@@ -8,7 +8,7 @@
 
 > **HtmlPolicy** = `"text"` \| `"sanitized-html"` \| `"trusted-html"`
 
-Defined in: web/dist/types.d.ts:160
+Defined in: web/dist/types.d.ts:152
 
 Trust level a slot applies to string content injected into it.
 

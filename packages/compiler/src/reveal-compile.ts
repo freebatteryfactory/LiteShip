@@ -22,7 +22,7 @@ import {
 } from '@liteship/core';
 import { MotionCompiler } from './motion.js';
 import type { MotionCompileResult, MotionEasing, MotionViewTimeline } from './motion.js';
-import { appendReducedMotionGuard, appendTranslateConsumer } from './motion-utils.js';
+import { appendReducedMotionGuard, appendTranslateConsumer } from './motion-augment.js';
 
 /** Compiled reveal artifacts — CSS projection + runtime floor. */
 export interface CompiledReveal {

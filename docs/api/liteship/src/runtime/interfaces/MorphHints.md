@@ -6,7 +6,7 @@
 
 # Interface: MorphHints
 
-Defined in: web/dist/types.d.ts:98
+Defined in: web/dist/types.d.ts:90
 
 Morph hints for fine-grained DOM diffing control.
 
@@ -16,7 +16,7 @@ Morph hints for fine-grained DOM diffing control.
 
 > `readonly` `optional` **idMap?**: `ReadonlyMap`\<`string`, `string`\>
 
-Defined in: web/dist/types.d.ts:101
+Defined in: web/dist/types.d.ts:93
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: web/dist/types.d.ts:101
 
 > `readonly` `optional` **preserve?**: readonly `string`[]
 
-Defined in: web/dist/types.d.ts:104
+Defined in: web/dist/types.d.ts:96
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: web/dist/types.d.ts:104
 
 > `readonly` `optional` **preserveFocus?**: readonly `string`[]
 
-Defined in: web/dist/types.d.ts:102
+Defined in: web/dist/types.d.ts:94
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: web/dist/types.d.ts:102
 
 > `readonly` `optional` **preserveIds?**: readonly `string`[]
 
-Defined in: web/dist/types.d.ts:99
+Defined in: web/dist/types.d.ts:91
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: web/dist/types.d.ts:99
 
 > `readonly` `optional` **preserveScroll?**: readonly `string`[]
 
-Defined in: web/dist/types.d.ts:103
+Defined in: web/dist/types.d.ts:95
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: web/dist/types.d.ts:103
 
 > `readonly` `optional` **remap?**: `Record`\<`string`, `string`\>
 
-Defined in: web/dist/types.d.ts:105
+Defined in: web/dist/types.d.ts:97
 
 ***
 
@@ -64,4 +64,4 @@ Defined in: web/dist/types.d.ts:105
 
 > `readonly` `optional` **semanticIds?**: readonly `string`[]
 
-Defined in: web/dist/types.d.ts:100
+Defined in: web/dist/types.d.ts:92

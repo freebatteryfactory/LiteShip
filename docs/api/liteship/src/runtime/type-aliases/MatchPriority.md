@@ -8,6 +8,6 @@
 
 > **MatchPriority** = `"semantic"` \| `"dom-id"` \| `"structural"` \| `"none"`
 
-Defined in: web/dist/types.d.ts:343
+Defined in: web/dist/types.d.ts:335
 
 Match priority levels for node comparison.

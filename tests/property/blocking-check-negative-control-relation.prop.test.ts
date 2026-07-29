@@ -255,7 +255,7 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
   [
     'check/package-smoke',
     'pnpm run package:smoke',
-    'tests/unit/cli/commands/package-smoke-helpers.test.ts',
+    'tests/unit/cli/commands/package-smoke-engine.test.ts',
     'shared:package-smoke-owner',
   ],
   ['check/doctor', 'pnpm run doctor -- --preflight --ci', 'tests/unit/cli/commands/doctor.test.ts', 'check/doctor'],
@@ -263,7 +263,7 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
   [
     'check/hermetic',
     'pnpm run package:smoke:hermetic',
-    'tests/unit/cli/commands/package-smoke-helpers.test.ts',
+    'tests/unit/cli/commands/package-smoke-engine.test.ts',
     'shared:package-smoke-owner',
   ],
   [

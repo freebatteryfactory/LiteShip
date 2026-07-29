@@ -6,7 +6,7 @@
 
 # Interface: UnverifiedPackageArtifacts
 
-Defined in: [audit/src/types.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L100)
+Defined in: [audit/src/types.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L87)
 
 A discovered package whose declared audit artifacts matched no files.
 
@@ -16,7 +16,7 @@ A discovered package whose declared audit artifacts matched no files.
 
 > `readonly` **coverage**: `"unverified"`
 
-Defined in: [audit/src/types.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L102)
+Defined in: [audit/src/types.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L89)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [audit/src/types.ts:102](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **expectedArtifacts**: readonly `string`[]
 
-Defined in: [audit/src/types.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L103)
+Defined in: [audit/src/types.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L90)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [audit/src/types.ts:103](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **package**: `string`
 
-Defined in: [audit/src/types.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L101)
+Defined in: [audit/src/types.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L88)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [audit/src/types.ts:101](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **reason**: `string`
 
-Defined in: [audit/src/types.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L104)
+Defined in: [audit/src/types.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L91)

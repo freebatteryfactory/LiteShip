@@ -6,7 +6,7 @@
 
 # Interface: SlotEntry
 
-Defined in: [web/src/types.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L40)
+Defined in: [web/src/types.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L33)
 
 Slot registry entry -- maps a slot path to its DOM element.
 
@@ -16,7 +16,7 @@ Slot registry entry -- maps a slot path to its DOM element.
 
 > `readonly` **element**: `Element`
 
-Defined in: [web/src/types.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L42)
+Defined in: [web/src/types.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L35)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:42](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **mode**: [`IslandMode`](../type-aliases/IslandMode.md)
 
-Defined in: [web/src/types.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L43)
+Defined in: [web/src/types.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L36)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/types.ts:43](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **mounted**: `boolean`
 
-Defined in: [web/src/types.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L44)
+Defined in: [web/src/types.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L37)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [web/src/types.ts:44](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **path**: [`SlotPath`](../type-aliases/SlotPath.md)
 
-Defined in: [web/src/types.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L41)
+Defined in: [web/src/types.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L34)

@@ -6,7 +6,7 @@
 
 # Interface: BackpressureHint
 
-Defined in: web/dist/types.d.ts:262
+Defined in: web/dist/types.d.ts:254
 
 Backpressure hint emitted when SSE buffer fills.
 
@@ -16,7 +16,7 @@ Backpressure hint emitted when SSE buffer fills.
 
 > `readonly` **bufferSize**: `number`
 
-Defined in: web/dist/types.d.ts:263
+Defined in: web/dist/types.d.ts:255
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: web/dist/types.d.ts:263
 
 > `readonly` **coalescedCount**: `number`
 
-Defined in: web/dist/types.d.ts:272
+Defined in: web/dist/types.d.ts:264
 
 Cumulative count of same-id `patch` supersessions (coalesce hits).
 
@@ -34,7 +34,7 @@ Cumulative count of same-id `patch` supersessions (coalesce hits).
 
 > `readonly` **droppedCount**: `number`
 
-Defined in: web/dist/types.d.ts:270
+Defined in: web/dist/types.d.ts:262
 
 Cumulative count of messages evicted/rejected by the overflow policy.
 
@@ -44,7 +44,7 @@ Cumulative count of messages evicted/rejected by the overflow policy.
 
 > `readonly` **dropping**: `boolean`
 
-Defined in: web/dist/types.d.ts:266
+Defined in: web/dist/types.d.ts:258
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: web/dist/types.d.ts:266
 
 > `readonly` **maxBufferSize**: `number`
 
-Defined in: web/dist/types.d.ts:264
+Defined in: web/dist/types.d.ts:256
 
 ***
 
@@ -60,7 +60,7 @@ Defined in: web/dist/types.d.ts:264
 
 > `readonly` **percentFull**: `number`
 
-Defined in: web/dist/types.d.ts:265
+Defined in: web/dist/types.d.ts:257
 
 ***
 
@@ -68,6 +68,6 @@ Defined in: web/dist/types.d.ts:265
 
 > `readonly` **policy**: [`OverflowPolicy`](../type-aliases/OverflowPolicy.md)
 
-Defined in: web/dist/types.d.ts:268
+Defined in: web/dist/types.d.ts:260
 
 The active [OverflowPolicy](../type-aliases/OverflowPolicy.md) (the rule governing `dropping`).

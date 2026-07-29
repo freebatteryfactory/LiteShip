@@ -6,7 +6,7 @@
 
 # Interface: PhysicalState
 
-Defined in: [web/src/types.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L66)
+Defined in: [web/src/types.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L59)
 
 Physical state captures DOM state that should survive morphing.
 
@@ -16,7 +16,7 @@ Physical state captures DOM state that should survive morphing.
 
 > `readonly` **activeElementPath**: `string` \| `null`
 
-Defined in: [web/src/types.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L67)
+Defined in: [web/src/types.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L60)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:67](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **focusState**: [`FocusState`](FocusState.md) \| `null`
 
-Defined in: [web/src/types.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L68)
+Defined in: [web/src/types.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L61)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/types.ts:68](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **ime**: [`IMEState`](IMEState.md) \| `null`
 
-Defined in: [web/src/types.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L71)
+Defined in: [web/src/types.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L64)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [web/src/types.ts:71](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **scrollPositions**: `Record`\<`string`, [`ScrollPosition`](ScrollPosition.md)\>
 
-Defined in: [web/src/types.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L69)
+Defined in: [web/src/types.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L62)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [web/src/types.ts:69](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **selection**: [`SelectionState`](SelectionState.md) \| `null`
 
-Defined in: [web/src/types.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L70)
+Defined in: [web/src/types.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L63)

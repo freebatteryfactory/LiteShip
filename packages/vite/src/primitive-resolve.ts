@@ -20,7 +20,7 @@ import type { Boundary, Token, Theme, Style } from '@liteship/core';
 import type { PrimitiveKind } from '@liteship/core';
 import * as path from 'node:path';
 import { fileExists, findConventionFiles } from './resolve-fs.js';
-import { tryImportNamed } from './resolve-utils.js';
+import { tryImportNamed } from './try-import.js';
 
 export type { PrimitiveKind };
 

@@ -5,8 +5,23 @@
  */
 
 import { ValidationError } from '@liteship/error';
-import { SlotPath } from '../types.js';
-export { SlotPath } from '../types.js';
+
+/**
+ * Slot path is a forward-slash prefixed branded path string.
+ * Used to address regions within the DOM. Declared here beside its branding
+ * factory (`types.ts` re-exports the type and stays fully erasable).
+ */
+export type SlotPath = `/${string}` & { readonly _brand: 'SlotPath' };
+
+/**
+ * Brand an already-validated slot path string.
+ *
+ * Sanctioned single-site cast for `SlotPath`. Callers that have externally
+ * validated the shape (e.g. via {@link SlotAddressing.isValid}, attribute
+ * provenance, or a literal `/...` template) should use this helper instead of
+ * inline-casting.
+ */
+export const SlotPath = (value: string): SlotPath => value as SlotPath;
 
 /**
  * The root slot path constant.

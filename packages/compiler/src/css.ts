@@ -10,7 +10,7 @@
 
 import type { Boundary, StateUnion } from '@liteship/core';
 import { Diagnostics } from '@liteship/core';
-import { inferSyntax } from './css-utils.js';
+import { inferSyntax } from './css-syntax.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -375,7 +375,7 @@ function serializeContainerRules(containerRules: readonly CSSContainerRule[], se
 // @property Registration
 // ---------------------------------------------------------------------------
 
-// COLOR_RE, NUMBER_RE, and inferSyntax are imported from ./css-utils.js
+// COLOR_RE, NUMBER_RE, and inferSyntax are imported from ./css-syntax.js
 
 function initialValueForSyntax(syntax: string): string {
   switch (syntax) {

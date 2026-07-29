@@ -9,6 +9,7 @@
  * @module
  */
 export * from './types.js';
+export * from './rule-ids.js';
 export * from './policy.js';
 export * from './shared.js';
 export * from './devops-profile.js';

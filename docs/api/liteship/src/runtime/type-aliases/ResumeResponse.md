@@ -8,6 +8,6 @@
 
 > **ResumeResponse** = \{ `patches`: readonly `unknown`[]; `type`: `"replay"`; \} \| \{ `html`: `string`; `lastEventId`: `string`; `signals`: `unknown`; `type`: `"snapshot"`; \}
 
-Defined in: web/dist/types.d.ts:331
+Defined in: web/dist/types.d.ts:323
 
 Resume response from the server.

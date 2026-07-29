@@ -8,7 +8,7 @@
  */
 
 import type { Token, Theme } from '@liteship/core';
-import { inferSyntax, stringifyCSSValue } from './css-utils.js';
+import { inferSyntax, stringifyCSSValue } from './css-syntax.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,7 +35,7 @@ export interface TokenCSSResult {
 // Helpers
 // ---------------------------------------------------------------------------
 
-// COLOR_RE, NUMBER_RE, CSSSyntax, inferSyntax, and stringifyCSSValue are imported from ./css-utils.js
+// COLOR_RE, NUMBER_RE, CSSSyntax, inferSyntax, and stringifyCSSValue are imported from ./css-syntax.js
 
 /**
  * Derive the CSS custom property name from a `Token`.

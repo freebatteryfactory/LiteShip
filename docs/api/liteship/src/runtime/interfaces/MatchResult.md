@@ -6,7 +6,7 @@
 
 # Interface: MatchResult
 
-Defined in: web/dist/types.d.ts:347
+Defined in: web/dist/types.d.ts:339
 
 Result of matching two nodes.
 
@@ -16,7 +16,7 @@ Result of matching two nodes.
 
 > `readonly` `optional` **matchedId?**: `string`
 
-Defined in: web/dist/types.d.ts:350
+Defined in: web/dist/types.d.ts:342
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: web/dist/types.d.ts:350
 
 > `readonly` **matches**: `boolean`
 
-Defined in: web/dist/types.d.ts:348
+Defined in: web/dist/types.d.ts:340
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: web/dist/types.d.ts:348
 
 > `readonly` **priority**: [`MatchPriority`](../type-aliases/MatchPriority.md)
 
-Defined in: web/dist/types.d.ts:349
+Defined in: web/dist/types.d.ts:341

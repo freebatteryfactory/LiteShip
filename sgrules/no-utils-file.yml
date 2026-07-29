@@ -12,17 +12,12 @@
 # `program` root node, so any non-empty file at one of the banned paths is an
 # error regardless of contents.
 #
-# SCOPE — packages/core/src only, for now. Other packages still carry grab-bag
-# names TODAY (ratchet plan: rename each to its domain, then widen the glob to
-# `**/packages/*/src/**`):
-#     packages/cli/src/spawn-helpers.ts
-#     packages/cli/src/internal/package-smoke-helpers.ts
-#     packages/compiler/src/motion-utils.ts
-#     packages/compiler/src/css-utils.ts
-#     packages/vite/src/resolve-utils.ts
-# Scoping to core (the fully-migrated package) lets this ship green now; each
-# other package graduates into the ban as its offenders are renamed. When the
-# list above reaches zero, replace `packages/core` with `packages/*` here.
+# SCOPE — every package src tree. The core-first ratchet completed 2026-07-29
+# (issue #178): the five grab-bag offenders outside core were renamed to their
+# domains (cli spawn-helpers → spawn, cli package-smoke-helpers →
+# package-smoke-engine, compiler motion-utils → motion-augment, compiler
+# css-utils → css-syntax, vite resolve-utils → try-import), so the glob is
+# repo-wide and every package graduates permanently.
 #
 # Run: `pnpm run lint:structural`  (CI: gauntlet `lint:structural` phase)
 id: no-utils-file
@@ -30,9 +25,9 @@ language: typescript
 severity: error
 message: "Grab-bag filename (utils.ts / helpers.ts / *-utils.ts / *-helpers.ts) is forbidden — name the file after its domain (e.g. math-utils → numeric, type-utils → type-level). A util bucket has no single responsibility and no re-export home."
 files:
-  - "**/packages/core/src/**/utils.ts"
-  - "**/packages/core/src/**/helpers.ts"
-  - "**/packages/core/src/**/*-utils.ts"
-  - "**/packages/core/src/**/*-helpers.ts"
+  - "**/packages/*/src/**/utils.ts"
+  - "**/packages/*/src/**/helpers.ts"
+  - "**/packages/*/src/**/*-utils.ts"
+  - "**/packages/*/src/**/*-helpers.ts"
 rule:
   kind: program

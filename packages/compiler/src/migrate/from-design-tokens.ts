@@ -45,7 +45,7 @@
 import { defineToken, defineTheme, decode, schema, parseErrorFromIssues } from '@liteship/core';
 import type { Token, Theme, TokenCategory } from '@liteship/core';
 import { ValidationError, hasTag } from '@liteship/error';
-import { stringifyCSSValue } from '../css-utils.js';
+import { stringifyCSSValue } from '../css-syntax.js';
 import type { MigrationDiagnostic, MigrationResult } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
 import { migrationRecord } from './record.js';

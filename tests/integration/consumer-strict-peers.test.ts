@@ -26,7 +26,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnArgvCaptureWithEnv } from '../../packages/command/src/host/launcher.js';
-import { CONSUMER_STRICT_PEER_FLAG } from '../../packages/cli/src/internal/package-smoke-helpers.js';
+import { CONSUMER_STRICT_PEER_FLAG } from '../../packages/cli/src/internal/package-smoke-engine.js';
 
 const fixtureDirs: string[] = [];
 

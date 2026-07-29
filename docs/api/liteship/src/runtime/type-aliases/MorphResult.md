@@ -8,6 +8,6 @@
 
 > **MorphResult** = \{ `type`: `"success"`; \} \| \{ `rejection`: [`MorphRejection`](../interfaces/MorphRejection.md); `type`: `"rejected"`; \}
 
-Defined in: web/dist/types.d.ts:133
+Defined in: web/dist/types.d.ts:125
 
 Result of a morph operation.

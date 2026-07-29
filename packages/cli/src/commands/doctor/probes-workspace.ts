@@ -22,14 +22,8 @@ import {
   type ProjectPackageManager,
 } from '../../internal/project-package-manager.js';
 import { findWorkspaceRoot } from './manifest.js';
-import {
-  DOCTOR_PROBE_TIMEOUT_MS,
-  type DoctorCheck,
-  type EngineMinima,
-  type Readout,
-  parseMajor,
-  unreadable,
-} from './types.js';
+import { DOCTOR_PROBE_TIMEOUT_MS, parseMajor, unreadable } from './probe-support.js';
+import { type DoctorCheck, type EngineMinima, type Readout } from './types.js';
 
 export function probeNode(minima: EngineMinima): DoctorCheck {
   const version = process.versions.node;

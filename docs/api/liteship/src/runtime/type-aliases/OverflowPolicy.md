@@ -8,7 +8,7 @@
 
 > **OverflowPolicy** = `"drop-newest"` \| `"drop-oldest"` \| `"coalesce-by-id"`
 
-Defined in: web/dist/types.d.ts:201
+Defined in: web/dist/types.d.ts:193
 
 Policy applied when the SSE receive buffer is saturated.
 

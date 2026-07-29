@@ -6,7 +6,7 @@
 
 # Interface: MorphRejection
 
-Defined in: web/dist/types.d.ts:142
+Defined in: web/dist/types.d.ts:134
 
 Morph rejection when preserve constraints are violated.
 
@@ -16,7 +16,7 @@ Morph rejection when preserve constraints are violated.
 
 > `readonly` `optional` **hint?**: `string`
 
-Defined in: web/dist/types.d.ts:149
+Defined in: web/dist/types.d.ts:141
 
 Literal next step for the consumer rendering the rejection.
 
@@ -26,7 +26,7 @@ Literal next step for the consumer rendering the rejection.
 
 > `readonly` `optional` **missingIds?**: readonly `string`[]
 
-Defined in: web/dist/types.d.ts:145
+Defined in: web/dist/types.d.ts:137
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: web/dist/types.d.ts:145
 
 > `readonly` **reason**: `string`
 
-Defined in: web/dist/types.d.ts:147
+Defined in: web/dist/types.d.ts:139
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: web/dist/types.d.ts:147
 
 > `readonly` `optional` **slot?**: [`SlotPath`](../type-aliases/SlotPath.md)
 
-Defined in: web/dist/types.d.ts:146
+Defined in: web/dist/types.d.ts:138
 
 ***
 
@@ -50,6 +50,6 @@ Defined in: web/dist/types.d.ts:146
 
 > `readonly` **type**: `"preserve_violation"`
 
-Defined in: web/dist/types.d.ts:144
+Defined in: web/dist/types.d.ts:136
 
 Closed union of the rejection kinds the runtime emits.

@@ -6,7 +6,7 @@
 
 # Interface: ReconnectConfig
 
-Defined in: web/dist/types.d.ts:253
+Defined in: web/dist/types.d.ts:245
 
 Reconnection configuration. Engine defaults live in
 `defaultReconnectConfig` (`./stream/sse-pure.js`); `SSEConfig.reconnect`
@@ -18,7 +18,7 @@ accepts a partial and merges over those defaults.
 
 > `readonly` **factor**: `number`
 
-Defined in: web/dist/types.d.ts:257
+Defined in: web/dist/types.d.ts:249
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: web/dist/types.d.ts:257
 
 > `readonly` **initialDelay**: [`Millis`](../../../../spine/type-aliases/Millis.md)
 
-Defined in: web/dist/types.d.ts:255
+Defined in: web/dist/types.d.ts:247
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: web/dist/types.d.ts:255
 
 > `readonly` **maxAttempts**: `number`
 
-Defined in: web/dist/types.d.ts:254
+Defined in: web/dist/types.d.ts:246
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: web/dist/types.d.ts:254
 
 > `readonly` **maxDelay**: [`Millis`](../../../../spine/type-aliases/Millis.md)
 
-Defined in: web/dist/types.d.ts:256
+Defined in: web/dist/types.d.ts:248

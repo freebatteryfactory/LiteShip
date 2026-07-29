@@ -948,7 +948,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/cli/commands/package-smoke-helpers.test.ts',
+    negativeControl: 'tests/unit/cli/commands/package-smoke-engine.test.ts',
     remediation: 'fix the packed-package export/peer that failed to resolve in the consumer smoke.',
   },
   {
@@ -995,7 +995,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 420_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/cli/commands/package-smoke-helpers.test.ts',
+    negativeControl: 'tests/unit/cli/commands/package-smoke-engine.test.ts',
     remediation:
       'fix the offline reinstall, public-subpath proof, or semantic package-content drift reported by the hermetic closure.',
   },

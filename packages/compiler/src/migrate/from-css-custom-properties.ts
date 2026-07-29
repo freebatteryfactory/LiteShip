@@ -46,7 +46,7 @@ import {
   type CSSDeclarationValue,
 } from '../parse/css-cascade.js';
 import { containsCustomPropertyDeclaration, parseFlatDeclarationValues } from '../parse/css-scan.js';
-import { inferSyntax } from '../css-utils.js';
+import { inferSyntax } from '../css-syntax.js';
 import type { MigrationDiagnostic, MigrationResult } from './types.js';
 import { tokenNameForCSSCustomProperty } from './custom-property-name.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';

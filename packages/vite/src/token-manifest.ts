@@ -17,7 +17,7 @@ import { Diagnostics } from '@liteship/core';
 import { walkFiles } from '@liteship/core/fs-walk';
 import { TokenCSSCompiler } from '@liteship/compiler';
 import { findConventionFiles, reportProjectWalkIssue } from './resolve-fs.js';
-import { tryImportNamed } from './resolve-utils.js';
+import { tryImportNamed } from './try-import.js';
 
 const DIAGNOSTIC_SOURCE = 'liteship/vite.token-manifest';
 

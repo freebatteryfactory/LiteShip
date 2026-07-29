@@ -36,7 +36,7 @@ import {
   packedLiteshipBin,
   packageSmokeProcessFailure,
   qualifiedHostOverrides,
-} from '../../../../packages/cli/src/internal/package-smoke-helpers.js';
+} from '../../../../packages/cli/src/internal/package-smoke-engine.js';
 
 describe('packageSmokeProcessFailure — failed child diagnostics', () => {
   it('preserves the stdout-only package-manager error that escaped main CI', () => {

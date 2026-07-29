@@ -46,7 +46,7 @@ import {
   type PackageSmokeExecutable,
   semanticClosureFileHash,
   tarballFileUrl,
-} from '../internal/package-smoke-helpers.js';
+} from '../internal/package-smoke-engine.js';
 import { checkPackedMetadata } from '../internal/package-metadata-catalog.js';
 import {
   buildColdImportGraph,

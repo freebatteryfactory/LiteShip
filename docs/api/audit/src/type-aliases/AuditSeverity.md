@@ -8,6 +8,6 @@
 
 > **AuditSeverity** = `"error"` \| `"warning"` \| `"info"`
 
-Defined in: [audit/src/types.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L28)
+Defined in: [audit/src/types.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L15)
 
 Severity emitted by an audit finding.

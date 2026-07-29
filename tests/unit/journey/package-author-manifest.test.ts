@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { PEER_INSTALLS } from '@liteship/command';
 import { boundedJourneyOutput, writePackedAuthorManifest, type PackedWorkspace } from '../../journey/harness.js';
-import { qualifiedHostOverrides } from '../../../packages/cli/src/internal/package-smoke-helpers.js';
+import { qualifiedHostOverrides } from '../../../packages/cli/src/internal/package-smoke-engine.js';
 
 describe('bounded journey diagnostics', () => {
   test('preserves the owning error and the process epilogue when output is long', () => {

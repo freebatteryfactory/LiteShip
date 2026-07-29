@@ -6,7 +6,7 @@
 
 # Interface: FocusState
 
-Defined in: web/dist/types.d.ts:63
+Defined in: web/dist/types.d.ts:55
 
 Focus state with cursor and selection details for input elements.
 
@@ -16,7 +16,7 @@ Focus state with cursor and selection details for input elements.
 
 > `readonly` **cursorPosition**: `number`
 
-Defined in: web/dist/types.d.ts:65
+Defined in: web/dist/types.d.ts:57
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: web/dist/types.d.ts:65
 
 > `readonly` **elementId**: `string`
 
-Defined in: web/dist/types.d.ts:64
+Defined in: web/dist/types.d.ts:56
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: web/dist/types.d.ts:64
 
 > `readonly` **selectionDirection**: `string`
 
-Defined in: web/dist/types.d.ts:68
+Defined in: web/dist/types.d.ts:60
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: web/dist/types.d.ts:68
 
 > `readonly` **selectionEnd**: `number`
 
-Defined in: web/dist/types.d.ts:67
+Defined in: web/dist/types.d.ts:59
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: web/dist/types.d.ts:67
 
 > `readonly` **selectionStart**: `number`
 
-Defined in: web/dist/types.d.ts:66
+Defined in: web/dist/types.d.ts:58
