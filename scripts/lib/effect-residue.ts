@@ -8,11 +8,12 @@
  * reintroduced via scaffolder TEMPLATE, EXAMPLE app, MANIFEST key, dynamic import,
  * or a vendored `Effect.<method>(` call site would slip both.
  *
- * Scope: every package src tree (INCLUDING `_`-prefixed), scaffolder templates,
- * examples (source, not build output), scripts, tests, and every workspace-reachable
- * manifest's dependency keys. Comment lines are exempt — residue means something the
- * runtime executes or the installer resolves, not prose about the shed (the `_spine`
- * "was Effect.Effect<...>" history lines stay legal).
+ * Scope: every package tree in full (INCLUDING `_`-prefixed packages and the
+ * CLI-shipped fragments/), examples (source, not build output), scripts, tests,
+ * and EVERY authored manifest in the repository, recursively. Comment lines are
+ * exempt — residue means something the runtime executes or the installer
+ * resolves, not prose about the shed (the `_spine` "was Effect.Effect<...>"
+ * history lines stay legal).
  *
  * The consuming test (tests/unit/devops/effect-residue-scan.test.ts) holds the
  * pinned allowlist (files that carry these patterns as regex/fixture literals) and
@@ -39,11 +40,18 @@ export interface EffectResidueScan {
   readonly swept: readonly string[];
 }
 
-const STATIC_IMPORT = /\bfrom\s+['"]effect(?:\/[^'"]*)?['"]/;
-const DYNAMIC_IMPORT = /\bimport\s*\(\s*['"]effect(?:\/[^'"]*)?['"]\s*\)/;
-const REQUIRE_CALL = /\brequire\s*\(\s*['"]effect(?:\/[^'"]*)?['"]\s*\)/;
-const CALL_SITE =
-  /\bEffect\.(?:runSync|runPromise|runFork|gen|scoped|all|succeed|fail|die|promise|sync|try|tryPromise|forEach|flatMap|map|provide|provideService|acquireRelease)\s*\(/;
+// `from 'effect'` (static/re-export) OR bare `import 'effect'` — a side-effect
+// import executes the module without any `from`, so requiring `from` alone was
+// a false-green path (PR #186 review, confirmed).
+const STATIC_IMPORT = /\b(?:from|import)\s+['"]effect(?:\/[^'"]*)?['"]/;
+// `,?` — a multiline call collapsed to one line carries prettier's trailing
+// comma (`import('effect',)`), which must not defeat the match.
+const DYNAMIC_IMPORT = /\bimport\s*\(\s*['"]effect(?:\/[^'"]*)?['"]\s*,?\s*\)/;
+const REQUIRE_CALL = /\brequire\s*\(\s*['"]effect(?:\/[^'"]*)?['"]\s*,?\s*\)/;
+// ANY `Effect.<method>(` call: the shed removed the library, so no legitimate
+// `Effect.` namespace call exists outside the pinned allowlist — enumerating
+// blessed method names just left every unlisted method a false green.
+const CALL_SITE = /\bEffect\.[A-Za-z_$][\w$]*\s*\(/;
 
 const MANIFEST_DEP_FIELDS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const;
 
@@ -104,25 +112,22 @@ function walkSources(dir: string, out: string[]): void {
   }
 }
 
+// EVERY authored manifest in the repository, recursively — a shallow
+// hand-enrolled list silently missed the CLI-shipped fragments and the vite
+// integration workspace member (PR #186 review, confirmed). A new template,
+// fragment, or fixture manifest joins the scan the moment it exists.
 function manifestPaths(root: string): string[] {
-  const paths: string[] = [join(root, 'package.json')];
-  for (const group of ['packages', 'examples']) {
-    const groupDir = join(root, group);
-    if (!existsSync(groupDir)) continue;
-    for (const name of readdirSync(groupDir)) {
-      const manifest = join(groupDir, name, 'package.json');
-      if (existsSync(manifest)) paths.push(manifest);
+  const paths: string[] = [];
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (!SKIPPED_DIRS.has(entry.name) && entry.name !== '.git') walk(join(dir, entry.name));
+      } else if (entry.name === 'package.json') {
+        paths.push(join(dir, entry.name));
+      }
     }
-  }
-  const templatesDir = join(root, 'packages', 'create-liteship', 'templates');
-  if (existsSync(templatesDir)) {
-    for (const name of readdirSync(templatesDir)) {
-      const manifest = join(templatesDir, name, 'package.json');
-      if (existsSync(manifest)) paths.push(manifest);
-    }
-  }
-  const integrationManifest = join(root, 'tests', 'integration', 'astro', 'package.json');
-  if (existsSync(integrationManifest)) paths.push(integrationManifest);
+  };
+  walk(root);
   return paths;
 }
 
@@ -130,12 +135,11 @@ function manifestPaths(root: string): string[] {
 export function scanEffectResidue(root: string, allowlist: ReadonlySet<string>): EffectResidueScan {
   const sourceRoots: string[] = [];
   const packagesDir = join(root, 'packages');
+  // The WHOLE package directory, not just src + templates: the CLI ships its
+  // fragments/ tree verbatim into user projects (PR #186 review, confirmed),
+  // and any future shipped subtree joins the sweep the moment it exists.
   for (const name of readdirSync(packagesDir, { withFileTypes: true })) {
-    if (!name.isDirectory()) continue;
-    for (const subtree of ['src', 'templates']) {
-      const dir = join(packagesDir, name.name, subtree);
-      if (existsSync(dir) && statSync(dir).isDirectory()) sourceRoots.push(dir);
-    }
+    if (name.isDirectory()) sourceRoots.push(join(packagesDir, name.name));
   }
   for (const top of ['examples', 'scripts', 'tests']) {
     const dir = join(root, top);
@@ -152,9 +156,25 @@ export function scanEffectResidue(root: string, allowlist: ReadonlySet<string>):
     if (allowlist.has(file)) continue;
     swept.push(file);
     const lines = readFileSync(absolute, 'utf8').split(/\r?\n/);
+    let found = false;
     for (let index = 0; index < lines.length; index += 1) {
       for (const kind of classifyEffectResidueLine(lines[index]!)) {
         findings.push({ file, line: index + 1, kind, detail: lines[index]!.trim().slice(0, 120) });
+        found = true;
+      }
+    }
+    // Second pass — the same classifiers over a comment-stripped, whitespace-
+    // collapsed rendition, so a construct formatted across line boundaries
+    // (`import(\n  'effect'\n)`) cannot evade the per-line pass (PR #186
+    // review, confirmed). Only when the per-line pass saw nothing: any single
+    // finding already reds the zero-findings law, so per-file dedup is sound.
+    if (!found) {
+      const collapsed = lines
+        .filter((line) => !isCommentLine(line))
+        .join(' ')
+        .replace(/\s+/g, ' ');
+      for (const kind of classifyEffectResidueLine(collapsed)) {
+        findings.push({ file, line: 0, kind, detail: 'construct spans line boundaries (collapsed-source match)' });
       }
     }
   }

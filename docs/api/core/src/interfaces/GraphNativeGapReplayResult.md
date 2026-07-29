@@ -6,7 +6,7 @@
 
 # Interface: GraphNativeGapReplayResult
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L78)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L87)
 
 Result of [runGraphNativeGapReplay](../functions/runGraphNativeGapReplay.md).
 
@@ -16,7 +16,7 @@ Result of [runGraphNativeGapReplay](../functions/runGraphNativeGapReplay.md).
 
 > `readonly` **query**: [`GraphQueryResponse`](../type-aliases/GraphQueryResponse.md)
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L79)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L88)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/graph/graph-query-gap-replay.ts:79](https://github.com/fre
 
 > `readonly` **replayedCells**: readonly [`ReplayableRecoveryCell`](../type-aliases/ReplayableRecoveryCell.md)[]
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L80)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L89)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/graph/graph-query-gap-replay.ts:80](https://github.com/fre
 
 > `readonly` **transitions**: readonly [`DiscreteStateTransition`](DiscreteStateTransition.md)[]
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L81)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L90)

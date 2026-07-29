@@ -93,6 +93,28 @@ describe('recordStreamPatchReceipt — attested buffering', () => {
     expect(await recordStreamPatchReceipt('nobody-home', await validFrame())).toBe(false);
   });
 
+  test('unawaited concurrent records land in ARRIVAL order, not attestation-completion order (PR #188 review)', async () => {
+    // The defect class: the stream directive fires recordStreamPatchReceipt per
+    // SSE event without awaiting, and attestation hashes asynchronously — so a
+    // later frame whose hash resolved first used to push first, while
+    // compaction treats array order as chronology. The law: the buffer
+    // position is claimed synchronously at call time, so buffer order is
+    // arrival order regardless of per-frame hashing latency.
+    const dispose = registerStreamRecoverySubstrate('art-order', substrate());
+    try {
+      const cells = Array.from({ length: 12 }, (_, index) => `cell-${index}`);
+      const frames = await Promise.all(cells.map((cell) => validFrame('liteship:base', cell)));
+      // Fire ALL records in one synchronous burst — none awaited until the end.
+      const pending = frames.map((frame) => recordStreamPatchReceipt('art-order', frame));
+      const results = await Promise.all(pending);
+      expect(results).toEqual(cells.map(() => true));
+      const buffered = getStreamRecoverySubstrate('art-order')!.patchReceiptEntries;
+      expect(buffered.map((entry) => entry.transition.cell)).toEqual(cells);
+    } finally {
+      dispose();
+    }
+  });
+
   test('HOSTILE: a forged-hash frame is refused at record time (never buffered)', async () => {
     const dispose = registerStreamRecoverySubstrate('art-forged', substrate());
     try {

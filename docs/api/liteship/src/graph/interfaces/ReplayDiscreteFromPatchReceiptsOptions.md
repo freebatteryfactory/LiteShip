@@ -42,9 +42,9 @@ Defined in: core/dist/graph/graph-query-gap-replay.d.ts:32
 
 ### chainValidation?
 
-> `readonly` `optional` **chainValidation?**: [`ChainValidationOptions`](../../evidence/interfaces/ChainValidationOptions.md)
+> `readonly` `optional` **chainValidation?**: [`ChainValidationOptions`](../../evidence/interfaces/ChainValidationOptions.md) \| (() => [`ChainValidationOptions`](../../evidence/interfaces/ChainValidationOptions.md) \| `undefined`)
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:46
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:51
 
 Checkpoint-attestation retention (issue #150): when the bounded receipt
 buffer evicted a prefix, the buffer owner minted a genesis-shaped
@@ -55,6 +55,11 @@ prefix — `validateChainDetailed` widens its genesis predicate to
 genesis-rooted floor applies unchanged (a truncated tail refuses —
 `base` without a verified `checkpoint` is deliberately rejected; that
 hole was closed once and stays closed).
+
+May be a THUNK: the live buffer's retention advances on every eviction,
+and an eviction can land while the QUERY read is in flight. A thunk is
+resolved HERE, synchronously with the entries read, so retention and
+buffer can never diverge across that await (PR #188 review, confirmed).
 
 ***
 
