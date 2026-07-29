@@ -31,7 +31,7 @@ Bindings: **4138** across **87** public specifiers.
 | `@liteship/astro/middleware-entry` | advanced-module | host-integrator | stable | 1 | 1 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/astro/runtime` | advanced-module | host-integrator | stable | 84 | 20 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/astro/runtime/inspector-toolbar-app` | advanced-module | host-integrator | stable | 1 | 1 | `INV-PUBLIC-SURFACE-INHABITED` |
-| `@liteship/audit` | advanced-module | operator | stable | 183 | 30 | `INV-PUBLIC-SURFACE-INHABITED` |
+| `@liteship/audit` | advanced-module | operator | stable | 183 | 31 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/canonical` | advanced-module | package-author | stable | 14 | 7 | `INV-CANONICAL-BYTES` |
 | `@liteship/cli` | advanced-module | operator | stable | 1 | 1 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/cloudflare` | advanced-module | host-integrator | stable | 10 | 3 | `INV-PUBLIC-SURFACE-INHABITED` |
@@ -63,7 +63,7 @@ Bindings: **4138** across **87** public specifiers.
 | `@liteship/error` | advanced-module | package-author | stable | 35 | 4 | `INV-DIAGNOSTIC-CODE-CLOSED` |
 | `@liteship/gauntlet` | advanced-module | operator | stable | 342 | 79 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/genui` | advanced-module | package-author | experimental | 17 | 8 | `INV-PUBLIC-SURFACE-INHABITED` |
-| `@liteship/mcp-server` | advanced-module | operator | experimental | 97 | 17 | `INV-PUBLIC-SURFACE-INHABITED` |
+| `@liteship/mcp-server` | advanced-module | operator | experimental | 97 | 18 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/quantizer` | advanced-module | package-author | stable | 22 | 6 | `INV-ADAPTIVE-RECEIPT-EQUIVALENCE` |
 | `@liteship/quantizer/testing` | advanced-module | package-author | stable | 2 | 2 | `INV-ADAPTIVE-RECEIPT-EQUIVALENCE` |
 | `@liteship/remotion` | advanced-module | host-integrator | experimental | 11 | 4 | `INV-PUBLIC-SURFACE-INHABITED` |
