@@ -100,18 +100,49 @@ export function elementHasDirectiveRoot(name: DirectiveName, element: Element): 
   );
 }
 
-/** Collect the roots for one directive, including a root node passed directly. */
-export function collectDirectiveRootsForName(name: DirectiveName, root: ParentNode = document): readonly HTMLElement[] {
-  const candidates =
-    root instanceof HTMLElement
-      ? [root, ...root.querySelectorAll<HTMLElement>('*')]
-      : [...root.querySelectorAll<HTMLElement>('*')];
-  return candidates.filter((element) => elementHasDirectiveRoot(name, element));
+/** Every element under (and including) `root`, in document order — ONE DOM traversal. */
+export function collectDirectiveCandidates(root: ParentNode = document): readonly HTMLElement[] {
+  return root instanceof HTMLElement
+    ? [root, ...root.querySelectorAll<HTMLElement>('*')]
+    : [...root.querySelectorAll<HTMLElement>('*')];
 }
 
-/** Collect every directive root under `root` exactly once, catalog-driven. */
+/**
+ * Bucket every directive root by name in ONE DOM traversal (issue #155).
+ *
+ * The former shape walked the whole document once PER DIRECTIVE
+ * (O(directives × document), all on the main thread in the boot frame); the
+ * attribute checks per element are cheap, the traversals were not. Callers that
+ * already hold the candidates array (the boot scanner shares one traversal with
+ * its diagnostics pass) pass it in; others let it default to a fresh walk.
+ */
+export function collectDirectiveRootsByName(
+  root: ParentNode = document,
+  candidates: readonly HTMLElement[] = collectDirectiveCandidates(root),
+): ReadonlyMap<DirectiveName, readonly HTMLElement[]> {
+  const buckets = new Map<DirectiveName, HTMLElement[]>();
+  for (const element of candidates) {
+    for (const name of DIRECTIVE_NAMES) {
+      if (!elementHasDirectiveRoot(name, element)) continue;
+      const bucket = buckets.get(name);
+      if (bucket === undefined) buckets.set(name, [element]);
+      else bucket.push(element);
+    }
+  }
+  return buckets;
+}
+
+/** Collect the roots for one directive, including a root node passed directly. */
+export function collectDirectiveRootsForName(name: DirectiveName, root: ParentNode = document): readonly HTMLElement[] {
+  return collectDirectiveCandidates(root).filter((element) => elementHasDirectiveRoot(name, element));
+}
+
+/** Collect every directive root under `root` exactly once, catalog-driven — ONE traversal. */
 export function collectDirectiveRoots(root: ParentNode = document): readonly HTMLElement[] {
-  const roots = new Set(DIRECTIVE_NAMES.flatMap((name) => collectDirectiveRootsForName(name, root)));
+  const roots = new Set<HTMLElement>();
+  for (const bucket of collectDirectiveRootsByName(root).values()) {
+    for (const element of bucket) roots.add(element);
+  }
   return [...roots];
 }
 
