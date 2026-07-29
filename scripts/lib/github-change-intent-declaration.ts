@@ -190,6 +190,32 @@ function validateParsedGitHubChangeIntentDeclaration(value: unknown): GitHubChan
     'areas',
   ]);
   const uncertainty = exactRecord(record['uncertainty'], 'liteship-change-intent.uncertainty', ['level', 'unknowns']);
+  // Mirror the kernel's execution admission rules (PR #190 review): this
+  // validator is the ONLY change-intent check before the expensive CI matrix,
+  // so a declaration full admission will certainly refuse must fail HERE, in
+  // the plan job, not after the matrix has burned its minutes.
+  //  - an agent actor with a null execution → `agent-execution-not-declared`;
+  //  - approve/release autonomy → refused outright: a PR-body classification
+  //    is agent-self-declared by construction, and the kernel refuses
+  //    privileged autonomy for any unverified actor
+  //    (`privileged-autonomy-actor-not-verified`).
+  const declaredExecution = executionDeclaration(record['execution']);
+  const declaredActorClass = enumValue(record['actorClass'], 'liteship-change-intent.actorClass', [
+    'human',
+    'agent',
+    'automation',
+  ]);
+  if (declaredActorClass === 'agent' && declaredExecution === null) {
+    throw new TypeError(
+      'liteship-change-intent.execution must be declared for an agent actor (admission refuses agent-execution-not-declared)',
+    );
+  }
+  if (declaredExecution !== null && ['approve', 'release'].includes(declaredExecution.autonomy)) {
+    throw new TypeError(
+      'liteship-change-intent.execution.autonomy approve/release requires a host-verified actor classification; ' +
+        'a PR-body declaration is agent-self-declared, so admission refuses privileged-autonomy-actor-not-verified',
+    );
+  }
   return Object.freeze({
     sponsor: nonEmptyString(record['sponsor'], 'liteship-change-intent.sponsor'),
     hypothesis: nonEmptyString(record['hypothesis'], 'liteship-change-intent.hypothesis'),
@@ -204,12 +230,12 @@ function validateParsedGitHubChangeIntentDeclaration(value: unknown): GitHubChan
     expectedOutcome: nonEmptyString(record['expectedOutcome'], 'liteship-change-intent.expectedOutcome'),
     guardrails: Object.freeze(stringSet(record['guardrails'], 'liteship-change-intent.guardrails')),
     reversibility: Object.freeze(reversibility(record['reversibility'])),
-    actorClass: enumValue(record['actorClass'], 'liteship-change-intent.actorClass', ['human', 'agent', 'automation']),
+    actorClass: declaredActorClass,
     uncertainty: Object.freeze({
       level: enumValue(uncertainty['level'], 'liteship-change-intent.uncertainty.level', ['low', 'medium', 'high']),
       unknowns: Object.freeze(stringSet(uncertainty['unknowns'], 'liteship-change-intent.uncertainty.unknowns', true)),
     }),
-    execution: executionDeclaration(record['execution']),
+    execution: declaredExecution,
   });
 }
 

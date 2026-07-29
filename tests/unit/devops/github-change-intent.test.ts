@@ -230,6 +230,40 @@ describe('GitHub ChangeIntent host adapter', () => {
     expect(() => admitGitHubChangeIntent(input({ body }))).toThrow(TypeError);
   });
 
+  it('cold-refuses an agent declaration without execution BEFORE the CI matrix (PR #190 review)', () => {
+    // The kernel refuses agent-execution-not-declared at full admission — but
+    // full admission runs AFTER the expensive authority matrix. The cold
+    // validator is the only pre-matrix check, so it must mirror the rule.
+    const payload = { ...declaration('internal'), execution: null };
+    expect(() =>
+      validateGitHubChangeIntentDeclaration('pull_request', {
+        pull_request: { body: block(payload), user: { login: 'heyoub' } },
+      }),
+    ).toThrow(/agent-execution-not-declared/u);
+    expect(() => admitGitHubChangeIntent(input({ body: block(payload) }))).toThrow(/agent-execution-not-declared/u);
+  });
+
+  it('cold-refuses approve/release autonomy BEFORE the matrix — a PR-body classification is self-declared (PR #190 review)', () => {
+    for (const autonomy of ['approve', 'release'] as const) {
+      for (const actorClass of ['human', 'agent', 'automation'] as const) {
+        const payload = { ...declaration('internal'), actorClass } as Record<string, unknown> & {
+          execution: { autonomy: string };
+        };
+        payload.execution = { ...(declaration('internal')['execution'] as Record<string, unknown>), autonomy } as never;
+        expect(
+          () =>
+            validateGitHubChangeIntentDeclaration('pull_request', {
+              pull_request: { body: block(payload), user: { login: 'heyoub' } },
+            }),
+          `${actorClass}+${autonomy} must cold-refuse`,
+        ).toThrow(/privileged-autonomy-actor-not-verified/u);
+        expect(() => admitGitHubChangeIntent(input({ body: block(payload) }))).toThrow(
+          /privileged-autonomy-actor-not-verified/u,
+        );
+      }
+    }
+  });
+
   it('refuses foreign or missing declarative fields', () => {
     expect(() => admitGitHubChangeIntent(input({ body: block({ ...declaration(), surprise: true }) }))).toThrow(
       /keys must be exactly/u,

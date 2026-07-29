@@ -45,7 +45,11 @@ export interface ChangeIntentRepositoryIdentity {
  * `approve` and `release` are human-owned: a declared agent/automation
  * execution claiming either is refused ({@link admitChangeIntent},
  * `execution-self-approval-refused`) — deterministic controls and human
- * ownership retain the gavel.
+ * ownership retain the gavel. And the HUMAN classification itself must be
+ * host-verified to unlock those tiers: an actorClass whose provenance is
+ * merely self-declared cannot claim approve/release
+ * (`privileged-autonomy-actor-not-verified`, PR #190 review) — otherwise an
+ * agent simply declares itself human and walks past both refusals.
  */
 export type ChangeIntentAutonomy = 'propose' | 'edit' | 'execute' | 'approve' | 'release';
 
@@ -112,7 +116,8 @@ export type ChangeIntentRefusalCode =
   | 'public-or-trust-source-not-github-verified'
   | 'public-or-trust-repository-not-github-verified'
   | 'agent-execution-not-declared'
-  | 'execution-self-approval-refused';
+  | 'execution-self-approval-refused'
+  | 'privileged-autonomy-actor-not-verified';
 
 export type ChangeIntentAdmission =
   | { readonly accepted: true; readonly intentId: ChangeIntent['intentId']; readonly reasons: readonly [] }
@@ -403,6 +408,19 @@ export function admitChangeIntent(intent: ChangeIntent): ChangeIntentAdmission {
     ['approve', 'release'].includes(intent.execution.value.autonomy)
   ) {
     reasons.push('execution-self-approval-refused');
+  }
+  //  - the human-owned tiers bind to a VERIFIED human, not a self-described
+  //    one: the GitHub adapter stamps actorClass 'agent-self-declared' (it
+  //    verifies the sponsor login and permission, never the author's species),
+  //    so trusting the claimed class would let an agent declare itself human
+  //    and hold approve/release (PR #190 review, confirmed). Same idiom as the
+  //    public-surface github-verified requirements below.
+  if (
+    intent.execution.value !== null &&
+    ['approve', 'release'].includes(intent.execution.value.autonomy) &&
+    intent.actorClass.provenance !== 'github-verified'
+  ) {
+    reasons.push('privileged-autonomy-actor-not-verified');
   }
   if (intent.affectedUserSurface.value.visibility !== 'internal') {
     if (intent.sponsor.provenance !== 'github-verified') {

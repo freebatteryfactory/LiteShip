@@ -184,11 +184,27 @@ describe('internal ChangeIntent', () => {
     }
   });
 
-  it('a HUMAN actor may hold approve/release autonomy (human ownership retains the gavel)', () => {
+  it('a VERIFIED human actor may hold approve/release autonomy (human ownership retains the gavel)', () => {
     const input = validInput('internal');
-    (input['actorClass'] as { value: string }).value = 'human';
+    (input['actorClass'] as { value: string; provenance: string }).value = 'human';
+    (input['actorClass'] as { value: string; provenance: string }).provenance = 'github-verified';
     (input['execution'] as { value: { autonomy: string } }).value.autonomy = 'approve';
     expect(admitChangeIntent(buildChangeIntent(input)).accepted).toBe(true);
+  });
+
+  it('a SELF-DECLARED human claiming approve/release is refused (PR #190 review — no species self-attestation)', () => {
+    // The bypass class: the GitHub adapter verifies sponsor login + permission
+    // but stamps actorClass 'agent-self-declared' — so an agent could declare
+    // actorClass 'human' and hold the human-owned tiers. The classification
+    // must be host-verified before it unlocks approve/release.
+    for (const autonomy of ['approve', 'release'] as const) {
+      const input = validInput('internal');
+      (input['actorClass'] as { value: string }).value = 'human';
+      (input['execution'] as { value: { autonomy: string } }).value.autonomy = autonomy;
+      const admission = admitChangeIntent(buildChangeIntent(input));
+      expect(admission.accepted, `self-declared human + ${autonomy} must refuse`).toBe(false);
+      expect(admission.reasons).toContain('privileged-autonomy-actor-not-verified');
+    }
   });
 
   it('digest fields refuse raw text — private context is structurally unrepresentable', () => {
