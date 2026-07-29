@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / LiteshipFetchLayer
+[LiteShip](../../README.md) / [\_spine](../README.md) / LiteshipFetchLayer
 
 # Type Alias: LiteshipFetchLayer
 

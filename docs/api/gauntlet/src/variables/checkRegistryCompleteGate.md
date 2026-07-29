@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / checkRegistryCompleteGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / checkRegistryCompleteGate
 
 # Variable: checkRegistryCompleteGate
 

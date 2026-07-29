@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / serializeBoundaryOutput
+[LiteShip](../../../README.md) / [vite/src](../README.md) / serializeBoundaryOutput
 
 # Function: serializeBoundaryOutput()
 

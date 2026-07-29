@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ASSEMBLY\_KINDS
+[LiteShip](../../../README.md) / [core/src](../README.md) / ASSEMBLY\_KINDS
 
 # Variable: ASSEMBLY\_KINDS
 

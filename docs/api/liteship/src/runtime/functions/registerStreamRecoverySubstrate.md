@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / registerStreamRecoverySubstrate
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / registerStreamRecoverySubstrate
 
 # Function: registerStreamRecoverySubstrate()
 

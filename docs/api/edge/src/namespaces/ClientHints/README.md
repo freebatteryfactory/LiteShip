@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [edge/src](../../README.md) / ClientHints
+[LiteShip](../../../../README.md) / [edge/src](../../README.md) / ClientHints
 
 # ClientHints
 

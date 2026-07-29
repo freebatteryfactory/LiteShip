@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / onLiteship
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / onLiteship
 
 # Function: onLiteship()
 

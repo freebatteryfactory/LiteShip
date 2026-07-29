@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / GraphQueryRequest
+[LiteShip](../../../README.md) / [core/src](../README.md) / GraphQueryRequest
 
 # Interface: GraphQueryRequest
 

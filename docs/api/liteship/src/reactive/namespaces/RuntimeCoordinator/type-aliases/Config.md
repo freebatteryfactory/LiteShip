@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/reactive](../../../README.md) / [RuntimeCoordinator](../README.md) / Config
+[LiteShip](../../../../../../README.md) / [liteship/src/reactive](../../../README.md) / [RuntimeCoordinator](../README.md) / Config
 
 # Type Alias: Config
 

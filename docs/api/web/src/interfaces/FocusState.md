@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / FocusState
+[LiteShip](../../../README.md) / [web/src](../README.md) / FocusState
 
 # Interface: FocusState
 

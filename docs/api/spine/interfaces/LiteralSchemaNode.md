@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / LiteralSchemaNode
+[LiteShip](../../README.md) / [\_spine](../README.md) / LiteralSchemaNode
 
 # Interface: LiteralSchemaNode
 
-Defined in: [\_spine/core.d.ts:626](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L626)
+Defined in: [\_spine/core.d.ts:627](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L627)
 
 Literal schema AST node.
 
@@ -20,7 +20,7 @@ Literal schema AST node.
 
 > `readonly` `optional` **annotations?**: `Readonly`\<`Record`\<`symbol`, `unknown`\>\>
 
-Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
+Defined in: [\_spine/core.d.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L612)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `"literal"`
 
-Defined in: [\_spine/core.d.ts:627](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L627)
+Defined in: [\_spine/core.d.ts:628](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L628)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:627](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **value**: [`LiteralValue`](../type-aliases/LiteralValue.md)
 
-Defined in: [\_spine/core.d.ts:628](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L628)
+Defined in: [\_spine/core.d.ts:629](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L629)

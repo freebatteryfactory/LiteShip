@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / PulseEnvelope
+[LiteShip](../../../README.md) / [scene/src](../README.md) / PulseEnvelope
 
 # Type Alias: PulseEnvelope
 

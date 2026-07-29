@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / getTag
+[LiteShip](../../../README.md) / [error/src](../README.md) / getTag
 
 # Function: getTag()
 

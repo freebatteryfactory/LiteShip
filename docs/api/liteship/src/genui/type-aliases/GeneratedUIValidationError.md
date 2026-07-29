@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/genui](../README.md) / GeneratedUIValidationError
+[LiteShip](../../../../README.md) / [liteship/src/genui](../README.md) / GeneratedUIValidationError
 
 # Type Alias: GeneratedUIValidationError
 

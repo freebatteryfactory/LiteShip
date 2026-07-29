@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / selectCandidates
+[LiteShip](../../../README.md) / [core/src](../README.md) / selectCandidates
 
 # Function: selectCandidates()
 

@@ -64,7 +64,7 @@ The root `liteship` entry is a curated, budget-enforced immutable authoring and 
 | `liteship/migrate`  | source migration adapters with refusal diagnostics            |
 | `liteship/genui`    | trusted generated-UI catalogs, validation, and rendering      |
 
-Importing the root `.` never evaluates a host integration: `liteship/astro` and `liteship/vite` live behind their own subpaths (with `astro` / `vite` as optional peers), so a host-free or vite-only app pays no astro cost. The full rationale is [ADR-0048](../../docs/adr/0048-facade-export-budget.md).
+Importing the root `.` never evaluates a host integration: `liteship/astro` and `liteship/vite` live behind their own subpaths (with `astro` / `vite` as optional peers), so a host-free or vite-only app pays no astro cost. The root re-exports only from the host-free runtime scopes (`@liteship/core`, `@liteship/quantizer`, `@liteship/error`), and an enforced export budget keeps that curated first-day surface small instead of letting it drift back into the raw scopes.
 
 `LITESHIP_PACKAGES` remains available from `liteship/testing` for audit and release tooling; it is not production-root ontology.
 

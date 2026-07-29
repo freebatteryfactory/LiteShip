@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CaptureResult
+[LiteShip](../../README.md) / [\_spine](../README.md) / CaptureResult
 
 # Interface: CaptureResult
 
-Defined in: [\_spine/core.d.ts:1631](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1631)
+Defined in: [\_spine/core.d.ts:1633](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1633)
 
 Completed capture bytes and their media metadata.
 
@@ -16,7 +16,7 @@ Completed capture bytes and their media metadata.
 
 > `readonly` **blob**: `Blob`
 
-Defined in: [\_spine/core.d.ts:1632](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1632)
+Defined in: [\_spine/core.d.ts:1634](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1634)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1632](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **codec**: `string`
 
-Defined in: [\_spine/core.d.ts:1633](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1633)
+Defined in: [\_spine/core.d.ts:1635](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1635)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1633](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **durationMs**: [`Millis`](../type-aliases/Millis.md)
 
-Defined in: [\_spine/core.d.ts:1635](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1635)
+Defined in: [\_spine/core.d.ts:1637](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1637)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:1635](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **frames**: `number`
 
-Defined in: [\_spine/core.d.ts:1634](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1634)
+Defined in: [\_spine/core.d.ts:1636](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1636)

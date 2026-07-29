@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / SCENE\_CHECKS
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / SCENE\_CHECKS
 
 # Variable: SCENE\_CHECKS
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / escapeHtml
+[LiteShip](../../../README.md) / [web/src](../README.md) / escapeHtml
 
 # Function: escapeHtml()
 

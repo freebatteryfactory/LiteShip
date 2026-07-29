@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / lowerScrollTimelineIntent
+[LiteShip](../../../README.md) / [core/src](../README.md) / lowerScrollTimelineIntent
 
 # Function: lowerScrollTimelineIntent()
 

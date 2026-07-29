@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / CollectTokenManifestOptions
+[LiteShip](../../../README.md) / [vite/src](../README.md) / CollectTokenManifestOptions
 
 # Interface: CollectTokenManifestOptions
 

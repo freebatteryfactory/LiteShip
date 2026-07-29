@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / GLSLStates
+[LiteShip](../../README.md) / [\_spine](../README.md) / GLSLStates
 
 # Type Alias: GLSLStates
 

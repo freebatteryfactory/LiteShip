@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / DefKind
+[LiteShip](../../README.md) / [\_spine](../README.md) / DefKind
 
 # Type Alias: DefKind
 

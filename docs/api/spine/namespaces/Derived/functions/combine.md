@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Derived](../README.md) / combine
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Derived](../README.md) / combine
 
 # Function: combine()
 
 > **combine**\<`T`, `U`\>(`sources`, `combiner`): [`Derived`](../../../interfaces/Derived.md)\<`U`\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:903](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L903)
+Defined in: [\_spine/core.d.ts:904](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L904)
 
 ## Type Parameters
 

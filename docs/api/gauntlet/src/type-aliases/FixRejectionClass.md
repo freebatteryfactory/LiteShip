@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FixRejectionClass
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FixRejectionClass
 
 # Type Alias: FixRejectionClass
 

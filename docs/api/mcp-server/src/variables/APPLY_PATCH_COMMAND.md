@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / APPLY\_PATCH\_COMMAND
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / APPLY\_PATCH\_COMMAND
 
 # Variable: APPLY\_PATCH\_COMMAND
 

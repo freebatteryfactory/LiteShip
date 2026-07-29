@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / VerifyPayload
+[LiteShip](../../../README.md) / [command/src](../README.md) / VerifyPayload
 
 # Type Alias: VerifyPayload
 
 > **VerifyPayload** = `object`
 
-Defined in: [command/src/commands/verify.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L49)
+Defined in: [command/src/commands/verify.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L56)
 
 Structured payload returned alongside a verdict.
 
@@ -18,7 +18,7 @@ Structured payload returned alongside a verdict.
 
 > `readonly` **capsule\_id**: [`ContentAddress`](../../../liteship/src/schema/type-aliases/ContentAddress.md) \| `null`
 
-Defined in: [command/src/commands/verify.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L51)
+Defined in: [command/src/commands/verify.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L58)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [command/src/commands/verify.ts:51](https://github.com/freebatteryfa
 
 > `readonly` **checks**: `object`
 
-Defined in: [command/src/commands/verify.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L52)
+Defined in: [command/src/commands/verify.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L59)
 
 #### chain\_link
 
@@ -50,7 +50,7 @@ Defined in: [command/src/commands/verify.ts:52](https://github.com/freebatteryfa
 
 > `readonly` **mismatches**: readonly `string`[]
 
-Defined in: [command/src/commands/verify.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L58)
+Defined in: [command/src/commands/verify.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L65)
 
 ***
 
@@ -58,4 +58,4 @@ Defined in: [command/src/commands/verify.ts:58](https://github.com/freebatteryfa
 
 > `readonly` **tarball**: `string`
 
-Defined in: [command/src/commands/verify.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L50)
+Defined in: [command/src/commands/verify.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L57)

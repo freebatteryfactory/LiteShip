@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/migrate](../README.md) / FromTailwindThemeOptions
+[LiteShip](../../../../README.md) / [liteship/src/migrate](../README.md) / FromTailwindThemeOptions
 
 # Interface: FromTailwindThemeOptions
 

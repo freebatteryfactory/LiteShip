@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / SSEConfig
+[LiteShip](../../../README.md) / [web/src](../README.md) / SSEConfig
 
 # Interface: SSEConfig
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WGSLCompileResult
+[LiteShip](../../README.md) / [\_spine](../README.md) / WGSLCompileResult
 
 # Interface: WGSLCompileResult
 

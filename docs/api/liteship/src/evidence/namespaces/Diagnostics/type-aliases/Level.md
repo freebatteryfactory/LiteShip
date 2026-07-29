@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/evidence](../../../README.md) / [Diagnostics](../README.md) / Level
+[LiteShip](../../../../../../README.md) / [liteship/src/evidence](../../../README.md) / [Diagnostics](../README.md) / Level
 
 # Type Alias: Level
 

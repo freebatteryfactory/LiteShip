@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / createLLMSession
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / createLLMSession
 
 # Function: createLLMSession()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / WatchAndPrepareHandle
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / WatchAndPrepareHandle
 
 # Interface: WatchAndPrepareHandle
 

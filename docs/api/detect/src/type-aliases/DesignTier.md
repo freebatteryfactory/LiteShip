@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / DesignTier
+[LiteShip](../../../README.md) / [detect/src](../README.md) / DesignTier
 
 # Type Alias: DesignTier
 

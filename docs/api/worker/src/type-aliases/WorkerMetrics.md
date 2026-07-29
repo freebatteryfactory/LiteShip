@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [worker/src](../README.md) / WorkerMetrics
+[LiteShip](../../../README.md) / [worker/src](../README.md) / WorkerMetrics
 
 # Type Alias: WorkerMetrics
 

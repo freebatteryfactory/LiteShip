@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / computeShaderIntegrity
+[LiteShip](../../../README.md) / [web/src](../README.md) / computeShaderIntegrity
 
 # Function: computeShaderIntegrity()
 

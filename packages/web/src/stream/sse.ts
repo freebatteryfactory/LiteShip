@@ -10,7 +10,8 @@
  * {@link applyOverflow} buffer holds pending messages (replacing the bounded
  * `Queue`), and `messages`/`stateChanges` are {@link CellKernel}-backed
  * AsyncIterables. The `state`/`lastEventId`/`backpressure` accessors are plain
- * getters. See ADR-0005 §Category 4 for the rationale.
+ * getters — the long-lived-machine rule: transitions live in plain mutable state, and
+ * the resource boundary plus the public reader accessors are its only ceremony.
  */
 
 import {

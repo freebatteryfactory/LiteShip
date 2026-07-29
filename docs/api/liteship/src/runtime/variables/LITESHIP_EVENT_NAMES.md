@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / LITESHIP\_EVENT\_NAMES
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / LITESHIP\_EVENT\_NAMES
 
 # Variable: LITESHIP\_EVENT\_NAMES
 

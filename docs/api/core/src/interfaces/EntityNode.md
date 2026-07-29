@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / EntityNode
+[LiteShip](../../../README.md) / [core/src](../README.md) / EntityNode
 
 # Interface: EntityNode
 

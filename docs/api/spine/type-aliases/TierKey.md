@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / TierKey
+[LiteShip](../../README.md) / [\_spine](../README.md) / TierKey
 
 # Type Alias: TierKey
 

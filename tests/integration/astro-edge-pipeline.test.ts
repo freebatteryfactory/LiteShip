@@ -5,7 +5,7 @@ import { liteshipMiddleware } from '@liteship/astro';
 describe('Astro edge host pipeline integration', () => {
   test('resolves hints, tier, theme, and cached outputs through the middleware host path', async () => {
     const cacheStore = new Map<string, string>();
-    // Real minted address -- the KV keyspace is content-addressed (ADR-0003),
+    // Real minted address -- the KV keyspace is content-addressed,
     // so tests use defineBoundary ids rather than fabricated strings.
     const boundary = defineBoundary({
       input: 'viewport.width',

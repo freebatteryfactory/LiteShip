@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / matchesInvariantExemption
+[LiteShip](../../../README.md) / [command/src](../README.md) / matchesInvariantExemption
 
 # Function: matchesInvariantExemption()
 

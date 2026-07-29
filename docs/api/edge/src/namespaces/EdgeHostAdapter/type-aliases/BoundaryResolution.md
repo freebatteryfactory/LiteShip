@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [edge/src](../../../README.md) / [EdgeHostAdapter](../README.md) / BoundaryResolution
+[LiteShip](../../../../../README.md) / [edge/src](../../../README.md) / [EdgeHostAdapter](../README.md) / BoundaryResolution
 
 # Type Alias: BoundaryResolution
 

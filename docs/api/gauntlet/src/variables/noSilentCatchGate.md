@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / noSilentCatchGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / noSilentCatchGate
 
 # Variable: noSilentCatchGate
 

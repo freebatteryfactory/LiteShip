@@ -80,8 +80,9 @@ export interface Reason {
  * The decision is the WHOLE authority a policyGate primitive holds — it returns
  * a verdict, it never enforces it. Side-effecting admission (refusing a request,
  * minting a token, mutating state) lives in the downstream PRODUCER that consumes
- * this verdict, never in the capsule primitive (ADR-0014 "no built-in authority",
- * consistent with the AI cast-primitive boundary).
+ * this verdict, never in the capsule primitive (the "no built-in authority" rule:
+ * LiteShip owns render/decision safety, the host owns authority to act — consistent
+ * with the AI cast-primitive boundary).
  */
 export interface Decision {
   /** Whether the subject is admitted (`allow`) or rejected (`deny`). */
@@ -249,8 +250,8 @@ export interface CapsuleContract<K extends AssemblyKind, In, Out, R> {
    * asserts the two verdicts are deep-equal (determinism). A handler that calls a
    * provider, reads a clock, mutates state, or otherwise enforces the verdict does
    * NOT belong here — a policyGate returns a verdict, it never enforces it. Wire
-   * side-effecting admission behind a separate downstream producer (ADR-0014 "no
-   * built-in authority") and keep `decide` a pure verdict function.
+   * side-effecting admission behind a separate downstream producer (the "no
+   * built-in authority" rule) and keep `decide` a pure verdict function.
    *
    * `Out` is the verdict shape: a `policyGate` declares `output` as the
    * {@link Decision} schema, so the generated reason-chain check decodes each

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / Style
+[LiteShip](../../README.md) / [\_spine](../README.md) / Style
 
 # Interface: Style\<B\>
 

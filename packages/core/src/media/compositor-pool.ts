@@ -148,7 +148,7 @@ export function createCompositorStatePool(capacity = COMPOSITOR_POOL_CAP): Compo
  * Public structural type for `CompositorStatePool` -- ring buffer of pre-allocated
  * CompositeState objects. Zero-allocation hot path: acquire a state, write into it,
  * render, then release. Construct one with the standalone
- * {@link createCompositorStatePool} (verb grammar, ADR-0046).
+ * {@link createCompositorStatePool} (verb grammar).
  *
  * @example
  * ```ts

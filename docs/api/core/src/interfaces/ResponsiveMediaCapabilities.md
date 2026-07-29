@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ResponsiveMediaCapabilities
+[LiteShip](../../../README.md) / [core/src](../README.md) / ResponsiveMediaCapabilities
 
 # Interface: ResponsiveMediaCapabilities
 

@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / requireIR
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / requireIR
 
 # Function: requireIR()
 
 > **requireIR**(`context`, `gateId`): [`RepoIR`](../interfaces/RepoIR.md)
 
-Defined in: [gauntlet/src/gate.ts:1376](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1376)
+Defined in: [gauntlet/src/gate.ts:1377](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1377)
 
 Read the injected [RepoIR](../interfaces/RepoIR.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) when none was injected — the guard an IR-fold gate

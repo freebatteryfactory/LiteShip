@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ResponsiveMediaIntent
+[LiteShip](../../../README.md) / [core/src](../README.md) / ResponsiveMediaIntent
 
 # Interface: ResponsiveMediaIntent
 

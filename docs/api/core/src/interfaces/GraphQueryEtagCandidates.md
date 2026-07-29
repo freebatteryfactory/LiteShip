@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / GraphQueryEtagCandidates
+[LiteShip](../../../README.md) / [core/src](../README.md) / GraphQueryEtagCandidates
 
 # Interface: GraphQueryEtagCandidates
 

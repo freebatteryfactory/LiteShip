@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / matchesGlob
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / matchesGlob
 
 # Function: matchesGlob()
 

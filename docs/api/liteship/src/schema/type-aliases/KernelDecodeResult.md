@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / KernelDecodeResult
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / KernelDecodeResult
 
 # Type Alias: KernelDecodeResult\<A\>
 

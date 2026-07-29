@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / TrackEnvelope
+[LiteShip](../../../README.md) / [scene/src](../README.md) / TrackEnvelope
 
 # Type Alias: TrackEnvelope
 

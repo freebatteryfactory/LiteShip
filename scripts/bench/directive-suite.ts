@@ -162,10 +162,13 @@ export const DIAGNOSTIC_OVERHEAD_THRESHOLD = 0.25;
 /**
  * Threshold for pairs whose overhead is dominated by the worker-transport
  * cost floor — the async-via-microtask shim that BenchWorker uses in Node
- * plus the CompositorWorker dispatch/receipt infrastructure. ADR-0002 §
- * "Transport cost floor" classifies this as accepted structural cost
- * (message-receipt is 'support-only' in the audit rows), so the parity
- * baseline intentionally does not model it. The 100% ceiling gives ~22pp
+ * plus the CompositorWorker dispatch/receipt infrastructure. That residual is
+ * accepted structural boundary cost, not product debt: the dominant stages
+ * (`state-delivery:message-receipt`, `request-compute:dispatch-send`) have no
+ * in-process analogue by design and are marked 'support-only' in the audit
+ * rows, so the parity baseline intentionally does not model it. The reducible
+ * shared portion is hard-gated separately via `worker-runtime-startup-shared`
+ * at 15%. The 100% ceiling gives ~22pp
  * headroom over observed Node medians (~75-80%) while still failing loudly
  * if anyone regresses the shim beyond its honest floor.
  */

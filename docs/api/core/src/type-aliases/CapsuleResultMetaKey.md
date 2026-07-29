@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CapsuleResultMetaKey
+[LiteShip](../../../README.md) / [core/src](../README.md) / CapsuleResultMetaKey
 
 # Type Alias: CapsuleResultMetaKey
 

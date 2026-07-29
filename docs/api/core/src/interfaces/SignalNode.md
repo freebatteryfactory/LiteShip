@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / SignalNode
+[LiteShip](../../../README.md) / [core/src](../README.md) / SignalNode
 
 # Interface: SignalNode
 

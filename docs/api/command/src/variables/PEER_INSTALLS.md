@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PEER\_INSTALLS
+[LiteShip](../../../README.md) / [command/src](../README.md) / PEER\_INSTALLS
 
 # Variable: PEER\_INSTALLS
 

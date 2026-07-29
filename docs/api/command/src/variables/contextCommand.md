@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / contextCommand
+[LiteShip](../../../README.md) / [command/src](../README.md) / contextCommand
 
 # Variable: contextCommand
 

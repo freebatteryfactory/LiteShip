@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ErrorMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / ErrorMessage
 
 # Interface: ErrorMessage
 

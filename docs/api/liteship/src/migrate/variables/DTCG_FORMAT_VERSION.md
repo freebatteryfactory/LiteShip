@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/migrate](../README.md) / DTCG\_FORMAT\_VERSION
+[LiteShip](../../../../README.md) / [liteship/src/migrate](../README.md) / DTCG\_FORMAT\_VERSION
 
 # Variable: DTCG\_FORMAT\_VERSION
 

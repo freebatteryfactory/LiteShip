@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / transitionReceipt
+[LiteShip](../../../README.md) / [core/src](../README.md) / transitionReceipt
 
 # Function: transitionReceipt()
 

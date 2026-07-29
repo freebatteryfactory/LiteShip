@@ -4,7 +4,7 @@
  *
  * This is the verb/orchestration layer. It owns no identity kernel of its own:
  * every content address is minted through `CanonicalCbor.encode` →
- * `AddressedDigest.of` (the `@liteship/core` kernel, ADR-0003/0011), and every
+ * `AddressedDigest.of` (the `@liteship/core` kernel), and every
  * caster it drives already EXISTS — `CSSCompiler.compile` (`@liteship/compiler`),
  * `resolveInitialState`/`adaptiveAttrs` (`@liteship/astro`), and the shared
  * `FrameSchedule` over a `Compositor` (`@liteship/core`). Stage reinvents none
@@ -577,7 +577,7 @@ async function childReceipt(
  */
 export async function dualExport(graph: DocumentGraph): Promise<DualExportResult> {
   // (1) shared source = the graph's OWN integrity digest. The keystone kernel
-  // (`addressDocumentGraph`, ADR-0003/0011) already minted this over the
+  // (`addressDocumentGraph`) already minted this over the
   // canonical bytes of the graph's sorted node ids + edges — node payloads ride
   // in transitively, since each node id is itself a content address of its
   // payload. Re-encoding the whole graph object would hash a DIFFERENT

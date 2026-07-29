@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / Messages
+[LiteShip](../../README.md) / [\_spine](../README.md) / Messages
 
 # Type Alias: Messages
 

@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / SystemEntity
+[LiteShip](../../README.md) / [\_spine](../README.md) / SystemEntity
 
 # Interface: SystemEntity
 
-Defined in: [\_spine/core.d.ts:754](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L754)
+Defined in: [\_spine/core.d.ts:755](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L755)
 
 Minimal entity handle supplied to a declared system.
 
@@ -16,4 +16,4 @@ Minimal entity handle supplied to a declared system.
 
 > `readonly` **id**: [`EntityId`](../type-aliases/EntityId.md)
 
-Defined in: [\_spine/core.d.ts:755](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L755)
+Defined in: [\_spine/core.d.ts:756](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L756)

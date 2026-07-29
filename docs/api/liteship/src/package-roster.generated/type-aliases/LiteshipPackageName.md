@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/package-roster.generated](../README.md) / LiteshipPackageName
+[LiteShip](../../../../README.md) / [liteship/src/package-roster.generated](../README.md) / LiteshipPackageName
 
 # Type Alias: LiteshipPackageName
 

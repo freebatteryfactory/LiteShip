@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/motion](../../../README.md) / [Animation](../README.md) / Frame
+[LiteShip](../../../../../../README.md) / [liteship/src/motion](../../../README.md) / [Animation](../README.md) / Frame
 
 # Type Alias: Frame
 

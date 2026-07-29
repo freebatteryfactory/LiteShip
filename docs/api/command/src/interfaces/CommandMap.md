@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CommandMap
+[LiteShip](../../../README.md) / [command/src](../README.md) / CommandMap
 
 # Interface: CommandMap
 

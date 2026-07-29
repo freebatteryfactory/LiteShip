@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / AISlot
+[LiteShip](../../README.md) / [\_spine](../README.md) / AISlot
 
 # Interface: AISlot
 

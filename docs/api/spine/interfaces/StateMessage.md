@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / StateMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / StateMessage
 
 # Interface: StateMessage
 

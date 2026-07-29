@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / EdgeHostBoundaryResolution
+[LiteShip](../../../README.md) / [edge/src](../README.md) / EdgeHostBoundaryResolution
 
 # Interface: EdgeHostBoundaryResolution
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / LiteshipStreamErrorDetail
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / LiteshipStreamErrorDetail
 
 # Type Alias: LiteshipStreamErrorDetail
 

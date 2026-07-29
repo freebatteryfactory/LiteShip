@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [worker/src](../../../README.md) / [Messages](../README.md) / StartupPacket
+[LiteShip](../../../../../README.md) / [worker/src](../../../README.md) / [Messages](../README.md) / StartupPacket
 
 # Type Alias: StartupPacket
 

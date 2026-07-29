@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / SiteAdapterCheckDisposition
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / SiteAdapterCheckDisposition
 
 # Type Alias: SiteAdapterCheckDisposition
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / FrameMarkSum
+[LiteShip](../../../README.md) / [scene/src](../README.md) / FrameMarkSum
 
 # Type Alias: FrameMarkSum
 

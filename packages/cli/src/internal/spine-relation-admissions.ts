@@ -6,7 +6,7 @@
  * LiteShip mirrors in `@liteship/_spine`, their runtime producers, and the FROZEN relation
  * each holds are repo-local CONTRACTS a reviewer owns — not a published surface.
  *
- * This is DATA, not policy logic (ADR-0012): `@liteship/audit`'s `buildSpineRelationFacts` and
+ * This is DATA, not policy logic: `@liteship/audit`'s `buildSpineRelationFacts` and
  * `@liteship/gauntlet`'s gate are reusable and name no LiteShip mirror; the CLI host threads
  * generator and host thread in as a value (the same boundary the taint registry / capability modules ride).
  *
@@ -17,7 +17,7 @@
  * two-axis fidelity the reconciled (post-Wave-8) spine exhibits — a drift moves the OBSERVED
  * relation away from it.
  *
- * Two axes (ADR-0010): `authority` — `runtime` for shapes the runtime owns and the spine
+ * Two axes: `authority` — `runtime` for shapes the runtime owns and the spine
  * hand-mirrors; `spine` for branded scalars the spine OWNS and the runtime re-exports
  * (`brand-reanchored`). `admittedRelation` — the structural fidelity the checker observes
  * (`exact` / `public-wider` / …), or `brand-reanchored` for the re-anchored scalars.
@@ -292,7 +292,7 @@ export const LITESHIP_SPINE_AUTHORED_ADMISSIONS: readonly SpineTypeAdmission[] =
   // while the runtime's private implementation parameter is the richer AVBridge.
   // Preserve the observed direction explicitly so flipping or exactifying it reds.
   runtimeMirror('Signal.audio', `${CORE}/reactive/signal.ts`, 'public-narrower', 'typeof Signal.audio'),
-  // ── @liteship/_spine-owned branded scalars (ADR-0010: the spine owns, the runtime re-exports) ──
+  // ── @liteship/_spine-owned branded scalars (the spine owns, the runtime re-exports) ──
   reanchoredBrand('Millis'),
   reanchoredBrand('ContentAddress'),
   reanchoredBrand('IntegrityDigest'),

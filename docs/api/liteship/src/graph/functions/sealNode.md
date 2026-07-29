@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / sealNode
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / sealNode
 
 # Function: sealNode()
 

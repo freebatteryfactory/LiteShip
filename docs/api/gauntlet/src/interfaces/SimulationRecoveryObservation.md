@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SimulationRecoveryObservation
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SimulationRecoveryObservation
 
 # Interface: SimulationRecoveryObservation
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Rng
+[LiteShip](../../../README.md) / [core/src](../README.md) / Rng
 
 # Interface: Rng
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [create-liteship/src](../README.md) / scaffold
+[LiteShip](../../../README.md) / [create-liteship/src](../README.md) / scaffold
 
 # Function: scaffold()
 

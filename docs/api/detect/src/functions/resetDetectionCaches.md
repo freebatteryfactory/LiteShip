@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / resetDetectionCaches
+[LiteShip](../../../README.md) / [detect/src](../README.md) / resetDetectionCaches
 
 # Function: resetDetectionCaches()
 

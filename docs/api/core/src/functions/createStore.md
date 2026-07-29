@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / createStore
+[LiteShip](../../../README.md) / [core/src](../README.md) / createStore
 
 # Function: createStore()
 

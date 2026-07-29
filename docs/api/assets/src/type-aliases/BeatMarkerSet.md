@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / BeatMarkerSet
+[LiteShip](../../../README.md) / [assets/src](../README.md) / BeatMarkerSet
 
 # Type Alias: BeatMarkerSet
 

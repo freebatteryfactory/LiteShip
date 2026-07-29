@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / produceSkipSiteFactsFromContext
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / produceSkipSiteFactsFromContext
 
 # Function: produceSkipSiteFactsFromContext()
 

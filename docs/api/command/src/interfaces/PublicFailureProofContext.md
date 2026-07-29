@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PublicFailureProofContext
+[LiteShip](../../../README.md) / [command/src](../README.md) / PublicFailureProofContext
 
 # Interface: PublicFailureProofContext
 

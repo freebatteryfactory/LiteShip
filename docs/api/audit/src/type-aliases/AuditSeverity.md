@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / AuditSeverity
+[LiteShip](../../../README.md) / [audit/src](../README.md) / AuditSeverity
 
 # Type Alias: AuditSeverity
 

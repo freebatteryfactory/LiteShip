@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / GraphPatch
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / GraphPatch
 
 # Interface: GraphPatch
 

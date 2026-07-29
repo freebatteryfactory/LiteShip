@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / LiteshipUniformUpdateDetail
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / LiteshipUniformUpdateDetail
 
 # Type Alias: LiteshipUniformUpdateDetail
 

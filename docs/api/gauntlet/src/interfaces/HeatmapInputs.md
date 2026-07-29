@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / HeatmapInputs
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / HeatmapInputs
 
 # Interface: HeatmapInputs
 

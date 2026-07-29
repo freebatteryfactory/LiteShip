@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ApplyResolvedStateMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / ApplyResolvedStateMessage
 
 # Interface: ApplyResolvedStateMessage
 

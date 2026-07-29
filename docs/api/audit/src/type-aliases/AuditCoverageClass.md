@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / AuditCoverageClass
+[LiteShip](../../../README.md) / [audit/src](../README.md) / AuditCoverageClass
 
 # Type Alias: AuditCoverageClass
 

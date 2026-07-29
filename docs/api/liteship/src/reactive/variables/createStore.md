@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / createStore
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / createStore
 
 # Variable: createStore
 

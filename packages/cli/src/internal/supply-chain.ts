@@ -2,7 +2,7 @@
  * Supply-chain analyzer (host) — the heavy lifting the lean `@liteship/gauntlet`
  * supply-chain gate refuses to do (Slice C, the avionics tier).
  *
- * This is the HOST (ADR-0012): it parses pnpm-lock.yaml, enforces the
+ * This is the HOST: it parses pnpm-lock.yaml, enforces the
  * {@link LockfilePolicy}, builds the deterministic CycloneDX SBOM, re-reads a
  * ShipCapsule's recorded addresses and validates them against the LIVE tree, and
  * scans `.github/workflows` for ambient publish authority. It folds all four

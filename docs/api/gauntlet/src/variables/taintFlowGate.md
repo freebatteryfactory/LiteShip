@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / taintFlowGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / taintFlowGate
 
 # Variable: taintFlowGate
 
 > `const` **taintFlowGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/taint-flow.ts:165](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/taint-flow.ts#L165)
+Defined in: [gauntlet/src/gates/taint-flow.ts:166](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/taint-flow.ts#L166)
 
 The qualified gate — fixtures included, so it self-proves via the ratchet.
 

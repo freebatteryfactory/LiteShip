@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / resolveInitialStateFallback
+[LiteShip](../../../README.md) / [astro/src](../README.md) / resolveInitialStateFallback
 
 # Function: resolveInitialStateFallback()
 

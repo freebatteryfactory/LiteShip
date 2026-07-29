@@ -8,8 +8,8 @@
  * LiveCell.make/makeBoundary.
  *
  * This is DELIBERATELY NOT the `fnv1a:` identity byte law. Internal `fnv1a:`
- * content addresses are minted only through `CanonicalCbor` (ADR-0003,
- * always-float64, cross-payload agreement; CUT B1). The two byte laws are
+ * content addresses are minted only through `CanonicalCbor` (always-float64,
+ * cross-payload agreement; CUT B1). The two byte laws are
  * distinct on purpose:
  *
  *   - IDENTITY  (`fnv1a:`):  CanonicalCbor, always-float64. Needs cross-payload

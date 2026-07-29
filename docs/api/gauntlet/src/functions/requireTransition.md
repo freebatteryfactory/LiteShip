@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / requireTransition
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / requireTransition
 
 # Function: requireTransition()
 
 > **requireTransition**(`context`, `gateId`): [`TransitionFacts`](../interfaces/TransitionFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:1412](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1412)
+Defined in: [gauntlet/src/gate.ts:1413](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1413)
 
 Read the injected [TransitionFacts](../interfaces/TransitionFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) when none were injected — the guard the

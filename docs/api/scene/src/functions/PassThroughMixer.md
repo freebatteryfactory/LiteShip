@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / PassThroughMixer
+[LiteShip](../../../README.md) / [scene/src](../README.md) / PassThroughMixer
 
 # Function: PassThroughMixer()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CANVAS\_FALLBACK\_HEIGHT
+[LiteShip](../../../README.md) / [core/src](../README.md) / CANVAS\_FALLBACK\_HEIGHT
 
 # Variable: CANVAS\_FALLBACK\_HEIGHT
 

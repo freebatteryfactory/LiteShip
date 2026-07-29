@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / scanModuleScopeDateReads
+[LiteShip](../../../README.md) / [audit/src](../README.md) / scanModuleScopeDateReads
 
 # Function: scanModuleScopeDateReads()
 

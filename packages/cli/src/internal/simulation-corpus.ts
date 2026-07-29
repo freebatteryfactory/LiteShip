@@ -28,7 +28,7 @@
  * LEAN BOUNDARY: the corpus lives in the CLI HOST (which deps `@liteship/core`), NOT in
  * `@liteship/gauntlet` (the lean engine imports no DST harness). The host runs the
  * corpus through `assertReplayDeterministic` and folds the verdicts into the flat
- * {@link SimulationFacts} the gate folds — exactly the ADR-0012 host-computes /
+ * {@link SimulationFacts} the gate folds — exactly the host-computes /
  * engine-folds pattern the `--supply-chain` and `--mutate` paths use.
  *
  * @module
@@ -396,7 +396,7 @@ export const SIMULATION_CORPUS: readonly CorpusEntry[] = [
 /**
  * Run the whole corpus through the DST harness and fold the verdicts into the flat
  * {@link SimulationFacts} the {@link simulationDeterminismGate} folds — the HOST's
- * job (ADR-0012: the host computes the facts, the lean engine folds them).
+ * job (the host computes the facts, the lean engine folds them).
  *
  * For each (scenario, seed) the host replays the scenario TWICE from a FRESH world
  * (via `assertReplayDeterministic`) and compares the two byte-exact trace digests.

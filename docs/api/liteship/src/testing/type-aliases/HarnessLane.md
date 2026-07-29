@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / HarnessLane
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / HarnessLane
 
 # Type Alias: HarnessLane
 

@@ -392,6 +392,9 @@ function probeDPR(): ProbeResult<number> {
 // NavigatorConnection is aliased to the augmented NavigatorConnectionInfo above.
 type NavigatorConnection = NavigatorConnectionInfo;
 
+// Connection facts (effectiveType/downlink/saveData) are TIER-DETECTION inputs,
+// deliberately never a reactive signal: network class picks a capability tier
+// once; it does not stream per-frame values into the value layer.
 function probeConnection(): ProbeResult<NavigatorConnection> {
   try {
     if (typeof navigator === 'undefined') return probeUnavailable();

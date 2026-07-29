@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / detectBeats
+[LiteShip](../../../README.md) / [assets/src](../README.md) / detectBeats
 
 # Function: detectBeats()
 

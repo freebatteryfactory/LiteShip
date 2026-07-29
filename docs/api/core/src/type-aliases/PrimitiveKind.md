@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / PrimitiveKind
+[LiteShip](../../../README.md) / [core/src](../README.md) / PrimitiveKind
 
 # Type Alias: PrimitiveKind
 

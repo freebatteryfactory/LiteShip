@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / crdtLawsGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / crdtLawsGate
 
 # Variable: crdtLawsGate
 

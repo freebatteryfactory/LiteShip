@@ -4,7 +4,8 @@
  * coverage (Verified / Mismatch / Incomplete / Unknown end-to-end with a
  * real packed tarball and synthesized capsules) lives in
  * tests/unit/ship-verify-verdicts.test.ts; this file just confirms the
- * Unknown-verdict exit path and receipt shape from ADR-0011.
+ * Unknown-verdict exit path and receipt shape — no capsule available means "we
+ * cannot tell you", a first-class verdict (exit 4), not a pass.
  */
 import { describe, it, expect } from 'vitest';
 import { verify } from '../../../../packages/cli/src/commands/ship-verify.js';

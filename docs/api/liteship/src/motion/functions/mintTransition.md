@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / mintTransition
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / mintTransition
 
 # Function: mintTransition()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / MotionTier
+[LiteShip](../../../README.md) / [core/src](../README.md) / MotionTier
 
 # Type Alias: MotionTier
 
@@ -11,6 +11,6 @@
 Defined in: [core/src/evidence/ui-quality.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/ui-quality.ts#L19)
 
 Motion tier — re-anchored from `@liteship/_spine` (the canonical declaration
-per ADR-0010). The ladder runs from lowest capability (`none`, forced by
+source). The ladder runs from lowest capability (`none`, forced by
 `prefers-reduced-motion: reduce` regardless of GPU tier) to highest
 (`compute`, which unlocks the Rust/WASM kernels).

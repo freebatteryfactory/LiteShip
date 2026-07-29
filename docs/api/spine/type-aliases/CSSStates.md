@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CSSStates
+[LiteShip](../../README.md) / [\_spine](../README.md) / CSSStates
 
 # Type Alias: CSSStates
 

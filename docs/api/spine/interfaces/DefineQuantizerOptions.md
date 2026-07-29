@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / DefineQuantizerOptions
+[LiteShip](../../README.md) / [\_spine](../README.md) / DefineQuantizerOptions
 
 # Interface: DefineQuantizerOptions\<B, O\>
 

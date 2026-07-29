@@ -48,7 +48,6 @@ This package never renders model HTML and never trusts model-controlled keys —
 ## Docs
 
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
-- [Generated UI catalog (ADR-0014)](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0014-genui-catalog.md) — the trust model above
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/genui/src/) — generated from source
 

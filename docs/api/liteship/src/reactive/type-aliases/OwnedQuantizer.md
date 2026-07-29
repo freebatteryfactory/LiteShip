@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / OwnedQuantizer
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / OwnedQuantizer
 
 # Type Alias: OwnedQuantizer\<B, O\>
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / GeneratedUIValidator
+[LiteShip](../../../README.md) / [core/src](../README.md) / GeneratedUIValidator
 
 # Type Alias: GeneratedUIValidator
 

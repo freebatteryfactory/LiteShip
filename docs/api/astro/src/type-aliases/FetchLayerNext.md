@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / FetchLayerNext
+[LiteShip](../../../README.md) / [astro/src](../README.md) / FetchLayerNext
 
 # Type Alias: FetchLayerNext
 
 > **FetchLayerNext** = (`request`) => `Response` \| `Promise`\<`Response`\>
 
-Defined in: [astro/src/fetch-layer.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L44)
+Defined in: [astro/src/fetch-layer.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L45)
 
 The downstream handler a layer wraps — typically the Astro pipeline
 (`(req) => astro(new FetchState(req))` from `astro/fetch`). Mirrors Astro 7's

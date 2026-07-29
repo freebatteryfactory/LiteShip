@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / Canvas2DTarget
+[LiteShip](../../README.md) / [\_spine](../README.md) / Canvas2DTarget
 
 # Type Alias: Canvas2DTarget
 

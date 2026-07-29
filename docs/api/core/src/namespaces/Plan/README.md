@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [core/src](../../README.md) / Plan
+[LiteShip](../../../../README.md) / [core/src](../../README.md) / Plan
 
 # Plan
 

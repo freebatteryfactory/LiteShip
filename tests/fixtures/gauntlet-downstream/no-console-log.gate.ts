@@ -8,7 +8,7 @@
  * into NO `@liteship/gauntlet/src/*` internal, monkey-patches NOTHING, and adds NO
  * field to the engine. If this gate can earn blocking authority through the SAME
  * authority ratchet LiteShip's built-ins use, the engine is genuinely extendable
- * with zero rebuild + no fork (ADR-0012).
+ * with zero rebuild + no fork.
  *
  * The rule is a deliberately downstream-specific domain rule (NOT one of
  * LiteShip's built-ins): "no `console.log(...)` in shipped source." It ships the

@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / CapabilityAxisEvidence
+[LiteShip](../../../README.md) / [detect/src](../README.md) / CapabilityAxisEvidence
 
 # Interface: CapabilityAxisEvidence\<Axis\>
 
-Defined in: [detect/src/cap-axes.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L91)
+Defined in: [detect/src/cap-axes.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L92)
 
 One complete tier value paired with the provenance of every input that shaped it.
 
@@ -22,7 +22,7 @@ One complete tier value paired with the provenance of every input that shaped it
 
 > `readonly` **axis**: `Axis`
 
-Defined in: [detect/src/cap-axes.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L92)
+Defined in: [detect/src/cap-axes.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L93)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [detect/src/cap-axes.ts:92](https://github.com/freebatteryfactory/Li
 
 > `readonly` **inputs**: readonly [`CapabilityInputEvidence`](CapabilityInputEvidence.md)[]
 
-Defined in: [detect/src/cap-axes.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L95)
+Defined in: [detect/src/cap-axes.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L96)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [detect/src/cap-axes.ts:95](https://github.com/freebatteryfactory/Li
 
 > `readonly` **support**: [`CapabilityEvidenceSupport`](../type-aliases/CapabilityEvidenceSupport.md)
 
-Defined in: [detect/src/cap-axes.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L94)
+Defined in: [detect/src/cap-axes.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L95)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [detect/src/cap-axes.ts:94](https://github.com/freebatteryfactory/Li
 
 > `readonly` **value**: [`CapabilityAxisValues`](../type-aliases/CapabilityAxisValues.md)\[`Axis`\]
 
-Defined in: [detect/src/cap-axes.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L93)
+Defined in: [detect/src/cap-axes.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L94)

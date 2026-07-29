@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/graph](../../../README.md) / [GraphPatch](../README.md) / EdgeOp
+[LiteShip](../../../../../../README.md) / [liteship/src/graph](../../../README.md) / [GraphPatch](../README.md) / EdgeOp
 
 # Type Alias: EdgeOp
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [EdgeTier](../README.md) / Result
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [EdgeTier](../README.md) / Result
 
 # Type Alias: Result
 

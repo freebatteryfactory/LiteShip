@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / AIToolDefinition
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / AIToolDefinition
 
 # Interface: AIToolDefinition
 

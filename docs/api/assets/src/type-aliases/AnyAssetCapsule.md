@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / AnyAssetCapsule
+[LiteShip](../../../README.md) / [assets/src](../README.md) / AnyAssetCapsule
 
 # Type Alias: AnyAssetCapsule
 

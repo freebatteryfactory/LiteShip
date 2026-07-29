@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / InvariantViolationError
+[LiteShip](../../../README.md) / [error/src](../README.md) / InvariantViolationError
 
 # Variable: InvariantViolationError
 

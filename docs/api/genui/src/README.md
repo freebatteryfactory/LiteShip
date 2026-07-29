@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / genui/src
+[LiteShip](../../README.md) / genui/src
 
 # genui/src
 

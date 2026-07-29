@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / RevealPolicy
+[LiteShip](../../../README.md) / [core/src](../README.md) / RevealPolicy
 
 # Interface: RevealPolicy
 

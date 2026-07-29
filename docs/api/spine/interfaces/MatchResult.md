@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / MatchResult
+[LiteShip](../../README.md) / [\_spine](../README.md) / MatchResult
 
 # Interface: MatchResult
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / AudioSystem
+[LiteShip](../../../README.md) / [scene/src](../README.md) / AudioSystem
 
 # Function: AudioSystem()
 

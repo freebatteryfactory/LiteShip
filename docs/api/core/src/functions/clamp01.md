@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / clamp01
+[LiteShip](../../../README.md) / [core/src](../README.md) / clamp01
 
 # Function: clamp01()
 

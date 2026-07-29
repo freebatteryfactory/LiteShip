@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / decideShaderIntegrity
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / decideShaderIntegrity
 
 # Function: decideShaderIntegrity()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WorkerUpdate
+[LiteShip](../../README.md) / [\_spine](../README.md) / WorkerUpdate
 
 # Type Alias: WorkerUpdate
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / FrameType
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / FrameType
 
 # Type Alias: FrameType
 

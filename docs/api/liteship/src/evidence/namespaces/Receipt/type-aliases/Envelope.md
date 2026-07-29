@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/evidence](../../../README.md) / [Receipt](../README.md) / Envelope
+[LiteShip](../../../../../../README.md) / [liteship/src/evidence](../../../README.md) / [Receipt](../README.md) / Envelope
 
 # Type Alias: Envelope
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / inputToSource
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / inputToSource
 
 # Function: inputToSource()
 

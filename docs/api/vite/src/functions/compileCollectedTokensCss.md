@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / compileCollectedTokensCss
+[LiteShip](../../../README.md) / [vite/src](../README.md) / compileCollectedTokensCss
 
 # Function: compileCollectedTokensCss()
 

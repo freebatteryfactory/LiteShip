@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / ResponsiveMediaHostProjection
+[LiteShip](../../../README.md) / [astro/src](../README.md) / ResponsiveMediaHostProjection
 
 # Interface: ResponsiveMediaHostProjection
 

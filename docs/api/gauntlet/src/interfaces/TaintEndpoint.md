@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / TaintEndpoint
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / TaintEndpoint
 
 # Interface: TaintEndpoint
 

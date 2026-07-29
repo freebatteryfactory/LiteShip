@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / deriveBuildEnv
+[LiteShip](../../../README.md) / [command/src](../README.md) / deriveBuildEnv
 
 # Function: deriveBuildEnv()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / defineTheme
+[LiteShip](../../../README.md) / [core/src](../README.md) / defineTheme
 
 # Function: defineTheme()
 

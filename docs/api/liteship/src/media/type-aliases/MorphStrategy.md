@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / MorphStrategy
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / MorphStrategy
 
 # Type Alias: MorphStrategy
 

@@ -36,8 +36,8 @@
  * (phase C — `declaredFixProtocolGate` folds the verdict). The agent declares its
  * fix once; the verifier checks declaration-vs-reality + no-weakening at both moments.
  *
- * LEAN BY CONSTRUCTION (ADR-0012): like {@link StandardsIntegrityFacts}, this module
- * defines ONLY the lean DATA + the PURE verifier. It carries NO heavy dependency —
+ * LEAN BY CONSTRUCTION (the engine stays installable downstream): like {@link StandardsIntegrityFacts},
+ * this module defines ONLY the lean DATA + the PURE verifier. It carries NO heavy dependency —
  * it never reads the filesystem, never content-addresses (the `contentAddressOf`
  * kernel lives in `@liteship/core`; the HOST mints the receipts), and never reads a clock
  * (the HOST injects `now` for the sign-off-expiry check). The host measures the

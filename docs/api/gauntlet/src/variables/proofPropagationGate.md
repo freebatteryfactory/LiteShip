@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / proofPropagationGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / proofPropagationGate
 
 # Variable: proofPropagationGate
 

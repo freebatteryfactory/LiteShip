@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / DpuAdoptClient
+[LiteShip](../../../README.md) / [web/src](../README.md) / DpuAdoptClient
 
 # Interface: DpuAdoptClient
 

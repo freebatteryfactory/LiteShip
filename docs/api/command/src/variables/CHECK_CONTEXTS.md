@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CHECK\_CONTEXTS
+[LiteShip](../../../README.md) / [command/src](../README.md) / CHECK\_CONTEXTS
 
 # Variable: CHECK\_CONTEXTS
 

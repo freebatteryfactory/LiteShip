@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / sendGraphQuery
+[LiteShip](../../../README.md) / [core/src](../README.md) / sendGraphQuery
 
 # Function: sendGraphQuery()
 

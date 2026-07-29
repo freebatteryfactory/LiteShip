@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / sceneVerifyCommand
+[LiteShip](../../../README.md) / [command/src](../README.md) / sceneVerifyCommand
 
 # Variable: sceneVerifyCommand
 

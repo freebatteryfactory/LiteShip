@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / bindRequestSnapshotRecovery
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / bindRequestSnapshotRecovery
 
 # Variable: bindRequestSnapshotRecovery
 

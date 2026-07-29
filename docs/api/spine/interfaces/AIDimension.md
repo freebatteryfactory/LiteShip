@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / AIDimension
+[LiteShip](../../README.md) / [\_spine](../README.md) / AIDimension
 
 # Interface: AIDimension
 

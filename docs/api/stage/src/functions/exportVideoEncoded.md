@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [stage/src](../README.md) / exportVideoEncoded
+[LiteShip](../../../README.md) / [stage/src](../README.md) / exportVideoEncoded
 
 # Function: exportVideoEncoded()
 

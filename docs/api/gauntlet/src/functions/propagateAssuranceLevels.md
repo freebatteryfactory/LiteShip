@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / propagateAssuranceLevels
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / propagateAssuranceLevels
 
 # Function: propagateAssuranceLevels()
 

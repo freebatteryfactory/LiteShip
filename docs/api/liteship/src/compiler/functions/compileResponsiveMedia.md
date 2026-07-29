@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / compileResponsiveMedia
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / compileResponsiveMedia
 
 # Function: compileResponsiveMedia()
 

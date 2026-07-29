@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / ConsumerDiscovery
+[LiteShip](../../../README.md) / [audit/src](../README.md) / ConsumerDiscovery
 
 # Interface: ConsumerDiscovery
 

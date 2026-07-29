@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / FrameRange
+[LiteShip](../../../README.md) / [scene/src](../README.md) / FrameRange
 
 # Interface: FrameRange
 

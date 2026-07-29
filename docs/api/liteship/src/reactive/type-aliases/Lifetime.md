@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / Lifetime
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / Lifetime
 
 # Type Alias: Lifetime
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / VideoSourcePart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / VideoSourcePart
 
 # Variable: VideoSourcePart
 

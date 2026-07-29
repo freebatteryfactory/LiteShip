@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Cell
+[LiteShip](../../../README.md) / [core/src](../README.md) / Cell
 
 # Type Alias: Cell\<T\>
 

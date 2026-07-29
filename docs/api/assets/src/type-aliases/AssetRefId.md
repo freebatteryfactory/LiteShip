@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / AssetRefId
+[LiteShip](../../../README.md) / [assets/src](../README.md) / AssetRefId
 
 # Type Alias: AssetRefId
 

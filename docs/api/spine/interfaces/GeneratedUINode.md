@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / GeneratedUINode
+[LiteShip](../../README.md) / [\_spine](../README.md) / GeneratedUINode
 
 # Interface: GeneratedUINode
 

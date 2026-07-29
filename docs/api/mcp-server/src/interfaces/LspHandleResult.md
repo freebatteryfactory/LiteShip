@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / LspHandleResult
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / LspHandleResult
 
 # Interface: LspHandleResult
 

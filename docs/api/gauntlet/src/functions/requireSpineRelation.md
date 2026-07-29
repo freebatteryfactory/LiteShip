@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / requireSpineRelation
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / requireSpineRelation
 
 # Function: requireSpineRelation()
 
 > **requireSpineRelation**(`context`, `gateId`): [`SpineRelationFacts`](../interfaces/SpineRelationFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:1430](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1430)
+Defined in: [gauntlet/src/gate.ts:1431](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1431)
 
 Read the injected [SpineRelationFacts](../interfaces/SpineRelationFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) when none were injected — the guard the

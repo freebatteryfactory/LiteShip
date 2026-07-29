@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / generateStateMachine
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / generateStateMachine
 
 # Function: generateStateMachine()
 

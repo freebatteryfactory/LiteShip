@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / enumerateTierKeys
+[LiteShip](../../../README.md) / [edge/src](../README.md) / enumerateTierKeys
 
 # Function: enumerateTierKeys()
 

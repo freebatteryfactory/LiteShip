@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / BeatProjectionResolutionInput
+[LiteShip](../../README.md) / [\_spine](../README.md) / BeatProjectionResolutionInput
 
 # Interface: BeatProjectionResolutionInput
 

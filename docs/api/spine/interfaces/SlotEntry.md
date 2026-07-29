@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / SlotEntry
+[LiteShip](../../README.md) / [\_spine](../README.md) / SlotEntry
 
 # Interface: SlotEntry
 

@@ -178,7 +178,7 @@ describe('DAG.checkpoint — boundary validation (A)', () => {
   });
 
   test('the verifyCheckpoint provenance seam rejects a forged checkpoint the structural floor accepts', async () => {
-    // The residual limit (ADR-0026): the structural checks prove a checkpoint is
+    // The residual limit of drop-only DAG compaction: the structural checks prove a checkpoint is
     // WELL-FORMED but not that it attests to the real dropped set — a compacted-tail
     // validator lacks that set, so it cannot recompute the summary content_hash. A
     // forger can therefore mint a genesis-shaped kind:"checkpoint" for an arbitrary

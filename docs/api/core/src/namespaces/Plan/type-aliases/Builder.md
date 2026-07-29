@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [Plan](../README.md) / Builder
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [Plan](../README.md) / Builder
 
 # Type Alias: Builder
 

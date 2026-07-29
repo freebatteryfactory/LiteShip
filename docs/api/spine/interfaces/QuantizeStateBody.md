@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / QuantizeStateBody
+[LiteShip](../../README.md) / [\_spine](../README.md) / QuantizeStateBody
 
 # Interface: QuantizeStateBody
 

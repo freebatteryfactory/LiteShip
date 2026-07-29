@@ -31,7 +31,7 @@ describe('coverage config drift guard', () => {
     // cli/src/spawn-helpers.ts (re-export shim — `export {...} from './lib
     // /spawn.js'` has no executable statements for v8 to track even though
     // the targets are exercised via vitest-runner + spawn-quoting-drift).
-    // + 2 subprocess-style command modules added with ADR-0011 ShipCapsule:
+    // + 2 subprocess-style command modules added with ShipCapsule:
     // cli/src/commands/ship.ts (orchestrates git + pnpm pack + pnpm publish
     // --dry-run + pnpm publish; integration-tested via the liteship ship
     // --dry-run path that runs in every package:smoke gauntlet phase) and

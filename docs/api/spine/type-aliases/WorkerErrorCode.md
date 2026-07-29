@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WorkerErrorCode
+[LiteShip](../../README.md) / [\_spine](../README.md) / WorkerErrorCode
 
 # Type Alias: WorkerErrorCode
 

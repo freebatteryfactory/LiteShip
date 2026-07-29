@@ -145,8 +145,8 @@ describe('buildRepoIR — faithful materialization over a real tmp corpus', () =
   it('emits the is-default-export / ts-ast fact at each real default-export site', () => {
     const ir = buildRepoIR(acmeProfile(fixtureRepo()));
     // The audit engine emits ONLY its own STRUCTURAL AST oracle facts — the
-    // LiteShip-local invariant-regex oracle is HOST-injected (ADR-0012: the engine
-    // references no LiteShip-local contract), so scope by oracle for clarity.
+    // LiteShip-local invariant-regex oracle is HOST-injected (the engine references
+    // no LiteShip-local contract), so scope by oracle for clarity.
     const defFacts = ir.facts.filter((f) => f.property === 'is-default-export' && f.oracleId === 'ts-ast');
     // Two default-ish sites: app/index keyword-form default + core/legacy `export =`.
     expect(defFacts).toHaveLength(2);
@@ -163,7 +163,7 @@ describe('buildRepoIR — faithful materialization over a real tmp corpus', () =
     expect(legacyFact?.line).toBe(2);
   });
 
-  it('emits NO LiteShip-local invariant-regex fact from the engine (ADR-0012 boundary)', () => {
+  it('emits NO LiteShip-local invariant-regex fact from the engine (the host/engine boundary)', () => {
     // The audit engine references no LiteShip-local contract: it imports no
     // @liteship/command rule set and emits NO `invariant-regex` facts of its own. That
     // oracle is the HOST's job (the CLI injects it via extraFactOracles, proven by
@@ -172,7 +172,7 @@ describe('buildRepoIR — faithful materialization over a real tmp corpus', () =
     expect(ir.facts.filter((f) => f.oracleId === 'invariant-regex')).toHaveLength(0);
   });
 
-  it('merges a HOST-INJECTED FactOracle into the IR (the ADR-0012 injection seam)', () => {
+  it('merges a HOST-INJECTED FactOracle into the IR (the host-capability injection seam)', () => {
     // An in-test oracle standing in for the CLI's liteshipRegexOracle: it emits one
     // text-only is-default-export fact per file whose RAW text contains the
     // keyword-pair form. The engine invokes it knowing nothing about what it checks,

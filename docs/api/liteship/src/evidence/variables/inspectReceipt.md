@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / inspectReceipt
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / inspectReceipt
 
 # Variable: inspectReceipt
 
@@ -11,7 +11,7 @@
 Defined in: core/dist/evidence/receipt.d.ts:335
 
 Return a structured, human-debuggable view of a receipt envelope (verb grammar,
-ADR-0046 — `inspect` returns structured debug information). A thin, synchronous
+`inspect` returns structured debug information). A thin, synchronous
 facade over the existing [Receipt](Receipt.md) namespace: it derives the causal facts
 (genesis/merge/signed classification, normalized predecessor links) a caller
 reads when tracing a chain link, WITHOUT recomputing the hash or touching I/O.

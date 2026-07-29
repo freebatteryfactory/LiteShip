@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckPayloadSchema
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckPayloadSchema
 
 # Variable: CheckPayloadSchema
 

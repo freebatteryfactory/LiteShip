@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / SlotAddressing
+[LiteShip](../../../README.md) / [web/src](../README.md) / SlotAddressing
 
 # Variable: SlotAddressing
 

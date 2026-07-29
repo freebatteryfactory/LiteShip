@@ -1,4 +1,4 @@
-# Grab-bag ban (ADR-0045) — a file named `utils.ts` / `helpers.ts` /
+# Grab-bag ban — a file named `utils.ts` / `helpers.ts` /
 # `*-utils.ts` / `*-helpers.ts` is a naming admission that a home was never
 # found: it becomes an unbounded dumping ground with no single responsibility and
 # no re-export discipline. Every function has a real domain; name the file after
@@ -28,7 +28,7 @@
 id: no-utils-file
 language: typescript
 severity: error
-message: "Grab-bag filename (utils.ts / helpers.ts / *-utils.ts / *-helpers.ts) is forbidden (ADR-0045) — name the file after its domain (e.g. math-utils → numeric, type-utils → type-level). A util bucket has no single responsibility and no re-export home."
+message: "Grab-bag filename (utils.ts / helpers.ts / *-utils.ts / *-helpers.ts) is forbidden — name the file after its domain (e.g. math-utils → numeric, type-utils → type-level). A util bucket has no single responsibility and no re-export home."
 files:
   - "**/packages/core/src/**/utils.ts"
   - "**/packages/core/src/**/helpers.ts"

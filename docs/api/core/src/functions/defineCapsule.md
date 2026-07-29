@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / defineCapsule
+[LiteShip](../../../README.md) / [core/src](../README.md) / defineCapsule
 
 # Function: defineCapsule()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / PackageNode
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / PackageNode
 
 # Interface: PackageNode
 

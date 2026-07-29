@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [worker/src](../README.md) / WorkerConfig
+[LiteShip](../../../README.md) / [worker/src](../README.md) / WorkerConfig
 
 # Interface: WorkerConfig
 

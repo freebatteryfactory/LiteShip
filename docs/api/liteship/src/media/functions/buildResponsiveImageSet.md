@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / buildResponsiveImageSet
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / buildResponsiveImageSet
 
 # Function: buildResponsiveImageSet()
 

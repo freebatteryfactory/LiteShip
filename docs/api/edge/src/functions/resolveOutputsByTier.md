@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / resolveOutputsByTier
+[LiteShip](../../../README.md) / [edge/src](../README.md) / resolveOutputsByTier
 
 # Function: resolveOutputsByTier()
 

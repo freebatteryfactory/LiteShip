@@ -25,8 +25,10 @@
  *  - UN-REGENERATED STRENGTHEN / NEUTRAL drift → a `warning` ("regenerate the
  *    snapshot intentionally"), NOT blocking-as-weakening (a stale-but-safe snapshot).
  *
- * LEAN BY CONSTRUCTION (ADR-0012): the gate reads NO config off disk, content-
- * addresses NOTHING (the fnv1a kernel lives in `@liteship/core`), and reads NO clock.
+ * LEAN BY CONSTRUCTION (the published engine carries no heavy dependency, so it stays
+ * installable downstream and every LiteShip-specific decision stays with the host): the
+ * gate reads NO config off disk, content-addresses NOTHING (the fnv1a kernel lives in
+ * `@liteship/core`), and reads NO clock.
  * The HOST extractor does all of that and injects the decided facts via
  * {@link GateContext.standards}; this gate only FOLDS. REPORT-not-DECIDE.
  *

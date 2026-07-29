@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / Stagger
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / Stagger
 
 # Variable: Stagger
 

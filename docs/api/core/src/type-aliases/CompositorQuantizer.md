@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CompositorQuantizer
+[LiteShip](../../../README.md) / [core/src](../README.md) / CompositorQuantizer
 
 # Type Alias: CompositorQuantizer\<B\>
 

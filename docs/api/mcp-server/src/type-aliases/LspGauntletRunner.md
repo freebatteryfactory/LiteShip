@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / LspGauntletRunner
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / LspGauntletRunner
 
 # Type Alias: LspGauntletRunner
 

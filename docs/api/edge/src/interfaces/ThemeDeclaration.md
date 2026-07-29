@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / ThemeDeclaration
+[LiteShip](../../../README.md) / [edge/src](../README.md) / ThemeDeclaration
 
 # Interface: ThemeDeclaration
 

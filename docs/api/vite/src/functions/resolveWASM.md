@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / resolveWASM
+[LiteShip](../../../README.md) / [vite/src](../README.md) / resolveWASM
 
 # Function: resolveWASM()
 

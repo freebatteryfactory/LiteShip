@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/genui](../README.md) / renderHash
+[LiteShip](../../../../README.md) / [liteship/src/genui](../README.md) / renderHash
 
 # Function: renderHash()
 

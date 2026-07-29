@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / normalizeRepoPath
+[LiteShip](../../../README.md) / [audit/src](../README.md) / normalizeRepoPath
 
 # Function: normalizeRepoPath()
 

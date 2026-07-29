@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / commentsBlanked
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / commentsBlanked
 
 # Function: commentsBlanked()
 

@@ -1,4 +1,11 @@
-# Locks in the P5 .Shape removal (ADR-0046, superseding ADR-0001).
+# Locks in the P5 .Shape removal.
+#
+# The old namespace-object pattern merged each primitive's value const with a
+# `declare namespace` whose `Shape` member carried the instance type. It paid
+# rent nowhere: TypeScript already separates the type and value declaration
+# spaces, so the indirection duplicated declaration merging, taxed every reader
+# (`watch(cell: Cell.Shape<number>)`), and doubled the apparent symbol count in
+# IntelliSense and agent retrieval.
 #
 # The namespace type-member convention `X.Shape<T>` was retired repo-wide:
 # every public type now shares its value's name directly via declaration-space
@@ -17,7 +24,7 @@
 id: no-shape-namespace-type
 language: typescript
 severity: error
-message: "Retired ADR-0001 .Shape convention — use the direct exported generic that shares the value's name (ADR-0046)."
+message: "Retired `.Shape` namespace-member convention — use the direct exported generic that shares the value's name."
 files:
   - "**/packages/*/src/**"
   - "**/packages/_spine/*.d.ts"

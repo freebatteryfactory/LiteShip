@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ConfigTemplateResult
+[LiteShip](../../README.md) / [\_spine](../README.md) / ConfigTemplateResult
 
 # Interface: ConfigTemplateResult
 

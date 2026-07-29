@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / QuantizeProps
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / QuantizeProps
 
 # Interface: QuantizeProps\<B\>
 

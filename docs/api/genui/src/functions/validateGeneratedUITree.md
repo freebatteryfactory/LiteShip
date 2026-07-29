@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [genui/src](../README.md) / validateGeneratedUITree
+[LiteShip](../../../README.md) / [genui/src](../README.md) / validateGeneratedUITree
 
 # Function: validateGeneratedUITree()
 

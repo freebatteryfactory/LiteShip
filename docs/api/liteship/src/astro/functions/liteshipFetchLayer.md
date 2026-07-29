@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / liteshipFetchLayer
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / liteshipFetchLayer
 
 # Function: liteshipFetchLayer()
 
 > **liteshipFetchLayer**(`config?`): [`LiteshipFetchLayer`](../type-aliases/LiteshipFetchLayer.md)
 
-Defined in: astro/dist/fetch-layer.d.ts:94
+Defined in: astro/dist/fetch-layer.d.ts:95
 
 Create the liteship fetch layer.
 

@@ -132,7 +132,7 @@ The pattern LiteShip absorbs is the one most projects re-implement, in pieces, b
 - the GLSL uniform that mirrors the same state on hosts that ship a shader
 - the TypeScript discriminated union that lets the rest of your app `switch` on the same state
 
-Hand-rolled, those drift the moment one of them falls behind. Authored as a single boundary, they emit from one definition every time. The boundary is content-addressed (FNV-1a + canonical CBOR per [ADR-0003](./docs/adr/0003-content-addressing.md)); change the definition, every output recomputes against the same hash.
+Hand-rolled, those drift the moment one of them falls behind. Authored as a single boundary, they emit from one definition every time. The boundary is content-addressed (FNV-1a over canonical CBOR — identity is over the definition, not the source location); change the definition, every output recomputes against the same hash.
 
 This is not a replacement for media queries (use them where they're enough), CSS custom properties (use them where you control the keyspace), or design-token systems (LiteShip *is* one, and also the projection layer above them). It's the layer that ties them together so they stay in agreement.
 
@@ -156,7 +156,7 @@ LiteShip can adopt one surface at a time; existing CSS keeps working beside it. 
 | Vite / Astro | 8 / 7 | same — no known gap |
 | Browsers | Chromium + Firefox + WebKit | same — no known gap |
 
-**No Effect runtime; host peers stay explicit.** The root authoring layer produces plain CSS strings, GLSL preambles, ARIA records, and TypeScript unions through a synchronous API (`.read()` / `.subscribe()` / plain function calls). The `effect` runtime that earlier previews carried was fully removed (see `traceability/effect-shed-receipt.json`, ADR-0042 / ADR-0043). Optional or host-specific surfaces still declare the peers they truly execute against — including Astro, Vite, fast-check for the harness subpath, and React/Remotion for video integration — so consumer dependency validation matches the selected surface instead of making a repository-wide zero-peer claim.
+**No Effect runtime; host peers stay explicit.** The root authoring layer produces plain CSS strings, GLSL preambles, ARIA records, and TypeScript unions through a synchronous API (`.read()` / `.subscribe()` / plain function calls). The `effect` runtime that earlier previews carried was fully removed (see `traceability/effect-shed-receipt.json`). Optional or host-specific surfaces still declare the peers they truly execute against — including Astro, Vite, fast-check for the harness subpath, and React/Remotion for video integration — so consumer dependency validation matches the selected surface instead of making a repository-wide zero-peer claim.
 
 **Every push and pull request runs the full release candidate before merge.** Affected Linux/Windows/browser jobs remain fast feedback, while `truth-linux-parallel`, `browser-e2e`, `windows-smoke`, `macos-smoke`, `macos-browser`, `rust-wasm-parity`, and `security-audit` prove the exact candidate tree. The main-push run repeats that same fold as confirmation; it is never the first place a release defect is allowed to surface. Scheduled, manual, and release-tag runs add serial and exhaustive mutation/MC/DC authority. The authoritative event-to-job mapping lives in `scripts/lib/ci-authority.ts` and is executed by `.github/workflows/ci.yml`.
 
@@ -166,16 +166,16 @@ The event-authority census covers `format`, `pr-affected`, `pr-windows-affected`
 
 ## Documentation
 
-**[DOCS.md](./DOCS.md) is the full map** — the shortest route to the right document for humans and agents (reading paths by role, plus a discovery index of where each answer lives in the source). Start there. The essentials:
+The doc set is deliberately small — the file tree and the generated projections carry the rest:
 
-- [GETTING-STARTED.md](./GETTING-STARTED.md): install in your project, first boundary, end-to-end
+- [GETTING-STARTED.md](./GETTING-STARTED.md): install in your project, first boundary, end-to-end — the beginner route (`npm create liteship`)
 - [AUTHORING-MODEL.md](./AUTHORING-MODEL.md): definition shapes, naming, and composition rules
 - [ARCHITECTURE.md](./ARCHITECTURE.md): package and system architecture, the IR, the AI cast
 - [PACKAGE-SURFACES.md](./PACKAGE-SURFACES.md): which package to import for which job
 - [GLOSSARY.md](./GLOSSARY.md): LiteShip / `@liteship/*` naming and prose register
+- [HOSTING.md](./HOSTING.md) · [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md) · [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md): deployment and the Astro mental/runtime models
 - [CONTRIBUTING.md](./CONTRIBUTING.md) · [SECURITY.md](./SECURITY.md) · [RELEASING.md](./RELEASING.md): dev environment, security posture, release process
-
-Hosting, the Astro mental/runtime models, the ADRs, generated API reference, and the changelog are all routed from [DOCS.md](./DOCS.md).
+- [docs/api](./docs/api): the generated API reference · [CHANGELOG.md](./CHANGELOG.md): release history
 
 ## Security posture (summary)
 
@@ -248,7 +248,7 @@ Diagnostic watch, not a release gate: `llm-runtime-steady` runs above its relati
 
 For run-by-run truth, use artifacts produced by the authorities on one frozen source head. [STATUS.md](./STATUS.md) names those authorities and deliberately does not claim that an older artifact proves the current branch. Generated artifacts in `coverage/`, `benchmarks/`, and `reports/` are evidence only when their source SHA matches and the corresponding authority completed.
 
-[`ARCHITECTURE.md`](./ARCHITECTURE.md), the ADRs, and the package surface docs explain shape and intent. They are not run-by-run ledgers.
+[`ARCHITECTURE.md`](./ARCHITECTURE.md) and the package surface docs explain shape and intent. They are not run-by-run ledgers.
 
 ## Appendix: Windows / PowerShell log capture
 

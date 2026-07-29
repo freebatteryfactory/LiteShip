@@ -21,7 +21,7 @@
  * already-parsed request and a host-owned {@link GraphStore}, and returns a plain
  * result — no `Request`/`Response`, no framework. `@liteship/astro` wraps it into an
  * Astro API route; any host with a POST endpoint can wrap it the same way. The
- * host owns the graph store and thus the authority (ADR-0015): LiteShip provides
+ * host owns the graph store and thus the authority: LiteShip provides
  * the channel and the gate, never the persistence.
  *
  * @module
@@ -129,7 +129,7 @@ export interface GraphStore {
  * failed mutation, the silent degradation LiteShip refuses to ship. LiteShip surfaces what
  * the host's store throws; it does not redact it. A `GraphStore` whose errors could carry
  * secrets (connection strings, internal paths) MUST therefore catch and re-throw a redacted
- * message inside the store — the store is the host's authority boundary (ADR-0015).
+ * message inside the store — the store is the host's authority boundary.
  */
 export async function handleGraphMutation(
   request: GraphMutationRequest,

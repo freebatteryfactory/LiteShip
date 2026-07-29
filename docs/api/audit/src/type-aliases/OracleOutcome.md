@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / OracleOutcome
+[LiteShip](../../../README.md) / [audit/src](../README.md) / OracleOutcome
 
 # Type Alias: OracleOutcome
 

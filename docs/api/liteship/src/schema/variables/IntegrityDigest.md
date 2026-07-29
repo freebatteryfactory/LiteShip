@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / IntegrityDigest
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / IntegrityDigest
 
 # Variable: IntegrityDigest
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / EvaluateResult
+[LiteShip](../../../README.md) / [core/src](../README.md) / EvaluateResult
 
 # Interface: EvaluateResult\<S\>
 

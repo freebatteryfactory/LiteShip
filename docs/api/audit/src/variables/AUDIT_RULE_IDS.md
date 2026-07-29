@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / AUDIT\_RULE\_IDS
+[LiteShip](../../../README.md) / [audit/src](../README.md) / AUDIT\_RULE\_IDS
 
 # Variable: AUDIT\_RULE\_IDS
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / StaggerIntentInput
+[LiteShip](../../../README.md) / [core/src](../README.md) / StaggerIntentInput
 
 # Interface: StaggerIntentInput
 

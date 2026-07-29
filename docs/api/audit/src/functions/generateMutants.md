@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / generateMutants
+[LiteShip](../../../README.md) / [audit/src](../README.md) / generateMutants
 
 # Function: generateMutants()
 

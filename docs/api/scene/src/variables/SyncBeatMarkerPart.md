@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / SyncBeatMarkerPart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / SyncBeatMarkerPart
 
 # Variable: SyncBeatMarkerPart
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / adaptiveAttrs
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / adaptiveAttrs
 
 # Function: adaptiveAttrs()
 

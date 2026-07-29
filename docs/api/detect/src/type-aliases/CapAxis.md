@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / CapAxis
+[LiteShip](../../../README.md) / [detect/src](../README.md) / CapAxis
 
 # Type Alias: CapAxis
 
 > **CapAxis** = *typeof* [`CAP_AXES`](../variables/CAP_AXES.md)\[`number`\]
 
-Defined in: [detect/src/cap-axes.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L30)
+Defined in: [detect/src/cap-axes.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L31)
 
 A capability axis — simultaneously the `Astro.locals.liteship.tiers` field name
 and the `data-liteship-<axis>` attribute suffix.

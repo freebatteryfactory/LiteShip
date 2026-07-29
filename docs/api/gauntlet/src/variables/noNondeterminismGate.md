@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / noNondeterminismGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / noNondeterminismGate
 
 # Variable: noNondeterminismGate
 

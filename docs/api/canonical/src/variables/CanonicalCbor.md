@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [canonical/src](../README.md) / CanonicalCbor
+[LiteShip](../../../README.md) / [canonical/src](../README.md) / CanonicalCbor
 
 # Variable: CanonicalCbor
 
@@ -10,7 +10,7 @@
 
 Defined in: [canonical/src/cbor.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/cbor.ts#L204)
 
-Canonical CBOR encoder namespace (ADR-0001 pattern).
+Canonical CBOR encoder namespace (namespace-object pattern).
 
 ## Type Declaration
 

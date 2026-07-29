@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / resolveVirtualId
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / resolveVirtualId
 
 # Function: resolveVirtualId()
 

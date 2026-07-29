@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / RevealReducedMotion
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / RevealReducedMotion
 
 # Type Alias: RevealReducedMotion
 

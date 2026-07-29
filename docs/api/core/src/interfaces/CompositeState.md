@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CompositeState
+[LiteShip](../../../README.md) / [core/src](../README.md) / CompositeState
 
 # Interface: CompositeState
 

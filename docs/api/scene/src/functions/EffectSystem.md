@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / EffectSystem
+[LiteShip](../../../README.md) / [scene/src](../README.md) / EffectSystem
 
 # Function: EffectSystem()
 

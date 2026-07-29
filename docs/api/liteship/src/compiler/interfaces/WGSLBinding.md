@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / WGSLBinding
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / WGSLBinding
 
 # Interface: WGSLBinding
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / SpringConfig
+[LiteShip](../../README.md) / [\_spine](../README.md) / SpringConfig
 
 # Interface: SpringConfig
 

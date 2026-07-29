@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / MotionEasing
+[LiteShip](../../README.md) / [\_spine](../README.md) / MotionEasing
 
 # Type Alias: MotionEasing
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SbomFacts
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SbomFacts
 
 # Interface: SbomFacts
 

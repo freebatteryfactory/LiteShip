@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / QuantizeBlock
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / QuantizeBlock
 
 # Interface: QuantizeBlock
 

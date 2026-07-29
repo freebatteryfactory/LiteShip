@@ -1,5 +1,5 @@
 /**
- * `liteship ship` — ADR-0011 publisher verb.
+ * `liteship ship` — the publisher verb.
  *
  * For each target package: validates git, packs the tarball, runs
  * `pnpm publish --dry-run`, addresses each input via ShipCapsule helpers,
@@ -8,9 +8,14 @@
  * the real upload.
  *
  * Doctrinal notes:
+ *   - Publish the TARBALL, never the workspace directory: `pnpm pack` rewrites
+ *     `workspace:*` ranges to concrete versions inside the tarball; a direct
+ *     `npm publish <dir>` skips that rewrite and ships broken ranges.
  *   - Git dirtiness is *recorded*, never blocked. The sin is lying.
- *   - The capsule lives next to the tarball, never inside it (ADR-0011
- *     §Rejected alternatives).
+ *   - The capsule lives next to the tarball, never inside it: the capsule
+ *     addresses the tarball's own contents, so it cannot live inside them.
+ *   - This verb is the SINGLE owner of the publish lifecycle — no per-package
+ *     `prepack`/`postpack` hook duplicates (or races) it.
  *   - Emission goes through the `cli.ship-emit` `receiptedMutation`
  *     capsule — the seven-arm closure is preserved.
  *
@@ -59,7 +64,7 @@ interface ShipOptions {
   readonly unknownFlags: readonly string[];
 }
 
-const SHIP_USAGE = `liteship ship — publish workspace packages (ADR-0011 publisher verb).
+const SHIP_USAGE = `liteship ship — publish workspace packages (the publisher verb).
 
 Usage:
   liteship ship [--filter <pkg>] [--dry-run] [--provenance] [--otp <code>]
@@ -161,6 +166,27 @@ const resolveGlob = (cwd: string, pattern: string): string[] => {
  * (Defined below the glob helpers so it never shifts the line-anchored no-silent-catch
  * waiver in `resolveGlob` — traceability/standards-waivers.json.)
  */
+/**
+ * Local-pack staging guard: `@liteship/core` ships its WASM kernel inside the
+ * tarball, and a wasm-less core silently forces every consumer onto the
+ * TypeScript fallback (the 0.2.1 dogfood finding). CI's verified-artifact path
+ * runs `build:wasm` before packing; the local/manual pack branch must refuse
+ * instead of publishing the degradation.
+ */
+export function stagedWasmError(
+  packageName: string,
+  packageDir: string,
+  exists: (path: string) => boolean = existsSync,
+): string | null {
+  if (packageName !== '@liteship/core') return null;
+  const wasm = join(packageDir, 'dist', 'liteship-compute.wasm');
+  if (exists(wasm)) return null;
+  return (
+    `refusing to pack @liteship/core without its WASM kernel: ${wasm} is missing. ` +
+    'Run `pnpm run build:wasm` first — a wasm-less core silently runs the TypeScript fallback for every consumer.'
+  );
+}
+
 export function buildNpmPublishArgv(tarballPath: string, opts: { provenance: boolean; otp?: string }): string[] {
   const args = ['publish', tarballPath, '--access', 'public'];
   if (opts.provenance) args.push('--provenance');
@@ -376,6 +402,11 @@ export async function ship(args: readonly string[]): Promise<number> {
     } else {
       // Local/manual path: pack once here. Release automation always supplies
       // --artifact-dir and therefore cannot enter this branch.
+      const wasmError = stagedWasmError(name, pkg.absolutePath);
+      if (wasmError !== null) {
+        emitError('ship', 'cli/integrity-failed', wasmError);
+        return 1;
+      }
       const packRes = await spawnArgvCapture('pnpm', ['pack'], { cwd: pkg.absolutePath });
       if (packRes.exitCode !== 0) {
         emitError('ship', 'cli/command-failed', `pnpm pack failed in ${pkg.relativePath}: ${packRes.stderr.trim()}`);

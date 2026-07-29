@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / SlotsOf
+[LiteShip](../../README.md) / [\_spine](../README.md) / SlotsOf
 
 # Type Alias: SlotsOf\<C\>
 

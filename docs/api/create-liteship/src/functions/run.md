@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [create-liteship/src](../README.md) / run
+[LiteShip](../../../README.md) / [create-liteship/src](../README.md) / run
 
 # Function: run()
 

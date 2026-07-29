@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / buildRepoIRTaint
+[LiteShip](../../../README.md) / [audit/src](../README.md) / buildRepoIRTaint
 
 # Function: buildRepoIRTaint()
 
@@ -14,7 +14,7 @@ Build the GENERIC taint facts for a repo — the host-side materialization. Pure
 deterministic: same source bytes + same registry → identical [TaintFacts](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts).
 
 The SOURCE / SINK / SANITIZER classification is INJECTED via `registry` — the
-oracle references NO LiteShip-specific name (ADR-0012 / D7b). The depth bound is
+oracle references NO LiteShip-specific name (the D7b boundary). The depth bound is
 carried into the facts so the report is HONEST about what was (and was not)
 traced. Throws a tagged [InvariantViolationError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) (never a bare throw) when
 a non-empty corpus yields no program.

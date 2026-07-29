@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CrossOriginEmbedderPolicy
+[LiteShip](../../README.md) / [\_spine](../README.md) / CrossOriginEmbedderPolicy
 
 # Type Alias: CrossOriginEmbedderPolicy
 

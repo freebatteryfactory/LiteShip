@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ResolvedStateAckMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / ResolvedStateAckMessage
 
 # Interface: ResolvedStateAckMessage
 

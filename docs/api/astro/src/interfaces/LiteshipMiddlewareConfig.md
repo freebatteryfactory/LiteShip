@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / LiteshipMiddlewareConfig
+[LiteShip](../../../README.md) / [astro/src](../README.md) / LiteshipMiddlewareConfig
 
 # Interface: LiteshipMiddlewareConfig
 

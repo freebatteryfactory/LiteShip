@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / easeFnFor
+[LiteShip](../../../README.md) / [scene/src](../README.md) / easeFnFor
 
 # Function: easeFnFor()
 
 > **easeFnFor**(`tag`): [`EaseFn`](../type-aliases/EaseFn.md)
 
-Defined in: [scene/src/sugar/ease.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/ease.ts#L66)
+Defined in: [scene/src/sugar/ease.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/ease.ts#L67)
 
 Resolve a serializable [EaseTag](../type-aliases/EaseTag.md) to its easing function.
 Tags are closed, so the lookup is total: the three names map to

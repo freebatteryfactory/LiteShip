@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / ReconnectConfig
+[LiteShip](../../../README.md) / [web/src](../README.md) / ReconnectConfig
 
 # Interface: ReconnectConfig
 

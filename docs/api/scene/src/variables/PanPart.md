@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / PanPart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / PanPart
 
 # Variable: PanPart
 

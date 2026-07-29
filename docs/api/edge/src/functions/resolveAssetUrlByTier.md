@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / resolveAssetUrlByTier
+[LiteShip](../../../README.md) / [edge/src](../README.md) / resolveAssetUrlByTier
 
 # Function: resolveAssetUrlByTier()
 

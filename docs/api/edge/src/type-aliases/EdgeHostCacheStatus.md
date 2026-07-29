@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / EdgeHostCacheStatus
+[LiteShip](../../../README.md) / [edge/src](../README.md) / EdgeHostCacheStatus
 
 # Type Alias: EdgeHostCacheStatus
 

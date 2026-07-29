@@ -55,7 +55,7 @@ function deterministicId<SlotNames extends readonly string[]>(
  * Create a {@link Component} — the content-addressed unit that binds a
  * {@link Boundary}, a {@link Style}, and named slots into a single declaration
  * compilers can target. The optional boundary gates style variants; the slots
- * describe the consumer-facing API (verb grammar, ADR-0046 — `create` allocates a
+ * describe the consumer-facing API (verb grammar — `create` allocates a
  * content-addressed unit).
  */
 export function createComponent<

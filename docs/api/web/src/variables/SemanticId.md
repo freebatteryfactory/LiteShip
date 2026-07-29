@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / SemanticId
+[LiteShip](../../../README.md) / [web/src](../README.md) / SemanticId
 
 # Variable: SemanticId
 

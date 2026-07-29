@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / defineGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / defineGate
 
 # Function: defineGate()
 
 > **defineGate**(`spec`): [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gate.ts:1130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1130)
+Defined in: [gauntlet/src/gate.ts:1131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1131)
 
 Validate and freeze one pure gate definition.
 

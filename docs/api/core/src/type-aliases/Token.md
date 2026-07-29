@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Token
+[LiteShip](../../../README.md) / [core/src](../README.md) / Token
 
 # Type Alias: Token\<N, Axes\>
 

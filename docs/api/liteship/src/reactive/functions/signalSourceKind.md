@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / signalSourceKind
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / signalSourceKind
 
 # Function: signalSourceKind()
 
@@ -11,7 +11,7 @@
 Defined in: core/dist/reactive/stream-recovery.d.ts:24
 
 Classify a canonical [SignalSource](../type-aliases/SignalSource.md) by the discrete/continuous replay law
-(ADR-0035 / ROADMAP Epic 9).
+(ROADMAP Epic 9): discrete crossings replay, continuous transients never do.
 
 ## Parameters
 

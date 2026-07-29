@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / SPSCRing
+[LiteShip](../../README.md) / [\_spine](../README.md) / SPSCRing
 
 # Interface: SPSCRing
 

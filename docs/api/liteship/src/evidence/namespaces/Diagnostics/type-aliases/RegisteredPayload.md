@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/evidence](../../../README.md) / [Diagnostics](../README.md) / RegisteredPayload
+[LiteShip](../../../../../../README.md) / [liteship/src/evidence](../../../README.md) / [Diagnostics](../README.md) / RegisteredPayload
 
 # Type Alias: RegisteredPayload
 

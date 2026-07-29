@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / StringSchemaNode
+[LiteShip](../../README.md) / [\_spine](../README.md) / StringSchemaNode
 
 # Interface: StringSchemaNode
 
-Defined in: [\_spine/core.d.ts:614](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L614)
+Defined in: [\_spine/core.d.ts:615](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L615)
 
 String schema AST node.
 
@@ -20,7 +20,7 @@ String schema AST node.
 
 > `readonly` `optional` **annotations?**: `Readonly`\<`Record`\<`symbol`, `unknown`\>\>
 
-Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
+Defined in: [\_spine/core.d.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L612)
 
 #### Inherited from
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `"string"`
 
-Defined in: [\_spine/core.d.ts:615](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L615)
+Defined in: [\_spine/core.d.ts:616](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L616)

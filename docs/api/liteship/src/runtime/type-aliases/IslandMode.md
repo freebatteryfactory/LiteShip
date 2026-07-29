@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / IslandMode
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / IslandMode
 
 # Type Alias: IslandMode
 

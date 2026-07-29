@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / ReceiptDAG
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / ReceiptDAG
 
 # Interface: ReceiptDAG
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / GLSLUniform
+[LiteShip](../../README.md) / [\_spine](../README.md) / GLSLUniform
 
 # Interface: GLSLUniform
 

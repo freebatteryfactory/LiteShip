@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / TransitionTimeline
+[LiteShip](../../../README.md) / [core/src](../README.md) / TransitionTimeline
 
 # Interface: TransitionTimeline
 

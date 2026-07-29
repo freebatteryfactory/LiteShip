@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / mcp-server/src
+[LiteShip](../../README.md) / mcp-server/src
 
 # mcp-server/src
 

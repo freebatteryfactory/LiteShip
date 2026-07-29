@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [stage/src](../README.md) / DualExportResult
+[LiteShip](../../../README.md) / [stage/src](../README.md) / DualExportResult
 
 # Interface: DualExportResult
 

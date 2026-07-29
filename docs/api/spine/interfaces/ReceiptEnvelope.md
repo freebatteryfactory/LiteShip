@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ReceiptEnvelope
+[LiteShip](../../README.md) / [\_spine](../README.md) / ReceiptEnvelope
 
 # Interface: ReceiptEnvelope
 
-Defined in: [\_spine/core.d.ts:1198](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1198)
+Defined in: [\_spine/core.d.ts:1199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1199)
 
 Hash-linked receipt carrying deterministic evidence payload and causality.
 
@@ -16,7 +16,7 @@ Hash-linked receipt carrying deterministic evidence payload and causality.
 
 > `readonly` **hash**: `string`
 
-Defined in: [\_spine/core.d.ts:1203](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1203)
+Defined in: [\_spine/core.d.ts:1204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1204)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1203](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **kind**: `string`
 
-Defined in: [\_spine/core.d.ts:1199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1199)
+Defined in: [\_spine/core.d.ts:1200](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1200)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1199](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **payload**: [`TypedRef`](TypedRef.md)
 
-Defined in: [\_spine/core.d.ts:1202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1202)
+Defined in: [\_spine/core.d.ts:1203](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1203)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/core.d.ts:1202](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **previous**: `string` \| readonly `string`[]
 
-Defined in: [\_spine/core.d.ts:1204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1204)
+Defined in: [\_spine/core.d.ts:1205](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1205)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/core.d.ts:1204](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **signature?**: `string`
 
-Defined in: [\_spine/core.d.ts:1205](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1205)
+Defined in: [\_spine/core.d.ts:1206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1206)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [\_spine/core.d.ts:1205](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **subject**: [`ReceiptSubject`](ReceiptSubject.md)
 
-Defined in: [\_spine/core.d.ts:1201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1201)
+Defined in: [\_spine/core.d.ts:1202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1202)
 
 ***
 
@@ -64,4 +64,4 @@ Defined in: [\_spine/core.d.ts:1201](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **timestamp**: [`HLC`](../type-aliases/HLC.md)
 
-Defined in: [\_spine/core.d.ts:1200](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1200)
+Defined in: [\_spine/core.d.ts:1201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1201)

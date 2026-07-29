@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / EASING\_SPRING\_STEPS
+[LiteShip](../../../README.md) / [core/src](../README.md) / EASING\_SPRING\_STEPS
 
 # Variable: EASING\_SPRING\_STEPS
 

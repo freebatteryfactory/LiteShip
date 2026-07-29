@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / LiteshipEventName
+[LiteShip](../../../README.md) / [web/src](../README.md) / LiteshipEventName
 
 # Type Alias: LiteshipEventName
 

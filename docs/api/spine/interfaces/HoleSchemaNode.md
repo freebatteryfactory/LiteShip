@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / HoleSchemaNode
+[LiteShip](../../README.md) / [\_spine](../README.md) / HoleSchemaNode
 
 # Interface: HoleSchemaNode
 
-Defined in: [\_spine/core.d.ts:683](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L683)
+Defined in: [\_spine/core.d.ts:684](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L684)
 
 Named hole schema AST node.
 
@@ -20,7 +20,7 @@ Named hole schema AST node.
 
 > `readonly` `optional` **annotations?**: `Readonly`\<`Record`\<`symbol`, `unknown`\>\>
 
-Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
+Defined in: [\_spine/core.d.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L612)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `"hole"`
 
-Defined in: [\_spine/core.d.ts:684](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L684)
+Defined in: [\_spine/core.d.ts:685](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L685)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:684](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/core.d.ts:685](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L685)
+Defined in: [\_spine/core.d.ts:686](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L686)

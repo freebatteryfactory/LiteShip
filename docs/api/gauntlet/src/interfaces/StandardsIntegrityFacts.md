@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / StandardsIntegrityFacts
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / StandardsIntegrityFacts
 
 # Interface: StandardsIntegrityFacts
 

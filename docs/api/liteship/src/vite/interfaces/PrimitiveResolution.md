@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / PrimitiveResolution
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / PrimitiveResolution
 
 # Interface: PrimitiveResolution\<K\>
 

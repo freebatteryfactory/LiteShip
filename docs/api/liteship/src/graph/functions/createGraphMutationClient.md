@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / createGraphMutationClient
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / createGraphMutationClient
 
 # Function: createGraphMutationClient()
 

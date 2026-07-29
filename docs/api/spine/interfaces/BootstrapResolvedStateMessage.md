@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / BootstrapResolvedStateMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / BootstrapResolvedStateMessage
 
 # Interface: BootstrapResolvedStateMessage
 

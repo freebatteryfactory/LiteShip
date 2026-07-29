@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ResponsiveMediaPictureProjection
+[LiteShip](../../../README.md) / [core/src](../README.md) / ResponsiveMediaPictureProjection
 
 # Interface: ResponsiveMediaPictureProjection
 

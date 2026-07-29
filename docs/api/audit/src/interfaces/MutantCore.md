@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / MutantCore
+[LiteShip](../../../README.md) / [audit/src](../README.md) / MutantCore
 
 # Interface: MutantCore
 

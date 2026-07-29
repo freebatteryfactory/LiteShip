@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / SSE
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / SSE
 
 # Variable: SSE
 
 > `const` **SSE**: `object`
 
-Defined in: web/dist/stream/sse.d.ts:145
+Defined in: web/dist/stream/sse.d.ts:146
 
 SSE client namespace.
 

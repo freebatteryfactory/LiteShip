@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/export-budget](../README.md) / FacadeStability
+[LiteShip](../../../../README.md) / [liteship/src/export-budget](../README.md) / FacadeStability
 
 # Type Alias: FacadeStability
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / StandardsChange
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / StandardsChange
 
 # Interface: StandardsChange
 

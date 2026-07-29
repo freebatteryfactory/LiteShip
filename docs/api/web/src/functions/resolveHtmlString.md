@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / resolveHtmlString
+[LiteShip](../../../README.md) / [web/src](../README.md) / resolveHtmlString
 
 # Function: resolveHtmlString()
 

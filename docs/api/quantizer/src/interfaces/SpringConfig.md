@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [quantizer/src](../README.md) / SpringConfig
+[LiteShip](../../../README.md) / [quantizer/src](../README.md) / SpringConfig
 
 # Interface: SpringConfig
 

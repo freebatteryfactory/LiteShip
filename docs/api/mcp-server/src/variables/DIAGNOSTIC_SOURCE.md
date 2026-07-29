@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / DIAGNOSTIC\_SOURCE
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / DIAGNOSTIC\_SOURCE
 
 # Variable: DIAGNOSTIC\_SOURCE
 

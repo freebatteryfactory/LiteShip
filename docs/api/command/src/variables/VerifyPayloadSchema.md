@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / VerifyPayloadSchema
+[LiteShip](../../../README.md) / [command/src](../README.md) / VerifyPayloadSchema
 
 # Variable: VerifyPayloadSchema
 
 > `const` **VerifyPayloadSchema**: `object`
 
-Defined in: [command/src/commands/verify.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L28)
+Defined in: [command/src/commands/verify.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L35)
 
 The descriptor `outputSchema` — hand-written JSON-Schema, byte-parity-pinned
 against the parity fixture. The four forward-compat `checks` are a nested struct

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / RecordNode
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / RecordNode
 
 # Interface: RecordNode
 

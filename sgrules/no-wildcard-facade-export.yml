@@ -1,4 +1,4 @@
-# Facade law (ADR-0045), wildcard clause — a facade re-exports by NAME, never
+# Facade law, wildcard clause — a facade re-exports by NAME, never
 # with a star. `export * from './x.js'` (and its `export * as ns from` cousin)
 # splatter every symbol a module happens to expose onto the barrel: the public
 # surface then drifts silently whenever the re-exported module grows a new
@@ -22,7 +22,7 @@
 id: no-wildcard-facade-export
 language: typescript
 severity: error
-message: 'Wildcard facade re-export `export * from ...` is forbidden (ADR-0045) — enumerate the surface with explicit `export {...} from` / `export type {...} from` so the public API is diff-visible and cannot drift silently.'
+message: 'Wildcard facade re-export `export * from ...` is forbidden — enumerate the surface with explicit `export {...} from` / `export type {...} from` so the public API is diff-visible and cannot drift silently.'
 files:
   - '**/packages/*/src/*/index.ts'
   - '**/packages/core/src/index.ts'

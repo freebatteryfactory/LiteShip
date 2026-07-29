@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / litelaunchGauntlet
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / litelaunchGauntlet
 
 # Function: litelaunchGauntlet()
 

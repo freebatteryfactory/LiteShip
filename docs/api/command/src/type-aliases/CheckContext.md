@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckContext
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckContext
 
 # Type Alias: CheckContext
 

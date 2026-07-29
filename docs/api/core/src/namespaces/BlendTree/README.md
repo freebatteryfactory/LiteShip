@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [core/src](../../README.md) / BlendTree
+[LiteShip](../../../../README.md) / [core/src](../../README.md) / BlendTree
 
 # BlendTree
 

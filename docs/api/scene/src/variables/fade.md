@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / fade
+[LiteShip](../../../README.md) / [scene/src](../README.md) / fade
 
 # Variable: fade
 

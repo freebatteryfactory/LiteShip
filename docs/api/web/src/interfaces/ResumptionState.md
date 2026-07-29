@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / ResumptionState
+[LiteShip](../../../README.md) / [web/src](../README.md) / ResumptionState
 
 # Interface: ResumptionState
 

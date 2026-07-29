@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ABSENT\_SUFFIX
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ABSENT\_SUFFIX
 
 # Variable: ABSENT\_SUFFIX
 

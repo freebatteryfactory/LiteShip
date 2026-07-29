@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / StructureCoverageClassification
+[LiteShip](../../../README.md) / [audit/src](../README.md) / StructureCoverageClassification
 
 # Interface: StructureCoverageClassification
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / createPackagePathResolver
+[LiteShip](../../../README.md) / [audit/src](../README.md) / createPackagePathResolver
 
 # Function: createPackagePathResolver()
 

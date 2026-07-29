@@ -1,5 +1,5 @@
 /**
- * ShipEmit — `receiptedMutation` arm instance `cli.ship-emit` (ADR-0011).
+ * ShipEmit — `receiptedMutation` arm instance `cli.ship-emit`.
  *
  * A ship emission has two cleanly separable halves:
  *
@@ -16,7 +16,7 @@
  *    {@link ShipCapsule} and writes `<pkg>-<version>.shipcapsule.cbor`
  *    next to a freshly-produced npm tarball. The publish itself is downstream.
  *
- * Re-uses the seven-arm closure (ADR-0008): emission is a
+ * Re-uses the seven-arm closure: emission is a
  * `receiptedMutation`, not a new arm. The capsule declaration is what the
  * AST walker / type-directed detector picks up for
  * `reports/capsule-manifest.json`.

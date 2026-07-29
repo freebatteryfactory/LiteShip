@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / parseGraphQueryEtagList
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / parseGraphQueryEtagList
 
 # Function: parseGraphQueryEtagList()
 

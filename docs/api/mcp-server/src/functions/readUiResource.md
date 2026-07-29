@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / readUiResource
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / readUiResource
 
 # Function: readUiResource()
 

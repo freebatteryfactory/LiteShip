@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / AIContext
+[LiteShip](../../../README.md) / [core/src](../README.md) / AIContext
 
 # Interface: AIContext
 

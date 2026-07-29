@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [Plan](../README.md) / ValidationResult
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [Plan](../README.md) / ValidationResult
 
 # Type Alias: ValidationResult
 

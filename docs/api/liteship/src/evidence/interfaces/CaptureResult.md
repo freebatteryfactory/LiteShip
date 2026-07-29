@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / CaptureResult
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / CaptureResult
 
 # Interface: CaptureResult
 

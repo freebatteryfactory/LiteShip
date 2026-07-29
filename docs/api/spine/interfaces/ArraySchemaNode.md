@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ArraySchemaNode
+[LiteShip](../../README.md) / [\_spine](../README.md) / ArraySchemaNode
 
 # Interface: ArraySchemaNode
 
-Defined in: [\_spine/core.d.ts:647](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L647)
+Defined in: [\_spine/core.d.ts:648](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L648)
 
 Array schema AST node.
 
@@ -20,7 +20,7 @@ Array schema AST node.
 
 > `readonly` `optional` **annotations?**: `Readonly`\<`Record`\<`symbol`, `unknown`\>\>
 
-Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
+Defined in: [\_spine/core.d.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L612)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **element**: [`SchemaNode`](../type-aliases/SchemaNode.md)
 
-Defined in: [\_spine/core.d.ts:649](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L649)
+Defined in: [\_spine/core.d.ts:650](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L650)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:649](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `"array"`
 
-Defined in: [\_spine/core.d.ts:648](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L648)
+Defined in: [\_spine/core.d.ts:649](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L649)

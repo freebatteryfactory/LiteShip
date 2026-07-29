@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / GLSLType
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / GLSLType
 
 # Type Alias: GLSLType
 

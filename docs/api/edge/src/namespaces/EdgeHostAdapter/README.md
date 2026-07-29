@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [edge/src](../../README.md) / EdgeHostAdapter
+[LiteShip](../../../../README.md) / [edge/src](../../README.md) / EdgeHostAdapter
 
 # EdgeHostAdapter
 

@@ -14,8 +14,9 @@
  * Finding naming the source, the sink, the path, and the missing sanitizer; the
  * human/agent triages — the gate auto-fixes nothing.
  *
- * LEAN BY CONSTRUCTION (ADR-0012 / D7b): the gate builds NO `ts.Program`, walks NO
- * checker, and references NO LiteShip-specific source/sink name. The HOST
+ * LEAN BY CONSTRUCTION (the published engine carries no `typescript` dependency and
+ * names no LiteShip policy, so it stays installable downstream): the gate builds NO
+ * `ts.Program`, walks NO checker, and references NO LiteShip-specific source/sink name. The HOST
  * (`@liteship/audit`'s taint oracle, classified by the LiteShip-LOCAL registry the
  * `@liteship/cli` host injects) traces the flows and injects them via
  * {@link GateContext.taint}; this gate only folds. The gate REQUIRES the facts

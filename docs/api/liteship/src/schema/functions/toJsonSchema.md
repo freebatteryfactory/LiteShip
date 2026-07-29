@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / toJsonSchema
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / toJsonSchema
 
 # Function: toJsonSchema()
 

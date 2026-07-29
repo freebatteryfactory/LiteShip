@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SkipForm
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SkipForm
 
 # Type Alias: SkipForm
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/adaptive](../README.md) / defineAdaptive
+[LiteShip](../../../../README.md) / [liteship/src/adaptive](../README.md) / defineAdaptive
 
 # Function: defineAdaptive()
 

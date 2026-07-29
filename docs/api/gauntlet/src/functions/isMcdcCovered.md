@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / isMcdcCovered
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / isMcdcCovered
 
 # Function: isMcdcCovered()
 

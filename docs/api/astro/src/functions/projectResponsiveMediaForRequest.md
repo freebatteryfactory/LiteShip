@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / projectResponsiveMediaForRequest
+[LiteShip](../../../README.md) / [astro/src](../README.md) / projectResponsiveMediaForRequest
 
 # Function: projectResponsiveMediaForRequest()
 

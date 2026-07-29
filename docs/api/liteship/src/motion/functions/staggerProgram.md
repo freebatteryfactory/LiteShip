@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / staggerProgram
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / staggerProgram
 
 # Function: staggerProgram()
 

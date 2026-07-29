@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / StartOpts
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / StartOpts
 
 # Interface: StartOpts
 

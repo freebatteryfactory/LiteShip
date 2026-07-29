@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / lowerStaggerIntent
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / lowerStaggerIntent
 
 # Function: lowerStaggerIntent()
 

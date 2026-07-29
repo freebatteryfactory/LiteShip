@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / ariaCompileCapsule
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / ariaCompileCapsule
 
 # Variable: ariaCompileCapsule
 

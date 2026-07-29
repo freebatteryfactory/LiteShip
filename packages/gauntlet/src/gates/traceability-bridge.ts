@@ -20,9 +20,10 @@
  *    (`missing-test`) → a Finding (the ledger and the LIVE test headers must agree —
  *    the head-probe LAW).
  *
- * LEAN BY CONSTRUCTION (ADR-0012): the gate parses NO YAML, scans NO corpus, and
- * reads NO clock. The HOST (the CLI's `packages/cli/src/internal/traceability.ts` state
- * machine) computes the facts and injects them via {@link GateContext.traceability};
+ * LEAN BY CONSTRUCTION (the published engine carries no heavy dependency, so it stays
+ * installable downstream and every LiteShip-specific decision stays with the host): the
+ * gate parses NO YAML, scans NO corpus, and reads NO clock. The HOST (the CLI's
+ * `packages/cli/src/internal/traceability.ts` state machine) computes the facts and injects them via {@link GateContext.traceability};
  * this gate only FOLDS. REPORT-not-DECIDE: the host's state machine decides each
  * invariant's resolved state; the gate reports it at the right level.
  *

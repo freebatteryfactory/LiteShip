@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / GlossaryEntry
+[LiteShip](../../../README.md) / [command/src](../README.md) / GlossaryEntry
 
 # Type Alias: GlossaryEntry
 

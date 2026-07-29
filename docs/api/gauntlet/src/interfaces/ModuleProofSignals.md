@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ModuleProofSignals
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ModuleProofSignals
 
 # Interface: ModuleProofSignals
 

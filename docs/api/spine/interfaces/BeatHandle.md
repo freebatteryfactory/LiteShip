@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / BeatHandle
+[LiteShip](../../README.md) / [\_spine](../README.md) / BeatHandle
 
 # Interface: BeatHandle
 

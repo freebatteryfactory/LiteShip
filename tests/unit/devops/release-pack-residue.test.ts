@@ -1,5 +1,5 @@
 /**
- * Release-path smoke (scar S0.5, docs/plan/scar-ledger.md): packed release
+ * Release-path smoke: packed release
  * artifacts carry NO workspace/catalog residue.
  *
  * `catalog:` refs broke a standalone `pnpm pack` (ERR_PNPM_CATALOG_ENTRY_NOT_FOUND

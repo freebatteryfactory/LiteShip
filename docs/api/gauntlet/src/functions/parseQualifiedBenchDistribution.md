@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / parseQualifiedBenchDistribution
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / parseQualifiedBenchDistribution
 
 # Function: parseQualifiedBenchDistribution()
 

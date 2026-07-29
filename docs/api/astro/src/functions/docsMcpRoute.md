@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / docsMcpRoute
+[LiteShip](../../../README.md) / [astro/src](../README.md) / docsMcpRoute
 
 # Function: docsMcpRoute()
 

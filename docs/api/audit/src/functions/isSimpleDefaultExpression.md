@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / isSimpleDefaultExpression
+[LiteShip](../../../README.md) / [audit/src](../README.md) / isSimpleDefaultExpression
 
 # Function: isSimpleDefaultExpression()
 

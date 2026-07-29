@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / canonical/src
+[LiteShip](../../README.md) / canonical/src
 
 # canonical/src
 

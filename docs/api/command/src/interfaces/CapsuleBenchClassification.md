@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CapsuleBenchClassification
+[LiteShip](../../../README.md) / [command/src](../README.md) / CapsuleBenchClassification
 
 # Interface: CapsuleBenchClassification
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [cloudflare/src](../README.md) / cloudflareMiddleware
+[LiteShip](../../../README.md) / [cloudflare/src](../README.md) / cloudflareMiddleware
 
 # Function: cloudflareMiddleware()
 

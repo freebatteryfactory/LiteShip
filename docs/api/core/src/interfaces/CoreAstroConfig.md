@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CoreAstroConfig
+[LiteShip](../../../README.md) / [core/src](../README.md) / CoreAstroConfig
 
 # Interface: CoreAstroConfig
 

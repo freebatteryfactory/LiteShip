@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / AdaptiveSpec
+[LiteShip](../../../README.md) / [core/src](../README.md) / AdaptiveSpec
 
 # Interface: AdaptiveSpec\<B\>
 

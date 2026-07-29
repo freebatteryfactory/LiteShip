@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PlumbGateSummary
+[LiteShip](../../../README.md) / [command/src](../README.md) / PlumbGateSummary
 
 # Interface: PlumbGateSummary
 

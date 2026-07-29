@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CaptureFrame
+[LiteShip](../../README.md) / [\_spine](../README.md) / CaptureFrame
 
 # Interface: CaptureFrame
 
-Defined in: [\_spine/core.d.ts:1616](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1616)
+Defined in: [\_spine/core.d.ts:1618](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1618)
 
 One timestamped RGBA frame emitted by a capture source.
 
@@ -16,7 +16,7 @@ One timestamped RGBA frame emitted by a capture source.
 
 > `readonly` **bitmap**: `ImageBitmap` \| `OffscreenCanvas`
 
-Defined in: [\_spine/core.d.ts:1619](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1619)
+Defined in: [\_spine/core.d.ts:1621](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1621)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1619](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **frame**: `number`
 
-Defined in: [\_spine/core.d.ts:1617](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1617)
+Defined in: [\_spine/core.d.ts:1619](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1619)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:1617](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **timestamp**: `number`
 
-Defined in: [\_spine/core.d.ts:1618](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1618)
+Defined in: [\_spine/core.d.ts:1620](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1620)

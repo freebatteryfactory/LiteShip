@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / VirtualModuleData
+[LiteShip](../../README.md) / [\_spine](../README.md) / VirtualModuleData
 
 # Interface: VirtualModuleData
 

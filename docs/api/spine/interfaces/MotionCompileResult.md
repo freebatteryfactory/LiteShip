@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / MotionCompileResult
+[LiteShip](../../README.md) / [\_spine](../README.md) / MotionCompileResult
 
 # Interface: MotionCompileResult
 

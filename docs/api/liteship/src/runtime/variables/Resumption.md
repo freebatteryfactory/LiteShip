@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / Resumption
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / Resumption
 
 # Variable: Resumption
 
 > `const` **Resumption**: `object`
 
-Defined in: web/dist/stream/resumption.d.ts:113
+Defined in: web/dist/stream/resumption.d.ts:117
 
 SSE resumption protocol namespace.
 

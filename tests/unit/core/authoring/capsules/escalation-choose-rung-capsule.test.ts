@@ -1,6 +1,7 @@
 /**
  * escalation-choose-tier capsule — direct unit assertions over the FIRST
- * `policyGate` instance (ADR-0008's closure rule). The generated traversal
+ * `policyGate` instance (one of the seven closed assembly arms — an 8th arm needs
+ * an explicit justification plus a first concrete instance in the same PR). The generated traversal
  * (`tests/generated/core-escalation-choose-tier.test.ts`) drives the allow/deny
  * + reason-chain + determinism laws under random subjects; this file pins the
  * declaration shape and that the `decide` core's verdict is the REAL `chooseTier`

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [genui/src](../README.md) / GeneratedUINode
+[LiteShip](../../../README.md) / [genui/src](../README.md) / GeneratedUINode
 
 # Type Alias: GeneratedUINode
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / DirtyFlags
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / DirtyFlags
 
 # Type Alias: DirtyFlags\<K\>
 
@@ -12,7 +12,7 @@ Defined in: core/dist/reactive/dirty.d.ts:48
 
 Public structural type for `DirtyFlags` -- bitmask-based dirty tracking for up to
 31 named keys. O(1) mark/clear/check operations using bitwise integer operations.
-Construct one with the standalone [createDirtyFlags](../functions/createDirtyFlags.md) (verb grammar, ADR-0046).
+Construct one with the standalone [createDirtyFlags](../functions/createDirtyFlags.md) (verb grammar).
 
 ## Type Parameters
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ContentAddress
+[LiteShip](../../../README.md) / [core/src](../README.md) / ContentAddress
 
 # Variable: ContentAddress
 

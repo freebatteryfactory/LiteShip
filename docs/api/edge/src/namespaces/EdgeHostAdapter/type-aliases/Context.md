@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [edge/src](../../../README.md) / [EdgeHostAdapter](../README.md) / Context
+[LiteShip](../../../../../README.md) / [edge/src](../../../README.md) / [EdgeHostAdapter](../README.md) / Context
 
 # Type Alias: Context
 

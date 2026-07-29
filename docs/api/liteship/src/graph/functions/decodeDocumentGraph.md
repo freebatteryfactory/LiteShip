@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / decodeDocumentGraph
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / decodeDocumentGraph
 
 # Function: decodeDocumentGraph()
 

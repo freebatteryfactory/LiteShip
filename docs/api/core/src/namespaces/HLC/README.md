@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [core/src](../../README.md) / HLC
+[LiteShip](../../../../README.md) / [core/src](../../README.md) / HLC
 
 # HLC
 

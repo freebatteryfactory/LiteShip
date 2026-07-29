@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / NavigatorConnectionInfo
+[LiteShip](../../../README.md) / [detect/src](../README.md) / NavigatorConnectionInfo
 
 # Interface: NavigatorConnectionInfo
 

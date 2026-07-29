@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FactChannel
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FactChannel
 
 # Type Alias: FactChannel
 

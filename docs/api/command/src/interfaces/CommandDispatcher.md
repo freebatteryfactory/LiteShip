@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CommandDispatcher
+[LiteShip](../../../README.md) / [command/src](../README.md) / CommandDispatcher
 
 # Interface: CommandDispatcher
 

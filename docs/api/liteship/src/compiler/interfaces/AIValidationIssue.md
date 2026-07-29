@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / AIValidationIssue
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / AIValidationIssue
 
 # Interface: AIValidationIssue
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CHECK\_PLATFORMS
+[LiteShip](../../../README.md) / [command/src](../README.md) / CHECK\_PLATFORMS
 
 # Variable: CHECK\_PLATFORMS
 

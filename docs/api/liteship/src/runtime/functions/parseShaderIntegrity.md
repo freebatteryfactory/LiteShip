@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / parseShaderIntegrity
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / parseShaderIntegrity
 
 # Function: parseShaderIntegrity()
 

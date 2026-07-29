@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / DiscreteStateTransition
+[LiteShip](../../../README.md) / [core/src](../README.md) / DiscreteStateTransition
 
 # Interface: DiscreteStateTransition
 

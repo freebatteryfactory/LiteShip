@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / ContextPointerKind
+[LiteShip](../../../README.md) / [command/src](../README.md) / ContextPointerKind
 
 # Type Alias: ContextPointerKind
 

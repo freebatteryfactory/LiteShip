@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / runIntegrityAudit
+[LiteShip](../../../README.md) / [audit/src](../README.md) / runIntegrityAudit
 
 # Function: runIntegrityAudit()
 

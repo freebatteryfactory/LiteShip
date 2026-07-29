@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [quantizer/src](../README.md) / EvaluateResult
+[LiteShip](../../../README.md) / [quantizer/src](../README.md) / EvaluateResult
 
 # Interface: EvaluateResult\<S\>
 

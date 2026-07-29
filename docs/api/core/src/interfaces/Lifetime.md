@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Lifetime
+[LiteShip](../../../README.md) / [core/src](../README.md) / Lifetime
 
 # Interface: Lifetime
 

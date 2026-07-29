@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / InvalidRequest
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / InvalidRequest
 
 # Variable: InvalidRequest
 

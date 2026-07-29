@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [cloudflare/src](../README.md) / CloudflareCacheApi
+[LiteShip](../../../README.md) / [cloudflare/src](../README.md) / CloudflareCacheApi
 
 # Interface: CloudflareCacheApi
 

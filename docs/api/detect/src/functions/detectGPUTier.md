@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / detectGPUTier
+[LiteShip](../../../README.md) / [detect/src](../README.md) / detectGPUTier
 
 # Function: detectGPUTier()
 
 > **detectGPUTier**(): [`GPUTier`](../type-aliases/GPUTier.md)
 
-Defined in: [detect/src/detect.ts:604](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L604)
+Defined in: [detect/src/detect.ts:607](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L607)
 
 Detect GPU tier from WebGL renderer string heuristics.
 Falls back to tier 1 (integrated) when WebGL is unavailable.

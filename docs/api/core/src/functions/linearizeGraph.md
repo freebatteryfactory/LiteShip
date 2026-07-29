@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / linearizeGraph
+[LiteShip](../../../README.md) / [core/src](../README.md) / linearizeGraph
 
 # Function: linearizeGraph()
 

@@ -78,7 +78,7 @@ afterEach(() => {
 
 /**
  * Reference boundary mirroring the fixture module below -- the manifest
- * id must equal this minted address (ADR-0003 identity law).
+ * id must equal this minted address (the manifest is a derivation, never a re-hash).
  */
 const referenceBoundary = defineBoundary({
   input: 'viewport.width',

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / DiagnosticCode
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / DiagnosticCode
 
 # Type Alias: DiagnosticCode
 

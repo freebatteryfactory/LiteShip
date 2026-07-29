@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / attachLifetime
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / attachLifetime
 
 # Function: attachLifetime()
 

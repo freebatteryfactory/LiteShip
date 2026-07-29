@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / AppliedGraphVerification
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / AppliedGraphVerification
 
 # Type Alias: AppliedGraphVerification
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [liteship/src](../README.md) / schema
+[LiteShip](../../../README.md) / [liteship/src](../README.md) / schema
 
 # Variable: schema
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / LLMChunkNormalization
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / LLMChunkNormalization
 
 # Variable: LLMChunkNormalization
 

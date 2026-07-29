@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / StateName
+[LiteShip](../../../README.md) / [core/src](../README.md) / StateName
 
 # Type Alias: StateName\<S\>
 

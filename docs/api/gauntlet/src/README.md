@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / gauntlet/src
+[LiteShip](../../README.md) / gauntlet/src
 
 # gauntlet/src
 

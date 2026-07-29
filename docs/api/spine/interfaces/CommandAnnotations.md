@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CommandAnnotations
+[LiteShip](../../README.md) / [\_spine](../README.md) / CommandAnnotations
 
 # Interface: CommandAnnotations
 

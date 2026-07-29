@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / AIConstraint
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / AIConstraint
 
 # Interface: AIConstraint
 

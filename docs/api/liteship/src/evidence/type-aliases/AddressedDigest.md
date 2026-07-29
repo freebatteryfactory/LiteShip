@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / AddressedDigest
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / AddressedDigest
 
 # Type Alias: AddressedDigest
 

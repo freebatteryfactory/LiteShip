@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ProposalSchema
+[LiteShip](../../../README.md) / [core/src](../README.md) / ProposalSchema
 
 # Interface: ProposalSchema
 

@@ -36,8 +36,8 @@
  *
  * It {@link requireTransition}, so it runs ONLY when a host injects the facts. The reference
  * model + native-transport oracle are LiteShip-local (product machinery in the test tree), so
- * — per ADR-0012/0023 — the host is the repo-local `transition:gate` phase
- * (`scripts/transition-conformance-gate.ts`, run every PR over the shared
+ * — the shipped engine may not depend on LiteShip-local test-tree machinery — the host is the
+ * repo-local `transition:gate` phase (`scripts/transition-conformance-gate.ts`, run every PR over the shared
  * `tests/support/reactive-conformance.ts` runner), NOT the shipped `liteship check gates` CLI; the lean
  * MCP/command path does not run it. Composition over inheritance: a `status` fold +
  * standalone functions, no class. Earns blocking authority via the SHIPPED ratchet

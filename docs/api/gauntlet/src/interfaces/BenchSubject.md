@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / BenchSubject
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / BenchSubject
 
 # Interface: BenchSubject
 

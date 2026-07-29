@@ -17,7 +17,7 @@
  *     gate: a breaking change with no version bump (vs the snapshot's recorded
  *     version) FAILS. Pre-1.0, a breaking change requires at least a MINOR bump.
  *
- *  3. POLICY — the LiteShip policy is DATA (`api-surface-policy.ts`, ADR-0012):
+ *  3. POLICY — the LiteShip policy is DATA (`api-surface-policy.ts`):
  *     which packages are public + the bump rule are repo-local, host-injectable
  *     CONTRACTS, never baked into a shipped package.
  *

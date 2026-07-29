@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / StaggerChild
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / StaggerChild
 
 # Interface: StaggerChild
 

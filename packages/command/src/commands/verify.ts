@@ -1,9 +1,16 @@
 /**
- * verify (CUT A1) — ADR-0011 local tarball-vs-capsule verifier. A finite
- * structured decision command: read the inputs, decode the capsule, recompute
- * the tarball manifest address, compare. The four verdicts + exit codes are the
- * structured logic and live here; the file reads + Effect-backed decode/recompute
- * are injected. No network, no pnpm, no git.
+ * verify (CUT A1) — the local tarball-vs-capsule verifier. A finite structured
+ * decision command: read the inputs, decode the capsule, recompute the tarball
+ * manifest address, compare. The file reads + Effect-backed decode/recompute are
+ * injected. No network, no pnpm, no git.
+ *
+ * THE CONTRACT (code-resident, and the whole point of this command): verification
+ * answers in a MACHINE-READABLE vocabulary, not a boolean. Four verdicts, each with
+ * its own process exit code, so a caller can branch on WHY rather than on pass/fail —
+ * `Verified` (0), `Mismatch` (2), `Incomplete` (3), `Unknown` (4). `Unknown` is
+ * FIRST-CLASS: "no capsule available, so we cannot tell you" is an honest answer and
+ * must never be laundered into either a pass or a mismatch. {@link Verdict} +
+ * {@link verdictResult} are the sole owners; the CLI adapter only renders them.
  *
  * @module
  */
@@ -63,7 +70,7 @@ function verdictResult(
   exitCode: number,
   payload: VerifyPayload,
 ): CapsuleCommandResult<VerifyPayload> {
-  // Stamp the shared envelope through ok()/failed(); overlay the ADR-0011 verdict
+  // Stamp the shared envelope through ok()/failed(); overlay the verdict
   // and its explicit exitCode (0 on Verified — the one ok result that pins a code).
   const base = verdict === 'Verified' ? ok('verify', payload) : failed('verify', payload, exitCode);
   return { ...base, verdict, exitCode };
@@ -77,7 +84,7 @@ function plainError(error: string): CapsuleCommandResult {
 export const verifyCommand = defineCommand({
   descriptor: {
     name: 'verify',
-    summary: 'Locally verify a tarball against its ShipCapsule (ADR-0011; no network).',
+    summary: 'Locally verify a tarball against its ShipCapsule (no network).',
     inputSchema: {
       type: 'object',
       properties: { tarball: { type: 'string' }, capsule: { type: 'string' } },
@@ -88,8 +95,8 @@ export const verifyCommand = defineCommand({
     annotations: { readOnly: true, group: 'ship' },
   },
   // BOTH args decode as OPTIONAL even though the inputSchema documents `tarball`
-  // as required: ADR-0011 makes an absent tarball an honest `Unknown` verdict at
-  // the handler, not a hard `invalid_args` reject — the handler owns that decision.
+  // as required: an absent tarball is an honest `Unknown` verdict at the handler,
+  // not a hard `invalid_args` reject — the handler owns that decision.
   argsSchema: schema.struct({ tarball: schema.optional(schema.string), capsule: schema.optional(schema.string) }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const tarball = invocation.args.tarball;
@@ -98,7 +105,7 @@ export const verifyCommand = defineCommand({
     // No --capsule: ship mints the capsule as a tarball sibling
     // (`<slug>-<version>.shipcapsule.cbor`, see cli ship). Probe that
     // convention before falling back to Unknown — the verdict for the
-    // genuinely-no-capsule case (ADR-0011: Unknown is first-class).
+    // genuinely-no-capsule case (Unknown is first-class: we cannot tell you).
     if (capsule === undefined && tarball !== undefined) {
       const sibling = tarball.replace(/\.tgz$/, '.shipcapsule.cbor');
       if (sibling !== tarball && context.fileExists?.(sibling)) capsule = sibling;
@@ -121,7 +128,8 @@ export const verifyCommand = defineCommand({
 
     const decoded = await context.decodeShipCapsule?.(capsuleBytes);
     if (!decoded || !decoded.ok) {
-      // All decode errors collapse to Incomplete per ADR-0011 §Decision.
+      // All decode errors collapse to Incomplete — an unreadable capsule is a gap in
+      // the evidence, never a Mismatch (which would assert a difference we never saw).
       return verdictResult('Incomplete', 3, {
         tarball,
         capsule_id: null,

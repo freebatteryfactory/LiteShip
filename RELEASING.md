@@ -1,141 +1,32 @@
 # Releasing LiteShip (`@liteship/*`)
 
-Operator vocabulary: [GLOSSARY.md](./GLOSSARY.md). LiteShip (product and engine), `@liteship/*` (packages). CLI and commands stay `liteship`.
+The release procedure is code, not prose: **[`.github/workflows/release.yml`](./.github/workflows/release.yml)**
+is the authority for every step — certification, the pack-once immutable fleet, trusted
+publishing, ShipCapsule attachment, and release notes. Read the workflow; it cannot drift
+from itself. What lives in this file is only what the workflow **cannot** do: external
+npm-side configuration, and the local fallback's prerequisites.
 
-Operator checklist for public npm and GitHub releases. Run destructive git steps locally.
+The fleet is 25 publishable packages — the generated roster in
+[`scripts/ci/publish-roster.json`](./scripts/ci/publish-roster.json) is the authority, and a
+roster test pins this sentence to it.
 
-> The example commands below use `vX.Y.Z` / `X.Y.Z` as a placeholder for the release version — substitute the real version (e.g. the one in `package.json`) when you run them.
+To cut a release:
 
-## Preconditions
+1. Get the ship commit green through the release-blocking gates (`pnpm run gauntlet:full`).
+2. Tag it `vX.Y.Z` (matching every `package.json` version) and push the tag.
+3. The workflow does the rest. Release notes come from the canonical `## [X.Y.Z]` block in
+   [CHANGELOG.md](./CHANGELOG.md) via `pnpm run release:notes`.
 
-- Release-blocking gates (for example `pnpm run gauntlet:full`) are green on the ship commit.
-- Run `pnpm run package:smoke` on the ship commit. This packs every publishable
-  `@liteship/*` scope, installs the tarballs in a throwaway consumer, verifies export
-  imports, runs the CLI, and fails if a packed manifest still contains
-  `workspace:*`.
-- Let `liteship ship` do the publish. It packs each package with `pnpm pack` (which rewrites
-  `workspace:*` to concrete versions in the tarball), then uploads that tarball with the
-  npm CLI (`npm publish <tgz>`). Do NOT `npm publish` a workspace *directory* directly —
-  npm won't rewrite `workspace:*`; the rewrite only happens in the `pnpm pack` step.
-- Run `pnpm run release:notes` so `RELEASE_NOTES_vX.Y.Z.md` matches the canonical `## [X.Y.Z]` block in `CHANGELOG.md`. Do not paste the full changelog into GitHub Releases.
+## One-time trusted-publisher setup (per package — npm-side, the workflow cannot do this)
 
-## Build the WASM artifact (0.2.1+)
+Publishing authenticates via OIDC trusted publishing: the workflow carries
+`id-token: write` and the npm CLI (≥ 11.5.1) exchanges the GitHub Actions OIDC token for a
+short-lived publish credential. There is no `NPM_TOKEN` secret. That exchange only works if
+each package's npm settings name this repo as a trusted publisher.
 
-The `liteship-compute` kernel ships inside `@liteship/core`, so it must be staged into `packages/core/dist/` before `liteship ship` packs the tarball. CI's `release.yml` does this automatically (a `wasm32-unknown-unknown` Rust toolchain + `pnpm run build:wasm` before the ship loop). For a local release, after `pnpm run build`:
-
-```bash
-rustup target add wasm32-unknown-unknown   # one-time
-pnpm run build:wasm
-```
-
-Without it, the published `@liteship/core` carries no binary and `liteship({ wasm: { enabled: true } })` silently runs the TypeScript fallback.
-
-## Extract release notes
-
-```bash
-pnpm run release:notes
-```
-
-Create the GitHub release:
-
-```bash
-gh release create vX.Y.Z --title "vX.Y.Z" --notes-file RELEASE_NOTES_vX.Y.Z.md
-```
-
-## Publish packages
-
-Publish via `liteship ship`, which mints a `ShipCapsule` for every non-private `packages/*` workspace, then uploads each already-packed tarball with `npm publish <tgz> --provenance` (ADR-0011). A **ShipCapsule** is a content-addressed release receipt: a `.cbor` (binary) manifest that pins each package's tarball to the exact commit and build that produced it, so a consumer can verify what they install independently of npm. The default (no filter) is every publishable workspace package. `pnpm pack` rewrites `workspace:*` to concrete versions in the tarball; the npm CLI (>= 11.5.1) uploads it and performs npm's OIDC trusted-publishing token exchange in CI — which `pnpm publish` does not (pnpm#11513 / pnpm#9812), the gap that `ENEEDAUTH`'d the 0.4.0 and 0.6.0 cuts.
-
-Dry-run first so the receipts and `pnpm publish --dry-run` outputs are both observable without uploading:
-
-```bash
-pnpm run ship -- --dry-run
-pnpm run ship
-```
-
-The dry-run still writes `<pkg>-<version>.shipcapsule.cbor` next to each `<pkg>-<version>.tgz` in the package directories. Inspect either with:
-
-```bash
-pnpm run verify -- <tarball> --capsule <cbor>
-```
-
-To publish a single package (e.g. a hotfix), pass its name or path: `pnpm run ship -- --filter @liteship/cli`.
-
-## Attach ShipCapsules to the GitHub Release
-
-After publish, attach every capsule to the GitHub release so downstream consumers can verify their npm-downloaded tarballs against a non-npm-hosted receipt:
-
-```bash
-gh release upload vX.Y.Z packages/*/liteship-*-X.Y.Z.shipcapsule.cbor
-```
-
-The `.tgz` files in `packages/*/` after ship are intermediate (npm has the canonical copy). Clean them up once the release is final:
-
-```bash
-rm -f packages/*/liteship-*-X.Y.Z.tgz
-```
-
-## Verifying a published package (consumer side)
-
-Anyone with the published `.tgz` and the GitHub-attached `.shipcapsule.cbor` can verify locally:
-
-```bash
-npm pack @liteship/core@X.Y.Z   # or download the .tgz from npm directly
-gh release download vX.Y.Z -p 'liteship-core-X.Y.Z.shipcapsule.cbor'
-npx @liteship/cli verify liteship-core-X.Y.Z.tgz --capsule liteship-core-X.Y.Z.shipcapsule.cbor
-```
-
-Verdicts and exit codes:
-
-| Verdict | Exit | Meaning |
-|---|---|---|
-| `Verified` | 0 | Tarball manifest matches the capsule. |
-| `Mismatch` | 2 | Tarball differs from the capsule. |
-| `Incomplete` | 3 | Capsule is malformed or non-canonical. |
-| `Unknown` | 4 | No capsule supplied — verification declined, not refused. |
-
-## Tag
-
-```bash
-git tag vX.Y.Z
-git push origin vX.Y.Z
-```
-
-Use `git push --force-with-lease` only after a coordinated history rewrite.
-
-## MCP and CLI
-
-`@liteship/cli` loads `@liteship/mcp-server` only for the `liteship mcp` subcommand (dynamic
-`import()`); add `@liteship/mcp-server` when you use MCP mode. Ship matching versions
-whenever you publish either package.
-
-## v0.1.1+ — releases from GitHub Actions
-
-The v0.1.0 publish above was a manual local run because the packages didn't
-exist on npm yet (npm requires a package to exist before you can configure a
-trusted publisher). From v0.1.1 onward, releases run through
-`.github/workflows/release.yml`.
-
-v0.1.x authenticated via the `NPM_TOKEN` repo secret — a granular access
-token with `bypass_2fa: true`, installed into `~/.npmrc` before the
-`liteship ship` step. That token has been revoked. **v0.2 onward uses OIDC
-trusted publishing**: the workflow carries `id-token: write`, and
-`liteship ship` publishes each packed tarball with the **npm CLI** (>= 11.5.1,
-installed in `release.yml` before the ship loop), which exchanges the
-GitHub Actions OIDC token for a short-lived publish credential at publish
-time — with `--provenance` so every tarball links back to its workflow
-run. (`pnpm publish` does NOT perform the OIDC exchange — pnpm#11513 —
-which is why the handoff uses npm.) There are no publish tokens anywhere —
-nothing to rotate, leak, or revoke. The one remaining prerequisite is
-configuring a trusted publisher per package, form values below.
-
-### One-time trusted-publisher setup (per package, REQUIRED before v0.2)
-
-For each of the 25 publishable packages (23 `@liteship/*` scopes — including `@liteship/stage`, public as of 0.2.0, and the 0.4.0 additions `@liteship/error` (the foundational error algebra) and `@liteship/gauntlet` (the rigor engine) — plus `create-liteship` + `liteship`), open
-`https://www.npmjs.com/package/<name>/access` (e.g.
-`https://www.npmjs.com/package/@liteship/core/access`,
-`https://www.npmjs.com/package/liteship/access`) and add a trusted publisher
-with these exact values:
+For every publishable package (each `@liteship/*` scope on the roster, plus `liteship` and
+`create-liteship`), open `https://www.npmjs.com/package/<name>/access` and add a trusted
+publisher with these exact values:
 
 | Field | Value |
 |---|---|
@@ -145,63 +36,20 @@ with these exact values:
 | Workflow filename | `release.yml` |
 | Environment name | (leave blank) |
 
-A package without a trusted publisher fails its publish with an auth
-error; configure it and re-run the workflow — `liteship ship` treats
-already-published versions as idempotent success (`ShipSkippedReceipt`),
-so partial-batch re-runs are safe. Once configured, future releases need
-zero auth setup, and the dead `NPM_TOKEN` secret can be deleted from the
-repo settings.
+A package without a trusted publisher fails its publish with an auth error; configure it
+and re-run the workflow — `liteship ship` treats already-published versions as idempotent
+success, so partial-batch re-runs are safe. A **new** package added to the roster needs
+this setup before its first release.
 
-### Cutting a release
+## Local release fallback (not the paved road)
 
-1. Bump versions in every `packages/*/package.json` to the new minor (e.g. `0.1.1`).
-   Also bump the `@liteship/*` dependency ranges in
-   `packages/create-liteship/templates/default/package.json` — the template is
-   scaffolder *data* (plain `^x.y.z` strings, not workspace specs), so the
-   workspace bump does not touch it automatically.
-2. Update `CHANGELOG.md` with the new release block.
-3. Commit, open a PR, merge to `main`.
-4. Locally on `main`:
-   ```bash
-   git tag -a v0.1.1 -m "v0.1.1"
-   git push origin v0.1.1
-   ```
-5. The `Release (OIDC trusted publishing)` workflow auto-fires on the tag.
-   It runs the release-certification gate (`build` / `typecheck` / `lint` /
-   `test` / `package:smoke`), then idempotently ships every publishable
-   package with `--provenance`, then creates the GitHub Release and
-   attaches the ShipCapsules.
+`liteship ship` is the single owner of the publish lifecycle — its own docs state the
+invariants (publish the tarball never the directory; npm ≥ 11.5.1 for the OIDC exchange).
+Two prerequisites before running it locally:
 
-### Hotfix or partial publish
-
-`workflow_dispatch` lets you run the release flow manually from the Actions
-tab. Toggle `dry-run: true` to mint capsules without uploading.
-
-### Why the release gate is slim
-
-The release-certification job in `release.yml` runs the publishability
-subset — `build` / `typecheck` / `lint` / `test` / `package:smoke` — not
-`pnpm run gauntlet:full`. The full gauntlet (bench, e2e, stream-stress,
-flake, redteam, bench-gate / trend / reality, runtime-seams audit, coverage
-merge, flex:verify) runs on pushes and scheduled/manual complete-authority
-events via `.github/workflows/ci.yml`. Pull requests first run the addressed,
-conservative affected closure; a frozen release candidate then receives the
-complete authority. By the time a `v*.*.*` tag is pushed, the exact `main`
-SHA has already cleared that bar — re-running it on the tag added ~20 minutes
-of CI time without adding signal, and the timing-sensitive lanes flaked
-intermittently in the GHA runner under different load than the local box.
-The original v0.1.1 release ate six failed runs before this split landed.
-The release pipeline's job is the narrower question: *are the tarballs
-publishable right now*. Whole-system regression is `ci.yml`'s job and runs
-on the merge that produced the tag, not on the tag itself.
-
-### Why provenance (future, v0.2)
-
-`npm publish --provenance` writes a signed attestation linking the published
-artifact to the GitHub Actions run that built it. Consumers (and Sentinel,
-later) can verify the attestation chain end-to-end: npm signature → GHA
-identity → repo commit → ShipCapsule. The TanStack worm's lesson stuck:
-provenance alone isn't sufficient (the worm carried valid provenance over a
-hijacked pipeline), but provenance + an independently-verifiable
-content-addressed receipt (ShipCapsule on the GitHub Release) closes the
-"signed poison" gap.
+1. `pnpm run build` — ship packs what `dist/` carries.
+2. `pnpm run build:wasm` — stages the `liteship-compute` kernel into `packages/core/dist/`
+   (one-time: `rustup target add wasm32-unknown-unknown`). Without it a published
+   `@liteship/core` would silently run the TypeScript fallback for every consumer —
+   `liteship ship` now **refuses to pack a wasm-less core** rather than publish that
+   degradation.

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / chooseTier
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / chooseTier
 
 # Function: chooseTier()
 

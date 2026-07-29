@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / checkWaiverFreshnessGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / checkWaiverFreshnessGate
 
 # Variable: checkWaiverFreshnessGate
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / EdgeWGSLUniformVector
+[LiteShip](../../README.md) / [\_spine](../README.md) / EdgeWGSLUniformVector
 
 # Type Alias: EdgeWGSLUniformVector
 

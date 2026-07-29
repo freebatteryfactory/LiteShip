@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [stage/src](../README.md) / EncodedVideo
+[LiteShip](../../../README.md) / [stage/src](../README.md) / EncodedVideo
 
 # Interface: EncodedVideo
 

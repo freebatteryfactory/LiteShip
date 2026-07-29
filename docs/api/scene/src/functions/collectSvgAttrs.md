@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / collectSvgAttrs
+[LiteShip](../../../README.md) / [scene/src](../README.md) / collectSvgAttrs
 
 # Function: collectSvgAttrs()
 

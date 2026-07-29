@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ProposalResult
+[LiteShip](../../../README.md) / [core/src](../README.md) / ProposalResult
 
 # Type Alias: ProposalResult\<T\>
 

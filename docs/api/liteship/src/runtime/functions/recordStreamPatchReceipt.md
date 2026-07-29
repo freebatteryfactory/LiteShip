@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / recordStreamPatchReceipt
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / recordStreamPatchReceipt
 
 # Function: recordStreamPatchReceipt()
 

@@ -459,7 +459,7 @@ function fanout<T>(policy: EmissionPolicy<T> = EMIT_ALL): CellFanout<T> {
 }
 
 // ---------------------------------------------------------------------------
-// Namespace export (ADR-0001)
+// Namespace export (namespace-object pattern)
 // ---------------------------------------------------------------------------
 
 /**

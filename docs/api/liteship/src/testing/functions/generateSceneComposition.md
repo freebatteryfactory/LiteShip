@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / generateSceneComposition
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / generateSceneComposition
 
 # Function: generateSceneComposition()
 

@@ -49,12 +49,11 @@ The core entry never imports a codec. `exportVideo` content-addresses the produc
 
 ## Authored-motion adapter
 
-`sampleMotionFrames(plan, totalFrames)` samples the ONE shared kernel (`@liteship/core`'s `sampleProgram`, #130) at each `FrameRange` index; `exportMotionTrack(plan, totalFrames)` folds the sampled leaves into per-frame content and content-addresses the whole track through the SAME `CanonicalCbor.encode` → `AddressedDigest.of` kernel `dualExport` uses — the built-in oracle for the video leg. It is **additive** to the video-crossfade carrier / `TransitionSystem`, never a merge. A differential oracle proves the stage leg renders identically to every other target ([ADR-0040](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0040-cross-target-motion-parity.md)).
+`sampleMotionFrames(plan, totalFrames)` samples the ONE shared kernel (`@liteship/core`'s `sampleProgram`, #130) at each `FrameRange` index; `exportMotionTrack(plan, totalFrames)` folds the sampled leaves into per-frame content and content-addresses the whole track through the SAME `CanonicalCbor.encode` → `AddressedDigest.of` kernel `dualExport` uses — the built-in oracle for the video leg. It is **additive** to the video-crossfade carrier / `TransitionSystem`, never a merge. A differential oracle proves the stage leg renders identically to every other target.
 
 ## Docs
 
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
-- [ADR-0015 — Document graph IR + AI cast envelope](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0015-document-graph-ir.md) — the IR stage casts
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/stage/src/) — generated from source
 

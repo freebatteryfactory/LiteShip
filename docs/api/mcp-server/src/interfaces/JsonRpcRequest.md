@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / JsonRpcRequest
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / JsonRpcRequest
 
 # Interface: JsonRpcRequest
 

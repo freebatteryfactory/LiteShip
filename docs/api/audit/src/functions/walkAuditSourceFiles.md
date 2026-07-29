@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / walkAuditSourceFiles
+[LiteShip](../../../README.md) / [audit/src](../README.md) / walkAuditSourceFiles
 
 # Function: walkAuditSourceFiles()
 

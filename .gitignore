@@ -70,8 +70,8 @@ tests/integration/cli/.out-*.mp4
 tests/smoke/.out-*.mp4
 examples/scenes/*.mp4
 
-# Release artifacts (ADR-0011) — tarballs are intermediate, capsules are
-# uploaded to GitHub Releases, neither belong in the working tree.
+# Release artifacts — tarballs are intermediate, capsules are uploaded to
+# GitHub Releases, neither belong in the working tree.
 *.tgz
 *.shipcapsule.cbor
 
@@ -94,8 +94,6 @@ reports/**/*.tmp
 # Internal-only docs (kept locally for reference, not for OSS distribution)
 docs/superpowers/
 docs/sixsigma/
-docs/plans/
-docs/internal/
 
 # TypeDoc HTML output — the committed API reference is the markdown in docs/api/;
 # the HTML build (docs/api-html/) is a heavy, regenerable artifact, never committed.

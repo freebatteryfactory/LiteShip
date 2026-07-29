@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / DenseSystemContext
+[LiteShip](../../README.md) / [\_spine](../README.md) / DenseSystemContext
 
 # Interface: DenseSystemContext\<R, W\>
 
-Defined in: [\_spine/core.d.ts:848](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L848)
+Defined in: [\_spine/core.d.ts:849](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L849)
 
 Part-authorized dense stores supplied to one dense system.
 
@@ -26,7 +26,7 @@ Part-authorized dense stores supplied to one dense system.
 
 > **read**\<`P`\>(`part`): [`DenseStore`](DenseStore.md)\<`P`\>
 
-Defined in: [\_spine/core.d.ts:849](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L849)
+Defined in: [\_spine/core.d.ts:850](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L850)
 
 #### Type Parameters
 
@@ -50,7 +50,7 @@ Defined in: [\_spine/core.d.ts:849](https://github.com/freebatteryfactory/LiteSh
 
 > **write**\<`P`\>(`part`): [`DenseStoreWriter`](DenseStoreWriter.md)\<`P`\>
 
-Defined in: [\_spine/core.d.ts:850](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L850)
+Defined in: [\_spine/core.d.ts:851](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L851)
 
 #### Type Parameters
 

@@ -1,5 +1,6 @@
 /**
- * Property test: IntegrityDigest determinism + format conformance (ADR-0011).
+ * Property test: IntegrityDigest determinism + format conformance
+ * (`sha256:<64-hex>` / `blake3:<64-hex>`, the ShipCapsule integrity brand).
  *
  * Mirrors the shape of `content-address.prop.test.ts` for the sha256 sibling.
  */

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / DiagnosticSeverity
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / DiagnosticSeverity
 
 # Variable: DiagnosticSeverity
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / computeWaveform
+[LiteShip](../../../README.md) / [assets/src](../README.md) / computeWaveform
 
 # Function: computeWaveform()
 

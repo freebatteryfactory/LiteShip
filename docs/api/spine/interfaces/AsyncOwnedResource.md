@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / AsyncOwnedResource
+[LiteShip](../../README.md) / [\_spine](../README.md) / AsyncOwnedResource
 
 # Interface: AsyncOwnedResource
 
-Defined in: [\_spine/core.d.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L180)
+Defined in: [\_spine/core.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L181)
 
 A resource that owns its teardown through LiteShip's one public lifecycle.
 Synchronous finalizers run before `dispose()` returns; the promise joins async
@@ -29,7 +29,7 @@ value usable with `await using`.
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L181)
+Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L182)
 
 ## Methods
 
@@ -37,7 +37,7 @@ Defined in: [\_spine/core.d.ts:181](https://github.com/freebatteryfactory/LiteSh
 
 > **\[asyncDispose\]**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L183)
+Defined in: [\_spine/core.d.ts:184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L184)
 
 #### Returns
 
@@ -49,7 +49,7 @@ Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteSh
 
 > **dispose**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L182)
+Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L183)
 
 #### Returns
 

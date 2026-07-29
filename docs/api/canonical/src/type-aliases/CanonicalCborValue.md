@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [canonical/src](../README.md) / CanonicalCborValue
+[LiteShip](../../../README.md) / [canonical/src](../README.md) / CanonicalCborValue
 
 # Type Alias: CanonicalCborValue
 

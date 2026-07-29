@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / audioDecoder
+[LiteShip](../../../README.md) / [assets/src](../README.md) / audioDecoder
 
 # Function: audioDecoder()
 

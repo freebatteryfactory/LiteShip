@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / TokenManifestEntry
+[LiteShip](../../../README.md) / [vite/src](../README.md) / TokenManifestEntry
 
 # Type Alias: TokenManifestEntry
 

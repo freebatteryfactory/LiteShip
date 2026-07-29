@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / RevealIntent
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / RevealIntent
 
 # Interface: RevealIntent
 

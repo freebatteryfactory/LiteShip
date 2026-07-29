@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / buildTypedEcsFeatureEdgeFacts
+[LiteShip](../../../README.md) / [audit/src](../README.md) / buildTypedEcsFeatureEdgeFacts
 
 # Function: buildTypedEcsFeatureEdgeFacts()
 

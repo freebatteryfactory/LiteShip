@@ -11,7 +11,7 @@
  * arithmetic on track ranges always see plain numbers. Envelope spans
  * and ease tags are likewise resolved into pure-data `Envelope` /
  * `Ease` components so the per-tick systems stay arithmetic-only
- * (ADR-0002) and the descriptor stays content-addressable (ADR-0003).
+ * and the descriptor stays content-addressable.
  *
  * World construction is intentionally deferred to {@link SceneRuntime}
  * (see `./runtime.ts`). Previously this function wrapped a

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / AudioProcessor
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / AudioProcessor
 
 # Interface: AudioProcessor
 

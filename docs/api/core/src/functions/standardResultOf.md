@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / standardResultOf
+[LiteShip](../../../README.md) / [core/src](../README.md) / standardResultOf
 
 # Function: standardResultOf()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Compositor
+[LiteShip](../../../README.md) / [core/src](../README.md) / Compositor
 
 # Type Alias: Compositor
 

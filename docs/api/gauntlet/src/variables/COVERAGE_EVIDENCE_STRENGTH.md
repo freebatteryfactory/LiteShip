@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / COVERAGE\_EVIDENCE\_STRENGTH
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / COVERAGE\_EVIDENCE\_STRENGTH
 
 # Variable: COVERAGE\_EVIDENCE\_STRENGTH
 

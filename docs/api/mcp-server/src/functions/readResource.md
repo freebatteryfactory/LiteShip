@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / readResource
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / readResource
 
 # Function: readResource()
 

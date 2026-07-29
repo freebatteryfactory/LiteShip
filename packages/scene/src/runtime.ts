@@ -170,8 +170,8 @@ export interface SceneRuntimeHandle {
  *
  * Holds the world (which owns its own teardown) so the caller
  * controls when finalizers run. Systems are registered in the
- * canonical topological order — this matches ADR-0009's
- * ECS-as-scene-substrate discipline.
+ * canonical topological order, per the ECS-as-scene-substrate
+ * discipline.
  */
 async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): Promise<SceneRuntimeHandle> {
   const sampleRate = opts.sampleRate ?? 48_000;
@@ -283,7 +283,7 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
 }
 
 // ---------------------------------------------------------------------------
-// Namespace export (ADR-0001)
+// Namespace export (namespace-object pattern)
 // ---------------------------------------------------------------------------
 
 /**

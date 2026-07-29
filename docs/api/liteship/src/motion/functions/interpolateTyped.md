@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / interpolateTyped
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / interpolateTyped
 
 # Function: interpolateTyped()
 

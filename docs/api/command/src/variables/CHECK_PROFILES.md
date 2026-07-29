@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CHECK\_PROFILES
+[LiteShip](../../../README.md) / [command/src](../README.md) / CHECK\_PROFILES
 
 # Variable: CHECK\_PROFILES
 

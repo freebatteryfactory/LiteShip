@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / WGSLUniformValue
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / WGSLUniformValue
 
 # Type Alias: WGSLUniformValue
 

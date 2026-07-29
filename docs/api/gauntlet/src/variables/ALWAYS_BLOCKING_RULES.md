@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ALWAYS\_BLOCKING\_RULES
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ALWAYS\_BLOCKING\_RULES
 
 # Variable: ALWAYS\_BLOCKING\_RULES
 

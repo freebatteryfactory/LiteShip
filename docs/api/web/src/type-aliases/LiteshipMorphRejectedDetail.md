@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / LiteshipMorphRejectedDetail
+[LiteShip](../../../README.md) / [web/src](../README.md) / LiteshipMorphRejectedDetail
 
 # Type Alias: LiteshipMorphRejectedDetail
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / VENDOR
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / VENDOR
 
 # Variable: VENDOR
 

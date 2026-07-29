@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / RuntimeWriteProperty
+[LiteShip](../../../README.md) / [core/src](../README.md) / RuntimeWriteProperty
 
 # Interface: RuntimeWriteProperty
 

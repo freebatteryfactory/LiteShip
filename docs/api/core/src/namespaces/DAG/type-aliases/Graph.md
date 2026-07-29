@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [DAG](../README.md) / Graph
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [DAG](../README.md) / Graph
 
 # Type Alias: Graph
 

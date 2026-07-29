@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [quantizer/src](../README.md) / resolveQuantizerTargets
+[LiteShip](../../../README.md) / [quantizer/src](../README.md) / resolveQuantizerTargets
 
 # Function: resolveQuantizerTargets()
 

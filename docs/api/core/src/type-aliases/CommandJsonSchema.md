@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CommandJsonSchema
+[LiteShip](../../../README.md) / [core/src](../README.md) / CommandJsonSchema
 
 # Type Alias: CommandJsonSchema
 

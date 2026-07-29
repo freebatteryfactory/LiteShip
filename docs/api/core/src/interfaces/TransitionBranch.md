@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / TransitionBranch
+[LiteShip](../../../README.md) / [core/src](../README.md) / TransitionBranch
 
 # Interface: TransitionBranch
 

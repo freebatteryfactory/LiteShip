@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / assertNever
+[LiteShip](../../../README.md) / [error/src](../README.md) / assertNever
 
 # Function: assertNever()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / OpacityPart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / OpacityPart
 
 # Variable: OpacityPart
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ModuleProof
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ModuleProof
 
 # Interface: ModuleProof
 
@@ -32,7 +32,7 @@ The repo-relative file id — MUST be an IR file (the gate aims its level + read
 Defined in: [gauntlet/src/facts/proof-facts.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/proof-facts.ts#L64)
 
 The blended local proof scalar in `[0, 1]` — the host's normalized combination
-of [ProofSignals](ProofSignals.md). The gate does NOT recompute it (ADR-0012: the host
+of [ProofSignals](ProofSignals.md). The gate does NOT recompute it (the host
 computes, the engine folds); it propagates it along the dep DAG.
 
 ***

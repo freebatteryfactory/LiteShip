@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / proposalSubject
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / proposalSubject
 
 # Function: proposalSubject()
 

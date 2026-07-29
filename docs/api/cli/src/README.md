@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / cli/src
+[LiteShip](../../README.md) / cli/src
 
 # cli/src
 

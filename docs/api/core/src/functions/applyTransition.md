@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / applyTransition
+[LiteShip](../../../README.md) / [core/src](../README.md) / applyTransition
 
 # Function: applyTransition()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / glslIdent
+[LiteShip](../../../README.md) / [core/src](../README.md) / glslIdent
 
 # Function: glslIdent()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / asReplayableRecoveryCell
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / asReplayableRecoveryCell
 
 # Variable: asReplayableRecoveryCell
 

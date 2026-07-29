@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / AIManifestInput
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / AIManifestInput
 
 # Interface: AIManifestInput
 

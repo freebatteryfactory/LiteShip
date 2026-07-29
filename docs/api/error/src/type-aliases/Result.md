@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / Result
+[LiteShip](../../../README.md) / [error/src](../README.md) / Result
 
 # Type Alias: Result\<A, E\>
 

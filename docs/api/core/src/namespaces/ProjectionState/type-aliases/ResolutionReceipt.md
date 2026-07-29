@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [ProjectionState](../README.md) / ResolutionReceipt
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [ProjectionState](../README.md) / ResolutionReceipt
 
 # Type Alias: ResolutionReceipt
 

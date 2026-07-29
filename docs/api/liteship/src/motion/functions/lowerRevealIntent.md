@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / lowerRevealIntent
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / lowerRevealIntent
 
 # Function: lowerRevealIntent()
 

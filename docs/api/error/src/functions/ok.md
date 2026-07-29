@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / ok
+[LiteShip](../../../README.md) / [error/src](../README.md) / ok
 
 # Function: ok()
 

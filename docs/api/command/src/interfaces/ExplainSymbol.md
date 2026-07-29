@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / ExplainSymbol
+[LiteShip](../../../README.md) / [command/src](../README.md) / ExplainSymbol
 
 # Interface: ExplainSymbol
 

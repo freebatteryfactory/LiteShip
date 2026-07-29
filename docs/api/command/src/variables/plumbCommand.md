@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / plumbCommand
+[LiteShip](../../../README.md) / [command/src](../README.md) / plumbCommand
 
 # Variable: plumbCommand
 

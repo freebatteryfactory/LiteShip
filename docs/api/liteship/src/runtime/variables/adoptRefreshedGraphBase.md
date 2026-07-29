@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / adoptRefreshedGraphBase
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / adoptRefreshedGraphBase
 
 # Variable: adoptRefreshedGraphBase
 

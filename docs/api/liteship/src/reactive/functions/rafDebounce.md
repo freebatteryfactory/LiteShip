@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / rafDebounce
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / rafDebounce
 
 # Function: rafDebounce()
 

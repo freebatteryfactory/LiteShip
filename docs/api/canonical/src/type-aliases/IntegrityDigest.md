@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [canonical/src](../README.md) / IntegrityDigest
+[LiteShip](../../../README.md) / [canonical/src](../README.md) / IntegrityDigest
 
 # Type Alias: IntegrityDigest
 

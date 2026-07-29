@@ -4,7 +4,7 @@
  * module-internal `compareBytes`. Pins the exact behavior the copy-sites rely
  * on so Phase 2 consumers can import a single owner.
  *
- * Identity-law separation (ADR-0011/ADR-0012): `sha256Hex` returns PLAIN hex
+ * Identity-law separation: `sha256Hex` returns PLAIN hex
  * with NO `sha256:` label — it is the hex HALF of `addressedDigestOf`'s
  * `integrity_digest`, NOT a merge of the labeled receipt law (#3). The labeled
  * form stays separately named and pinned (see canonical-identity.test.ts).

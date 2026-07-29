@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / AssuranceTargetReason
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / AssuranceTargetReason
 
 # Type Alias: AssuranceTargetReason
 

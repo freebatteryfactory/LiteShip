@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / BenchSubjectQualification
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / BenchSubjectQualification
 
 # Interface: BenchSubjectQualification
 

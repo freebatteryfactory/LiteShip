@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / MutantOutcome
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / MutantOutcome
 
 # Interface: MutantOutcome
 

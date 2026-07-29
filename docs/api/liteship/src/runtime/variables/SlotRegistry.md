@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / SlotRegistry
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / SlotRegistry
 
 # Variable: SlotRegistry
 

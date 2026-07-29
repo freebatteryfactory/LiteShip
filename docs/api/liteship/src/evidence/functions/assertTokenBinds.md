@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / assertTokenBinds
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / assertTokenBinds
 
 # Function: assertTokenBinds()
 

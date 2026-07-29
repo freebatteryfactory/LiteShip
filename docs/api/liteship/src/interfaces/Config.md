@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [liteship/src](../README.md) / Config
+[LiteShip](../../../README.md) / [liteship/src](../README.md) / Config
 
 # Interface: Config
 

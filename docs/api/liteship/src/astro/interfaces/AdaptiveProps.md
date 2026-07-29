@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / AdaptiveProps
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / AdaptiveProps
 
 # Interface: AdaptiveProps
 

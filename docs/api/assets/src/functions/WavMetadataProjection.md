@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / WavMetadataProjection
+[LiteShip](../../../README.md) / [assets/src](../README.md) / WavMetadataProjection
 
 # Function: WavMetadataProjection()
 

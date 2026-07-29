@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / AssuranceSpec
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / AssuranceSpec
 
 # Interface: AssuranceSpec
 

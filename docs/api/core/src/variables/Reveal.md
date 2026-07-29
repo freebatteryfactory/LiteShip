@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Reveal
+[LiteShip](../../../README.md) / [core/src](../README.md) / Reveal
 
 # Variable: Reveal
 

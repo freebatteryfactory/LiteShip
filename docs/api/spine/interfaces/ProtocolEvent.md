@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ProtocolEvent
+[LiteShip](../../README.md) / [\_spine](../README.md) / ProtocolEvent
 
 # Interface: ProtocolEvent\<Owner, Channel, Detail\>
 

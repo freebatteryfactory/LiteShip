@@ -1,4 +1,8 @@
-# Public lifecycle drift guard (ADR-0051, D1 closure).
+# Public lifecycle drift guard.
+#
+# The sweep that collapsed the reactive substrate also collapsed teardown onto a
+# SINGLE public owned-resource protocol; the sync `OwnedResource` /
+# `[Symbol.dispose]` spelling was retired with no alias.
 #
 # LiteShip exposes one owned-resource protocol: AsyncOwnedResource. Synchronous
 # finalizers still execute before dispose() returns; its Promise joins async

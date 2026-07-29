@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CapsuleCommandResult
+[LiteShip](../../../README.md) / [core/src](../README.md) / CapsuleCommandResult
 
 # Type Alias: CapsuleCommandResult\<P\>
 

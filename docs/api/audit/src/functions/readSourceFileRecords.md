@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / readSourceFileRecords
+[LiteShip](../../../README.md) / [audit/src](../README.md) / readSourceFileRecords
 
 # Function: readSourceFileRecords()
 

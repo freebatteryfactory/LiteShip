@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / interpretTransition
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / interpretTransition
 
 # Function: interpretTransition()
 

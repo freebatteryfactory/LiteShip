@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / capTierFromCapabilities
+[LiteShip](../../../README.md) / [detect/src](../README.md) / capTierFromCapabilities
 
 # Function: capTierFromCapabilities()
 

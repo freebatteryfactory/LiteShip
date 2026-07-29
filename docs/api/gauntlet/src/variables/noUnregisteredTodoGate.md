@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / noUnregisteredTodoGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / noUnregisteredTodoGate
 
 # Variable: noUnregisteredTodoGate
 

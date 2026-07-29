@@ -73,7 +73,7 @@ export { transformHTML } from './html-transform.js';
 export type { VirtualModuleId, VirtualModuleData } from './virtual-modules.js';
 export { resolveVirtualId, isVirtualId, loadVirtualModule } from './virtual-modules.js';
 
-// Boundary manifest (build-to-edge handoff, ADR-0003)
+// Boundary manifest (build-to-edge handoff)
 export type { CollectBoundaryManifestOptions } from './boundary-manifest.js';
 export { collectBoundaryManifest, serializeBoundaryOutput } from './boundary-manifest.js';
 

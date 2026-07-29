@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / SyncAnchorPart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / SyncAnchorPart
 
 # Variable: SyncAnchorPart
 

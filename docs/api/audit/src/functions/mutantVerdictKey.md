@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / mutantVerdictKey
+[LiteShip](../../../README.md) / [audit/src](../README.md) / mutantVerdictKey
 
 # Function: mutantVerdictKey()
 

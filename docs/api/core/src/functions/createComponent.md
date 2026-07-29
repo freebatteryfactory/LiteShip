@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / createComponent
+[LiteShip](../../../README.md) / [core/src](../README.md) / createComponent
 
 # Function: createComponent()
 
@@ -13,7 +13,7 @@ Defined in: [core/src/authoring/component.ts:61](https://github.com/freebatteryf
 Create a [Component](../type-aliases/Component.md) — the content-addressed unit that binds a
 [Boundary](../variables/Boundary.md), a [Style](../variables/Style.md), and named slots into a single declaration
 compilers can target. The optional boundary gates style variants; the slots
-describe the consumer-facing API (verb grammar, ADR-0046 — `create` allocates a
+describe the consumer-facing API (verb grammar — `create` allocates a
 content-addressed unit).
 
 ## Type Parameters

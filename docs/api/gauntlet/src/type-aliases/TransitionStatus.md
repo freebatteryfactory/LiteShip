@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / TransitionStatus
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / TransitionStatus
 
 # Type Alias: TransitionStatus
 

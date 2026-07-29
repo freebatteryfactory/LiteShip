@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / GenerateMutantsOptions
+[LiteShip](../../../README.md) / [audit/src](../README.md) / GenerateMutantsOptions
 
 # Interface: GenerateMutantsOptions
 

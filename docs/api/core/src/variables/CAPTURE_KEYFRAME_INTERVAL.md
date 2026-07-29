@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CAPTURE\_KEYFRAME\_INTERVAL
+[LiteShip](../../../README.md) / [core/src](../README.md) / CAPTURE\_KEYFRAME\_INTERVAL
 
 # Variable: CAPTURE\_KEYFRAME\_INTERVAL
 

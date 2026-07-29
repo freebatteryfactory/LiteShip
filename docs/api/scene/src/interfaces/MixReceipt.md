@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / MixReceipt
+[LiteShip](../../../README.md) / [scene/src](../README.md) / MixReceipt
 
 # Interface: MixReceipt
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / compileThemeBlock
+[LiteShip](../../../README.md) / [vite/src](../README.md) / compileThemeBlock
 
 # Function: compileThemeBlock()
 

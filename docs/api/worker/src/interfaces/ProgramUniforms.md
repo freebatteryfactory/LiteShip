@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [worker/src](../README.md) / ProgramUniforms
+[LiteShip](../../../README.md) / [worker/src](../README.md) / ProgramUniforms
 
 # Interface: ProgramUniforms
 

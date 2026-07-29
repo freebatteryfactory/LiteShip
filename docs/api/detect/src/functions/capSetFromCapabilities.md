@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / capSetFromCapabilities
+[LiteShip](../../../README.md) / [detect/src](../README.md) / capSetFromCapabilities
 
 # Function: capSetFromCapabilities()
 

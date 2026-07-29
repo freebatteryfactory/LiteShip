@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CompositorConfig
+[LiteShip](../../../README.md) / [core/src](../README.md) / CompositorConfig
 
 # Interface: CompositorConfig
 

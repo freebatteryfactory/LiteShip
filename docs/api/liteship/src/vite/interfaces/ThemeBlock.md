@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / ThemeBlock
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / ThemeBlock
 
 # Interface: ThemeBlock
 

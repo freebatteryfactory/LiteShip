@@ -8,7 +8,7 @@ import { cloudflareMiddleware } from '@liteship/cloudflare';
 import * as testingEntry from '@liteship/cloudflare/testing';
 import { getDefaultWorkersEnv, resetWorkersEnvForTesting, setWorkersEnvForTesting } from '@liteship/cloudflare/testing';
 
-/** Mint a real boundary so test ids honor the ADR-0003 identity law. */
+/** Mint a real boundary so test ids honor the content-addressing identity law. */
 function makeBoundary() {
   return defineBoundary({
     input: 'viewport.width',

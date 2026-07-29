@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [scene/src](../../../README.md) / [BeatBinding](../README.md) / Component
+[LiteShip](../../../../../README.md) / [scene/src](../../../README.md) / [BeatBinding](../README.md) / Component
 
 # Type Alias: Component
 

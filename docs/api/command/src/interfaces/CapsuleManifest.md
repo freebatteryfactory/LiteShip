@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CapsuleManifest
+[LiteShip](../../../README.md) / [command/src](../README.md) / CapsuleManifest
 
 # Interface: CapsuleManifest
 

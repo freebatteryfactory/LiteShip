@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / EarlyReturnMatch
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / EarlyReturnMatch
 
 # Interface: EarlyReturnMatch
 

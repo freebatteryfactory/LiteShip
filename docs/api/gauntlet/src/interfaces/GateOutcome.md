@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / GateOutcome
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / GateOutcome
 
 # Interface: GateOutcome
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / DeepReadonly
+[LiteShip](../../../README.md) / [core/src](../README.md) / DeepReadonly
 
 # Type Alias: DeepReadonly\<T\>
 

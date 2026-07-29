@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [Diagnostics](../README.md) / Event
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [Diagnostics](../README.md) / Event
 
 # Type Alias: Event
 

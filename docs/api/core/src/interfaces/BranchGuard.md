@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / BranchGuard
+[LiteShip](../../../README.md) / [core/src](../README.md) / BranchGuard
 
 # Interface: BranchGuard
 

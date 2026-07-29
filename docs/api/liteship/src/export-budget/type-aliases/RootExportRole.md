@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/export-budget](../README.md) / RootExportRole
+[LiteShip](../../../../README.md) / [liteship/src/export-budget](../README.md) / RootExportRole
 
 # Type Alias: RootExportRole
 

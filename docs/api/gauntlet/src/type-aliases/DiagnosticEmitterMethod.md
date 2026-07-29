@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / DiagnosticEmitterMethod
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / DiagnosticEmitterMethod
 
 # Type Alias: DiagnosticEmitterMethod
 

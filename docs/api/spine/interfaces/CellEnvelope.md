@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CellEnvelope
+[LiteShip](../../README.md) / [\_spine](../README.md) / CellEnvelope
 
 # Interface: CellEnvelope\<K, T\>
 
-Defined in: [\_spine/core.d.ts:589](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L589)
+Defined in: [\_spine/core.d.ts:590](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L590)
 
 Typed live-cell payload with its kind and transport metadata.
 
@@ -26,7 +26,7 @@ Typed live-cell payload with its kind and transport metadata.
 
 > `readonly` **id**: [`ContentAddress`](../type-aliases/ContentAddress.md)
 
-Defined in: [\_spine/core.d.ts:591](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L591)
+Defined in: [\_spine/core.d.ts:592](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L592)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/core.d.ts:591](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `K`
 
-Defined in: [\_spine/core.d.ts:590](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L590)
+Defined in: [\_spine/core.d.ts:591](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L591)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [\_spine/core.d.ts:590](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **meta**: [`CellMeta`](CellMeta.md)
 
-Defined in: [\_spine/core.d.ts:592](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L592)
+Defined in: [\_spine/core.d.ts:593](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L593)
 
 ***
 
@@ -50,4 +50,4 @@ Defined in: [\_spine/core.d.ts:592](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **value**: `T`
 
-Defined in: [\_spine/core.d.ts:593](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L593)
+Defined in: [\_spine/core.d.ts:594](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L594)

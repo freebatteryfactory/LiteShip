@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / CompositorStatePool
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / CompositorStatePool
 
 # Type Alias: CompositorStatePool
 
@@ -13,7 +13,7 @@ Defined in: core/dist/media/compositor-pool.d.ts:69
 Public structural type for `CompositorStatePool` -- ring buffer of pre-allocated
 CompositeState objects. Zero-allocation hot path: acquire a state, write into it,
 render, then release. Construct one with the standalone
-[createCompositorStatePool](../functions/createCompositorStatePool.md) (verb grammar, ADR-0046).
+[createCompositorStatePool](../functions/createCompositorStatePool.md) (verb grammar).
 
 ## Example
 

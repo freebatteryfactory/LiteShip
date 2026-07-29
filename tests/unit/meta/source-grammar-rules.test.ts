@@ -1,7 +1,7 @@
 /**
- * Source-grammar enforcement — proof harness for the ADR-0045 structural rules.
+ * Source-grammar enforcement — proof harness for the source-layout structural rules.
  *
- * ADR-0045 (docs/adr/0045-source-grammar.md) makes a package's directory layout
+ * The source grammar makes a package's directory layout
  * carry its specification: package boundary vs domain directory, the facade law
  * (a barrel is a pure named-re-export surface — no behavior, no wildcards),
  * types.ts purity (type-space only, erasable), and the grab-bag-filename ban.
@@ -11,7 +11,7 @@
  *   - no-wildcard-facade-export  (b) no `export * from` in a facade
  *   - no-utils-file              (c) no utils.ts / helpers.ts / *-utils / *-helpers
  *   - types-file-purity          (d) no value declarations in a types.ts
- *   - no-shape-namespace-type    (e) the retired ADR-0001 `.Shape` convention stays dead (ADR-0046)
+ *   - no-shape-namespace-type    (e) the retired `.Shape` namespace-type convention stays dead
  *
  * The same harness also proves the testing-hygiene backstop from the runtime-seams
  * hotspot:
@@ -20,9 +20,9 @@
  *                                    destructure, or computed-call bypass; node builtins
  *                                    + third-party specifiers stay legal (scope: `tests/**`)
  *   - no-reactive-make-factory   (g) the retired reactive `.make` factory spellings
- *                                    stay dead — the create* verb sweep (ADR-0051)
+ *                                    stay dead — the create* verb sweep
  *   - no-sync-owned-resource     (h) the retired second owned-resource lifecycle
- *                                    stays dead — one async-uniform protocol (ADR-0051)
+ *                                    stays dead — one async-uniform protocol
  *
  * Every other sgrule is backstopped by a vitest meta-test that pins the SCARS
  * (float-determinism.test.ts, a1-seam-integrity.test.ts). Those rules ported an
@@ -40,7 +40,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawnArgvCapture } from '@liteship/command/host';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import ts from 'typescript';
@@ -198,25 +198,39 @@ describe('source-grammar rules are registered with ast-grep', () => {
     expect(cfg).toMatch(/ruleDirs:\s*[\s\S]*-\s*sgrules/);
   });
 
-  it('every source-grammar rule file exists under sgrules/', () => {
-    for (const r of [
+  it('the sgrules/ inventory matches the pinned rule set exactly (deletion AND unpinned addition both red)', () => {
+    // A subset-existence check let any unpinned rule vanish silently; exact
+    // equality makes removing OR adding a rule a deliberate edit to this pin.
+    const PINNED_RULES = [
+      'a1-no-cli-import.yml',
+      'a1-no-stdout-monkeypatch.yml',
+      'c8-ignore-without-reason.yml',
+      'detect-tier-vocab-drift.yml',
       'facade-only-reexports.yml',
-      'no-wildcard-facade-export.yml',
-      'no-utils-file.yml',
-      'types-file-purity.yml',
-      'no-shape-namespace-type.yml',
-      'no-internal-vi-mock.yml',
-      'no-internal-vi-mock-tsx.yml',
-      'no-reactive-make-factory.yml',
-      'no-sync-owned-resource.yml',
+      'float-determinism-boundary.yml',
+      'hallucinated-themes-option.yml',
       'no-fire-and-forget-dispose.yml',
-    ]) {
-      expect(existsSync(resolve(SGRULES, r)), r).toBe(true);
-    }
+      'no-internal-vi-mock-tsx.yml',
+      'no-internal-vi-mock.yml',
+      'no-reactive-make-factory.yml',
+      'no-rung-ladder-vocab.yml',
+      'no-shape-namespace-type.yml',
+      'no-sync-owned-resource.yml',
+      'no-utils-file.yml',
+      'no-wildcard-facade-export.yml',
+      'raw-vitest-option-timeout.yml',
+      'raw-vitest-trailing-timeout.yml',
+      'repo-truths-no-script-parse.yml',
+      'types-file-purity.yml',
+    ];
+    const onDisk = readdirSync(SGRULES)
+      .filter((f) => f.endsWith('.yml'))
+      .sort();
+    expect(onDisk).toEqual([...PINNED_RULES].sort());
   });
 });
 
-describe('no-fire-and-forget-dispose (i) — disposal errors stay observable (ADR-0051)', () => {
+describe('no-fire-and-forget-dispose (i) — disposal errors stay observable', () => {
   const RULE = 'no-fire-and-forget-dispose.yml';
 
   it('RED: discarding an owned resource disposal Promise fires', async () => {
@@ -237,7 +251,7 @@ describe('no-fire-and-forget-dispose (i) — disposal errors stay observable (AD
   });
 });
 
-describe('no-sync-owned-resource (h) — one public owned-resource lifecycle (ADR-0051)', () => {
+describe('no-sync-owned-resource (h) — one public owned-resource lifecycle', () => {
   const RULE = 'no-sync-owned-resource.yml';
 
   it('RED: a declaration, import, or use of the retired sync arm fires', async () => {
@@ -264,7 +278,7 @@ describe('no-sync-owned-resource (h) — one public owned-resource lifecycle (AD
   });
 });
 
-describe('no-reactive-make-factory (g) — the retired reactive `.make` spellings stay dead (ADR-0051)', () => {
+describe('no-reactive-make-factory (g) — the retired reactive `.make` spellings stay dead', () => {
   const RULE = 'no-reactive-make-factory.yml';
 
   it('RED: each retired reactive `.make` / `.makeBoundary` factory spelling fires (incl. generic-parameterized)', async () => {
@@ -476,7 +490,7 @@ describe('types-file-purity (d) — a types.ts is type-space only (core-scoped g
   });
 });
 
-describe('no-shape-namespace-type (e) — the ADR-0001 .Shape convention stays dead (ADR-0046)', () => {
+describe('no-shape-namespace-type (e) — the retired `.Shape` namespace-type convention stays dead', () => {
   const RULE = 'no-shape-namespace-type.yml';
 
   it('RED: a namespace Shape member plus two qualified .Shape references fire on each', async () => {

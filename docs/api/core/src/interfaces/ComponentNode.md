@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ComponentNode
+[LiteShip](../../../README.md) / [core/src](../README.md) / ComponentNode
 
 # Interface: ComponentNode
 

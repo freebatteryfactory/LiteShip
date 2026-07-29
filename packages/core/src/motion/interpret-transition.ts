@@ -77,7 +77,7 @@ export interface CssKeyframeStep {
  * default `ease`). When `eligible: false` the compiler emits NO native ownership block,
  * so `getComputedStyle(el).animationName` carries no `liteship-motion-*` name and the
  * per-window RUNTIME floor (`client:motion`, which samples each window at its OWN easing)
- * stays the faithful renderer (ADR-0041).
+ * stays the faithful renderer.
  */
 export type NativeTimelineEligibility =
   { readonly eligible: true } | { readonly eligible: false; readonly reason: 'mixed-easing-overlap' };

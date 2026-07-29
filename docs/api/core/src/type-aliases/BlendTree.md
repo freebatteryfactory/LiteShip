@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / BlendTree
+[LiteShip](../../../README.md) / [core/src](../README.md) / BlendTree
 
 # Type Alias: BlendTree\<T\>
 
@@ -13,7 +13,7 @@ Defined in: [core/src/motion/blend.ts:147](https://github.com/freebatteryfactory
 Public structural type for `BlendTree` -- weighted multi-state blending for
 numeric records. Add named nodes with values and weights, then compute the
 weighted average. Construct one with the standalone [createBlendTree](../functions/createBlendTree.md)
-(verb grammar, ADR-0046), which returns the tree augmented with its own
+(verb grammar), which returns the tree augmented with its own
 `dispose()`.
 
 ## Type Parameters

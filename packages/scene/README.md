@@ -46,7 +46,7 @@ Beat-synced effect tracks (`syncTo: syncTo.beat(...)`) tick but never pulse when
 
 `MotionSampleSystem(frameIndex)` is the Scene adapter for the shared motion kernel. Each selected entity carries its own admitted `RuntimeWritePlanPart` and `FrameRangePart`; the system samples that plan at entity-local time and writes one typed `MotionSamplePart`. `sampleSceneMotion(plan, t)` is the pure aggregate projection used by the differential oracle. Free-string `MotionProgram` queries, dynamic `motion:<cssVar>` component names, and closure-global plans are not part of the runtime contract.
 
-This is **additive** to `TransitionSystem`, not a merge. `TransitionSystem`'s typed `BlendPart` is a video-**crossfade** mix factor between two `BetweenPart` entities — a different concept from an authored runtime write plan. Both coexist on one world. A differential oracle proves the Scene leg renders identically to browser CSS, the browser runtime floor, Stage, Remotion, and Worker ([ADR-0040](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0040-cross-target-motion-parity.md)).
+This is **additive** to `TransitionSystem`, not a merge. `TransitionSystem`'s typed `BlendPart` is a video-**crossfade** mix factor between two `BetweenPart` entities — a different concept from an authored runtime write plan. Both coexist on one world. A differential oracle proves the Scene leg renders identically to browser CSS, the browser runtime floor, Stage, Remotion, and Worker.
 
 ## Docs
 

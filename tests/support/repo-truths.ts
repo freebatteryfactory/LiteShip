@@ -1,7 +1,7 @@
 /**
  * Repo-truths single ownership — one truth, one owner, zero private parsers.
  *
- * Scar S0.4 (docs/plan/scar-ledger.md): two drift-guards independently
+ * The scar: two drift-guards independently
  * regex-parsed the build script; fixing one left the other broken. Related:
  * scaffold caret-floor and ship pack tests string-parsed manifest shapes that
  * `catalog:` changed under them. Class: *one truth, many private parsers —

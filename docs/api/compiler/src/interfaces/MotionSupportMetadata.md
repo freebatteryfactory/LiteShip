@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / MotionSupportMetadata
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / MotionSupportMetadata
 
 # Interface: MotionSupportMetadata
 

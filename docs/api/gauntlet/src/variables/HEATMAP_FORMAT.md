@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / HEATMAP\_FORMAT
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / HEATMAP\_FORMAT
 
 # Variable: HEATMAP\_FORMAT
 

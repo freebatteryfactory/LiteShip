@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / VirtualModuleId
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / VirtualModuleId
 
 # Type Alias: VirtualModuleId
 

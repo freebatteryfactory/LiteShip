@@ -1,6 +1,6 @@
 /**
  * reactive-trace — the closed operation-trace vocabulary the transition cage
- * speaks (Wave 5.5, `docs/plan/remaining-waves.md` §"operation-trace").
+ * speaks.
  *
  * ONE serializable vocabulary drives ANY reactive primitive and normalizes what
  * it does into ONE comparable {@link Observation}. The capture harness
@@ -249,7 +249,7 @@ export interface Observation {
 
 /**
  * Content-address an op history through the ONE canonical encoder
- * (`CanonicalCbor` → fnv1a). Byte-stable across runs and platforms (ADR-0003),
+ * (`CanonicalCbor` → fnv1a). Byte-stable across runs and platforms,
  * so a fixture can be keyed `{ primitive, seed, traceDigest }`.
  */
 export const traceDigest = (history: OpHistory): ContentAddress => fnv1aBytes(CanonicalCbor.encode(history));

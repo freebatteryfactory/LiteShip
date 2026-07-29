@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / compileTheme
+[LiteShip](../../../README.md) / [edge/src](../README.md) / compileTheme
 
 # Function: compileTheme()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / TypeScriptPathAliases
+[LiteShip](../../../README.md) / [audit/src](../README.md) / TypeScriptPathAliases
 
 # Type Alias: TypeScriptPathAliases
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ResolvedStateEntry
+[LiteShip](../../README.md) / [\_spine](../README.md) / ResolvedStateEntry
 
 # Interface: ResolvedStateEntry
 

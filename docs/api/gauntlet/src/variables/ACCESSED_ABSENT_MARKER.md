@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ACCESSED\_ABSENT\_MARKER
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ACCESSED\_ABSENT\_MARKER
 
 # Variable: ACCESSED\_ABSENT\_MARKER
 

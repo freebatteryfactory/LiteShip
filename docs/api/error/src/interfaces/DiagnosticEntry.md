@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / DiagnosticEntry
+[LiteShip](../../../README.md) / [error/src](../README.md) / DiagnosticEntry
 
 # Interface: DiagnosticEntry
 

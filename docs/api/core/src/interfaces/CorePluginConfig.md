@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CorePluginConfig
+[LiteShip](../../../README.md) / [core/src](../README.md) / CorePluginConfig
 
 # Interface: CorePluginConfig
 

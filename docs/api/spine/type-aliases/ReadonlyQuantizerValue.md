@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ReadonlyQuantizerValue
+[LiteShip](../../README.md) / [\_spine](../README.md) / ReadonlyQuantizerValue
 
 # Type Alias: ReadonlyQuantizerValue\<T\>
 

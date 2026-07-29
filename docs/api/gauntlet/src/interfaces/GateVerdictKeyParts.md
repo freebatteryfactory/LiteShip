@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / GateVerdictKeyParts
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / GateVerdictKeyParts
 
 # Interface: GateVerdictKeyParts
 

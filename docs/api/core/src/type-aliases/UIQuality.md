@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / UIQuality
+[LiteShip](../../../README.md) / [core/src](../README.md) / UIQuality
 
 # Type Alias: UIQuality
 

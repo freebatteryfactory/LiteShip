@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / buildCatalogFeatureEdgeFamily
+[LiteShip](../../../README.md) / [audit/src](../README.md) / buildCatalogFeatureEdgeFamily
 
 # Function: buildCatalogFeatureEdgeFamily()
 

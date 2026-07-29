@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ReplayDivergence
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ReplayDivergence
 
 # Interface: ReplayDivergence
 

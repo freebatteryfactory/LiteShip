@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / onDetectReady
+[LiteShip](../../../README.md) / [detect/src](../README.md) / onDetectReady
 
 # Function: onDetectReady()
 

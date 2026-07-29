@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / graphMutationRoute
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / graphMutationRoute
 
 # Function: graphMutationRoute()
 
@@ -28,7 +28,7 @@ will parse a `text/plain` or form-encoded body just fine, so without this a cros
 cookie-authed mount — the base-match/CAS is integrity, NOT a CSRF token (the graph id
 is discoverable). Demanding `application/json` forces every cross-origin POST into a
 preflighted request the browser blocks by default. This closes the parse-level bypass;
-it does not replace host session/origin auth (ADR-0015) — the host still owns that.
+it does not replace host session/origin auth — the host still owns that.
 
 ## Parameters
 

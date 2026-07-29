@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / beatBindingCapsule
+[LiteShip](../../../README.md) / [scene/src](../README.md) / beatBindingCapsule
 
 # Variable: beatBindingCapsule
 

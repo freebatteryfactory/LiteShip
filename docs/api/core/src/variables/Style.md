@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Style
+[LiteShip](../../../README.md) / [core/src](../README.md) / Style
 
 # Variable: Style
 

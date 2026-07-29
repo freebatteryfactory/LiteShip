@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / successResponse
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / successResponse
 
 # Variable: successResponse
 

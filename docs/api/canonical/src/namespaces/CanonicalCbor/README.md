@@ -2,8 +2,8 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [canonical/src](../../README.md) / CanonicalCbor
+[LiteShip](../../../../README.md) / [canonical/src](../../README.md) / CanonicalCbor
 
 # CanonicalCbor
 
-Canonical CBOR encoder namespace (ADR-0001 pattern).
+Canonical CBOR encoder namespace (namespace-object pattern).

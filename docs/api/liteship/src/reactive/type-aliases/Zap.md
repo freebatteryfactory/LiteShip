@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / Zap
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / Zap
 
 # Type Alias: Zap\<T\>
 

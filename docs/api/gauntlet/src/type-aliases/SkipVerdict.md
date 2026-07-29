@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SkipVerdict
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SkipVerdict
 
 # Type Alias: SkipVerdict
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / generateConditionMutants
+[LiteShip](../../../README.md) / [audit/src](../README.md) / generateConditionMutants
 
 # Function: generateConditionMutants()
 

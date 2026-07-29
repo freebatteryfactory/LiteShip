@@ -72,7 +72,7 @@ pnpm verify
 
 `pnpm verify` is the first-run aggregate: environment checks, build, tests, then the quick profile. It is not the final release authority.
 
-Local focused work should run the smallest relevant unit/property/integration proof. The CI-grade gauntlet, browser matrix, packed journeys, and hermetic release proof are intentionally reserved for a frozen implementation head or CI. See [SKILL.md](./SKILL.md#operating-hazards-workstation-safety) before running heavyweight authorities on a workstation.
+Local focused work should run the smallest relevant unit/property/integration proof. The CI-grade gauntlet, browser matrix, packed journeys, and hermetic release proof are intentionally reserved for a frozen implementation head or CI. Run `pnpm resources:plan` before heavyweight authorities on a workstation — they are sized for CI, not laptops.
 
 ## Frozen-head release proof
 
@@ -118,7 +118,7 @@ These surfaces are projections, not independent authored inventories:
 - generated agent package context;
 - public API reference.
 
-Their owning sources and regeneration routes are indexed in [DOCS.md](./DOCS.md). Hand-editing a generated block is drift, even when the hand edit happens to be correct today.
+Each generated block's BEGIN marker names its owning generator and source. Hand-editing a generated block is drift, even when the hand edit happens to be correct today.
 
 ## Current limitations and obligations
 

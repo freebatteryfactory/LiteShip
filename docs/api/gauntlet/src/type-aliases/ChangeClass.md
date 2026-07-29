@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ChangeClass
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ChangeClass
 
 # Type Alias: ChangeClass
 

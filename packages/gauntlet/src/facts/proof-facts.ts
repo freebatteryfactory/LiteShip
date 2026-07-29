@@ -11,7 +11,7 @@
  * per-module proof scalar, and hands the engine these flat, already-decided facts.
  * The gate's only job is to PROPAGATE the scalar along the IR's dep DAG (the
  * `min`-fold mirroring {@link propagateAssuranceLevels}) and FOLD a weak-link finding
- * (ADR-0012: the lean engine folds facts; the host computes them).
+ * (the lean engine folds facts; the host computes them).
  *
  * THE BIG IDEA (the lax-functor; sound as a RISK signal). A module can be LOCALLY
  * well-proven — high coverage, killed mutants, a property test, an enrolled
@@ -58,7 +58,7 @@ export interface ModuleProof {
   readonly file: string;
   /**
    * The blended local proof scalar in `[0, 1]` — the host's normalized combination
-   * of {@link ProofSignals}. The gate does NOT recompute it (ADR-0012: the host
+   * of {@link ProofSignals}. The gate does NOT recompute it (the host
    * computes, the engine folds); it propagates it along the dep DAG.
    */
   readonly localProof: number;

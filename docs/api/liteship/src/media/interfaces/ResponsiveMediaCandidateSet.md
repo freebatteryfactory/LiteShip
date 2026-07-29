@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / ResponsiveMediaCandidateSet
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / ResponsiveMediaCandidateSet
 
 # Interface: ResponsiveMediaCandidateSet
 

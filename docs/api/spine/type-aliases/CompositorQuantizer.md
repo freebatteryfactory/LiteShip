@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CompositorQuantizer
+[LiteShip](../../README.md) / [\_spine](../README.md) / CompositorQuantizer
 
 # Type Alias: CompositorQuantizer\<B\>
 
 > **CompositorQuantizer**\<`B`\> = [`Quantizer`](../interfaces/Quantizer.md)\<`B`\> & `object` \| [`ReactiveQuantizer`](../interfaces/ReactiveQuantizer.md)\<`B`\>
 
-Defined in: [\_spine/core.d.ts:470](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L470)
+Defined in: [\_spine/core.d.ts:471](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L471)
 
 Quantizer shape accepted by the live compositor.
 

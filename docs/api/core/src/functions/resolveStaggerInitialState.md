@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / resolveStaggerInitialState
+[LiteShip](../../../README.md) / [core/src](../README.md) / resolveStaggerInitialState
 
 # Function: resolveStaggerInitialState()
 

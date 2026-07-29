@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / BytesNode
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / BytesNode
 
 # Interface: BytesNode
 

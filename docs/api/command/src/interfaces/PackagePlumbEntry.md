@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PackagePlumbEntry
+[LiteShip](../../../README.md) / [command/src](../README.md) / PackagePlumbEntry
 
 # Interface: PackagePlumbEntry
 

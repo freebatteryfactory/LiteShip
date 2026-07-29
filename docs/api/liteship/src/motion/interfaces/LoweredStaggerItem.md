@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / LoweredStaggerItem
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / LoweredStaggerItem
 
 # Interface: LoweredStaggerItem
 

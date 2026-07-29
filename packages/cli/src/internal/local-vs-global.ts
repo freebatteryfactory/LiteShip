@@ -1,7 +1,7 @@
 /**
  * The HOST builders for the LOCAL-VS-GLOBAL correctness family (the lax-functor
  * proof-propagation + the composition-coverage analysis). The heavy IR/graph/signal
- * work lives HERE (the CLI host owns `fs` + the IR + the test corpus, ADR-0012); the
+ * work lives HERE (the CLI host owns `fs` + the IR + the test corpus); the
  * lean `@liteship/gauntlet` gates only FOLD the flat facts these builders produce.
  *
  * Both builders are PURE + DETERMINISTIC over the repo bytes + the injected IR — no

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / MorphResult
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / MorphResult
 
 # Type Alias: MorphResult
 

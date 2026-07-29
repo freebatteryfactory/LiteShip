@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / StateCellRegisterOptions
+[LiteShip](../../../README.md) / [core/src](../README.md) / StateCellRegisterOptions
 
 # Interface: StateCellRegisterOptions
 

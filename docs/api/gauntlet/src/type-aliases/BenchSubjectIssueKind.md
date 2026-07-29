@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / BenchSubjectIssueKind
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / BenchSubjectIssueKind
 
 # Type Alias: BenchSubjectIssueKind
 

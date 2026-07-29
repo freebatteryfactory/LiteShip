@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / WavChunk
+[LiteShip](../../../README.md) / [assets/src](../README.md) / WavChunk
 
 # Type Alias: WavChunk
 

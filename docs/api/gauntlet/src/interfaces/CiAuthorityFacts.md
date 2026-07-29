@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / CiAuthorityFacts
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / CiAuthorityFacts
 
 # Interface: CiAuthorityFacts
 

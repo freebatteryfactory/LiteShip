@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / MotionTier
+[LiteShip](../../README.md) / [\_spine](../README.md) / MotionTier
 
 # Type Alias: MotionTier
 

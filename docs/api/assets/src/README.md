@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / assets/src
+[LiteShip](../../README.md) / assets/src
 
 # assets/src
 

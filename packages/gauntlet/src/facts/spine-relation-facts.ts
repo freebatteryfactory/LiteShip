@@ -13,13 +13,15 @@
  * bidirectional-assignability probe per admitted mirror type, compile it, read the
  * compiler's own diagnostics, classify each relation — and hands the engine these
  * flat, already-observed facts. The gate's only job is to FOLD them into Findings
- * (ADR-0023: the lean engine folds facts; the host computes them).
+ * (the lean engine folds facts; the host computes them).
  *
- * THE TWO AXES (grounded in ADR-0010 — the spine is the canonical OWNER of branded
- * types; other declarations MIRROR runtime types). A mirror declaration is
+ * THE TWO AXES (grounded in the spine-as-canonical-type-source law — the spine is the
+ * canonical OWNER of branded types, which land in `_spine` BEFORE any runtime re-export,
+ * so a brand is never duplicated; every other declaration MIRRORS a runtime-owned type).
+ * A mirror declaration is
  * classified on two ORTHOGONAL axes, never eight ad-hoc modes:
  *  - **Authority** `{spine | runtime | generated}` — WHO OWNS the type. `spine`: a
- *    branded scalar the spine declares and the runtime re-exports (ADR-0010's
+ *    branded scalar the spine declares and the runtime re-exports (the
  *    `import type X as _X` re-anchor). `runtime`: a shape the runtime owns and the
  *    spine hand-mirrors (CompositeState, CapSet, Codec…). `generated`: emitted by a
  *    codegen (none today — the arm is reserved, Conflict-1's `gen-spine` is
@@ -125,7 +127,7 @@ export function classifyStructuralRelation(
  * Whether an OBSERVED structural relation satisfies the ADMITTED relation — the
  * two-axis conformance check the gate folds on.
  *  - `brand-reanchored` (Authority-spine): the runtime re-exports the brand FROM the
- *    spine (ADR-0010), so the two are structurally IDENTICAL — the probe observes
+ *    spine, so the two are structurally IDENTICAL — the probe observes
  *    `exact`. A reanchored brand that stopped being identical (a runtime
  *    redeclaration that changed the brand) observes non-`exact` → not satisfied.
  *  - `runtime-exists` / `intentionally-omitted`: NOT structurally probed here (value

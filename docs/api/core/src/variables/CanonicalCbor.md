@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CanonicalCbor
+[LiteShip](../../../README.md) / [core/src](../README.md) / CanonicalCbor
 
 # Variable: CanonicalCbor
 
@@ -10,7 +10,7 @@
 
 Defined in: canonical/dist/cbor.d.ts:27
 
-Canonical CBOR encoder namespace (ADR-0001 pattern).
+Canonical CBOR encoder namespace (namespace-object pattern).
 
 ## Type Declaration
 

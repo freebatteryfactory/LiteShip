@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / PLACEHOLDER\_SKIP\_MARKERS
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / PLACEHOLDER\_SKIP\_MARKERS
 
 # Variable: PLACEHOLDER\_SKIP\_MARKERS
 

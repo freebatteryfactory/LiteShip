@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / SpeculativeEvaluator
+[LiteShip](../../../README.md) / [core/src](../README.md) / SpeculativeEvaluator
 
 # Type Alias: SpeculativeEvaluator\<B\>
 

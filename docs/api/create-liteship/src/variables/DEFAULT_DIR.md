@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [create-liteship/src](../README.md) / DEFAULT\_DIR
+[LiteShip](../../../README.md) / [create-liteship/src](../README.md) / DEFAULT\_DIR
 
 # Variable: DEFAULT\_DIR
 

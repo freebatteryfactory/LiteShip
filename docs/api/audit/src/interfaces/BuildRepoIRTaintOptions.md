@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / BuildRepoIRTaintOptions
+[LiteShip](../../../README.md) / [audit/src](../README.md) / BuildRepoIRTaintOptions
 
 # Interface: BuildRepoIRTaintOptions
 

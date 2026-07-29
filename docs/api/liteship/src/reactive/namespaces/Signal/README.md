@@ -2,14 +2,14 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [liteship/src/reactive](../../README.md) / Signal
+[LiteShip](../../../../../README.md) / [liteship/src/reactive](../../README.md) / Signal
 
 # Signal
 
 Signal namespace -- the alternate live-feed constructors.
 
 The primary environment-source constructor is the standalone [createSignal](../../functions/createSignal.md)
-(verb grammar, ADR-0046 — `create` allocates a runtime resource). This namespace
+(verb grammar — `create` allocates a runtime resource). This namespace
 carries the two SPECIALIZED constructors: `controllable` (a seekable/pausable
 time signal driven externally) and `audio` (an [AVBridge](../../../media/variables/AVBridge.md)-backed sample/
 normalized feed). Each signal provides `.read()` and `.subscribe(sink)` backed by

@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / factBundleDigest
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / factBundleDigest
 
 # Function: factBundleDigest()
 
 > **factBundleDigest**(`context`, `requires`): `string`
 
-Defined in: [gauntlet/src/gate.ts:1240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1240)
+Defined in: [gauntlet/src/gate.ts:1241](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1241)
 
 The out-of-IR evidence digest for a [FactGate](../interfaces/FactGate.md) — the cache-soundness keystone,
 derived from the DECLARED fact channels (not hand-authored). Folds each required

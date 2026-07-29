@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [AVBridge](../README.md) / Config
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [AVBridge](../README.md) / Config
 
 # Type Alias: Config
 

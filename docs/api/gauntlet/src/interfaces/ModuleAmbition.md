@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ModuleAmbition
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ModuleAmbition
 
 # Interface: ModuleAmbition
 

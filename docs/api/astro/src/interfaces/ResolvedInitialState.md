@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / ResolvedInitialState
+[LiteShip](../../../README.md) / [astro/src](../README.md) / ResolvedInitialState
 
 # Interface: ResolvedInitialState
 

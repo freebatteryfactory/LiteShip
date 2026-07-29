@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / ARIACompiler
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / ARIACompiler
 
 # Variable: ARIACompiler
 

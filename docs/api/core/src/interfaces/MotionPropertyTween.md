@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / MotionPropertyTween
+[LiteShip](../../../README.md) / [core/src](../README.md) / MotionPropertyTween
 
 # Interface: MotionPropertyTween
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / decodeLenient
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / decodeLenient
 
 # Function: decodeLenient()
 

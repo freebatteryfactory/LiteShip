@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / GraphNativeGapReplayResult
+[LiteShip](../../../README.md) / [core/src](../README.md) / GraphNativeGapReplayResult
 
 # Interface: GraphNativeGapReplayResult
 

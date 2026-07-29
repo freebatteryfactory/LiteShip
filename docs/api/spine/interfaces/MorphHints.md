@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / MorphHints
+[LiteShip](../../README.md) / [\_spine](../README.md) / MorphHints
 
 # Interface: MorphHints
 

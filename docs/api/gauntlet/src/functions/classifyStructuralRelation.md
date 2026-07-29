@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / classifyStructuralRelation
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / classifyStructuralRelation
 
 # Function: classifyStructuralRelation()
 
 > **classifyStructuralRelation**(`assignableSpineToRuntime`, `assignableRuntimeToSpine`): [`SurfaceRelation`](../type-aliases/SurfaceRelation.md)
 
-Defined in: [gauntlet/src/facts/spine-relation-facts.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/spine-relation-facts.ts#L114)
+Defined in: [gauntlet/src/facts/spine-relation-facts.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/spine-relation-facts.ts#L116)
 
 Classify the STRUCTURAL relation from the two assignability directions — a total
 function over the 2×2 truth table:

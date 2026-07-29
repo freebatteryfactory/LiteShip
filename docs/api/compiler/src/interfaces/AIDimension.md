@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / AIDimension
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / AIDimension
 
 # Interface: AIDimension
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / DocsMcpBundle
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / DocsMcpBundle
 
 # Interface: DocsMcpBundle
 

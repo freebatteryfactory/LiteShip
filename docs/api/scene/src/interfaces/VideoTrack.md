@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / VideoTrack
+[LiteShip](../../../README.md) / [scene/src](../README.md) / VideoTrack
 
 # Interface: VideoTrack\<M\>
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / SYMBOL\_ORPHAN\_PROPERTY
+[LiteShip](../../../README.md) / [audit/src](../README.md) / SYMBOL\_ORPHAN\_PROPERTY
 
 # Variable: SYMBOL\_ORPHAN\_PROPERTY
 

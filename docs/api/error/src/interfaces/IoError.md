@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / IoError
+[LiteShip](../../../README.md) / [error/src](../README.md) / IoError
 
 # Interface: IoError
 

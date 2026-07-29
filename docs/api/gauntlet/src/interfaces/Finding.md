@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / Finding
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / Finding
 
 # Interface: Finding
 

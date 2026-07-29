@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / SlotEntryInput
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / SlotEntryInput
 
 # Interface: SlotEntryInput
 

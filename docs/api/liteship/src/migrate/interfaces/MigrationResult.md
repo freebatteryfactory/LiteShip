@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/migrate](../README.md) / MigrationResult
+[LiteShip](../../../../README.md) / [liteship/src/migrate](../README.md) / MigrationResult
 
 # Interface: MigrationResult
 

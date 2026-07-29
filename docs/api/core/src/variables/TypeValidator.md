@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / TypeValidator
+[LiteShip](../../../README.md) / [core/src](../README.md) / TypeValidator
 
 # Variable: TypeValidator
 
 > `const` **TypeValidator**: `object`
 
-Defined in: [core/src/authoring/capsule.ts:271](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L271)
+Defined in: [core/src/authoring/capsule.ts:272](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L272)
 
 Runtime validator that verifies values against kernel schemas.
 

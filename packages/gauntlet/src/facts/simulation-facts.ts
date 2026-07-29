@@ -10,7 +10,7 @@
  * (the CLI's `liteship check gates --ir --simulate` path) runs the scenario corpus through
  * the `@liteship/core/simulation` harness — `replay`/`assertReplayDeterministic` — and
  * hands the engine these flat, already-decided facts. The gate's only job is to
- * FOLD them into Findings at the avionics level (ADR-0012: the lean engine folds
+ * FOLD them into Findings at the avionics level (the lean engine folds
  * facts; the host computes them).
  *
  * THE DETERMINISM SPINE: a replay-DIVERGENCE (two replays of the SAME seed produce

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / DisposeMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / DisposeMessage
 
 # Interface: DisposeMessage
 

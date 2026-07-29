@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / LevelRule
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / LevelRule
 
 # Interface: LevelRule
 

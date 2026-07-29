@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / EdgeTierResult
+[LiteShip](../../../README.md) / [edge/src](../README.md) / EdgeTierResult
 
 # Interface: EdgeTierResult
 

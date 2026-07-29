@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / Err
+[LiteShip](../../../README.md) / [error/src](../README.md) / Err
 
 # Interface: Err\<E\>
 

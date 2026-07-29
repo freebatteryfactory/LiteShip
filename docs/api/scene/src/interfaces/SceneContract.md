@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / SceneContract
+[LiteShip](../../../README.md) / [scene/src](../README.md) / SceneContract
 
 # Interface: SceneContract\<M\>
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / TraceabilityDivergence
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / TraceabilityDivergence
 
 # Interface: TraceabilityDivergence
 

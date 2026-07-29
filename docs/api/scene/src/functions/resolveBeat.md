@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / resolveBeat
+[LiteShip](../../../README.md) / [scene/src](../README.md) / resolveBeat
 
 # Function: resolveBeat()
 

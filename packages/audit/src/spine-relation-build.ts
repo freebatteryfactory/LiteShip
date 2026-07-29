@@ -1,8 +1,8 @@
 /**
  * Spine-relation FACTS builder — the heavy `ts.Program` host that computes the
- * two-axis `SpineRelationFacts` the lean `spineRelationGate` folds (Wave 8.5,
- * ADR-0023: the host produces the facts, the lean gate folds them; @liteship/gauntlet
- * carries no `typescript` dependency, so this work lives here).
+ * two-axis `SpineRelationFacts` the lean `spineRelationGate` folds (Wave 8.5 — the host
+ * produces the facts, the lean gate only folds them; @liteship/gauntlet carries no
+ * `typescript` dependency, so this work lives here).
  *
  * HOW IT OBSERVES THE RELATION (the compiler is the oracle, never a hand-rolled
  * structural comparison — no cheerful holes in the floor). For each admitted mirror
@@ -30,7 +30,7 @@
  * admissions probed in a stable order, no time/random input. Byte-stable facts over
  * unchanged source.
  *
- * POLICY-FREE (ADR-0012): this module names no LiteShip mirror. The host (the devops
+ * POLICY-FREE: this module names no LiteShip mirror. The host (the devops
  * test / the CLI) supplies the admission table; the audit engine only probes it.
  *
  * @module

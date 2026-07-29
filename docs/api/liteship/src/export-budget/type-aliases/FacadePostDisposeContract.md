@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/export-budget](../README.md) / FacadePostDisposeContract
+[LiteShip](../../../../README.md) / [liteship/src/export-budget](../README.md) / FacadePostDisposeContract
 
 # Type Alias: FacadePostDisposeContract
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / tallyBySeverity
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / tallyBySeverity
 
 # Function: tallyBySeverity()
 

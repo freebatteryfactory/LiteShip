@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [CompositorWorker](../README.md) / StartupTelemetry
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [CompositorWorker](../README.md) / StartupTelemetry
 
 # Type Alias: StartupTelemetry
 

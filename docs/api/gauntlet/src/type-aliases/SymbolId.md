@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SymbolId
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SymbolId
 
 # Type Alias: SymbolId
 

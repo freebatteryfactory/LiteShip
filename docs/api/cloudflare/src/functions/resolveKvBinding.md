@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [cloudflare/src](../README.md) / resolveKvBinding
+[LiteShip](../../../README.md) / [cloudflare/src](../README.md) / resolveKvBinding
 
 # Function: resolveKvBinding()
 

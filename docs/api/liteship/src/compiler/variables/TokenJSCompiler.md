@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / TokenJSCompiler
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / TokenJSCompiler
 
 # Variable: TokenJSCompiler
 

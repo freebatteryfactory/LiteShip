@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WGSLStates
+[LiteShip](../../README.md) / [\_spine](../README.md) / WGSLStates
 
 # Type Alias: WGSLStates
 

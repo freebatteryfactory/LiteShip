@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / StructField
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / StructField
 
 # Interface: StructField
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CapsuleCommandDescriptor
+[LiteShip](../../../README.md) / [core/src](../README.md) / CapsuleCommandDescriptor
 
 # Type Alias: CapsuleCommandDescriptor
 

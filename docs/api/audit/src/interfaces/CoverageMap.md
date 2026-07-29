@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / CoverageMap
+[LiteShip](../../../README.md) / [audit/src](../README.md) / CoverageMap
 
 # Interface: CoverageMap
 

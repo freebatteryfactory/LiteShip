@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / listAppResources
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / listAppResources
 
 # Function: listAppResources()
 

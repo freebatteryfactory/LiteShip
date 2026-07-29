@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / pickFacts
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / pickFacts
 
 # Function: pickFacts()
 
 > **pickFacts**(`context`, `requires`): [`FactBundle`](../interfaces/FactBundle.md)
 
-Defined in: [gauntlet/src/gate.ts:1201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1201)
+Defined in: [gauntlet/src/gate.ts:1202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1202)
 
 Pick EXACTLY the declared FactPacks off a context into a [FactBundle](../interfaces/FactBundle.md) — the engine
 seam that hands a [FactGate](../interfaces/FactGate.md)'s [FactGate.decide](../interfaces/FactGate.md#decide) only what it declared. A

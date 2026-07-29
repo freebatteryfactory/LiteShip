@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / Infer
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / Infer
 
 # Type Alias: Infer\<S\>
 

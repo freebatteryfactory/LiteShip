@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / Boundary
+[LiteShip](../../README.md) / [\_spine](../README.md) / Boundary
 
 # Interface: Boundary\<I, S\>
 
-Defined in: [\_spine/core.d.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L255)
+Defined in: [\_spine/core.d.ts:256](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L256)
 
 Immutable threshold partition that maps one numeric input to named states.
 
@@ -26,7 +26,7 @@ Immutable threshold partition that maps one numeric input to named states.
 
 > `readonly` **\_tag**: `"BoundaryDef"`
 
-Defined in: [\_spine/core.d.ts:259](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L259)
+Defined in: [\_spine/core.d.ts:260](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L260)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/core.d.ts:259](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **\_version**: `1`
 
-Defined in: [\_spine/core.d.ts:260](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L260)
+Defined in: [\_spine/core.d.ts:261](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L261)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [\_spine/core.d.ts:260](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **hysteresis?**: `number`
 
-Defined in: [\_spine/core.d.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L265)
+Defined in: [\_spine/core.d.ts:266](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L266)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [\_spine/core.d.ts:265](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **id**: [`ContentAddress`](../type-aliases/ContentAddress.md)
 
-Defined in: [\_spine/core.d.ts:261](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L261)
+Defined in: [\_spine/core.d.ts:262](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L262)
 
 ***
 
@@ -58,7 +58,7 @@ Defined in: [\_spine/core.d.ts:261](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **input**: [`SignalInput`](../type-aliases/SignalInput.md)\<`I`\>
 
-Defined in: [\_spine/core.d.ts:262](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L262)
+Defined in: [\_spine/core.d.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L263)
 
 ***
 
@@ -66,7 +66,7 @@ Defined in: [\_spine/core.d.ts:262](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **spec?**: [`BoundarySpec`](BoundarySpec.md)
 
-Defined in: [\_spine/core.d.ts:266](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L266)
+Defined in: [\_spine/core.d.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L267)
 
 ***
 
@@ -74,7 +74,7 @@ Defined in: [\_spine/core.d.ts:266](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **states**: `S`
 
-Defined in: [\_spine/core.d.ts:264](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L264)
+Defined in: [\_spine/core.d.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L265)
 
 ***
 
@@ -82,4 +82,4 @@ Defined in: [\_spine/core.d.ts:264](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **thresholds**: readonly [`ThresholdValue`](../type-aliases/ThresholdValue.md)[]
 
-Defined in: [\_spine/core.d.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L263)
+Defined in: [\_spine/core.d.ts:264](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L264)

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CellEnvelope
+[LiteShip](../../../README.md) / [core/src](../README.md) / CellEnvelope
 
 # Interface: CellEnvelope\<K, T\>
 

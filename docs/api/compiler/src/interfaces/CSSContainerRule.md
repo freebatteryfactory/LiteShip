@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / CSSContainerRule
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / CSSContainerRule
 
 # Interface: CSSContainerRule
 

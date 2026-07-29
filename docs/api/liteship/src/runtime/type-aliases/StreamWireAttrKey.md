@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / StreamWireAttrKey
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / StreamWireAttrKey
 
 # Type Alias: StreamWireAttrKey
 

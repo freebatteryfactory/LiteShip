@@ -15,8 +15,8 @@
  *     `tests/unit/audit/spine-relation.test.ts`
  * The pins were absorbed only AFTER that gate went green over the three drift fixtures
  * (the S-conflict discipline — never delete a pin ahead of a green gate that subsumes
- * it). This closes Conflict-1 / S5.2. See ADR-0010 (spine as canonical type source)
- * and `docs/plan/convergence-constitution.md` §7.3–7.4.
+ * it). This closes Conflict-1 / S5.2 — the spine is the single source of truth for shared
+ * branded types, and implementation packages re-anchor from it rather than redeclaring.
  *
  * WHAT STAYS HERE, because the relation gate does NOT subsume it:
  *  1. Type-UTILITY / error-PORT asserts that are not a mirror↔runtime relation: the

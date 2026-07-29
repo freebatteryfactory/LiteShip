@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / DIRTY\_FLAGS\_MAX
+[LiteShip](../../../README.md) / [core/src](../README.md) / DIRTY\_FLAGS\_MAX
 
 # Variable: DIRTY\_FLAGS\_MAX
 

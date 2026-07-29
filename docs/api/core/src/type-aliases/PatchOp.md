@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / PatchOp
+[LiteShip](../../../README.md) / [core/src](../README.md) / PatchOp
 
 # Type Alias: PatchOp
 

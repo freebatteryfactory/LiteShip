@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / ProgramTimelineEntry
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / ProgramTimelineEntry
 
 # Interface: ProgramTimelineEntry
 

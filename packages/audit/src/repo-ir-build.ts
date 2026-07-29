@@ -30,7 +30,7 @@
  *         property is supplied by the CLI host through {@link buildRepoIR}'s
  *         `extraFactOracles` hook (the LiteShip-local `NO_DEFAULT_EXPORT` regex
  *         rule lives with the host, which deps `@liteship/command`; the audit engine
- *         stays LiteShip-agnostic — ADR-0012). Where the two disagree at a
+ *         stays LiteShip-agnostic). Where the two disagree at a
  *         `(file, line)` the Step-3 divergence gate reports it (the text oracle
  *         fired on a comment the AST correctly ignores).
  *       - `bare-throw` from the AST oracle (`ts-ast`, `file-proxy-only`): the
@@ -85,7 +85,7 @@ const UTF8 = new TextEncoder();
 
 /**
  * A host-supplied fact oracle — the injection hook that keeps `@liteship/audit`
- * LiteShip-agnostic (ADR-0012). It is a PURE function the host passes to
+ * LiteShip-agnostic. It is a PURE function the host passes to
  * {@link buildRepoIR}: given one source file's raw text + path + owning package,
  * it returns the {@link Fact}s it observes. `buildRepoIR` invokes each injected
  * oracle per file and merges the returned facts into the single IR, knowing
@@ -379,7 +379,7 @@ export function buildRepoIR(profile: DevopsProfile, options: BuildRepoIROptions 
     // ── Host-injected oracles ─────────────────────────────────────────────
     // Invoke every host-supplied FactOracle on this file and merge its facts.
     // The audit engine knows NOTHING about what they check — this is the clean
-    // ADR-0012 boundary: a repo-LOCAL rule set (LiteShip's NO_DEFAULT_EXPORT
+    // host-injection boundary: a repo-LOCAL rule set (LiteShip's NO_DEFAULT_EXPORT
     // invariant-regex oracle, injected by the CLI host) enters the IR here
     // WITHOUT the engine importing it. makeRepoIR rejects a dangling fact, so an
     // oracle that mis-targets its `file` fails loudly, exactly like audit's own.

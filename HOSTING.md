@@ -85,7 +85,7 @@ Note that the hostname blocklist rejects literal private-IP strings (`127.0.0.1`
 
 **Symptom:** You changed a boundary's threshold or values, but the cached output didn't change.
 
-**Cause:** Boundary identity is content-addressed (ADR-0003 — FNV-1a over canonical CBOR). Identity is over the *definition*, not the source location. Edits that don't change the canonical encoding (e.g. reordering keys, renaming a local variable) yield the same hash, and the cache holds.
+**Cause:** Boundary identity is content-addressed (FNV-1a over canonical CBOR). Identity is over the *definition*, not the source location. Edits that don't change the canonical encoding (e.g. reordering keys, renaming a local variable) yield the same hash, and the cache holds.
 
 **Fix:** This is intended. If you actually changed the definition, the hash changes and downstream work re-fires. If you didn't, no work happens — that's the cache doing its job. To force a recompute, change a definition field rather than rearranging unchanged data.
 
@@ -266,7 +266,7 @@ Same browser CSP as [Required CSP directives](#required-csp-directives) above. I
 
 ### KV trust boundary
 
-Treat KV as a host-controlled cache — not a secrets store. A KV entry is keyed by the boundary's content address (`defineBoundary`'s FNV-1a address per ADR-0003), the device tier, the boundary name, and a fingerprint of the resolved theme — so an entry only serves a request whose inputs match. `expirationTtl`, `cacheTtl`, and `prefix` are distinct `cloudflareMiddleware` policies: `expirationTtl` reclaims stored KV entries, `cacheTtl` controls Cloudflare KV edge-cache reads, and `prefix` doubles as a per-deploy content version. A bundled `compile()` whose output depends on build-time content the boundary id does not cover must bump `prefix`. Deploys that change boundary content mint new content addresses, stranding the old keys (never re-read) — Workers KV never evicts and bills storage, so set `expirationTtl` (e.g. `2592000` = 30 days) to reclaim them. Requests whose tier is covered by the manifest are served from the bundle without touching KV at all (`cacheStatus: 'precompiled'`); KV only backs the `compile` fallback path.
+Treat KV as a host-controlled cache — not a secrets store. A KV entry is keyed by the boundary's content address (`defineBoundary`'s FNV-1a address over canonical CBOR), the device tier, the boundary name, and a fingerprint of the resolved theme — so an entry only serves a request whose inputs match. `expirationTtl`, `cacheTtl`, and `prefix` are distinct `cloudflareMiddleware` policies: `expirationTtl` reclaims stored KV entries, `cacheTtl` controls Cloudflare KV edge-cache reads, and `prefix` doubles as a per-deploy content version. A bundled `compile()` whose output depends on build-time content the boundary id does not cover must bump `prefix`. Deploys that change boundary content mint new content addresses, stranding the old keys (never re-read) — Workers KV never evicts and bills storage, so set `expirationTtl` (e.g. `2592000` = 30 days) to reclaim them. Requests whose tier is covered by the manifest are served from the bundle without touching KV at all (`cacheStatus: 'precompiled'`); KV only backs the `compile` fallback path.
 
 ## Responsive media under Save-Data (Astro + Cloudflare)
 
@@ -279,4 +279,4 @@ The middleware merges the responsive `Vary` axis (`Sec-CH-DPR, Save-Data`) into 
 - [SECURITY.md](./SECURITY.md) — full security posture, allowlist details, sanitizer reference
 - [GETTING-STARTED.md](./GETTING-STARTED.md) — install → hello-world boundary → cast to CSS → hydrate through Astro
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — module DAG and projection pipeline
-- [RELEASING.md](./RELEASING.md) — release flow for maintainers (ADR-0011 ShipCapsules)
+- [RELEASING.md](./RELEASING.md) — release flow for maintainers (content-addressed ShipCapsules)

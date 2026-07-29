@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CapsuleCommandDescriptor
+[LiteShip](../../README.md) / [\_spine](../README.md) / CapsuleCommandDescriptor
 
 # Interface: CapsuleCommandDescriptor
 

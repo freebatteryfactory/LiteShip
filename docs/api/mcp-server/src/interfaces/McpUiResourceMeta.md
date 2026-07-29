@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / McpUiResourceMeta
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / McpUiResourceMeta
 
 # Interface: McpUiResourceMeta
 

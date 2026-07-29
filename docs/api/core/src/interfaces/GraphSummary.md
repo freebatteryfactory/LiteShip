@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / GraphSummary
+[LiteShip](../../../README.md) / [core/src](../README.md) / GraphSummary
 
 # Interface: GraphSummary
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / BenchSubjectRole
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / BenchSubjectRole
 
 # Type Alias: BenchSubjectRole
 

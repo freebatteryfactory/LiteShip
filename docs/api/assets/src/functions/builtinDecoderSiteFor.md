@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / builtinDecoderSiteFor
+[LiteShip](../../../README.md) / [assets/src](../README.md) / builtinDecoderSiteFor
 
 # Function: builtinDecoderSiteFor()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / PoseNode
+[LiteShip](../../../README.md) / [core/src](../README.md) / PoseNode
 
 # Interface: PoseNode
 

@@ -156,7 +156,7 @@ export interface BoundaryCache {
   /**
    * Active purge by content address: delete every cached tier × theme variant of
    * one boundary (the passive answer is to mint a new `ContentAddress` and wait
-   * for TTL — see ADR-0017). Requires `KVNamespace.list` + `delete`; without them
+   * for TTL). Requires `KVNamespace.list` + `delete`; without them
    * it emits a diagnostic and returns 0. Resolves to the number of keys deleted.
    */
   invalidateByPath(boundaryId: ContentAddress): Promise<number>;

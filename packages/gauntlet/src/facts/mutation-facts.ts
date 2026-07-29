@@ -11,7 +11,7 @@
  * catalogue, run the covering tests per mutant, decide each kill/survive verdict —
  * and hands the engine these flat, already-decided facts. The gate's only job is to
  * FOLD them into Findings at the right (propagated) assurance level, with the
- * kill-floor deciding which severities BLOCK (ADR-0012: the lean engine folds facts;
+ * kill-floor deciding which severities BLOCK (the lean engine folds facts;
  * the host computes them).
  *
  * THE BIG IDEA. A mutant is a deliberate SECOND ORACLE: where the original and the

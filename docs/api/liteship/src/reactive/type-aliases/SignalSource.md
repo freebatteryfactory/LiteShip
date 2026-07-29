@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / SignalSource
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / SignalSource
 
 # Type Alias: SignalSource
 

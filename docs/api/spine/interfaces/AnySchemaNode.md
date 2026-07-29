@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / AnySchemaNode
+[LiteShip](../../README.md) / [\_spine](../README.md) / AnySchemaNode
 
 # Interface: AnySchemaNode
 
-Defined in: [\_spine/core.d.ts:666](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L666)
+Defined in: [\_spine/core.d.ts:667](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L667)
 
 Any schema AST node.
 
@@ -20,7 +20,7 @@ Any schema AST node.
 
 > `readonly` `optional` **annotations?**: `Readonly`\<`Record`\<`symbol`, `unknown`\>\>
 
-Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
+Defined in: [\_spine/core.d.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L612)
 
 #### Inherited from
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `"any"`
 
-Defined in: [\_spine/core.d.ts:667](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L667)
+Defined in: [\_spine/core.d.ts:668](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L668)

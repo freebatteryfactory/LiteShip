@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / LITESHIP\_IR\_GATES
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / LITESHIP\_IR\_GATES
 
 # Variable: LITESHIP\_IR\_GATES
 

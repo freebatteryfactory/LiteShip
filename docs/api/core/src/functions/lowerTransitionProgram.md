@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / lowerTransitionProgram
+[LiteShip](../../../README.md) / [core/src](../README.md) / lowerTransitionProgram
 
 # Function: lowerTransitionProgram()
 

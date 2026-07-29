@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / RuntimePhase
+[LiteShip](../../../README.md) / [core/src](../README.md) / RuntimePhase
 
 # Type Alias: RuntimePhase
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / installDiagnosticsBridge
+[LiteShip](../../../README.md) / [astro/src](../README.md) / installDiagnosticsBridge
 
 # Function: installDiagnosticsBridge()
 

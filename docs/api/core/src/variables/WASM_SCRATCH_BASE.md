@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / WASM\_SCRATCH\_BASE
+[LiteShip](../../../README.md) / [core/src](../README.md) / WASM\_SCRATCH\_BASE
 
 # Variable: WASM\_SCRATCH\_BASE
 

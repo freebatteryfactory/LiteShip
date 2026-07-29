@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / KilledVerdict
+[LiteShip](../../../README.md) / [audit/src](../README.md) / KilledVerdict
 
 # Interface: KilledVerdict\<M\>
 

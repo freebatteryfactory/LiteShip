@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / UNMEASURED\_WEAK\_LINK\_SEVERITY
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / UNMEASURED\_WEAK\_LINK\_SEVERITY
 
 # Variable: UNMEASURED\_WEAK\_LINK\_SEVERITY
 

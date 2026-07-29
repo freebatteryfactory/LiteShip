@@ -11,7 +11,7 @@
  * each value from a SOURCE call to a SINK call argument over the type-checker +
  * symbol references — and hands the engine these flat, already-traced facts. The
  * gate's only job is to FOLD them into Findings at the right (propagated)
- * assurance level (ADR-0012: the lean engine folds facts; the host computes them;
+ * assurance level (the lean engine folds facts; the host computes them;
  * the LiteShip policy is host-injected, never baked into the published engine).
  *
  * THE BIG IDEA. An untrusted SOURCE (a shader-source fetch, an AI-cast proposal,

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PackageJsonLite
+[LiteShip](../../../README.md) / [command/src](../README.md) / PackageJsonLite
 
 # Interface: PackageJsonLite
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [HLC](../README.md) / Clock
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [HLC](../README.md) / Clock
 
 # Type Alias: Clock
 

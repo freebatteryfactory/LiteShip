@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / TupleNode
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / TupleNode
 
 # Interface: TupleNode
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / StateName
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / StateName
 
 # Variable: StateName
 

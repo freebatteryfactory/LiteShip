@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / SlotPath
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / SlotPath
 
 # Type Alias: SlotPath
 

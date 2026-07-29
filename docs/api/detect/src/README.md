@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / detect/src
+[LiteShip](../../README.md) / detect/src
 
 # detect/src
 

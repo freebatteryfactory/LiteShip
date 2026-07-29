@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [worker/src](../README.md) / CompositorWorkerState
+[LiteShip](../../../README.md) / [worker/src](../README.md) / CompositorWorkerState
 
 # Type Alias: CompositorWorkerState
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / parseTokenBlocks
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / parseTokenBlocks
 
 # Function: parseTokenBlocks()
 

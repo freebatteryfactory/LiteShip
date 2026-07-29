@@ -3,7 +3,7 @@
  * enforces over pnpm-lock.yaml + the workspace deps (Slice C, the avionics
  * tier).
  *
- * The POLICY is DATA, not code (ADR-0012, the same shape as the audit
+ * The POLICY is DATA, not code (the same shape as the audit
  * `DevopsProfile` and `auditAllowlist`): a {@link LockfilePolicy} record names
  * the allowed registries, whether non-registry resolutions are permitted, and an
  * ALLOWLIST of dependencies sanctioned to carry a prerelease/range specifier
@@ -37,7 +37,7 @@ export interface PrereleaseException {
   readonly reason: string;
 }
 
-/** The host-injectable lockfile policy (DATA — ADR-0012). */
+/** The host-injectable lockfile policy (DATA the host supplies, never engine code). */
 export interface LockfilePolicy {
   /**
    * Whether non-registry resolutions (git / tarball / directory) are allowed.

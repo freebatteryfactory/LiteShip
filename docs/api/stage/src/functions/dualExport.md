@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [stage/src](../README.md) / dualExport
+[LiteShip](../../../README.md) / [stage/src](../README.md) / dualExport
 
 # Function: dualExport()
 

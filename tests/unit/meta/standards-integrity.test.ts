@@ -774,7 +774,11 @@ describe('MULTI-COMMIT PUSH GAP — the push base must be github.event.before, n
     return (await git(repo, ['rev-parse', 'HEAD'])).trim();
   }
 
-  test('RED: diff vs HEAD~1 MISSES a weakening introduced 2 commits back; GREEN: diff vs the before-SHA CATCHES it', async () => {
+  test(
+    'RED: diff vs HEAD~1 MISSES a weakening introduced 2 commits back; GREEN: diff vs the before-SHA CATCHES it',
+    // Seven real git spawns on a loaded Windows runner overrun vitest's 10s default.
+    { timeout: scaledTimeout(30_000) },
+    async () => {
     const repo = await initRepo('main');
     try {
       // The PRE-PUSH tip (`before`): the STRONG floor (value 100). This is the SHA the ref
@@ -816,7 +820,11 @@ describe('MULTI-COMMIT PUSH GAP — the push base must be github.event.before, n
     }
   });
 
-  test('BOOTSTRAP: an all-zeros before-SHA falls through to main (fail-closed if main lacks the snapshot)', async () => {
+  test(
+    'BOOTSTRAP: an all-zeros before-SHA falls through to main (fail-closed if main lacks the snapshot)',
+    // Same real-git fixture as the drill above; scale past the 10s default.
+    { timeout: scaledTimeout(30_000) },
+    async () => {
     // The brand-new-branch first push: github.event.before is the all-zeros sentinel. The
     // resolver must NOT pass it to git — it falls through to main. In a temp repo with no
     // `main` snapshot reachable, the base read FAILS CLOSED (refuse), never a silent pass.

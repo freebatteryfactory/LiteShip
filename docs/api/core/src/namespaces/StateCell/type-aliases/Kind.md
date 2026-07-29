@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [StateCell](../README.md) / Kind
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [StateCell](../README.md) / Kind
 
 # Type Alias: Kind
 

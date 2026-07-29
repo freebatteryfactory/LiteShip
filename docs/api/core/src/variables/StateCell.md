@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / StateCell
+[LiteShip](../../../README.md) / [core/src](../README.md) / StateCell
 
 # Variable: StateCell
 

@@ -161,7 +161,7 @@ function validateReceiptedMutationFaults(
 }
 
 function computeId(contract: Omit<CapsuleContract<AssemblyKind, unknown, unknown, unknown>, 'id'>): ContentAddress {
-  // ADR-0003: route through CanonicalCbor to obtain a deterministic byte
+  // Route through CanonicalCbor to obtain a deterministic byte
   // sequence (RFC 8949 §4.2.1) before hashing. Stable across key order,
   // platform endianness, and stringification quirks.
   const canonicalBytes = CanonicalCbor.encode({
@@ -199,7 +199,7 @@ export function defineCapsule<
         '`run` function — invariants are type-only without one. Add `run: (input) => ...` to enable runtime validation against your invariants.',
     });
   }
-  // receiptedMutation discriminated requirement (ADR-0011 amendment): a
+  // receiptedMutation discriminated requirement: a
   // receipted mutation MUST EITHER expose a pure `mutate` core (driving real
   // idempotency / audit / fault-injection tests) OR explicitly declare a typed
   // `receiptKind: 'effect-outcome'` exemption WITH a non-empty `reason`. Having
@@ -241,7 +241,7 @@ export function defineCapsule<
     }
   }
 
-  // policyGate mandatory-`decide` requirement (ADR-0008 amendment): a policyGate
+  // policyGate mandatory-`decide` requirement: a policyGate
   // is a permission/authz check — its whole job is to resolve a verdict against a
   // subject. A policyGate with NO `decide` core has no decision to drive, so the
   // allow/deny coverage, reason-chain integrity, and determinism checks would have

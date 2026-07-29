@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / isProjectableError
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / isProjectableError
 
 # Function: isProjectableError()
 

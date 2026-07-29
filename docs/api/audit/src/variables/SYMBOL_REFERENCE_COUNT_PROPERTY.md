@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / SYMBOL\_REFERENCE\_COUNT\_PROPERTY
+[LiteShip](../../../README.md) / [audit/src](../README.md) / SYMBOL\_REFERENCE\_COUNT\_PROPERTY
 
 # Variable: SYMBOL\_REFERENCE\_COUNT\_PROPERTY
 

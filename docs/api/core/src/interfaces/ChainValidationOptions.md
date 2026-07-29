@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ChainValidationOptions
+[LiteShip](../../../README.md) / [core/src](../README.md) / ChainValidationOptions
 
 # Interface: ChainValidationOptions
 

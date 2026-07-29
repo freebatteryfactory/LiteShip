@@ -16,8 +16,9 @@
  *  - NO AMBIENT CI AUTHORITY: no long-lived publish secret (`NPM_TOKEN`, …) in
  *    the workflows — publish authority is the short-lived OIDC token only.
  *
- * LEAN BY CONSTRUCTION (ADR-0012): the gate parses NO YAML, decodes NO CBOR, and
- * touches NO workspace. The HOST (the CLI's `@liteship/cli` analyzer) computes the
+ * LEAN BY CONSTRUCTION (the published engine carries no heavy dependency, so it stays
+ * installable downstream and every LiteShip-specific decision stays with the host): the
+ * gate parses NO YAML, decodes NO CBOR, and touches NO workspace. The HOST (the CLI's `@liteship/cli` analyzer) computes the
  * facts and injects them via {@link GateContext.supplyChain}; this gate only
  * folds. An ABSENT fact family is reported as an HONEST advisory "not-evidenced"
  * finding (a host that supplied no supply-chain facts at all gets four

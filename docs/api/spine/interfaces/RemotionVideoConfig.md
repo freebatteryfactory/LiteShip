@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / RemotionVideoConfig
+[LiteShip](../../README.md) / [\_spine](../README.md) / RemotionVideoConfig
 
 # Interface: RemotionVideoConfig
 

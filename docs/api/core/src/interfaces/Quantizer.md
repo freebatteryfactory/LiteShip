@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Quantizer
+[LiteShip](../../../README.md) / [core/src](../README.md) / Quantizer
 
 # Interface: Quantizer\<B\>
 

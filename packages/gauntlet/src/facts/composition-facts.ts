@@ -12,7 +12,7 @@
  * decides which units are individually tested, and decides which edges an
  * integration test exercises TOGETHER, then hands the engine these flat,
  * already-decided facts. The gate's only job is to FOLD the uncovered edges into
- * Findings at the edge's (propagated) level (ADR-0012: the lean engine folds facts;
+ * Findings at the edge's (propagated) level (the lean engine folds facts;
  * the host computes them).
  *
  * THE BIG IDEA + ITS EXACT DEFINITION (honesty about what is computed). Two units

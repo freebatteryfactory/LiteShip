@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / validateSnapshotSignalsField
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / validateSnapshotSignalsField
 
 # Function: validateSnapshotSignalsField()
 

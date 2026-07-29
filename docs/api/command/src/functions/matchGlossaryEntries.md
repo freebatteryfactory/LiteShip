@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / matchGlossaryEntries
+[LiteShip](../../../README.md) / [command/src](../README.md) / matchGlossaryEntries
 
 # Function: matchGlossaryEntries()
 

@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Easing](../README.md) / Fns
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Easing](../README.md) / Fns
 
 # Interface: Fns
 
-Defined in: [\_spine/core.d.ts:381](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L381)
+Defined in: [\_spine/core.d.ts:382](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L382)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [\_spine/core.d.ts:381](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **ease**: [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:390](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L390)
+Defined in: [\_spine/core.d.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L391)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [\_spine/core.d.ts:390](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **easeIn**: [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L391)
+Defined in: [\_spine/core.d.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L392)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [\_spine/core.d.ts:391](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **easeInCubic**: [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L383)
+Defined in: [\_spine/core.d.ts:384](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L384)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/core.d.ts:383](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **easeInOut**: [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L393)
+Defined in: [\_spine/core.d.ts:394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L394)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [\_spine/core.d.ts:393](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **easeInOutCubic**: [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:385](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L385)
+Defined in: [\_spine/core.d.ts:386](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L386)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [\_spine/core.d.ts:385](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **easeOut**: [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L392)
+Defined in: [\_spine/core.d.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L393)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [\_spine/core.d.ts:392](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **easeOutBack**: [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L387)
+Defined in: [\_spine/core.d.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L388)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [\_spine/core.d.ts:387](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **easeOutBounce**: [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L389)
+Defined in: [\_spine/core.d.ts:390](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L390)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [\_spine/core.d.ts:389](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **easeOutCubic**: [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:384](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L384)
+Defined in: [\_spine/core.d.ts:385](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L385)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [\_spine/core.d.ts:384](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **easeOutElastic**: [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L388)
+Defined in: [\_spine/core.d.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L389)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [\_spine/core.d.ts:388](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **easeOutExpo**: [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:386](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L386)
+Defined in: [\_spine/core.d.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L387)
 
 ***
 
@@ -102,7 +102,7 @@ Defined in: [\_spine/core.d.ts:386](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **linear**: [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:382](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L382)
+Defined in: [\_spine/core.d.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L383)
 
 ## Methods
 
@@ -110,7 +110,7 @@ Defined in: [\_spine/core.d.ts:382](https://github.com/freebatteryfactory/LiteSh
 
 > **cubicBezier**(`x1`, `y1`, `x2`, `y2`): [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L395)
+Defined in: [\_spine/core.d.ts:396](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L396)
 
 #### Parameters
 
@@ -140,7 +140,7 @@ Defined in: [\_spine/core.d.ts:395](https://github.com/freebatteryfactory/LiteSh
 
 > **easingToLinearCSS**(`fn`, `sampleCount?`): `string`
 
-Defined in: [\_spine/core.d.ts:396](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L396)
+Defined in: [\_spine/core.d.ts:397](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L397)
 
 #### Parameters
 
@@ -162,7 +162,7 @@ Defined in: [\_spine/core.d.ts:396](https://github.com/freebatteryfactory/LiteSh
 
 > **spring**(`config`): [`Fn`](../type-aliases/Fn.md)
 
-Defined in: [\_spine/core.d.ts:394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L394)
+Defined in: [\_spine/core.d.ts:395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L395)
 
 #### Parameters
 
@@ -180,7 +180,7 @@ Defined in: [\_spine/core.d.ts:394](https://github.com/freebatteryfactory/LiteSh
 
 > **springNaturalDuration**(`config`, `epsilon?`): `number`
 
-Defined in: [\_spine/core.d.ts:398](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L398)
+Defined in: [\_spine/core.d.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L399)
 
 #### Parameters
 
@@ -202,7 +202,7 @@ Defined in: [\_spine/core.d.ts:398](https://github.com/freebatteryfactory/LiteSh
 
 > **springToLinearCSS**(`config`, `sampleCount?`): `string`
 
-Defined in: [\_spine/core.d.ts:397](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L397)
+Defined in: [\_spine/core.d.ts:398](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L398)
 
 #### Parameters
 

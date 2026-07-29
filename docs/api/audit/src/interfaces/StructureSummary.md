@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / StructureSummary
+[LiteShip](../../../README.md) / [audit/src](../README.md) / StructureSummary
 
 # Interface: StructureSummary
 

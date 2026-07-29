@@ -39,7 +39,7 @@ interface BoundaryDef<
 
 /**
  * Compute the content address for a boundary synchronously.
- * FNV-1a hash of the RFC 8949 §4.2.1 canonical CBOR encoding (ADR-0003).
+ * FNV-1a hash of the RFC 8949 §4.2.1 canonical CBOR encoding.
  * Cross-machine stable: identical definitions produce byte-identical IDs.
  */
 function deterministicId(

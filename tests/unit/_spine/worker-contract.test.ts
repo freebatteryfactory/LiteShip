@@ -3,7 +3,8 @@
  * `@liteship/worker` runtime contract.
  *
  * `packages/_spine/worker.d.ts` is a hand-authored type mirror that
- * published packages treat as the canonical worker type contract (ADR-0010).
+ * published packages treat as the canonical worker type contract (the spine is
+ * the single source of truth for shared declaration contracts).
  * The worker runtime does NOT re-anchor from the spine — the spine is a pure
  * mirror, never imported back — so nothing keeps the two honest except this
  * suite. It silently drifted once (the worker split into compositor-types /

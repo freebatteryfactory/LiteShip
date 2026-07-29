@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / SSEEventSource
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / SSEEventSource
 
 # Interface: SSEEventSource
 
-Defined in: web/dist/stream/sse.d.ts:23
+Defined in: web/dist/stream/sse.d.ts:24
 
 The EventSource surface the SSE client actually drives (assign, onmessage,
 onerror, close). Named so the dependency is structural rather than ambient:
@@ -19,7 +19,7 @@ drift between consumer and double breaks the build.
 
 > **onerror**: ((`event`) => `void`) \| `null`
 
-Defined in: web/dist/stream/sse.d.ts:25
+Defined in: web/dist/stream/sse.d.ts:26
 
 ***
 
@@ -27,7 +27,7 @@ Defined in: web/dist/stream/sse.d.ts:25
 
 > **onmessage**: ((`event`) => `void`) \| `null`
 
-Defined in: web/dist/stream/sse.d.ts:24
+Defined in: web/dist/stream/sse.d.ts:25
 
 ## Methods
 
@@ -35,7 +35,7 @@ Defined in: web/dist/stream/sse.d.ts:24
 
 > **close**(): `void`
 
-Defined in: web/dist/stream/sse.d.ts:26
+Defined in: web/dist/stream/sse.d.ts:27
 
 #### Returns
 

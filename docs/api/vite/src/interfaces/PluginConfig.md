@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / PluginConfig
+[LiteShip](../../../README.md) / [vite/src](../README.md) / PluginConfig
 
 # Interface: PluginConfig
 

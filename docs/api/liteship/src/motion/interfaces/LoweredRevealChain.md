@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / LoweredRevealChain
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / LoweredRevealChain
 
 # Interface: LoweredRevealChain
 

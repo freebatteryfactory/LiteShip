@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / McpToolDescriptor
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / McpToolDescriptor
 
 # Interface: McpToolDescriptor
 

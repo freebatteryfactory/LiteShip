@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / StyleCSSResult
+[LiteShip](../../README.md) / [\_spine](../README.md) / StyleCSSResult
 
 # Interface: StyleCSSResult
 

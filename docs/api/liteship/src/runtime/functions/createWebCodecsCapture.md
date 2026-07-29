@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / createWebCodecsCapture
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / createWebCodecsCapture
 
 # Function: createWebCodecsCapture()
 

@@ -87,7 +87,7 @@ export interface ShipVerifyChecks {
   readonly chain_link: 'skipped';
 }
 
-/** Receipt emitted by `liteship verify` per ADR-0011. Verdict drives exit code. */
+/** Receipt emitted by `liteship verify`. Verdict drives exit code. */
 export interface ShipVerifyReceipt extends BaseReceipt {
   readonly command: 'verify';
   readonly verdict: 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';

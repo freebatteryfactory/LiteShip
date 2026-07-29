@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / Entity
+[LiteShip](../../README.md) / [\_spine](../README.md) / Entity
 
 # Interface: Entity\<P\>
 
-Defined in: [\_spine/core.d.ts:748](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L748)
+Defined in: [\_spine/core.d.ts:749](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L749)
 
 Immutable snapshot view of one entity.
 
@@ -22,7 +22,7 @@ Immutable snapshot view of one entity.
 
 > `readonly` **id**: [`EntityId`](../type-aliases/EntityId.md)
 
-Defined in: [\_spine/core.d.ts:749](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L749)
+Defined in: [\_spine/core.d.ts:750](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L750)
 
 ## Methods
 
@@ -30,7 +30,7 @@ Defined in: [\_spine/core.d.ts:749](https://github.com/freebatteryfactory/LiteSh
 
 > **get**\<`Q`\>(`part`): [`PartValue`](../type-aliases/PartValue.md)\<`Q`\>
 
-Defined in: [\_spine/core.d.ts:750](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L750)
+Defined in: [\_spine/core.d.ts:751](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L751)
 
 #### Type Parameters
 

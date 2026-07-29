@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / StandardJsonSchemaProjection
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / StandardJsonSchemaProjection
 
 # Interface: StandardJsonSchemaProjection\<I, A\>
 

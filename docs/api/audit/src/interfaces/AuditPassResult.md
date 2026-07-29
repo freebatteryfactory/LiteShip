@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / AuditPassResult
+[LiteShip](../../../README.md) / [audit/src](../README.md) / AuditPassResult
 
 # Interface: AuditPassResult
 

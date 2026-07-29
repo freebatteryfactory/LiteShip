@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / lspRoutedMethodNames
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / lspRoutedMethodNames
 
 # Function: lspRoutedMethodNames()
 

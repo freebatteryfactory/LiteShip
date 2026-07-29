@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / plugin
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / plugin
 
 # Function: plugin()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / AIManifest
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / AIManifest
 
 # Interface: AIManifest
 

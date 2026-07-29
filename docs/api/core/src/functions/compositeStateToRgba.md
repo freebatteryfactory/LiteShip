@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / compositeStateToRgba
+[LiteShip](../../../README.md) / [core/src](../README.md) / compositeStateToRgba
 
 # Function: compositeStateToRgba()
 

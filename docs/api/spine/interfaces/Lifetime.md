@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / Lifetime
+[LiteShip](../../README.md) / [\_spine](../README.md) / Lifetime
 
 # Interface: Lifetime
 
-Defined in: [\_spine/core.d.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L152)
+Defined in: [\_spine/core.d.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L153)
 
 Lifetime — the disposal primitive that replaces `Scope`/`ManagedRuntime` at the
 shed seams. Owns a LIFO finalizer stack disposed exactly once; `signal` projects
@@ -18,7 +18,7 @@ cancellation, and `dispose()` settles once every async finalizer settles.
 
 > `readonly` **\_tag**: `"Lifetime"`
 
-Defined in: [\_spine/core.d.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L153)
+Defined in: [\_spine/core.d.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L154)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [\_spine/core.d.ts:153](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **add**: (`finalizer`) => () => `void`
 
-Defined in: [\_spine/core.d.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L159)
+Defined in: [\_spine/core.d.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L160)
 
 Register a finalizer (LIFO); returns an unregister handle. Runs now if already disposed.
 
@@ -46,7 +46,7 @@ Register a finalizer (LIFO); returns an unregister handle. Runs now if already d
 
 > `readonly` **dispose**: () => `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L161)
+Defined in: [\_spine/core.d.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L162)
 
 Run every finalizer once in LIFO order; the returned promise settles once async finalizers settle.
 
@@ -60,7 +60,7 @@ Run every finalizer once in LIFO order; the returned promise settles once async 
 
 > `readonly` **disposed**: `boolean`
 
-Defined in: [\_spine/core.d.ts:155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L155)
+Defined in: [\_spine/core.d.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L156)
 
 True once `dispose()` has been initiated (flips synchronously).
 
@@ -70,6 +70,6 @@ True once `dispose()` has been initiated (flips synchronously).
 
 > `readonly` **signal**: [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
 
-Defined in: [\_spine/core.d.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L157)
+Defined in: [\_spine/core.d.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L158)
 
 An `AbortSignal` that aborts synchronously when `dispose()` begins.

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / BoundarySpec
+[LiteShip](../../../README.md) / [core/src](../README.md) / BoundarySpec
 
 # Interface: BoundarySpec
 

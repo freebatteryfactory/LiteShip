@@ -2,12 +2,12 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / TypeExportKind
+[LiteShip](../../../README.md) / [audit/src](../README.md) / TypeExportKind
 
 # Type Alias: TypeExportKind
 
 > **TypeExportKind** = `"interface"` \| `"type"` \| `"enum"` \| `"namespace"`
 
-Defined in: [audit/src/type-export-surface.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L43)
+Defined in: [audit/src/type-export-surface.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L45)
 
 The kinds of TYPE-meaning export the surface tracks.

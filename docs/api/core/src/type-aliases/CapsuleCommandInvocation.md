@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CapsuleCommandInvocation
+[LiteShip](../../../README.md) / [core/src](../README.md) / CapsuleCommandInvocation
 
 # Type Alias: CapsuleCommandInvocation
 

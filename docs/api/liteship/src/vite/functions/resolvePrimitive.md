@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / resolvePrimitive
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / resolvePrimitive
 
 # Function: resolvePrimitive()
 

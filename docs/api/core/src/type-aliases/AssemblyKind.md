@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / AssemblyKind
+[LiteShip](../../../README.md) / [core/src](../README.md) / AssemblyKind
 
 # Type Alias: AssemblyKind
 

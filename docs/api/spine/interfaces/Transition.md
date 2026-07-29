@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / Transition
+[LiteShip](../../README.md) / [\_spine](../README.md) / Transition
 
 # Interface: Transition\<B\>
 

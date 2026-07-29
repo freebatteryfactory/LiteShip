@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / HandledCommand
+[LiteShip](../../../README.md) / [command/src](../README.md) / HandledCommand
 
 # Interface: HandledCommand
 

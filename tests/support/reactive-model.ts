@@ -75,7 +75,7 @@
  * effect beyond the `disposed` flag. Foundation-A's capture of the CURRENT impl
  * will show scope-close DOES complete streams; that captured coupling is the
  * evidence Wave 6 pins into a product law (the differential oracle then checks
- * it). See `docs/plan/scar-ledger.md` (Wave 6 seed) / `remaining-waves.md`.
+ * it).
  *
  * TraceValue is `number` — exactly the value type the law-table tests exercise
  * (`cell-kernel.test.ts` drives numeric channels throughout). Richer value types

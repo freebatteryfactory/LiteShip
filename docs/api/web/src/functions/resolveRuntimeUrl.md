@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / resolveRuntimeUrl
+[LiteShip](../../../README.md) / [web/src](../README.md) / resolveRuntimeUrl
 
 # Function: resolveRuntimeUrl()
 

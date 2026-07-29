@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / validateGraph
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / validateGraph
 
 # Function: validateGraph()
 

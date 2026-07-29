@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [RuntimeCoordinator](../README.md) / Phase
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [RuntimeCoordinator](../README.md) / Phase
 
 # Type Alias: Phase
 

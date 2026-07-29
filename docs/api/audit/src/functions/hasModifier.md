@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / hasModifier
+[LiteShip](../../../README.md) / [audit/src](../README.md) / hasModifier
 
 # Function: hasModifier()
 

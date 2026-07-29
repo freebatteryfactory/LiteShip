@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / defaultDecodeP95MsFor
+[LiteShip](../../../README.md) / [assets/src](../README.md) / defaultDecodeP95MsFor
 
 # Function: defaultDecodeP95MsFor()
 

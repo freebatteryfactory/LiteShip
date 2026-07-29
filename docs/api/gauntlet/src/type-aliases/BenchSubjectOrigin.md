@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / BenchSubjectOrigin
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / BenchSubjectOrigin
 
 # Type Alias: BenchSubjectOrigin
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / createBlendTree
+[LiteShip](../../../README.md) / [core/src](../README.md) / createBlendTree
 
 # Function: createBlendTree()
 

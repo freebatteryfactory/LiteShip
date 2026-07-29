@@ -79,8 +79,10 @@ const PAR_META: CellMeta = {
 
 /**
  * A mixed-easing OVERLAPPING `par` on ONE target `hero`: opacity tweens `linear`, `--liteship-hero-y`
- * tweens `ease`, both over the shared window. The lowerer denies this native ownership (#148,
- * ADR-0041); the compiler emits no `liteship-motion-*` binding, so a CAPABLE browser reports no native
+ * tweens `ease`, both over the shared window. The lowerer denies this native ownership (#148 — one
+ * per-keyframe `animation-timing-function` cannot serve two curves over one overlapping segment, so the
+ * differently-eased composed case routes to the per-window runtime floor instead of a native
+ * `@keyframes`); the compiler emits no `liteship-motion-*` binding, so a CAPABLE browser reports no native
  * ownership (getComputedStyle carries no liteship-motion name) and the per-window RUNTIME floor renders
  * each child at its OWN easing. Returns the serialized program the directive drives PLUS the plan's
  * `css` (so the test derives the element's real animation-name from the compiled output — a true
@@ -415,7 +417,7 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
   test('#148 E2E: a mixed-easing par is denied native ownership, so a capable browser runs the floor for BOTH children', () => {
     // The full core → compiler → runtime chain. The lowerer denies the mixed-easing par native
     // ownership; the compiler emits no `liteship-motion-*` binding; a CAPABLE browser therefore reports
-    // no native ownership and the per-window floor renders each child at its OWN easing (ADR-0041).
+    // no native ownership and the per-window floor renders each child at its OWN easing.
     const { serialized, css } = buildMixedEasingParProgram();
     expect(css.nativeTimeline).toEqual({ eligible: false, reason: 'mixed-easing-overlap' });
 

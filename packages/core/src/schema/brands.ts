@@ -43,11 +43,11 @@ export type ContentAddress = _ContentAddress;
 
 /**
  * Cryptographic content digest brand. Format: `sha256:<64-hex>` or `blake3:<64-hex>`.
- * The algorithmic complement to ContentAddress for external/release artifacts (ADR-0011).
+ * The algorithmic complement to ContentAddress for external/release artifacts.
  */
 export type IntegrityDigest = _IntegrityDigest;
 
-/** Pair of identity hash + cryptographic digest over the same canonical bytes (ADR-0011). */
+/** Pair of identity hash + cryptographic digest over the same canonical bytes. */
 export type AddressedDigest = _AddressedDigest;
 
 /** Branded token reference name */
@@ -87,7 +87,7 @@ const CONTENT_ADDRESS_RE = /^fnv1a:[0-9a-f]{8}$/;
 
 /**
  * `sha256:`/`blake3:` + exactly 64 lowercase hex — the full width of a 256-bit
- * cryptographic digest (ADR-0011). Only these two algorithms are sanctioned.
+ * cryptographic digest. Only these two algorithms are sanctioned.
  */
 const INTEGRITY_DIGEST_RE = /^(?:sha256|blake3):[0-9a-f]{64}$/;
 

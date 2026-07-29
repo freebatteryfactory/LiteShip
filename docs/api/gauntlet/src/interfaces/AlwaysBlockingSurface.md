@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / AlwaysBlockingSurface
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / AlwaysBlockingSurface
 
 # Interface: AlwaysBlockingSurface
 

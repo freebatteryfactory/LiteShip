@@ -1,5 +1,6 @@
 /**
- * End-to-end verdicts for `liteship verify` (ADR-0011 §Decision item 5).
+ * End-to-end verdicts for `liteship verify` — the four-verdict contract, where
+ * "Unknown" is a first-class outcome (no capsule means we cannot tell you).
  *
  *   - Verified (exit 0): tarball + matching capsule.
  *   - Mismatch (exit 2): capsule whose tarball_manifest_address differs from

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / CompiledGLSLOutput
+[LiteShip](../../../README.md) / [edge/src](../README.md) / CompiledGLSLOutput
 
 # Interface: CompiledGLSLOutput
 

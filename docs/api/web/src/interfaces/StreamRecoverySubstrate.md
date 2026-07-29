@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / StreamRecoverySubstrate
+[LiteShip](../../../README.md) / [web/src](../README.md) / StreamRecoverySubstrate
 
 # Interface: StreamRecoverySubstrate
 

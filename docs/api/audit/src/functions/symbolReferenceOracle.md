@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / symbolReferenceOracle
+[LiteShip](../../../README.md) / [audit/src](../README.md) / symbolReferenceOracle
 
 # Function: symbolReferenceOracle()
 

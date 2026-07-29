@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / EventsInChannel
+[LiteShip](../../README.md) / [\_spine](../README.md) / EventsInChannel
 
 # Type Alias: EventsInChannel\<Channel\>
 

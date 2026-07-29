@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / enumeratePackageTypeExports
+[LiteShip](../../../README.md) / [audit/src](../README.md) / enumeratePackageTypeExports
 
 # Function: enumeratePackageTypeExports()
 
 > **enumeratePackageTypeExports**(`entryFile`, `reader?`): readonly [`TypeExportDescriptor`](../interfaces/TypeExportDescriptor.md)[]
 
-Defined in: [audit/src/type-export-surface.ts:273](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L273)
+Defined in: [audit/src/type-export-surface.ts:275](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L275)
 
 Enumerate a package's PUBLIC type surface from `entryFile`, following relative
 `export *` re-exports AND resolving the TYPE half of plain named re-exports

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / TransitionNode
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / TransitionNode
 
 # Interface: TransitionNode
 

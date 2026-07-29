@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / loadDocsMcpBundle
+[LiteShip](../../../README.md) / [astro/src](../README.md) / loadDocsMcpBundle
 
 # Function: loadDocsMcpBundle()
 

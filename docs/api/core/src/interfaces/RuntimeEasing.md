@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / RuntimeEasing
+[LiteShip](../../../README.md) / [core/src](../README.md) / RuntimeEasing
 
 # Interface: RuntimeEasing
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / LITESHIP\_CHECK\_METHOD
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / LITESHIP\_CHECK\_METHOD
 
 # Variable: LITESHIP\_CHECK\_METHOD
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ResumptionConfig
+[LiteShip](../../README.md) / [\_spine](../README.md) / ResumptionConfig
 
 # Interface: ResumptionConfig
 

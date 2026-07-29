@@ -1,5 +1,5 @@
 /**
- * Deterministic source-layout census for ADR-0045 domain directories.
+ * Deterministic source-layout census for governed domain directories.
  *
  * A directory facade is an entry surface, not a content module. A governed
  * domain directory therefore needs at least two non-facade source modules.

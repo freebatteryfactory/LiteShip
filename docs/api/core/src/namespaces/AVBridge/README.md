@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [core/src](../../README.md) / AVBridge
+[LiteShip](../../../../README.md) / [core/src](../../README.md) / AVBridge
 
 # AVBridge
 

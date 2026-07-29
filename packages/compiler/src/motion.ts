@@ -421,7 +421,7 @@ function emitViewTimeline(
   // emits NO `@supports (animation-timeline)` ownership block: without an `animation-name`
   // binding `getComputedStyle(el).animationName` carries no `liteship-motion-*` name, so the
   // Astro runtime's `nativeTimelineOwnsElement` stays false and the per-window runtime floor
-  // renders each child at its own easing (ADR-0041). The no-support transition fallback still
+  // renders each child at its own easing. The no-support transition fallback still
   // ships for browsers lacking `animation-timeline` (where the floor already owns rendering).
   if (!plan.nativeTimeline.eligible) return fallback;
 
@@ -461,7 +461,7 @@ function emitScrollRootTimeline(
   ].join('\n');
 
   // See emitViewTimeline: a plan denied native ownership (#148) emits only the no-support
-  // fallback, leaving the per-window runtime floor to own rendering (ADR-0041).
+  // fallback, leaving the per-window runtime floor to own rendering.
   if (!plan.nativeTimeline.eligible) return fallback;
 
   const supported = [

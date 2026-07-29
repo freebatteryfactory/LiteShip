@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / facadeExportBudgetGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / facadeExportBudgetGate
 
 # Variable: facadeExportBudgetGate
 
 > `const` **facadeExportBudgetGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/facade-export-budget.ts:619](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/facade-export-budget.ts#L619)
+Defined in: [gauntlet/src/gates/facade-export-budget.ts:621](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/facade-export-budget.ts#L621)
 
 The facade-export-budget gate — the curated-root guardrail. Self-proves via a
 synthetic allowlist + built surface: an unlisted export OR a dropped export reds

@@ -2,15 +2,15 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ShipCapsule
+[LiteShip](../../../README.md) / [core/src](../README.md) / ShipCapsule
 
 # Variable: ShipCapsule
 
 > `const` **ShipCapsule**: `object`
 
-Defined in: [core/src/authoring/ship-capsule.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/ship-capsule.ts#L216)
+Defined in: [core/src/authoring/ship-capsule.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/ship-capsule.ts#L219)
 
-Public namespace for ShipCapsule (ADR-0011). `make` builds a capsule from
+Public namespace for ShipCapsule. `make` builds a capsule from
 input (sync), `canonicalize` encodes it as canonical CBOR for transport /
 hashing, `decode` round-trips canonical bytes and returns a `Result`
 (`@liteship/error`) that rejects non-canonical encodings AND unknown

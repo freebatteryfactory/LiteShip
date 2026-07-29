@@ -130,7 +130,7 @@ describe('B5b — no package-graph poisoning', () => {
     //     only @liteship/error + fast-glob, so audit → gauntlet is acyclic;
     //   • @liteship/canonical — the blake3 content-address kernel for per-file digests
     //     (deps only @liteship/error + @noble/hashes), acyclic.
-    // The audit engine references NO LiteShip-local contract (ADR-0012): it must
+    // The audit engine references NO LiteShip-local contract: it must
     // NOT import @liteship/command — not even the pure `/invariants` subpath — because
     // that bakes LiteShip-LOCAL config (the NO_DEFAULT_EXPORT rule + its exclude
     // list) into the downstream-installable engine. The repo-IR builder emits only

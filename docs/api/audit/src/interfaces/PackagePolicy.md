@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / PackagePolicy
+[LiteShip](../../../README.md) / [audit/src](../README.md) / PackagePolicy
 
 # Interface: PackagePolicy
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / AssetRegistry
+[LiteShip](../../../README.md) / [assets/src](../README.md) / AssetRegistry
 
 # Interface: AssetRegistry
 

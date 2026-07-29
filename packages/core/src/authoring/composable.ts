@@ -81,8 +81,8 @@ function makeEntityId(components: EntityComponents): ContentAddress {
 
 /**
  * Content-address a component bag into a {@link ComposableEntity}. Two entities
- * with structurally-equal components share the same content address (verb grammar,
- * ADR-0046 — `create` allocates a content-addressed unit).
+ * with structurally-equal components share the same content address (verb
+ * grammar — `create` allocates a content-addressed unit).
  */
 export function createComposable<T extends EntityComponents>(components: T): ComposableEntity<T> {
   const admission = admitComposableComponents(components);
@@ -275,7 +275,7 @@ function makeComposableDenseStore(world: World): ComposableDenseStore {
  * Composable — content-addressed entity algebra over liteship primitives.
  *
  * Build entities from a bag of components with the standalone {@link createComposable}
- * (verb grammar, ADR-0046), then merge them associatively via `Composable.compose` /
+ * (verb grammar), then merge them associatively via `Composable.compose` /
  * `Composable.merge`, relying on the content address to deduplicate
  * structurally-equal entities.
  */

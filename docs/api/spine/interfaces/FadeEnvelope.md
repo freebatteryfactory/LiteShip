@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / FadeEnvelope
+[LiteShip](../../README.md) / [\_spine](../README.md) / FadeEnvelope
 
 # Interface: FadeEnvelope
 

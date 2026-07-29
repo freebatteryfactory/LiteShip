@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / EvaluateResult
+[LiteShip](../../README.md) / [\_spine](../README.md) / EvaluateResult
 
 # Interface: EvaluateResult\<S\>
 

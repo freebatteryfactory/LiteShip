@@ -5,7 +5,7 @@
  *
  * These live in a concrete reactive module (not the facade) so the package root
  * barrel can re-export them by name — a facade is a pure re-export surface
- * (ADR-0045), never a definition site.
+ * (the facade law), never a definition site.
  *
  * @module
  */

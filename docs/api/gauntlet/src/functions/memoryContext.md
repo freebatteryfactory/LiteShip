@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / memoryContext
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / memoryContext
 
 # Function: memoryContext()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CapabilityTierProjection
+[LiteShip](../../README.md) / [\_spine](../README.md) / CapabilityTierProjection
 
 # Interface: CapabilityTierProjection
 

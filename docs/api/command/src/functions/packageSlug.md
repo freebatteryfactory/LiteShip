@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / packageSlug
+[LiteShip](../../../README.md) / [command/src](../README.md) / packageSlug
 
 # Function: packageSlug()
 

@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / requireTaint
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / requireTaint
 
 # Function: requireTaint()
 
 > **requireTaint**(`context`, `gateId`): [`TaintFacts`](../interfaces/TaintFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:1465](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1465)
+Defined in: [gauntlet/src/gate.ts:1466](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1466)
 
 Read the injected [TaintFacts](../interfaces/TaintFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) when none were injected — the guard the

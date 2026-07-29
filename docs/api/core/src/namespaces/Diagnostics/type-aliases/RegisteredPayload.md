@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [Diagnostics](../README.md) / RegisteredPayload
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [Diagnostics](../README.md) / RegisteredPayload
 
 # Type Alias: RegisteredPayload
 

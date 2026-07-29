@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/migrate](../README.md) / fromCSSCustomProperties
+[LiteShip](../../../../README.md) / [liteship/src/migrate](../README.md) / fromCSSCustomProperties
 
 # Function: fromCSSCustomProperties()
 

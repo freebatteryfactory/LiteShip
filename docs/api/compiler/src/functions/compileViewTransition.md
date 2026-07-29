@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / compileViewTransition
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / compileViewTransition
 
 # Function: compileViewTransition()
 

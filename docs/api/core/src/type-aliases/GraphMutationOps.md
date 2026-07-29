@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / GraphMutationOps
+[LiteShip](../../../README.md) / [core/src](../README.md) / GraphMutationOps
 
 # Type Alias: GraphMutationOps
 

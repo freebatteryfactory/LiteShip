@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [CellKernel](../README.md) / Sink
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [CellKernel](../README.md) / Sink
 
 # Interface: Sink\<T\>
 
-Defined in: [\_spine/core.d.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L204)
+Defined in: [\_spine/core.d.ts:205](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L205)
 
 A subscription sink: a `next` value listener plus an optional close `complete` callback.
 
@@ -22,7 +22,7 @@ A subscription sink: a `next` value listener plus an optional close `complete` c
 
 > `readonly` `optional` **complete?**: () => `void`
 
-Defined in: [\_spine/core.d.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L206)
+Defined in: [\_spine/core.d.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L207)
 
 #### Returns
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/core.d.ts:206](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **next**: (`value`) => `void`
 
-Defined in: [\_spine/core.d.ts:205](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L205)
+Defined in: [\_spine/core.d.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L206)
 
 #### Parameters
 

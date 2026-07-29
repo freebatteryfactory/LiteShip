@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / StateUnion
+[LiteShip](../../../README.md) / [core/src](../README.md) / StateUnion
 
 # Type Alias: StateUnion\<B\>
 

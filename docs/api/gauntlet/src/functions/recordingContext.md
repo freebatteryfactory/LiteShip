@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / recordingContext
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / recordingContext
 
 # Function: recordingContext()
 

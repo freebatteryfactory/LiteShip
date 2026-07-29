@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / VIEWPORT
+[LiteShip](../../../README.md) / [core/src](../README.md) / VIEWPORT
 
 # Variable: VIEWPORT
 

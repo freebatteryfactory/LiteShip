@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / SelectionState
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / SelectionState
 
 # Interface: SelectionState
 

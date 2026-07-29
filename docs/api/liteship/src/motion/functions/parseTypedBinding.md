@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / parseTypedBinding
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / parseTypedBinding
 
 # Function: parseTypedBinding()
 

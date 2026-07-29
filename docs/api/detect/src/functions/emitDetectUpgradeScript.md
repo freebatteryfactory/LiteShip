@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / emitDetectUpgradeScript
+[LiteShip](../../../README.md) / [detect/src](../README.md) / emitDetectUpgradeScript
 
 # Function: emitDetectUpgradeScript()
 

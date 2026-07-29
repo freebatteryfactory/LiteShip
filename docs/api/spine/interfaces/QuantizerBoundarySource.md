@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / QuantizerBoundarySource
+[LiteShip](../../README.md) / [\_spine](../README.md) / QuantizerBoundarySource
 
 # Interface: QuantizerBoundarySource
 

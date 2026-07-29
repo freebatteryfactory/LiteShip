@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / SurvivedVerdict
+[LiteShip](../../../README.md) / [audit/src](../README.md) / SurvivedVerdict
 
 # Interface: SurvivedVerdict\<M\>
 

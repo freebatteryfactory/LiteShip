@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CompositorWorkerStartupTelemetry
+[LiteShip](../../README.md) / [\_spine](../README.md) / CompositorWorkerStartupTelemetry
 
 # Interface: CompositorWorkerStartupTelemetry
 

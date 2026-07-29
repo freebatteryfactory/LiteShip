@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/reactive](../../../README.md) / [StateCell](../README.md) / Authority
+[LiteShip](../../../../../../README.md) / [liteship/src/reactive](../../../README.md) / [StateCell](../README.md) / Authority
 
 # Type Alias: Authority
 

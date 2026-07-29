@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / tierKey
+[LiteShip](../../../README.md) / [edge/src](../README.md) / tierKey
 
 # Function: tierKey()
 

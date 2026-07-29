@@ -2,7 +2,7 @@
 LiteShip is maintainer-led and doctrine-protected. Contributions are welcome;
 direction is not crowdsourced. A technically-correct PR may still be declined if
 it doesn't fit the project's doctrine, performance model, or conceptual shape —
-that's not arbitrary, it's "violates a written invariant" (an ADR, the plumb-gate,
+that's not arbitrary, it's "violates a written invariant" (a gate, the plumb-gate,
 the source-of-truth principle, the zero-advisory floor).
 
 Bug fixes / tests / docs / small compatibility patches: open a PR directly.

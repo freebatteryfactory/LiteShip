@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / RevealTrigger
+[LiteShip](../../../README.md) / [core/src](../README.md) / RevealTrigger
 
 # Type Alias: RevealTrigger
 

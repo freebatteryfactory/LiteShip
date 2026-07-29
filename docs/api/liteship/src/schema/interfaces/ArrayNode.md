@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / ArrayNode
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / ArrayNode
 
 # Interface: ArrayNode
 

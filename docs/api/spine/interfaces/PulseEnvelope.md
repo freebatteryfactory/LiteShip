@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / PulseEnvelope
+[LiteShip](../../README.md) / [\_spine](../README.md) / PulseEnvelope
 
 # Interface: PulseEnvelope
 

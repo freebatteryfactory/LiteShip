@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / TRANSITION\_FAMILY\_LEVEL
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / TRANSITION\_FAMILY\_LEVEL
 
 # Variable: TRANSITION\_FAMILY\_LEVEL
 

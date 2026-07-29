@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / Scheduler
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / Scheduler
 
 # Type Alias: Scheduler
 

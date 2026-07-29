@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / SceneBeat
+[LiteShip](../../../README.md) / [scene/src](../README.md) / SceneBeat
 
 # Type Alias: SceneBeat
 

@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / PlanBuilder
+[LiteShip](../../README.md) / [\_spine](../README.md) / PlanBuilder
 
 # Interface: PlanBuilder
 
-Defined in: [\_spine/core.d.ts:1460](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1460)
+Defined in: [\_spine/core.d.ts:1461](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1461)
 
 Fluent builder that emits an immutable plan IR.
 
@@ -16,7 +16,7 @@ Fluent builder that emits an immutable plan IR.
 
 > **build**(): [`PlanIR`](PlanIR.md)
 
-Defined in: [\_spine/core.d.ts:1465](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1465)
+Defined in: [\_spine/core.d.ts:1466](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1466)
 
 #### Returns
 
@@ -28,7 +28,7 @@ Defined in: [\_spine/core.d.ts:1465](https://github.com/freebatteryfactory/LiteS
 
 > **choice**(`fromId`, `thenId`, `elseId`): `PlanBuilder`
 
-Defined in: [\_spine/core.d.ts:1464](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1464)
+Defined in: [\_spine/core.d.ts:1465](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1465)
 
 #### Parameters
 
@@ -54,7 +54,7 @@ Defined in: [\_spine/core.d.ts:1464](https://github.com/freebatteryfactory/LiteS
 
 > **par**(`fromId`, `toId`): `PlanBuilder`
 
-Defined in: [\_spine/core.d.ts:1463](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1463)
+Defined in: [\_spine/core.d.ts:1464](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1464)
 
 #### Parameters
 
@@ -76,7 +76,7 @@ Defined in: [\_spine/core.d.ts:1463](https://github.com/freebatteryfactory/LiteS
 
 > **seq**(`fromId`, `toId`): `PlanBuilder`
 
-Defined in: [\_spine/core.d.ts:1462](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1462)
+Defined in: [\_spine/core.d.ts:1463](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1463)
 
 #### Parameters
 
@@ -98,7 +98,7 @@ Defined in: [\_spine/core.d.ts:1462](https://github.com/freebatteryfactory/LiteS
 
 > **step**(`name`, `opType`, `metadata?`): `PlanBuilder`
 
-Defined in: [\_spine/core.d.ts:1461](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1461)
+Defined in: [\_spine/core.d.ts:1462](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1462)
 
 #### Parameters
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / CollectBoundaryManifestOptions
+[LiteShip](../../../README.md) / [vite/src](../README.md) / CollectBoundaryManifestOptions
 
 # Interface: CollectBoundaryManifestOptions
 

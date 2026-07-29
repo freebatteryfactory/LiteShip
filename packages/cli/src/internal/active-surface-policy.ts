@@ -1,7 +1,7 @@
 /**
  * LiteShip-local active-surface enrollment — the HOST derives load-bearing field
  * names from the real `@liteship/core` type union and injects them into `@liteship/audit`'s
- * reader oracle (ADR-0012 / audit-leaf-purity: audit names no core dialect).
+ * reader oracle (audit-leaf-purity: audit names no core dialect).
  *
  * @module
  */

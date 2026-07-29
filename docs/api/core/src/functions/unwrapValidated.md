@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / unwrapValidated
+[LiteShip](../../../README.md) / [core/src](../README.md) / unwrapValidated
 
 # Function: unwrapValidated()
 

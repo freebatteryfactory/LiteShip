@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / TargetEntityPart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / TargetEntityPart
 
 # Variable: TargetEntityPart
 

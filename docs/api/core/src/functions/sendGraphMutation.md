@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / sendGraphMutation
+[LiteShip](../../../README.md) / [core/src](../README.md) / sendGraphMutation
 
 # Function: sendGraphMutation()
 

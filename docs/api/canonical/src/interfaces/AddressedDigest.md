@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [canonical/src](../README.md) / AddressedDigest
+[LiteShip](../../../README.md) / [canonical/src](../README.md) / AddressedDigest
 
 # Interface: AddressedDigest
 

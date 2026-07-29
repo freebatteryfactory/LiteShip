@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / EVALUATE\_THRESHOLDS\_SOURCE
+[LiteShip](../../../README.md) / [core/src](../README.md) / EVALUATE\_THRESHOLDS\_SOURCE
 
 # Variable: EVALUATE\_THRESHOLDS\_SOURCE
 

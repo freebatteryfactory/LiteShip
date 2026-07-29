@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / ProgramSample
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / ProgramSample
 
 # Interface: ProgramSample
 

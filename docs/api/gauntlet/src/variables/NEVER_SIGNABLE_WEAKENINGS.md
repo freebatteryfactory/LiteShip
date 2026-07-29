@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / NEVER\_SIGNABLE\_WEAKENINGS
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / NEVER\_SIGNABLE\_WEAKENINGS
 
 # Variable: NEVER\_SIGNABLE\_WEAKENINGS
 

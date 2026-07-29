@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / resolveFrameMark
+[LiteShip](../../../README.md) / [scene/src](../README.md) / resolveFrameMark
 
 # Function: resolveFrameMark()
 

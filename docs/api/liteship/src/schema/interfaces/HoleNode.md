@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / HoleNode
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / HoleNode
 
 # Interface: HoleNode
 

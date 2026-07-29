@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / OracleDivergenceSpec
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / OracleDivergenceSpec
 
 # Interface: OracleDivergenceSpec
 

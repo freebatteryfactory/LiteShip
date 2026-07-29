@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / documentGraphAddressCapsule
+[LiteShip](../../../README.md) / [core/src](../README.md) / documentGraphAddressCapsule
 
 # Variable: documentGraphAddressCapsule
 

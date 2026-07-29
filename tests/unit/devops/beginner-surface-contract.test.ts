@@ -68,7 +68,7 @@ describe('beginner surface contract', () => {
   });
 
   it('keeps the documentation map pointed at the same beginner route', () => {
-    const useLayer = markdownSection(read('DOCS.md'), '## Four layers', '## Start Here');
+    const useLayer = markdownSection(read('README.md'), '## Documentation', '## Security posture (summary)');
     expect(useLayer).toContain('[GETTING-STARTED.md](./GETTING-STARTED.md)');
     expect(useLayer).toContain('`npm create liteship`');
     expect(useLayer).not.toContain('@liteship/core');

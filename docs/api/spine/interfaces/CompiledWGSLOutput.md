@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CompiledWGSLOutput
+[LiteShip](../../README.md) / [\_spine](../README.md) / CompiledWGSLOutput
 
 # Interface: CompiledWGSLOutput
 

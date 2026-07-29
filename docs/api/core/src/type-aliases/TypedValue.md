@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / TypedValue
+[LiteShip](../../../README.md) / [core/src](../README.md) / TypedValue
 
 # Type Alias: TypedValue
 

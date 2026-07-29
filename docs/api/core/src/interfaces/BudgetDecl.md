@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / BudgetDecl
+[LiteShip](../../../README.md) / [core/src](../README.md) / BudgetDecl
 
 # Interface: BudgetDecl
 

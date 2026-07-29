@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / DocumentGraphNodeSchema
+[LiteShip](../../../README.md) / [core/src](../README.md) / DocumentGraphNodeSchema
 
 # Variable: DocumentGraphNodeSchema
 

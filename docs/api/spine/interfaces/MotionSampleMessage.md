@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / MotionSampleMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / MotionSampleMessage
 
 # Interface: MotionSampleMessage
 

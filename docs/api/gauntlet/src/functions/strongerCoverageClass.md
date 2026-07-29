@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / strongerCoverageClass
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / strongerCoverageClass
 
 # Function: strongerCoverageClass()
 

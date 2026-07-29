@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / InternalError
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / InternalError
 
 # Variable: InternalError
 

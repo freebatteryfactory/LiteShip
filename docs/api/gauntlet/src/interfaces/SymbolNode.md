@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SymbolNode
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SymbolNode
 
 # Interface: SymbolNode
 

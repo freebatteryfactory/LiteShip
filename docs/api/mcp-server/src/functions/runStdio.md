@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / runStdio
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / runStdio
 
 # Function: runStdio()
 

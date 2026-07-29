@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [create-liteship/src](../README.md) / ScaffoldResult
+[LiteShip](../../../README.md) / [create-liteship/src](../README.md) / ScaffoldResult
 
 # Interface: ScaffoldResult
 

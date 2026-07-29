@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / collectProfileArtifactCoverage
+[LiteShip](../../../README.md) / [audit/src](../README.md) / collectProfileArtifactCoverage
 
 # Function: collectProfileArtifactCoverage()
 

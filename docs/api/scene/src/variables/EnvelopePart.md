@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / EnvelopePart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / EnvelopePart
 
 # Variable: EnvelopePart
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / parseErrorFromIssues
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / parseErrorFromIssues
 
 # Function: parseErrorFromIssues()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [web/src](../../../README.md) / [LLMAdapter](../README.md) / Chunk
+[LiteShip](../../../../../README.md) / [web/src](../../../README.md) / [LLMAdapter](../README.md) / Chunk
 
 # Type Alias: Chunk
 

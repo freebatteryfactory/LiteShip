@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / DiagnosticEmissionMatch
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / DiagnosticEmissionMatch
 
 # Interface: DiagnosticEmissionMatch
 

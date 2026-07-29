@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / MorphConfig
+[LiteShip](../../../README.md) / [web/src](../README.md) / MorphConfig
 
 # Interface: MorphConfig
 

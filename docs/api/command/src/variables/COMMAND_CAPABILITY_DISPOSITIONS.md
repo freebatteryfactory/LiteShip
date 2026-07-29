@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / COMMAND\_CAPABILITY\_DISPOSITIONS
+[LiteShip](../../../README.md) / [command/src](../README.md) / COMMAND\_CAPABILITY\_DISPOSITIONS
 
 # Variable: COMMAND\_CAPABILITY\_DISPOSITIONS
 

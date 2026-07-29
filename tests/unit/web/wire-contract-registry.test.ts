@@ -1,7 +1,8 @@
 /**
  * Wire-contract registry drift guard — pins the typed `liteship:*` event union,
  * stream `data-liteship-*` attributes, and generated docs to the single sources
- * in `packages/web/src/wire/*` (ADR-0028 / ADR-0018 pattern).
+ * in `packages/web/src/wire/*` — the single-registry pattern: every consumer is projected
+ * from one registry, so two surfaces cannot disagree about a name.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';

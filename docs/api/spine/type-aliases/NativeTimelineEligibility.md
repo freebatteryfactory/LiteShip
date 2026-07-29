@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / NativeTimelineEligibility
+[LiteShip](../../README.md) / [\_spine](../README.md) / NativeTimelineEligibility
 
 # Type Alias: NativeTimelineEligibility
 

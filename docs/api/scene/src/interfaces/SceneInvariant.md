@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / SceneInvariant
+[LiteShip](../../../README.md) / [scene/src](../README.md) / SceneInvariant
 
 # Interface: SceneInvariant
 

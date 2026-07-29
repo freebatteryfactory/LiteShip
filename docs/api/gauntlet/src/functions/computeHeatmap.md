@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / computeHeatmap
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / computeHeatmap
 
 # Function: computeHeatmap()
 

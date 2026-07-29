@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / AICast
+[LiteShip](../../../README.md) / [core/src](../README.md) / AICast
 
 # Variable: AICast
 

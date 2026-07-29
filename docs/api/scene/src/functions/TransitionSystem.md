@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / TransitionSystem
+[LiteShip](../../../README.md) / [scene/src](../README.md) / TransitionSystem
 
 # Function: TransitionSystem()
 

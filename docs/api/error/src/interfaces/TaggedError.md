@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / TaggedError
+[LiteShip](../../../README.md) / [error/src](../README.md) / TaggedError
 
 # Interface: TaggedError\<Tag\>
 

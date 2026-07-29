@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / PatchReceiptEntry
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / PatchReceiptEntry
 
 # Interface: PatchReceiptEntry
 

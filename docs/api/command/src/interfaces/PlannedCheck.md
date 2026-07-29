@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PlannedCheck
+[LiteShip](../../../README.md) / [command/src](../README.md) / PlannedCheck
 
 # Interface: PlannedCheck
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / FindingLike
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / FindingLike
 
 # Interface: FindingLike
 

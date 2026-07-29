@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WorkerConfig
+[LiteShip](../../README.md) / [\_spine](../README.md) / WorkerConfig
 
 # Interface: WorkerConfig
 

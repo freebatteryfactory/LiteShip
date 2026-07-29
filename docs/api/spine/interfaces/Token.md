@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / Token
+[LiteShip](../../README.md) / [\_spine](../README.md) / Token
 
 # Interface: Token\<N, Axes\>
 

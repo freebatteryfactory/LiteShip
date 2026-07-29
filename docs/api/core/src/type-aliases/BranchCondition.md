@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / BranchCondition
+[LiteShip](../../../README.md) / [core/src](../README.md) / BranchCondition
 
 # Type Alias: BranchCondition
 

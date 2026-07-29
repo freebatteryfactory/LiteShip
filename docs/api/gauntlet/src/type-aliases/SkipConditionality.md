@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SkipConditionality
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SkipConditionality
 
 # Type Alias: SkipConditionality
 

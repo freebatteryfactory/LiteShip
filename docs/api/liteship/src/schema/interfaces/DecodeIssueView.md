@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / DecodeIssueView
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / DecodeIssueView
 
 # Interface: DecodeIssueView
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / InvariantUntraced
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / InvariantUntraced
 
 # Interface: InvariantUntraced
 

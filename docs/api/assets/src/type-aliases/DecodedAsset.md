@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / DecodedAsset
+[LiteShip](../../../README.md) / [assets/src](../README.md) / DecodedAsset
 
 # Type Alias: DecodedAsset\<K\>
 

@@ -10,8 +10,9 @@
  * sit in FRONT of the page pipeline. `liteshipFetchLayer` is a thin layer for that
  * seam. It calls the **same** `createEdgeHostAdapter().resolve()` the
  * middleware does (one resolution implementation, two presentation shells — the
- * fetch layer adds NO cache code, so ADR-0017's key/identity invariants are
- * untouched by construction), and then either:
+ * fetch layer adds NO cache code, so the boundary cache's key law holds untouched by
+ * construction: every per-request input is folded in — id + tier + name + resolved-theme
+ * fingerprint, under the per-deploy content-version `prefix`), and then either:
  *
  *  - **edge serve** — serves the compiled boundary CSS straight from the edge and
  *    returns WITHOUT calling `next()`, so Astro is skipped entirely on the

@@ -25,7 +25,7 @@ function layoutFixture(): { readonly domain: string; readonly root: string } {
   return { domain, root };
 }
 
-describe('ADR-0045 domain-directory graduation', () => {
+describe('domain-directory graduation — the SECOND module earns the directory', () => {
   it('RED: an index facade plus one implementation remains a singleton', () => {
     const finding = evaluateDomainDirectory({
       directory: 'packages/faux/src/ecs',

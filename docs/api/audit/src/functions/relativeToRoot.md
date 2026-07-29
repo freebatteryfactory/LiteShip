@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / relativeToRoot
+[LiteShip](../../../README.md) / [audit/src](../README.md) / relativeToRoot
 
 # Function: relativeToRoot()
 

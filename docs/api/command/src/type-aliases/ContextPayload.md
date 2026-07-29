@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / ContextPayload
+[LiteShip](../../../README.md) / [command/src](../README.md) / ContextPayload
 
 # Type Alias: ContextPayload
 

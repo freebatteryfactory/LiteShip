@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / BrandNode
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / BrandNode
 
 # Interface: BrandNode
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / noVarDivergenceGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / noVarDivergenceGate
 
 # Variable: noVarDivergenceGate
 

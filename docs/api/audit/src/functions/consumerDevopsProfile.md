@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / consumerDevopsProfile
+[LiteShip](../../../README.md) / [audit/src](../README.md) / consumerDevopsProfile
 
 # Function: consumerDevopsProfile()
 

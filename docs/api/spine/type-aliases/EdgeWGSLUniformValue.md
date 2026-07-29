@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / EdgeWGSLUniformValue
+[LiteShip](../../README.md) / [\_spine](../README.md) / EdgeWGSLUniformValue
 
 # Type Alias: EdgeWGSLUniformValue
 

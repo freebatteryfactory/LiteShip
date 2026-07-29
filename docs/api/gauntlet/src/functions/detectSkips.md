@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / detectSkips
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / detectSkips
 
 # Function: detectSkips()
 

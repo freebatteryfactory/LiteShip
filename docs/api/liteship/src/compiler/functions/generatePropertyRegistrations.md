@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / generatePropertyRegistrations
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / generatePropertyRegistrations
 
 # Function: generatePropertyRegistrations()
 

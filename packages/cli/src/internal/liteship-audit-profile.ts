@@ -4,7 +4,7 @@
  * The reusable `@liteship/audit` engine deliberately carries no fleet topology,
  * host-surface assumptions, dynamic exemptions, or suppressions. This module
  * composes those project facts from the generated package catalog and supplies
- * them at the host boundary promised by ADR-0023.
+ * them at the host boundary that keeps the engine lean and downstream-installable.
  *
  * @module
  */

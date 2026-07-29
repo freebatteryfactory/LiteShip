@@ -1,7 +1,8 @@
 /**
  * ease — named easing functions. Each is a pure (t: number) => number
- * on t in [0,1]. `stepped(n)` is a factory. Extending this catalog
- * requires an ADR amendment (cap-the-catalog rule per ADR-0001/0008).
+ * on t in [0,1]. `stepped(n)` is a factory. The catalog is CLOSED under the
+ * cap-the-catalog rule: a new easing is an owner decision that must ship with a
+ * concrete first consumer, never a drive-by add.
  *
  * Contracts store serializable {@link EaseTag} names — not functions —
  * so compiled scenes stay pure data; TransitionSystem looks the tag up
@@ -55,7 +56,7 @@ const stepped =
   (t) =>
     Math.floor(t * steps) / steps;
 
-/** Named easing catalog. Closed set; extend via ADR amendment. */
+/** Named easing catalog. Closed set under the cap-the-catalog rule. */
 export const ease = { cubic, spring, bounce, stepped } as const;
 
 /**

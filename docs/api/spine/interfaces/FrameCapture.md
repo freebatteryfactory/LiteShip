@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / FrameCapture
+[LiteShip](../../README.md) / [\_spine](../README.md) / FrameCapture
 
 # Interface: FrameCapture
 
-Defined in: [\_spine/core.d.ts:1623](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1623)
+Defined in: [\_spine/core.d.ts:1625](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1625)
 
 Live browser capture handle with one async-uniform encoder lifecycle.
 
@@ -20,7 +20,7 @@ Live browser capture handle with one async-uniform encoder lifecycle.
 
 > `readonly` **\_tag**: `"FrameCapture"`
 
-Defined in: [\_spine/core.d.ts:1624](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1624)
+Defined in: [\_spine/core.d.ts:1626](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1626)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [\_spine/core.d.ts:1624](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L181)
+Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L182)
 
 #### Inherited from
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/core.d.ts:181](https://github.com/freebatteryfactory/LiteSh
 
 > **\[asyncDispose\]**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L183)
+Defined in: [\_spine/core.d.ts:184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L184)
 
 #### Returns
 
@@ -56,7 +56,7 @@ Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteSh
 
 > **capture**(`frame`): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:1626](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1626)
+Defined in: [\_spine/core.d.ts:1628](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1628)
 
 #### Parameters
 
@@ -74,7 +74,7 @@ Defined in: [\_spine/core.d.ts:1626](https://github.com/freebatteryfactory/LiteS
 
 > **dispose**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L182)
+Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L183)
 
 #### Returns
 
@@ -90,7 +90,7 @@ Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteSh
 
 > **finalize**(): `Promise`\<[`CaptureResult`](CaptureResult.md)\>
 
-Defined in: [\_spine/core.d.ts:1627](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1627)
+Defined in: [\_spine/core.d.ts:1629](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1629)
 
 #### Returns
 
@@ -102,7 +102,7 @@ Defined in: [\_spine/core.d.ts:1627](https://github.com/freebatteryfactory/LiteS
 
 > **init**(`config`): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:1625](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1625)
+Defined in: [\_spine/core.d.ts:1627](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1627)
 
 #### Parameters
 

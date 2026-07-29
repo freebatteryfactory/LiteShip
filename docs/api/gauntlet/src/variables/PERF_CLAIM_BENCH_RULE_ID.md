@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / PERF\_CLAIM\_BENCH\_RULE\_ID
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / PERF\_CLAIM\_BENCH\_RULE\_ID
 
 # Variable: PERF\_CLAIM\_BENCH\_RULE\_ID
 

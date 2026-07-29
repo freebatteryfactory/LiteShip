@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / supplementReplayIfSignalsDropped
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / supplementReplayIfSignalsDropped
 
 # Variable: supplementReplayIfSignalsDropped
 

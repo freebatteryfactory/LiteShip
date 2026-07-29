@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / captureVideo
+[LiteShip](../../../README.md) / [web/src](../README.md) / captureVideo
 
 # Function: captureVideo()
 

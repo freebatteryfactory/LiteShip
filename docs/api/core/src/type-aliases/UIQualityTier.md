@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / UIQualityTier
+[LiteShip](../../../README.md) / [core/src](../README.md) / UIQualityTier
 
 # Type Alias: UIQualityTier
 

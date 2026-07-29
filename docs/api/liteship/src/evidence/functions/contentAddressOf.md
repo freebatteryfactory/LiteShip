@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / contentAddressOf
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / contentAddressOf
 
 # Function: contentAddressOf()
 

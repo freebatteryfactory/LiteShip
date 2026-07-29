@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / CssMotionPlan
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / CssMotionPlan
 
 # Interface: CssMotionPlan
 

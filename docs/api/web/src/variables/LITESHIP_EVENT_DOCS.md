@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / LITESHIP\_EVENT\_DOCS
+[LiteShip](../../../README.md) / [web/src](../README.md) / LITESHIP\_EVENT\_DOCS
 
 # Variable: LITESHIP\_EVENT\_DOCS
 

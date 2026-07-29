@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SymbolKind
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SymbolKind
 
 # Type Alias: SymbolKind
 

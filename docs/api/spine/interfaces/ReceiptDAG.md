@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ReceiptDAG
+[LiteShip](../../README.md) / [\_spine](../README.md) / ReceiptDAG
 
 # Interface: ReceiptDAG
 
-Defined in: [\_spine/core.d.ts:1285](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1285)
+Defined in: [\_spine/core.d.ts:1286](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1286)
 
 Indexed receipt graph with head tracking and canonical ordering.
 
@@ -16,7 +16,7 @@ Indexed receipt graph with head tracking and canonical ordering.
 
 > `readonly` **genesis**: `string` \| `null`
 
-Defined in: [\_spine/core.d.ts:1288](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1288)
+Defined in: [\_spine/core.d.ts:1289](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1289)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1288](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **heads**: readonly `string`[]
 
-Defined in: [\_spine/core.d.ts:1287](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1287)
+Defined in: [\_spine/core.d.ts:1288](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1288)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:1287](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **nodes**: `ReadonlyMap`\<`string`, [`DAGNode`](DAGNode.md)\>
 
-Defined in: [\_spine/core.d.ts:1286](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1286)
+Defined in: [\_spine/core.d.ts:1287](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1287)

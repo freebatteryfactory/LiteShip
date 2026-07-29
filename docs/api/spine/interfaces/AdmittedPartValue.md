@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / AdmittedPartValue
+[LiteShip](../../README.md) / [\_spine](../README.md) / AdmittedPartValue
 
 # Interface: AdmittedPartValue\<P\>
 
-Defined in: [\_spine/core.d.ts:735](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L735)
+Defined in: [\_spine/core.d.ts:736](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L736)
 
 Value admitted by the exact Part schema and witness.
 
@@ -22,7 +22,7 @@ Value admitted by the exact Part schema and witness.
 
 > `readonly` **\[SpineAdmissionWitness\]**: `true`
 
-Defined in: [\_spine/core.d.ts:738](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L738)
+Defined in: [\_spine/core.d.ts:739](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L739)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [\_spine/core.d.ts:738](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **part**: `P`
 
-Defined in: [\_spine/core.d.ts:736](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L736)
+Defined in: [\_spine/core.d.ts:737](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L737)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [\_spine/core.d.ts:736](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **value**: [`PartValue`](../type-aliases/PartValue.md)\<`P`\>
 
-Defined in: [\_spine/core.d.ts:737](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L737)
+Defined in: [\_spine/core.d.ts:738](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L738)

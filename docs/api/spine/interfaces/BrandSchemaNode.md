@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / BrandSchemaNode
+[LiteShip](../../README.md) / [\_spine](../README.md) / BrandSchemaNode
 
 # Interface: BrandSchemaNode
 
-Defined in: [\_spine/core.d.ts:676](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L676)
+Defined in: [\_spine/core.d.ts:677](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L677)
 
 Branded schema AST node.
 
@@ -20,7 +20,7 @@ Branded schema AST node.
 
 > `readonly` `optional` **annotations?**: `Readonly`\<`Record`\<`symbol`, `unknown`\>\>
 
-Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
+Defined in: [\_spine/core.d.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L612)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **base**: [`SchemaNode`](../type-aliases/SchemaNode.md)
 
-Defined in: [\_spine/core.d.ts:678](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L678)
+Defined in: [\_spine/core.d.ts:679](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L679)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/core.d.ts:678](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `"brand"`
 
-Defined in: [\_spine/core.d.ts:677](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L677)
+Defined in: [\_spine/core.d.ts:678](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L678)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/core.d.ts:677](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/core.d.ts:679](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L679)
+Defined in: [\_spine/core.d.ts:680](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L680)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [\_spine/core.d.ts:679](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **refine**: (`value`) => `unknown`
 
-Defined in: [\_spine/core.d.ts:680](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L680)
+Defined in: [\_spine/core.d.ts:681](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L681)
 
 #### Parameters
 

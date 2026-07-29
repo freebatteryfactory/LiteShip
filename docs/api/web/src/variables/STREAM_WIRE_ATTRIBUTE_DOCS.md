@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / STREAM\_WIRE\_ATTRIBUTE\_DOCS
+[LiteShip](../../../README.md) / [web/src](../README.md) / STREAM\_WIRE\_ATTRIBUTE\_DOCS
 
 # Variable: STREAM\_WIRE\_ATTRIBUTE\_DOCS
 

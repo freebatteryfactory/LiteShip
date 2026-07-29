@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / TokenTailwindCompiler
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / TokenTailwindCompiler
 
 # Variable: TokenTailwindCompiler
 

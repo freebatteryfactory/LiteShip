@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [worker/src](../../../README.md) / [Messages](../README.md) / BootstrapRegistration
+[LiteShip](../../../../../README.md) / [worker/src](../../../README.md) / [Messages](../README.md) / BootstrapRegistration
 
 # Type Alias: BootstrapRegistration
 

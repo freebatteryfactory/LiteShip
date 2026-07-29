@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / ExplainDiagnostic
+[LiteShip](../../../README.md) / [command/src](../README.md) / ExplainDiagnostic
 
 # Interface: ExplainDiagnostic
 

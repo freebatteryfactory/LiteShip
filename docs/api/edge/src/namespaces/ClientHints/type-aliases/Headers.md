@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [edge/src](../../../README.md) / [ClientHints](../README.md) / Headers
+[LiteShip](../../../../../README.md) / [edge/src](../../../README.md) / [ClientHints](../README.md) / Headers
 
 # Type Alias: Headers
 

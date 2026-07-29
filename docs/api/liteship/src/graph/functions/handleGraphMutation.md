@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / handleGraphMutation
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / handleGraphMutation
 
 # Function: handleGraphMutation()
 
@@ -22,7 +22,7 @@ HTTP client) — deliberately: a blanket "internal error" would strand a host de
 failed mutation, the silent degradation LiteShip refuses to ship. LiteShip surfaces what
 the host's store throws; it does not redact it. A `GraphStore` whose errors could carry
 secrets (connection strings, internal paths) MUST therefore catch and re-throw a redacted
-message inside the store — the store is the host's authority boundary (ADR-0015).
+message inside the store — the store is the host's authority boundary.
 
 ## Parameters
 

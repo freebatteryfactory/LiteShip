@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / LLMSessionConfig
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / LLMSessionConfig
 
 # Interface: LLMSessionConfig
 

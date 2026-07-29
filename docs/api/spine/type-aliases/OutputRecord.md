@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / OutputRecord
+[LiteShip](../../README.md) / [\_spine](../README.md) / OutputRecord
 
 # Type Alias: OutputRecord
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PackageSmokePayloadSchema
+[LiteShip](../../../README.md) / [command/src](../README.md) / PackageSmokePayloadSchema
 
 # Variable: PackageSmokePayloadSchema
 

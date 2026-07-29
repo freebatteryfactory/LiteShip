@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [GenFrame](../README.md) / Frame
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [GenFrame](../README.md) / Frame
 
 # Type Alias: Frame
 

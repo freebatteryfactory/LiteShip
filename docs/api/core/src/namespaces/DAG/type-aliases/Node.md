@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [DAG](../README.md) / Node
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [DAG](../README.md) / Node
 
 # Type Alias: Node
 

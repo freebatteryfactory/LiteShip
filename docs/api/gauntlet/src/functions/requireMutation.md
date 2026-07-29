@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / requireMutation
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / requireMutation
 
 # Function: requireMutation()
 
 > **requireMutation**(`context`, `gateId`): [`MutationFacts`](../interfaces/MutationFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:1394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1394)
+Defined in: [gauntlet/src/gate.ts:1395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1395)
 
 Read the injected [MutationFacts](../interfaces/MutationFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) when none was injected — the guard the

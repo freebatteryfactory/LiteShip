@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / detect
+[LiteShip](../../../README.md) / [detect/src](../README.md) / detect
 
 # Function: detect()
 
 > **detect**(): [`ExtendedDetectionResult`](../interfaces/ExtendedDetectionResult.md)
 
-Defined in: [detect/src/detect.ts:679](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L679)
+Defined in: [detect/src/detect.ts:682](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L682)
 
 Run a full device capability detection sweep.
 All probes are synchronous with internal error handling -- gracefully

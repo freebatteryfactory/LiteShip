@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / explainCommand
+[LiteShip](../../../README.md) / [command/src](../README.md) / explainCommand
 
 # Variable: explainCommand
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WarmResetMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / WarmResetMessage
 
 # Interface: WarmResetMessage
 

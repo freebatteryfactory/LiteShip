@@ -22,7 +22,7 @@
  * `contentAddressOf` kernel, diff it against the committed snapshot, apply the
  * owner sign-offs — and hands the engine these flat, already-decided facts. The
  * gate's only job is to FOLD them into Findings (the lean engine folds facts; the
- * host computes them — ADR-0012).
+ * host computes them).
  *
  * THE ONLY HONEST ESCAPE. A weakening is permitted ONLY via an explicit committed
  * {@link StandardsWaiver} — a waiver-with-teeth (owner, justification, the exact

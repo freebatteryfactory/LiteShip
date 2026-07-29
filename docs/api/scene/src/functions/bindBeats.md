@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / bindBeats
+[LiteShip](../../../README.md) / [scene/src](../README.md) / bindBeats
 
 # Function: bindBeats()
 

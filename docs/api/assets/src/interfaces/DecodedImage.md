@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / DecodedImage
+[LiteShip](../../../README.md) / [assets/src](../README.md) / DecodedImage
 
 # Interface: DecodedImage
 

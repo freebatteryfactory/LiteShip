@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / SSEMessage
+[LiteShip](../../../README.md) / [web/src](../README.md) / SSEMessage
 
 # Type Alias: SSEMessage
 

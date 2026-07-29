@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Animation](../README.md) / run
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Animation](../README.md) / run
 
 # Function: run()
 
 > **run**(`config`): `AsyncGenerator`\<[`Frame`](../interfaces/Frame.md), `void`, `void`\>
 
-Defined in: [\_spine/core.d.ts:413](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L413)
+Defined in: [\_spine/core.d.ts:414](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L414)
 
 ## Parameters
 

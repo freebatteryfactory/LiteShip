@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / ExplainEmitter
+[LiteShip](../../../README.md) / [command/src](../README.md) / ExplainEmitter
 
 # Interface: ExplainEmitter
 

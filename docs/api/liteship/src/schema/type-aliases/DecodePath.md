@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / DecodePath
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / DecodePath
 
 # Type Alias: DecodePath
 

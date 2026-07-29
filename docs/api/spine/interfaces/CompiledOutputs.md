@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CompiledOutputs
+[LiteShip](../../README.md) / [\_spine](../README.md) / CompiledOutputs
 
 # Interface: CompiledOutputs
 

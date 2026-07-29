@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Zap](../README.md) / fromDOMEvent
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Zap](../README.md) / fromDOMEvent
 
 # Function: fromDOMEvent()
 
 > **fromDOMEvent**\<`K`\>(`element`, `event`): [`Zap`](../../../interfaces/Zap.md)\<`HTMLElementEventMap`\[`K`\]\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:935](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L935)
+Defined in: [\_spine/core.d.ts:936](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L936)
 
 ## Type Parameters
 

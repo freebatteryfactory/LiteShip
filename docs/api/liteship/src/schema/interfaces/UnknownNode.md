@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / UnknownNode
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / UnknownNode
 
 # Interface: UnknownNode
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/reactive](../../../README.md) / [CellKernel](../README.md) / Reentrancy
+[LiteShip](../../../../../../README.md) / [liteship/src/reactive](../../../README.md) / [CellKernel](../README.md) / Reentrancy
 
 # Type Alias: Reentrancy
 

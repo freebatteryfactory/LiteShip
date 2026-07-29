@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / EdgeTier
+[LiteShip](../../../README.md) / [edge/src](../README.md) / EdgeTier
 
 # Variable: EdgeTier
 

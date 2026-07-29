@@ -6,7 +6,7 @@
  * the CONSTITUTION / conformance INTEGRITY family. The lean `transitionConformanceGate` fold
  * is exercised in unit tests with INJECTED facts (`tests/unit/gauntlet/transition-conformance.test.ts`)
  * — that proves the fold; but a gate nothing runs over the real transports is a hole. This
- * script is the repo-local HOST (ADR-0043 layering: `@liteship/gauntlet` owns only the lean fact
+ * script is the repo-local HOST (the engine/host layering: `@liteship/gauntlet` owns only the lean fact
  * FOLD; the reference model + native-transport oracle stay LiteShip-local): it drives the SAME
  * pinned corpus the property test exercises (the SHARED runner
  * `tests/support/reactive-conformance.ts` — one model, one corpus, one law table) over BOTH the
@@ -23,7 +23,9 @@
  *
  * WHY A STANDALONE PHASE (not the published `liteship check` CLI): the model + native-transport
  * oracle are LiteShip-specific product machinery living in the test tree (a reactive-history
- * capture over `@liteship/core`). Per ADR-0012 / ADR-0023 that laboratory stays repo-local rather
+ * capture over `@liteship/core`). The engine stays LEAN and downstream-installable while heavy,
+ * LiteShip-specific capability is HOST-injected, and only fields a downstream engine actually
+ * consumes may become configuration — so that laboratory stays repo-local rather
  * than being inflated into a shipped consumer CLI feature; the gate is HOSTED here, next to the
  * other constitution-integrity phases (`spine-relation:gate` / `capability:gate`), guaranteeing
  * the L4 bisimulation proof runs on every PR (reachable, never fixture-only).

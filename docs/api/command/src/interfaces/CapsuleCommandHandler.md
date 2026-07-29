@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CapsuleCommandHandler
+[LiteShip](../../../README.md) / [command/src](../README.md) / CapsuleCommandHandler
 
 # Interface: CapsuleCommandHandler()\<Args, Payload\>
 

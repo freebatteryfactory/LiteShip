@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FixRejection
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FixRejection
 
 # Interface: FixRejection
 

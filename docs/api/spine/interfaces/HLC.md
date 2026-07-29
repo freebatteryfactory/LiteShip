@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / HLC
+[LiteShip](../../README.md) / [\_spine](../README.md) / HLC
 
 # Interface: HLC
 
-Defined in: [\_spine/core.d.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L111)
+Defined in: [\_spine/core.d.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L112)
 
 Hybrid Logical Clock -- physical time + logical counter + node identity
 
@@ -16,7 +16,7 @@ Hybrid Logical Clock -- physical time + logical counter + node identity
 
 > `readonly` **counter**: `number`
 
-Defined in: [\_spine/core.d.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L113)
+Defined in: [\_spine/core.d.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L114)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:113](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **node\_id**: `string`
 
-Defined in: [\_spine/core.d.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L114)
+Defined in: [\_spine/core.d.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L115)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:114](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **wall\_ms**: `number`
 
-Defined in: [\_spine/core.d.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L112)
+Defined in: [\_spine/core.d.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L113)

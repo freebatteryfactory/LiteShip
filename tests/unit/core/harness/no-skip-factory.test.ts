@@ -33,7 +33,7 @@ const minimalCapsule = (kind: AssemblyKind) =>
     budgets: { p95Ms: 1 },
     site: ['node'],
     // A `policyGate` MUST declare a `decide` core (defineCapsule rejects it
-    // otherwise — ADR-0008 amendment). Supply a trivial one so the capsule is
+    // otherwise). Supply a trivial one so the capsule is
     // VALIDLY declared and the degenerate (no-binding) case is exercised at the
     // GENERATOR, which is what this guard tests — the generator throwing on an
     // un-probed capsule, not defineCapsule throwing on a malformed one.

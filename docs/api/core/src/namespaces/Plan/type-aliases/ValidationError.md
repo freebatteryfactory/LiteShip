@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [Plan](../README.md) / ValidationError
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [Plan](../README.md) / ValidationError
 
 # Type Alias: ValidationError
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / isFinding
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / isFinding
 
 # Function: isFinding()
 

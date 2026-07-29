@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/reactive](../../../README.md) / [CellKernel](../README.md) / Replay
+[LiteShip](../../../../../../README.md) / [liteship/src/reactive](../../../README.md) / [CellKernel](../README.md) / Replay
 
 # Type Alias: Replay\<T\>
 

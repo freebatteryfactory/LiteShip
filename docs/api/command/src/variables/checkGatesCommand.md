@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / checkGatesCommand
+[LiteShip](../../../README.md) / [command/src](../README.md) / checkGatesCommand
 
 # Variable: checkGatesCommand
 

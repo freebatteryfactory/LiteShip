@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / projectRemediation
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / projectRemediation
 
 # Function: projectRemediation()
 

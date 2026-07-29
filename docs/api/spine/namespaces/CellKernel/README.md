@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [\_spine](../../README.md) / CellKernel
+[LiteShip](../../../README.md) / [\_spine](../../README.md) / CellKernel
 
 # CellKernel
 

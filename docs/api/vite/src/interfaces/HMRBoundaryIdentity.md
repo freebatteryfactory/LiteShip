@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / HMRBoundaryIdentity
+[LiteShip](../../../README.md) / [vite/src](../README.md) / HMRBoundaryIdentity
 
 # Interface: HMRBoundaryIdentity
 

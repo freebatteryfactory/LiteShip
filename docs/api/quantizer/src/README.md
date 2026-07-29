@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / quantizer/src
+[LiteShip](../../README.md) / quantizer/src
 
 # quantizer/src
 

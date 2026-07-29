@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / coverageClassSeverity
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / coverageClassSeverity
 
 # Function: coverageClassSeverity()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ReceiptEnvelope
+[LiteShip](../../../README.md) / [core/src](../README.md) / ReceiptEnvelope
 
 # Interface: ReceiptEnvelope
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / ChunkParser
+[LiteShip](../../../README.md) / [web/src](../README.md) / ChunkParser
 
 # Type Alias: ChunkParser
 

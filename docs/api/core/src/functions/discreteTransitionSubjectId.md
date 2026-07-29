@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / discreteTransitionSubjectId
+[LiteShip](../../../README.md) / [core/src](../README.md) / discreteTransitionSubjectId
 
 # Function: discreteTransitionSubjectId()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PackagePlumbStatus
+[LiteShip](../../../README.md) / [command/src](../README.md) / PackagePlumbStatus
 
 # Type Alias: PackagePlumbStatus
 

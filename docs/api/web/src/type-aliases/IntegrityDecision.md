@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / IntegrityDecision
+[LiteShip](../../../README.md) / [web/src](../README.md) / IntegrityDecision
 
 # Type Alias: IntegrityDecision
 

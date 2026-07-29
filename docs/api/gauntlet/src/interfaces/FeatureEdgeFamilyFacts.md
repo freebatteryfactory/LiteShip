@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FeatureEdgeFamilyFacts
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FeatureEdgeFamilyFacts
 
 # Interface: FeatureEdgeFamilyFacts
 

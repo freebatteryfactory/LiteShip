@@ -1,7 +1,7 @@
 /**
  * schema-strictness — auto-derived near-miss strictness properties (scar S1.1 / GUARD 3).
  *
- * The EdgeSeed scar (`docs/plan/scar-ledger.md` S1.1): an arity-2 tuple silently
+ * The EdgeSeed scar: an arity-2 tuple silently
  * widened to `schema.array(schema.number)` because the Wave-0 kernel had no tuple node, and
  * EVERY existing test stayed green because tests feed VALID values. The disposition
  * (master plan Methodology §7) is auto-derived strictness properties: derive

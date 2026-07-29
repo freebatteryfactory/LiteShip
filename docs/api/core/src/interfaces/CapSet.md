@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CapSet
+[LiteShip](../../../README.md) / [core/src](../README.md) / CapSet
 
 # Interface: CapSet
 

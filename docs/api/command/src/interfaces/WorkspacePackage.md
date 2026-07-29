@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / WorkspacePackage
+[LiteShip](../../../README.md) / [command/src](../README.md) / WorkspacePackage
 
 # Interface: WorkspacePackage
 

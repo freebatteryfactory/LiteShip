@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Composable
+[LiteShip](../../../README.md) / [core/src](../README.md) / Composable
 
 # Variable: Composable
 
@@ -13,6 +13,6 @@ Defined in: [core/src/authoring/composable.ts:282](https://github.com/freebatter
 Composable — content-addressed entity algebra over liteship primitives.
 
 Build entities from a bag of components with the standalone [createComposable](../functions/createComposable.md)
-(verb grammar, ADR-0046), then merge them associatively via `Composable.compose` /
+(verb grammar), then merge them associatively via `Composable.compose` /
 `Composable.merge`, relying on the content address to deduplicate
 structurally-equal entities.

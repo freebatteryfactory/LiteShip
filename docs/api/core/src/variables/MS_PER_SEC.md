@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / MS\_PER\_SEC
+[LiteShip](../../../README.md) / [core/src](../README.md) / MS\_PER\_SEC
 
 # Variable: MS\_PER\_SEC
 

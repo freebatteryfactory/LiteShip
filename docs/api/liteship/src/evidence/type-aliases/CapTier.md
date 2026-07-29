@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / CapTier
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / CapTier
 
 # Type Alias: CapTier
 

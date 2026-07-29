@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / UnknownSchemaNode
+[LiteShip](../../README.md) / [\_spine](../README.md) / UnknownSchemaNode
 
 # Interface: UnknownSchemaNode
 
-Defined in: [\_spine/core.d.ts:662](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L662)
+Defined in: [\_spine/core.d.ts:663](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L663)
 
 Unknown schema AST node.
 
@@ -20,7 +20,7 @@ Unknown schema AST node.
 
 > `readonly` `optional` **annotations?**: `Readonly`\<`Record`\<`symbol`, `unknown`\>\>
 
-Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
+Defined in: [\_spine/core.d.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L612)
 
 #### Inherited from
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `"unknown"`
 
-Defined in: [\_spine/core.d.ts:663](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L663)
+Defined in: [\_spine/core.d.ts:664](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L664)

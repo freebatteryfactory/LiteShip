@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / TupleType
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / TupleType
 
 # Type Alias: TupleType\<E\>
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ThresholdValue
+[LiteShip](../../../README.md) / [core/src](../README.md) / ThresholdValue
 
 # Variable: ThresholdValue
 

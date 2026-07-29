@@ -15,8 +15,8 @@
  * export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request);
  * ```
  *
- * ...OR a `liteshipFetchLayer` branch. `@liteship/astro` injects NO routes on purpose
- * (ADR-0030): the host owns the endpoint, the graph store, and thus the authority.
+ * ...OR a `liteshipFetchLayer` branch. `@liteship/astro` injects NO routes on purpose:
+ * the host owns the endpoint, the graph store, and thus the authority.
  * This adapter is pure transport glue over the already-validated AI-cast seam — no
  * new validation, no persistence, no model or network code (fullsend-in-scope).
  *
@@ -50,7 +50,7 @@ function jsonResponse(body: GraphMutationResponse, status: number): Response {
  * cookie-authed mount — the base-match/CAS is integrity, NOT a CSRF token (the graph id
  * is discoverable). Demanding `application/json` forces every cross-origin POST into a
  * preflighted request the browser blocks by default. This closes the parse-level bypass;
- * it does not replace host session/origin auth (ADR-0015) — the host still owns that.
+ * it does not replace host session/origin auth — the host still owns that.
  */
 export function graphMutationRoute(store: GraphStore): (request: Request) => Promise<Response> {
   return async (request: Request): Promise<Response> => {

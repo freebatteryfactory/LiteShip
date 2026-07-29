@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / DeclaredFixFacts
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / DeclaredFixFacts
 
 # Interface: DeclaredFixFacts
 

@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Derived](../README.md) / Source
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Derived](../README.md) / Source
 
 # Type Alias: Source\<T\>
 
 > **Source**\<`T`\> = `Pick`\<[`Replay`](../../CellKernel/interfaces/Replay.md)\<`T`\>, `"read"` \| `"subscribe"`\>
 
-Defined in: [\_spine/core.d.ts:899](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L899)
+Defined in: [\_spine/core.d.ts:900](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L900)
 
 The readable + subscribable source `combine` recomputes from.
 

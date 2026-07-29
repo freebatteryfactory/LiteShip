@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / QuantizeAtRuleGroup
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / QuantizeAtRuleGroup
 
 # Interface: QuantizeAtRuleGroup
 

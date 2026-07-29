@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / AIParamSchema
+[LiteShip](../../README.md) / [\_spine](../README.md) / AIParamSchema
 
 # Interface: AIParamSchema
 

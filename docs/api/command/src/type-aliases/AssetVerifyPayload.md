@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / AssetVerifyPayload
+[LiteShip](../../../README.md) / [command/src](../README.md) / AssetVerifyPayload
 
 # Type Alias: AssetVerifyPayload
 

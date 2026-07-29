@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / chainPatchesBetween
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / chainPatchesBetween
 
 # Function: chainPatchesBetween()
 

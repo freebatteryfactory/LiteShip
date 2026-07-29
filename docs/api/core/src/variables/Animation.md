@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Animation
+[LiteShip](../../../README.md) / [core/src](../README.md) / Animation
 
 # Variable: Animation
 

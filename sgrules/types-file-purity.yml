@@ -1,4 +1,4 @@
-# types.ts purity (ADR-0045) — a `types.ts` is TYPE-SPACE ONLY: `interface`,
+# types.ts purity — a `types.ts` is TYPE-SPACE ONLY: `interface`,
 # `type` aliases, and re-exported types. It must be fully ERASABLE — a type-only
 # import of it, or a bundler dropping `import type`, leaves nothing behind. A
 # value definition (function / class / const / let / var / enum) breaks
@@ -33,7 +33,7 @@
 id: types-file-purity
 language: typescript
 severity: error
-message: "types.ts is type-space only and must be erasable (ADR-0045) — no function/class/const/let/var/enum. Move the value into a domain module and keep only its `interface` / `type` here."
+message: "types.ts is type-space only and must be erasable — no function/class/const/let/var/enum. Move the value into a domain module and keep only its `interface` / `type` here."
 files:
   - "**/packages/core/src/**/types.ts"
 rule:

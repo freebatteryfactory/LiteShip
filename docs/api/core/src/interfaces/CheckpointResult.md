@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CheckpointResult
+[LiteShip](../../../README.md) / [core/src](../README.md) / CheckpointResult
 
 # Interface: CheckpointResult
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / COVERAGE\_CLASS\_SEVERITY
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / COVERAGE\_CLASS\_SEVERITY
 
 # Variable: COVERAGE\_CLASS\_SEVERITY
 

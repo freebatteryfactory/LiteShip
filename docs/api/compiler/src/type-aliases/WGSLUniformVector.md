@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / WGSLUniformVector
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / WGSLUniformVector
 
 # Type Alias: WGSLUniformVector
 

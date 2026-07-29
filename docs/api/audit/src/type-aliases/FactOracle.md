@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / FactOracle
+[LiteShip](../../../README.md) / [audit/src](../README.md) / FactOracle
 
 # Type Alias: FactOracle
 
@@ -11,7 +11,7 @@
 Defined in: [audit/src/repo-ir-build.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-build.ts#L108)
 
 A host-supplied fact oracle — the injection hook that keeps `@liteship/audit`
-LiteShip-agnostic (ADR-0012). It is a PURE function the host passes to
+LiteShip-agnostic. It is a PURE function the host passes to
 [buildRepoIR](../functions/buildRepoIR.md): given one source file's raw text + path + owning package,
 it returns the [Fact](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)s it observes. `buildRepoIR` invokes each injected
 oracle per file and merges the returned facts into the single IR, knowing

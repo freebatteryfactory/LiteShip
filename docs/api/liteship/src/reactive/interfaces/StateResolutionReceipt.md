@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / StateResolutionReceipt
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / StateResolutionReceipt
 
 # Interface: StateResolutionReceipt
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / RemoveQuantizerMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / RemoveQuantizerMessage
 
 # Interface: RemoveQuantizerMessage
 

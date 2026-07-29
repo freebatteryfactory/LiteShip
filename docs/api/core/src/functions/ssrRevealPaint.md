@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ssrRevealPaint
+[LiteShip](../../../README.md) / [core/src](../README.md) / ssrRevealPaint
 
 # Function: ssrRevealPaint()
 

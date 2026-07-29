@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CSSTime
+[LiteShip](../../README.md) / [\_spine](../README.md) / CSSTime
 
 # Type Alias: CSSTime
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/export-budget](../README.md) / FACADE\_SUBPATH\_CONTRACT\_SOURCE
+[LiteShip](../../../../README.md) / [liteship/src/export-budget](../README.md) / FACADE\_SUBPATH\_CONTRACT\_SOURCE
 
 # Variable: FACADE\_SUBPATH\_CONTRACT\_SOURCE
 

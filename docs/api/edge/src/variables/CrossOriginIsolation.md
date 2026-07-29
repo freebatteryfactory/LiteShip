@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / CrossOriginIsolation
+[LiteShip](../../../README.md) / [edge/src](../README.md) / CrossOriginIsolation
 
 # Variable: CrossOriginIsolation
 

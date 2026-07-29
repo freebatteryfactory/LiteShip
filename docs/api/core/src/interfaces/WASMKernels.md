@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / WASMKernels
+[LiteShip](../../../README.md) / [core/src](../README.md) / WASMKernels
 
 # Interface: WASMKernels
 

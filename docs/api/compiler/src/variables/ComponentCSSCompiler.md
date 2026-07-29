@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / ComponentCSSCompiler
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / ComponentCSSCompiler
 
 # Variable: ComponentCSSCompiler
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / GPU\_TIER\_PRECEDENCE
+[LiteShip](../../../README.md) / [detect/src](../README.md) / GPU\_TIER\_PRECEDENCE
 
 # Variable: GPU\_TIER\_PRECEDENCE
 

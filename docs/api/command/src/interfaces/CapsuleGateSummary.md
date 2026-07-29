@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CapsuleGateSummary
+[LiteShip](../../../README.md) / [command/src](../README.md) / CapsuleGateSummary
 
 # Interface: CapsuleGateSummary
 

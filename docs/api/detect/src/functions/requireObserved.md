@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / requireObserved
+[LiteShip](../../../README.md) / [detect/src](../README.md) / requireObserved
 
 # Function: requireObserved()
 
@@ -10,7 +10,7 @@
 
 > **requireObserved**(`evidence`): [`ObservedCapabilityAxisValues`](../type-aliases/ObservedCapabilityAxisValues.md)
 
-Defined in: [detect/src/cap-axes.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L151)
+Defined in: [detect/src/cap-axes.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L152)
 
 Admit only axes backed entirely by observed inputs.
 
@@ -33,7 +33,7 @@ the requested axes.
 
 > **requireObserved**\<`Axes`\>(`evidence`, `axes`): [`ObservedCapabilityAxisValues`](../type-aliases/ObservedCapabilityAxisValues.md)\<`Axes`\[`number`\]\>
 
-Defined in: [detect/src/cap-axes.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L152)
+Defined in: [detect/src/cap-axes.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L153)
 
 Admit only axes backed entirely by observed inputs.
 

@@ -57,7 +57,7 @@ export interface ResolvedStateAckPayload {
  * name make hand-assembled registrations unnecessary.
  */
 export interface QuantizerBoundarySource {
-  /** Content address computed by `defineBoundary` (ADR-0003). */
+  /** Content address computed by `defineBoundary`. */
   readonly id: ContentAddress;
   /** Signal input name — used as the quantizer name when none is given. */
   readonly input: string;

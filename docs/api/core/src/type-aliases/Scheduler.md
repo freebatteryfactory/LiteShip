@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Scheduler
+[LiteShip](../../../README.md) / [core/src](../README.md) / Scheduler
 
 # Type Alias: Scheduler
 

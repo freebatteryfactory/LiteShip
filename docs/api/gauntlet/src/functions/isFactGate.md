@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / isFactGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / isFactGate
 
 # Function: isFactGate()
 
 > **isFactGate**(`gate`): `gate is FactGate`
 
-Defined in: [gauntlet/src/gate.ts:1365](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1365)
+Defined in: [gauntlet/src/gate.ts:1366](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1366)
 
 Narrow a [Gate](../interfaces/Gate.md) to the [FactGate](../interfaces/FactGate.md) variant — by UNFORGEABLE `FACT_GATES`
 membership, NOT the public `form` string and NOT an on-object brand. A hand-built

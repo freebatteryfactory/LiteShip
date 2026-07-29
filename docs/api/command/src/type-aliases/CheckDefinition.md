@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckDefinition
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckDefinition
 
 # Type Alias: CheckDefinition
 

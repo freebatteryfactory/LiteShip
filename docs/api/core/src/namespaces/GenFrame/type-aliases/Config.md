@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [GenFrame](../README.md) / Config
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [GenFrame](../README.md) / Config
 
 # Type Alias: Config
 

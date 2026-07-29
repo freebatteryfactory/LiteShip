@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/export-budget](../README.md) / RootValueBudgetSymbol
+[LiteShip](../../../../README.md) / [liteship/src/export-budget](../README.md) / RootValueBudgetSymbol
 
 # Type Alias: RootValueBudgetSymbol
 

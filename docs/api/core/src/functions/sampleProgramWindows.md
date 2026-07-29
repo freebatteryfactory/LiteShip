@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / sampleProgramWindows
+[LiteShip](../../../README.md) / [core/src](../README.md) / sampleProgramWindows
 
 # Function: sampleProgramWindows()
 

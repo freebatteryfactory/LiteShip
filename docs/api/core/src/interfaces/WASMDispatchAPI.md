@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / WASMDispatchAPI
+[LiteShip](../../../README.md) / [core/src](../README.md) / WASMDispatchAPI
 
 # Interface: WASMDispatchAPI
 

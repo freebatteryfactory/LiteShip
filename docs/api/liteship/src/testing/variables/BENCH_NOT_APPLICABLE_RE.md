@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / BENCH\_NOT\_APPLICABLE\_RE
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / BENCH\_NOT\_APPLICABLE\_RE
 
 # Variable: BENCH\_NOT\_APPLICABLE\_RE
 

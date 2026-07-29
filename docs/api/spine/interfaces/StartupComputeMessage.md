@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / StartupComputeMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / StartupComputeMessage
 
 # Interface: StartupComputeMessage
 

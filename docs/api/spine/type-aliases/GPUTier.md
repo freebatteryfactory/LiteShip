@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / GPUTier
+[LiteShip](../../README.md) / [\_spine](../README.md) / GPUTier
 
 # Type Alias: GPUTier
 

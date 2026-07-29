@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / promptResolverNames
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / promptResolverNames
 
 # Function: promptResolverNames()
 

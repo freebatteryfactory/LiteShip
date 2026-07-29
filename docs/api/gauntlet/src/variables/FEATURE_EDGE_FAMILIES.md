@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FEATURE\_EDGE\_FAMILIES
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FEATURE\_EDGE\_FAMILIES
 
 # Variable: FEATURE\_EDGE\_FAMILIES
 

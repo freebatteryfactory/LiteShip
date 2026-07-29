@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / ParseError
+[LiteShip](../../../README.md) / [error/src](../README.md) / ParseError
 
 # Interface: ParseError
 

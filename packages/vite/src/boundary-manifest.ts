@@ -8,7 +8,7 @@
  * boundary's `defineBoundary` content address plus precompiled
  * `CompiledOutputs` for every (motion x design) tier.
  *
- * This is the build half of the edge caching design (ADR-0003): identity
+ * This is the build half of the content-addressed edge caching design: identity
  * and compilation are derived here, so edge workers consume the manifest
  * instead of hand-typing boundary ids or bundling the CSS compiler.
  *
@@ -223,7 +223,7 @@ function wgslVector(parts: readonly number[]): WGSLUniformVector | undefined {
  * Parse a `@wgsl` cast value into a scalar or vector. Returns `'invalid'` when the
  * author wrote a vector constructor whose component count does not match the
  * declared arity (or a count outside vec2/vec3/vec4) — the caller turns that into a
- * loud diagnostic instead of a silently-wrong offset (ADR-0029).
+ * loud diagnostic instead of a silently-wrong offset.
  */
 export function parseWgslCastValue(value: string): WGSLUniformValue | 'invalid' | undefined {
   const trimmed = value.trim();

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / TransferCanvasMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / TransferCanvasMessage
 
 # Interface: TransferCanvasMessage
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [cloudflare/src](../README.md) / createCloudflareEdgeCache
+[LiteShip](../../../README.md) / [cloudflare/src](../README.md) / createCloudflareEdgeCache
 
 # Function: createCloudflareEdgeCache()
 

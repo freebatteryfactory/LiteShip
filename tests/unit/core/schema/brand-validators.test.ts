@@ -11,7 +11,8 @@
  *
  * ContentAddress / IntegrityDigest live in THREE intentional homes across
  * `@liteship/core`, `@liteship/canonical`, and `@liteship/genui` — a deliberate layering
- * (ADR-0013), NOT accidental duplication. The three-home parity drift-guard
+ * (the zero-dep canonical bytes kernel stays independent of the heavy stack),
+ * NOT accidental duplication. The three-home parity drift-guard
  * below pins that they agree at runtime so the divergence can't be naively
  * "unified" away; see the long comment above that `describe` block for the
  * rationale (spine = strict symbol-brand apex; core/genui re-anchor; canonical
@@ -94,7 +95,7 @@ describe('ContentAddress', () => {
 });
 
 // ===========================================================================
-// IntegrityDigest — (sha256|blake3): + exactly 64 lowercase hex (ADR-0011)
+// IntegrityDigest — (sha256|blake3): + exactly 64 lowercase hex
 // ===========================================================================
 describe('IntegrityDigest', () => {
   test('accepts sha256:/blake3: + 64 lowercase hex', () => {
@@ -129,7 +130,7 @@ describe('IntegrityDigest', () => {
 });
 
 // ===========================================================================
-// Cross-package parity drift-guard — THE THREE-HOME INVARIANT (ADR-0013).
+// Cross-package parity drift-guard — THE THREE-HOME INVARIANT.
 //
 // `ContentAddress` has THREE intentional homes that must NOT be merged:
 //   • `@liteship/_spine` — the APEX brand: `string & { [ContentAddressBrand]: true }`
@@ -197,7 +198,7 @@ function verdictOf(
   }
 }
 
-describe('ContentAddress three-home parity drift-guard (ADR-0013)', () => {
+describe('ContentAddress three-home parity drift-guard', () => {
   test('(a) ACCEPT parity: all three accept fnv1a:<8 hex> and return byte-identical strings', () => {
     fc.assert(
       fc.property(hex8, (h) => {

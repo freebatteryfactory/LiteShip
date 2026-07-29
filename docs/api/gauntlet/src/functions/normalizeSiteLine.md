@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / normalizeSiteLine
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / normalizeSiteLine
 
 # Function: normalizeSiteLine()
 

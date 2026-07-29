@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / createGraphQueryRefreshBase
+[LiteShip](../../../README.md) / [core/src](../README.md) / createGraphQueryRefreshBase
 
 # Function: createGraphQueryRefreshBase()
 

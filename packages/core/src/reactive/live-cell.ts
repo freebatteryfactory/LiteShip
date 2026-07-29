@@ -285,6 +285,6 @@ export function createLiveCellBoundary<I extends string, S extends readonly [str
  * {@link CellEnvelope} — kind, content address, HLC, boundary crossings — so
  * primitives can travel between peers as self-describing messages. Construct one
  * with the standalone {@link createLiveCell} / {@link createLiveCellBoundary}
- * (verb grammar, ADR-0046 — `create` allocates a runtime resource).
+ * (verb grammar — `create` allocates a runtime resource).
  */
 export type LiveCell<K extends CellKind, T> = LiveCellShape<K, T>;

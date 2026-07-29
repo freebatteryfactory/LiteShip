@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WGSLUniformVector
+[LiteShip](../../README.md) / [\_spine](../README.md) / WGSLUniformVector
 
 # Type Alias: WGSLUniformVector
 

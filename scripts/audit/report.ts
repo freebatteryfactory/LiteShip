@@ -550,7 +550,7 @@ function buildSignals(
     ),
     hasTraceSignal: /\b(trace|audit|receipt|invariant|coverage|diagnostic|telemetry|report)\b/iu.test(text),
     hasDocsSignal: /\b(architecture|status|runtime|surface|protocol|spec|contract|gate|artifact)\b/iu.test(text),
-    hasDecisionSignal: /\b(decision|tradeoff|consequence|supersede|adr)\b/iu.test(text),
+    hasDecisionSignal: /\b(decision|tradeoff|consequence|supersede)\b/iu.test(text),
     hasToolingSignal: /\b(vitest|playwright|eslint|prettier|typescript|tsx|pnpm|cargo|workflow|ci)\b/iu.test(text),
     hasPlaceholder: hasPlaceholder(text),
     hasConsole: hasConsole(relativePath, text),
@@ -1151,7 +1151,7 @@ function repoEvaluations(
                 'No secret was found, but supply-chain controls are only partially explicit here.',
               );
       case 'Architecture conformance':
-        return /ARCHITECTURE|STATUS|AUDIT|adr\/|gauntlet|invariant/u.test(text) ||
+        return /ARCHITECTURE|STATUS|sgrules|gauntlet|invariant/u.test(text) ||
           Object.values(supportingArtifacts).every((artifact) => artifact.status === 'present')
           ? makeEvaluation(
               family,
@@ -1901,13 +1901,13 @@ function buildProtocolGapReport(
       title: PROTOCOL_AREA_TITLES['bidirectional-traceability'],
       status:
         protocolAreaStatus(protocolEntries, 'bidirectional-traceability') === 'present' &&
-        hasPattern(/\b(REQ-|INV-|ADR-)\b/u)
+        hasPattern(/\b(REQ-|INV-)\b/u)
           ? 'present'
           : 'partial',
-      summary: hasPattern(/\b(REQ-|INV-|ADR-)\b/u)
-        ? 'Requirement/invariant/decision identifiers exist in-band, but the repo still leans on advisory linkage rather than a full explicit traceability graph.'
+      summary: hasPattern(/\b(REQ-|INV-)\b/u)
+        ? 'Requirement/invariant identifiers exist in-band, but the repo still leans on advisory linkage rather than a full explicit traceability graph.'
         : 'Status docs, invariant checks, and audit artifacts exist, but stable requirement IDs and backward links remain mostly implicit.',
-      evidence: ['STATUS.md', 'AUDIT.md', 'scripts/check-invariants.ts', 'reports/codebase-audit.json'],
+      evidence: ['STATUS.md', 'traceability/invariants.yaml', 'reports/codebase-audit.json'],
       recommendations: [
         'Add stable requirement/invariant identifiers and link them to proving artifacts.',
         'Extend docs and audit output with explicit backward links from artifact to requirement.',

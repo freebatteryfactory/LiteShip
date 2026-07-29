@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / RuntimeEndpointKind
+[LiteShip](../../README.md) / [\_spine](../README.md) / RuntimeEndpointKind
 
 # Type Alias: RuntimeEndpointKind
 

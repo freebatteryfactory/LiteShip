@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / requireMcdc
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / requireMcdc
 
 # Function: requireMcdc()
 
 > **requireMcdc**(`context`, `gateId`): [`McdcFacts`](../interfaces/McdcFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:1447](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1447)
+Defined in: [gauntlet/src/gate.ts:1448](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1448)
 
 Read the injected [McdcFacts](../interfaces/McdcFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) when none were injected — the guard the

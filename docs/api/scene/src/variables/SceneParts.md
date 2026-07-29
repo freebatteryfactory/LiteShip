@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / SceneParts
+[LiteShip](../../../README.md) / [scene/src](../README.md) / SceneParts
 
 # Variable: SceneParts
 

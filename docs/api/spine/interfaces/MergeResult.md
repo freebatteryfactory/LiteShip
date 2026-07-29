@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / MergeResult
+[LiteShip](../../README.md) / [\_spine](../README.md) / MergeResult
 
 # Interface: MergeResult
 
-Defined in: [\_spine/core.d.ts:1292](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1292)
+Defined in: [\_spine/core.d.ts:1293](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1293)
 
 Result of merging receipt DAGs, including conflicts and resulting heads.
 
@@ -16,7 +16,7 @@ Result of merging receipt DAGs, including conflicts and resulting heads.
 
 > `readonly` **added**: readonly `string`[]
 
-Defined in: [\_spine/core.d.ts:1294](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1294)
+Defined in: [\_spine/core.d.ts:1295](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1295)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1294](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **dag**: [`ReceiptDAG`](ReceiptDAG.md)
 
-Defined in: [\_spine/core.d.ts:1293](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1293)
+Defined in: [\_spine/core.d.ts:1294](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1294)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:1293](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **forked**: `boolean`
 
-Defined in: [\_spine/core.d.ts:1295](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1295)
+Defined in: [\_spine/core.d.ts:1296](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1296)

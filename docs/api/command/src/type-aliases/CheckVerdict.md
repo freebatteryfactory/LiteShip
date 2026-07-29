@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckVerdict
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckVerdict
 
 # Type Alias: CheckVerdict
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/migrate](../README.md) / fromContainerQueries
+[LiteShip](../../../../README.md) / [liteship/src/migrate](../README.md) / fromContainerQueries
 
 # Function: fromContainerQueries()
 

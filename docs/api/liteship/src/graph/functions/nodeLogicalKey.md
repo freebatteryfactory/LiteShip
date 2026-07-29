@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / nodeLogicalKey
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / nodeLogicalKey
 
 # Function: nodeLogicalKey()
 

@@ -143,9 +143,9 @@ function deriveInternalPackagePrefix(profile: DevopsProfile): string {
  *     the discovered package manifests; ambiguous or unscoped trees throw a
  *     teaching error instead of guessing.
  *
- * ADR-0012 pins WHICH fields a profile has, not that callers must hand-build
- * them; a fully-specified profile passes through unchanged (modulo repo-path
- * normalization).
+ * The no-aspirational-fields law pins WHICH fields a profile has — only what the
+ * audit actually consumes — not that callers must hand-build them; a fully-specified
+ * profile passes through unchanged (modulo repo-path normalization).
  */
 export function resolveDevopsProfile(partial: Partial<DevopsProfile>): DevopsProfile {
   const candidate: DevopsProfile = {

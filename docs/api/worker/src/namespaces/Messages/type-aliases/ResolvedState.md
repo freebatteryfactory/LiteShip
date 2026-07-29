@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [worker/src](../../../README.md) / [Messages](../README.md) / ResolvedState
+[LiteShip](../../../../../README.md) / [worker/src](../../../README.md) / [Messages](../README.md) / ResolvedState
 
 # Type Alias: ResolvedState
 

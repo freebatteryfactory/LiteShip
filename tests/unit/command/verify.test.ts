@@ -49,7 +49,7 @@ describe('@liteship/command verify', () => {
     expect(r.exitCode).toBe(4);
   });
 
-  it('no args at all → Unknown verdict, exit 4 (ADR-0011: honest cannot-tell)', async () => {
+  it('no args at all → Unknown verdict, exit 4 (honest cannot-tell, never a pass)', async () => {
     const r = await verifyCommand.handler({ name: 'verify', args: {} }, {});
     expect(r.verdict).toBe('Unknown');
     expect(r.exitCode).toBe(4);

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / McpServerHandle
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / McpServerHandle
 
 # Interface: McpServerHandle
 

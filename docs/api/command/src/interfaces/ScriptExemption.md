@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / ScriptExemption
+[LiteShip](../../../README.md) / [command/src](../README.md) / ScriptExemption
 
 # Interface: ScriptExemption
 

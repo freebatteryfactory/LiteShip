@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / isZap
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / isZap
 
 # Variable: isZap
 

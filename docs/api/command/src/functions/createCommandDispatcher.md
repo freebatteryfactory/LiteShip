@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / createCommandDispatcher
+[LiteShip](../../../README.md) / [command/src](../README.md) / createCommandDispatcher
 
 # Function: createCommandDispatcher()
 

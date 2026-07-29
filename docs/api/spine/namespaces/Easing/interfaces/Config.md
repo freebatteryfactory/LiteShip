@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Easing](../README.md) / Config
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Easing](../README.md) / Config
 
 # Interface: Config
 
-Defined in: [\_spine/core.d.ts:372](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L372)
+Defined in: [\_spine/core.d.ts:373](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L373)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [\_spine/core.d.ts:372](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **damping?**: `number`
 
-Defined in: [\_spine/core.d.ts:376](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L376)
+Defined in: [\_spine/core.d.ts:377](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L377)
 
 Default: 26.
 
@@ -24,7 +24,7 @@ Default: 26.
 
 > `readonly` `optional` **mass?**: `number`
 
-Defined in: [\_spine/core.d.ts:378](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L378)
+Defined in: [\_spine/core.d.ts:379](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L379)
 
 Default: 1.
 
@@ -34,6 +34,6 @@ Default: 1.
 
 > `readonly` `optional` **stiffness?**: `number`
 
-Defined in: [\_spine/core.d.ts:374](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L374)
+Defined in: [\_spine/core.d.ts:375](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L375)
 
 Default: 170.

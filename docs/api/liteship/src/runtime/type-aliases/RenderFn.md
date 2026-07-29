@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / RenderFn
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / RenderFn
 
 # Type Alias: RenderFn
 

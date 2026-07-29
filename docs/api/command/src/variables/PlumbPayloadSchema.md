@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PlumbPayloadSchema
+[LiteShip](../../../README.md) / [command/src](../README.md) / PlumbPayloadSchema
 
 # Variable: PlumbPayloadSchema
 

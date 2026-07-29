@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / isFetchableRuntimeUrl
+[LiteShip](../../../README.md) / [web/src](../README.md) / isFetchableRuntimeUrl
 
 # Function: isFetchableRuntimeUrl()
 

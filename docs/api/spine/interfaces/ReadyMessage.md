@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ReadyMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / ReadyMessage
 
 # Interface: ReadyMessage
 

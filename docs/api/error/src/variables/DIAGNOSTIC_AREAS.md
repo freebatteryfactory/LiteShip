@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / DIAGNOSTIC\_AREAS
+[LiteShip](../../../README.md) / [error/src](../README.md) / DIAGNOSTIC\_AREAS
 
 # Variable: DIAGNOSTIC\_AREAS
 

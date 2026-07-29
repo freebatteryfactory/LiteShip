@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / envelopeFactor
+[LiteShip](../../../README.md) / [scene/src](../README.md) / envelopeFactor
 
 # Function: envelopeFactor()
 

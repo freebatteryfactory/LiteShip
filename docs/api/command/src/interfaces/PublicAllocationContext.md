@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PublicAllocationContext
+[LiteShip](../../../README.md) / [command/src](../README.md) / PublicAllocationContext
 
 # Interface: PublicAllocationContext
 

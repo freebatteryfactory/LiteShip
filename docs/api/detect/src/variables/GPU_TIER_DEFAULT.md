@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / GPU\_TIER\_DEFAULT
+[LiteShip](../../../README.md) / [detect/src](../README.md) / GPU\_TIER\_DEFAULT
 
 # Variable: GPU\_TIER\_DEFAULT
 

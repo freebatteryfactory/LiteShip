@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / propagateProofStrength
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / propagateProofStrength
 
 # Function: propagateProofStrength()
 

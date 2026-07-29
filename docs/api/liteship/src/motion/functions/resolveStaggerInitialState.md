@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / resolveStaggerInitialState
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / resolveStaggerInitialState
 
 # Function: resolveStaggerInitialState()
 

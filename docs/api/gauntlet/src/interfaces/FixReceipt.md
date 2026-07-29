@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FixReceipt
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FixReceipt
 
 # Interface: FixReceipt
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / VideoRenderer
+[LiteShip](../../../README.md) / [core/src](../README.md) / VideoRenderer
 
 # Type Alias: VideoRenderer
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / EventsOwnedBy
+[LiteShip](../../README.md) / [\_spine](../README.md) / EventsOwnedBy
 
 # Type Alias: EventsOwnedBy\<Owner\>
 
