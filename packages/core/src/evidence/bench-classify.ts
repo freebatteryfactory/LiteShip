@@ -54,7 +54,11 @@ export function classifyBenchSource(source: string): 'real' | 'placeholder' {
       cursor = callEnd;
       continue;
     }
-    if (code.slice(at + 1, bodyEnd).trim().length > 0) return 'real';
+    // Emptiness ignores semicolons as well as whitespace: after masking, a
+    // literal-only statement (`'work()';`) leaves only its `;` behind, and an
+    // empty statement measures nothing — neither may launder a placeholder
+    // into 'real'.
+    if (code.slice(at + 1, bodyEnd).replace(/[;\s]/gu, '').length > 0) return 'real';
     cursor = callEnd;
   }
   return 'placeholder';

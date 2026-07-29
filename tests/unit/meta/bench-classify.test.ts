@@ -97,6 +97,13 @@ describe('classifyBenchSource', () => {
     expect(classifyBenchSource("bench('x', () => { if (!/[}{)(]/u.test(s)) { work(); } });")).toBe('real');
   });
 
+  it('does not let literal-only statements launder a placeholder via their punctuation', () => {
+    // Found by the generative lexical lane: the masked string's trailing `;`
+    // survived as "evidence" and classified a literal-only body as real.
+    expect(classifyBenchSource("bench('x', () => { 'work()'; });")).toBe('placeholder');
+    expect(classifyBenchSource("bench('x', () => { ;;; });")).toBe('placeholder');
+  });
+
   it('preserves executable template interpolations while masking template text', () => {
     expect(classifyBenchSource("bench('x', () => { `${work()}` });")).toBe('real');
     expect(classifyBenchSource("bench('x', () => { `work()` });")).toBe('placeholder');
