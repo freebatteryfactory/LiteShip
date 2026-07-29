@@ -16,7 +16,7 @@ import type { DirectiveName } from '../../../packages/astro/src/runtime/directiv
 
 type MutableGlobal = {
   scheduler?: { yield?: () => Promise<void> };
-  requestIdleCallback?: (callback: () => void) => number;
+  requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number;
 };
 
 const globalHost = globalThis as MutableGlobal;
@@ -97,10 +97,12 @@ describe('directive boot scheduling (#155)', () => {
     expect(yields).toBe(eagerNames.length - 1);
   });
 
-  it('llm and graph are IDLE class; every visual directive is eager', () => {
+  it('llm is IDLE class; every paint-affecting directive — INCLUDING graph — is eager', () => {
     expect(DIRECTIVE_BOOT_PRIORITY.llm).toBe('idle');
-    expect(DIRECTIVE_BOOT_PRIORITY.graph).toBe('idle');
-    for (const name of ['adaptive', 'stream', 'gpu', 'motion', 'svg', 'wasm', 'worker'] as const) {
+    // graph seeds visual state (applyBoundaryState writes data-liteship-state +
+    // per-state CSS at boot), so idle-deferring it was a first-paint regression
+    // (PR #189 review, confirmed).
+    for (const name of ['adaptive', 'stream', 'gpu', 'graph', 'motion', 'svg', 'wasm', 'worker'] as const) {
       expect(DIRECTIVE_BOOT_PRIORITY[name], `${name} must stay eager`).toBe('eager');
     }
   });
@@ -122,11 +124,55 @@ describe('directive boot scheduling (#155)', () => {
     const eagerNames = DIRECTIVE_NAMES.filter((name) => DIRECTIVE_BOOT_PRIORITY[name] === 'eager');
     expect(booted).toEqual([...eagerNames]);
     expect(booted).not.toContain('llm');
-    expect(booted).not.toContain('graph');
     expect(idleCallback, 'the idle pass must be parked on requestIdleCallback').toBeDefined();
 
     idleCallback!();
     await scan;
-    expect(booted).toEqual([...eagerNames, 'llm', 'graph']);
+    expect(booted).toEqual([...eagerNames, 'llm']);
+  });
+
+  it('the idle deadline carries a bounded timeout so a starved rIC cannot hang the scan (PR #189 review)', async () => {
+    // The defect class: requestIdleCallback without { timeout } may never fire
+    // on a busy or throttled page — idle directives never activate and the
+    // scan promise never resolves. The law: the host is always told to force
+    // the callback after a bounded delay.
+    markAll([...DIRECTIVE_NAMES]);
+    let receivedTimeout: number | undefined;
+    globalHost.scheduler = { yield: () => Promise.resolve() };
+    globalHost.requestIdleCallback = (callback, options) => {
+      receivedTimeout = options?.timeout;
+      callback();
+      return 1;
+    };
+    await scanAndBootDirectives([...DIRECTIVE_NAMES], document.body, recordingLoaders([]));
+    expect(receivedTimeout).toBeTypeOf('number');
+    expect(receivedTimeout!).toBeGreaterThan(0);
+    expect(receivedTimeout!).toBeLessThanOrEqual(10_000);
+  });
+
+  it('a root detached while the scan is parked on the idle deadline does NOT boot (PR #189 review)', async () => {
+    // The defect class: an Astro navigation replaces the document while an
+    // unawaited scan is parked on rIC; releasing the idle callback then booted
+    // the captured, detached roots — recreating listeners and runtime
+    // resources outside the next lifecycle's teardown.
+    markAll([...DIRECTIVE_NAMES]);
+    const booted: string[] = [];
+    globalHost.scheduler = { yield: () => Promise.resolve() };
+    let idleCallback: (() => void) | undefined;
+    globalHost.requestIdleCallback = (callback) => {
+      idleCallback = callback;
+      return 1;
+    };
+
+    const scan = scanAndBootDirectives([...DIRECTIVE_NAMES], document.body, recordingLoaders(booted));
+    for (let hop = 0; hop < 20; hop += 1) await Promise.resolve();
+    expect(idleCallback).toBeDefined();
+
+    // Navigation: the document body is replaced while llm is still parked.
+    document.body.innerHTML = '';
+
+    idleCallback!();
+    await scan;
+    expect(booted).not.toContain('llm');
   });
 });
