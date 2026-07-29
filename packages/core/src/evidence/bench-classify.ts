@@ -178,6 +178,15 @@ function maskCommentsAndLiterals(source: string): string {
         // regular-expression literal.
         at++;
         regexAllowed = false;
+      } else if (char === '>' && chars[at - 1] !== '=') {
+        // A `>` that is not an arrow's head either closes a TS type-argument
+        // list / instantiation expression (an operand — `value<Type> / count`
+        // is valid TypeScript and its slash is division) or is a relational
+        // operator, where a directly following regex would be semantic
+        // nonsense no generator emits. Classify the next slash as division.
+        // The arrow case (`=> /re/`) is excluded: a regex directly after `=>`
+        // is a real pattern that must stay masked.
+        regexAllowed = false;
       } else if (char === '!' && next !== '=') {
         // `!` preserves the position class rather than resetting it: the
         // TypeScript postfix non-null assertion follows an operand (where

@@ -75,6 +75,21 @@ describe('classifyBenchSource', () => {
     expect(classifyBenchSource("bench('x', () => { total! / count; });")).toBe('real');
   });
 
+  it('keeps division visible after a TypeScript instantiation expression', () => {
+    // `value<Type> / count` is valid TypeScript when value's type intersects a
+    // generic callable with number (verified against tsc): the closing `>` of
+    // the type-argument list produces an operand, so the slash is division —
+    // not the start of a regex that would swallow the body's delimiters.
+    expect(classifyBenchSource("bench('x', () => { value<Type> / count; });")).toBe('real');
+  });
+
+  it('still masks a regex literal in an arrow body after =>', () => {
+    // The arrow's `>` must NOT classify the next slash as division: a regex
+    // with brace decoys directly after `=>` is a real pattern, and scanning it
+    // as code would corrupt the callback delimiters.
+    expect(classifyBenchSource("bench('x', () => { items.map((s) => /decoy[}{)(]/u.test(s)); });")).toBe('real');
+  });
+
   it('still masks a regex literal after prefix negation', () => {
     // Prefix `!` sits in operator position, so `!/…/` IS a regex; if its brace
     // decoys were scanned as code the callback delimiters would corrupt and a
