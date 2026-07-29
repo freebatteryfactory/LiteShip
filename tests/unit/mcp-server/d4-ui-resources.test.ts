@@ -223,6 +223,10 @@ describe('D4 — projection drift pin', () => {
     // the static commands UI is a byte-addressed projection of that catalog.
     // The commands UI projects the same catalog-owned CLI invocation/output
     // contract as describe/help; this pin records that intentional projection.
-    expect(address).toBe('fnv1a:34c27d61');
+    // Markdown-is-not-law sweep: decision-record citations were inlined as the
+    // constraints themselves in the catalog `capsule-verify` summary and the
+    // zero-allocation / assembly-catalog glossary definitions — the projected
+    // bodies embed those strings, re-pinning the digest.
+    expect(address).toBe('fnv1a:4a624945');
   });
 });
