@@ -40,6 +40,7 @@ import {
   packedLiteshipBin,
   packageSmokeProcessFailure,
   peerDependenciesOnly as peerDependenciesOnlyHelper,
+  CONSUMER_STRICT_PEER_FLAG,
   qualifiedHostOverrides,
   resolvePackageManagerInvocation,
   type PackageSmokeExecutable,
@@ -443,7 +444,7 @@ async function runHermeticBuild(
   writeFileSync(join(dir, 'package.json'), JSON.stringify(buildConsumerManifest(tarballByPackage), null, 2));
   process.stderr.write('[package:smoke] > hermetic-build: offline pnpm install (network disabled on the child only)\n');
   try {
-    await runOffline(['install'], dir);
+    await runOffline(['install', CONSUMER_STRICT_PEER_FLAG], dir);
     process.stderr.write(
       '[package:smoke] ok hermetic-build: offline install succeeded from warm store + file:// tarballs\n',
     );
@@ -776,7 +777,7 @@ export async function runPackageSmokeScan(
       // Consumer scratch lives under the repo; without --ignore-workspace pnpm
       // treats this as a workspace root install and never materializes cborg/mediabunny here.
       step(`pnpm install consumer dependencies in ${consumerDir}`);
-      await run('pnpm', ['install', '--ignore-workspace'], consumerDir);
+      await run('pnpm', ['install', '--ignore-workspace', CONSUMER_STRICT_PEER_FLAG], consumerDir);
       stepOk('pnpm install complete');
 
       for (const name of Object.keys(externalDeps)) {
@@ -805,7 +806,7 @@ export async function runPackageSmokeScan(
       stepOk(`consumer package.json written (sample dep: ${firstPkg.name} → ${sampleDep})`);
 
       step(`pnpm install in consumer dir (${consumerDir})`);
-      await run('pnpm', ['install'], consumerDir);
+      await run('pnpm', ['install', CONSUMER_STRICT_PEER_FLAG], consumerDir);
       stepOk('pnpm install complete');
     }
 

@@ -32,6 +32,7 @@ import { PACKAGES, PEER_INSTALLS } from '../../packages/command/src/commands/pac
 import { scaffold } from '../../packages/create-liteship/src/scaffold.js';
 import { packInWorkspace } from '../support/pack.js';
 import {
+  CONSUMER_STRICT_PEER_FLAG,
   peerDependenciesOnly,
   qualifiedHostOverrides,
   tarballFileUrl,
@@ -402,10 +403,14 @@ export async function installConsumer(
   options: { readonly updateLockfile?: boolean } = {},
 ): Promise<PnpmRunResult> {
   if (packageManager === 'pnpm') {
-    const args = ['install', '--prefer-offline'];
+    // Scratch consumers sit outside the workspace, where pnpm defaults to
+    // NON-strict peers; the argv flag restores the workspace's strict law so an
+    // incompatible peer graph fails the journey instead of warning past it.
+    const args = ['install', '--prefer-offline', CONSUMER_STRICT_PEER_FLAG];
     if (options.updateLockfile === true) args.push('--no-frozen-lockfile');
     return runPnpm(args, { cwd: appDir, env: { FORCE_COLOR: '0' } });
   }
+  // npm needs no flag: it fails peer conflicts by default (ERESOLVE).
   const result = await spawnArgvCapture('npm', ['install', '--prefer-offline', '--no-audit', '--no-fund'], {
     cwd: appDir,
   });

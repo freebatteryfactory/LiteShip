@@ -142,6 +142,20 @@ export function peerDependenciesOnly(peerInstalls: readonly string[]): Record<st
 }
 
 /**
+ * The argv-level strict-peer law for every generated scratch consumer.
+ *
+ * `strictPeerDependencies: true` lives in pnpm-workspace.yaml, which governs
+ * ONLY workspace installs; packed-consumer proofs install outside the workspace
+ * (temp dirs / `--ignore-workspace`), where pnpm's default is non-strict — an
+ * incompatible peer graph would warn and exit green instead of invalidating the
+ * release proof. Passed on the install argv (never a consumer `.npmrc`) because
+ * the journeys assert their consumers carry NO npmrc: default isolation is part
+ * of what they prove. npm consumers need no flag — npm fails peer conflicts by
+ * default (ERESOLVE).
+ */
+export const CONSUMER_STRICT_PEER_FLAG = '--strict-peer-dependencies';
+
+/**
  * Project the exact host graph qualified by every packed-consumer authority.
  *
  * Public peer ranges stay broad, but a release receipt must not change meaning
