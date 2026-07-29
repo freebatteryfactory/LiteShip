@@ -142,10 +142,10 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   {
     id: 'check/format',
     title: 'Prettier formatting',
-    claim: 'Every package source file is Prettier-clean.',
+    claim: 'Every source, test, and script file the linter sweeps is Prettier-clean.',
     owner: '.prettierrc',
     command: 'pnpm run format:check',
-    inputs: [SRC_GLOB, ...FORMAT_CONFIG_INPUTS],
+    inputs: [SRC_GLOB, TESTS_GLOB, SCRIPTS_GLOB, ...FORMAT_CONFIG_INPUTS],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 60_000,
