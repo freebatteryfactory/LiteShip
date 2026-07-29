@@ -66,6 +66,39 @@ describe('blocking check negative controls execute their authorities', () => {
     expect(result?.errorCount).toBeGreaterThan(0);
   });
 
+  it('ESLint rejects dynamic code construction by the named rule (SECURITY.md discipline)', async () => {
+    // Untrusted text must never become executable JavaScript at runtime. Each
+    // fixture must red under the SPECIFIC rule so the control cannot pass off a
+    // coincidental other error as the discipline being enforced.
+    const cases: readonly [source: string, ruleId: string][] = [
+      ['export const out = eval("1");\n', 'no-eval'],
+      ['export const out = new Function("return 1");\n', 'no-new-func'],
+      ['setTimeout("globalThis.pwned = 1", 10);\n', 'no-implied-eval'],
+    ];
+    for (const [source, ruleId] of cases) {
+      const [result] = await new ESLint({ cwd: ROOT }).lintText(source, {
+        filePath: resolve(ROOT, 'packages/core/src/negative-control.ts'),
+      });
+      const ruleIds = (result?.messages ?? []).map((message) => message.ruleId);
+      expect(ruleIds, `${ruleId} must fire for: ${source.trim()}`).toContain(ruleId);
+    }
+  });
+
+  it('the sanctioned script-execution harnesses stay exempt from no-new-func only', async () => {
+    // The exceptions exist so tests can EXECUTE compiled script text they are
+    // proving things about — they must not widen to eval.
+    const harness = 'tests/support/compositor-script-harness.ts';
+    const eslint = new ESLint({ cwd: ROOT });
+    const [allowed] = await eslint.lintText('export const run = new Function("self", "return 1");\n', {
+      filePath: resolve(ROOT, harness),
+    });
+    expect((allowed?.messages ?? []).map((message) => message.ruleId)).not.toContain('no-new-func');
+    const [rejected] = await eslint.lintText('export const out = eval("1");\n', {
+      filePath: resolve(ROOT, harness),
+    });
+    expect((rejected?.messages ?? []).map((message) => message.ruleId)).toContain('no-eval');
+  });
+
   it('bench trend rejects a deterministic sustained regression', async () => {
     const root = tempDir('trend-red');
     const history = join(root, 'history.jsonl');
