@@ -119,13 +119,13 @@ export const coverageExclude = [
   // succeeds), so they are structurally uncoverable on a working runner. Same
   // host-dependent-backend rationale as command/host/ffmpeg.ts above.
   'packages/stage/src/ffmpeg-encoder.ts',
-  // spawn-helpers.ts is a re-export shim — its only body is `export {...}
+  // spawn.ts is a re-export shim — its only body is `export {...}
   // from './lib/spawn.js'`. The actual implementation in cli/src/lib/spawn.ts
   // is measured normally; v8 reports 0% on the shim because there are no
   // executable statements to track (re-export declarations aren't tracked
   // even when the re-export targets are exercised). Real consumers (vitest
   // -runner, spawn-quoting-drift drift test) keep the shim load-bearing.
-  'packages/cli/src/spawn-helpers.ts',
+  'packages/cli/src/spawn.ts',
 ];
 
 /**

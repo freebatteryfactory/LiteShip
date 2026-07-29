@@ -478,10 +478,29 @@ describe('types-file-purity (d) — a types.ts is type-space only (repo-wide)', 
         'export interface Shape { x: number }',
         'export type Alias = string | number;',
         "export type { Imported } from './elsewhere.js';",
+        "export type * from './everything.js';",
+        "import type { Used } from './used.js';",
+        'export interface Uses { u: Used }',
         '',
       ].join('\n'),
     );
     expect((await scan(RULE, f)).length).toBe(0);
+  });
+
+  it('RED: runtime re-exports and side-effect imports break erasability (PR #186 review)', async () => {
+    // `export { v } from` re-emits a runtime binding, `export * from` re-emits
+    // them all, and a clause-less import executes the module — all three make
+    // the "types" file a hidden runtime module even with zero declarations.
+    const f = fixture(
+      'packages/web/src/hidden/types.ts',
+      [
+        "export { runtimeValue } from './runtime.js';",
+        "export * from './runtime.js';",
+        "import './side-effect.js';",
+        '',
+      ].join('\n'),
+    );
+    expect((await scan(RULE, f)).length).toBe(3);
   });
 
   it('SCOPE: a value-bearing types.ts in a NON-core package fires (issue #178 widened the guard repo-wide)', async () => {

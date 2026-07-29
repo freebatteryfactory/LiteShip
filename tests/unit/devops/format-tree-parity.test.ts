@@ -25,18 +25,18 @@ function scriptGlobs(script: string): string[] {
   return [...script.matchAll(/"([^"]+)"/g)].map((match) => match[1]!).sort();
 }
 
-/** First .ts file under a directory, depth-first (deterministic sort order). */
-function firstTsFile(dir: string): string | null {
+/** EVERY .ts file under a directory, depth-first. One sample per subtree
+ *  cannot see a single-file ignore entry hidden below it — the exactness law
+ *  must interrogate the complete population it claims to govern. */
+function allTsFiles(dir: string): string[] {
+  const files: string[] = [];
   for (const name of readdirSync(dir).sort()) {
+    if (name === 'node_modules') continue;
     const path = join(dir, name);
-    if (statSync(path).isDirectory()) {
-      const nested = firstTsFile(path);
-      if (nested !== null) return nested;
-    } else if (name.endsWith('.ts')) {
-      return path;
-    }
+    if (statSync(path).isDirectory()) files.push(...allTsFiles(path));
+    else if (name.endsWith('.ts')) files.push(path);
   }
-  return null;
+  return files;
 }
 
 /** Ask prettier itself (the real authority) whether it would skip this file. */
@@ -71,19 +71,24 @@ describe('format/lint tree parity', () => {
 
   it('prettier skips exactly the freshness-gate-owned generated tree, nothing else', async () => {
     // tests/generated: bytes are pinned by the capsule freshness gate
-    // (`liteship capsule-verify` recompiles and diffs) — prettier must not
-    // rewrite what that gate byte-pins. Every OTHER immediate tests/ subtree is
-    // hand-authored and must stay under the formatter, so an ignore entry
-    // sneaked in to silence the gate reds here by name.
-    for (const name of readdirSync(join(ROOT, 'tests')).sort()) {
-      const dir = join(ROOT, 'tests', name);
-      if (!statSync(dir).isDirectory()) continue;
-      const sample = firstTsFile(dir);
-      if (sample === null) continue;
-      expect(await prettierIgnores(sample), `tests/${name} (via ${sample})`).toBe(name === 'generated');
+    // (`liteship capsule gate` recompiles and diffs) — prettier must not
+    // rewrite what that gate byte-pins. EVERY other .ts file in the formatted
+    // trees is hand-authored and must stay under the formatter, so an ignore
+    // entry sneaked in for any single file — not just a whole subtree — reds
+    // here by path. Full enumeration, not sampling: prettier itself is asked
+    // about every file it is claimed to govern.
+    const generatedRoot = join(ROOT, 'tests', 'generated');
+    const population = [...allTsFiles(join(ROOT, 'tests')), ...allTsFiles(join(ROOT, 'scripts'))];
+    expect(population.length).toBeGreaterThan(1000); // anti-vacuity: the trees are large
+    const verdicts = await Promise.all(
+      population.map(async (path) => ({ path, ignored: await prettierIgnores(path) })),
+    );
+    for (const { path, ignored } of verdicts) {
+      expect(ignored, path).toBe(path.startsWith(generatedRoot));
     }
-    const scriptsSample = firstTsFile(join(ROOT, 'scripts'));
-    expect(scriptsSample).not.toBeNull();
-    expect(await prettierIgnores(scriptsSample!), scriptsSample!).toBe(false);
+    expect(
+      verdicts.some(({ path }) => path.startsWith(generatedRoot)),
+      'sweep must reach tests/generated',
+    ).toBe(true);
   });
 });
