@@ -21,6 +21,7 @@ import {
   ffmpegInstallPlan,
   ffmpegPostInstallPathProjection,
   hostPreparationBudgets,
+  remainingPhaseBudgetMs,
   standardsBaseTarget,
 } from './lib/ci-test-host-contract.js';
 
@@ -111,8 +112,11 @@ if (prepareFfmpeg) {
   refuseTimedOutProbe(probe);
   if (!probe.ok) {
     await runPhase('ffmpeg-install', async () => {
+      // One deadline for the WHOLE plan: each step spawns with only the time
+      // remaining, so a two-step linux plan cannot consume two full budgets.
+      const deadline = Date.now() + budgets.installPhaseTimeoutMs;
       for (const step of ffmpegInstallPlan(process.platform)) {
-        await run(step.command, step.args, budgets.installStepTimeoutMs);
+        await run(step.command, step.args, remainingPhaseBudgetMs(deadline, Date.now()));
       }
     });
     const pathProjection = ffmpegPostInstallPathProjection(

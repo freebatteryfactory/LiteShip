@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve, relative } from 'node:path';
 
 /**
@@ -35,18 +35,30 @@ function readJson(path: string): Record<string, unknown> {
   return JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
 }
 
-/** First major in a semver range (`^7.0.0`, `>=7`, `7.x`, `~7.1.0` → 7). */
-function majorOf(range: string): number | null {
-  const match = range.match(/\d+/);
-  return match ? Number(match[0]) : null;
-}
-
 type VersionTuple = readonly [major: number, minor: number, patch: number];
 
-/** First complete semver tuple in a supported range (`^7.1.0`, `>=7.1.0 <8`). */
+/** EVERY complete semver tuple named anywhere in a range — a compound range
+ *  like `^7.0.0 || ^6.0.0` yields both, so no branch of a union escapes the
+ *  laws below by hiding behind the first tuple. */
+function allVersionsOf(range: string): VersionTuple[] {
+  return [...range.matchAll(/(\d+)\.(\d+)\.(\d+)/g)].map((m) => [Number(m[1]), Number(m[2]), Number(m[3])]);
+}
+
+/** Every major admitted by the range: majors of all complete tuples, falling
+ *  back to the first bare number for shorthand ranges (`7.x`, `>=7`). */
+function majorsOf(range: string): number[] {
+  const tuples = allVersionsOf(range);
+  if (tuples.length > 0) return [...new Set(tuples.map((t) => t[0]))];
+  const match = range.match(/\d+/);
+  return match ? [Number(match[0])] : [];
+}
+
+/** The LOWEST complete semver tuple in the range — the true floor a compound
+ *  range admits, not merely its first-written branch. */
 function minimumVersionOf(range: string): VersionTuple | null {
-  const match = range.match(/(\d+)\.(\d+)\.(\d+)/);
-  return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+  const tuples = allVersionsOf(range);
+  if (tuples.length === 0) return null;
+  return tuples.reduce((lowest, next) => (compareVersions(next, lowest) < 0 ? next : lowest));
 }
 
 function compareVersions(left: VersionTuple, right: VersionTuple): number {
@@ -75,36 +87,37 @@ function astroPinsIn(manifestPath: string): Pin[] {
   return pins;
 }
 
-/** Every manifest that could carry an `astro` pin: all workspace packages +
- *  examples, plus the two non-workspace files (the scaffolder template data
- *  and the integration fixture). */
+/** Directories that never hold authored manifests — installed trees, build
+ *  output, and VCS internals. Everything else is walked, so a NEW template,
+ *  fragment, or fixture manifest anywhere in the repo joins the laws below the
+ *  moment it exists instead of waiting to be hand-enrolled. */
+const UNAUTHORED_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', '.astro', 'reports']);
+
+/** Every authored manifest in the repository, recursively. */
 function collectManifests(): string[] {
   const manifests: string[] = [];
-  for (const group of ['packages', 'examples']) {
-    const groupDir = join(REPO_ROOT, group);
-    if (!existsSync(groupDir)) continue;
-    for (const name of readdirSync(groupDir)) {
-      const manifest = join(groupDir, name, 'package.json');
-      if (existsSync(manifest)) manifests.push(manifest);
+  const walk = (dir: string): void => {
+    for (const name of readdirSync(dir).sort()) {
+      if (UNAUTHORED_DIRS.has(name)) continue;
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) walk(path);
+      else if (name === 'package.json') manifests.push(path);
     }
-  }
-  // The scaffolder template is plain data, NOT a workspace member, so it is not
-  // covered by the packages/* sweep — add it explicitly.
-  manifests.push(join(REPO_ROOT, 'packages/create-liteship/templates/default/package.json'));
-  manifests.push(join(REPO_ROOT, 'tests/integration/astro/package.json'));
+  };
+  walk(REPO_ROOT);
   return manifests;
 }
 
 const root = readJson(join(REPO_ROOT, 'package.json'));
 const overrideRange = ((root.pnpm as Record<string, Record<string, string>> | undefined)?.overrides ?? {}).astro;
-const overrideMajor = overrideRange ? majorOf(overrideRange) : null;
+const overrideMajors = overrideRange ? majorsOf(overrideRange) : [];
 const overrideMinimum = overrideRange ? minimumVersionOf(overrideRange) : null;
 const pins = collectManifests().flatMap(astroPinsIn);
 
 describe('astro version sync', () => {
   it('the root pnpm.overrides.astro is the single source of truth', () => {
     expect(overrideRange, 'root package.json must pin pnpm.overrides.astro').toBeTypeOf('string');
-    expect(overrideMajor, `overrides.astro ${overrideRange} must name a major`).not.toBeNull();
+    expect(overrideMajors, `overrides.astro ${overrideRange} must name exactly one major`).toHaveLength(1);
     expect(overrideMinimum, `overrides.astro ${overrideRange} must name a complete minimum version`).not.toBeNull();
   });
 
@@ -114,17 +127,33 @@ describe('astro version sync', () => {
     const files = pins.map((p) => p.file);
     expect(files).toContain('packages/astro/package.json');
     expect(files).toContain('packages/create-liteship/templates/default/package.json');
+    // The CLI-shipped fragments are copied verbatim into user projects — the
+    // recursive sweep must reach them (they are NOT under packages/*/package.json).
+    expect(files.some((f) => f.startsWith('packages/cli/fragments/'))).toBe(true);
     expect(files.some((f) => f.startsWith('examples/'))).toBe(true);
   });
 
-  it('every Astro pin tracks the override major', () => {
+  it('range helpers see every branch of a compound range (negative controls)', () => {
+    // The defect class: a union range whose FIRST branch satisfies the law
+    // while a later branch admits a stale line. Helpers must fold the whole
+    // range, not its first match.
+    expect(minimumVersionOf('^0.24.0 || ^0.23.0')).toEqual([0, 23, 0]);
+    expect(minimumVersionOf('^0.23.0 || ^0.24.0')).toEqual([0, 23, 0]);
+    expect(majorsOf('^7.0.0 || ^6.0.0').sort()).toEqual([6, 7]);
+    expect(majorsOf('7.x')).toEqual([7]);
+    expect(minimumVersionOf('not-a-range')).toBeNull();
+  });
+
+  it('every Astro pin tracks the override major on every branch of its range', () => {
     for (const pin of pins) {
-      const pinMajor = majorOf(pin.range);
-      expect(pinMajor, `${pin.file} ${pin.field}.astro = ${pin.range} must name a major`).not.toBeNull();
-      expect(
-        pinMajor,
-        `${pin.file} ${pin.field}.astro (${pin.range}) must track the workspace override astro (${overrideRange})`,
-      ).toBe(overrideMajor);
+      const pinMajors = majorsOf(pin.range);
+      expect(pinMajors.length, `${pin.file} ${pin.field}.astro = ${pin.range} must name a major`).toBeGreaterThan(0);
+      for (const pinMajor of pinMajors) {
+        expect(
+          pinMajor,
+          `${pin.file} ${pin.field}.astro (${pin.range}) must track the workspace override astro (${overrideRange})`,
+        ).toBe(overrideMajors[0]);
+      }
     }
   });
 
@@ -150,9 +179,12 @@ describe('astro version sync', () => {
         }
       }
     }
-    // Drift guard: the scaffolder template is the load-bearing pin — if the
-    // sweep stops finding it, the loop below passes vacuously.
-    expect(liteshipPins.map((pin) => pin.file)).toContain('packages/create-liteship/templates/default/package.json');
+    // Drift guard: the scaffolder template and the CLI-shipped fragments are
+    // the load-bearing pins — if the sweep stops finding them, the loop below
+    // passes vacuously.
+    const pinFiles = liteshipPins.map((pin) => pin.file);
+    expect(pinFiles).toContain('packages/create-liteship/templates/default/package.json');
+    expect(pinFiles.some((f) => f.startsWith('packages/cli/fragments/'))).toBe(true);
 
     for (const pin of liteshipPins) {
       const minimum = minimumVersionOf(pin.range);
