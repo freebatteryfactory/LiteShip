@@ -372,7 +372,15 @@ function execCapsule(rest: readonly string[]): number | Promise<number> {
   }
   // `capsule gate` — the whole-corpus release gate (identity capsule.gate; the old
   // flat `capsule-verify` sat one keystroke from `capsule.verify`, issue #174).
-  if (sub === 'gate') return capsuleVerifyGate();
+  // Zero-option identity: trailing arguments refuse instead of silently dropping
+  // (PR #187 review — a typo must not receive a successful gate receipt).
+  if (sub === 'gate') {
+    if (subRest.length > 0) {
+      emitError('capsule.gate', 'cli/usage', 'capsule gate takes no options');
+      return 1;
+    }
+    return capsuleVerifyGate();
+  }
   if (sub === 'list') {
     const kind = takeFlagValue(subRest, catalogFlag('capsule.list', 'kind'));
     if (kind.present && kind.value === undefined) {
@@ -387,6 +395,18 @@ function execCapsule(rest: readonly string[]): number | Promise<number> {
 
 /** `audit [--profile <p>] [--consumer] [--consumer-app] [--findings]` — handler-backed. */
 function execAudit(rest: readonly string[]): Promise<number> {
+  // `audit floor` — the warning-floor gate (identity audit.floor; the old flat
+  // `audit-floor` hyphen-shadowed the `audit` verb, issue #174). Zero-option
+  // identity: trailing arguments refuse instead of silently dropping (PR #187
+  // review). Note `positional()` reads rest[0] only, so `audit --profile floor`
+  // can never reach this branch — `floor` stays the profile value.
+  if (positional(rest) === 'floor') {
+    if (rest.length > 1) {
+      emitError('audit.floor', 'cli/usage', 'audit floor takes no options');
+      return Promise.resolve(1);
+    }
+    return auditFloor();
+  }
   // `--profile <name>` is value-taking — the same swallow guard as doctor's
   // flags: `audit --profile --consumer` must not read profile='--consumer'.
   const profileFlag = takeFlagValue(rest, catalogFlag('audit', 'profile'));
@@ -394,9 +414,6 @@ function execAudit(rest: readonly string[]): Promise<number> {
     emitError('audit', 'cli/usage', 'usage: liteship audit --profile <path>');
     return Promise.resolve(1);
   }
-  // `audit floor` — the warning-floor gate (identity audit.floor; the old flat
-  // `audit-floor` hyphen-shadowed the `audit` verb, issue #174).
-  if (positional(rest) === 'floor') return auditFloor();
   const profile = profileFlag.value;
   const consumer = rest.includes(catalogFlag('audit', 'consumer'));
   const consumerApp = rest.includes(catalogFlag('audit', '--consumer-app'));
@@ -419,7 +436,16 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
   const subcommand = positional(rest);
   // `check invariants` — the fast-lane invariant gate (identity check.invariants;
   // the old flat `check-invariants` hyphen-shadowed the check family, issue #174).
-  if (subcommand === 'invariants') return checkInvariants();
+  // Zero-option identity: a recognized parent option (`--plan`, `--profile`, …)
+  // refuses instead of silently running the wrong gate with a green receipt
+  // (PR #187 review, Greptile T-Rex-verified).
+  if (subcommand === 'invariants') {
+    if (rest.length > 1) {
+      emitError('check.invariants', 'cli/usage', 'check invariants takes no options');
+      return Promise.resolve(1);
+    }
+    return checkInvariants();
+  }
   if (subcommand !== undefined && subcommand !== 'gates') {
     emitError('check', 'cli/invalid-argument', `expected subcommand: gates | invariants (got: ${subcommand})`);
     return Promise.resolve(1);
