@@ -31,44 +31,47 @@ function responseCode(response: unknown): number | undefined {
 describe('LSP lifecycle model', () => {
   it('matches the initialize/active/shutdown protocol for arbitrary request sequences', async () => {
     await fc.assert(
-      fc.asyncProperty(fc.array(fc.constantFrom<Operation>('initialize', 'check', 'shutdown', 'unknown'), {
-        minLength: 1,
-        maxLength: 40,
-      }), async (operations) => {
-        let phase: Phase = 'initial';
-        let state = initialLspState();
-        for (const [index, operation] of operations.entries()) {
-          const step = await handle(request(operation, index + 1), state, runner);
-          const code = responseCode(step.result.response);
-          if (phase === 'initial') {
-            if (operation === 'initialize') {
-              expect(code).toBeUndefined();
-              expect(step.state.initialized).toBe(true);
-              phase = 'active';
+      fc.asyncProperty(
+        fc.array(fc.constantFrom<Operation>('initialize', 'check', 'shutdown', 'unknown'), {
+          minLength: 1,
+          maxLength: 40,
+        }),
+        async (operations) => {
+          let phase: Phase = 'initial';
+          let state = initialLspState();
+          for (const [index, operation] of operations.entries()) {
+            const step = await handle(request(operation, index + 1), state, runner);
+            const code = responseCode(step.result.response);
+            if (phase === 'initial') {
+              if (operation === 'initialize') {
+                expect(code).toBeUndefined();
+                expect(step.state.initialized).toBe(true);
+                phase = 'active';
+              } else {
+                expect(code).toBe(-32600);
+                expect(step.state).toBe(state);
+              }
+            } else if (phase === 'active') {
+              if (operation === 'check') {
+                expect(code).toBeUndefined();
+              } else if (operation === 'shutdown') {
+                expect(code).toBeUndefined();
+                expect(step.state.shuttingDown).toBe(true);
+                phase = 'shutdown';
+              } else if (operation === 'initialize') {
+                expect(code).toBe(-32600);
+                expect(step.state).toBe(state);
+              } else {
+                expect(code).toBe(-32601);
+              }
             } else {
               expect(code).toBe(-32600);
               expect(step.state).toBe(state);
             }
-          } else if (phase === 'active') {
-            if (operation === 'check') {
-              expect(code).toBeUndefined();
-            } else if (operation === 'shutdown') {
-              expect(code).toBeUndefined();
-              expect(step.state.shuttingDown).toBe(true);
-              phase = 'shutdown';
-            } else if (operation === 'initialize') {
-              expect(code).toBe(-32600);
-              expect(step.state).toBe(state);
-            } else {
-              expect(code).toBe(-32601);
-            }
-          } else {
-            expect(code).toBe(-32600);
-            expect(step.state).toBe(state);
+            state = step.state;
           }
-          state = step.state;
-        }
-      }),
+        },
+      ),
       { seed: 0x15_051_1fe, numRuns: 100 },
     );
   });

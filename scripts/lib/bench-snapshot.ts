@@ -16,8 +16,20 @@ interface Snapshot {
   source: { runId: string | null; commit: string | null; capturedAt: string; env: string };
   gauntlet: { status: string; durationFormatted: string };
   benchGate: { hardGateCount: number; failedHardGateCount: number; replicateCount: number };
-  hardGatedPairs: { label: string; medianDirectiveNs: number; medianBaselineNs: number; medianOverheadPct: number; thresholdPct: number }[];
-  diagnosticWatch: { label: string; directiveP99Ns: number; absoluteP99BudgetNs: number; pctOfBudget: number; p99ToBaselineRatio: number };
+  hardGatedPairs: {
+    label: string;
+    medianDirectiveNs: number;
+    medianBaselineNs: number;
+    medianOverheadPct: number;
+    thresholdPct: number;
+  }[];
+  diagnosticWatch: {
+    label: string;
+    directiveP99Ns: number;
+    absoluteP99BudgetNs: number;
+    pctOfBudget: number;
+    p99ToBaselineRatio: number;
+  };
 }
 
 /** README-friendly display name for each hard-gated bench pair. */

@@ -8,21 +8,29 @@ import { scaledTimeout } from '../../../../vitest.shared.js';
 import { startDevServer } from '../../../../packages/scene/src/dev/server.js';
 
 describe('startDevServer', () => {
-  it('boots Vite on an ephemeral port and returns a /player.html URL', async () => {
-    const handle = await startDevServer('examples/scenes/intro.ts');
-    try {
-      expect(handle.url).toMatch(/^http:\/\/(localhost|127\.0\.0\.1):\d+\/player\.html$/);
-    } finally {
-      await handle.close();
-    }
-  }, scaledTimeout(30_000));
+  it(
+    'boots Vite on an ephemeral port and returns a /player.html URL',
+    async () => {
+      const handle = await startDevServer('examples/scenes/intro.ts');
+      try {
+        expect(handle.url).toMatch(/^http:\/\/(localhost|127\.0\.0\.1):\d+\/player\.html$/);
+      } finally {
+        await handle.close();
+      }
+    },
+    scaledTimeout(30_000),
+  );
 
-  it('close() resolves cleanly and the port is released', async () => {
-    const handle = await startDevServer('examples/scenes/intro.ts');
-    await handle.close();
-    // Re-starting a fresh instance after close should succeed (no port leak).
-    const second = await startDevServer('examples/scenes/intro.ts');
-    expect(second.url).toMatch(/^http:\/\//);
-    await second.close();
-  }, scaledTimeout(30_000));
+  it(
+    'close() resolves cleanly and the port is released',
+    async () => {
+      const handle = await startDevServer('examples/scenes/intro.ts');
+      await handle.close();
+      // Re-starting a fresh instance after close should succeed (no port leak).
+      const second = await startDevServer('examples/scenes/intro.ts');
+      expect(second.url).toMatch(/^http:\/\//);
+      await second.close();
+    },
+    scaledTimeout(30_000),
+  );
 });

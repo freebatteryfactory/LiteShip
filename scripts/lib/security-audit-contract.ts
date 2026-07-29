@@ -50,7 +50,8 @@ export function securityMinimumFindings(packageJson: unknown, lockfileText: stri
 }
 
 export function parsePnpmAuditReceipt(value: unknown): PnpmAuditReceipt {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new TypeError('audit receipt must be an object');
+  if (value === null || typeof value !== 'object' || Array.isArray(value))
+    throw new TypeError('audit receipt must be an object');
   const metadata = (value as Record<string, unknown>)['metadata'];
   if (metadata === null || typeof metadata !== 'object' || Array.isArray(metadata)) {
     throw new TypeError('audit receipt has no metadata');
@@ -61,7 +62,8 @@ export function parsePnpmAuditReceipt(value: unknown): PnpmAuditReceipt {
   }
   for (const severity of ['info', 'low', 'moderate', 'high', 'critical'] as const) {
     const count = (vulnerabilities as Record<string, unknown>)[severity];
-    if (!Number.isSafeInteger(count) || (count as number) < 0) throw new TypeError(`audit ${severity} count is invalid`);
+    if (!Number.isSafeInteger(count) || (count as number) < 0)
+      throw new TypeError(`audit ${severity} count is invalid`);
   }
   return value as PnpmAuditReceipt;
 }

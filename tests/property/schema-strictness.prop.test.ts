@@ -145,12 +145,21 @@ function corpus(id: string, schema: Schema<unknown, unknown>): Named {
 const kernelCorpus: readonly Named[] = [
   corpus('corpus:scalars', schema.struct({ id: schema.string, count: schema.number, active: schema.boolean })),
   corpus('corpus:edge-seed-tuple', schema.tuple(schema.number, schema.number)),
-  corpus('corpus:tuple-in-struct', schema.struct({ edge: schema.tuple(schema.number, schema.number), label: schema.literal('edge') })),
+  corpus(
+    'corpus:tuple-in-struct',
+    schema.struct({ edge: schema.tuple(schema.number, schema.number), label: schema.literal('edge') }),
+  ),
   corpus('corpus:heterogeneous-tuple', schema.tuple(schema.string, schema.number, schema.boolean)),
   corpus('corpus:union', schema.union(schema.literal('a'), schema.literal('b'), schema.number)),
-  corpus('corpus:union-in-struct', schema.struct({ tag: schema.union(schema.literal('x'), schema.number), n: schema.number })),
+  corpus(
+    'corpus:union-in-struct',
+    schema.struct({ tag: schema.union(schema.literal('x'), schema.number), n: schema.number }),
+  ),
   corpus('corpus:record', schema.record(schema.number)),
-  corpus('corpus:array-of-struct', schema.array(schema.struct({ x: schema.number, y: schema.optional(schema.string) }))),
+  corpus(
+    'corpus:array-of-struct',
+    schema.array(schema.struct({ x: schema.number, y: schema.optional(schema.string) })),
+  ),
   corpus(
     'corpus:nested',
     schema.struct({
@@ -160,8 +169,14 @@ const kernelCorpus: readonly Named[] = [
       opt: schema.optional(schema.boolean),
     }),
   ),
-  corpus('corpus:literals', schema.struct({ nothing: schema.literal(null), one: schema.literal(1), yes: schema.literal(true) })),
-  corpus('corpus:bytes', withArbitrary(schema.bytes(Uint8Array), () => fc.uint8Array({ minLength: 1, maxLength: 8 }))),
+  corpus(
+    'corpus:literals',
+    schema.struct({ nothing: schema.literal(null), one: schema.literal(1), yes: schema.literal(true) }),
+  ),
+  corpus(
+    'corpus:bytes',
+    withArbitrary(schema.bytes(Uint8Array), () => fc.uint8Array({ minLength: 1, maxLength: 8 })),
+  ),
 ];
 
 // ── Classify every candidate into swept vs. carved-out ──────────────────────
@@ -198,34 +213,46 @@ for (const named of [...catalogNamed, ...kernelCorpus]) {
     throw err;
   }
   const sample = fc.sample(arb, { numRuns: 1, seed: SEED })[0];
-  swept.push({ id: named.id, origin: named.origin, schema, arb, sampleNearMissCount: deriveNearMisses(schema, sample).length });
+  swept.push({
+    id: named.id,
+    origin: named.origin,
+    schema,
+    arb,
+    sampleNearMissCount: deriveNearMisses(schema, sample).length,
+  });
 }
 
 // ── The sweep — one property per schema ─────────────────────────────────────
 
 describe('schema strictness — auto-derived near-miss sweep (scar S1.1)', () => {
   for (const entry of swept) {
-    it(`${entry.origin}: ${entry.id}`, () => {
-      fc.assert(
-        fc.property(entry.arb, (value) => {
-          // Valid values strict-decode cleanly.
-          const valid = decode(entry.schema, value);
-          expect(valid.ok, `a schema-conformant value failed strict decode for ${entry.id}`).toBe(true);
-          // Every derived near-miss is rejected with the predicted code + path prefix.
-          for (const nm of deriveNearMisses(entry.schema, value)) {
-            const rejected = decode(entry.schema, nm.mutated);
-            expect(rejected.ok, `near-miss NOT rejected [${entry.id}]: ${nm.label}`).toBe(false);
-            if (rejected.ok) continue;
-            const matched = rejected.error.some((issue) => issue.code === nm.code && pathStartsWith(issue.path, nm.pathPrefix));
-            expect(
-              matched,
-              `near-miss [${entry.id}] "${nm.label}" expected ${nm.code} at prefix [${nm.pathPrefix.join('/')}] — got ${JSON.stringify(rejected.error)}`,
-            ).toBe(true);
-          }
-        }),
-        { seed: SEED, numRuns: NUM_RUNS },
-      );
-    }, scaledTimeout(30_000));
+    it(
+      `${entry.origin}: ${entry.id}`,
+      () => {
+        fc.assert(
+          fc.property(entry.arb, (value) => {
+            // Valid values strict-decode cleanly.
+            const valid = decode(entry.schema, value);
+            expect(valid.ok, `a schema-conformant value failed strict decode for ${entry.id}`).toBe(true);
+            // Every derived near-miss is rejected with the predicted code + path prefix.
+            for (const nm of deriveNearMisses(entry.schema, value)) {
+              const rejected = decode(entry.schema, nm.mutated);
+              expect(rejected.ok, `near-miss NOT rejected [${entry.id}]: ${nm.label}`).toBe(false);
+              if (rejected.ok) continue;
+              const matched = rejected.error.some(
+                (issue) => issue.code === nm.code && pathStartsWith(issue.path, nm.pathPrefix),
+              );
+              expect(
+                matched,
+                `near-miss [${entry.id}] "${nm.label}" expected ${nm.code} at prefix [${nm.pathPrefix.join('/')}] — got ${JSON.stringify(rejected.error)}`,
+              ).toBe(true);
+            }
+          }),
+          { seed: SEED, numRuns: NUM_RUNS },
+        );
+      },
+      scaledTimeout(30_000),
+    );
   }
 });
 

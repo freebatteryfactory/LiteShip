@@ -5,12 +5,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import {
-  Stagger,
-  lowerStaggerIntent,
-  interpretTransition,
-  resolveStaggerInitialState,
-} from '@liteship/core';
+import { Stagger, lowerStaggerIntent, interpretTransition, resolveStaggerInitialState } from '@liteship/core';
 import { compileStagger } from '@liteship/compiler';
 
 function listIntent(childCount = 3) {

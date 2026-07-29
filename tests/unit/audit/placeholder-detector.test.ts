@@ -167,19 +167,27 @@ describe('placeholder-content — GREEN: the anti-placeholder machinery passes C
   });
 
   it('a slash-enumeration of marker NAMES leading a comment', () => {
-    expect(placeholderFindings(`// ${TD} / ${FX} / pseudocode / "implement me" stubs\nexport const x = 1;\n`)).toHaveLength(0);
+    expect(
+      placeholderFindings(`// ${TD} / ${FX} / pseudocode / "implement me" stubs\nexport const x = 1;\n`),
+    ).toHaveLength(0);
   });
 
   it('a marker word fused into an identifier in prose (`ADR-KEYWORD`)', () => {
-    expect(placeholderFindings(`// Other arms lack a wired channel — see ADR-${TD}.\nexport const x = 1;\n`)).toHaveLength(0);
+    expect(
+      placeholderFindings(`// Other arms lack a wired channel — see ADR-${TD}.\nexport const x = 1;\n`),
+    ).toHaveLength(0);
   });
 
   it('a marker word mid-prose, not leading the line', () => {
-    expect(placeholderFindings(`// the ${TD} family is never shippable and never waivable\nexport const x = 1;\n`)).toHaveLength(0);
+    expect(
+      placeholderFindings(`// the ${TD} family is never shippable and never waivable\nexport const x = 1;\n`),
+    ).toHaveLength(0);
   });
 
   it('the bare word "placeholder" in prose comments', () => {
-    expect(placeholderFindings(`// a green placeholder would ship unwired work — banned\nexport const x = 1;\n`)).toHaveLength(0);
+    expect(
+      placeholderFindings(`// a green placeholder would ship unwired work — banned\nexport const x = 1;\n`),
+    ).toHaveLength(0);
   });
 
   it('a `//`-looking sequence INSIDE a string literal is not read as a comment', () => {

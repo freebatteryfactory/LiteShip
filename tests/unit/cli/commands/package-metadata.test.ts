@@ -71,7 +71,10 @@ describe('answerFirstViolation — rejects the known anti-patterns, accepts real
     ).toMatch(/symbol inventory/);
     // @liteship/web's OLD description.
     expect(
-      answerFirstViolation('DOM runtime: Morph, SlotRegistry, SSE client, Physical state, LLM adapter', '@liteship/web'),
+      answerFirstViolation(
+        'DOM runtime: Morph, SlotRegistry, SSE client, Physical state, LLM adapter',
+        '@liteship/web',
+      ),
     ).toMatch(/symbol inventory/);
   });
 
@@ -88,7 +91,9 @@ describe('answerFirstViolation — rejects the known anti-patterns, accepts real
   it('rejects an empty description, a name-only description, and a code-symbol opener', () => {
     expect(answerFirstViolation('', '@liteship/core')).toMatch(/empty/);
     expect(answerFirstViolation('@liteship/core', '@liteship/core')).toMatch(/package name/);
-    expect(answerFirstViolation('`TaggedError` coproduct over an open contract', '@liteship/error')).toMatch(/code symbol/);
+    expect(answerFirstViolation('`TaggedError` coproduct over an open contract', '@liteship/error')).toMatch(
+      /code symbol/,
+    );
   });
 
   it('rejects a leaked workspace: protocol string', () => {
@@ -108,12 +113,18 @@ describe('checkPackedMetadata — validates a packed manifest against the catalo
   });
 
   it('flags a package with no catalog entry', () => {
-    const v = checkPackedMetadata({ name: '@liteship/ghost', description: 'x'.repeat(40), keywords: ['a'] }, '@liteship/ghost');
+    const v = checkPackedMetadata(
+      { name: '@liteship/ghost', description: 'x'.repeat(40), keywords: ['a'] },
+      '@liteship/ghost',
+    );
     expect(v.some((x) => x.field === 'catalog')).toBe(true);
   });
 
   it('flags a description that drifted from the catalog', () => {
-    const m = { ...good('@liteship/core'), description: 'Some other perfectly fine plain-English sentence about core.' };
+    const m = {
+      ...good('@liteship/core'),
+      description: 'Some other perfectly fine plain-English sentence about core.',
+    };
     const v = checkPackedMetadata(m, '@liteship/core');
     expect(v.some((x) => x.field === 'description' && /drifted from the catalog/.test(x.message))).toBe(true);
   });

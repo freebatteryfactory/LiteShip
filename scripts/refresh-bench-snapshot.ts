@@ -89,4 +89,6 @@ const snapshot = {
 
 const out = resolve(import.meta.dirname, '..', 'benchmarks', 'readme-snapshot.json');
 writeFileSync(out, JSON.stringify(snapshot, null, 2) + '\n');
-console.log(`refresh-bench-snapshot — wrote ${out} (gauntlet ${snapshot.gauntlet.status} in ${snapshot.gauntlet.durationFormatted}, ${snapshot.hardGatedPairs.length} hard gates)`);
+console.log(
+  `refresh-bench-snapshot — wrote ${out} (gauntlet ${snapshot.gauntlet.status} in ${snapshot.gauntlet.durationFormatted}, ${snapshot.hardGatedPairs.length} hard gates)`,
+);

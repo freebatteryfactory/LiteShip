@@ -63,11 +63,7 @@ export type AuditScoreValue = 0 | 0.5 | 1;
 export type AuditCoverageStatus = 'present' | 'partial' | 'missing' | 'not_applicable';
 export type ManualReviewStatus = 'seeded' | 'spot_checked' | 'reviewed';
 export type ProtocolAreaId =
-  | 'bidirectional-traceability'
-  | 'flow-verification'
-  | 'test-honesty'
-  | 'semantic-consistency'
-  | 'proof-inventory';
+  'bidirectional-traceability' | 'flow-verification' | 'test-honesty' | 'semantic-consistency' | 'proof-inventory';
 export type FullTreeClassification =
   | 'scored-authored'
   | 'evidence-artifact'
@@ -77,10 +73,7 @@ export type FullTreeClassification =
   | 'excluded-binary-or-large';
 export type FrameworkCapabilityStatus = 'present' | 'partial' | 'absent' | 'out_of_scope';
 export type FrameworkRecommendation =
-  | 'no_action'
-  | 'architecture_hardening'
-  | 'new_runtime_work'
-  | 'documentation_clarification';
+  'no_action' | 'architecture_hardening' | 'new_runtime_work' | 'documentation_clarification';
 
 export interface AuditControlEvaluation {
   readonly family: string;

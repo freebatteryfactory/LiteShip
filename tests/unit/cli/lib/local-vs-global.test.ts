@@ -52,10 +52,7 @@ beforeAll(() => {
 
   // A: strongly proven (mutation 1.0, coverage 1.0); B: weakly proven (mutation 0.2,
   // coverage ~0.33).
-  writeFileSync(
-    join(repoRoot, 'benchmarks/mutation-score.json'),
-    JSON.stringify({ [A]: 1, [B]: 0.2 }),
-  );
+  writeFileSync(join(repoRoot, 'benchmarks/mutation-score.json'), JSON.stringify({ [A]: 1, [B]: 0.2 }));
   writeFileSync(
     join(repoRoot, 'coverage/coverage-final.json'),
     JSON.stringify({
@@ -74,10 +71,7 @@ beforeAll(() => {
     `import { a } from '${A.replace(/\.ts$/, '.js')}';\nimport fc from 'fast-check';\n// PROVES: INV-A-LAW\nfc.assert(() => a());\n`,
   );
   // A unit test deep-imports B only (B is individually tested, but no test touches A+B).
-  writeFileSync(
-    join(repoRoot, 'tests/unit/b.test.ts'),
-    `import { b } from '${B.replace(/\.ts$/, '.js')}';\nb();\n`,
-  );
+  writeFileSync(join(repoRoot, 'tests/unit/b.test.ts'), `import { b } from '${B.replace(/\.ts$/, '.js')}';\nb();\n`);
 });
 
 afterAll(() => {
@@ -88,10 +82,20 @@ describe('blendProof — the documented weighted combination', () => {
   it('blends the four signals by the redlinable weights, in [0, 1]', () => {
     const full = blendProof({ mutationScore: 1, coverage: 1, hasPropertyTest: true, hasEnrolledInvariant: true });
     expect(full).toBeCloseTo(1); // weights sum to 1
-    const onlyMutation = blendProof({ mutationScore: 1, coverage: null, hasPropertyTest: false, hasEnrolledInvariant: false });
+    const onlyMutation = blendProof({
+      mutationScore: 1,
+      coverage: null,
+      hasPropertyTest: false,
+      hasEnrolledInvariant: false,
+    });
     expect(onlyMutation).toBeCloseTo(PROOF_BLEND_WEIGHTS.mutation);
     // An unmeasured fraction (null) contributes 0 — the sound direction.
-    const none = blendProof({ mutationScore: null, coverage: null, hasPropertyTest: false, hasEnrolledInvariant: false });
+    const none = blendProof({
+      mutationScore: null,
+      coverage: null,
+      hasPropertyTest: false,
+      hasEnrolledInvariant: false,
+    });
     expect(none).toBe(0);
   });
 });
@@ -151,7 +155,9 @@ describe('buildCompositionFacts — the sound static-reference proxy', () => {
 
   it('is DETERMINISTIC — the same repo + IR yields byte-identical facts twice', () => {
     const ir = fixtureIR();
-    expect(JSON.stringify(buildCompositionFacts(repoRoot, ir))).toBe(JSON.stringify(buildCompositionFacts(repoRoot, ir)));
+    expect(JSON.stringify(buildCompositionFacts(repoRoot, ir))).toBe(
+      JSON.stringify(buildCompositionFacts(repoRoot, ir)),
+    );
   });
 });
 
@@ -182,7 +188,12 @@ describe('blendProof — the LAW is monotone + bounded (property-based)', () => 
   it('a missing measurement (null) NEVER raises proof vs. a measured 0 — the sound direction', () => {
     fc.assert(
       fc.property(fc.boolean(), fc.boolean(), (p, i) => {
-        const withNull = blendProof({ mutationScore: null, coverage: null, hasPropertyTest: p, hasEnrolledInvariant: i });
+        const withNull = blendProof({
+          mutationScore: null,
+          coverage: null,
+          hasPropertyTest: p,
+          hasEnrolledInvariant: i,
+        });
         const withZero = blendProof({ mutationScore: 0, coverage: 0, hasPropertyTest: p, hasEnrolledInvariant: i });
         // null contributes 0 exactly as a measured 0 does (never an inflated bonus).
         expect(withNull).toBeCloseTo(withZero, 10);

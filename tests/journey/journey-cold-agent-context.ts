@@ -99,14 +99,13 @@ export async function journeyColdAgentContext(installedAppDir: string): Promise<
     journeyAssert(describeResult.code === 0, `packed describe exited ${describeResult.code}`);
     const described = parseReceipt(describeResult.stdout);
     const publicSurface = described['publicSurface'] as
-      {
-        root?: readonly unknown[];
-        subpaths?: readonly unknown[];
-        lifecycle?: readonly { readonly operation?: unknown; readonly specifier?: unknown }[];
-      } | undefined;
-    const expectedLifecycle = FACADE_LIFECYCLE_CONTRACT.map(
-      (entry) => `${entry.specifier}:${entry.operation}`,
-    ).sort();
+      | {
+          root?: readonly unknown[];
+          subpaths?: readonly unknown[];
+          lifecycle?: readonly { readonly operation?: unknown; readonly specifier?: unknown }[];
+        }
+      | undefined;
+    const expectedLifecycle = FACADE_LIFECYCLE_CONTRACT.map((entry) => `${entry.specifier}:${entry.operation}`).sort();
     const receivedLifecycle = (publicSurface?.lifecycle ?? [])
       .map((entry) => `${String(entry.specifier)}:${String(entry.operation)}`)
       .sort();
@@ -114,7 +113,9 @@ export async function journeyColdAgentContext(installedAppDir: string): Promise<
     const receivedSet = new Set(receivedLifecycle);
     const missingLifecycle = expectedLifecycle.filter((identity) => !receivedSet.has(identity));
     const unexpectedLifecycle = receivedLifecycle.filter((identity) => !expectedSet.has(identity));
-    const duplicateLifecycle = receivedLifecycle.filter((identity, index) => receivedLifecycle.indexOf(identity) !== index);
+    const duplicateLifecycle = receivedLifecycle.filter(
+      (identity, index) => receivedLifecycle.indexOf(identity) !== index,
+    );
     journeyAssert(
       Array.isArray(publicSurface?.root) &&
         Array.isArray(publicSurface?.subpaths) &&

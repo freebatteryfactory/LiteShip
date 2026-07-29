@@ -4,9 +4,14 @@ import type { SceneContract } from '@liteship/scene';
 
 describe('Scene.include', () => {
   const sub: SceneContract = {
-    name: 'sub', duration: 30, fps: 60, bpm: 120,
+    name: 'sub',
+    duration: 30,
+    fps: 60,
+    bpm: 120,
     tracks: [Track.video('a', { from: 0, to: 30, source: {} })],
-    invariants: [], budgets: { p95FrameMs: 16 }, site: ['node'],
+    invariants: [],
+    budgets: { p95FrameMs: 16 },
+    site: ['node'],
   };
 
   it('shifts every track in the sub-scene by the given offset', () => {
@@ -85,7 +90,10 @@ describe('Scene.include', () => {
         Track.video('hero', { from: 0, to: 30, source: {} }),
         Track.audio('bed', { from: 0, to: 30, source: 'bed' }),
         Track.effect('glow', {
-          from: 5, to: 25, kind: 'glow', target,
+          from: 5,
+          to: 25,
+          kind: 'glow',
+          target,
           syncTo: { anchor, mode: 'beat' },
         }),
       ],
@@ -121,19 +129,35 @@ describe('Scene.include', () => {
 
 describe('Scene.subscene', () => {
   it('inherits parent bpm/fps when child does not declare them', () => {
-    const out = Scene.subscene({ bpm: 120, fps: 60 }, {
-      name: 'child', duration: 1000,
-      tracks: [], invariants: [], budgets: { p95FrameMs: 16 }, site: ['node'],
-    });
+    const out = Scene.subscene(
+      { bpm: 120, fps: 60 },
+      {
+        name: 'child',
+        duration: 1000,
+        tracks: [],
+        invariants: [],
+        budgets: { p95FrameMs: 16 },
+        site: ['node'],
+      },
+    );
     expect(out.bpm).toBe(120);
     expect(out.fps).toBe(60);
   });
 
   it('child explicit bpm/fps win over parent inheritance', () => {
-    const out = Scene.subscene({ bpm: 120, fps: 60 }, {
-      name: 'child', duration: 1000, bpm: 90, fps: 30,
-      tracks: [], invariants: [], budgets: { p95FrameMs: 16 }, site: ['node'],
-    });
+    const out = Scene.subscene(
+      { bpm: 120, fps: 60 },
+      {
+        name: 'child',
+        duration: 1000,
+        bpm: 90,
+        fps: 30,
+        tracks: [],
+        invariants: [],
+        budgets: { p95FrameMs: 16 },
+        site: ['node'],
+      },
+    );
     expect(out.bpm).toBe(90);
     expect(out.fps).toBe(30);
   });

@@ -124,74 +124,83 @@ describe('headless dualExportNode (F) — the proof + a real MP4, in node', () =
       );
     });
   } else {
+    test('the stage probe agrees the codec is available', () => {
+      expect(ffmpegEncodeAvailable()).toBe(true);
+    });
 
-  test('the stage probe agrees the codec is available', () => {
-    expect(ffmpegEncodeAvailable()).toBe(true);
-  });
+    test('produces a real validatable MP4 Uint8Array (ftyp magic + ffprobe h264)', async () => {
+      const graph = buildGraph();
+      const result = await dualExportNode(graph, ffmpegFrameEncoder());
 
-  test('produces a real validatable MP4 Uint8Array (ftyp magic + ffprobe h264)', async () => {
-    const graph = buildGraph();
-    const result = await dualExportNode(graph, ffmpegFrameEncoder());
+      // (a) Real bytes: a non-empty ISO-BMFF container the node caller can write out.
+      expect(result.encoded.bytes).toBeInstanceOf(Uint8Array);
+      expect(result.encoded.bytes.byteLength).toBeGreaterThan(0);
+      expect(result.encoded.container).toBe('video/mp4');
+      expect(result.encoded.codec).toBe('h264');
+      expect(isIsoBmff(result.encoded.bytes)).toBe(true);
 
-    // (a) Real bytes: a non-empty ISO-BMFF container the node caller can write out.
-    expect(result.encoded.bytes).toBeInstanceOf(Uint8Array);
-    expect(result.encoded.bytes.byteLength).toBeGreaterThan(0);
-    expect(result.encoded.container).toBe('video/mp4');
-    expect(result.encoded.codec).toBe('h264');
-    expect(isIsoBmff(result.encoded.bytes)).toBe(true);
+      // The encoded-bytes content address is a real sha256 digest.
+      expect(result.bytesDigest.integrity_digest).toMatch(/^sha256:/);
 
-    // The encoded-bytes content address is a real sha256 digest.
-    expect(result.bytesDigest.integrity_digest).toMatch(/^sha256:/);
+      // ffprobe reads the bytes back as a genuine h264 video stream (exit 0).
+      const probe = execFileSync(
+        'ffprobe',
+        [
+          '-v',
+          'error',
+          '-select_streams',
+          'v:0',
+          '-show_entries',
+          'stream=codec_name',
+          '-of',
+          'default=nw=1:nk=1',
+          '-',
+        ],
+        { input: Buffer.from(result.encoded.bytes), encoding: 'utf8' },
+      ).trim();
+      expect(probe).toBe('h264');
+    });
 
-    // ffprobe reads the bytes back as a genuine h264 video stream (exit 0).
-    const probe = execFileSync(
-      'ffprobe',
-      ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name', '-of', 'default=nw=1:nk=1', '-'],
-      { input: Buffer.from(result.encoded.bytes), encoding: 'utf8' },
-    ).trim();
-    expect(probe).toBe('h264');
-  });
+    test('the dual-export INVARIANT holds headless — sharedSourceDigest === graph.digest, one source for both casts', async () => {
+      const graph = buildGraph();
+      const projectionId = graph.nodes.find((n) => n.family === 'projection')!.id;
+      const result = await dualExportNode(graph, ffmpegFrameEncoder());
 
-  test('the dual-export INVARIANT holds headless — sharedSourceDigest === graph.digest, one source for both casts', async () => {
-    const graph = buildGraph();
-    const projectionId = graph.nodes.find((n) => n.family === 'projection')!.id;
-    const result = await dualExportNode(graph, ffmpegFrameEncoder());
+      // (b) The single source both casts derive from IS the graph's own digest.
+      expect(result.sharedSourceDigest.display_id).toBe(graph.digest.display_id);
+      expect(result.sharedSourceDigest.integrity_digest).toBe(graph.digest.integrity_digest);
 
-    // (b) The single source both casts derive from IS the graph's own digest.
-    expect(result.sharedSourceDigest.display_id).toBe(graph.digest.display_id);
-    expect(result.sharedSourceDigest.integrity_digest).toBe(graph.digest.integrity_digest);
+      // The page carrier and the video carrier read the SAME source projection —
+      // exactly the proof the browser path makes, now proven headless.
+      expect(result.astro.carrier).toBe('astro-page');
+      expect(result.video.carrier).toBe('video');
+      expect(result.astro.sourceRefs).toContain(projectionId);
+      expect(result.video.sourceRefs).toContain(projectionId);
+      expect([...result.astro.sourceRefs].sort()).toEqual([...result.video.sourceRefs].sort());
 
-    // The page carrier and the video carrier read the SAME source projection —
-    // exactly the proof the browser path makes, now proven headless.
-    expect(result.astro.carrier).toBe('astro-page');
-    expect(result.video.carrier).toBe('video');
-    expect(result.astro.sourceRefs).toContain(projectionId);
-    expect(result.video.sourceRefs).toContain(projectionId);
-    expect([...result.astro.sourceRefs].sort()).toEqual([...result.video.sourceRefs].sort());
+      // The parent merge head pins both child receipts (the single assertable head).
+      const previous = result.receipt.previous as readonly string[];
+      expect(previous).toContain(result.astroReceipt.hash);
+      expect(previous).toContain(result.videoReceipt.hash);
+    });
 
-    // The parent merge head pins both child receipts (the single assertable head).
-    const previous = result.receipt.previous as readonly string[];
-    expect(previous).toContain(result.astroReceipt.hash);
-    expect(previous).toContain(result.videoReceipt.hash);
-  });
+    test('the injected byte-encode does NOT change the proof video FRAME digest', async () => {
+      const graph = buildGraph();
+      // The frame-only video cast (no encoder) — the content address of the FRAMES.
+      const frameOnly = exportVideo(graph);
+      // The headless proof: its `video` carrier must be addressed over the SAME
+      // frames, byte-for-byte identical to `dualExport`. The mp4 rides alongside in
+      // `encoded`; it must not leak into the proof's frame digest.
+      const proof = await dualExport(graph);
+      const headless = await dualExportNode(graph, ffmpegFrameEncoder());
 
-  test('the injected byte-encode does NOT change the proof video FRAME digest', async () => {
-    const graph = buildGraph();
-    // The frame-only video cast (no encoder) — the content address of the FRAMES.
-    const frameOnly = exportVideo(graph);
-    // The headless proof: its `video` carrier must be addressed over the SAME
-    // frames, byte-for-byte identical to `dualExport`. The mp4 rides alongside in
-    // `encoded`; it must not leak into the proof's frame digest.
-    const proof = await dualExport(graph);
-    const headless = await dualExportNode(graph, ffmpegFrameEncoder());
+      expect(headless.video.artifactDigest.display_id).toBe(frameOnly.artifactDigest.display_id);
+      expect(headless.video.artifactDigest.display_id).toBe(proof.video.artifactDigest.display_id);
+      expect(headless.sharedSourceDigest.display_id).toBe(proof.sharedSourceDigest.display_id);
 
-    expect(headless.video.artifactDigest.display_id).toBe(frameOnly.artifactDigest.display_id);
-    expect(headless.video.artifactDigest.display_id).toBe(proof.video.artifactDigest.display_id);
-    expect(headless.sharedSourceDigest.display_id).toBe(proof.sharedSourceDigest.display_id);
-
-    // The real encoded bytes still exist and are non-trivial — the proof staying
-    // frame-addressed does not mean the encode was skipped.
-    expect(headless.encoded.bytes.byteLength).toBeGreaterThan(0);
-  });
+      // The real encoded bytes still exist and are non-trivial — the proof staying
+      // frame-addressed does not mean the encode was skipped.
+      expect(headless.encoded.bytes.byteLength).toBeGreaterThan(0);
+    });
   }
 });

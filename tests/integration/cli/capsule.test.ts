@@ -19,9 +19,7 @@ describe('liteship capsule *', () => {
   afterAll(() => iso?.restore());
 
   it('inspect dumps a capsule manifest entry by name', async () => {
-    const { exit, stdout } = await captureCli(() =>
-      run(['capsule', 'inspect', 'core.boundary.evaluate']),
-    );
+    const { exit, stdout } = await captureCli(() => run(['capsule', 'inspect', 'core.boundary.evaluate']));
     expect(exit).toBe(0);
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     expect(receipt.status).toBe('ok');
@@ -37,18 +35,18 @@ describe('liteship capsule *', () => {
   });
 
   it('list --kind filters by assembly kind', async () => {
-    const { exit, stdout } = await captureCli(() =>
-      run(['capsule', 'list', '--kind=pureTransform']),
-    );
+    const { exit, stdout } = await captureCli(() => run(['capsule', 'list', '--kind=pureTransform']));
     expect(exit).toBe(0);
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     expect(receipt.capsules.every((c: { kind: string }) => c.kind === 'pureTransform')).toBe(true);
   });
 
-  it('verify runs generated tests for a capsule', async () => {
-    const { exit } = await captureCli(() =>
-      run(['capsule', 'verify', 'core.boundary.evaluate']),
-    );
-    expect(exit).toBe(0);
-  }, scaledTimeout(90_000));
+  it(
+    'verify runs generated tests for a capsule',
+    async () => {
+      const { exit } = await captureCli(() => run(['capsule', 'verify', 'core.boundary.evaluate']));
+      expect(exit).toBe(0);
+    },
+    scaledTimeout(90_000),
+  );
 });

@@ -20,12 +20,27 @@ function capture(operation: () => unknown): unknown {
 
 describe('@liteship/canonical error contract', () => {
   it('rejects malformed identity and integrity brands as ValidationError values', () => {
-    expect(hasTag(capture(() => ContentAddress('fnv1a:XYZ')), 'ValidationError')).toBe(true);
-    expect(hasTag(capture(() => IntegrityDigest('sha256:not-a-digest')), 'ValidationError')).toBe(true);
+    expect(
+      hasTag(
+        capture(() => ContentAddress('fnv1a:XYZ')),
+        'ValidationError',
+      ),
+    ).toBe(true);
+    expect(
+      hasTag(
+        capture(() => IntegrityDigest('sha256:not-a-digest')),
+        'ValidationError',
+      ),
+    ).toBe(true);
   });
 
   it('rejects unsupported host objects as UnsupportedError values', () => {
-    expect(hasTag(capture(() => CanonicalCbor.encode(new Map())), 'UnsupportedError')).toBe(true);
+    expect(
+      hasTag(
+        capture(() => CanonicalCbor.encode(new Map())),
+        'UnsupportedError',
+      ),
+    ).toBe(true);
   });
 
   it('rejects malformed and non-canonical bytes as ParseError values with bounded reasons', () => {

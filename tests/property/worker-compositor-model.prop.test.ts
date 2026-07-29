@@ -6,8 +6,7 @@ import { executeCompositorScript } from '../support/compositor-script-harness.js
 
 type State = 'low' | 'high';
 type Operation =
-  | { readonly kind: 'evaluate'; readonly name: 'a' | 'b'; readonly state: State }
-  | { readonly kind: 'warm-reset' };
+  { readonly kind: 'evaluate'; readonly name: 'a' | 'b'; readonly state: State } | { readonly kind: 'warm-reset' };
 
 describe('compositor worker versus full-snapshot model', () => {
   test('generated update/reset histories never drop an unchanged quantizer', () => {

@@ -17,22 +17,14 @@ describe('streamReceiptCapsule', () => {
   });
 
   it('receipt-accompanies-every-mutation invariant accepts applied with receipt and rejects malformed', () => {
-    const inv = streamReceiptCapsule.invariants.find(
-      (i) => i.name === 'receipt-accompanies-every-mutation',
-    );
+    const inv = streamReceiptCapsule.invariants.find((i) => i.name === 'receipt-accompanies-every-mutation');
     expect(inv).toBeDefined();
     // Skipped/failed mutations don't need a string messageId — invariant trivially passes.
     expect(
-      inv!.check(
-        { kind: 'patch', payload: {} },
-        { status: 'skipped', receipt: { messageId: '', appliedAt: 0 } },
-      ),
+      inv!.check({ kind: 'patch', payload: {} }, { status: 'skipped', receipt: { messageId: '', appliedAt: 0 } }),
     ).toBe(true);
     expect(
-      inv!.check(
-        { kind: 'signal', payload: null },
-        { status: 'failed', receipt: { messageId: '', appliedAt: 0 } },
-      ),
+      inv!.check({ kind: 'signal', payload: null }, { status: 'failed', receipt: { messageId: '', appliedAt: 0 } }),
     ).toBe(true);
     // Applied requires a string messageId.
     expect(

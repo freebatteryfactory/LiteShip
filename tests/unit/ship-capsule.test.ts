@@ -6,7 +6,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { ContentAddress, IntegrityDigest, ShipCapsule, type AddressedDigest, type HLCBrand as HLC } from '@liteship/core';
+import {
+  ContentAddress,
+  IntegrityDigest,
+  ShipCapsule,
+  type AddressedDigest,
+  type HLCBrand as HLC,
+} from '@liteship/core';
 import { encode as cborEncode } from 'cborg';
 
 const fakeDigest = (label: string): AddressedDigest => ({

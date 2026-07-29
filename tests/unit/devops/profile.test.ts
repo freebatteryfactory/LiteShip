@@ -45,7 +45,13 @@ function acmeProfile(root: string): DevopsProfile {
       '@acme/core': { allowedInternalImports: [], kind: 'core' },
     },
     dynamicImportExemptions: new Set<string>(),
-    surfacePolicy: { astroPackage: '', astroClientDirectives: [], astroRuntimeFiles: [], viteVirtualModules: [], knownCapabilityNotes: [] },
+    surfacePolicy: {
+      astroPackage: '',
+      astroClientDirectives: [],
+      astroRuntimeFiles: [],
+      viteVirtualModules: [],
+      knownCapabilityNotes: [],
+    },
   };
 }
 
@@ -63,11 +69,15 @@ describe('D7 — the default profile references the existing policy consts (sing
 });
 
 describe('D7 — the host profile is explicit', () => {
-  it('the engine reproduces LiteShip behavior only when the host supplies LiteShip policy', () => {
-    const explicit = runStructureAudit(liteshipDevopsProfile);
-    expect(explicit.summary.packageCount).toBeGreaterThan(0);
-    expect(explicit.summary.coverageClassification.topology.every((entry) => entry.coverage === 'clean')).toBe(true);
-  }, scaledTimeout(60_000));
+  it(
+    'the engine reproduces LiteShip behavior only when the host supplies LiteShip policy',
+    () => {
+      const explicit = runStructureAudit(liteshipDevopsProfile);
+      expect(explicit.summary.packageCount).toBeGreaterThan(0);
+      expect(explicit.summary.coverageClassification.topology.every((entry) => entry.coverage === 'clean')).toBe(true);
+    },
+    scaledTimeout(60_000),
+  );
 });
 
 describe('D7 — a synthetic @acme/ profile drives the audit (decoupling proof)', () => {

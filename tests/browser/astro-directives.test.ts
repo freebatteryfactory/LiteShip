@@ -153,7 +153,9 @@ describe('browser astro directive coverage', () => {
                   listener({
                     data: {
                       type: 'resolved-state-ack',
-                      generation: Array.isArray(message.states) ? ((message.states[0] as { generation?: number } | undefined)?.generation ?? 0) : 0,
+                      generation: Array.isArray(message.states)
+                        ? ((message.states[0] as { generation?: number } | undefined)?.generation ?? 0)
+                        : 0,
                       states: Array.isArray(message.states)
                         ? message.states.map((state) => ({
                             name: (state as { name: string }).name,
@@ -193,9 +195,7 @@ describe('browser astro directive coverage', () => {
     await Promise.resolve();
 
     expect(workers).toHaveLength(1);
-    expect(
-      workers[0]?.listeners.message.length,
-    ).toBeGreaterThanOrEqual(1);
+    expect(workers[0]?.listeners.message.length).toBeGreaterThanOrEqual(1);
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     expect(revokeObjectURL).not.toHaveBeenCalled();
   });
@@ -209,7 +209,8 @@ describe('browser astro directive coverage', () => {
     const loadSpy = vi.spyOn(WASMDispatch, 'load').mockResolvedValue(WASMDispatch.kernels());
 
     const readyEvents: unknown[] = [];
-    document.addEventListener('liteship:wasm-ready', ((event: CustomEvent) => readyEvents.push(event.detail)) as EventListener);
+    document.addEventListener('liteship:wasm-ready', ((event: CustomEvent) =>
+      readyEvents.push(event.detail)) as EventListener);
 
     wasmDirective(noop, {}, wasmElement);
     await Promise.resolve();

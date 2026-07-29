@@ -69,9 +69,9 @@ function runEmittedProbe(input: {
     const UNMASKED_RENDERER_WEBGL = 37446;
     return {
       RENDERER,
-      getExtension: (name: string) =>
-        name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL } : null,
-      getParameter: (key: number) => (key === UNMASKED_RENDERER_WEBGL ? input.renderer : input.maskedRenderer ?? input.renderer),
+      getExtension: (name: string) => (name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL } : null),
+      getParameter: (key: number) =>
+        key === UNMASKED_RENDERER_WEBGL ? input.renderer : (input.maskedRenderer ?? input.renderer),
     };
   }) as never;
 
@@ -117,9 +117,7 @@ describe('head-probe is a derived artifact of canonical @liteship/detect', () =>
       reducedMotion: false,
     });
     const gpu = classifyGPURenderer(renderer);
-    expect(result.tier).toBe(
-      headProbeCapTier({ gpu, cores: 8, memory: 8, webgpu: true, prefersReducedMotion: false }),
-    );
+    expect(result.tier).toBe(headProbeCapTier({ gpu, cores: 8, memory: 8, webgpu: true, prefersReducedMotion: false }));
   });
   // ── Structural: the emitted classifier embeds EVERY canonical pattern ──
   // A pattern added to the canonical GPU_TIER_PATTERNS datum that did NOT flow

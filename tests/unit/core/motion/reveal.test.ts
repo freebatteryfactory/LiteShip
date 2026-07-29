@@ -122,9 +122,9 @@ describe('Reveal graph → CSS equivalence', () => {
     const staleEdge = compiled.graph.edges.some((edge) => edge.to === lowered.projectionId);
     expect(staleEdge).toBe(false);
     expect(compiled.graph.edges.some((edge) => edge.to === compiled.projectionId)).toBe(true);
-    expect(compiled.graph.edges.some((edge) => edge.from === lowered.componentId && edge.to === compiled.projectionId)).toBe(
-      true,
-    );
+    expect(
+      compiled.graph.edges.some((edge) => edge.from === lowered.componentId && edge.to === compiled.projectionId),
+    ).toBe(true);
   });
 
   test('spring easing compiles to linear() timing function', () => {

@@ -33,11 +33,16 @@ function extractDispatchCommands(): readonly string[] {
  */
 function expectedDescribeNamesFor(verb: string): readonly string[] {
   switch (verb) {
-    case 'scene':   return ['scene.compile', 'scene.render', 'scene.verify', 'scene.dev'];
-    case 'asset':   return ['asset.analyze', 'asset.verify'];
-    case 'astro':   return ['astro.dev', 'astro.status', 'astro.stop'];
-    case 'capsule': return ['capsule.inspect', 'capsule.verify', 'capsule.list'];
-    default:        return [verb]; // describe, gauntlet, mcp — single command
+    case 'scene':
+      return ['scene.compile', 'scene.render', 'scene.verify', 'scene.dev'];
+    case 'asset':
+      return ['asset.analyze', 'asset.verify'];
+    case 'astro':
+      return ['astro.dev', 'astro.status', 'astro.stop'];
+    case 'capsule':
+      return ['capsule.inspect', 'capsule.verify', 'capsule.list'];
+    default:
+      return [verb]; // describe, gauntlet, mcp — single command
   }
 }
 
@@ -56,8 +61,9 @@ describe('cli describe — auto-sync with dispatch', () => {
     for (const verb of verbs) {
       const expected = expectedDescribeNamesFor(verb);
       for (const name of expected) {
-        expect(describedNames, `dispatch verb '${verb}' expects describe entry '${name}'`)
-          .toSatisfy(() => describedNames.has(name));
+        expect(describedNames, `dispatch verb '${verb}' expects describe entry '${name}'`).toSatisfy(() =>
+          describedNames.has(name),
+        );
       }
     }
   });

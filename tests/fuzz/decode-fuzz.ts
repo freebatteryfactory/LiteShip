@@ -222,7 +222,8 @@ export const HLC_SUT: DecoderSut = {
 export const GRAPH_PATCH_SUT: DecoderSut = {
   id: 'graph-patch.decode',
   inputKind: 'value',
-  describe: 'GraphPatch.decode (@liteship/core) — the version-aware fail-closed reader for an untrusted patch envelope.',
+  describe:
+    'GraphPatch.decode (@liteship/core) — the version-aware fail-closed reader for an untrusted patch envelope.',
   run: (input) => GraphPatch.decode(input),
   failClosed: taggedFailClosed,
 };

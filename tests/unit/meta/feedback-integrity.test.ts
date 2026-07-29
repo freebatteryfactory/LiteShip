@@ -325,12 +325,7 @@ function writeBenchArtifact(root: string, generatedAt = '2026-03-28T05:31:00.000
 function writeStartupRealityArtifact(root: string, generatedAt = '2026-03-28T05:32:00.000Z'): void {
   const context = ensureArtifactContext(root);
   const benchFacts = buildBenchFacts(root);
-  const artifact = buildStartupRealityArtifact(
-    context,
-    benchFacts,
-    measuredStartupRealityFixture(),
-    generatedAt,
-  );
+  const artifact = buildStartupRealityArtifact(context, benchFacts, measuredStartupRealityFixture(), generatedAt);
 
   writeFileSync(join(root, 'benchmarks/startup-reality.json'), JSON.stringify(artifact, null, 2));
 }
@@ -679,7 +674,9 @@ describe('feedback integrity', { timeout: scaledTimeout(30_000) }, () => {
       root,
     );
     expect(verification.passed).toBe(false);
-    expect(verification.checks.find((check) => check.code === 'runtime-seams-paired-truth-fidelity')?.passed).toBe(false);
+    expect(verification.checks.find((check) => check.code === 'runtime-seams-paired-truth-fidelity')?.passed).toBe(
+      false,
+    );
   });
 
   test('runtime seams verifier fails when a missing startup stage reports measured timings', () => {
@@ -705,7 +702,9 @@ describe('feedback integrity', { timeout: scaledTimeout(30_000) }, () => {
 
     const verification = verifyRuntimeSeamsReport(report, root);
     expect(verification.passed).toBe(false);
-    expect(verification.checks.find((check) => check.code === 'runtime-seams-startup-breakdown-accounting')?.passed).toBe(false);
+    expect(
+      verification.checks.find((check) => check.code === 'runtime-seams-startup-breakdown-accounting')?.passed,
+    ).toBe(false);
   });
 
   test('runtime seams verifier fails when startup stage coverage is incomplete even with zero timings', () => {
@@ -731,7 +730,9 @@ describe('feedback integrity', { timeout: scaledTimeout(30_000) }, () => {
 
     const verification = verifyRuntimeSeamsReport(report, root);
     expect(verification.passed).toBe(false);
-    expect(verification.checks.find((check) => check.code === 'runtime-seams-startup-breakdown-complete')?.passed).toBe(false);
+    expect(verification.checks.find((check) => check.code === 'runtime-seams-startup-breakdown-complete')?.passed).toBe(
+      false,
+    );
   });
 
   test('runtime seams verifier fails when bench stability summary contradicts replicate data', () => {

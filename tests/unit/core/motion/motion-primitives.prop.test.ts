@@ -57,20 +57,24 @@ describe('Motion primitives property laws', () => {
 
   test('MotionCompiler scroll timeline block always includes unsupported fallback', () => {
     fc.assert(
-      fc.property(fc.constantFrom('0%', '10%', 'entry 0%'), fc.constantFrom('50%', '100%', 'cover 80%'), (start, end) => {
-        const intent = ScrollTimeline.intent({
-          target: 'probe',
-          range: [start, end],
-          from: { opacity: 0 },
-          to: { opacity: 1 },
-          transition: { durationMs: 300 },
-          policy: { reducedMotion: 'none', motionTier: 'transitions' },
-        });
-        const lowered = lowerScrollTimelineIntent(intent);
-        const compiled = compileScrollTimeline(lowered.graph, lowered.transitionId, intent);
-        expect(compiled.css.scrollTimeline).toContain('@supports not (animation-timeline: scroll())');
-        expect(compiled.css.scrollTimeline).toContain(`animation-range: ${start} ${end}`);
-      }),
+      fc.property(
+        fc.constantFrom('0%', '10%', 'entry 0%'),
+        fc.constantFrom('50%', '100%', 'cover 80%'),
+        (start, end) => {
+          const intent = ScrollTimeline.intent({
+            target: 'probe',
+            range: [start, end],
+            from: { opacity: 0 },
+            to: { opacity: 1 },
+            transition: { durationMs: 300 },
+            policy: { reducedMotion: 'none', motionTier: 'transitions' },
+          });
+          const lowered = lowerScrollTimelineIntent(intent);
+          const compiled = compileScrollTimeline(lowered.graph, lowered.transitionId, intent);
+          expect(compiled.css.scrollTimeline).toContain('@supports not (animation-timeline: scroll())');
+          expect(compiled.css.scrollTimeline).toContain(`animation-range: ${start} ${end}`);
+        },
+      ),
       { seed: 0x5eed },
     );
   });

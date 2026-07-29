@@ -25,7 +25,10 @@ describe('@liteship/genui renderFromCatalog', () => {
   it('rejects unknown components without mutating the target', () => {
     const target = document.createElement('div');
     target.textContent = 'keep';
-    const { ok } = renderFromCatalog({ name: 'Missing', props: {} }, { catalog: DEMO_COMPONENT_CATALOG, target, clear: false });
+    const { ok } = renderFromCatalog(
+      { name: 'Missing', props: {} },
+      { catalog: DEMO_COMPONENT_CATALOG, target, clear: false },
+    );
     expect(ok).toBe(false);
     expect(target.textContent).toBe('keep');
   });
@@ -155,10 +158,7 @@ describe('@liteship/genui renderFromCatalog', () => {
 
   it('writes the `label` string prop as textContent (label branch)', () => {
     const target = document.createElement('div');
-    renderFromCatalog(
-      { name: 'Button', props: { label: 'Press' } },
-      { catalog: DEMO_COMPONENT_CATALOG, target },
-    );
+    renderFromCatalog({ name: 'Button', props: { label: 'Press' } }, { catalog: DEMO_COMPONENT_CATALOG, target });
     expect(target.querySelector('button')?.textContent).toBe('Press');
   });
 
@@ -187,10 +187,7 @@ describe('@liteship/genui renderFromCatalog', () => {
       },
     });
     const target = document.createElement('div');
-    const result = renderFromCatalog(
-      { name: 'Box', props: { onClick: 5 as unknown as string } },
-      { catalog, target },
-    );
+    const result = renderFromCatalog({ name: 'Box', props: { onClick: 5 as unknown as string } }, { catalog, target });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe('genui/invalid-prop');
     expect(target.childElementCount).toBe(0);

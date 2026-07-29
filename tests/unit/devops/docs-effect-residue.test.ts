@@ -50,10 +50,16 @@ function shippedDocFiles(): readonly string[] {
  * matches (no install verb, no `@` pin, no `from 'effect'`, no `Effect.method(`).
  */
 const RESIDUE_PATTERNS: readonly { readonly label: string; readonly re: RegExp }[] = [
-  { label: 'install command adding effect', re: /\b(?:pnpm add|pnpm i|npm i(?:nstall)?|yarn add)\b[^\n]*\beffect(?:@|\b)/ },
+  {
+    label: 'install command adding effect',
+    re: /\b(?:pnpm add|pnpm i|npm i(?:nstall)?|yarn add)\b[^\n]*\beffect(?:@|\b)/,
+  },
   { label: 'effect@ version pin', re: /\beffect@(?:beta|latest|next|\d)/ },
   { label: "import from 'effect'", re: /from ['"]effect['"]/ },
-  { label: 'Effect runtime usage', re: /\bEffect\.(?:runSync|runPromise|gen|scoped|all|succeed|fail|promise|sync|forEach)\s*\(/ },
+  {
+    label: 'Effect runtime usage',
+    re: /\bEffect\.(?:runSync|runPromise|gen|scoped|all|succeed|fail|promise|sync|forEach)\s*\(/,
+  },
   {
     // Live peer-dependency / version-range claim: Effect adjacent to a concrete
     // prerelease pin (`4.0.0-beta.0`, `4.0.0-beta.32`) on the same line, in either

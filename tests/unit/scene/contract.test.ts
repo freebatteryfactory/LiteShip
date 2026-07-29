@@ -6,8 +6,14 @@ describe('SceneContract', () => {
   it('accepts a minimal scene with one video track', () => {
     const track: VideoTrack = { _tag: 'video', id: 'hero', from: 0, to: 60, source: { _t: 'quantizer' } };
     const contract: SceneContract = {
-      name: 'demo', duration: 60, fps: 60, bpm: 120,
-      tracks: [track], invariants: [], budgets: { p95FrameMs: 16 }, site: ['node'],
+      name: 'demo',
+      duration: 60,
+      fps: 60,
+      bpm: 120,
+      tracks: [track],
+      invariants: [],
+      budgets: { p95FrameMs: 16 },
+      site: ['node'],
     };
     expect(contract.tracks.length).toBe(1);
     expect(contract.tracks[0]?._tag).toBe('video');

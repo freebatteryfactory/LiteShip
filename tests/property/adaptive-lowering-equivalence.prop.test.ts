@@ -314,10 +314,7 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
 
         if (a.quantizer !== undefined && g.quantize !== undefined) {
           const hq = defineQuantizer(hb, g.quantize as Parameters<typeof defineQuantizer>[1]);
-          const adaptiveTrace = await runtimeReceiptTrace(
-            a.quantizer as Parameters<typeof createQuantizer>[0],
-            widths,
-          );
+          const adaptiveTrace = await runtimeReceiptTrace(a.quantizer as Parameters<typeof createQuantizer>[0], widths);
           const handTrace = await runtimeReceiptTrace(hq as Parameters<typeof createQuantizer>[0], widths);
           expect(adaptiveTrace).toEqual(handTrace);
         }

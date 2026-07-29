@@ -278,20 +278,21 @@ describe('doctor command', () => {
           engines: { node: '>=20.0.0', pnpm: '>=9.0.0' },
         }),
       );
-      const { exit, stdout } = await captureCli(() =>
-        doctor({ pretty: false, preflight: true, ci: true, cwd: tmp }),
-      );
+      const { exit, stdout } = await captureCli(() => doctor({ pretty: false, preflight: true, ci: true, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
       const built = receipt.checks.filter((c: { id: string }) => c.id.endsWith('.built'));
       expect(built.length).toBe(2);
       expect(built.every((c: { status: string }) => c.status === 'warn')).toBe(true);
       // Scoped verdict ignores built warns — only non-built probes gate exit.
-      const scopedVerdict =
-        receipt.checks.filter((c: { id: string }) => !c.id.endsWith('.built')).some((c: { status: string }) => c.status === 'fail')
-          ? 'blocked'
-          : receipt.checks.filter((c: { id: string }) => !c.id.endsWith('.built')).some((c: { status: string }) => c.status === 'warn')
-            ? 'caution'
-            : 'ready';
+      const scopedVerdict = receipt.checks
+        .filter((c: { id: string }) => !c.id.endsWith('.built'))
+        .some((c: { status: string }) => c.status === 'fail')
+        ? 'blocked'
+        : receipt.checks
+              .filter((c: { id: string }) => !c.id.endsWith('.built'))
+              .some((c: { status: string }) => c.status === 'warn')
+          ? 'caution'
+          : 'ready';
       expect(receipt.verdict).toBe(scopedVerdict);
       if (scopedVerdict === 'ready') {
         expect(exit).toBe(0);
@@ -341,9 +342,7 @@ describe('doctor command', () => {
           scripts: { build: 'echo "this build should NEVER run from doctor --fix"' },
         }),
       );
-      const { stdout } = await captureCli(() =>
-        doctor({ pretty: false, fix: true, cwd: tmp }),
-      );
+      const { stdout } = await captureCli(() => doctor({ pretty: false, fix: true, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
       expect(spy).not.toHaveBeenCalled();
       const buildFix = (receipt.fixed ?? []).find((f: { id: string }) => f.id === 'build');
@@ -366,13 +365,8 @@ describe('doctor command', () => {
     const tmp = mkdtempSync(join(tmpdir(), 'liteship-fix-hooks-'));
     try {
       mkdirSync(resolve(tmp, '.git', 'hooks'), { recursive: true });
-      writeFileSync(
-        resolve(tmp, 'package.json'),
-        JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0' }),
-      );
-      const { stdout } = await captureCli(() =>
-        doctor({ pretty: false, fix: true, cwd: tmp }),
-      );
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0' }));
+      const { stdout } = await captureCli(() => doctor({ pretty: false, fix: true, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
       expect(spy).toHaveBeenCalled();
       if (Array.isArray(receipt.fixed)) {
@@ -409,9 +403,7 @@ describe('doctor command', () => {
           scripts: { build: 'echo "should never run"' },
         }),
       );
-      const { stdout } = await captureCli(() =>
-        doctor({ pretty: false, fix: true, cwd: tmp }),
-      );
+      const { stdout } = await captureCli(() => doctor({ pretty: false, fix: true, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
       expect(spy).not.toHaveBeenCalled();
       const hookFix = (receipt.fixed ?? []).find((f: { id: string }) => f.id === 'git.hooks');

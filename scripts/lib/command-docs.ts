@@ -1,10 +1,7 @@
 /** Generated command/check documentation projected from the live registries. */
 import { COMMAND_CATALOG } from '../../packages/command/src/catalog.js';
 import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
-import {
-  CHECK_PROFILE_METADATA,
-  type CheckProfile,
-} from '../../packages/command/src/checks/definition.js';
+import { CHECK_PROFILE_METADATA, type CheckProfile } from '../../packages/command/src/checks/definition.js';
 
 const PROFILES = ['quick', 'full', 'release', 'consumer', 'environment'] as const satisfies readonly CheckProfile[];
 
@@ -45,9 +42,7 @@ export function renderCheckProfiles(): string {
     const checks = CHECK_REGISTRY.filter((definition) => definition.profiles.includes(profile));
     return `| \`${profile}\` | ${CHECK_PROFILE_METADATA[profile].claim} | ${checks.length} | ${checks.map((check) => `\`${check.id}\``).join(', ')} |`;
   });
-  return [
-    '| Profile | Passing claim | Checks | Registry projection |',
-    '| --- | --- | ---: | --- |',
-    ...rows,
-  ].join('\n');
+  return ['| Profile | Passing claim | Checks | Registry projection |', '| --- | --- | ---: | --- |', ...rows].join(
+    '\n',
+  );
 }

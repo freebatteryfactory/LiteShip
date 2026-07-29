@@ -104,10 +104,7 @@ describe('validateGeneratedUITree', () => {
   });
 
   it('rejects an unknown prop with genui/invalid-prop', () => {
-    const result = validateGeneratedUITree(
-      { name: 'Text', props: { text: 'ok', stray: 'x' } },
-      DEMO_COMPONENT_CATALOG,
-    );
+    const result = validateGeneratedUITree({ name: 'Text', props: { text: 'ok', stray: 'x' } }, DEMO_COMPONENT_CATALOG);
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.code).toBe('genui/invalid-prop');

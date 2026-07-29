@@ -177,7 +177,10 @@ describe('isExternalShaderSource — fetch vs inline classification', () => {
       '../assets/wave.frag', // parent-relative
     ];
     for (const url of fetchableShapes) {
-      const cls = resolveRuntimeUrl(url, { kind: 'gpu-shader', policy: { mode: 'allowlist', allowOrigins: ['https://cdn.example', 'http://localhost'] } });
+      const cls = resolveRuntimeUrl(url, {
+        kind: 'gpu-shader',
+        policy: { mode: 'allowlist', allowOrigins: ['https://cdn.example', 'http://localhost'] },
+      });
       // Every shape is something the URL policy treats as a URL (allowed or rejected
       // for an origin reason) — i.e. NOT an opaque inline body. The integrity
       // classifier must agree it is external so it never compiles unverified.
@@ -205,7 +208,9 @@ describe('isExternalShaderSource — fetch vs inline classification', () => {
     expect(isExternalShaderSource('shader file.wgsl')).toBe(true);
     expect(isExternalShaderSource('./shader file.wgsl')).toBe(true);
     // The space-containing path resolves as a fetchable same-origin URL under the policy...
-    expect(resolveRuntimeUrl('shader file.wgsl', { kind: 'gpu-shader', policy: { mode: 'same-origin' } }).type).toBe('allowed');
+    expect(resolveRuntimeUrl('shader file.wgsl', { kind: 'gpu-shader', policy: { mode: 'same-origin' } }).type).toBe(
+      'allowed',
+    );
     // ...so the classifier MUST agree it is external (never compiled unverified).
     expect(isFetchableRuntimeUrl('shader file.wgsl')).toBe(true);
     expect(isFetchableRuntimeUrl('./shader file.wgsl')).toBe(true);

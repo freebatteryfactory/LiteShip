@@ -8,7 +8,7 @@
 
 import fc from 'fast-check';
 import { defineBoundary, defineToken, defineTheme, defineStyle } from '@liteship/core';
-import type { PrimitiveKind , Boundary, Token, Theme, Style} from '@liteship/core';
+import type { PrimitiveKind, Boundary, Token, Theme, Style } from '@liteship/core';
 
 export const PRIMITIVE_KINDS = ['boundary', 'token', 'theme', 'style'] as const satisfies PrimitiveKind[];
 

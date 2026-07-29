@@ -9,11 +9,7 @@
  */
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import {
-  installSwapPipeline,
-  runSwapPipeline,
-  SWAP_STEPS,
-} from '../../../packages/astro/src/runtime/swap-pipeline.js';
+import { installSwapPipeline, runSwapPipeline, SWAP_STEPS } from '../../../packages/astro/src/runtime/swap-pipeline.js';
 import { getSlotRegistry } from '../../../packages/astro/src/runtime/slots.js';
 
 type PipelineWindow = Window & {

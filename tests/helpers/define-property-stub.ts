@@ -2,11 +2,7 @@
  * Safe Object.defineProperty wrapper that integrates with vitest cleanup.
  * Returns a restore function.
  */
-export function definePropertyStub(
-  target: object,
-  property: string,
-  descriptor: PropertyDescriptor,
-): () => void {
+export function definePropertyStub(target: object, property: string, descriptor: PropertyDescriptor): () => void {
   const original = Object.getOwnPropertyDescriptor(target, property);
   Object.defineProperty(target, property, { ...descriptor, configurable: true });
   return () => {

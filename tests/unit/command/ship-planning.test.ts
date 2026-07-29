@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { packageSlug, selectTargets, observedLifecycleScripts, deriveBuildEnv, readPackageManagerVersion } from '@liteship/command';
+import {
+  packageSlug,
+  selectTargets,
+  observedLifecycleScripts,
+  deriveBuildEnv,
+  readPackageManagerVersion,
+} from '@liteship/command';
 import type { WorkspacePackage } from '@liteship/command';
 
 function pkg(relativePath: string, name: string, isPrivate = false): WorkspacePackage {

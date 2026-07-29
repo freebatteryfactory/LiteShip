@@ -15,7 +15,14 @@ const META: CellMeta = {
   version: 1,
 };
 const node = (input: string): SignalNode =>
-  sealNode({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', id: '', meta: META, input } as unknown as SignalNode);
+  sealNode({
+    _tag: 'DocGraphSignalNode',
+    _version: 1,
+    family: 'signal',
+    id: '',
+    meta: META,
+    input,
+  } as unknown as SignalNode);
 const graph = (nodes: DocumentGraphNode[], edges: DocumentGraphEdge[] = []): DocumentGraph =>
   sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: META, nodes, edges } as Omit<DocumentGraph, 'id' | 'digest'>);
 
@@ -108,18 +115,14 @@ describe('graphQueryRoute — read-only store, conditional etag', () => {
 
   test('unsupported method → 405 with Allow header', async () => {
     const base = graph([node('scroll.y')]);
-    const res = await graphQueryRoute(readOnlyStore(base))(
-      new Request('http://host/api/graph', { method: 'GET' }),
-    );
+    const res = await graphQueryRoute(readOnlyStore(base))(new Request('http://host/api/graph', { method: 'GET' }));
     expect(res.status).toBe(405);
     expect(res.headers.get('allow')).toBe('QUERY, POST, OPTIONS');
   });
 
   test('OPTIONS → 204 with Allow (CORS preflight must not see 405)', async () => {
     const base = graph([node('scroll.y')]);
-    const res = await graphQueryRoute(readOnlyStore(base))(
-      new Request('http://host/api/graph', { method: 'OPTIONS' }),
-    );
+    const res = await graphQueryRoute(readOnlyStore(base))(new Request('http://host/api/graph', { method: 'OPTIONS' }));
     expect(res.status).toBe(204);
     expect(res.headers.get('allow')).toBe('QUERY, POST, OPTIONS');
   });

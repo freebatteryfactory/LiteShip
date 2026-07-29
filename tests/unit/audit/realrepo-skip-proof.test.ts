@@ -39,40 +39,44 @@ describe('REAL REPO — detectSkipsAST over the whole tests/ tree', () => {
   // Exclude tests/generated/ — the plumb-gate owns that subtree (no double-jeopardy).
   const governed = files.filter((f) => !/[\\/]tests[\\/]generated[\\/]/.test(f));
 
-  it('detects every sanctioned skip + classifies it conditional + ZERO unsanctioned (no false positives)', () => {
-    const detectedSanctioned = new Set<string>();
-    const blocking: string[] = [];
-    for (const abs of governed) {
-      const rel = abs.slice(ROOT.length + 1).replace(/\\/g, '/');
-      const text = readFileSync(abs, 'utf8');
-      const lines = text.split('\n');
-      for (const skip of detectSkipsAST(text)) {
-        const rawLine = lines[skip.line - 1] ?? '';
-        const sanction = sanctionedSkipFor(rel, rawLine, skip.conditional);
-        if (sanction !== undefined) {
-          detectedSanctioned.add(`${rel}::${normalizeSiteLine(rawLine)}`);
-          // Every sanctioned skip must classify CONDITIONAL under the AST structural proof.
-          expect(
-            skip.conditional,
-            `${rel}:${skip.line} (${skip.token}) must classify conditional, not a placeholder`,
-          ).not.toBe('unconditional');
-        } else {
-          blocking.push(`${rel}:${skip.line} ${skip.token} [${skip.conditional}] :: ${rawLine.trim()}`);
+  it(
+    'detects every sanctioned skip + classifies it conditional + ZERO unsanctioned (no false positives)',
+    () => {
+      const detectedSanctioned = new Set<string>();
+      const blocking: string[] = [];
+      for (const abs of governed) {
+        const rel = abs.slice(ROOT.length + 1).replace(/\\/g, '/');
+        const text = readFileSync(abs, 'utf8');
+        const lines = text.split('\n');
+        for (const skip of detectSkipsAST(text)) {
+          const rawLine = lines[skip.line - 1] ?? '';
+          const sanction = sanctionedSkipFor(rel, rawLine, skip.conditional);
+          if (sanction !== undefined) {
+            detectedSanctioned.add(`${rel}::${normalizeSiteLine(rawLine)}`);
+            // Every sanctioned skip must classify CONDITIONAL under the AST structural proof.
+            expect(
+              skip.conditional,
+              `${rel}:${skip.line} (${skip.token}) must classify conditional, not a placeholder`,
+            ).not.toBe('unconditional');
+          } else {
+            blocking.push(`${rel}:${skip.line} ${skip.token} [${skip.conditional}] :: ${rawLine.trim()}`);
+          }
         }
       }
-    }
-    // Every enumerated sanctioned site must be hit by the detector + classified conditional.
-    for (const s of SANCTIONED_SKIPS) {
-      const key = `${s.file}::${normalizeSiteLine(s.site)}`;
-      expect(detectedSanctioned.has(key), `sanctioned site not detected/classified-conditional: ${key}`).toBe(true);
-    }
-    // ZERO new false positives across the live tree.
-    expect(blocking, `unsanctioned skips found:\n${blocking.join('\n')}`).toEqual([]);
-    // Full-tree AST scan (readFileSync + ts.createSourceFile over the whole tests/ corpus) is
-    // heavy synchronous work; the default 10s times out on a loaded Windows CI runner where the
-    // shared suite's import phase alone runs into minutes. Give it generous headroom via the
-    // repo's central CI-scaling policy (no raw literals — see test-timeout-policy).
-  }, scaledTimeout(30_000));
+      // Every enumerated sanctioned site must be hit by the detector + classified conditional.
+      for (const s of SANCTIONED_SKIPS) {
+        const key = `${s.file}::${normalizeSiteLine(s.site)}`;
+        expect(detectedSanctioned.has(key), `sanctioned site not detected/classified-conditional: ${key}`).toBe(true);
+      }
+      // ZERO new false positives across the live tree.
+      expect(blocking, `unsanctioned skips found:\n${blocking.join('\n')}`).toEqual([]);
+      // Full-tree AST scan (readFileSync + ts.createSourceFile over the whole tests/ corpus) is
+      // heavy synchronous work; the default 10s times out on a loaded Windows CI runner where the
+      // shared suite's import phase alone runs into minutes. Give it generous headroom via the
+      // repo's central CI-scaling policy (no raw literals — see test-timeout-policy).
+    },
+    scaledTimeout(30_000),
+  );
 });
 
 describe('F2 — structural conditionality is the sanctioning proof', () => {

@@ -13,7 +13,8 @@ const flush = async (): Promise<void> => {
 };
 
 function fixtureForm(): HTMLFormElement {
-  document.body.innerHTML = '<section id="host"><form><input name="axis" value="viewport.height"><button>Save</button></form></section>';
+  document.body.innerHTML =
+    '<section id="host"><form><input name="axis" value="viewport.height"><button>Save</button></form></section>';
   return document.querySelector('form')!;
 }
 
@@ -110,7 +111,10 @@ describe('bindGraphForm', () => {
           if (typeof ops === 'function') ops(base);
           return applied();
         } catch (error) {
-          return { status: 'error', message: `ops builder threw: ${error instanceof Error ? error.message : String(error)}` };
+          return {
+            status: 'error',
+            message: `ops builder threw: ${error instanceof Error ? error.message : String(error)}`,
+          };
         }
       },
     };

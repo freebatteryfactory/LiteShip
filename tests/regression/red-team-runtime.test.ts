@@ -236,10 +236,9 @@ describe('red-team runtime regressions', () => {
   });
 
   test('strips <noscript> mXSS re-serialization vector', () => {
-    const sanitized = resolveHtmlString(
-      '<p>ok</p><noscript><img src="x" onerror="alert(1)"></noscript>',
-      { policy: 'sanitized-html' },
-    );
+    const sanitized = resolveHtmlString('<p>ok</p><noscript><img src="x" onerror="alert(1)"></noscript>', {
+      policy: 'sanitized-html',
+    });
     const container = document.createElement('div');
     container.innerHTML = sanitized;
     expect(container.querySelector('noscript')).toBeNull();
@@ -282,10 +281,9 @@ describe('red-team runtime regressions', () => {
   });
 
   test('strips <math> namespace foreign-content', () => {
-    const sanitized = resolveHtmlString(
-      '<p>ok</p><math><mtext><script>alert(1)</script></mtext></math>',
-      { policy: 'sanitized-html' },
-    );
+    const sanitized = resolveHtmlString('<p>ok</p><math><mtext><script>alert(1)</script></mtext></math>', {
+      policy: 'sanitized-html',
+    });
     const container = document.createElement('div');
     container.innerHTML = sanitized;
     expect(container.querySelector('math')).toBeNull();
@@ -294,10 +292,9 @@ describe('red-team runtime regressions', () => {
   });
 
   test('strips javascript: scheme obfuscated with embedded whitespace (#121)', () => {
-    const sanitized = resolveHtmlString(
-      '<a href="java\tscript:alert(1)">x</a><a href="java\nscript:alert(2)">y</a>',
-      { policy: 'sanitized-html' },
-    );
+    const sanitized = resolveHtmlString('<a href="java\tscript:alert(1)">x</a><a href="java\nscript:alert(2)">y</a>', {
+      policy: 'sanitized-html',
+    });
     const container = document.createElement('div');
     container.innerHTML = sanitized;
     expect(container.querySelector('a')?.getAttribute('href')).toBeNull();

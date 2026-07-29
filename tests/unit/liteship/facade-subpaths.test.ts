@@ -539,9 +539,7 @@ describe('gauntlet/facade-export-budget — exact-match gate (both directions)',
       memoryContext({
         [BUDGET_FILE]: source(entries),
         [ROOT_DTS_FILE]: dts,
-        [ROOT_SOURCE_FILE]: entries
-          .map((item) => `export { ${item.name} } from '${item.producer}';`)
-          .join('\n'),
+        [ROOT_SOURCE_FILE]: entries.map((item) => `export { ${item.name} } from '${item.producer}';`).join('\n'),
       }),
     );
     expect(findings.some((finding) => finding.title.includes('cap exceeded'))).toBe(true);

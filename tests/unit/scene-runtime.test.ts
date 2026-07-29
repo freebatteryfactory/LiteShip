@@ -240,12 +240,8 @@ describe('SceneRuntime', () => {
   });
 
   it('sceneRuntimeCapsule invariants accept canonical output and reject malformed shapes', () => {
-    const allCanonical = sceneRuntimeCapsule.invariants.find(
-      (i) => i.name === 'all-canonical-systems-registered',
-    );
-    const nonNeg = sceneRuntimeCapsule.invariants.find(
-      (i) => i.name === 'entity-spawn-count-non-negative',
-    );
+    const allCanonical = sceneRuntimeCapsule.invariants.find((i) => i.name === 'all-canonical-systems-registered');
+    const nonNeg = sceneRuntimeCapsule.invariants.find((i) => i.name === 'entity-spawn-count-non-negative');
     expect(allCanonical).toBeDefined();
     expect(nonNeg).toBeDefined();
 

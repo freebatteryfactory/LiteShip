@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { ContentAddress as SpineContentAddress } from '@liteship/_spine';
-import type { ContentAddress} from '@liteship/core';
+import type { ContentAddress } from '@liteship/core';
 import { SignalInput, ThresholdValue, StateName } from '@liteship/core';
 
 describe('spine bridge', () => {

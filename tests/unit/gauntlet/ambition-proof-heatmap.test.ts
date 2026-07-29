@@ -28,7 +28,11 @@ import {
 
 /** A minimal IR over the given substantive module files (the inert fixture digest). */
 function irOf(files: readonly FileId[]): ReturnType<typeof makeRepoIR> {
-  const nodes: FileNode[] = files.map((id) => ({ id, contentDigest: 'placeholder:no-content-address', packageName: null }));
+  const nodes: FileNode[] = files.map((id) => ({
+    id,
+    contentDigest: 'placeholder:no-content-address',
+    packageName: null,
+  }));
   return makeRepoIR({ files: nodes });
 }
 
@@ -104,10 +108,22 @@ describe('the heatmap is a DETERMINISTIC fold', () => {
     const z: FileId = 'packages/core/src/zzz.ts';
     const inputs: HeatmapInputs = {
       ir: irOf([z, a]),
-      moduleSizes: new Map([[a, 1000], [z, 1000]]),
-      claimHits: new Map([[a, 1], [z, 1]]),
-      effectiveLevels: new Map<FileId, AssuranceLevel>([[a, 'L3'], [z, 'L3']]),
-      proofSignals: new Map([[a, NO_PROOF], [z, NO_PROOF]]),
+      moduleSizes: new Map([
+        [a, 1000],
+        [z, 1000],
+      ]),
+      claimHits: new Map([
+        [a, 1],
+        [z, 1],
+      ]),
+      effectiveLevels: new Map<FileId, AssuranceLevel>([
+        [a, 'L3'],
+        [z, 'L3'],
+      ]),
+      proofSignals: new Map([
+        [a, NO_PROOF],
+        [z, NO_PROOF],
+      ]),
     };
     const heatmap = computeHeatmap(inputs);
     expect(heatmap.hotSpots.map((h) => h.file)).toEqual([a, z]);
@@ -161,10 +177,22 @@ describe('scope — only substantive packages/*/src modules are ranked', () => {
     const tooling: FileId = 'scripts/tool.ts';
     const inputs: HeatmapInputs = {
       ir: irOf([src, tooling]),
-      moduleSizes: new Map([[src, 1000], [tooling, 1000]]),
-      claimHits: new Map([[src, 1], [tooling, 1]]),
-      effectiveLevels: new Map<FileId, AssuranceLevel>([[src, 'L3'], [tooling, 'L3']]),
-      proofSignals: new Map([[src, NO_PROOF], [tooling, NO_PROOF]]),
+      moduleSizes: new Map([
+        [src, 1000],
+        [tooling, 1000],
+      ]),
+      claimHits: new Map([
+        [src, 1],
+        [tooling, 1],
+      ]),
+      effectiveLevels: new Map<FileId, AssuranceLevel>([
+        [src, 'L3'],
+        [tooling, 'L3'],
+      ]),
+      proofSignals: new Map([
+        [src, NO_PROOF],
+        [tooling, NO_PROOF],
+      ]),
     };
     const heatmap = computeHeatmap(inputs);
     expect(heatmap.hotSpots.map((h) => h.file)).toEqual([src]);

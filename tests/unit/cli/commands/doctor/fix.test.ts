@@ -108,7 +108,10 @@ describe('doctor/fix — applyFixes() build branch', () => {
 
   it('refuses the build fix outside the LiteShip workspace (records a skipped failed-fix, no spawn)', async () => {
     const dir = mkTmp();
-    writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ name: 'imposter', version: '0.0.0', scripts: { build: 'echo nope' } }));
+    writeFileSync(
+      resolve(dir, 'package.json'),
+      JSON.stringify({ name: 'imposter', version: '0.0.0', scripts: { build: 'echo nope' } }),
+    );
     visibleSpy.mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
     const fixes = await applyFixes([builtWarn('core.built')], dir);
     expect(visibleSpy).not.toHaveBeenCalled();
@@ -168,7 +171,12 @@ describe('doctor/fix — applyFixes() git.hooks branch', () => {
     const dir = mkTmp();
     writeLiteshipRoot(dir);
     visibleSpy.mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
-    const unresolved: DoctorCheck = { id: 'git.hooks', label: 'git hooks', status: 'warn', detail: 'hooks dir unresolved' };
+    const unresolved: DoctorCheck = {
+      id: 'git.hooks',
+      label: 'git hooks',
+      status: 'warn',
+      detail: 'hooks dir unresolved',
+    };
     const fixes = await applyFixes([unresolved], dir);
     expect(fixes.find((f) => f.id === 'git.hooks')).toBeUndefined();
     expect(visibleSpy).not.toHaveBeenCalled();
@@ -180,10 +188,7 @@ describe('doctor/fix — applyFixes() with nothing to fix', () => {
     const dir = mkTmp();
     writeLiteshipRoot(dir);
     visibleSpy.mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
-    const fixes = await applyFixes(
-      [{ id: 'node.version', label: 'Node.js', status: 'ok', detail: 'v22' }],
-      dir,
-    );
+    const fixes = await applyFixes([{ id: 'node.version', label: 'Node.js', status: 'ok', detail: 'v22' }], dir);
     expect(fixes).toEqual([]);
     expect(visibleSpy).not.toHaveBeenCalled();
   });

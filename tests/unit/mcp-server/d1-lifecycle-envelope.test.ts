@@ -27,13 +27,29 @@ function req(method: string, params?: unknown, id: string | number = 1): JsonRpc
     : { jsonrpc: '2.0', id, method, params: params as Record<string, unknown> };
 }
 function note(method: string, params?: unknown): JsonRpcNotification {
-  return params === undefined ? { jsonrpc: '2.0', method } : { jsonrpc: '2.0', method, params: params as Record<string, unknown> };
+  return params === undefined
+    ? { jsonrpc: '2.0', method }
+    : { jsonrpc: '2.0', method, params: params as Record<string, unknown> };
 }
 
 describe('D1 lifecycle floor — initialize / initialized / honest absence', () => {
   it('initialize returns protocolVersion 2025-11-25, tools capability, and serverInfo with the real package version', async () => {
-    const r = await dispatch(req('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'test', version: '0' } }));
-    const result = (r as { result: { protocolVersion: string; capabilities: Record<string, unknown>; serverInfo: { name: string; version: string } } }).result;
+    const r = await dispatch(
+      req('initialize', {
+        protocolVersion: '2025-11-25',
+        capabilities: {},
+        clientInfo: { name: 'test', version: '0' },
+      }),
+    );
+    const result = (
+      r as {
+        result: {
+          protocolVersion: string;
+          capabilities: Record<string, unknown>;
+          serverInfo: { name: string; version: string };
+        };
+      }
+    ).result;
     expect(result.protocolVersion).toBe('2025-11-25');
     expect(result.capabilities.tools).toBeDefined();
     // As of D3, resources + prompts ARE declared (their methods are implemented).
@@ -41,7 +57,9 @@ describe('D1 lifecycle floor — initialize / initialized / honest absence', () 
     expect(result.capabilities.resources).toBeDefined();
     expect(result.capabilities.prompts).toBeDefined();
     // serverInfo.version is the real @liteship/mcp-server package version, not a literal.
-    const pkgVersion = (JSON.parse(readFileSync(resolve(REPO, 'packages/mcp-server/package.json'), 'utf8')) as { version: string }).version;
+    const pkgVersion = (
+      JSON.parse(readFileSync(resolve(REPO, 'packages/mcp-server/package.json'), 'utf8')) as { version: string }
+    ).version;
     expect(result.serverInfo.name).toBeTypeOf('string');
     expect(result.serverInfo.version).toBe(pkgVersion);
     expect(result.serverInfo.version).not.toBe('0.0.0-unknown');
@@ -122,7 +140,9 @@ describe('D1 namespace law — protocol surfaces are product-owned, not maintain
     const protocolSurfaces = ['packages/_spine/command.d.ts', 'packages/mcp-server/src/dispatch.ts'];
     for (const rel of protocolSurfaces) {
       const src = readFileSync(resolve(REPO, rel), 'utf8');
-      expect(src, `${rel} must not embed a maintainer namespace in a protocol surface`).not.toContain('dev.heyoub.liteship');
+      expect(src, `${rel} must not embed a maintainer namespace in a protocol surface`).not.toContain(
+        'dev.heyoub.liteship',
+      );
     }
   });
 });

@@ -4,10 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { COMMAND_CATALOG } from '../../packages/command/src/catalog.js';
 import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
-import {
-  CHECK_PROFILE_METADATA,
-  type CheckProfile,
-} from '../../packages/command/src/checks/definition.js';
+import { CHECK_PROFILE_METADATA, type CheckProfile } from '../../packages/command/src/checks/definition.js';
 import { CONTEXT_MAP } from '../../packages/command/src/commands/context-map.js';
 import { DIAGNOSTIC_REGISTRY } from '../../packages/error/src/codes.js';
 import { PACKAGE_CATALOG } from '../package-catalog.js';

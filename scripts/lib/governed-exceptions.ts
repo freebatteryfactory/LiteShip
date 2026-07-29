@@ -153,8 +153,7 @@ export function projectGovernedExceptions(
     requireText(waiver.justification, 'rationale', sourceId);
     const dateStatus = activeDateStatus(standardsEffective, waiver.expiry, now, sourceId);
     const sourceStatus: GovernedExceptionStatus =
-      dateStatus === 'active' &&
-      !standardsSignoffIsLive(sourceId, waiver.weakening, sources.liveStandardsSignoffKeys)
+      dateStatus === 'active' && !standardsSignoffIsLive(sourceId, waiver.weakening, sources.liveStandardsSignoffKeys)
         ? 'stale'
         : dateStatus;
     out.push(

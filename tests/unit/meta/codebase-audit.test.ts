@@ -897,7 +897,9 @@ export const ids = [
     );
     expect(policyAbsent.has('@liteship/experimental')).toBe(true);
     // A package that does have a policy is not policy-absent.
-    expect(classification.topology.find((entry) => entry.package === '@liteship/core')?.coverage).not.toBe('policy-absent');
+    expect(classification.topology.find((entry) => entry.package === '@liteship/core')?.coverage).not.toBe(
+      'policy-absent',
+    );
 
     // (b) Orphan detection is labelled file-proxy-only so its zero/count cannot be read as symbol-level proof.
     expect(classification.orphan.coverage).toBe('file-proxy-only');
@@ -1036,7 +1038,13 @@ export const ids = [
       result.summary.coverageClassification.topology.map((entry) => [entry.package, entry.coverage] as const),
     );
 
-    for (const pkg of ['@liteship/cli', '@liteship/mcp-server', '@liteship/scene', '@liteship/assets', '@liteship/_spine']) {
+    for (const pkg of [
+      '@liteship/cli',
+      '@liteship/mcp-server',
+      '@liteship/scene',
+      '@liteship/assets',
+      '@liteship/_spine',
+    ]) {
       expect(coverageByPackage.get(pkg)).toBeDefined();
       expect(coverageByPackage.get(pkg)).not.toBe('policy-absent');
     }

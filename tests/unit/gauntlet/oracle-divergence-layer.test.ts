@@ -51,7 +51,14 @@ function propFact(file: string, line: number, property: string, oracleId: string
 
 /** The marker fact a policy-excluded file emits (the exclude-vs-miss seam). */
 function marker(file: string, markerProperty: string, ruleName: string): Fact {
-  return { file, line: 1, property: markerProperty, value: ruleName, oracleId: 'invariant-regex', coverageClass: 'text-only' };
+  return {
+    file,
+    line: 1,
+    property: markerProperty,
+    value: ruleName,
+    oracleId: 'invariant-regex',
+    coverageClass: 'text-only',
+  };
 }
 
 /**

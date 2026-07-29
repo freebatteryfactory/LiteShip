@@ -174,7 +174,8 @@ describe('GraphMutationClient', () => {
 
   test('maps refreshBase throws to error', async () => {
     const base = graph([node('base')]);
-    const fetchImpl: typeof fetch = async () => response({ status: 'refused', errors: ['stale'], staleBase: true }, 409);
+    const fetchImpl: typeof fetch = async () =>
+      response({ status: 'refused', errors: ['stale'], staleBase: true }, 409);
     const client = createGraphMutationClient({
       url: '/api/graph',
       base,
@@ -210,32 +211,36 @@ describe('GraphMutationClient', () => {
 
   test('concurrent submit order is the applied-base chain for any short batch', async () => {
     await fc.assert(
-      fc.asyncProperty(fc.uniqueArray(fc.stringMatching(/^[a-z]{1,6}$/), { minLength: 1, maxLength: 5 }), async (inputs) => {
-        const base = graph([node('base')]);
-        let serverBase = base;
-        const postedBases: string[] = [];
-        const fetchImpl: typeof fetch = async (_url, init) => {
-          const patch = patchFromInit(init);
-          postedBases.push(patch.base);
-          if (patch.base !== serverBase.id) return response({ status: 'refused', errors: ['stale'], staleBase: true }, 409);
-          serverBase = GraphPatch.apply(serverBase, patch);
-          return response({ status: 'applied', graph: serverBase });
-        };
-        const client = createGraphMutationClient({ url: '/api/graph', base, fetchImpl });
+      fc.asyncProperty(
+        fc.uniqueArray(fc.stringMatching(/^[a-z]{1,6}$/), { minLength: 1, maxLength: 5 }),
+        async (inputs) => {
+          const base = graph([node('base')]);
+          let serverBase = base;
+          const postedBases: string[] = [];
+          const fetchImpl: typeof fetch = async (_url, init) => {
+            const patch = patchFromInit(init);
+            postedBases.push(patch.base);
+            if (patch.base !== serverBase.id)
+              return response({ status: 'refused', errors: ['stale'], staleBase: true }, 409);
+            serverBase = GraphPatch.apply(serverBase, patch);
+            return response({ status: 'applied', graph: serverBase });
+          };
+          const client = createGraphMutationClient({ url: '/api/graph', base, fetchImpl });
 
-        const results = await Promise.all(
-          inputs.map((input) => client.submit([{ op: 'add', family: 'signal', node: node(input) }])),
-        );
+          const results = await Promise.all(
+            inputs.map((input) => client.submit([{ op: 'add', family: 'signal', node: node(input) }])),
+          );
 
-        expect(results.every((result) => result.status === 'applied')).toBe(true);
-        expect(postedBases[0]).toBe(base.id);
-        for (let i = 1; i < postedBases.length; i += 1) {
-          const prior = results[i - 1];
-          if (prior.status !== 'applied') throw new Error('expected applied prior response');
-          expect(postedBases[i]).toBe(prior.graph.id);
-        }
-        expect(client.base().id).toBe(serverBase.id);
-      }),
+          expect(results.every((result) => result.status === 'applied')).toBe(true);
+          expect(postedBases[0]).toBe(base.id);
+          for (let i = 1; i < postedBases.length; i += 1) {
+            const prior = results[i - 1];
+            if (prior.status !== 'applied') throw new Error('expected applied prior response');
+            expect(postedBases[i]).toBe(prior.graph.id);
+          }
+          expect(client.base().id).toBe(serverBase.id);
+        },
+      ),
       { numRuns: 20, seed: 0x80_00_01 },
     );
   });

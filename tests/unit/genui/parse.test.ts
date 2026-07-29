@@ -7,9 +7,7 @@ import { tryParseGeneratedUIChunk } from '@liteship/genui';
 
 describe('tryParseGeneratedUIChunk', () => {
   it('parses discriminated JSON trees', () => {
-    const node = tryParseGeneratedUIChunk(
-      JSON.stringify({ _genui: true, name: 'Text', props: { text: 'hi' } }),
-    );
+    const node = tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, name: 'Text', props: { text: 'hi' } }));
     expect(node).toEqual({ name: 'Text', props: { text: 'hi' } });
   });
 
@@ -32,21 +30,15 @@ describe('tryParseGeneratedUIChunk', () => {
   });
 
   it('returns null when slots is not a plain object', () => {
-    expect(
-      tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, name: 'Text', props: {}, slots: [] })),
-    ).toBeNull();
+    expect(tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, name: 'Text', props: {}, slots: [] }))).toBeNull();
   });
 
   it('returns null when name is not a string', () => {
-    expect(
-      tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, name: 42, props: {} })),
-    ).toBeNull();
+    expect(tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, name: 42, props: {} }))).toBeNull();
   });
 
   it('returns null when props is not a plain object', () => {
-    expect(
-      tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, name: 'Text', props: 'nope' })),
-    ).toBeNull();
+    expect(tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, name: 'Text', props: 'nope' }))).toBeNull();
   });
 
   it('returns null for content that does not start with {', () => {
@@ -68,9 +60,7 @@ describe('tryParseGeneratedUIChunk', () => {
 
   it('returns null when a child node is malformed', () => {
     expect(
-      tryParseGeneratedUIChunk(
-        JSON.stringify({ _genui: true, name: 'Card', props: {}, children: [{ name: 'Text' }] }),
-      ),
+      tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, name: 'Card', props: {}, children: [{ name: 'Text' }] })),
     ).toBeNull();
   });
 
@@ -126,9 +116,7 @@ describe('tryParseGeneratedUIChunk', () => {
   it('refuses over-width trees at the shared node budget', () => {
     const children = Array.from({ length: 4096 }, (_, index) => ({ name: 'Text', props: { text: String(index) } }));
     expect(
-      tryParseGeneratedUIChunk(
-        JSON.stringify({ _genui: true, name: 'Card', props: { title: 'wide' }, children }),
-      ),
+      tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, name: 'Card', props: { title: 'wide' }, children })),
     ).toBeNull();
   });
 });

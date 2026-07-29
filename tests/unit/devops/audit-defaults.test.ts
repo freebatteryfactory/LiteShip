@@ -92,7 +92,9 @@ describe('runAuditPasses accepts a partial profile (defaults normalized at the e
       'packages/core/src/index.ts': 'export const a = 1;\n',
     });
     expect(() => resolveDevopsProfile({ repoRoot: root })).toThrowError(/no scoped/);
-    expect(() => resolveDevopsProfile({ repoRoot: root })).toThrowError(/runAuditPasses\(\{ repoRoot, internalPackagePrefix/);
+    expect(() => resolveDevopsProfile({ repoRoot: root })).toThrowError(
+      /runAuditPasses\(\{ repoRoot, internalPackagePrefix/,
+    );
   });
 
   it('an explicit prefix is never second-guessed by derivation', () => {
@@ -129,11 +131,7 @@ describe('SurfacePolicy — every field is optional, absent = check skipped', ()
   it('the CLI JSON loader accepts a profile without surfacePolicy', async () => {
     const root = acmeRepo();
     const profilePath = resolve(root, 'liteship.profile.json');
-    writeFileSync(
-      profilePath,
-      JSON.stringify({ internalPackagePrefix: '@acme/', packageTopology: {} }),
-      'utf8',
-    );
+    writeFileSync(profilePath, JSON.stringify({ internalPackagePrefix: '@acme/', packageTopology: {} }), 'utf8');
     const { profile, source } = await loadProfile(profilePath, root);
     expect(source).toBe('file');
     expect(profile.surfacePolicy).toEqual({});

@@ -113,7 +113,10 @@ function buildBlindSpots(
   const paired = runtimeSeams.pairedTruth ?? [];
   const driftEntries = paired
     .filter((entry) => entry.status === 'seam-drift')
-    .map((entry) => `${entry.id} support seam drift ${entry.divergence.pct?.toFixed(2) ?? 'n/a'}% (${entry.divergence.class})`);
+    .map(
+      (entry) =>
+        `${entry.id} support seam drift ${entry.divergence.pct?.toFixed(2) ?? 'n/a'}% (${entry.divergence.class})`,
+    );
   const invalidEntries = paired
     .filter((entry) => entry.status === 'invalid-measurement')
     .map((entry) => `${entry.id} invalid measurement`);
@@ -145,11 +148,10 @@ function buildBlindSpots(
       : []),
     ...(runtimeSeams.benchStability ?? [])
       .filter((entry) => entry.trustGrade !== 'stable')
-      .map(
-        (entry) =>
-          `${entry.label} hard gate trust is ${entry.trustGrade}: ${entry.trustReason}`,
-      ),
-    audit.counts!.warning! > 0 ? `${audit.counts!.warning} advisory warning(s) remain active` : 'audit warnings cleared',
+      .map((entry) => `${entry.label} hard gate trust is ${entry.trustGrade}: ${entry.trustReason}`),
+    audit.counts!.warning! > 0
+      ? `${audit.counts!.warning} advisory warning(s) remain active`
+      : 'audit warnings cleared',
   ];
 }
 
@@ -161,8 +163,7 @@ function workerBroadResidualIsMostlySeam(runtimeSeams: RuntimeSeamsReportArtifac
     return false;
   }
 
-  const sharedWithinTarget =
-    shared.overheadPct !== null && shared.overheadPct <= shared.thresholdPct;
+  const sharedWithinTarget = shared.overheadPct !== null && shared.overheadPct <= shared.thresholdPct;
   return sharedWithinTarget && audit.posture === 'accept-honest-residual' && seam.absoluteMeanNs > 0;
 }
 
@@ -182,9 +183,17 @@ function buildStrikeBoard(runtimeSeams: RuntimeSeamsReportArtifact): readonly St
     const divergenceWeight = Math.abs(entry.divergence.pct ?? 0);
     const outlierWeight = entry.outliers?.[0]?.valueMs ?? 0;
     const primaryP99 = entry.primaryLane.summary?.p99 ?? 0;
-    const fidelityDebtWeight = fidelityMissesTarget(entry) ? Math.abs(entry.divergence.pct ?? 0) - entry.fidelity.driftTargetPct : 0;
+    const fidelityDebtWeight = fidelityMissesTarget(entry)
+      ? Math.abs(entry.divergence.pct ?? 0) - entry.fidelity.driftTargetPct
+      : 0;
     const score = Number(
-      (statusWeight + (workerMostlySeam ? divergenceWeight * 0.35 : divergenceWeight) + outlierWeight + primaryP99 + fidelityDebtWeight).toFixed(2),
+      (
+        statusWeight +
+        (workerMostlySeam ? divergenceWeight * 0.35 : divergenceWeight) +
+        outlierWeight +
+        primaryP99 +
+        fidelityDebtWeight
+      ).toFixed(2),
     );
 
     return {
@@ -236,14 +245,19 @@ function buildStrikeBoard(runtimeSeams: RuntimeSeamsReportArtifact): readonly St
         `event boundary ${entry.fidelity.eventBoundaryParity}`,
         `modeled stages ${entry.fidelity.modeledStages.join(', ') || 'none'}`,
         `missing stages ${entry.fidelity.missingStages.join(', ') || 'none'}`,
-        ...((runtimeSeams.benchStability ?? [])
+        ...(runtimeSeams.benchStability ?? [])
           .filter((candidate) => candidate.label === entry.id.replace('-startup', '').replace('llm-promoted', 'llm'))
           .map(
             (candidate) =>
               `hard-gate trust ${candidate.trustGrade}: ${candidate.trustReason}; ${candidate.exceedances}/${candidate.validReplicates} over threshold, spread ${candidate.spreadPct?.toFixed(2) ?? 'n/a'}%, canary ${candidate.canarySpreadMeanNs ?? 'n/a'}ns / ${candidate.canarySpreadPct?.toFixed(2) ?? 'n/a'}%`,
-          )),
+          ),
         ...(entry.stages?.map((stage) => `stage ${stage}`) ?? []),
-        ...(entry.outliers?.slice(0, 2).map((outlier) => `outlier #${outlier.iteration} ${outlier.valueMs.toFixed(4)}ms${outlier.note ? ` (${outlier.note})` : ''}`) ?? []),
+        ...(entry.outliers
+          ?.slice(0, 2)
+          .map(
+            (outlier) =>
+              `outlier #${outlier.iteration} ${outlier.valueMs.toFixed(4)}ms${outlier.note ? ` (${outlier.note})` : ''}`,
+          ) ?? []),
       ],
     } satisfies StrikeBoardEntry;
   });
@@ -251,10 +265,7 @@ function buildStrikeBoard(runtimeSeams: RuntimeSeamsReportArtifact): readonly St
   return entries.sort((left, right) => right.score - left.score);
 }
 
-export function verifyAdaptiveScanReport(
-  report: AdaptiveScanReport,
-  root = repoRoot,
-): AdaptiveScanVerification {
+export function verifyAdaptiveScanReport(report: AdaptiveScanReport, root = repoRoot): AdaptiveScanVerification {
   const checks: AdaptiveScanIntegrityCheck[] = [];
   const currentContext = buildCurrentArtifactContext(root);
   const runtimeSeamsPath = resolve(root, 'reports', 'runtime-seams.json');
@@ -288,8 +299,24 @@ export function verifyAdaptiveScanReport(
   const expectedBlindSpots = auditCountsValid ? buildBlindSpots(startupReality, audit, runtimeSeams) : [];
   const expectedStrikeBoard = buildStrikeBoard(runtimeSeams);
 
-  checks.push(buildCheck('adaptive-scan-schema-version', report.schemaVersion === 6, report.schemaVersion === 6 ? 'Adaptive scan schema version is current.' : 'Adaptive scan schema version is missing or unsupported.'));
-  checks.push(buildCheck('adaptive-scan-runtime-seams-integrity', runtimeSeamsVerification.passed, runtimeSeamsVerification.passed ? 'Runtime seams integrity passed before adaptive scan verification.' : 'Runtime seams integrity failed underneath the adaptive scan.'));
+  checks.push(
+    buildCheck(
+      'adaptive-scan-schema-version',
+      report.schemaVersion === 6,
+      report.schemaVersion === 6
+        ? 'Adaptive scan schema version is current.'
+        : 'Adaptive scan schema version is missing or unsupported.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-runtime-seams-integrity',
+      runtimeSeamsVerification.passed,
+      runtimeSeamsVerification.passed
+        ? 'Runtime seams integrity passed before adaptive scan verification.'
+        : 'Runtime seams integrity failed underneath the adaptive scan.',
+    ),
+  );
   checks.push(
     buildCheck(
       'adaptive-scan-audit-schema-version',
@@ -317,23 +344,141 @@ export function verifyAdaptiveScanReport(
         : 'Audit runtime-seams support status is missing or malformed beneath the adaptive scan.',
     ),
   );
-  checks.push(buildCheck('adaptive-scan-startup-reality-schema-version', startupReality.schemaVersion === 4, startupReality.schemaVersion === 4 ? 'Startup reality schema version is current beneath the adaptive scan.' : 'Startup reality schema version is missing or unsupported beneath the adaptive scan.'));
-  checks.push(buildCheck('adaptive-scan-source-fingerprint', report.sourceFingerprint === currentContext.sourceFingerprint, report.sourceFingerprint === currentContext.sourceFingerprint ? 'Adaptive scan source fingerprint matches the current source tree.' : 'Adaptive scan source fingerprint does not match the current source tree.'));
-  checks.push(buildCheck('adaptive-scan-environment-fingerprint', report.environmentFingerprint === currentContext.environmentFingerprint, report.environmentFingerprint === currentContext.environmentFingerprint ? 'Adaptive scan environment fingerprint matches the current environment profile.' : 'Adaptive scan environment fingerprint does not match the current environment profile.'));
-  checks.push(buildCheck('adaptive-scan-expected-counts', compareJson(report.expectedCounts, currentContext.expectedCounts), compareJson(report.expectedCounts, currentContext.expectedCounts) ? 'Adaptive scan expected suite counts match the current repo layout.' : 'Adaptive scan expected suite counts do not match the current repo layout.'));
-  checks.push(buildCheck('adaptive-scan-run-coherence', report.gauntletRunId === runtimeSeams.gauntletRunId && report.gauntletRunId === audit.gauntletRunId && report.gauntletRunId === startupReality.gauntletRunId, report.gauntletRunId === runtimeSeams.gauntletRunId && report.gauntletRunId === audit.gauntletRunId && report.gauntletRunId === startupReality.gauntletRunId ? 'Adaptive scan, runtime seams, audit, and startup reality share the same gauntlet run id.' : 'Adaptive scan run id does not match one or more upstream artifacts.'));
+  checks.push(
+    buildCheck(
+      'adaptive-scan-startup-reality-schema-version',
+      startupReality.schemaVersion === 4,
+      startupReality.schemaVersion === 4
+        ? 'Startup reality schema version is current beneath the adaptive scan.'
+        : 'Startup reality schema version is missing or unsupported beneath the adaptive scan.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-source-fingerprint',
+      report.sourceFingerprint === currentContext.sourceFingerprint,
+      report.sourceFingerprint === currentContext.sourceFingerprint
+        ? 'Adaptive scan source fingerprint matches the current source tree.'
+        : 'Adaptive scan source fingerprint does not match the current source tree.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-environment-fingerprint',
+      report.environmentFingerprint === currentContext.environmentFingerprint,
+      report.environmentFingerprint === currentContext.environmentFingerprint
+        ? 'Adaptive scan environment fingerprint matches the current environment profile.'
+        : 'Adaptive scan environment fingerprint does not match the current environment profile.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-expected-counts',
+      compareJson(report.expectedCounts, currentContext.expectedCounts),
+      compareJson(report.expectedCounts, currentContext.expectedCounts)
+        ? 'Adaptive scan expected suite counts match the current repo layout.'
+        : 'Adaptive scan expected suite counts do not match the current repo layout.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-run-coherence',
+      report.gauntletRunId === runtimeSeams.gauntletRunId &&
+        report.gauntletRunId === audit.gauntletRunId &&
+        report.gauntletRunId === startupReality.gauntletRunId,
+      report.gauntletRunId === runtimeSeams.gauntletRunId &&
+        report.gauntletRunId === audit.gauntletRunId &&
+        report.gauntletRunId === startupReality.gauntletRunId
+        ? 'Adaptive scan, runtime seams, audit, and startup reality share the same gauntlet run id.'
+        : 'Adaptive scan run id does not match one or more upstream artifacts.',
+    ),
+  );
   // CUT generated-time-ordering: the wall-clock `generatedAt` vs file-mtime ordering gate
   // was REMOVED — `adaptive-scan-run-coherence` (gauntletRunId equality, above) is the
   // authoritative same-run signal. `generatedAt` stays WallClockTimestamp provenance only.
-  checks.push(buildCheck('adaptive-scan-runtime-seams-source', report.sourceArtifacts.runtimeSeams.fingerprint === runtimeSeamsArtifact.fingerprint, report.sourceArtifacts.runtimeSeams.fingerprint === runtimeSeamsArtifact.fingerprint ? 'Adaptive scan runtime seams fingerprint matches the current runtime seams report.' : 'Adaptive scan runtime seams fingerprint does not match the current runtime seams report.'));
-  checks.push(buildCheck('adaptive-scan-audit-source', report.sourceArtifacts.audit.fingerprint === auditArtifact.fingerprint, report.sourceArtifacts.audit.fingerprint === auditArtifact.fingerprint ? 'Adaptive scan audit fingerprint matches the current audit report.' : 'Adaptive scan audit fingerprint does not match the current audit report.'));
-  checks.push(buildCheck('adaptive-scan-startup-reality-source', report.sourceArtifacts.startupReality.fingerprint === startupRealityArtifact.fingerprint, report.sourceArtifacts.startupReality.fingerprint === startupRealityArtifact.fingerprint ? 'Adaptive scan startup reality fingerprint matches the current startup reality artifact.' : 'Adaptive scan startup reality fingerprint does not match the current startup reality artifact.'));
-  checks.push(buildCheck('adaptive-scan-runtime-warnings', compareJson(report.summary.runtimeWarnings, expectedRuntimeWarnings), compareJson(report.summary.runtimeWarnings, expectedRuntimeWarnings) ? 'Adaptive scan runtime warning summary matches paired-truth gate failures.' : 'Adaptive scan runtime warning summary does not match paired-truth gate failures.'));
-  checks.push(buildCheck('adaptive-scan-branch-hotspots', compareJson(report.summary.branchHotspots, expectedBranchHotspots), compareJson(report.summary.branchHotspots, expectedBranchHotspots) ? 'Adaptive scan branch hotspots match runtime seams.' : 'Adaptive scan branch hotspots do not match runtime seams.'));
-  checks.push(buildCheck('adaptive-scan-blind-spots', auditCountsValid && compareJson(report.summary.blindSpots, expectedBlindSpots), auditCountsValid && compareJson(report.summary.blindSpots, expectedBlindSpots) ? 'Adaptive scan blind spots match the current audit, startup reality, and runtime seams inputs.' : auditCountsValid ? 'Adaptive scan blind spots do not match the current audit, startup reality, and runtime seams inputs.' : 'Adaptive scan blind spots cannot be verified because the audit counts block is missing or malformed.'));
-  checks.push(buildCheck('adaptive-scan-paired-truth', compareJson(report.pairedTruth, runtimeSeams.pairedTruth ?? []), compareJson(report.pairedTruth, runtimeSeams.pairedTruth ?? []) ? 'Adaptive scan paired-truth metrics match runtime seams.' : 'Adaptive scan paired-truth metrics do not match runtime seams.'));
-  checks.push(buildCheck('adaptive-scan-fidelity', (report.pairedTruth ?? []).every((entry) => entry.fidelity !== undefined), (report.pairedTruth ?? []).every((entry) => entry.fidelity !== undefined) ? 'Adaptive scan preserves paired-truth fidelity metadata.' : 'Adaptive scan is missing paired-truth fidelity metadata.'));
-  checks.push(buildCheck('adaptive-scan-strike-board', compareJson(report.strikeBoard, expectedStrikeBoard), compareJson(report.strikeBoard, expectedStrikeBoard) ? 'Adaptive scan strike board matches the current runtime seams inputs.' : 'Adaptive scan strike board does not match the current runtime seams inputs.'));
+  checks.push(
+    buildCheck(
+      'adaptive-scan-runtime-seams-source',
+      report.sourceArtifacts.runtimeSeams.fingerprint === runtimeSeamsArtifact.fingerprint,
+      report.sourceArtifacts.runtimeSeams.fingerprint === runtimeSeamsArtifact.fingerprint
+        ? 'Adaptive scan runtime seams fingerprint matches the current runtime seams report.'
+        : 'Adaptive scan runtime seams fingerprint does not match the current runtime seams report.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-audit-source',
+      report.sourceArtifacts.audit.fingerprint === auditArtifact.fingerprint,
+      report.sourceArtifacts.audit.fingerprint === auditArtifact.fingerprint
+        ? 'Adaptive scan audit fingerprint matches the current audit report.'
+        : 'Adaptive scan audit fingerprint does not match the current audit report.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-startup-reality-source',
+      report.sourceArtifacts.startupReality.fingerprint === startupRealityArtifact.fingerprint,
+      report.sourceArtifacts.startupReality.fingerprint === startupRealityArtifact.fingerprint
+        ? 'Adaptive scan startup reality fingerprint matches the current startup reality artifact.'
+        : 'Adaptive scan startup reality fingerprint does not match the current startup reality artifact.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-runtime-warnings',
+      compareJson(report.summary.runtimeWarnings, expectedRuntimeWarnings),
+      compareJson(report.summary.runtimeWarnings, expectedRuntimeWarnings)
+        ? 'Adaptive scan runtime warning summary matches paired-truth gate failures.'
+        : 'Adaptive scan runtime warning summary does not match paired-truth gate failures.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-branch-hotspots',
+      compareJson(report.summary.branchHotspots, expectedBranchHotspots),
+      compareJson(report.summary.branchHotspots, expectedBranchHotspots)
+        ? 'Adaptive scan branch hotspots match runtime seams.'
+        : 'Adaptive scan branch hotspots do not match runtime seams.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-blind-spots',
+      auditCountsValid && compareJson(report.summary.blindSpots, expectedBlindSpots),
+      auditCountsValid && compareJson(report.summary.blindSpots, expectedBlindSpots)
+        ? 'Adaptive scan blind spots match the current audit, startup reality, and runtime seams inputs.'
+        : auditCountsValid
+          ? 'Adaptive scan blind spots do not match the current audit, startup reality, and runtime seams inputs.'
+          : 'Adaptive scan blind spots cannot be verified because the audit counts block is missing or malformed.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-paired-truth',
+      compareJson(report.pairedTruth, runtimeSeams.pairedTruth ?? []),
+      compareJson(report.pairedTruth, runtimeSeams.pairedTruth ?? [])
+        ? 'Adaptive scan paired-truth metrics match runtime seams.'
+        : 'Adaptive scan paired-truth metrics do not match runtime seams.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-fidelity',
+      (report.pairedTruth ?? []).every((entry) => entry.fidelity !== undefined),
+      (report.pairedTruth ?? []).every((entry) => entry.fidelity !== undefined)
+        ? 'Adaptive scan preserves paired-truth fidelity metadata.'
+        : 'Adaptive scan is missing paired-truth fidelity metadata.',
+    ),
+  );
+  checks.push(
+    buildCheck(
+      'adaptive-scan-strike-board',
+      compareJson(report.strikeBoard, expectedStrikeBoard),
+      compareJson(report.strikeBoard, expectedStrikeBoard)
+        ? 'Adaptive scan strike board matches the current runtime seams inputs.'
+        : 'Adaptive scan strike board does not match the current runtime seams inputs.',
+    ),
+  );
 
   return {
     passed: checks.every((check) => check.passed),
@@ -360,7 +505,9 @@ export function buildAdaptiveScanReport(root = repoRoot, generatedAt = new Date(
   const runtimeSeams = readJson<RuntimeSeamsReportArtifact>(runtimeSeamsPath);
   const runtimeSeamsIntegrity = verifyRuntimeSeamsReport(runtimeSeams, root);
   if (!runtimeSeamsIntegrity.passed) {
-    throw new Error('Runtime seams integrity failed. Refresh coverage, bench, startup-reality, and runtime-seams before building the adaptive scan.');
+    throw new Error(
+      'Runtime seams integrity failed. Refresh coverage, bench, startup-reality, and runtime-seams before building the adaptive scan.',
+    );
   }
 
   const audit = readJson<CodebaseAuditArtifactEnvelope>(auditPath);
@@ -452,7 +599,9 @@ export function renderAdaptiveScanMarkdown(report: AdaptiveScanReport): string {
     '',
     '## Runtime Warnings',
     '',
-    ...(report.summary.runtimeWarnings.length === 0 ? ['- None. Browser-budget truth currently passes.'] : report.summary.runtimeWarnings.map((entry) => `- ${entry}`)),
+    ...(report.summary.runtimeWarnings.length === 0
+      ? ['- None. Browser-budget truth currently passes.']
+      : report.summary.runtimeWarnings.map((entry) => `- ${entry}`)),
     '',
     '## Branch Hotspots',
     '',

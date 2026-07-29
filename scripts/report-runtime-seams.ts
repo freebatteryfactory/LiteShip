@@ -240,7 +240,10 @@ function readPreviousReport(root: string): RuntimeSeamsReportArtifact | null {
   return readJsonIfExists<RuntimeSeamsReportArtifact>(resolve(root, 'reports', 'runtime-seams.json'));
 }
 
-export function buildRuntimeSeamsReport(root = repoRoot, generatedAt = new Date().toISOString()): ExtendedRuntimeSeamsReport {
+export function buildRuntimeSeamsReport(
+  root = repoRoot,
+  generatedAt = new Date().toISOString(),
+): ExtendedRuntimeSeamsReport {
   const context = ensureArtifactContext(root);
   const coverageFacts = buildCoverageFacts(root);
   const benchFacts = buildBenchFacts(root);
@@ -248,7 +251,9 @@ export function buildRuntimeSeamsReport(root = repoRoot, generatedAt = new Date(
   const previousReport = readPreviousReport(root);
 
   const previousHotspotsByFile = new Map(
-    (previousReport?.coverage?.topBranchHotspots ?? []).map((entry: PreviousHotspotEntry) => [entry.file, entry.branchPct] as const),
+    (previousReport?.coverage?.topBranchHotspots ?? []).map(
+      (entry: PreviousHotspotEntry) => [entry.file, entry.branchPct] as const,
+    ),
   );
   const branchHotspots = coverageFacts.topBranchHotspots.map((entry) => {
     const previousBranchPct = previousHotspotsByFile.get(entry.file) ?? null;
@@ -271,13 +276,19 @@ export function buildRuntimeSeamsReport(root = repoRoot, generatedAt = new Date(
     .slice(0, 10);
 
   const previousDiagnosticsByLabel = new Map(
-    (previousReport?.diagnostics ?? []).map((entry: PreviousDiagnosticEntry) => [entry.label, entry.medianOverheadPct] as const),
+    (previousReport?.diagnostics ?? []).map(
+      (entry: PreviousDiagnosticEntry) => [entry.label, entry.medianOverheadPct] as const,
+    ),
   );
   const previousTransportDiagnosticsByLabel = new Map(
-    (previousReport?.transportDiagnostics ?? []).map((entry: PreviousDiagnosticEntry) => [entry.label, entry.medianOverheadPct] as const),
+    (previousReport?.transportDiagnostics ?? []).map(
+      (entry: PreviousDiagnosticEntry) => [entry.label, entry.medianOverheadPct] as const,
+    ),
   );
   const previousStartupBreakdownByStage = new Map(
-    (previousReport?.startupBreakdown ?? []).map((entry: PreviousStartupBreakdownEntry) => [entry.stage, entry.meanNs] as const),
+    (previousReport?.startupBreakdown ?? []).map(
+      (entry: PreviousStartupBreakdownEntry) => [entry.stage, entry.meanNs] as const,
+    ),
   );
   const previousWorkerSharedOverheadPct = previousReport?.workerStartupSplit?.shared?.overheadPct ?? null;
   const previousWorkerSeamAbsoluteMeanNs = previousReport?.workerStartupSplit?.seam?.absoluteMeanNs ?? null;
@@ -335,9 +346,9 @@ export function buildRuntimeSeamsReport(root = repoRoot, generatedAt = new Date(
     });
 
   const startupBreakdownOrder =
-    benchFacts.bench.replicates?.find((replicate) => (replicate.startupBreakdown?.length ?? 0) > 0)?.startupBreakdown?.map(
-      (entry) => entry.stage,
-    ) ?? [];
+    benchFacts.bench.replicates
+      ?.find((replicate) => (replicate.startupBreakdown?.length ?? 0) > 0)
+      ?.startupBreakdown?.map((entry) => entry.stage) ?? [];
   const startupBreakdown = startupBreakdownOrder
     .map((stage) => {
       const samples = (benchFacts.bench.replicates ?? [])
@@ -391,7 +402,8 @@ export function buildRuntimeSeamsReport(root = repoRoot, generatedAt = new Date(
     startupBreakdown,
     workerStartupAudit: benchFacts.bench.workerStartupAudit ?? {
       posture: 'accept-honest-residual',
-      conclusion: 'worker startup audit was missing, so the residual remains unattributed beyond the public 7-stage table.',
+      conclusion:
+        'worker startup audit was missing, so the residual remains unattributed beyond the public 7-stage table.',
       dominantStage: null,
       rows: [],
     },
@@ -425,7 +437,9 @@ export function buildRuntimeSeamsReport(root = repoRoot, generatedAt = new Date(
         derivedPct: benchWorkerStartupSplit?.seam.derivedPct ?? null,
         previousDerivedPct: previousWorkerSeamDerivedPct,
         deltaDerivedPct:
-          benchWorkerStartupSplit?.seam.derivedPct === null || benchWorkerStartupSplit?.seam.derivedPct === undefined || previousWorkerSeamDerivedPct === null
+          benchWorkerStartupSplit?.seam.derivedPct === null ||
+          benchWorkerStartupSplit?.seam.derivedPct === undefined ||
+          previousWorkerSeamDerivedPct === null
             ? null
             : Number((benchWorkerStartupSplit.seam.derivedPct - previousWorkerSeamDerivedPct).toFixed(2)),
         dominantStage: benchWorkerStartupSplit?.seam.dominantStage ?? null,

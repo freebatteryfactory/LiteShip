@@ -89,7 +89,9 @@ import { makeCoverageMap } from '../../../../packages/audit/src/index.js';
  *   5: `}`                      ← function f end
  */
 const SEAM_FILE = 'packages/core/src/demo-seam.ts';
-const SEAM_TEXT = ['// header', 'export const X = 1 > 2;', 'export function f(a) {', '  return a === 0;', '}'].join('\n');
+const SEAM_TEXT = ['// header', 'export const X = 1 > 2;', 'export function f(a) {', '  return a === 0;', '}'].join(
+  '\n',
+);
 const SEAM_LINES = SEAM_TEXT.split('\n').length; // 5
 
 /** Build a throwaway repo dir with the seam's package + a set of test files. */
@@ -179,7 +181,10 @@ describe('seam execution coverage — the barrel-problem fix', () => {
       };
 
       const run = (): readonly string[][] => {
-        const { coverage } = buildSeamCoverageMap(root, seams, { _tag: 'execution', options: { repoRoot: root, batchedProbe } });
+        const { coverage } = buildSeamCoverageMap(root, seams, {
+          _tag: 'execution',
+          options: { repoRoot: root, batchedProbe },
+        });
         return Array.from({ length: SEAM_LINES }, (_v, i) => [...coverage.covering(SEAM_FILE, i + 1)]);
       };
       // Build twice → identical map (the determinism contract the verdict-cache key relies on).
@@ -191,7 +196,12 @@ describe('seam execution coverage — the barrel-problem fix', () => {
 
   it('relation — a function-body line maps to executing tests, a top-level line to the full barrel set', () => {
     const executions: SeamTestExecution[] = [
-      { testId: 'exec.test.ts', seamFile: SEAM_FILE, deepImporter: false, coveredFunctionRanges: [{ startLine: 3, endLine: 5 }] },
+      {
+        testId: 'exec.test.ts',
+        seamFile: SEAM_FILE,
+        deepImporter: false,
+        coveredFunctionRanges: [{ startLine: 3, endLine: 5 }],
+      },
       { testId: 'idle.test.ts', seamFile: SEAM_FILE, deepImporter: false, coveredFunctionRanges: [] },
     ];
     const relation = executionCoverageRelation(executions, new Map([[SEAM_FILE, SEAM_LINES]]));
@@ -228,8 +238,14 @@ describe('seam execution coverage — the barrel-problem fix', () => {
     const seamB = 'packages/core/src/dag.ts';
     const seamC = 'packages/core/src/content-address.ts';
     const report = JSON.stringify({
-      '/abs/packages/core/src/hlc.ts': { f: { '0': 2 }, fnMap: { '0': { loc: { start: { line: 5 }, end: { line: 9 } } } } },
-      '/abs/packages/core/src/dag.ts': { f: { '0': 0 }, fnMap: { '0': { loc: { start: { line: 1 }, end: { line: 3 } } } } },
+      '/abs/packages/core/src/hlc.ts': {
+        f: { '0': 2 },
+        fnMap: { '0': { loc: { start: { line: 5 }, end: { line: 9 } } } },
+      },
+      '/abs/packages/core/src/dag.ts': {
+        f: { '0': 0 },
+        fnMap: { '0': { loc: { start: { line: 1 }, end: { line: 3 } } } },
+      },
       // content-address.ts is ABSENT — the test executed none of its functions.
     });
     const m = parseBatchedCoveredFunctionRanges(report, [seamA, seamB, seamC]);
@@ -339,8 +355,18 @@ describe('executionCoverageRelation — the per-(file,line,test) substrate', () 
 
   it('multiple executing barrel importers on the same function-body line are BOTH kept; only line-containing ones', () => {
     const executions: SeamTestExecution[] = [
-      { testId: 'a.test.ts', seamFile: SEAM_FILE, deepImporter: false, coveredFunctionRanges: [{ startLine: 3, endLine: 5 }] },
-      { testId: 'b.test.ts', seamFile: SEAM_FILE, deepImporter: false, coveredFunctionRanges: [{ startLine: 4, endLine: 4 }] },
+      {
+        testId: 'a.test.ts',
+        seamFile: SEAM_FILE,
+        deepImporter: false,
+        coveredFunctionRanges: [{ startLine: 3, endLine: 5 }],
+      },
+      {
+        testId: 'b.test.ts',
+        seamFile: SEAM_FILE,
+        deepImporter: false,
+        coveredFunctionRanges: [{ startLine: 4, endLine: 4 }],
+      },
     ];
     const map = makeCoverageMap(executionCoverageRelation(executions, new Map([[SEAM_FILE, SEAM_LINES]])));
     // Line 4 is inside BOTH ranges → both kept.
@@ -373,7 +399,12 @@ describe('computeSeamExecutionCoverage — the execution filter (deep kept verba
     const seamB = 'packages/core/src/b.ts';
     // Test `shared` is a barrel candidate for BOTH seams → must be probed ONCE with both.
     const candidates: SeamCandidates[] = [
-      { seamFile: seamA, seamText: 'A', deepImporters: ['deepA.test.ts'], barrelImporters: [{ id: 'shared.test.ts', text: 'sA' }] },
+      {
+        seamFile: seamA,
+        seamText: 'A',
+        deepImporters: ['deepA.test.ts'],
+        barrelImporters: [{ id: 'shared.test.ts', text: 'sA' }],
+      },
       { seamFile: seamB, seamText: 'B', deepImporters: [], barrelImporters: [{ id: 'shared.test.ts', text: 'sB' }] },
     ];
     const batchedProbe: BatchedSeamCoverageProbe = (_r, _c, seamFiles, testId) => {
@@ -389,10 +420,25 @@ describe('computeSeamExecutionCoverage — the execution filter (deep kept verba
     // Exactly ONE probe (the shared test batched over both seams), not one per (test,seam).
     expect(probeCalls).toBe(1);
     // Deep importer kept verbatim (deepImporter:true, no ranges).
-    expect(out).toContainEqual({ testId: 'deepA.test.ts', seamFile: seamA, deepImporter: true, coveredFunctionRanges: [] });
+    expect(out).toContainEqual({
+      testId: 'deepA.test.ts',
+      seamFile: seamA,
+      deepImporter: true,
+      coveredFunctionRanges: [],
+    });
     // Barrel probe ranges flow through for seam A (executed a fn) and seam B (none → []).
-    expect(out).toContainEqual({ testId: 'shared.test.ts', seamFile: seamA, deepImporter: false, coveredFunctionRanges: [{ startLine: 1, endLine: 2 }] });
-    expect(out).toContainEqual({ testId: 'shared.test.ts', seamFile: seamB, deepImporter: false, coveredFunctionRanges: [] });
+    expect(out).toContainEqual({
+      testId: 'shared.test.ts',
+      seamFile: seamA,
+      deepImporter: false,
+      coveredFunctionRanges: [{ startLine: 1, endLine: 2 }],
+    });
+    expect(out).toContainEqual({
+      testId: 'shared.test.ts',
+      seamFile: seamB,
+      deepImporter: false,
+      coveredFunctionRanges: [],
+    });
     // Deterministic order: by seam, then by test id.
     const ordered = [...out].sort((x, y) => x.seamFile.localeCompare(y.seamFile) || x.testId.localeCompare(y.testId));
     expect(out).toEqual(ordered);
@@ -400,11 +446,13 @@ describe('computeSeamExecutionCoverage — the execution filter (deep kept verba
 
   it('a barrel seam ABSENT from the probe map maps to [] (covers nothing) — the sound exclusion', () => {
     const batchedProbe: BatchedSeamCoverageProbe = () => new Map(); // executes nothing
-    const out = computeSeamExecutionCoverage(
-      [candidatesFor({ barrel: [{ id: 'idle.test.ts', text: 't' }] })],
-      { repoRoot: '/repo', batchedProbe },
-    );
-    expect(out).toEqual([{ testId: 'idle.test.ts', seamFile: SEAM_FILE, deepImporter: false, coveredFunctionRanges: [] }]);
+    const out = computeSeamExecutionCoverage([candidatesFor({ barrel: [{ id: 'idle.test.ts', text: 't' }] })], {
+      repoRoot: '/repo',
+      batchedProbe,
+    });
+    expect(out).toEqual([
+      { testId: 'idle.test.ts', seamFile: SEAM_FILE, deepImporter: false, coveredFunctionRanges: [] },
+    ]);
   });
 
   it('no barrel candidates → no probe runs at all (the default probe is never reached)', () => {
@@ -527,7 +575,9 @@ describe('default(Batched)CoverageProbe — the real spawn glue, driven by a syn
 
   /** A v8/istanbul report mapping `seam` to one covered function on lines 3..5. */
   function coveredReport(seam: string): string {
-    return JSON.stringify({ [`/abs/${seam}`]: { f: { '0': 2 }, fnMap: { '0': { loc: { start: { line: 3 }, end: { line: 5 } } } } } });
+    return JSON.stringify({
+      [`/abs/${seam}`]: { f: { '0': 2 }, fnMap: { '0': { loc: { start: { line: 3 }, end: { line: 5 } } } } },
+    });
   }
 
   /**
@@ -674,7 +724,10 @@ describe('makeFsSeamCoverageProbeCache — the fs-backed B2 probe store (atomic 
     try {
       const cache = makeFsSeamCoverageProbeCache(dir);
       const key = 'seamdigAtestdigBtctc1';
-      const ranges: LineRange[] = [{ startLine: 3, endLine: 5 }, { startLine: 10, endLine: 12 }];
+      const ranges: LineRange[] = [
+        { startLine: 3, endLine: 5 },
+        { startLine: 10, endLine: 12 },
+      ];
       expect(cache.read(key)).toBeNull(); // cold → MISS
       cache.write(key, ranges);
       expect(cache.read(key)).toEqual(ranges); // warm → HIT round-trips
@@ -718,13 +771,13 @@ describe('makeFsSeamCoverageProbeCache — the fs-backed B2 probe store (atomic 
       cache.write(key, [{ startLine: 1, endLine: 2 }]);
       const file = onlyJsonFile(join(dir, '.liteship', 'cache', 'seam-coverage'));
       for (const garbage of [
-        'not json{',                                   // invalid JSON → SyntaxError → null
-        '{"not":"an array"}',                          // not an array → null
-        '[42]',                                        // element not an object → null
-        '[{"startLine":2,"endLine":1}]',               // endLine < startLine → null
-        '[{"startLine":0,"endLine":3}]',               // non-positive line → null
-        '[{"startLine":1.5,"endLine":3}]',             // non-integer line → null
-        'null',                                        // JSON null, not an array → null
+        'not json{', // invalid JSON → SyntaxError → null
+        '{"not":"an array"}', // not an array → null
+        '[42]', // element not an object → null
+        '[{"startLine":2,"endLine":1}]', // endLine < startLine → null
+        '[{"startLine":0,"endLine":3}]', // non-positive line → null
+        '[{"startLine":1.5,"endLine":3}]', // non-integer line → null
+        'null', // JSON null, not an array → null
       ]) {
         writeFileSync(file, garbage, 'utf8');
         expect(cache.read(key)).toBeNull();

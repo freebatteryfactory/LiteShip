@@ -26,7 +26,9 @@ async function readUrl(handle: SpawnHandle): Promise<string> {
     try {
       const receipt = JSON.parse(trimmed) as { url?: unknown };
       if (typeof receipt.url === 'string') return receipt.url;
-    } catch { /* not yet a complete JSON line */ }
+    } catch {
+      /* not yet a complete JSON line */
+    }
   }
   throw new Error('subprocess closed without emitting url');
 }
@@ -35,16 +37,11 @@ async function readUrl(handle: SpawnHandle): Promise<string> {
  * Browser command: spawn `scene dev <scenePath>` and return the resolved URL.
  * Stores the live handle keyed by `testPath` so `stopSceneDev` can dispose.
  */
-export async function startSceneDev(
-  context: BrowserCommandContext,
-  scenePath: string,
-): Promise<string> {
+export async function startSceneDev(context: BrowserCommandContext, scenePath: string): Promise<string> {
   const key = context.testPath ?? 'anonymous';
-  const handle = startSpawnHandle(
-    'pnpm',
-    ['exec', 'tsx', 'packages/cli/src/bin.ts', 'scene', 'dev', scenePath],
-    { stdio: ['ignore', 'pipe', 'pipe'] },
-  );
+  const handle = startSpawnHandle('pnpm', ['exec', 'tsx', 'packages/cli/src/bin.ts', 'scene', 'dev', scenePath], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
   handles.set(key, handle);
   try {
     const url = await readUrl(handle);

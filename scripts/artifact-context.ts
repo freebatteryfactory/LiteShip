@@ -28,7 +28,6 @@ export interface ArtifactContext {
   readonly expectedCounts: ArtifactExpectedCounts;
 }
 
-
 function hashText(content: string): string {
   return `sha256:${createHash('sha256').update(content).digest('hex')}`;
 }

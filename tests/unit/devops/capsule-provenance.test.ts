@@ -20,11 +20,7 @@ import { describe, it, expect } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, cpSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import {
-  GENERATOR_SOURCE_FILES,
-  sourceProvenanceDigest,
-  generatorVersionDigest,
-} from '@liteship/command/host';
+import { GENERATOR_SOURCE_FILES, sourceProvenanceDigest, generatorVersionDigest } from '@liteship/command/host';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -84,9 +80,7 @@ describe('sourceProvenanceDigest (content-hash, mtime-independent)', () => {
       'pkg/src/b.ts': 'export const x = 1;\n',
     });
     try {
-      expect(sourceProvenanceDigest(root, 'pkg/src/a.ts')).not.toBe(
-        sourceProvenanceDigest(root, 'pkg/src/b.ts'),
-      );
+      expect(sourceProvenanceDigest(root, 'pkg/src/a.ts')).not.toBe(sourceProvenanceDigest(root, 'pkg/src/b.ts'));
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

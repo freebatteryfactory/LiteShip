@@ -65,12 +65,8 @@ describe('beatBindingCapsule — invariants', () => {
   it('spawn-count-equals-beat-count rejects mismatched counts', () => {
     const inv = invByName.get('spawn-count-equals-beat-count')!;
     const beats = sample;
-    expect(
-      inv.check({ beats } as unknown, { spawns: bindBeats(beats) } as unknown),
-    ).toBe(true);
-    expect(
-      inv.check({ beats } as unknown, { spawns: [] } as unknown),
-    ).toBe(false);
+    expect(inv.check({ beats } as unknown, { spawns: bindBeats(beats) } as unknown)).toBe(true);
+    expect(inv.check({ beats } as unknown, { spawns: [] } as unknown)).toBe(false);
   });
 
   it('all-spawns-are-beat-components fails when a tag is wrong', () => {
@@ -91,17 +87,11 @@ describe('beatBindingCapsule — invariants', () => {
     const inv = invByName.get('spawns-preserve-beat-order')!;
     const beats = sample;
     const goodOutput = { spawns: bindBeats(beats) };
-    expect(
-      inv.check({ beats } as unknown, goodOutput as unknown),
-    ).toBe(true);
+    expect(inv.check({ beats } as unknown, goodOutput as unknown)).toBe(true);
     const badSpawns = bindBeats(beats).slice().reverse();
-    expect(
-      inv.check({ beats } as unknown, { spawns: badSpawns } as unknown),
-    ).toBe(false);
+    expect(inv.check({ beats } as unknown, { spawns: badSpawns } as unknown)).toBe(false);
     // Different lengths should also fail (defense-in-depth).
-    expect(
-      inv.check({ beats } as unknown, { spawns: [] } as unknown),
-    ).toBe(false);
+    expect(inv.check({ beats } as unknown, { spawns: [] } as unknown)).toBe(false);
   });
 
   it('the capsule is registered as sceneComposition with the spec name', () => {

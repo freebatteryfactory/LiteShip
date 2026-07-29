@@ -33,10 +33,7 @@ export interface DirectiveBenchArtifact {
   readonly replicates: readonly ReplicateResult[];
 }
 
-export function writeDirectiveBenchArtifact(
-  root: string,
-  artifact: DirectiveBenchArtifact,
-): void {
+export function writeDirectiveBenchArtifact(root: string, artifact: DirectiveBenchArtifact): void {
   writeTextFile(resolve(root, DIRECTIVE_BENCH_ARTIFACT_PATH), JSON.stringify(artifact, null, 2));
 }
 
@@ -69,10 +66,7 @@ export interface ReplicateCacheLookup {
  * environment fingerprints and satisfies the expected replicate count.
  * Returns `null` for any mismatch, which means callers should re-run fresh.
  */
-export function lookupCachedReplicates(
-  root: string,
-  lookup: ReplicateCacheLookup,
-): readonly ReplicateResult[] | null {
+export function lookupCachedReplicates(root: string, lookup: ReplicateCacheLookup): readonly ReplicateResult[] | null {
   const artifact = readDirectiveBenchArtifact(root);
   if (!artifact) {
     return null;

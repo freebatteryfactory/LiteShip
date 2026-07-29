@@ -20,7 +20,15 @@ export function measuredStartupRealityFixture(): RawStartupRealityBrowserResult 
         totalStartupMs: { min: 0.5, median: 0.6, p75: 0.62, p95: 0.64, p99: 0.65, max: 0.65, mean: 0.6 },
         stages: {
           'claim-or-create': { min: 0.1, median: 0.2, p75: 0.22, p95: 0.24, p99: 0.25, max: 0.25, mean: 0.2 },
-          'coordinator-reset-or-create': { min: 0.12, median: 0.16, p75: 0.17, p95: 0.18, p99: 0.19, max: 0.19, mean: 0.16 },
+          'coordinator-reset-or-create': {
+            min: 0.12,
+            median: 0.16,
+            p75: 0.17,
+            p95: 0.18,
+            p99: 0.19,
+            max: 0.19,
+            mean: 0.16,
+          },
           'listener-bind': { min: 0.02, median: 0.03, p75: 0.03, p95: 0.04, p99: 0.04, max: 0.04, mean: 0.03 },
           'quantizer-bootstrap': { min: 0.03, median: 0.05, p75: 0.05, p95: 0.06, p99: 0.06, max: 0.06, mean: 0.05 },
           'request-compute': { min: 0.03, median: 0.04, p75: 0.05, p95: 0.06, p99: 0.06, max: 0.06, mean: 0.04 },

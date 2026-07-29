@@ -19,10 +19,11 @@ const C8_IGNORE_BUDGET = 5;
 
 describe('c8 ignore budget', () => {
   it(`repo has at most ${C8_IGNORE_BUDGET} c8 ignore annotations`, () => {
-    const files = fg.sync(
-      ['packages/*/src/**/*.ts', 'scripts/**/*.ts'],
-      { cwd: REPO_ROOT, absolute: true, onlyFiles: true },
-    );
+    const files = fg.sync(['packages/*/src/**/*.ts', 'scripts/**/*.ts'], {
+      cwd: REPO_ROOT,
+      absolute: true,
+      onlyFiles: true,
+    });
     const offenders: { file: string; count: number }[] = [];
     let total = 0;
     for (const file of files) {

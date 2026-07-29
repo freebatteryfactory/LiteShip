@@ -145,8 +145,7 @@ describe('engine — runGates applies earned authority', () => {
     const unproven: Gate = defineGate({
       ...noBareThrowGate,
       id: 'gauntlet/unproven',
-      run: (context) =>
-        noBareThrowGate.run(context).map((entry) => ({ ...entry, ruleId: 'gauntlet/unproven' })),
+      run: (context) => noBareThrowGate.run(context).map((entry) => ({ ...entry, ruleId: 'gauntlet/unproven' })),
       fixtures: { ...noBareThrowGate.fixtures, mutation: { describe: 'identity', mutate: (g) => g } },
     });
     const result = runGates([unproven], dirty);
@@ -164,8 +163,7 @@ describe('engine — runGates applies earned authority', () => {
     const unproven: Gate = defineGate({
       ...noBareThrowGate,
       id: 'gauntlet/unproven-waived',
-      run: (context) =>
-        noBareThrowGate.run(context).map((entry) => ({ ...entry, ruleId: 'gauntlet/unproven-waived' })),
+      run: (context) => noBareThrowGate.run(context).map((entry) => ({ ...entry, ruleId: 'gauntlet/unproven-waived' })),
       fixtures: { ...noBareThrowGate.fixtures, mutation: { describe: 'identity', mutate: (g) => g } },
     });
     const result = runGates([unproven], dirty, {

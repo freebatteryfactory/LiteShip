@@ -399,7 +399,9 @@ describe('adaptive scan', () => {
     expect(report.strikeBoard.length).toBeGreaterThan(0);
     expect(report.summary.runtimeWarnings).toEqual([]);
     expect(report.pairedTruth.find((entry) => entry.id === 'worker-startup')?.primaryLane.summary?.p99).toBe(0.54);
-    expect(report.pairedTruth.find((entry) => entry.id === 'llm-promoted-startup')?.primaryLane.summary?.p99).toBe(0.15);
+    expect(report.pairedTruth.find((entry) => entry.id === 'llm-promoted-startup')?.primaryLane.summary?.p99).toBe(
+      0.15,
+    );
     expect(renderAdaptiveScanMarkdown(report)).toContain('## Feedback Integrity');
   });
 

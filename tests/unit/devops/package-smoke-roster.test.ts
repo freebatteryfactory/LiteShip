@@ -28,7 +28,9 @@ import { packageManifests } from '../../support/repo-truths.js';
 /** The authoritative publishable set: every packages/* manifest with public access and not private. */
 function derivePublishableScopes(): string[] {
   return packageManifests()
-    .filter((manifest) => manifest.publishConfig?.access === 'public' && manifest.private !== true && manifest.name != null)
+    .filter(
+      (manifest) => manifest.publishConfig?.access === 'public' && manifest.private !== true && manifest.name != null,
+    )
     .map((manifest) => manifest.name as string)
     .sort();
 }

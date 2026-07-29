@@ -45,7 +45,8 @@ describe('detect-upgrade fires liteship:detect-ready', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
       () =>
         ({
-          getExtension: (name: string) => (name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL: 37446 } : null),
+          getExtension: (name: string) =>
+            name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL: 37446 } : null,
           getParameter: () => 'NVIDIA GeForce RTX 4090',
         }) as never,
     );
@@ -121,7 +122,9 @@ describe('detect-upgrade fires liteship:detect-ready', () => {
               webgpu,
               prefersReducedMotion: false,
             } as Parameters<typeof motionTierFromCapabilities>[0];
-            expect(document.documentElement.getAttribute('data-liteship-motion')).toBe(motionTierFromCapabilities(caps));
+            expect(document.documentElement.getAttribute('data-liteship-motion')).toBe(
+              motionTierFromCapabilities(caps),
+            );
             expect(document.documentElement.getAttribute('data-liteship-tier')).toBe(capTierFromCapabilities(caps));
           });
         }

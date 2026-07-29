@@ -110,9 +110,7 @@ describe('beat-binding integration with SceneRuntime', () => {
     try {
       const beatEntities = handle.world.query(BeatPart);
       expect(beatEntities.length).toBe(beats.length);
-      const spawnedTimes = beatEntities
-        .map((e) => e.get(BeatPart).timeMs)
-        .sort((a, b) => a - b);
+      const spawnedTimes = beatEntities.map((e) => e.get(BeatPart).timeMs).sort((a, b) => a - b);
       expect(spawnedTimes).toEqual([250, 500, 750]);
     } finally {
       await handle.release();

@@ -56,10 +56,7 @@ import type {
   QuantizerBoundarySource as RtBoundarySource,
   CompositorWorkerStartupTelemetry as RtStartupTelemetry,
 } from '../../../packages/worker/src/compositor-types.js';
-import type {
-  SPSCRing as RtRingShape,
-  SPSCRingPair as RtRingPair,
-} from '../../../packages/worker/src/spsc-ring.js';
+import type { SPSCRing as RtRingShape, SPSCRingPair as RtRingPair } from '../../../packages/worker/src/spsc-ring.js';
 import type {
   MotionSampleMessage as RtMotionSampleMessage,
   ProgramUniforms as RtProgramUniforms,

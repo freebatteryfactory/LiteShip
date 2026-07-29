@@ -144,7 +144,9 @@ describe('test helper contract parity', () => {
     const originalDocument = globalThis.document;
     const cleanup = mockWebGL('Mock GPU Renderer');
     const canvas = globalThis.document.createElement('canvas') as {
-      getContext(type: string): { getParameter(pname: number): string | null; getExtension(name: string): object | null } | null;
+      getContext(
+        type: string,
+      ): { getParameter(pname: number): string | null; getExtension(name: string): object | null } | null;
     };
     const gl = canvas.getContext('webgl');
 

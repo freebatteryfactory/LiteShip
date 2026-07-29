@@ -91,11 +91,25 @@ describe('noBareThrowIRGate — the IR-fold twin of no-bare-throw', () => {
     const ir = makeRepoIR({
       files: [fileNode()],
       facts: [
-        { file: FILE, line: 5, property: 'bare-throw', value: true, oracleId: 'ts-ast', coverageClass: 'file-proxy-only' },
+        {
+          file: FILE,
+          line: 5,
+          property: 'bare-throw',
+          value: true,
+          oracleId: 'ts-ast',
+          coverageClass: 'file-proxy-only',
+        },
         // Not a bare-throw fact — must NOT be folded.
         defFact(9, 'ts-ast', 'file-proxy-only'),
         // A bare-throw observed by a DIFFERENT oracle id — not this oracle's fact.
-        { file: FILE, line: 7, property: 'bare-throw', value: true, oracleId: 'invariant-regex', coverageClass: 'text-only' },
+        {
+          file: FILE,
+          line: 7,
+          property: 'bare-throw',
+          value: true,
+          oracleId: 'invariant-regex',
+          coverageClass: 'text-only',
+        },
       ],
     });
     const findings = noBareThrowIRGate.run(irContext(ir));
@@ -204,7 +218,14 @@ describe('exclude-vs-miss — a sanctioned POLICY EXCLUDE is not a divergence (B
     const ir = makeRepoIR({
       files: [excludedFileNode()],
       facts: [
-        { file: EXCLUDED_FILE, line: 3, property: 'is-default-export', value: true, oracleId: 'ts-ast', coverageClass: 'file-proxy-only' },
+        {
+          file: EXCLUDED_FILE,
+          line: 3,
+          property: 'is-default-export',
+          value: true,
+          oracleId: 'ts-ast',
+          coverageClass: 'file-proxy-only',
+        },
         excludedMarker(EXCLUDED_FILE),
       ],
     });
@@ -231,7 +252,14 @@ describe('exclude-vs-miss — a sanctioned POLICY EXCLUDE is not a divergence (B
     const ir = makeRepoIR({
       files: [excludedFileNode()],
       facts: [
-        { file: EXCLUDED_FILE, line: 9, property: 'is-default-export', value: true, oracleId: 'invariant-regex', coverageClass: 'text-only' },
+        {
+          file: EXCLUDED_FILE,
+          line: 9,
+          property: 'is-default-export',
+          value: true,
+          oracleId: 'invariant-regex',
+          coverageClass: 'text-only',
+        },
         excludedMarker(EXCLUDED_FILE),
       ],
     });
@@ -243,7 +271,14 @@ describe('exclude-vs-miss — a sanctioned POLICY EXCLUDE is not a divergence (B
   it('the exclude is read from the LIVE marker fact — drop the marker and the same site becomes a divergence (head-probe LAW)', () => {
     // With the marker → no divergence (policy exclude). WITHOUT it → a divergence
     // (coverage miss). The gate hardcodes no path list; it reads the fact.
-    const astFact: Fact = { file: EXCLUDED_FILE, line: 3, property: 'is-default-export', value: true, oracleId: 'ts-ast', coverageClass: 'file-proxy-only' };
+    const astFact: Fact = {
+      file: EXCLUDED_FILE,
+      line: 3,
+      property: 'is-default-export',
+      value: true,
+      oracleId: 'ts-ast',
+      coverageClass: 'file-proxy-only',
+    };
     const withMarker = makeRepoIR({ files: [excludedFileNode()], facts: [astFact, excludedMarker(EXCLUDED_FILE)] });
     const withoutMarker = makeRepoIR({ files: [excludedFileNode()], facts: [astFact] });
     expect(noDefaultExportDivergenceGate.run(irContext(withMarker))).toEqual([]);

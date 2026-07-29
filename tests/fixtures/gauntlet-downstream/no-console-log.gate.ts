@@ -17,14 +17,7 @@
  * @module
  */
 
-import {
-  defineGate,
-  finding,
-  memoryContext,
-  type Gate,
-  type GateContext,
-  type Finding,
-} from '@liteship/gauntlet';
+import { defineGate, finding, memoryContext, type Gate, type GateContext, type Finding } from '@liteship/gauntlet';
 
 /**
  * Match a `console.log(` call. Narrow on purpose: the downstream rule forbids
@@ -82,13 +75,15 @@ export const noConsoleLogGate: Gate = defineGate({
   id: 'downstream/no-console-log',
   extension: { namespace: 'downstream', owner: '@acme/gauntlet-rules' },
   level: 'L2',
-  describe: 'Downstream rule: no `console.log(...)` in shipped source — route diagnostics through the structured logger.',
+  describe:
+    'Downstream rule: no `console.log(...)` in shipped source — route diagnostics through the structured logger.',
   run: scan,
   fixtures: {
     red: {
       name: 'a file with a console.log debug crumb',
       context: memoryContext({
-        'leaky.ts': "export function greet(name: string): string {\n  console.log('debug', name);\n  return `hi ${name}`;\n}\n",
+        'leaky.ts':
+          "export function greet(name: string): string {\n  console.log('debug', name);\n  return `hi ${name}`;\n}\n",
       }),
     },
     green: {

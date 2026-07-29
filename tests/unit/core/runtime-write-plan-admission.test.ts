@@ -71,15 +71,15 @@ describe('RuntimeWritePlan admission', () => {
         delete (plan.easing as Record<string, unknown>).points;
       },
       (plan) => {
-        ((plan.windows as Record<string, unknown>[])[0]!).windowEnd = 1.1;
+        (plan.windows as Record<string, unknown>[])[0]!.windowEnd = 1.1;
       },
       (plan) => {
-        ((plan.windows as Record<string, unknown>[])[0]!).windowStart = 0.8;
-        ((plan.windows as Record<string, unknown>[])[0]!).windowEnd = 0.2;
+        (plan.windows as Record<string, unknown>[])[0]!.windowStart = 0.8;
+        (plan.windows as Record<string, unknown>[])[0]!.windowEnd = 0.2;
       },
       (plan) => {
         const property = (plan.properties as Record<string, unknown>[])[0]!;
-        ((property.from as { parts: { args: Record<string, unknown>[] }[] }).parts[0]!.args[0]!).v = Infinity;
+        (property.from as { parts: { args: Record<string, unknown>[] }[] }).parts[0]!.args[0]!.v = Infinity;
       },
       (plan) => {
         const property = (plan.properties as Record<string, unknown>[])[0]!;
@@ -118,7 +118,7 @@ describe('RuntimeWritePlan admission', () => {
 
   it('rejects cyclic transform payloads without recursing forever', () => {
     const candidate = structuredClone(fixture()) as unknown as Record<string, unknown>;
-    const transform = ((candidate.properties as Record<string, unknown>[])[0]!).from as Record<string, unknown>;
+    const transform = (candidate.properties as Record<string, unknown>[])[0]!.from as Record<string, unknown>;
     const part = (transform.parts as Record<string, unknown>[])[0]!;
     (part.args as unknown[])[0] = transform;
 

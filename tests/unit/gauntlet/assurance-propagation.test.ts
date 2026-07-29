@@ -94,10 +94,7 @@ describe('propagateAssuranceLevels — transitive propagation (the fixpoint)', (
 
   it('the HIGHEST of multiple importers wins (max over importers)', () => {
     // shared imported by an L2 file AND an L4 file → it inherits L4.
-    const r = ir(
-      ['hi.ts', 'lo.ts', 'shared.ts'],
-      [edge('hi.ts', 'shared.ts'), edge('lo.ts', 'shared.ts')],
-    );
+    const r = ir(['hi.ts', 'lo.ts', 'shared.ts'], [edge('hi.ts', 'shared.ts'), edge('lo.ts', 'shared.ts')]);
     const levels = propagateAssuranceLevels(r, baseFrom({ 'hi.ts': 'L4', 'lo.ts': 'L2' }));
     expect(levels.get('shared.ts')).toBe('L4');
   });
@@ -190,18 +187,15 @@ describe('propagateAssuranceLevels — determinism + monotonicity LAWS', () => {
   const LEVELS: readonly AssuranceLevel[] = ['L0', 'L1', 'L2', 'L3', 'L4'];
 
   it('LAW: every file effective >= its base (propagation only raises) — over random DAGs+cycles', () => {
-    const arb = fc
-      .integer({ min: 1, max: 8 })
-      .chain((n) => {
-        const ids = Array.from({ length: n }, (_, i) => `f${i}.ts`);
-        const baseArb = fc.array(fc.constantFrom(...LEVELS), { minLength: n, maxLength: n });
-        // Random edges over the id set — may form DAGs, cycles, or self-loops.
-        const edgeArb = fc.array(
-          fc.tuple(fc.integer({ min: 0, max: n - 1 }), fc.integer({ min: 0, max: n - 1 })),
-          { maxLength: n * 2 },
-        );
-        return fc.tuple(fc.constant(ids), baseArb, edgeArb);
+    const arb = fc.integer({ min: 1, max: 8 }).chain((n) => {
+      const ids = Array.from({ length: n }, (_, i) => `f${i}.ts`);
+      const baseArb = fc.array(fc.constantFrom(...LEVELS), { minLength: n, maxLength: n });
+      // Random edges over the id set — may form DAGs, cycles, or self-loops.
+      const edgeArb = fc.array(fc.tuple(fc.integer({ min: 0, max: n - 1 }), fc.integer({ min: 0, max: n - 1 })), {
+        maxLength: n * 2,
       });
+      return fc.tuple(fc.constant(ids), baseArb, edgeArb);
+    });
 
     fc.assert(
       fc.property(arb, ([ids, bases, edgePairs]) => {

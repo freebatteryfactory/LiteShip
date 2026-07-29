@@ -134,27 +134,26 @@ async function measureWorkerStartup(iterations = 30): Promise<WorkerRealityResul
     'quantizer-bootstrap': [],
     'request-compute': [],
     'state-delivery': [],
-    'dispose': [],
+    dispose: [],
   };
   const iterationNotes: string[] = [];
 
   await runWorkerStartupScenario((startupTelemetry) => WorkerHost.create({ poolCapacity: 8 }, startupTelemetry));
 
   for (let iteration = 0; iteration < iterations; iteration++) {
-    const iterationResult = await runWorkerStartupScenario(
-      (startupTelemetry) => WorkerHost.create({ poolCapacity: 8 }, startupTelemetry),
+    const iterationResult = await runWorkerStartupScenario((startupTelemetry) =>
+      WorkerHost.create({ poolCapacity: 8 }, startupTelemetry),
     );
 
     totalStartupMs.push(iterationResult.totalStartupMs);
     for (const [stage, durationMs] of Object.entries(iterationResult.stages)) {
       stageSamples[stage as WorkerStartupStage].push(durationMs);
     }
-    const dominantStage = [...WORKER_STARTUP_STAGE_LABELS]
-      .sort(
-        (left, right) =>
-          (iterationResult.stages[right.stage as keyof typeof iterationResult.stages] ?? 0) -
-          (iterationResult.stages[left.stage as keyof typeof iterationResult.stages] ?? 0),
-      )[0];
+    const dominantStage = [...WORKER_STARTUP_STAGE_LABELS].sort(
+      (left, right) =>
+        (iterationResult.stages[right.stage as keyof typeof iterationResult.stages] ?? 0) -
+        (iterationResult.stages[left.stage as keyof typeof iterationResult.stages] ?? 0),
+    )[0];
     iterationNotes.push(
       dominantStage
         ? `dominant ${dominantStage.stage} ${(
@@ -205,15 +204,12 @@ async function measureLLMStartupPath(
   const scenario = buildLLMStartupScenario(mode);
   const tokenAt = new Promise<number>((resolve) => {
     let tokenCount = 0;
-    host.addEventListener(
-      'liteship:llm-token',
-      () => {
-        tokenCount += 1;
-        if (tokenCount === scenario.firstTokenOrdinal) {
-          resolve(performance.now());
-        }
-      },
-    );
+    host.addEventListener('liteship:llm-token', () => {
+      tokenCount += 1;
+      if (tokenCount === scenario.firstTokenOrdinal) {
+        resolve(performance.now());
+      }
+    });
   });
 
   llmDirective(async () => {}, {}, host);

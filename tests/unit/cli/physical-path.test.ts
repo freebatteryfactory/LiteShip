@@ -34,8 +34,7 @@ describe('physical path identity', () => {
 
   test('canonicalizes Windows 8.3 aliases and preserves spaces and Unicode', () => {
     const fs = semantics(win32, {
-      'C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\consumer':
-        'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\consumer',
+      'C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\consumer': 'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\consumer',
       'C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\consumer\\node_modules\\@scope\\démo file.js':
         'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\consumer\\node_modules\\@scope\\démo file.js',
     });

@@ -102,15 +102,15 @@ describe('LEVEL 1 — deterministic mutant generation', () => {
   it('covers the full operator catalogue over a representative fixture', () => {
     const ALL = [
       'function f(a: number, b: number) {',
-      '  const x = a < b;',          // conditional-boundary
-      '  const y = a === b;',        // equality
-      '  const z = a + b;',          // arithmetic
+      '  const x = a < b;', // conditional-boundary
+      '  const y = a === b;', // equality
+      '  const z = a + b;', // arithmetic
       '  const w = (a > 0) && (b > 0);', // logical (+ two conditional-boundary)
-      '  const flag = true;',        // boolean-literal
-      '  const neg = !flag;',        // unary-not
-      '  const s = "hello";',        // string-literal
-      '  if (x) return z;',          // return-value (numeric → 0)
-      '  return 0;',                 // return-value (0 → 1)
+      '  const flag = true;', // boolean-literal
+      '  const neg = !flag;', // unary-not
+      '  const s = "hello";', // string-literal
+      '  if (x) return z;', // return-value (numeric → 0)
+      '  return 0;', // return-value (0 → 1)
       '}',
     ].join('\n');
     const operators = new Set(generateMutants(parse('all.ts', ALL), { file: 'all.ts' }).map((m) => m.operator));
@@ -241,7 +241,11 @@ function addCoverage() {
   return makeCoverageMap(mutants.map((m) => ({ file: 'add.ts', line: m.line, testId: 'add.value' })));
 }
 
-function evaluateAll(mutants: readonly Mutant[], runner: MutantTestRunner, coverage = addCoverage()): readonly MutantVerdict[] {
+function evaluateAll(
+  mutants: readonly Mutant[],
+  runner: MutantTestRunner,
+  coverage = addCoverage(),
+): readonly MutantVerdict[] {
   return mutants.map((m) => evaluateMutant(m, { runner, coverage, originalSource: ADD }));
 }
 
@@ -276,7 +280,9 @@ describe('LEVEL 2 — the engine kills adequate tests and surfaces inadequate on
       runnerCalls += 1;
       return strongValueRunner(src);
     };
-    const verdicts = mutants.map((m) => evaluateMutant(m, { runner: countingRunner, coverage: emptyCoverage, originalSource: ADD }));
+    const verdicts = mutants.map((m) =>
+      evaluateMutant(m, { runner: countingRunner, coverage: emptyCoverage, originalSource: ADD }),
+    );
     expect(verdicts.every((v) => v._tag === 'no-coverage')).toBe(true);
     expect(runnerCalls).toBe(0);
   });
@@ -323,11 +329,16 @@ describe('LEVEL 3 — the broken-engine-is-caught keystone', () => {
     // Demonstrate the catch concretely: re-running the Level-2(b) shape with the
     // broken (no-op-only) catalogue yields NO `-` survivor → the meta-assertion fails.
     const brokenCatalogue: readonly Mutant[] = [noOpMutant];
-    const brokenVerdicts = brokenCatalogue.map((m) => evaluateMutant(m, { runner: weakTypeRunner, coverage, originalSource: ADD }));
+    const brokenVerdicts = brokenCatalogue.map((m) =>
+      evaluateMutant(m, { runner: weakTypeRunner, coverage, originalSource: ADD }),
+    );
     const brokenArithmeticSurvivor = brokenVerdicts.find(
       (v) => v._tag === 'survived' && v.mutant.operator === 'arithmetic' && v.mutant.mutatedText === '-',
     );
-    expect(brokenArithmeticSurvivor, 'a no-op engine produces NO real `-` survivor — the meta-test catches the broken engine').toBeUndefined();
+    expect(
+      brokenArithmeticSurvivor,
+      'a no-op engine produces NO real `-` survivor — the meta-test catches the broken engine',
+    ).toBeUndefined();
   });
 
   /**
@@ -470,7 +481,12 @@ describe('EQUIVALENT-MUTANT REGISTRY — justified non-gaps + the anti-drift pro
       return { failed: false };
     };
     const coverage = makeCoverageMap([{ file: m.file, line: m.line, testId: 'cmp.test' }]);
-    const verdict = evaluateMutant(m, { runner: countingRunner, coverage, originalSource: FIXTURE, equivalents: registry });
+    const verdict = evaluateMutant(m, {
+      runner: countingRunner,
+      coverage,
+      originalSource: FIXTURE,
+      equivalents: registry,
+    });
     expect(verdict._tag).toBe('equivalent');
     // The equivalent short-circuit precedes coverage + the runner — nothing was run.
     expect(runnerCalls).toBe(0);
@@ -482,13 +498,27 @@ describe('EQUIVALENT-MUTANT REGISTRY — justified non-gaps + the anti-drift pro
     // gap, so counting it would cap the honest score below 1.0 forever.
     const m = boundaryMutant(FIXTURE);
     const registry = makeEquivalentMutantRegistry([
-      { mutantId: m.id, file: m.file, line: m.line, column: m.column, operator: m.operator, originalText: m.originalText, mutatedText: m.mutatedText, justification: 'equivalent' },
+      {
+        mutantId: m.id,
+        file: m.file,
+        line: m.line,
+        column: m.column,
+        operator: m.operator,
+        originalText: m.originalText,
+        mutatedText: m.mutatedText,
+        justification: 'equivalent',
+      },
     ]);
     const coverage = makeCoverageMap([{ file: m.file, line: m.line, testId: 'cmp.test' }]);
     const killsEverythingButEquivalent: MutantTestRunner = () => ({ failed: true });
     const all = generateMutants(parse('cmp.ts', FIXTURE), { file: 'cmp.ts' });
     const verdicts = all.map((mut) =>
-      evaluateMutant(mut, { runner: killsEverythingButEquivalent, coverage, originalSource: FIXTURE, equivalents: registry }),
+      evaluateMutant(mut, {
+        runner: killsEverythingButEquivalent,
+        coverage,
+        originalSource: FIXTURE,
+        equivalents: registry,
+      }),
     );
     const score = scoreVerdicts(verdicts);
     expect(score.equivalent).toBe(1);
@@ -505,14 +535,28 @@ describe('EQUIVALENT-MUTANT REGISTRY — justified non-gaps + the anti-drift pro
     // passing runner). A stale justification can never silently cover the new code.
     const original = boundaryMutant(FIXTURE);
     const registry = makeEquivalentMutantRegistry([
-      { mutantId: original.id, file: original.file, line: original.line, column: original.column, operator: original.operator, originalText: original.originalText, mutatedText: original.mutatedText, justification: 'equivalent' },
+      {
+        mutantId: original.id,
+        file: original.file,
+        line: original.line,
+        column: original.column,
+        operator: original.operator,
+        originalText: original.originalText,
+        mutatedText: original.mutatedText,
+        justification: 'equivalent',
+      },
     ]);
     const drifted = `\n${FIXTURE}`; // shifts the comparator down one line → a new id
     const driftedMutant = boundaryMutant(drifted);
     expect(driftedMutant.id).not.toBe(original.id); // the content address changed
     const coverage = makeCoverageMap([{ file: driftedMutant.file, line: driftedMutant.line, testId: 'cmp.test' }]);
     const survives: MutantTestRunner = () => ({ failed: false });
-    const verdict = evaluateMutant(driftedMutant, { runner: survives, coverage, originalSource: drifted, equivalents: registry });
+    const verdict = evaluateMutant(driftedMutant, {
+      runner: survives,
+      coverage,
+      originalSource: drifted,
+      equivalents: registry,
+    });
     // NOT equivalent — the registry's stale id does not match the drifted mutant.
     expect(verdict._tag).toBe('survived');
   });

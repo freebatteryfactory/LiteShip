@@ -51,7 +51,11 @@ describe('DocumentGraph addressing', () => {
     const a = node('x');
     const b = sealNode({
       ...a,
-      meta: { created: { wall_ms: 9, counter: 1, node_id: 'z' }, updated: { wall_ms: 12345, counter: 7, node_id: 'z' }, version: 99 },
+      meta: {
+        created: { wall_ms: 9, counter: 1, node_id: 'z' },
+        updated: { wall_ms: 12345, counter: 7, node_id: 'z' },
+        version: 99,
+      },
     });
     expect(b.id).toBe(a.id);
   });

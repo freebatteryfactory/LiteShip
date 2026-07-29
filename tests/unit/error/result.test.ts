@@ -156,16 +156,18 @@ describe('exhaustive dispatch on the `ok` discriminant', () => {
   // only two arms and a literal discriminant, the compiler forces both to be
   // covered — the errors-as-values analogue of matchTag over a closed union.
   const fold = (r: Result<number, LiteShipError>): string =>
-    r.ok ? `ok:${r.value}` : matchTag(r.error, {
-      ValidationError: (e) => `err:${e.module}`,
-      ParseError: (e) => `err:${e.source}`,
-      IoError: (e) => `err:${e.operation}`,
-      HostCapabilityError: (e) => `err:${e.capability}`,
-      InvariantViolationError: (e) => `err:${e.invariant}`,
-      NotFoundError: (e) => `err:${e.kind}`,
-      UnsupportedError: (e) => `err:${e.subject}`,
-      IntegrityError: (e) => `err:${e.subject}`,
-    });
+    r.ok
+      ? `ok:${r.value}`
+      : matchTag(r.error, {
+          ValidationError: (e) => `err:${e.module}`,
+          ParseError: (e) => `err:${e.source}`,
+          IoError: (e) => `err:${e.operation}`,
+          HostCapabilityError: (e) => `err:${e.capability}`,
+          InvariantViolationError: (e) => `err:${e.invariant}`,
+          NotFoundError: (e) => `err:${e.kind}`,
+          UnsupportedError: (e) => `err:${e.subject}`,
+          IntegrityError: (e) => `err:${e.subject}`,
+        });
 
   it('routes the success arm to its branch', () => {
     expect(fold(ok(9))).toBe('ok:9');

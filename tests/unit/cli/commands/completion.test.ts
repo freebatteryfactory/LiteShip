@@ -5,11 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import {
-  completion,
-  SUBCOMMANDS,
-  TOP_LEVEL_VERBS,
-} from '../../../../packages/cli/src/commands/completion.js';
+import { completion, SUBCOMMANDS, TOP_LEVEL_VERBS } from '../../../../packages/cli/src/commands/completion.js';
 import { captureCli } from '../../../integration/cli/capture.js';
 
 describe('completion command', () => {

@@ -210,9 +210,8 @@ describe('LESSON (#92): worker isolation is configured once and derived, never d
     integration({ detect: true, workers: { enabled: false } });
 
     const middleware = liteshipMiddleware();
-    const response = await middleware(
-      { request: new Request('http://localhost/'), locals: {} },
-      () => Promise.resolve(new Response('OK')),
+    const response = await middleware({ request: new Request('http://localhost/'), locals: {} }, () =>
+      Promise.resolve(new Response('OK')),
     );
 
     expect(response.headers.get('Cross-Origin-Opener-Policy')).toBeNull();

@@ -36,7 +36,10 @@ describe('scene render command — non-ffmpeg portions', () => {
   // message if the receipt didn't arrive instead of "Cannot read property of
   // undefined" on the next access.
   const parseStderrReceipt = (stderr: string): { command?: string; error: string } => {
-    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
+    const lines = stderr
+      .trim()
+      .split('\n')
+      .filter((l) => l.startsWith('{'));
     expect(lines.length).toBeGreaterThan(0);
     return JSON.parse(lines[lines.length - 1]!) as { command?: string; error: string };
   };
@@ -95,9 +98,7 @@ describe('scene render command — non-ffmpeg portions', () => {
     });
     expect(existsSync(cachePath(hashInputs(ctx), workDir))).toBe(true);
 
-    const { exit, stdout } = await captureCli(() =>
-      sceneRender(scenePath, outPath, false, { cwd: workDir }),
-    );
+    const { exit, stdout } = await captureCli(() => sceneRender(scenePath, outPath, false, { cwd: workDir }));
     expect(exit).toBe(0);
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     expect(receipt.cached).toBe(true);
@@ -130,9 +131,7 @@ describe('scene render command — non-ffmpeg portions', () => {
       frameCount: 60,
     });
 
-    const { exit, stdout, stderr } = await captureCli(() =>
-      sceneRender(scenePath, outPath, false, { cwd: workDir }),
-    );
+    const { exit, stdout, stderr } = await captureCli(() => sceneRender(scenePath, outPath, false, { cwd: workDir }));
     expect(exit).toBe(1); // fell through, then exit 1 because no capsule
     // No cached:true receipt on stdout (we never reached emit() in the cache arm).
     const out = stdout.trim();
@@ -162,9 +161,7 @@ describe('scene render command — non-ffmpeg portions', () => {
 
     // Call sceneRender with force=true → tryReadCache returns null → falls
     // through to the render path → exits 1 (no capsule), NOT 0 from cache.
-    const { exit } = await captureCli(() =>
-      sceneRender(scenePath, outPath, true, { cwd: workDir }),
-    );
+    const { exit } = await captureCli(() => sceneRender(scenePath, outPath, true, { cwd: workDir }));
     expect(exit).toBe(1);
   });
 
@@ -172,10 +169,7 @@ describe('scene render command — non-ffmpeg portions', () => {
     const scenePath = join(workDir, 'capsule-only.mjs');
     // Export a sceneComposition-shaped capsule but no contract — guards
     // demand BOTH at line 74.
-    writeFileSync(
-      scenePath,
-      `export const cap = { _kind: 'sceneComposition', id: 'fnv1a:0', name: 'cap' };\n`,
-    );
+    writeFileSync(scenePath, `export const cap = { _kind: 'sceneComposition', id: 'fnv1a:0', name: 'cap' };\n`);
     const { exit, stderr } = await captureCli(() =>
       sceneRender(scenePath, join(workDir, 'out.mp4'), false, { cwd: workDir }),
     );

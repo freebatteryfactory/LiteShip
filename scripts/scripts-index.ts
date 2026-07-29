@@ -48,7 +48,9 @@ for (const cat of CATEGORIES) {
 const lifecycle = new Set<string>(LIFECYCLE_SCRIPTS);
 const other = Object.keys(all).filter((s) => !known.has(s) && !lifecycle.has(s));
 if (other.length > 0) {
-  process.stdout.write(`${color('yellow', 'other', on)} ${color('dim', '(uncategorized — consider adding to scripts/scripts-index.ts)', on)}\n`);
+  process.stdout.write(
+    `${color('yellow', 'other', on)} ${color('dim', '(uncategorized — consider adding to scripts/scripts-index.ts)', on)}\n`,
+  );
   for (const s of other) {
     const cmd = all[s] ?? '';
     const truncated = cmd.length > 80 ? cmd.slice(0, 77) + '...' : cmd;

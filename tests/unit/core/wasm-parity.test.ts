@@ -66,9 +66,7 @@ describe.skipIf(!wasmPresent)('WASM/TS kernel parity (liteship-compute vs fallba
         (thresholds, values) => {
           const t = new Float64Array(thresholds);
           const v = new Float64Array(values);
-          expect(Array.from(wasm.batchBoundaryEval(t, v))).toEqual(
-            Array.from(fallbackKernels.batchBoundaryEval(t, v)),
-          );
+          expect(Array.from(wasm.batchBoundaryEval(t, v))).toEqual(Array.from(fallbackKernels.batchBoundaryEval(t, v)));
         },
       ),
       { numRuns: 200 },

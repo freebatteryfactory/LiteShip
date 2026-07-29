@@ -33,25 +33,27 @@ const plan: AffectedTestPlan = {
   estimatedCost: { selectedNodeTests: 1, upperBoundMs: 60_000 },
 };
 
-function input(options: {
-  readonly feedbackMs?: number;
-  readonly totalComputeMs?: number;
-  readonly cacheHits?: readonly boolean[];
-  readonly reruns?: number;
-  readonly timeline?: null | {
-    readonly sourceSha: string;
-    readonly planId: AffectedTestPlan['planId'];
-    readonly committedAt: string | null;
-    readonly firstEvidenceAt: string | null;
-    readonly lastEvidenceAt: string | null;
-    readonly failureAt: string | null;
-    readonly recoveredAt: string | null;
-    readonly reviewStartedAt: string | null;
-    readonly reviewCompletedAt: string | null;
-    readonly batchStartedAt: string | null;
-    readonly batchCompletedAt: string | null;
-  };
-} = {}) {
+function input(
+  options: {
+    readonly feedbackMs?: number;
+    readonly totalComputeMs?: number;
+    readonly cacheHits?: readonly boolean[];
+    readonly reruns?: number;
+    readonly timeline?: null | {
+      readonly sourceSha: string;
+      readonly planId: AffectedTestPlan['planId'];
+      readonly committedAt: string | null;
+      readonly firstEvidenceAt: string | null;
+      readonly lastEvidenceAt: string | null;
+      readonly failureAt: string | null;
+      readonly recoveredAt: string | null;
+      readonly reviewStartedAt: string | null;
+      readonly reviewCompletedAt: string | null;
+      readonly batchStartedAt: string | null;
+      readonly batchCompletedAt: string | null;
+    };
+  } = {},
+) {
   const cacheHits = options.cacheHits ?? [];
   const reports =
     cacheHits.length === 0

@@ -113,11 +113,7 @@ describe('workflow heredoc shell-form properties', () => {
   it('does not mistake inert shell punctuation in a single-quoted payload for execution', () => {
     fc.assert(
       fc.property(fc.constantFrom('$(', '`', '&&', '||', ';', '|', '<(', '>('), (punctuation) => {
-        const workflow = [
-          'echo "value<<SAFE_EOF"',
-          `printf '%s\\n' '${punctuation}'`,
-          'echo "SAFE_EOF"',
-        ].join('\n');
+        const workflow = ['echo "value<<SAFE_EOF"', `printf '%s\\n' '${punctuation}'`, 'echo "SAFE_EOF"'].join('\n');
         expect(scanWorkflowOutputHeredocs('fixture.yml', workflow).findings).toEqual([]);
       }),
       { seed: 0x51afe, numRuns: 80 },

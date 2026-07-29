@@ -59,10 +59,7 @@ describe('chooseTier — escalation chooser (P5c)', () => {
   });
 
   test('a runtime site not in policy.sites is unsatisfiable (error)', () => {
-    const r = chooseTier(
-      policy({ requires: 'animated', grants: grantUpTo('animated'), sites: ['browser'] }),
-      'edge',
-    );
+    const r = chooseTier(policy({ requires: 'animated', grants: grantUpTo('animated'), sites: ['browser'] }), 'edge');
     expect(isChoice(r)).toBe(false);
     expect(!isChoice(r) && r.error).toMatch(/does not admit runtime site 'edge'/);
   });
@@ -101,10 +98,7 @@ describe('chooseTier — escalation chooser (P5c)', () => {
   test('minimal-tier: unconstrained, the tier is exactly requires (no escalation)', () => {
     // requires 'gpu' with full grants and no budget → the chooser never escalates
     // above requires and has no reason to downgrade, so it returns 'gpu'.
-    const r = chooseTier(
-      policy({ requires: 'gpu', grants: grantUpTo('gpu'), sites: ['browser'] }),
-      'browser',
-    );
+    const r = chooseTier(policy({ requires: 'gpu', grants: grantUpTo('gpu'), sites: ['browser'] }), 'browser');
     expect(isChoice(r) && r.tier).toBe('gpu');
   });
 
@@ -124,10 +118,7 @@ describe('chooseTier — escalation chooser (P5c)', () => {
   });
 
   test('no granted tier at or below requires → unsatisfiable', () => {
-    const r = chooseTier(
-      policy({ requires: 'styled', grants: Cap.from(['gpu']), sites: ['node'] }),
-      'node',
-    );
+    const r = chooseTier(policy({ requires: 'styled', grants: Cap.from(['gpu']), sites: ['node'] }), 'node');
     expect(isChoice(r)).toBe(false);
     expect(!isChoice(r) && r.error).toMatch(/admits no quality tier/);
   });

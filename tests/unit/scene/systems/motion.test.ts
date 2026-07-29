@@ -49,7 +49,9 @@ describe('MotionSampleSystem', () => {
 
       const samples = world.query(TrackIdPart, MotionSamplePart);
       const byTrack = new Map(samples.map((entity) => [entity.get(TrackIdPart), entity.get(MotionSamplePart)]));
-      expect(byTrack.get('left')).toEqual(sampleSceneMotion(plan('--left', 0, 10), sceneMotionTime(3, { from: 0, to: 5 })));
+      expect(byTrack.get('left')).toEqual(
+        sampleSceneMotion(plan('--left', 0, 10), sceneMotionTime(3, { from: 0, to: 5 })),
+      );
       expect(byTrack.get('right')).toEqual(
         sampleSceneMotion(plan('--right', 100, 200), sceneMotionTime(3, { from: 2, to: 7 })),
       );

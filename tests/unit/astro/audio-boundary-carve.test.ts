@@ -19,7 +19,10 @@ import {
   evaluateBoundary,
   applyBoundaryState,
 } from '../../../packages/astro/src/runtime/boundary.js';
-import { __resetAudioSignalForTest, __setAudioSignalForTest } from '../../../packages/astro/src/runtime/audio-signal.js';
+import {
+  __resetAudioSignalForTest,
+  __setAudioSignalForTest,
+} from '../../../packages/astro/src/runtime/audio-signal.js';
 
 function serialize(input: string, at: readonly (readonly [number, string])[]): string {
   const b = defineBoundary({ input, at: at as never });

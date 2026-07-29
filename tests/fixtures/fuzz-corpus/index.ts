@@ -185,7 +185,11 @@ function buildSeeds(): readonly CorpusSeed[] {
     { id: 'hlc-too-few-parts', note: 'two parts only — malformed.', value: 'abc:def' },
     { id: 'hlc-non-hex-wall', note: 'non-hex wall_ms — malformed.', value: 'zzzz:0000:node' },
     { id: 'hlc-non-hex-counter', note: 'non-hex counter — malformed.', value: '0000:zzzz:node' },
-    { id: 'hlc-proto-node-id', note: '__proto__ as the node id — must be ordinary data, not a prototype walk.', value: '0:0:__proto__' },
+    {
+      id: 'hlc-proto-node-id',
+      note: '__proto__ as the node id — must be ordinary data, not a prototype walk.',
+      value: '0:0:__proto__',
+    },
     { id: 'hlc-many-colons', note: 'a node id full of colons — must rejoin, not crash.', value: '0:0:a:b:c:d:e' },
   ];
   for (const a of hlcAdversarial) {
@@ -224,7 +228,12 @@ function buildSeeds(): readonly CorpusSeed[] {
     decoderId: 'graph-patch.decode',
     kind: 'adversarial',
     note: 'a GraphPatch-shaped value carrying a __proto__/constructor pollution payload — must not pollute on the version check.',
-    input: { _tag: 'GraphPatch', _version: 1, __proto__: { __polluted__: true }, constructor: { prototype: { isAdmin: true } } },
+    input: {
+      _tag: 'GraphPatch',
+      _version: 1,
+      __proto__: { __polluted__: true },
+      constructor: { prototype: { isAdmin: true } },
+    },
     expect: ['failed-closed', 'returned-typed'],
   });
   seeds.push({
@@ -268,7 +277,13 @@ function buildSeeds(): readonly CorpusSeed[] {
     decoderId: 'document-graph.decode',
     kind: 'adversarial',
     note: 'DocumentGraph with a non-well-formed node — malformed_node, must reject.',
-    input: { _tag: 'DocumentGraph', _version: 1, nodes: [{ not: 'a node' }], edges: [], meta: { version: 1, created: {}, updated: {} } },
+    input: {
+      _tag: 'DocumentGraph',
+      _version: 1,
+      nodes: [{ not: 'a node' }],
+      edges: [],
+      meta: { version: 1, created: {}, updated: {} },
+    },
     expect: ['failed-closed'],
   });
   seeds.push({

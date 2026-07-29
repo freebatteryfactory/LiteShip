@@ -196,10 +196,9 @@ describe('directive benchmark suite', () => {
     const adaptivePair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'adaptive')!;
     const workerPair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'worker')!;
     const workerEnvelopePair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'worker-envelope')!;
-    const [adaptive] = evaluateBenchPairsAcrossReplicates(
-      makeReplicates(adaptivePair, [0.18, 0.19, 0.17, 0.2, 0.12]),
-      [adaptivePair],
-    );
+    const [adaptive] = evaluateBenchPairsAcrossReplicates(makeReplicates(adaptivePair, [0.18, 0.19, 0.17, 0.2, 0.12]), [
+      adaptivePair,
+    ]);
     const [worker] = evaluateBenchPairsAcrossReplicates(makeReplicates(workerPair, [0.3, 0.28, 0.27, 0.31, 0.29]), [
       workerPair,
     ]);

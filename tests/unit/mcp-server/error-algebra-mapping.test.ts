@@ -64,7 +64,9 @@ describe('errorFromTagged — every LiteShip variant maps to a tag-specific JSON
   });
 
   it('ParseError → -32700 Parse error, source/detail in data, optional code+offset ride through', () => {
-    const e = err(errorFromTagged(1, ParseError('profile.json', 'unexpected token', { code: 'bad_token', offset: 42 })));
+    const e = err(
+      errorFromTagged(1, ParseError('profile.json', 'unexpected token', { code: 'bad_token', offset: 42 })),
+    );
     expect(e.code).toBe(-32700);
     expect(e.message).toBe('Parse error');
     expect(e.data.source).toBe('profile.json');

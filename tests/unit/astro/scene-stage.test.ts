@@ -23,15 +23,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import {
-  sealNode,
-  sealGraph,
-  AddressedDigest,
-  CanonicalCbor,
-  GraphPatch,
-  projectionKeys,
-  HLC,
-} from '@liteship/core';
+import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, GraphPatch, projectionKeys, HLC } from '@liteship/core';
 import type {
   DocumentGraph,
   SignalNode,
@@ -218,9 +210,15 @@ describe('scene-stage reference consumer — a REAL compiled scene drives the li
     const setPropSpy = vi.spyOn(el.style, 'setProperty');
 
     // Drive the REAL scene handle through the reference consumer.
-    const stage = driveSceneStage(scene, handle, () => el, { kind: 'time' }, {
-      projectTrack: (t) => (t === 'fade' ? entityId : undefined),
-    });
+    const stage = driveSceneStage(
+      scene,
+      handle,
+      () => el,
+      { kind: 'time' },
+      {
+        projectTrack: (t) => (t === 'fade' ? entityId : undefined),
+      },
+    );
 
     try {
       // Frame deltas: pump(ts) ticks dt = ts - lastTs. Stay BELOW the crossing first.
@@ -264,9 +262,15 @@ describe('scene-stage reference consumer — a REAL compiled scene drives the li
     const compiled = compileScene(buildScene());
     const scene = await SceneRuntime.build(compiled);
 
-    const stage = driveSceneStage(scene, handle, () => el, { kind: 'time' }, {
-      projectTrack: (t) => (t === 'fade' ? entityId : undefined),
-    });
+    const stage = driveSceneStage(
+      scene,
+      handle,
+      () => el,
+      { kind: 'time' },
+      {
+        projectTrack: (t) => (t === 'fade' ? entityId : undefined),
+      },
+    );
 
     await pump(0);
     const frameBefore = scene.currentFrame();

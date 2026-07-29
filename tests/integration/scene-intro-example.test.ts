@@ -35,13 +35,7 @@ describe('examples.intro scene capsule', () => {
     for (let i = 0; i < 3; i++) {
       const compiled = compileIntro();
       const sig = compiled.trackSpawns
-        .map(
-          (t) =>
-            String(t.trackId) +
-            JSON.stringify(
-              [...t.components].sort((a, b) => a.part.localeCompare(b.part)),
-            ),
-        )
+        .map((t) => String(t.trackId) + JSON.stringify([...t.components].sort((a, b) => a.part.localeCompare(b.part))))
         .sort()
         .join('|');
       hashes.push(sig);

@@ -119,10 +119,9 @@ describe('Diagnostics', () => {
       detail: { retry: false },
     });
 
-    expect(error).toHaveBeenCalledWith(
-      '[liteship/test] has-error: Error still routes through the console sink.',
-      { retry: false },
-    );
+    expect(error).toHaveBeenCalledWith('[liteship/test] has-error: Error still routes through the console sink.', {
+      retry: false,
+    });
   });
 
   test('default sink forwards causes when detail is absent', () => {

@@ -178,14 +178,16 @@ describe('LITESHIP_TAINT_REGISTRY — the classification LAWS (disjointness + no
   it('a name absent from every set is classified by none (the negative control)', () => {
     fc.assert(
       fc.property(
-        fc.string().filter(
-          (s) =>
-            !sources!.has(s) &&
-            !sinks!.has(s) &&
-            !memberSinks!.has(s) &&
-            !sanitizers!.has(s) &&
-            !assignmentSinkNames!.has(s),
-        ),
+        fc
+          .string()
+          .filter(
+            (s) =>
+              !sources!.has(s) &&
+              !sinks!.has(s) &&
+              !memberSinks!.has(s) &&
+              !sanitizers!.has(s) &&
+              !assignmentSinkNames!.has(s),
+          ),
         (unknownName) => {
           expect(sources!.has(unknownName)).toBe(false);
           expect(sinks!.has(unknownName)).toBe(false);

@@ -62,9 +62,7 @@ describe('beat-projection bridge — raw projection to scene-ready markers', () 
     try {
       const beatEntities = handle.world.query(BeatPart);
       expect(beatEntities.length).toBe(3);
-      const times = beatEntities
-        .map((e) => e.get(BeatPart).timeMs)
-        .sort((a, b) => a - b);
+      const times = beatEntities.map((e) => e.get(BeatPart).timeMs).sort((a, b) => a - b);
       expect(times).toEqual([0, 500, 1000]);
     } finally {
       await handle.release();

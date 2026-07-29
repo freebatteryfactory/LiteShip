@@ -43,7 +43,13 @@ import {
   type DecoderSut,
   type DecodeOutcome,
 } from './decode-fuzz.js';
-import { FUZZ_CORPUS, seedsForDecoder, corpusAddress, seedAddress, CORPUS_SEEDS } from '../fixtures/fuzz-corpus/index.js';
+import {
+  FUZZ_CORPUS,
+  seedsForDecoder,
+  corpusAddress,
+  seedAddress,
+  CORPUS_SEEDS,
+} from '../fixtures/fuzz-corpus/index.js';
 
 /** A snapshot of the pollution sentinels on Object.prototype — the global-state guard. */
 function prototypeIsClean(): boolean {

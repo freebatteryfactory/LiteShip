@@ -9,7 +9,14 @@
 import { describe, test, expect } from 'vitest';
 import { graphMutationRoute } from '../../../packages/astro/src/graph-mutation-route.js';
 import { GraphPatch, sealNode, sealGraph } from '../../../packages/core/src/index.js';
-import type { DocumentGraph, DocumentGraphNode, DocumentGraphEdge, SignalNode, CellMeta, GraphStore } from '@liteship/core';
+import type {
+  DocumentGraph,
+  DocumentGraphNode,
+  DocumentGraphEdge,
+  SignalNode,
+  CellMeta,
+  GraphStore,
+} from '@liteship/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },
@@ -17,7 +24,14 @@ const META: CellMeta = {
   version: 1,
 };
 const node = (input: string): SignalNode =>
-  sealNode({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', id: '', meta: META, input } as unknown as SignalNode);
+  sealNode({
+    _tag: 'DocGraphSignalNode',
+    _version: 1,
+    family: 'signal',
+    id: '',
+    meta: META,
+    input,
+  } as unknown as SignalNode);
 const graph = (nodes: DocumentGraphNode[], edges: DocumentGraphEdge[] = []): DocumentGraph =>
   sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: META, nodes, edges } as Omit<DocumentGraph, 'id' | 'digest'>);
 
@@ -80,7 +94,9 @@ describe('graphMutationRoute — real HTTP Request → Response', () => {
     const a = node('a.signal');
     const base = graph([a]);
     const store = memStore(base);
-    const invalid = GraphPatch.propose(base, [{ op: 'add', edge: { from: a.id, to: 'fnv1a:ghost' as typeof a.id, type: 'seq' } }]);
+    const invalid = GraphPatch.propose(base, [
+      { op: 'add', edge: { from: a.id, to: 'fnv1a:ghost' as typeof a.id, type: 'seq' } },
+    ]);
 
     const res = await graphMutationRoute(store)(postPatch(wire(invalid)));
 

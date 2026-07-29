@@ -131,17 +131,15 @@ describe('browser stream and llm directives', () => {
     const clearTimeoutMock = vi.fn();
 
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    vi.stubGlobal(
-      'setTimeout',
-      ((callback: () => void) => {
-        scheduled.push(callback);
-        return scheduled.length;
-      }) as never,
-    );
+    vi.stubGlobal('setTimeout', ((callback: () => void) => {
+      scheduled.push(callback);
+      return scheduled.length;
+    }) as never);
     vi.stubGlobal('clearTimeout', clearTimeoutMock as never);
 
     document.body.addEventListener('liteship:stream-disconnected', () => disconnects.push('disconnect'));
-    document.body.addEventListener('liteship:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    document.body.addEventListener('liteship:stream-error', ((event: CustomEvent) =>
+      errors.push(event.detail)) as EventListener);
 
     const el = document.createElement('section');
     el.setAttribute('data-liteship-stream-url', '/stream');
@@ -211,8 +209,10 @@ describe('browser stream and llm directives', () => {
 
     el.addEventListener('liteship:llm-start', () => starts.push('start'));
     el.addEventListener('liteship:llm-token', ((event: CustomEvent) => tokens.push(event.detail)) as EventListener);
-    el.addEventListener('liteship:llm-tool-start', ((event: CustomEvent) => toolStarts.push(event.detail)) as EventListener);
-    el.addEventListener('liteship:llm-tool-end', ((event: CustomEvent) => toolEnds.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:llm-tool-start', ((event: CustomEvent) =>
+      toolStarts.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:llm-tool-end', ((event: CustomEvent) =>
+      toolEnds.push(event.detail)) as EventListener);
     el.addEventListener('liteship:llm-done', ((event: CustomEvent) => dones.push(event.detail)) as EventListener);
     el.addEventListener('liteship:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
 

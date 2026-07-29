@@ -13,11 +13,15 @@ describe('liteship scene verify', () => {
   }, scaledTimeout(120_000));
   afterAll(() => iso?.restore());
 
-  it('runs generated tests for the intro scene and emits an ok receipt', async () => {
-    const { exit, stdout } = await captureCli(() => run(['scene', 'verify', 'examples/scenes/intro.ts']));
-    expect(exit).toBe(0);
-    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
-    expect(receipt.status).toBe('ok');
-    expect(receipt.generatedTests).toBeGreaterThan(0);
-  }, scaledTimeout(120_000));
+  it(
+    'runs generated tests for the intro scene and emits an ok receipt',
+    async () => {
+      const { exit, stdout } = await captureCli(() => run(['scene', 'verify', 'examples/scenes/intro.ts']));
+      expect(exit).toBe(0);
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      expect(receipt.status).toBe('ok');
+      expect(receipt.generatedTests).toBeGreaterThan(0);
+    },
+    scaledTimeout(120_000),
+  );
 });

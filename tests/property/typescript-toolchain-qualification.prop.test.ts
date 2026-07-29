@@ -27,7 +27,10 @@ function run(exitCode: number, signal: NodeJS.Signals | null = null): TypeScript
   };
 }
 
-function observation(role: 'compatibility' | 'native', sample: TypeScriptQualificationRun): TypeScriptToolchainObservation {
+function observation(
+  role: 'compatibility' | 'native',
+  sample: TypeScriptQualificationRun,
+): TypeScriptToolchainObservation {
   const contract = TYPESCRIPT_TOOLCHAIN_CONTRACT[role];
   return {
     role,

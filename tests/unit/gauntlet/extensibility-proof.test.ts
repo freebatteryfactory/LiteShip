@@ -188,8 +188,7 @@ describe('extensibility proof — ZERO ENGINE EDIT (the fixture touches only the
         // A reach into the engine internals is the failure mode this proves absent:
         // any specifier that resolves into packages/gauntlet/src (by path or by a
         // gauntlet subpath) would mean the fixture is NOT using the public surface.
-        const reachesEngine =
-          spec.includes('packages/gauntlet') || spec.startsWith('@liteship/gauntlet/');
+        const reachesEngine = spec.includes('packages/gauntlet') || spec.startsWith('@liteship/gauntlet/');
         if (reachesEngine) offenders.push(`${path}: ${spec}`);
       }
     }

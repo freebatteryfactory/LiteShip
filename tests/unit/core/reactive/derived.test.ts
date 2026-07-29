@@ -16,7 +16,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import type { Cell} from '@liteship/core';
+import type { Cell } from '@liteship/core';
 import { Derived, CellKernel, createCell, computed } from '@liteship/core';
 
 /** Subscribe a named collector to a derived; return the live delivery array. */

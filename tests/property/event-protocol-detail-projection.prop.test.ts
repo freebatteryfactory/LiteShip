@@ -81,9 +81,9 @@ describe('event detail projection properties', () => {
       fc.property(moduleArbitrary, identifierArbitrary, identifierArbitrary, (moduleName, expected, nearMiss) => {
         fc.pre(expected !== nearMiss);
         const detail = `Readonly<import(${JSON.stringify(moduleName)}).${expected}>`;
-        expect(() =>
-          validateProjectedDetailReferences([record(detail)], exportsMap([[moduleName, nearMiss]])),
-        ).toThrow(`${moduleName}.${expected}`);
+        expect(() => validateProjectedDetailReferences([record(detail)], exportsMap([[moduleName, nearMiss]]))).toThrow(
+          `${moduleName}.${expected}`,
+        );
       }),
       { numRuns: 250 },
     );
@@ -128,7 +128,9 @@ describe('event detail projection properties', () => {
           );
           const entries = [...references, ...references.map(([moduleName]) => [moduleName, extraName] as const)];
           expect(() => validateProjectedDetailReferences(records, exportsMap(entries))).not.toThrow();
-          expect(() => validateProjectedDetailReferences([...records].reverse(), exportsMap(entries.reverse()))).not.toThrow();
+          expect(() =>
+            validateProjectedDetailReferences([...records].reverse(), exportsMap(entries.reverse())),
+          ).not.toThrow();
         },
       ),
       { numRuns: 200 },
@@ -158,10 +160,7 @@ describe('event detail projection properties', () => {
       fc.property(moduleArbitrary, identifierArbitrary, (moduleName, symbolName) => {
         const admitted = exportsMap([[moduleName, symbolName]]);
         expect(() =>
-          validateProjectedDetailReferences(
-            [record(`import(${JSON.stringify(moduleName)}).${symbolName}`)],
-            admitted,
-          ),
+          validateProjectedDetailReferences([record(`import(${JSON.stringify(moduleName)}).${symbolName}`)], admitted),
         ).not.toThrow();
         expect(() =>
           validateProjectedDetailReferences([record(`import('${moduleName}').${symbolName}`)], admitted),

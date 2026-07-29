@@ -64,9 +64,7 @@ describe('CI authority requirements', () => {
       rustWasmAffected: false,
     });
     expect(pullRequest).toEqual(push);
-    expect(
-      push,
-    ).toEqual([
+    expect(push).toEqual([
       'browser-e2e',
       'format',
       'macos-browser',

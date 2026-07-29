@@ -34,7 +34,10 @@ const probeCommand: RegisteredCommand = {
 describe('dispatcher-level requires enforcement', () => {
   it('unmet requires → ONE structured failure naming the missing capabilities, exit 2', async () => {
     const dispatcher = createCommandDispatcher(createCommandRegistry([probeCommand]));
-    const result = await dispatcher.dispatch({ name: 'probe.cmd', args: {} }, { runVitest: async () => ({ exitCode: 0, stderrTail: '' }) });
+    const result = await dispatcher.dispatch(
+      { name: 'probe.cmd', args: {} },
+      { runVitest: async () => ({ exitCode: 0, stderrTail: '' }) },
+    );
     expect(result.status).toBe('failed');
     expect(result.exitCode).toBe(2);
     const payload = result.payload as { error: string; missing: string[]; hint: string };

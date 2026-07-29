@@ -191,8 +191,8 @@ describe('event, benchmark, and early-return topology', () => {
   test('template text stays inert while every interpolated invocation remains executable evidence', () => {
     fc.assert(
       fc.property(javascriptIdentifier, (callee) => {
-        expect(classifyBenchSource("bench('x', () => { `" + callee + "()` })")).toBe('placeholder');
-        expect(classifyBenchSource("bench('x', () => { `${" + callee + "()}` })")).toBe('real');
+        expect(classifyBenchSource("bench('x', () => { `" + callee + '()` })')).toBe('placeholder');
+        expect(classifyBenchSource("bench('x', () => { `${" + callee + '()}` })')).toBe('real');
       }),
       { seed: 0x7e4d_1a7e, numRuns: 192 },
     );

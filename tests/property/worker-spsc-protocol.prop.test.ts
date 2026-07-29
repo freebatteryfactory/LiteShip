@@ -52,10 +52,29 @@ describe('SPSCRing reference queue model', () => {
 describe('worker message discriminant fuzz', () => {
   test('unknown strings never narrow into either protocol direction', () => {
     const known = new Set([
-      'init', 'add-quantizer', 'bootstrap-quantizers', 'startup-compute', 'bootstrap-resolved-state',
-      'apply-resolved-state', 'remove-quantizer', 'evaluate', 'set-blend', 'apply-updates', 'compute',
-      'warm-reset', 'start-render', 'stop-render', 'transfer-canvas', 'dispose', 'ready', 'state',
-      'resolved-state-ack', 'frame', 'render-complete', 'error', 'metrics',
+      'init',
+      'add-quantizer',
+      'bootstrap-quantizers',
+      'startup-compute',
+      'bootstrap-resolved-state',
+      'apply-resolved-state',
+      'remove-quantizer',
+      'evaluate',
+      'set-blend',
+      'apply-updates',
+      'compute',
+      'warm-reset',
+      'start-render',
+      'stop-render',
+      'transfer-canvas',
+      'dispose',
+      'ready',
+      'state',
+      'resolved-state-ack',
+      'frame',
+      'render-complete',
+      'error',
+      'metrics',
     ]);
     fc.assert(
       fc.property(fc.string(), (type) => {

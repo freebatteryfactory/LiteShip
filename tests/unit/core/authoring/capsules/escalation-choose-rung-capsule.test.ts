@@ -62,7 +62,12 @@ describe('decideEscalation — the verdict core is the REAL chooser, mapped to a
     expect(verdict.reasons).toHaveLength(0);
     // The admitted tier is the chooser's OUTPUT, read off chooseTier directly.
     const result = chooseTier(
-      buildPolicy({ requires: 'gpu', grants: ['static', 'styled', 'reactive', 'animated', 'gpu'], sites: ['browser'], site: 'browser' }),
+      buildPolicy({
+        requires: 'gpu',
+        grants: ['static', 'styled', 'reactive', 'animated', 'gpu'],
+        sites: ['browser'],
+        site: 'browser',
+      }),
       'browser',
     );
     expect(isChoice(result) && result.tier).toBe('gpu');

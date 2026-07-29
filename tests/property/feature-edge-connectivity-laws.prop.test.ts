@@ -76,7 +76,9 @@ describe('feature-edge connectivity algebra', () => {
           const reverse: FeatureEdgeFacts = {
             ...forward,
             families: forward.families.map((family) =>
-              family.family === 'ecs-component' ? { ...family, observations: [...family.observations].reverse() } : family,
+              family.family === 'ecs-component'
+                ? { ...family, observations: [...family.observations].reverse() }
+                : family,
             ),
           };
           expect(orphanSubjects(forward)).toEqual(expected);

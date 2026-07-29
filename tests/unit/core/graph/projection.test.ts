@@ -13,10 +13,9 @@ import { describe, it, expect } from 'vitest';
 import { projectionKeys, glslIdent, wgslIdent, PROJECTION_KEYS_SOURCE } from '@liteship/core';
 
 /** Execute the worker-blob source exactly as the worker does. */
-const blobProjectionKeys = new Function(
-  'name',
-  `${PROJECTION_KEYS_SOURCE}\nreturn projectionKeys(name);`,
-) as (name: string) => { cssKey: string; glslKey: string; wgslKey: string; ariaKey: string };
+const blobProjectionKeys = new Function('name', `${PROJECTION_KEYS_SOURCE}\nreturn projectionKeys(name);`) as (
+  name: string,
+) => { cssKey: string; glslKey: string; wgslKey: string; ariaKey: string };
 
 describe('projectionKeys', () => {
   it('mints css/aria keys with the name verbatim, glsl as u_<snake>, wgsl as bare <snake>', () => {

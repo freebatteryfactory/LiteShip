@@ -77,8 +77,7 @@ export async function emitDocsBundle(opts: {
   }
 
   const version =
-    opts.version ??
-    JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8') as { version: string }).version;
+    opts.version ?? JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8') as { version: string }).version;
   const bundleId = computeBundleId(entries);
   const manifest: DocsBundleManifest = {
     version,
@@ -95,5 +94,7 @@ export async function emitDocsBundle(opts: {
 if (process.argv[1]?.endsWith('docs-bundle.ts')) {
   const outDir = process.argv[2] ?? join(REPO_ROOT, 'dist', 'docs-bundle');
   const manifest = await emitDocsBundle({ outDir });
-  console.log(`docs:bundle → ${outDir} (${manifest.entries.length} files, bundleId=${manifest.bundleId.slice(0, 12)}…)`);
+  console.log(
+    `docs:bundle → ${outDir} (${manifest.entries.length} files, bundleId=${manifest.bundleId.slice(0, 12)}…)`,
+  );
 }

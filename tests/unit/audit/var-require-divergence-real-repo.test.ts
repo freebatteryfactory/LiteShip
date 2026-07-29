@@ -29,12 +29,7 @@ import { resolve, dirname } from 'node:path';
 import { buildRepoIR, withRepoRoot } from '@liteship/audit';
 import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 import { liteshipRegexOracle } from '../../../packages/cli/src/internal/repo-ir-gauntlet.js';
-import {
-  noVarDivergenceGate,
-  noRequireDivergenceGate,
-  type Fact,
-  type RepoIR,
-} from '@liteship/gauntlet';
+import { noVarDivergenceGate, noRequireDivergenceGate, type Fact, type RepoIR } from '@liteship/gauntlet';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 

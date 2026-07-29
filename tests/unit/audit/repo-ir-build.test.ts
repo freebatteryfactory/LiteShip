@@ -21,12 +21,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import {
-  buildRepoIR,
-  withRepoRoot,
-  resolveDevopsProfile,
-  type FactOracle,
-} from '@liteship/audit';
+import { buildRepoIR, withRepoRoot, resolveDevopsProfile, type FactOracle } from '@liteship/audit';
 import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 import { buildCheckGovernanceFacts } from '@liteship/command/host';
 import {
@@ -71,8 +66,7 @@ function fixtureRepo(): string {
     'package.json': JSON.stringify({ name: 'acme-root', private: true, type: 'module' }),
     'packages/core/package.json': PKG('@acme/core'),
     'packages/core/src/index.ts':
-      'export const coreThing = 1;\n' +
-      'export function coreFn(): number { return coreThing; }\n',
+      'export const coreThing = 1;\n' + 'export function coreFn(): number { return coreThing; }\n',
     // export-assignment (`export =`) form — the regex no-default-export oracle misses this.
     'packages/core/src/legacy.ts': 'const legacy = { v: 1 };\nexport = legacy;\n',
     'packages/app/package.json': PKG('@acme/app', { '@acme/core': 'workspace:*' }),
@@ -180,7 +174,16 @@ describe('buildRepoIR — faithful materialization over a real tmp corpus', () =
     const keywordForm = ['export', 'default'].join(' ');
     const probeOracle: FactOracle = ({ file, text }) =>
       text.includes(keywordForm)
-        ? [{ file, line: 1, property: 'is-default-export', value: true, oracleId: 'invariant-regex', coverageClass: 'text-only' }]
+        ? [
+            {
+              file,
+              line: 1,
+              property: 'is-default-export',
+              value: true,
+              oracleId: 'invariant-regex',
+              coverageClass: 'text-only',
+            },
+          ]
         : [];
 
     const ir = buildRepoIR(acmeProfile(fixtureRepo()), { extraFactOracles: [probeOracle] });

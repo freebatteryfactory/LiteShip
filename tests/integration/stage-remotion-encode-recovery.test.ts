@@ -80,9 +80,7 @@ function renderGraph(mobileOpacity = 0.25, desktopOpacity = 1): DocumentGraph {
 
 function encodedFixture(frames: readonly CompositeState[]): EncodedVideo {
   return {
-    bytes: CanonicalCbor.encode(
-      frames.map((frame) => ({ discrete: frame.discrete, css: cssVarsFromState(frame) })),
-    ),
+    bytes: CanonicalCbor.encode(frames.map((frame) => ({ discrete: frame.discrete, css: cssVarsFromState(frame) }))),
     codec: 'fixture/raw-cbor',
     container: 'application/cbor',
   };

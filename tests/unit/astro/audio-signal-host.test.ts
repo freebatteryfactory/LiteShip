@@ -2,11 +2,7 @@
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { Diagnostics } from '@liteship/core';
-import {
-  attachAudioObserver,
-  driveAudioFromAnalyser,
-  readAudioSignal,
-} from '@liteship/astro/runtime';
+import { attachAudioObserver, driveAudioFromAnalyser, readAudioSignal } from '@liteship/astro/runtime';
 import { __resetAudioSignalForTest } from '../../../packages/astro/src/runtime/audio-signal.js';
 
 afterEach(() => {

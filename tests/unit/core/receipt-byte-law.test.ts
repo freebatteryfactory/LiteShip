@@ -109,7 +109,9 @@ describe('typed-ref — no fnv1a identity path feeds through TypedRef.canonicali
         offenders.push(file.replace(REPO, '').replace(/\\/g, '/'));
       }
     }
-    expect(offenders, `fnv1a identity must never mint through TypedRef.canonicalize: ${offenders.join(', ')}`).toEqual([]);
+    expect(offenders, `fnv1a identity must never mint through TypedRef.canonicalize: ${offenders.join(', ')}`).toEqual(
+      [],
+    );
   });
 
   it('LiveCell mints its envelope id via the fnv1a IDENTITY law, never the sha256 receipt path', () => {
@@ -129,7 +131,9 @@ describe('typed-ref — no fnv1a identity path feeds through TypedRef.canonicali
       'packages/core/src/authoring/config.ts',
     ];
     for (const rel of B1_IDENTITY_FILES) {
-      expect(read(rel), `${rel} must not reference TypedRef.canonicalize`).not.toMatch(/TypedRef(Module)?\.canonicalize/);
+      expect(read(rel), `${rel} must not reference TypedRef.canonicalize`).not.toMatch(
+        /TypedRef(Module)?\.canonicalize/,
+      );
     }
   });
 });

@@ -99,9 +99,7 @@ describe('JSON-RPC 2.0 §5 — invalid request', () => {
   });
 
   it('rejects object with wrong jsonrpc version', () => {
-    expect(JsonRpcServer.parse('{"jsonrpc":"1.0","method":"foo","id":1}').kind).toBe(
-      'invalid-request',
-    );
+    expect(JsonRpcServer.parse('{"jsonrpc":"1.0","method":"foo","id":1}').kind).toBe('invalid-request');
   });
 
   it('rejects object missing the method field', () => {
@@ -109,9 +107,7 @@ describe('JSON-RPC 2.0 §5 — invalid request', () => {
   });
 
   it('rejects object with non-string method', () => {
-    expect(JsonRpcServer.parse('{"jsonrpc":"2.0","method":42,"id":1}').kind).toBe(
-      'invalid-request',
-    );
+    expect(JsonRpcServer.parse('{"jsonrpc":"2.0","method":42,"id":1}').kind).toBe('invalid-request');
   });
 
   it('echoes the id when invalid-request still has a valid id field', () => {
@@ -213,9 +209,7 @@ describe('JSON-RPC 2.0 §7 — example transcriptions', () => {
 
   // §7 positional-params request
   it('parses a positional-params request', () => {
-    const out = JsonRpcServer.parse(
-      '{"jsonrpc":"2.0","method":"subtract","params":[42,23],"id":1}',
-    );
+    const out = JsonRpcServer.parse('{"jsonrpc":"2.0","method":"subtract","params":[42,23],"id":1}');
     expect(out.kind).toBe('request');
     if (out.kind === 'request') {
       expect(out.message.params).toEqual([42, 23]);
@@ -223,15 +217,13 @@ describe('JSON-RPC 2.0 §7 — example transcriptions', () => {
   });
 
   // §7 invalid JSON example
-  it('parses the spec\'s invalid-JSON example as parse-error', () => {
-    const out = JsonRpcServer.parse(
-      '{"jsonrpc": "2.0", "method": "foobar, "params": "bar", "baz]',
-    );
+  it("parses the spec's invalid-JSON example as parse-error", () => {
+    const out = JsonRpcServer.parse('{"jsonrpc": "2.0", "method": "foobar, "params": "bar", "baz]');
     expect(out.kind).toBe('parse-error');
   });
 
   // §7 invalid-request example: { "jsonrpc": "2.0", "method": 1, "params": "bar" }
-  it('parses the spec\'s invalid-request example as invalid-request', () => {
+  it("parses the spec's invalid-request example as invalid-request", () => {
     const out = JsonRpcServer.parse('{"jsonrpc":"2.0","method":1,"params":"bar"}');
     expect(out.kind).toBe('invalid-request');
   });

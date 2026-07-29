@@ -89,10 +89,7 @@ function traceBody(body: string, options: BuildRepoIRTaintOptions = {}) {
 describe('buildRepoIRTaint — intra-procedural flow (depth 0)', () => {
   it('flags an UNSANITIZED source→sink flow with sanitizedBy null', () => {
     const facts = traceBody(
-      'export function run(): void {\n' +
-        '  const tainted = fetchSource();\n' +
-        '  dangerousSink(tainted);\n' +
-        '}\n',
+      'export function run(): void {\n' + '  const tainted = fetchSource();\n' + '  dangerousSink(tainted);\n' + '}\n',
       { interproceduralDepth: 0 },
     );
     expect(facts.flows).toHaveLength(1);
@@ -123,10 +120,7 @@ describe('buildRepoIRTaint — intra-procedural flow (depth 0)', () => {
 
   it('does NOT flag a value with no source (no false-tainted)', () => {
     const facts = traceBody(
-      'export function run(): void {\n' +
-        '  const safe = "a static string";\n' +
-        '  dangerousSink(safe);\n' +
-        '}\n',
+      'export function run(): void {\n' + '  const safe = "a static string";\n' + '  dangerousSink(safe);\n' + '}\n',
       { interproceduralDepth: 0 },
     );
     expect(facts.flows).toHaveLength(0);

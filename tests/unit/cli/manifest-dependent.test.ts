@@ -32,14 +32,14 @@ async function capture(fn: () => Promise<number>): Promise<CaptureResult> {
   let stderr = '';
   const origO = process.stdout.write.bind(process.stdout);
   const origE = process.stderr.write.bind(process.stderr);
-  (process.stdout as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  (process.stdout as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stdout += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
-  (process.stderr as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  };
+  (process.stderr as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stderr += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
+  };
   try {
     const exit = await fn();
     return { exit, stdout, stderr };
@@ -157,28 +157,32 @@ describe('cli — manifest-dependent commands (serialized)', () => {
     expect(r.exit).toBe(1);
   });
 
-  it('capsule verify reports failure when generated test is missing', async () => {
-    writeFileSync(
-      MANIFEST_PATH,
-      JSON.stringify({
-        generatedAt: '2026-04-25T00:00:00.000Z',
-        capsules: [
-          {
-            name: 'broken.capsule',
-            kind: 'pureTransform',
-            source: 'broken.ts',
-            generated: {
-              testFile: 'tests/generated/__nonexistent__.test.ts',
-              benchFile: 'tests/generated/__nonexistent__.bench.ts',
+  it(
+    'capsule verify reports failure when generated test is missing',
+    async () => {
+      writeFileSync(
+        MANIFEST_PATH,
+        JSON.stringify({
+          generatedAt: '2026-04-25T00:00:00.000Z',
+          capsules: [
+            {
+              name: 'broken.capsule',
+              kind: 'pureTransform',
+              source: 'broken.ts',
+              generated: {
+                testFile: 'tests/generated/__nonexistent__.test.ts',
+                benchFile: 'tests/generated/__nonexistent__.bench.ts',
+              },
             },
-          },
-        ],
-      }),
-      'utf8',
-    );
-    const r = await capture(() => capsuleVerify('broken.capsule'));
-    expect(r.exit).toBe(2);
-  }, scaledTimeout(30_000));
+          ],
+        }),
+        'utf8',
+      );
+      const r = await capture(() => capsuleVerify('broken.capsule'));
+      expect(r.exit).toBe(2);
+    },
+    scaledTimeout(30_000),
+  );
 
   // ---------- asset analyze ----------
 
@@ -201,7 +205,12 @@ describe('cli — manifest-dependent commands (serialized)', () => {
       JSON.stringify({
         generatedAt: '2026-04-25T00:00:00.000Z',
         capsules: [
-          { name: 'phantom-asset', kind: 'cachedProjection', source: 'examples/scenes/phantom.wav', generated: { testFile: 't', benchFile: 'b' } },
+          {
+            name: 'phantom-asset',
+            kind: 'cachedProjection',
+            source: 'examples/scenes/phantom.wav',
+            generated: { testFile: 't', benchFile: 'b' },
+          },
         ],
       }),
       'utf8',
@@ -234,7 +243,10 @@ describe('cli — manifest-dependent commands (serialized)', () => {
             name: 'no-tests-asset',
             kind: 'cachedProjection',
             source: 'fake.ts',
-            generated: { testFile: 'tests/generated/__never_exists__.test.ts', benchFile: 'tests/generated/__never_exists__.bench.ts' },
+            generated: {
+              testFile: 'tests/generated/__never_exists__.test.ts',
+              benchFile: 'tests/generated/__never_exists__.bench.ts',
+            },
           },
         ],
       }),
@@ -261,11 +273,7 @@ describe('cli — manifest-dependent commands (serialized)', () => {
   });
 
   it('scene verify exits 1 when capsule is not in manifest', async () => {
-    writeFileSync(
-      MANIFEST_PATH,
-      JSON.stringify({ generatedAt: '2026-04-25T00:00:00.000Z', capsules: [] }),
-      'utf8',
-    );
+    writeFileSync(MANIFEST_PATH, JSON.stringify({ generatedAt: '2026-04-25T00:00:00.000Z', capsules: [] }), 'utf8');
     const r = await capture(() => sceneVerify('tests/fixtures/scene/throwing-compile.ts'));
     expect(r.exit).toBe(1);
     expect(r.stderr).toMatch(/not in manifest/);

@@ -81,11 +81,7 @@ describe('VitestRunner', () => {
 
     // test-files-echoed: same files in same order → ok; reordered → fail; trimmed → fail.
     expect(inv.get('test-files-echoed')!.check(goodInput, goodOutput)).toBe(true);
-    expect(
-      inv.get('test-files-echoed')!.check(goodInput, { ...goodOutput, testFiles: ['b.ts', 'a.ts'] }),
-    ).toBe(false);
-    expect(
-      inv.get('test-files-echoed')!.check(goodInput, { ...goodOutput, testFiles: ['a.ts'] }),
-    ).toBe(false);
+    expect(inv.get('test-files-echoed')!.check(goodInput, { ...goodOutput, testFiles: ['b.ts', 'a.ts'] })).toBe(false);
+    expect(inv.get('test-files-echoed')!.check(goodInput, { ...goodOutput, testFiles: ['a.ts'] })).toBe(false);
   });
 });

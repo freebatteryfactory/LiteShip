@@ -44,8 +44,7 @@ describe('diagnostic-code-registered — emitter ownership', () => {
 
   it('enrolls audit rule slugs through the shared diagnostic namespace', () => {
     const context = memoryContext({
-      'packages/audit/src/structure.ts':
-        "export const finding = { rule: 'package-topology', severity: 'error' };\n",
+      'packages/audit/src/structure.ts': "export const finding = { rule: 'package-topology', severity: 'error' };\n",
     });
 
     expect(diagnosticCodeRegisteredGate.run(context)).toEqual([]);

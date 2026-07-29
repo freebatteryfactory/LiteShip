@@ -18,17 +18,21 @@ const underCoverage = coverageInstrumentation;
 const conditionalIt = underCoverage ? it.skip : it;
 
 describe('liteship scene dev', () => {
-  conditionalIt('boots a Vite server and prints a receipt with a local URL', async () => {
-    await withSpawned(
-      'pnpm',
-      ['exec', 'tsx', 'packages/cli/src/bin.ts', 'scene', 'dev', 'examples/scenes/intro.ts'],
-      async (handle) => {
-        const url = await firstUrl(handle);
-        expect(url).toMatch(/^http:\/\/(localhost|127\.0\.0\.1):\d+/);
-      },
-      { stdio: ['ignore', 'pipe', 'pipe'] },
-    );
-  }, scaledTimeout(20000));
+  conditionalIt(
+    'boots a Vite server and prints a receipt with a local URL',
+    async () => {
+      await withSpawned(
+        'pnpm',
+        ['exec', 'tsx', 'packages/cli/src/bin.ts', 'scene', 'dev', 'examples/scenes/intro.ts'],
+        async (handle) => {
+          const url = await firstUrl(handle);
+          expect(url).toMatch(/^http:\/\/(localhost|127\.0\.0\.1):\d+/);
+        },
+        { stdio: ['ignore', 'pipe', 'pipe'] },
+      );
+    },
+    scaledTimeout(20000),
+  );
 });
 
 async function firstUrl(handle: SpawnHandle): Promise<string> {
@@ -42,7 +46,9 @@ async function firstUrl(handle: SpawnHandle): Promise<string> {
       if (typeof receipt.url === 'string' && receipt.url.startsWith('http')) {
         return receipt.url;
       }
-    } catch { /* not json yet */ }
+    } catch {
+      /* not json yet */
+    }
   }
   throw new Error('subprocess closed without emitting url');
 }
