@@ -8,7 +8,7 @@
 
 > `const` **BENCH\_NOT\_APPLICABLE\_RE**: `RegExp`
 
-Defined in: core/dist/evidence/bench-marker.d.ts:46
+Defined in: core/dist/evidence/bench-marker.d.ts:14
 
 Anchored matcher for the marker line. Group 1 is the trimmed reason. Anchored
 to the start of a line (multiline) so it only matches the dedicated marker

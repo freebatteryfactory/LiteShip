@@ -453,6 +453,8 @@ describe('blocking-check negative-control relation properties', () => {
     expect(execution).not.toBeNull();
     const synthetic = { ...BLOCKING_CHECKS[0]!, id: 'check/quoted', command, execution: execution! };
     expect(execute(synthetic, 0).calls.at(-1)).toBe('pnpm run lint -- --label "two words"');
+    const longWhitespace = `${' \t\r\n'.repeat(20_000)}pnpm${' '.repeat(20_000)}run\tlint`;
+    expect(parseRootScriptCheckExecution(longWhitespace)).toMatchObject({ script: 'lint', invocation: 'pnpm-run' });
   });
 
   it('rejects an unrelated existing control path instead of accepting file existence as proof', () => {

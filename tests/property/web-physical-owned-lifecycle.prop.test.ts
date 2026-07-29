@@ -3,6 +3,7 @@
 import { afterEach, beforeAll, describe, expect, test } from 'vitest';
 import fc from 'fast-check';
 import { createPhysicalStateTracker } from '../../packages/web/src/physical/capture.js';
+import { testCssEscape } from '../helpers/css-escape.js';
 
 type Command =
   | { readonly type: 'start'; readonly owner: 0 | 1; readonly start: number; readonly end: number }
@@ -37,7 +38,7 @@ describe('host-owned physical-state lifecycle laws', () => {
   beforeAll(() => {
     Object.defineProperty(globalThis, 'CSS', {
       configurable: true,
-      value: { escape: (value: string) => value },
+      value: { escape: testCssEscape },
     });
   });
 

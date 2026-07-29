@@ -45,34 +45,19 @@ function requirePositiveInteger(value: string, label: string): void {
   if (!/^[1-9][0-9]*$/u.test(value)) throw new TypeError(`${label} must be a positive integer`);
 }
 
-/** Fetch exact completed jobs for one run attempt; in-progress jobs are not evidence. */
-export async function fetchCompletedGithubRunJobs(
-  input: FetchGithubRunJobsInput,
-): Promise<readonly ObservedGithubJob[]> {
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u.test(input.repository)) {
-    throw new TypeError('GitHub repository is invalid');
-  }
-  requirePositiveInteger(input.runId, 'GitHub run id');
-  requirePositiveInteger(input.runAttempt, 'GitHub run attempt');
-  if (input.token.length === 0) throw new TypeError('GitHub token is required');
-  const fetchImpl = input.fetchImpl ?? fetch;
-  const headers = { Authorization: `Bearer ${input.token}`, Accept: 'application/vnd.github+json' };
-  const raw: unknown[] = [];
-  for (let page = 1; ; page += 1) {
-    const response = await fetchImpl(
-      `https://api.github.com/repos/${input.repository}/actions/runs/${input.runId}/attempts/${input.runAttempt}/jobs?per_page=100&page=${page}`,
-      { headers },
-    );
-    if (!response.ok) throw new Error(`GitHub jobs API returned ${response.status}`);
-    const body = (await response.json()) as GithubJobsPayload;
-    if (!Array.isArray(body.jobs)) throw new TypeError('GitHub jobs API returned no jobs array');
-    raw.push(...body.jobs);
-    if (typeof body.total_count !== 'number' || !Number.isInteger(body.total_count) || body.total_count < 0) {
-      throw new TypeError('GitHub jobs API total_count is invalid');
-    }
-    if (raw.length >= body.total_count) break;
-    if (body.jobs.length === 0) throw new Error(`GitHub jobs API stopped at ${raw.length}/${body.total_count} jobs`);
-  }
+/**
+ * Admit only completed jobs from one exact run attempt.
+ *
+ * GitHub may attach zero-date placeholder timestamps to queued or in-progress
+ * jobs. Those jobs are not execution evidence, so status is classified before
+ * any clock field is parsed. Completed jobs retain the fail-closed timestamp
+ * and duplicate-identity laws.
+ */
+export function snapshotCompletedGithubRunJobs(
+  raw: readonly unknown[],
+  runAttempt: string,
+): readonly ObservedGithubJob[] {
+  requirePositiveInteger(runAttempt, 'GitHub run attempt');
   const seen = new Set<string>();
   const completed = raw
     .map((value): ObservedGithubJob | null => {
@@ -92,7 +77,7 @@ export async function fetchCompletedGithubRunJobs(
       ) {
         throw new TypeError(`GitHub returned malformed job ${typeof job.name === 'string' ? job.name : '(unknown)'}`);
       }
-      if (job.run_attempt !== Number(input.runAttempt)) {
+      if (job.run_attempt !== Number(runAttempt)) {
         throw new TypeError(`GitHub returned foreign attempt for ${job.name}`);
       }
       const identity = `${job.name}\0${job.run_attempt}`;
@@ -127,4 +112,35 @@ export async function fetchCompletedGithubRunJobs(
     .sort((left, right) => left.name.localeCompare(right.name));
   if (completed.length === 0) throw new Error('GitHub jobs API returned no completed jobs');
   return Object.freeze(completed);
+}
+
+/** Fetch exact completed jobs for one run attempt; in-progress jobs are not evidence. */
+export async function fetchCompletedGithubRunJobs(
+  input: FetchGithubRunJobsInput,
+): Promise<readonly ObservedGithubJob[]> {
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u.test(input.repository)) {
+    throw new TypeError('GitHub repository is invalid');
+  }
+  requirePositiveInteger(input.runId, 'GitHub run id');
+  requirePositiveInteger(input.runAttempt, 'GitHub run attempt');
+  if (input.token.length === 0) throw new TypeError('GitHub token is required');
+  const fetchImpl = input.fetchImpl ?? fetch;
+  const headers = { Authorization: `Bearer ${input.token}`, Accept: 'application/vnd.github+json' };
+  const raw: unknown[] = [];
+  for (let page = 1; ; page += 1) {
+    const response = await fetchImpl(
+      `https://api.github.com/repos/${input.repository}/actions/runs/${input.runId}/attempts/${input.runAttempt}/jobs?per_page=100&page=${page}`,
+      { headers },
+    );
+    if (!response.ok) throw new Error(`GitHub jobs API returned ${response.status}`);
+    const body = (await response.json()) as GithubJobsPayload;
+    if (!Array.isArray(body.jobs)) throw new TypeError('GitHub jobs API returned no jobs array');
+    raw.push(...body.jobs);
+    if (typeof body.total_count !== 'number' || !Number.isInteger(body.total_count) || body.total_count < 0) {
+      throw new TypeError('GitHub jobs API total_count is invalid');
+    }
+    if (raw.length >= body.total_count) break;
+    if (body.jobs.length === 0) throw new Error(`GitHub jobs API stopped at ${raw.length}/${body.total_count} jobs`);
+  }
+  return snapshotCompletedGithubRunJobs(raw, input.runAttempt);
 }

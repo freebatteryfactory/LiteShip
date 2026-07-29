@@ -141,21 +141,32 @@ export type CheckExecution = RootScriptCheckExecution | CliCheckExecution;
  * a repository check without silently guessing its assertion owner.
  */
 export function parseRootScriptCheckExecution(command: string): RootScriptCheckExecution | null {
-  const run = /^pnpm run ([^\s]+)(?:\s+(.*))?$/u.exec(command);
-  if (run !== null) {
+  const tokens: string[] = [];
+  let token = '';
+  const flush = (): void => {
+    if (token.length === 0) return;
+    tokens.push(token);
+    token = '';
+  };
+  for (const char of command) {
+    if (char === ' ' || char === '\t' || char === '\r' || char === '\n' || char === '\f' || char === '\v') flush();
+    else token += char;
+  }
+  flush();
+  if (tokens[0] !== 'pnpm') return null;
+  if (tokens[1] === 'run' && tokens[2] !== undefined) {
     return {
       kind: 'root-script',
-      script: run[1]!,
-      args: run[2] === undefined ? [] : Object.freeze(run[2].split(/\s+/u)),
+      script: tokens[2],
+      args: Object.freeze(tokens.slice(3)),
       invocation: 'pnpm-run',
     };
   }
-  const testCommand = /^pnpm test(?:\s+(.*))?$/u.exec(command);
-  if (testCommand !== null) {
+  if (tokens[1] === 'test') {
     return {
       kind: 'root-script',
       script: 'test',
-      args: testCommand[1] === undefined ? [] : Object.freeze(testCommand[1].split(/\s+/u)),
+      args: Object.freeze(tokens.slice(2)),
       invocation: 'pnpm-test',
     };
   }

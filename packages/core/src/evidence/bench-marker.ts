@@ -30,6 +30,7 @@
  *
  * @module
  */
+import { ValidationError } from '@liteship/error';
 
 /**
  * The exact first-line marker a TYPED not-applicable generated bench carries.
@@ -45,7 +46,7 @@ export const BENCH_NOT_APPLICABLE_MARKER = '// BENCH-NOT-APPLICABLE:' as const;
  * to the start of a line (multiline) so it only matches the dedicated marker
  * line, never an incidental mention of the token inside a longer comment.
  */
-export const BENCH_NOT_APPLICABLE_RE = /^\/\/ BENCH-NOT-APPLICABLE:[ \t]*(.+)$/m;
+export const BENCH_NOT_APPLICABLE_RE = /^\/\/ BENCH-NOT-APPLICABLE:[ \t]*([^ \t\r\n][^\r\n]*)$/m;
 
 /**
  * Build the marker line for a given reason. Collapses whitespace to a single
@@ -53,5 +54,9 @@ export const BENCH_NOT_APPLICABLE_RE = /^\/\/ BENCH-NOT-APPLICABLE:[ \t]*(.+)$/m
  * the same collapsed reason — see `scripts/capsule-compile.ts`).
  */
 export function benchNotApplicableMarker(reason: string): string {
-  return `${BENCH_NOT_APPLICABLE_MARKER} ${reason.replace(/\s+/g, ' ').trim()}`;
+  const normalized = reason.replace(/\s+/g, ' ').trim();
+  if (normalized.length === 0) {
+    throw ValidationError('benchNotApplicableMarker', 'BENCH-NOT-APPLICABLE requires a non-empty single-line reason');
+  }
+  return `${BENCH_NOT_APPLICABLE_MARKER} ${normalized}`;
 }

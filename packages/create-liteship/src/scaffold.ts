@@ -78,10 +78,31 @@ export function defaultTemplateDir(): string {
  */
 export function projectNameFromDir(dir: string): string {
   const base = basename(resolve(dir));
-  const name = base
-    .toLowerCase()
-    .replace(/[^a-z0-9._~-]+/g, '-')
-    .replace(/^[-._]+|[-._]+$/g, '');
+  let projected = '';
+  let invalidRun = false;
+  for (const char of base.toLowerCase()) {
+    const code = char.codePointAt(0)!;
+    const allowed =
+      (code >= 48 && code <= 57) ||
+      (code >= 97 && code <= 122) ||
+      char === '.' ||
+      char === '_' ||
+      char === '~' ||
+      char === '-';
+    if (allowed) {
+      projected += char;
+      invalidRun = false;
+    } else if (!invalidRun) {
+      projected += '-';
+      invalidRun = true;
+    }
+  }
+  const edgeSeparator = (char: string | undefined): boolean => char === '-' || char === '.' || char === '_';
+  let start = 0;
+  let end = projected.length;
+  while (edgeSeparator(projected[start])) start++;
+  while (end > start && edgeSeparator(projected[end - 1])) end--;
+  const name = projected.slice(start, end);
   return name.length > 0 ? name : 'liteship-app';
 }
 

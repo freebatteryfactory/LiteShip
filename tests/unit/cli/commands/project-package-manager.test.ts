@@ -112,6 +112,32 @@ describe('consumer project package-manager authority', () => {
     });
   });
 
+  it.each([null, false, true, 0, 1, 'apps/*'])(
+    'treats scalar workspaces value %j as data rather than ancestor ownership',
+    (workspaces) => {
+      const root = fixture();
+      const app = join(root, 'apps', 'site');
+      mkdirSync(app, { recursive: true });
+      writeFileSync(join(root, 'package.json'), JSON.stringify({ workspaces }));
+      writeFileSync(join(root, 'yarn.lock'), '# ambient marker\n');
+
+      expect(detectProjectPackageManager(app, { npm_config_user_agent: 'pnpm/10.32.1 node/v22' })).toEqual({
+        kind: 'supported',
+        manager: 'pnpm',
+      });
+    },
+  );
+
+  it('does not inspect a malformed outer manifest after the application boundary decides', () => {
+    const root = fixture();
+    const app = join(root, 'apps', 'site');
+    mkdirSync(app, { recursive: true });
+    writeFileSync(join(root, 'package.json'), '{ malformed outer manifest');
+    writeFileSync(join(app, 'pnpm-lock.yaml'), 'lockfileVersion: 9\n');
+
+    expect(detectProjectPackageManager(app, {})).toEqual({ kind: 'supported', manager: 'pnpm' });
+  });
+
   it('refuses conflicting markers at one ownership boundary instead of guessing from the user agent', () => {
     const root = fixture();
     writeFileSync(join(root, 'pnpm-lock.yaml'), 'lockfileVersion: 9\n');

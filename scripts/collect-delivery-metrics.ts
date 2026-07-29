@@ -18,6 +18,7 @@ import {
 } from './lib/github-change-intent.js';
 import { buildGovernedExceptionView } from './lib/governed-exceptions.js';
 import { buildDeliveryMetrics } from './lib/delivery-metrics.js';
+import { snapshotCompletedGithubRunJobs } from './lib/github-run-jobs.js';
 import { parseAffectedTestPlan } from './lib/affected-test-plan.js';
 import { parseAffectedSelectorCalibration } from './lib/affected-selector-calibration.js';
 import { assertFlakeEvidenceCurrent, parseFlakeEvidence } from './lib/flake-evidence.js';
@@ -148,16 +149,19 @@ writeFileSync('reports/change-intent.json', `${JSON.stringify(admittedIntent, nu
 const governedExceptions = await buildGovernedExceptionView(process.cwd(), new Date());
 writeFileSync('reports/governed-exceptions.json', `${JSON.stringify(governedExceptions, null, 2)}\n`, 'utf8');
 
-const jobs = allJobs.filter(
-  (job): job is GithubJob & { started_at: string; completed_at: string } =>
-    typeof job.started_at === 'string' && typeof job.completed_at === 'string',
+const jobs = snapshotCompletedGithubRunJobs(allJobs, runAttempt);
+const timedJobs = jobs.filter(
+  (job): job is ObservedGithubJob & { startedAt: string; completedAt: string } =>
+    job.startedAt !== null && job.completedAt !== null,
 );
-if (jobs.length === 0) throw new Error('GitHub jobs API returned no completed timing evidence');
-const elapsed = (job: GithubJob): number =>
-  Math.max(0, Date.parse(job.completed_at ?? job.started_at ?? '') - Date.parse(job.started_at ?? ''));
+if (timedJobs.length === 0) throw new Error('GitHub jobs API returned no completed timing evidence');
+const elapsed = (job: ObservedGithubJob): number =>
+  job.startedAt === null || job.completedAt === null
+    ? 0
+    : Math.max(0, Date.parse(job.completedAt) - Date.parse(job.startedAt));
 const runCreatedMs = Date.parse(run.created_at);
-const firstStart = Math.min(...jobs.map((job) => Date.parse(job.started_at)));
-const lastCompletion = Math.max(...jobs.map((job) => Date.parse(job.completed_at ?? job.started_at)));
+const firstStart = Math.min(...timedJobs.map((job) => Date.parse(job.startedAt)));
+const lastCompletion = Math.max(...timedJobs.map((job) => Date.parse(job.completedAt)));
 const testJobs = jobs.filter((job) => /test|browser|smoke|gauntlet|mutation|mcdc|consumer|hermetic/iu.test(job.name));
 const buildJobs = jobs.filter((job) => /build|setup|rust|wasm|package/iu.test(job.name));
 const plan = parseAffectedTestPlan(JSON.parse(readFileSync(planPath, 'utf8')) as unknown);
@@ -185,15 +189,7 @@ const evidenceRecords = selected.map((selection) => {
   for (const expected of selection.jobNames) {
     const observed = jobs.filter((job) => jobNameMatches(job.name, expected));
     if (observed.length === 0) throw new TypeError(`GitHub run contains no completed evidence job for ${expected}`);
-    matched.push(
-      ...observed.map((job) => ({
-        name: job.name,
-        conclusion: job.conclusion,
-        startedAt: job.started_at,
-        completedAt: job.completed_at,
-        runAttempt: job.run_attempt,
-      })),
-    );
+    matched.push(...observed);
   }
   return buildCheckExecutionEvidence({
     requirement: selection.requirement,
@@ -230,15 +226,9 @@ const authorityJobs = requiredAuthorityJobs({
   browserAffected: plan.browserRequired,
   rustWasmAffected: plan.rustWasmRequired,
 });
-const observedAuthorityJobs = jobs
-  .filter((job) => authorityJobs.some((required) => jobNameMatches(job.name, required)))
-  .map((job) => ({
-    name: job.name,
-    conclusion: job.conclusion,
-    startedAt: job.started_at,
-    completedAt: job.completed_at,
-    runAttempt: job.run_attempt,
-  }));
+const observedAuthorityJobs = jobs.filter((job) =>
+  authorityJobs.some((required) => jobNameMatches(job.name, required)),
+);
 const authorityEvidence = buildCiAuthorityEvidence({
   identity: { repository, workflow, runId, runAttempt, event: eventName, ref, headSha },
   requiredJobs: authorityJobs,

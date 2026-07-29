@@ -588,7 +588,9 @@ jobs:
         with:
           name: dist-packages
           path: .
-      - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
+      # Browser/host authority lanes prove OS provisioning. This integration lane
+      # consumes the same pinned executables without repeating apt/font downloads.
+      - run: pnpm exec playwright install chromium chromium-headless-shell
       - name: Prepare ffmpeg render capability
         run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg
       - name: Confirm lane matches the registry-projected plan

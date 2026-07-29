@@ -225,34 +225,103 @@ function wgslVector(parts: readonly number[]): WGSLUniformVector | undefined {
  * declared arity (or a count outside vec2/vec3/vec4) — the caller turns that into a
  * loud diagnostic instead of a silently-wrong offset (ADR-0029).
  */
-function parseWgslCastValue(value: string): WGSLUniformValue | 'invalid' | undefined {
+export function parseWgslCastValue(value: string): WGSLUniformValue | 'invalid' | undefined {
   const trimmed = value.trim();
   if (trimmed === '') return undefined;
-  const scalar = Number(trimmed);
-  if (Number.isFinite(scalar)) return scalar;
+  const scalar = parseWgslNumberList(trimmed);
+  if (scalar !== null && scalar.length === 1) return scalar[0]!;
   // Match a WGSL vector constructor in either the shorthand (`vec2f(...)`) or the
   // generic (`vec2<f32>(...)`) form, capturing the DECLARED arity and the argument
   // list. The generic `<...>` must be stripped whole, or its digits (`f32` -> 32)
   // leak into the component scan and mis-shape the vector.
-  const ctor = /^vec([234])(?:[fiu]|<[^>]*>)?\s*\(([^)]*)\)$/i.exec(trimmed);
-  const declaredArity = ctor ? Number(ctor[1]) : undefined;
+  const ctor = parseWgslVectorConstructor(trimmed);
+  const declaredArity = ctor?.arity;
   // Constructor args, or a bare CSS-authored component list (`1 2`, `1, 2`).
-  const componentSource = ctor ? ctor[2]! : trimmed;
+  const componentSource = ctor?.components ?? trimmed;
   // The component source must be a PURE numeric list -- never arbitrary text with
   // stray digits. Without this, `10px` / `calc(100% - 1px)` / `var(--scale-2)` would
   // scan their digits into a false scalar/vector uniform and change the struct layout.
-  const numericList =
-    /^[\s,]*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?(?:[\s,]+[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)*[\s,]*$/i;
-  if (!numericList.test(componentSource)) return 'invalid';
-  const parts = [...componentSource.matchAll(/[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/gi)]
-    .map((match) => Number(match[0]))
-    .filter((part) => Number.isFinite(part));
-  if (parts.length === 0) return undefined;
+  const parts = parseWgslNumberList(componentSource);
+  if (parts === null) return 'invalid';
+  if (parts.length === 0) return 'invalid';
   // A constructor pins the arity: a component-count mismatch is an authoring error,
   // not something to silently reshape into a different vecN.
   if (declaredArity !== undefined && parts.length !== declaredArity) return 'invalid';
   if (parts.length === 1) return parts[0]!;
   return wgslVector(parts) ?? 'invalid';
+}
+
+interface WgslVectorConstructor {
+  readonly arity: 2 | 3 | 4;
+  readonly components: string;
+}
+
+function isWgslSpace(char: string | undefined): boolean {
+  return char === ' ' || char === '\t' || char === '\r' || char === '\n';
+}
+
+function parseWgslVectorConstructor(source: string): WgslVectorConstructor | null {
+  if (source.slice(0, 3).toLowerCase() !== 'vec') return null;
+  const arityCode = source.charCodeAt(3);
+  if (arityCode < 50 || arityCode > 52) return null;
+  const arity = (arityCode - 48) as 2 | 3 | 4;
+  let at = 4;
+  const suffix = source[at]?.toLowerCase();
+  if (suffix === 'f' || suffix === 'i' || suffix === 'u') {
+    at++;
+  } else if (source[at] === '<') {
+    const close = source.indexOf('>', at + 1);
+    if (close < 0 || close === at + 1) return null;
+    at = close + 1;
+  }
+  while (isWgslSpace(source[at])) at++;
+  if (source[at] !== '(' || !source.endsWith(')')) return null;
+  if (source.indexOf(')', at + 1) !== source.length - 1) return null;
+  return { arity, components: source.slice(at + 1, -1) };
+}
+
+function parseWgslNumber(source: string, start: number): { readonly value: number; readonly end: number } | null {
+  let at = start;
+  if (source[at] === '+' || source[at] === '-') at++;
+  let digits = 0;
+  while (source.charCodeAt(at) >= 48 && source.charCodeAt(at) <= 57) {
+    digits++;
+    at++;
+  }
+  if (source[at] === '.') {
+    at++;
+    while (source.charCodeAt(at) >= 48 && source.charCodeAt(at) <= 57) {
+      digits++;
+      at++;
+    }
+  }
+  if (digits === 0) return null;
+  if (source[at]?.toLowerCase() === 'e') {
+    at++;
+    if (source[at] === '+' || source[at] === '-') at++;
+    const exponentStart = at;
+    while (source.charCodeAt(at) >= 48 && source.charCodeAt(at) <= 57) at++;
+    if (at === exponentStart) return null;
+  }
+  const value = Number(source.slice(start, at));
+  return Number.isFinite(value) ? { value, end: at } : null;
+}
+
+/** Parse the exact numeric-list grammar accepted by authored WGSL casts in O(n). */
+function parseWgslNumberList(source: string): readonly number[] | null {
+  const values: number[] = [];
+  let at = 0;
+  while (at < source.length && (isWgslSpace(source[at]) || source[at] === ',')) at++;
+  while (at < source.length) {
+    const parsed = parseWgslNumber(source, at);
+    if (parsed === null) return null;
+    values.push(parsed.value);
+    at = parsed.end;
+    const separatorStart = at;
+    while (at < source.length && (isWgslSpace(source[at]) || source[at] === ',')) at++;
+    if (at < source.length && at === separatorStart) return null;
+  }
+  return values;
 }
 
 /**

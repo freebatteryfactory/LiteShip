@@ -8,7 +8,7 @@
 
 > `const` **BENCH\_NOT\_APPLICABLE\_MARKER**: `"// BENCH-NOT-APPLICABLE:"`
 
-Defined in: core/dist/evidence/bench-marker.d.ts:40
+Defined in: core/dist/evidence/bench-marker.d.ts:8
 
 The exact first-line marker a TYPED not-applicable generated bench carries.
 Format: this literal prefix, a space, then the single-line reason. A gate

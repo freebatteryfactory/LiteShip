@@ -26,15 +26,232 @@ import { BENCH_NOT_APPLICABLE_RE } from './bench-marker.js';
  * closure contains executable code, 'placeholder' if every closure body is
  * empty or comment-only (or no bench call exists at all).
  *
- * The lazy body capture stops at the first `}`, so a real body with nested
- * braces is truncated — but the truncated prefix is still non-empty, which
- * is all the classification needs.
+ * The scanner is deliberately linear: comments, strings, templates, and regular
+ * expressions are masked, then delimiter depth locates the callback arrow and
+ * its balanced body. That keeps hostile-generated input bounded without
+ * mistaking lexical decoys or a nested default-parameter arrow for evidence.
  */
 export function classifyBenchSource(source: string): 'real' | 'placeholder' {
-  const stripped = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
-  const closures = [...stripped.matchAll(/\bbench\s*\([\s\S]*?=>\s*\{([\s\S]*?)\}/g)];
-  if (closures.length === 0) return 'placeholder';
-  return closures.some((m) => m[1]!.trim().length > 0) ? 'real' : 'placeholder';
+  const code = maskCommentsAndLiterals(source);
+  for (let cursor = 0; cursor < code.length; cursor++) {
+    if (!wordAt(code, cursor, 'bench')) continue;
+    let at = skipWhitespace(code, cursor + 'bench'.length);
+    if (code[at] !== '(') continue;
+    const callEnd = matchingDelimiter(code, at, '(', ')');
+    if (callEnd < 0) continue;
+    const arrow = shallowestArrow(code, at, callEnd);
+    if (arrow < 0) {
+      cursor = callEnd;
+      continue;
+    }
+    at = skipWhitespace(code, arrow + 2);
+    if (code[at] !== '{') {
+      cursor = callEnd;
+      continue;
+    }
+    const bodyEnd = matchingDelimiter(code, at, '{', '}');
+    if (bodyEnd < 0 || bodyEnd > callEnd) {
+      cursor = callEnd;
+      continue;
+    }
+    // Emptiness ignores semicolons as well as whitespace: after masking, a
+    // literal-only statement (`'work()';`) leaves only its `;` behind, and an
+    // empty statement measures nothing — neither may launder a placeholder
+    // into 'real'.
+    if (code.slice(at + 1, bodyEnd).replace(/[;\s]/gu, '').length > 0) return 'real';
+    cursor = callEnd;
+  }
+  return 'placeholder';
+}
+
+function isIdentifierPart(char: string | undefined): boolean {
+  return char !== undefined && /[A-Za-z0-9_$]/.test(char);
+}
+
+function wordAt(source: string, at: number, word: string): boolean {
+  return (
+    source.startsWith(word, at) && !isIdentifierPart(source[at - 1]) && !isIdentifierPart(source[at + word.length])
+  );
+}
+
+function skipWhitespace(source: string, at: number): number {
+  while (
+    at < source.length &&
+    (source[at] === ' ' || source[at] === '\t' || source[at] === '\r' || source[at] === '\n')
+  ) {
+    at++;
+  }
+  return at;
+}
+
+function matchingDelimiter(source: string, start: number, open: string, close: string): number {
+  let depth = 0;
+  for (let at = start; at < source.length; at++) {
+    if (source[at] === open) depth++;
+    else if (source[at] === close && --depth === 0) return at;
+  }
+  return -1;
+}
+
+/** Find the callback arrow at the shallowest argument depth inside one call. */
+function shallowestArrow(source: string, callStart: number, callEnd: number): number {
+  let parenDepth = 1;
+  let bracketDepth = 0;
+  let braceDepth = 0;
+  let shallowest = Number.POSITIVE_INFINITY;
+  let candidate = -1;
+  for (let at = callStart + 1; at < callEnd; at++) {
+    const char = source[at];
+    if (char === '(') parenDepth++;
+    else if (char === ')') parenDepth--;
+    else if (char === '[') bracketDepth++;
+    else if (char === ']') bracketDepth--;
+    else if (char === '{') braceDepth++;
+    else if (char === '}') braceDepth--;
+    else if (char === '=' && source[at + 1] === '>') {
+      const depth = parenDepth + bracketDepth + braceDepth;
+      if (depth < shallowest) {
+        shallowest = depth;
+        candidate = at;
+      }
+      at++;
+    }
+  }
+  return candidate;
+}
+
+function regexMayFollowWord(word: string): boolean {
+  return /^(?:await|case|delete|else|in|instanceof|new|of|return|throw|typeof|void|yield)$/u.test(word);
+}
+
+/** Mask comments and JavaScript literal forms while preserving offsets. */
+function maskCommentsAndLiterals(source: string): string {
+  const chars = [...source];
+  let mode: 'code' | 'line-comment' | 'block-comment' | 'single' | 'double' | 'template' | 'regex' = 'code';
+  const templateExpressionDepths: number[] = [];
+  let escaped = false;
+  let regexClass = false;
+  let regexAllowed = true;
+  for (let at = 0; at < chars.length; at++) {
+    const char = chars[at]!;
+    const next = chars[at + 1];
+    if (mode === 'code') {
+      const templateExpressionDepth = templateExpressionDepths.length - 1;
+      if (templateExpressionDepth >= 0 && char === '{') {
+        templateExpressionDepths[templateExpressionDepth] = templateExpressionDepths[templateExpressionDepth]! + 1;
+        regexAllowed = true;
+      } else if (templateExpressionDepth >= 0 && char === '}') {
+        const remainingDepth = templateExpressionDepths[templateExpressionDepth]! - 1;
+        templateExpressionDepths[templateExpressionDepth] = remainingDepth;
+        if (remainingDepth === 0) {
+          templateExpressionDepths.pop();
+          chars[at] = ' ';
+          mode = 'template';
+        } else {
+          regexAllowed = false;
+        }
+      } else if (char === '/' && next === '/') {
+        chars[at] = chars[at + 1] = ' ';
+        at++;
+        mode = 'line-comment';
+      } else if (char === '/' && next === '*') {
+        chars[at] = chars[at + 1] = ' ';
+        at++;
+        mode = 'block-comment';
+      } else if (char === "'" || char === '"' || char === '`') {
+        chars[at] = ' ';
+        mode = char === "'" ? 'single' : char === '"' ? 'double' : 'template';
+        escaped = false;
+      } else if (char === '/' && regexAllowed) {
+        chars[at] = ' ';
+        mode = 'regex';
+        escaped = false;
+        regexClass = false;
+      } else if (/[A-Za-z_$]/u.test(char)) {
+        const start = at;
+        while (at + 1 < chars.length && /[A-Za-z0-9_$]/u.test(chars[at + 1]!)) at++;
+        regexAllowed = regexMayFollowWord(chars.slice(start, at + 1).join(''));
+      } else if (/[0-9]/u.test(char)) {
+        while (at + 1 < chars.length && /[A-Za-z0-9_.]/u.test(chars[at + 1]!)) at++;
+        regexAllowed = false;
+      } else if ((char === '+' || char === '-') && next === char) {
+        // Both prefix and postfix update expressions produce an operand. In
+        // particular, `value++ / divisor` must leave `/` classified as
+        // division; treating the second `+` as a generic prefix operator made
+        // the scanner swallow the rest of the callback as an unterminated
+        // regular-expression literal.
+        at++;
+        regexAllowed = false;
+      } else if (char === '>' && chars[at - 1] !== '=') {
+        // A `>` that is not an arrow's head either closes a TS type-argument
+        // list / instantiation expression (an operand — `value<Type> / count`
+        // is valid TypeScript and its slash is division) or is a relational
+        // operator, where a directly following regex would be semantic
+        // nonsense no generator emits. Classify the next slash as division.
+        // The arrow case (`=> /re/`) is excluded: a regex directly after `=>`
+        // is a real pattern that must stay masked.
+        regexAllowed = false;
+      } else if (char === '!' && next !== '=') {
+        // `!` preserves the position class rather than resetting it: the
+        // TypeScript postfix non-null assertion follows an operand (where
+        // regexAllowed is already false), so `total! / count` stays division;
+        // prefix negation sits in operator position (already true), so
+        // `!/re/.test(x)` stays a regex literal. `!=`/`!==` fall through to
+        // the generic operator branch.
+      } else if (!/\s/u.test(char)) {
+        regexAllowed = !')]}'.includes(char);
+      }
+      continue;
+    }
+    if (mode === 'line-comment') {
+      if (char === '\n') mode = 'code';
+      else chars[at] = ' ';
+      continue;
+    }
+    if (mode === 'block-comment') {
+      if (char === '*' && next === '/') {
+        chars[at] = chars[at + 1] = ' ';
+        at++;
+        mode = 'code';
+      } else if (char !== '\n') chars[at] = ' ';
+      continue;
+    }
+    if (mode === 'template' && !escaped && char === '$' && next === '{') {
+      // Template text is inert benchmark evidence, but interpolation bodies
+      // execute. Mask the `${` wrapper itself, then scan its JavaScript using
+      // the ordinary code states. A depth stack keeps nested object literals,
+      // blocks, and nested templates balanced without treating literal text as
+      // work performed by the benchmark.
+      chars[at] = chars[at + 1] = ' ';
+      at++;
+      templateExpressionDepths.push(1);
+      mode = 'code';
+      regexAllowed = true;
+      continue;
+    }
+    chars[at] = char === '\n' ? '\n' : ' ';
+    if (escaped) {
+      escaped = false;
+    } else if (char === '\\') {
+      escaped = true;
+    } else if (mode === 'regex' && char === '[') {
+      regexClass = true;
+    } else if (mode === 'regex' && char === ']') {
+      regexClass = false;
+    } else if (mode === 'regex' && char === '/' && !regexClass) {
+      while (at + 1 < chars.length && /[A-Za-z]/u.test(chars[at + 1]!)) chars[++at] = ' ';
+      mode = 'code';
+      regexAllowed = false;
+    } else if (
+      (mode === 'single' && char === "'") ||
+      (mode === 'double' && char === '"') ||
+      (mode === 'template' && char === '`')
+    ) {
+      mode = 'code';
+      regexAllowed = false;
+    }
+  }
+  return chars.join('');
 }
 
 function normalizeReason(reason: string): string {

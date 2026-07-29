@@ -16,6 +16,25 @@ describe('parseTypedBinding', () => {
     expect(parseTypedBinding('--liteship-hero-y', '24px')).toEqual({ k: 'length', v: 24, unit: 'px' });
   });
 
+  test('strictly refuses numeric prefixes and malformed relative values', () => {
+    const sink = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink.sink);
+    for (const value of ['10pxjunk', '1..2rem', '--1deg', '.px', '10e', '10e+px']) {
+      expect(parseTypedBinding('--x', value)).toEqual({ k: 'number', v: 0 });
+    }
+    expect(sink.events.some((event) => event.code === 'core/interpolate/unparseable-binding')).toBe(true);
+    Diagnostics.reset();
+  });
+
+  test('accepts CSS scientific notation without accepting an exponent prefix', () => {
+    expect(parseTypedBinding('--x', '1e3px')).toEqual({ k: 'length', v: 1_000, unit: 'px' });
+    expect(parseTypedBinding('--x', '1.5e-2rem')).toEqual({ k: 'length', v: 0.015, unit: 'rem' });
+    expect(parseTypedBinding('--angle', '-2E+1deg')).toEqual({ k: 'angle', v: -20, unit: 'deg' });
+    expect(parseTypedBinding('--n', '6.25e1')).toEqual({ k: 'number', v: 62.5 });
+    expect(parseTypedBinding('--x', '1e')).toEqual({ k: 'number', v: 0 });
+    expect(parseTypedBinding('--x', '1e+')).toEqual({ k: 'number', v: 0 });
+  });
+
   test('parses transform function strings', () => {
     const parsed = parseTypedBinding('transform', 'translateY(24px)');
     expect(parsed.k).toBe('transform');
@@ -128,6 +147,35 @@ describe('color TypedValue (F-MOT-3)', () => {
       space: 'oklch',
       components: [0.7, 0.15, 30],
     });
+  });
+
+  test('accepts scientific notation in color channels and percentages', () => {
+    expect(parseTypedBinding('--c', 'rgb(1e2 2.5e1 0)')).toEqual({
+      k: 'color',
+      space: 'srgb',
+      components: [100, 25, 0],
+    });
+    expect(parseTypedBinding('--c', 'oklch(7e1% 1e-1 3e1)')).toEqual({
+      k: 'color',
+      space: 'oklch',
+      components: [0.7, 0.1, 30],
+    });
+  });
+
+  test('does not accept a numeric prefix as a color channel', () => {
+    const sink = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink.sink);
+    expect(parseTypedBinding('--c', 'rgb(10foo 20 30)')).toEqual({ k: 'number', v: 0 });
+    expect(parseTypedBinding('--c', 'oklch(70%junk 0.1 30)')).toEqual({ k: 'number', v: 0 });
+    expect(sink.events.some((event) => event.code === 'core/interpolate/unparseable-binding')).toBe(true);
+    Diagnostics.reset();
+  });
+
+  test('rejects long hostile color input without partial parsing', () => {
+    const sink = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink.sink);
+    expect(parseTypedBinding('--c', `rgb(${'1'.repeat(50_000)}x 0 0)`)).toEqual({ k: 'number', v: 0 });
+    Diagnostics.reset();
   });
 
   test('normalizes percentage color channels into the canonical numeric domain (Codex P2)', () => {

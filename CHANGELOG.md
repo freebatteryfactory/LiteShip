@@ -19,6 +19,10 @@ break policy is intentionally aggressive — minor version bumps may carry break
   mixed-easing overlap requires the runtime floor.
 - **Security closure.** PostCSS is pinned above the disclosed vulnerable range; deterministic minimum and live audit
   checks, raw receipts, CodeQL, secret scanning, and push protection join the release authority.
+- **Reproducible consumer authority.** Packed smoke and journeys project one exact qualified Astro/Vite/WASM host
+  graph under strict peer enforcement; failed package-manager children preserve bounded stdout/stderr evidence, and
+  live delivery collection excludes unfinished GitHub jobs before admitting their timestamps. Windows CI provisions
+  a pinned ffmpeg package and projects its binary into both the current probe and subsequent workflow steps.
 
 ## [0.23.0] (unreleased)
 

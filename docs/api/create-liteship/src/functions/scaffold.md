@@ -8,7 +8,7 @@
 
 > **scaffold**(`targetDir`, `options?`): [`ScaffoldResult`](../interfaces/ScaffoldResult.md)
 
-Defined in: [create-liteship/src/scaffold.ts:195](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/create-liteship/src/scaffold.ts#L195)
+Defined in: [create-liteship/src/scaffold.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/create-liteship/src/scaffold.ts#L216)
 
 Scaffold the default template into `targetDir`.
 

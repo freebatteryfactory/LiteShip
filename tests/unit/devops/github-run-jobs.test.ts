@@ -24,7 +24,10 @@ describe('GitHub run jobs observation', () => {
             status: 'in_progress',
             conclusion: null,
             started_at: '2026-07-24T12:00:02.000Z',
-            completed_at: null,
+            // GitHub's live-run projection has emitted this zero-date sentinel
+            // for unfinished jobs. Status owns admission; placeholder clock
+            // fields on non-completed jobs must never enter evidence.
+            completed_at: '0001-01-01T00:00:00.000Z',
             run_attempt: 2,
           },
           {

@@ -79,4 +79,10 @@ describe('facade failure-proof binding', () => {
     const duplicate = `${source('')}\n${source('')}`;
     expect(kinds(duplicate)).toEqual(['ambiguous-proof']);
   });
+
+  it('rejects empty file/title halves around the exact identity separator', () => {
+    for (const testRef of ['::title', 'file.ts::', 'file.ts:', 'file.ts']) {
+      expect(kinds(source(''), { ...proof, test: testRef as typeof proof.test })).toEqual(['missing-proof']);
+    }
+  });
 });

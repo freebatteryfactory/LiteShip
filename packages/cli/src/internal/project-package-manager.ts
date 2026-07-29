@@ -30,6 +30,16 @@ export interface PackageManagerInvocation {
   readonly args: readonly string[];
 }
 
+/** One filesystem-independent package-manager ownership observation. */
+export type ProjectPackageManagerBoundary =
+  | {
+      readonly kind: 'boundary';
+      readonly ownsNestedProjects: boolean;
+      readonly packageManager?: unknown;
+      readonly lockfileManagers: readonly string[];
+    }
+  | Extract<ProjectPackageManagerDetection, { readonly kind: 'invalid-manifest' }>;
+
 const MAX_MANIFEST_FAILURE_REASON_LENGTH = 320;
 
 function boundedManifestFailureReason(error: unknown): string {
@@ -73,11 +83,43 @@ function classifyManager(
     : { kind: 'unsupported', manager, source };
 }
 
-/** Detect the package manager that owns commands in `cwd`, including unsupported authored managers. */
-export function detectProjectPackageManager(
-  cwd: string,
+/**
+ * Fold nearest-first ownership observations into one package-manager verdict.
+ *
+ * The filesystem adapter below owns discovery. This pure fold owns precedence,
+ * ambiguity, unsupported-manager refusal, and user-agent fallback so those laws
+ * can be exercised exhaustively without making property tests depend on host
+ * filesystem or antivirus latency.
+ */
+export function selectProjectPackageManager(
+  boundaries: Iterable<ProjectPackageManagerBoundary>,
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): ProjectPackageManagerDetection {
+  for (const boundary of boundaries) {
+    if (boundary.kind === 'invalid-manifest') return boundary;
+    if (!boundary.ownsNestedProjects) continue;
+
+    const declared = managerNameFromSpecifier(boundary.packageManager);
+    if (declared !== null) return classifyManager(declared, 'packageManager');
+
+    const lockfileManagers = [...new Set(boundary.lockfileManagers)];
+    if (lockfileManagers.length === 1) return classifyManager(lockfileManagers[0]!, 'lockfile');
+    if (lockfileManagers.length > 1) {
+      return {
+        kind: 'unsupported',
+        manager: `conflicting lockfiles (${lockfileManagers.sort().join(', ')})`,
+        source: 'lockfile',
+      };
+    }
+  }
+
+  const invoking = managerNameFromUserAgent(env['npm_config_user_agent']);
+  if (invoking !== null) return classifyManager(invoking, 'user-agent');
+
+  return { kind: 'supported', manager: 'npm' };
+}
+
+function* projectPackageManagerBoundaries(cwd: string): Iterable<ProjectPackageManagerBoundary> {
   let directory = resolve(cwd);
   let first = true;
   for (;;) {
@@ -87,11 +129,13 @@ export function detectProjectPackageManager(
       try {
         const candidate: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
         if (typeof candidate !== 'object' || candidate === null || Array.isArray(candidate)) {
-          return invalidProjectManifestFailure(manifestPath, 'package.json must contain a JSON object');
+          yield invalidProjectManifestFailure(manifestPath, 'package.json must contain a JSON object');
+          return;
         }
         manifest = candidate;
       } catch (error) {
-        return invalidProjectManifestFailure(manifestPath, error);
+        yield invalidProjectManifestFailure(manifestPath, error);
+        return;
       }
     }
     const ownsNestedProjects =
@@ -100,37 +144,32 @@ export function detectProjectPackageManager(
       (manifest !== undefined &&
         (Array.isArray(manifest.workspaces) ||
           (typeof manifest.workspaces === 'object' && manifest.workspaces !== null)));
-    if (ownsNestedProjects && manifest !== undefined) {
-      const declared = managerNameFromSpecifier(manifest.packageManager);
-      if (declared !== null) return classifyManager(declared, 'packageManager');
-    }
-
-    const lockfileManagers = ownsNestedProjects
-      ? [
-          ...(existsSync(resolve(directory, 'pnpm-lock.yaml')) ? ['pnpm'] : []),
-          ...(existsSync(resolve(directory, 'package-lock.json')) ? ['npm'] : []),
-          ...(existsSync(resolve(directory, 'yarn.lock')) ? ['yarn'] : []),
-        ]
-      : [];
-    if (lockfileManagers.length === 1) return classifyManager(lockfileManagers[0]!, 'lockfile');
-    if (lockfileManagers.length > 1) {
-      return {
-        kind: 'unsupported',
-        manager: `conflicting lockfiles (${lockfileManagers.sort().join(', ')})`,
-        source: 'lockfile',
-      };
-    }
+    yield {
+      kind: 'boundary',
+      ownsNestedProjects,
+      ...(manifest === undefined ? {} : { packageManager: manifest.packageManager }),
+      lockfileManagers: ownsNestedProjects
+        ? [
+            ...(existsSync(resolve(directory, 'pnpm-lock.yaml')) ? ['pnpm'] : []),
+            ...(existsSync(resolve(directory, 'package-lock.json')) ? ['npm'] : []),
+            ...(existsSync(resolve(directory, 'yarn.lock')) ? ['yarn'] : []),
+          ]
+        : [],
+    };
 
     const parent = dirname(directory);
-    if (parent === directory) break;
+    if (parent === directory) return;
     directory = parent;
     first = false;
   }
+}
 
-  const invoking = managerNameFromUserAgent(env['npm_config_user_agent']);
-  if (invoking !== null) return classifyManager(invoking, 'user-agent');
-
-  return { kind: 'supported', manager: 'npm' };
+/** Detect the package manager that owns commands in `cwd`, including unsupported authored managers. */
+export function detectProjectPackageManager(
+  cwd: string,
+  env: Readonly<Record<string, string | undefined>> = process.env,
+): ProjectPackageManagerDetection {
+  return selectProjectPackageManager(projectPackageManagerBoundaries(cwd), env);
 }
 
 /** One shared refusal text for consumer commands and application checks. */

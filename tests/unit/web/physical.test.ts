@@ -21,15 +21,11 @@ import {
   elementToPath,
   findScrollable,
 } from '../../../packages/web/src/physical/capture.js';
+import { installTestCssEscape } from '../../helpers/css-escape.js';
 
 // jsdom lacks CSS.escape — polyfill for tests
 beforeAll(() => {
-  if (typeof globalThis.CSS === 'undefined') {
-    (globalThis as any).CSS = {};
-  }
-  if (typeof CSS.escape !== 'function') {
-    CSS.escape = (s: string) => s.replace(/([^\w-])/g, '\\$1');
-  }
+  installTestCssEscape();
 });
 
 // ===========================================================================

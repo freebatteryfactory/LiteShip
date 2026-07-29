@@ -272,7 +272,15 @@ describe('(a) every gauntlet-lane command is a registry-projected profile invoca
 describe('(c) projected lane commands equal the recorded baseline (byte-identical)', () => {
   it('projects executable prerequisites from the closed prerequisite catalog', () => {
     expect(PLAN.schema).toBe('liteship/ci-plan@3');
-    for (const lane of Object.values(PLAN.lanes)) {
+    for (const [name, lane] of Object.entries(PLAN.lanes)) {
+      if (name === 'integration') {
+        expect(lane.prerequisites.map((entry) => entry.id)).toEqual([
+          'install',
+          'workspace-build',
+          'browser-binary-install',
+        ]);
+        continue;
+      }
       expect(lane.prerequisites.map((entry) => entry.id)).toEqual(['install', 'workspace-build']);
     }
     expect(PLAN.specializedChecks.format!.prerequisites.map((entry) => entry.id)).toEqual(['install']);
@@ -398,6 +406,8 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(integration).toContain('name: flake-evidence');
     expect(integration).toContain('reports/flake-evidence.json');
     expect(integration).toContain('reports/flake-signature-ledger.json');
+    expect(integration).toContain('pnpm exec playwright install chromium chromium-headless-shell');
+    expect(integration).not.toContain('playwright install --with-deps');
     expect(metrics).toContain('name: affected-plan');
     expect(metrics).toContain('name: flake-evidence');
     expect(metrics).toContain('.liteship/affected-selector-calibration.json');

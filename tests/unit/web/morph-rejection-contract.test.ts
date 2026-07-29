@@ -7,15 +7,11 @@
 import { beforeAll, describe, expect, test } from 'vitest';
 import { Hints } from '@liteship/web';
 import { rejectIfMissing } from '../../../packages/web/src/morph/hints.js';
+import { installTestCssEscape } from '../../helpers/css-escape.js';
 
 // jsdom lacks CSS.escape — polyfill for tests (mirrors tests/component/morph-diff.test.ts).
 beforeAll(() => {
-  if (typeof globalThis.CSS === 'undefined') {
-    (globalThis as { CSS?: unknown }).CSS = {};
-  }
-  if (typeof CSS.escape !== 'function') {
-    CSS.escape = (s: string) => s.replace(/([^\w-])/g, '\\$1');
-  }
+  installTestCssEscape();
 });
 
 describe('rejectIfMissing rejection contract', () => {

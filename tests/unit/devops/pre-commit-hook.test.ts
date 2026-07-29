@@ -23,12 +23,13 @@ describe('pre-commit hook ownership', () => {
     };
     const docsCheck = readFileSync(resolve(REPO, 'scripts/docs-check.ts'), 'utf8');
     const docsBuild = readFileSync(resolve(REPO, 'scripts/docs-build.ts'), 'utf8');
+    const docsPipeline = readFileSync(resolve(REPO, 'scripts/lib/typedoc-build-pipeline.ts'), 'utf8');
     const preflight = readFileSync(resolve(REPO, 'scripts/preflight.ts'), 'utf8');
 
     expect(packageJson.scripts['docs:check:fast']).toContain('docs-input-fingerprint.ts');
     expect(packageJson.scripts['docs:check:local']).toContain('docs-check.ts --local-cache');
     expect(packageJson.scripts['docs:build']).toContain('docs-build.ts');
-    expect(docsBuild).toContain("['exec', 'typedoc', '--out', tempDir]");
+    expect(docsPipeline).toContain("['exec', 'typedoc', '--out', input.tempDir]");
     expect(docsBuild).toContain('writeTypeDocProofReceipt');
     expect(packageJson.scripts['resources:plan']).toContain('local-resources.ts');
     expect(preflight).toContain('resource: resourcePlan');

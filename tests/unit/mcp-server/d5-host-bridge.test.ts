@@ -15,11 +15,13 @@ import { readAppResource } from '../../../packages/mcp-server/src/app-resources.
 
 const APP_URI = 'ui://liteship/app/capsule-inspect';
 
-function widgetParts(): { markup: string; script: string } {
-  const html = readAppResource(APP_URI).contents[0]!.text;
-  const script = html.match(/<script>([\s\S]*?)<\/script>/)![1]!;
-  const body = html.match(/<body>([\s\S]*?)<\/body>/)![1]!.replace(/<script>[\s\S]*?<\/script>/, '');
-  return { markup: body, script };
+function widgetParts(html = readAppResource(APP_URI).contents[0]!.text): { markup: string; script: string } {
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+  const scriptElement = parsed.body.querySelector('script');
+  if (scriptElement === null) throw new Error('widget resource has no bridge script');
+  const script = scriptElement.textContent ?? '';
+  for (const element of parsed.body.querySelectorAll('script')) element.remove();
+  return { markup: parsed.body.innerHTML, script };
 }
 
 let posted: Array<Record<string, unknown>>;
@@ -68,13 +70,18 @@ afterEach(() => {
 
 describe('D5 host-bridge — handshake', () => {
   it('the view posts ui/initialize on load with the 2026-01-26 protocol version', () => {
-    const init = posted.find((m) => m.method === 'ui/initialize') as { params: { protocolVersion: string } } | undefined;
+    const init = posted.find((m) => m.method === 'ui/initialize') as
+      { params: { protocolVersion: string } } | undefined;
     expect(init).toBeDefined();
     expect(init!.params.protocolVersion).toBe('2026-01-26');
   });
 
   it('on the host McpUiInitializeResult, the view posts ui/notifications/initialized', () => {
-    host({ jsonrpc: '2.0', id: 1, result: { protocolVersion: '2026-01-26', hostInfo: {}, hostCapabilities: {}, hostContext: {} } });
+    host({
+      jsonrpc: '2.0',
+      id: 1,
+      result: { protocolVersion: '2026-01-26', hostInfo: {}, hostCapabilities: {}, hostContext: {} },
+    });
     expect(posted.some((m) => m.method === 'ui/notifications/initialized')).toBe(true);
   });
 });
@@ -82,7 +89,11 @@ describe('D5 host-bridge — handshake', () => {
 describe('D5 host-bridge — tool-result injection renders the payload', () => {
   beforeEach(() => {
     // complete the handshake before injecting results
-    host({ jsonrpc: '2.0', id: 1, result: { protocolVersion: '2026-01-26', hostInfo: {}, hostCapabilities: {}, hostContext: {} } });
+    host({
+      jsonrpc: '2.0',
+      id: 1,
+      result: { protocolVersion: '2026-01-26', hostInfo: {}, hostCapabilities: {}, hostContext: {} },
+    });
   });
 
   it('renders payload A into the DOM', () => {
@@ -109,6 +120,13 @@ describe('D5 host-bridge — tool-result injection renders the payload', () => {
 });
 
 describe('D5 host-bridge — trust + no network', () => {
+  it('extracts and removes uppercase or mixed-case script elements through the DOM grammar', () => {
+    const parts = widgetParts('<DIV id="content">safe</DIV><SCRIPT>window.__bridge = true;</SCRIPT>');
+    expect(parts.script).toContain('window.__bridge = true');
+    expect(parts.markup).toContain('id="content"');
+    expect(parts.markup.toLowerCase()).not.toContain('<script');
+  });
+
   it('the view ignores messages whose source is not the parent host', () => {
     handler!({ data: toolResult({ name: 'spoof', kind: 'x' }), source: {} });
     expect(document.getElementById('capsule-name')!.textContent).toBe('');

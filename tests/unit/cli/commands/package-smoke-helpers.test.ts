@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import * as fc from 'fast-check';
 import ts from 'typescript';
 import { hasTag } from '@liteship/error';
+import { PEER_INSTALLS } from '../../../../packages/command/src/commands/package-smoke-registry.js';
 import { spawnArgvCapture } from '../../../../scripts/lib/spawn.js';
 import { resolveLauncher as resolveCanonicalLauncher } from '../../../../packages/command/src/host/launcher.js';
 import {
@@ -33,7 +34,78 @@ import {
   semanticClosureFileHash,
   assertPackedTypeClosure,
   packedLiteshipBin,
+  packageSmokeProcessFailure,
+  qualifiedHostOverrides,
 } from '../../../../packages/cli/src/internal/package-smoke-helpers.js';
+
+describe('packageSmokeProcessFailure — failed child diagnostics', () => {
+  it('preserves the stdout-only package-manager error that escaped main CI', () => {
+    expect(
+      packageSmokeProcessFailure(
+        'pnpm',
+        1,
+        'ERR_PNPM_PEER_DEP_ISSUES Unmet peer dependencies\n@napi-rs/wasm-runtime 1.2.0 requires @emnapi/core ^2.0.0-alpha.3\n',
+        '',
+      ),
+    ).toBe(
+      [
+        'pnpm exited with status 1',
+        'stdout tail:',
+        'ERR_PNPM_PEER_DEP_ISSUES Unmet peer dependencies',
+        '@napi-rs/wasm-runtime 1.2.0 requires @emnapi/core ^2.0.0-alpha.3',
+        'stderr tail:',
+        '(empty)',
+      ].join('\n'),
+    );
+  });
+
+  it('keeps both streams bounded and retains their newest evidence', () => {
+    const logText = (minLength: number) =>
+      fc.array(fc.constantFrom('a', 'b', 'c', ' '), { minLength, maxLength: 12_000 }).map((chars) => chars.join(''));
+    fc.assert(
+      fc.property(logText(4_200), logText(0), (out, err) => {
+        const detail = packageSmokeProcessFailure('pnpm', null, out, err);
+        const expectedTail = (value: string) => {
+          const normalized = value.trimEnd();
+          return normalized.length === 0 ? '(empty)' : normalized.slice(-4_096);
+        };
+        expect(detail).toContain('pnpm exited with status unknown');
+        expect(detail).toContain(expectedTail(out));
+        expect(detail).toContain(expectedTail(err));
+        expect(detail.length).toBeLessThanOrEqual(8_400);
+      }),
+      { seed: 0x51a6_0e, numRuns: 80 },
+    );
+  });
+
+  it('normalizes CRLF and strips terminal control sequences before the receipt crosses CI', () => {
+    const receipt = packageSmokeProcessFailure(
+      'node',
+      2,
+      '\u001B[31mboom\u001B[0m\r\n\u001B]8;;https://example.com\u0007link\u001B]8;;\u001B\\\r\n',
+      '\u001BPignored\u001B\\nope\r\n',
+    );
+    expect(receipt).toContain('stdout tail:\nboom\nlink\nstderr tail:\nnope');
+    expect(receipt).not.toMatch(/[\u0000-\u0008\u000B-\u001F\u007F-\u009F]/u);
+  });
+
+  it('preserves bounded partial evidence when the launcher reports a spawn error', () => {
+    const error = Object.assign(new Error('spawnSync pnpm EACCES'), { code: 'EACCES' });
+    const receipt = packageSmokeProcessFailure('pnpm', null, 'partial stdout', 'partial stderr', error);
+
+    expect(receipt).toContain('pnpm exited with status unknown');
+    expect(receipt).toContain('spawn error:\nError: spawnSync pnpm EACCES');
+    expect(receipt).toContain('stdout tail:\npartial stdout');
+    expect(receipt).toContain('stderr tail:\npartial stderr');
+  });
+
+  it('treats cross-spawn success null as no spawn error', () => {
+    const receipt = packageSmokeProcessFailure('pnpm', 1, 'out', 'err', null);
+    expect(receipt).not.toContain('spawn error:');
+    expect(receipt).toContain('stdout tail:\nout');
+    expect(receipt).toContain('stderr tail:\nerr');
+  });
+});
 
 describe('packedLiteshipBin — facade owns the public executable', () => {
   it('never points release smoke at the implementation-only @liteship/cli package', () => {
@@ -44,6 +116,27 @@ describe('packedLiteshipBin — facade owns the public executable', () => {
 });
 
 describe('peerDependenciesOnly — PEER_INSTALLS → {name: version}', () => {
+  it('projects the complete qualified Astro/Vite/Rolldown/WASM graph from exact host pins', () => {
+    expect(qualifiedHostOverrides(PEER_INSTALLS)).toEqual({
+      vite: '8.1.0',
+      astro: '7.1.0',
+      rolldown: '1.1.3',
+      '@napi-rs/wasm-runtime': '1.1.6',
+      '@emnapi/core': '1.11.1',
+      '@emnapi/runtime': '1.11.1',
+    });
+    expect(() => qualifiedHostOverrides(['astro@7.1.0'])).toThrow('requires an exact Vite install');
+    expect(() => qualifiedHostOverrides(['vite@8.1.0'])).toThrow('requires an exact Astro install');
+    expect(() => qualifiedHostOverrides(['vite@^8.1.0', 'astro@7.1.0'])).toThrow('requires an exact Vite install');
+    expect(() => qualifiedHostOverrides(['vite@8.1.0', 'astro@^7.1.0'])).toThrow('requires an exact Astro install');
+    expect(() => qualifiedHostOverrides(['vite@8.1.1', 'astro@7.1.0'])).toThrow(
+      'has no qualified packed-consumer graph',
+    );
+    expect(() => qualifiedHostOverrides(['vite@8.1.0', 'astro@7.1.1'])).toThrow(
+      'has no qualified packed-consumer graph',
+    );
+  });
+
   it('keeps the leading scope @ for a scoped specifier', () => {
     expect(peerDependenciesOnly(['@scope/pkg@1.2.3'])).toEqual({ '@scope/pkg': '1.2.3' });
   });
@@ -104,15 +197,15 @@ describe('resolvePackageManagerInvocation — closed executable/platform launche
     }
   });
 
-  it('routes a Windows pnpm shim through cmd.exe instead of passing .cmd to spawnSync', () => {
+  it('preserves Windows argv for the canonical shell-free spawn adapter', () => {
     expect(
       resolvePackageManagerInvocation('pnpm', ['pack', '--pack-destination', 'C:\\tmp dir'], {
         platform: 'win32',
       }),
     ).toEqual({
-      command: 'cmd.exe',
-      args: ['/d', '/s', '/c', 'pnpm pack --pack-destination "C:\\tmp dir"'],
-      windowsVerbatimArguments: true,
+      command: 'pnpm',
+      args: ['pack', '--pack-destination', 'C:\\tmp dir'],
+      windowsVerbatimArguments: false,
     });
   });
 

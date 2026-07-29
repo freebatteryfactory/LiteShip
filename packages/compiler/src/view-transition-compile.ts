@@ -78,10 +78,29 @@ export interface ViewTransitionCompileResult {
  * to a single hyphen and leading/trailing hyphens trimmed.
  */
 function viewTransitionNameFor(boundary: string): string {
-  const slug = boundary
-    .trim()
-    .replace(/[^A-Za-z0-9_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  let projected = '';
+  let invalidRun = false;
+  for (const char of boundary.trim()) {
+    const code = char.codePointAt(0)!;
+    const allowed =
+      (code >= 48 && code <= 57) ||
+      (code >= 65 && code <= 90) ||
+      (code >= 97 && code <= 122) ||
+      char === '_' ||
+      char === '-';
+    if (allowed) {
+      projected += char;
+      invalidRun = false;
+    } else if (!invalidRun) {
+      projected += '-';
+      invalidRun = true;
+    }
+  }
+  let start = 0;
+  let end = projected.length;
+  while (projected[start] === '-') start++;
+  while (end > start && projected[end - 1] === '-') end--;
+  const slug = projected.slice(start, end);
   return `liteship-vt-${slug.length > 0 ? slug : 'boundary'}`;
 }
 

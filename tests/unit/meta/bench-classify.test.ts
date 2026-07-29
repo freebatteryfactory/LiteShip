@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { classifyBenchSource, benchHonestyError } from '@liteship/core/harness';
+import { hasTag } from '@liteship/error';
+import { benchNotApplicableMarker } from '../../../packages/core/src/evidence/bench-marker.js';
 
 // Pins the real-vs-placeholder semantics the capsule:verify receipt is built
 // on. The integration test derives its expected receipt from this classifier,
@@ -46,6 +48,80 @@ describe('classifyBenchSource', () => {
     const src = "bench('n', () => { if (x) { y(); } });";
     expect(classifyBenchSource(src)).toBe('real');
   });
+
+  it('selects the bench callback rather than an arrow nested in its default parameters', () => {
+    expect(classifyBenchSource("bench('x', (make = () => work) => { make(); });")).toBe('real');
+    expect(classifyBenchSource("bench('x', (make = () => work) => { /* empty */ });")).toBe('placeholder');
+  });
+
+  it('masks regex literals containing quote, comment, and delimiter decoys', () => {
+    const decoy = String.raw`const grammar = /['\"{}/*=>]/giu;`;
+    expect(classifyBenchSource(`${decoy}\nbench('x', () => { measure(); });`)).toBe('real');
+    expect(classifyBenchSource(`${decoy}\nbench('x', () => { /* empty */ });`)).toBe('placeholder');
+  });
+
+  it('does not mistake division operators for regex literals', () => {
+    expect(classifyBenchSource("const ratio = total / count; bench('x', () => { consume(ratio); });")).toBe('real');
+  });
+
+  it.each(['++', '--'])('keeps division visible after postfix %s', (operator) => {
+    expect(classifyBenchSource(`bench('x', () => { total${operator} / count; });`)).toBe('real');
+  });
+
+  it('keeps division visible after a TypeScript non-null assertion', () => {
+    // Postfix `!` follows an operand, so the next `/` is division — treating it
+    // as a regex start would swallow the body's closing delimiters and misread
+    // executable evidence as a placeholder.
+    expect(classifyBenchSource("bench('x', () => { total! / count; });")).toBe('real');
+  });
+
+  it('keeps division visible after a TypeScript instantiation expression', () => {
+    // `value<Type> / count` is valid TypeScript when value's type intersects a
+    // generic callable with number (verified against tsc): the closing `>` of
+    // the type-argument list produces an operand, so the slash is division —
+    // not the start of a regex that would swallow the body's delimiters.
+    expect(classifyBenchSource("bench('x', () => { value<Type> / count; });")).toBe('real');
+  });
+
+  it('still masks a regex literal in an arrow body after =>', () => {
+    // The arrow's `>` must NOT classify the next slash as division: a regex
+    // with brace decoys directly after `=>` is a real pattern, and scanning it
+    // as code would corrupt the callback delimiters.
+    expect(classifyBenchSource("bench('x', () => { items.map((s) => /decoy[}{)(]/u.test(s)); });")).toBe('real');
+  });
+
+  it('still masks a regex literal after prefix negation', () => {
+    // Prefix `!` sits in operator position, so `!/…/` IS a regex; if its brace
+    // decoys were scanned as code the callback delimiters would corrupt and a
+    // real body would misclassify.
+    expect(classifyBenchSource("bench('x', () => { if (!/[}{)(]/u.test(s)) { work(); } });")).toBe('real');
+  });
+
+  it('does not let literal-only statements launder a placeholder via their punctuation', () => {
+    // Found by the generative lexical lane: the masked string's trailing `;`
+    // survived as "evidence" and classified a literal-only body as real.
+    expect(classifyBenchSource("bench('x', () => { 'work()'; });")).toBe('placeholder');
+    expect(classifyBenchSource("bench('x', () => { ;;; });")).toBe('placeholder');
+  });
+
+  it('preserves executable template interpolations while masking template text', () => {
+    expect(classifyBenchSource("bench('x', () => { `${work()}` });")).toBe('real');
+    expect(classifyBenchSource("bench('x', () => { `work()` });")).toBe('placeholder');
+    expect(classifyBenchSource("bench('x', () => { `${'work()'}` });")).toBe('placeholder');
+  });
+
+  it('preserves executable code through nested template interpolations', () => {
+    const source = "bench('x', () => { `${format(`${work()}`)}`; });";
+    expect(classifyBenchSource(source)).toBe('real');
+  });
+
+  it('stays linear on long comment/string decoys and finds the real nested body', () => {
+    const decoys = `${'/* bench("x", () => { fake(); }) */'.repeat(4_000)}\n${'"bench";'.repeat(4_000)}`;
+    expect(classifyBenchSource(`${decoys}\nbench('real', () => { if (ready) { measure(); } });`)).toBe('real');
+    expect(classifyBenchSource(`${decoys}\nbench('empty', () => { /* ${'x'.repeat(20_000)} */ });`)).toBe(
+      'placeholder',
+    );
+  });
 });
 
 // The gate the capsule:verify bench lane earns its blocking authority from: a
@@ -88,5 +164,16 @@ describe('benchHonestyError', () => {
 
   it('a marker reason disagreeing with the manifest reason FAILS', () => {
     expect(benchHonestyError('demo', `${NA}\n${guardBody}`, { reason: 'a different reason' })).toMatch(/disagrees/);
+  });
+
+  it.each(['', ' ', '\t\n'])('refuses an empty generated marker reason %j', (reason) => {
+    let failure: unknown;
+    try {
+      benchNotApplicableMarker(reason);
+    } catch (error) {
+      failure = error;
+    }
+    expect(hasTag(failure, 'ValidationError')).toBe(true);
+    expect(failure).toMatchObject({ module: 'benchNotApplicableMarker', detail: expect.stringMatching(/non-empty/u) });
   });
 });
