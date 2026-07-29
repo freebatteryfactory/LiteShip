@@ -8,7 +8,7 @@
 
 > **recordStreamPatchReceipt**(`artifactId`, `frame`): `Promise`\<`boolean`\>
 
-Defined in: [web/src/stream/recovery-substrate.ts:229](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L229)
+Defined in: [web/src/stream/recovery-substrate.ts:243](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L243)
 
 Record a receipt frame from the SSE stream into the artifact's live buffer.
 Async because the attestation-check recomputes the sha256 receipt hash

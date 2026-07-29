@@ -40,6 +40,27 @@ describe('completion command', () => {
     }
   });
 
+  it('bash and zsh render a subcommand case for EVERY catalog group (PR #187 review)', async () => {
+    // The defect class: bash/zsh hand-enumerated scene/asset/capsule/completion
+    // while fish derived from SUBCOMMANDS — so newly grouped identities
+    // (audit.floor, check.invariants) were tab-invisible in two of three
+    // shells. The law: every SUBCOMMANDS verb projects a case with every one
+    // of its subcommands in both scripts, derived, never hand-listed.
+    const bash = await captureCli(async () => completion('bash'));
+    const zsh = await captureCli(async () => completion('zsh'));
+    const groups = Object.entries(SUBCOMMANDS);
+    // Anti-vacuity: the catalog-derived groups include the two the class bug hid.
+    expect(Object.keys(SUBCOMMANDS)).toEqual(expect.arrayContaining(['audit', 'check', 'scene', 'capsule']));
+    for (const [verb, subs] of groups) {
+      expect(bash.stdout, `bash case for '${verb}'`).toMatch(new RegExp(`^\\s+${verb}\\)`, 'm'));
+      expect(zsh.stdout, `zsh case for '${verb}'`).toMatch(new RegExp(`^\\s+${verb}\\)`, 'm'));
+      for (const sub of subs) {
+        expect(bash.stdout, `bash '${verb}' offers '${sub}'`).toContain(sub);
+        expect(zsh.stdout, `zsh '${verb}' offers '${sub}'`).toContain(sub);
+      }
+    }
+  });
+
   it('rejects unknown shells with exit 1', async () => {
     const { exit, stderr } = await captureCli(async () => completion('powershell'));
     expect(exit).toBe(1);

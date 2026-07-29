@@ -55,12 +55,16 @@ function isShell(s: string | undefined): s is Shell {
   return s === 'bash' || s === 'zsh' || s === 'fish';
 }
 
+// Both scripts DERIVE their per-verb cases from SUBCOMMANDS — the same
+// projection fish always used. Hand-enumerated cases left newly grouped
+// identities tab-invisible (PR #187 review: `audit floor`, `check invariants`,
+// and the earlier `astro` group never reached bash/zsh).
+
 function bashScript(): string {
   const verbs = TOP_LEVEL_VERBS.join(' ');
-  const sceneSubs = (SUBCOMMANDS.scene ?? []).join(' ');
-  const assetSubs = (SUBCOMMANDS.asset ?? []).join(' ');
-  const capsuleSubs = (SUBCOMMANDS.capsule ?? []).join(' ');
-  const shellSubs = (SUBCOMMANDS.completion ?? []).join(' ');
+  const cases = Object.entries(SUBCOMMANDS)
+    .map(([verb, subs]) => `    ${verb}) COMPREPLY=( \$(compgen -W "${subs.join(' ')}" -- "\$cur") );;`)
+    .join('\n');
   return `# liteship bash completion
 _liteship_completion() {
   local cur prev
@@ -71,10 +75,7 @@ _liteship_completion() {
     return
   fi
   case "\$prev" in
-    scene)      COMPREPLY=( \$(compgen -W "${sceneSubs}" -- "\$cur") );;
-    asset)      COMPREPLY=( \$(compgen -W "${assetSubs}" -- "\$cur") );;
-    capsule)    COMPREPLY=( \$(compgen -W "${capsuleSubs}" -- "\$cur") );;
-    completion) COMPREPLY=( \$(compgen -W "${shellSubs}" -- "\$cur") );;
+${cases}
   esac
 }
 complete -F _liteship_completion liteship
@@ -83,10 +84,9 @@ complete -F _liteship_completion liteship
 
 function zshScript(): string {
   const verbs = TOP_LEVEL_VERBS.join(' ');
-  const sceneSubs = (SUBCOMMANDS.scene ?? []).join(' ');
-  const assetSubs = (SUBCOMMANDS.asset ?? []).join(' ');
-  const capsuleSubs = (SUBCOMMANDS.capsule ?? []).join(' ');
-  const shellSubs = (SUBCOMMANDS.completion ?? []).join(' ');
+  const cases = Object.entries(SUBCOMMANDS)
+    .map(([verb, subs]) => `    ${verb}) _values '${verb} subcommand' ${subs.join(' ')} ;;`)
+    .join('\n');
   return `# liteship zsh completion
 _liteship() {
   local -a verbs
@@ -96,10 +96,7 @@ _liteship() {
     return
   fi
   case "\${words[2]}" in
-    scene)      _values 'scene subcommand' ${sceneSubs} ;;
-    asset)      _values 'asset subcommand' ${assetSubs} ;;
-    capsule)    _values 'capsule subcommand' ${capsuleSubs} ;;
-    completion) _values 'shell' ${shellSubs} ;;
+${cases}
   esac
 }
 compdef _liteship liteship

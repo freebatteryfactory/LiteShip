@@ -96,11 +96,17 @@ function isBoolean(value: unknown): value is boolean {
 /**
  * Boot scheduling class per directive (issue #155). Nothing VISUAL depends on a
  * non-visual directive's boot completing in the first frame — `llm` (agent
- * tooling) and `graph` (graph runtime) paint nothing, yet previously paid the
- * same synchronous cost in the same long frame as `gpu`. `idle` directives boot
- * after the eager pass, at the host's idle deadline; every visual directive
- * stays `eager`. The scan itself is one traversal either way — this class only
- * governs WHEN activation runs, never whether.
+ * tooling) paints nothing, yet previously paid the same synchronous cost in the
+ * same long frame as `gpu`. `idle` directives boot after the eager pass, at the
+ * host's idle deadline; every visual directive stays `eager`. The scan itself
+ * is one traversal either way — this class only governs WHEN activation runs,
+ * never whether.
+ *
+ * `graph` is EAGER (PR #189 review, confirmed): its boot is not paint-free —
+ * `loadGraphRuntime` seeds every binding through `applyBoundaryState`, writing
+ * the initial `data-liteship-state` and per-state CSS before attaching
+ * observers. Deferring it to idle left graph-driven elements visually stale
+ * through first paint.
  */
 export const DIRECTIVE_BOOT_PRIORITY: Record<DirectiveName, 'eager' | 'idle'> = {
   adaptive: 'eager',
@@ -109,7 +115,7 @@ export const DIRECTIVE_BOOT_PRIORITY: Record<DirectiveName, 'eager' | 'idle'> = 
   worker: 'eager',
   gpu: 'eager',
   wasm: 'eager',
-  graph: 'idle',
+  graph: 'eager',
   motion: 'eager',
   svg: 'eager',
 };
@@ -128,11 +134,21 @@ function yieldToHost(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-/** Resolve at the host's idle deadline (`requestIdleCallback`; macrotask fallback). */
+/**
+ * Idle-boot ceiling: `requestIdleCallback` without a timeout is a promise the
+ * browser may never keep on a busy or throttled page — the idle pass (and the
+ * whole scan promise) would hang and idle directives would never activate
+ * (PR #189 review, confirmed). The timeout forces the callback after at most
+ * this many ms of denied idle time; 2s is far past first paint yet bounded.
+ */
+const IDLE_BOOT_TIMEOUT_MS = 2_000;
+
+/** Resolve at the host's idle deadline (`requestIdleCallback` with a bounded timeout; macrotask fallback). */
 function idleDeadline(): Promise<void> {
-  const ric = (globalThis as { requestIdleCallback?: (callback: () => void) => number }).requestIdleCallback;
+  const ric = (globalThis as { requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number })
+    .requestIdleCallback;
   return new Promise((resolve) => {
-    if (ric !== undefined) ric(() => resolve());
+    if (ric !== undefined) ric(() => resolve(), { timeout: IDLE_BOOT_TIMEOUT_MS });
     else setTimeout(resolve, 1);
   });
 }
@@ -214,6 +230,14 @@ export async function scanAndBootDirectives(
   const bootDirectiveBatch = (name: DirectiveName, elements: readonly HTMLElement[]): readonly Promise<void>[] => {
     const activations: Promise<void>[] = [];
     for (const element of elements) {
+      // Buckets were captured at scan time, but batches run across yields and
+      // the idle deadline — an Astro navigation can replace the document while
+      // this scan is parked. Booting a detached root would recreate listeners
+      // and runtime resources OUTSIDE the next lifecycle's teardown (PR #189
+      // review, confirmed): skip anything no longer in the document.
+      if (!element.isConnected) {
+        continue;
+      }
       if (boundNames(element).has(name)) {
         continue;
       }

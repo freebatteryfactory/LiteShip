@@ -70,6 +70,15 @@ interface SubstrateRecord {
   chainValidation?: ChainValidationOptions;
   /** Serializes compactions: concurrent overflows must chain, never interleave. */
   compaction: Promise<void>;
+  /**
+   * Serializes recordings: the directive fires `recordStreamPatchReceipt` per
+   * SSE event WITHOUT awaiting, and attestation hashes asynchronously — so two
+   * frames finishing out of order would push in COMPLETION order while
+   * compaction treats array order as chronology (PR #188 review, confirmed).
+   * Chaining each recording behind the previous makes buffer order = arrival
+   * order regardless of hashing latency.
+   */
+  recording: Promise<unknown>;
 }
 
 /**
@@ -96,7 +105,12 @@ export function registerStreamRecoverySubstrate(artifactId: string, substrate: S
     );
   }
 
-  const record: SubstrateRecord = { substrate, entries: [], compaction: Promise.resolve() };
+  const record: SubstrateRecord = {
+    substrate,
+    entries: [],
+    compaction: Promise.resolve(),
+    recording: Promise.resolve(),
+  };
   registry.set(artifactId, record);
 
   return () => {
@@ -231,7 +245,17 @@ export async function recordStreamPatchReceipt(artifactId: string, frame: unknow
   if (!record) {
     return false;
   }
+  // The chain position is claimed SYNCHRONOUSLY at call time, so buffer order
+  // is arrival order even when a later frame's attestation hash resolves first.
+  const task = record.recording.then(() => admitAttestedFrame(artifactId, record, frame));
+  record.recording = task.then(
+    () => undefined,
+    () => undefined,
+  );
+  return task;
+}
 
+async function admitAttestedFrame(artifactId: string, record: SubstrateRecord, frame: unknown): Promise<boolean> {
   const entry = await attestPatchReceiptEntry(artifactId, frame);
   if (!entry) {
     return false;

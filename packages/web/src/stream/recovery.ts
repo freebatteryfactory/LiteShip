@@ -171,7 +171,10 @@ export const runGraphNativeRecovery = async (options: StreamRecoveryOptions): Pr
     localBase !== undefined;
 
   if (canGapReplay) {
-    const chainValidation = options.chainValidation?.();
+    // The retention thunk is passed THROUGH, not resolved here: entries is the
+    // LIVE buffer, and an eviction can land while the QUERY read below is in
+    // flight. Core resolves the thunk synchronously with its entries read, so
+    // retention and buffer are always from the same moment (PR #188 review).
     const result = await runGraphNativeGapReplay({
       queryUrl: options.graphQueryUrl!,
       localBase: localBase!,
@@ -179,7 +182,7 @@ export const runGraphNativeRecovery = async (options: StreamRecoveryOptions): Pr
       cellStore: options.cellStore!,
       adopt: (graph) => options.mutationClient!.adopt(graph),
       ...(options.handlers.applyTransition !== undefined ? { applyTransition: options.handlers.applyTransition } : {}),
-      ...(chainValidation !== undefined ? { chainValidation } : {}),
+      ...(options.chainValidation !== undefined ? { chainValidation: options.chainValidation } : {}),
     });
     if (result.query.status === 'ok' || result.query.status === 'not_modified') {
       // F-REC-3: gap-replay corrected the graph + cell store, but a rejected
