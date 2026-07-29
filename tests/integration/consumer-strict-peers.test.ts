@@ -59,10 +59,32 @@ function scaffoldConsumerWithIncompatiblePeer(): string {
   return join(root, 'consumer');
 }
 
+/**
+ * Neutralize every inherited strict-peer config channel. A parent `pnpm run`
+ * exports the workspace's strictPeerDependencies into test-process env (the CI
+ * launcher does; a local `pnpm exec` does not), and worker pools can re-case
+ * the key (tinypool uppercases env names on Windows) — so every casing/spelling
+ * variant actually present is overridden, plus both canonical spellings. This
+ * makes both arms launcher-independent AND makes the strict arm prove the
+ * stronger claim: the argv flag defeats an explicitly non-strict environment
+ * (pnpm precedence: CLI over env).
+ */
+function nonStrictPeerEnv(): Record<string, string> {
+  const overrides: Record<string, string> = {
+    FORCE_COLOR: '0',
+    npm_config_strict_peer_dependencies: 'false',
+    'npm_config_strict-peer-dependencies': 'false',
+  };
+  for (const key of Object.keys(process.env)) {
+    if (/^npm_config_strict[-_]peer[-_]dependencies$/iu.test(key)) overrides[key] = 'false';
+  }
+  return overrides;
+}
+
 async function install(consumer: string, extraArgs: readonly string[]) {
   return spawnArgvCaptureWithEnv('pnpm', ['install', '--prefer-offline', ...extraArgs], {
     cwd: consumer,
-    envAdditions: { FORCE_COLOR: '0' },
+    envAdditions: nonStrictPeerEnv(),
     timeoutMs: 120_000,
   });
 }
@@ -81,7 +103,7 @@ describe('scratch-consumer strict-peer law', () => {
       const consumer = scaffoldConsumerWithIncompatiblePeer();
       const result = await install(consumer, []);
       expect(result.timedOut).toBe(false);
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode, `install output:\n${(result.stderr + result.stdout).slice(-1200)}`).toBe(0);
     },
   );
 
