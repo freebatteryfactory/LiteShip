@@ -166,6 +166,27 @@ const resolveGlob = (cwd: string, pattern: string): string[] => {
  * (Defined below the glob helpers so it never shifts the line-anchored no-silent-catch
  * waiver in `resolveGlob` — traceability/standards-waivers.json.)
  */
+/**
+ * Local-pack staging guard: `@liteship/core` ships its WASM kernel inside the
+ * tarball, and a wasm-less core silently forces every consumer onto the
+ * TypeScript fallback (the 0.2.1 dogfood finding). CI's verified-artifact path
+ * runs `build:wasm` before packing; the local/manual pack branch must refuse
+ * instead of publishing the degradation.
+ */
+export function stagedWasmError(
+  packageName: string,
+  packageDir: string,
+  exists: (path: string) => boolean = existsSync,
+): string | null {
+  if (packageName !== '@liteship/core') return null;
+  const wasm = join(packageDir, 'dist', 'liteship-compute.wasm');
+  if (exists(wasm)) return null;
+  return (
+    `refusing to pack @liteship/core without its WASM kernel: ${wasm} is missing. ` +
+    'Run `pnpm run build:wasm` first — a wasm-less core silently runs the TypeScript fallback for every consumer.'
+  );
+}
+
 export function buildNpmPublishArgv(tarballPath: string, opts: { provenance: boolean; otp?: string }): string[] {
   const args = ['publish', tarballPath, '--access', 'public'];
   if (opts.provenance) args.push('--provenance');
@@ -381,6 +402,11 @@ export async function ship(args: readonly string[]): Promise<number> {
     } else {
       // Local/manual path: pack once here. Release automation always supplies
       // --artifact-dir and therefore cannot enter this branch.
+      const wasmError = stagedWasmError(name, pkg.absolutePath);
+      if (wasmError !== null) {
+        emitError('ship', 'cli/integrity-failed', wasmError);
+        return 1;
+      }
       const packRes = await spawnArgvCapture('pnpm', ['pack'], { cwd: pkg.absolutePath });
       if (packRes.exitCode !== 0) {
         emitError('ship', 'cli/command-failed', `pnpm pack failed in ${pkg.relativePath}: ${packRes.stderr.trim()}`);

@@ -11,6 +11,7 @@ import {
   isAlreadyPublishedFailure,
   buildNpmPublishArgv,
   buildNpmPublishDryRunArgv,
+  stagedWasmError,
   topoSortByDependencies,
 } from '../../../../packages/cli/src/commands/ship.js';
 import type { WorkspacePackage } from '@liteship/command';
@@ -101,7 +102,7 @@ describe('ship arg safety (fail-closed: no flag typo can trigger a publish)', ()
   });
 });
 
-describe('isAlreadyPublishedFailure (ship idempotency contract, ROADMAP §4)', () => {
+describe('isAlreadyPublishedFailure (ship idempotency contract)', () => {
   // The release workflow used to grep publish output for these signatures
   // and translate them to success; ship now owns the decision, so workflow
   // re-runs after a mid-batch failure need no shell fallback.
@@ -123,6 +124,24 @@ describe('isAlreadyPublishedFailure (ship idempotency contract, ROADMAP §4)', (
       false,
     );
     expect(isAlreadyPublishedFailure('')).toBe(false);
+  });
+});
+
+describe('stagedWasmError (local pack refuses a wasm-less @liteship/core)', () => {
+  // Publishing core without its staged WASM kernel silently forces every
+  // consumer onto the TypeScript fallback (the 0.2.1 dogfood finding). The
+  // local/manual pack branch must refuse; CI's verified-artifact path stages
+  // the kernel via build:wasm before packing and never enters this guard.
+  it('refuses @liteship/core when dist/liteship-compute.wasm is absent, naming the remedy', () => {
+    const error = stagedWasmError('@liteship/core', '/repo/packages/core', () => false);
+    expect(error).toMatch(/liteship-compute\.wasm/);
+    expect(error).toMatch(/build:wasm/);
+    expect(error).toMatch(/TypeScript fallback/);
+  });
+
+  it('passes @liteship/core when the kernel is staged, and never inspects other packages', () => {
+    expect(stagedWasmError('@liteship/core', '/repo/packages/core', () => true)).toBeNull();
+    expect(stagedWasmError('@liteship/error', '/repo/packages/error', () => false)).toBeNull();
   });
 });
 
