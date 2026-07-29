@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:d5a7ec2e",
+  "address": "fnv1a:03ce3d9d",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4577,6 +4577,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/lib/doc-registry.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/dynamic-code-residue.ts",
       "level": "L1"
     },
     {
