@@ -6,7 +6,7 @@
 
 # Interface: GraphNativeGapReplayOptions
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L63)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L68)
 
 Options for QUERY-backed graph-native gap replay (#133-full).
 
@@ -16,7 +16,7 @@ Options for QUERY-backed graph-native gap replay (#133-full).
 
 > `readonly` **adopt**: (`graph`) => `void`
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L68)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L73)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [core/src/graph/graph-query-gap-replay.ts:68](https://github.com/fre
 
 > `readonly` `optional` **applyTransition?**: (`transition`) => `void`
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L70)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L75)
 
 Typed host reflection of an applied crossing (e.g. dispatch to the DOM).
 
@@ -54,17 +54,19 @@ Typed host reflection of an applied crossing (e.g. dispatch to the DOM).
 
 > `readonly` **cellStore**: [`StateCellStore`](StateCellStore.md)
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L67)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L72)
 
 ***
 
 ### chainValidation?
 
-> `readonly` `optional` **chainValidation?**: [`ChainValidationOptions`](ChainValidationOptions.md)
+> `readonly` `optional` **chainValidation?**: [`ChainValidationOptions`](ChainValidationOptions.md) \| (() => [`ChainValidationOptions`](ChainValidationOptions.md) \| `undefined`)
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L72)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L81)
 
 Checkpoint-attestation retention for an evicted buffer prefix (issue #150).
+A thunk defers resolution until the entries are read, keeping retention and
+a live buffer consistent across the QUERY await (PR #188 review).
 
 ***
 
@@ -72,7 +74,7 @@ Checkpoint-attestation retention for an evicted buffer prefix (issue #150).
 
 > `readonly` **entries**: readonly [`PatchReceiptEntry`](PatchReceiptEntry.md)[]
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L66)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L71)
 
 ***
 
@@ -80,7 +82,7 @@ Defined in: [core/src/graph/graph-query-gap-replay.ts:66](https://github.com/fre
 
 > `readonly` `optional` **fetchImpl?**: \{(`input`, `init?`): `Promise`\<`Response`\>; (`input`, `init?`): `Promise`\<`Response`\>; \}
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L73)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L82)
 
 #### Call Signature
 
@@ -128,7 +130,7 @@ Defined in: [core/src/graph/graph-query-gap-replay.ts:73](https://github.com/fre
 
 > `readonly` **localBase**: [`DocumentGraph`](DocumentGraph.md)
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L65)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L70)
 
 ***
 
@@ -136,7 +138,7 @@ Defined in: [core/src/graph/graph-query-gap-replay.ts:65](https://github.com/fre
 
 > `readonly` `optional` **maxRetries?**: `number`
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L74)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L83)
 
 ***
 
@@ -144,4 +146,4 @@ Defined in: [core/src/graph/graph-query-gap-replay.ts:74](https://github.com/fre
 
 > `readonly` **queryUrl**: `string`
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L64)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L69)

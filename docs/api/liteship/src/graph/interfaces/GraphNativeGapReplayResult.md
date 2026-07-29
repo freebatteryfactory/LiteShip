@@ -6,7 +6,7 @@
 
 # Interface: GraphNativeGapReplayResult
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:63
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:72
 
 Result of [runGraphNativeGapReplay](../functions/runGraphNativeGapReplay.md).
 
@@ -16,7 +16,7 @@ Result of [runGraphNativeGapReplay](../functions/runGraphNativeGapReplay.md).
 
 > `readonly` **query**: [`GraphQueryResponse`](../type-aliases/GraphQueryResponse.md)
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:64
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:73
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/dist/graph/graph-query-gap-replay.d.ts:64
 
 > `readonly` **replayedCells**: readonly [`ReplayableRecoveryCell`](../../reactive/type-aliases/ReplayableRecoveryCell.md)[]
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:65
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:74
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: core/dist/graph/graph-query-gap-replay.d.ts:65
 
 > `readonly` **transitions**: readonly [`DiscreteStateTransition`](../../motion/interfaces/DiscreteStateTransition.md)[]
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:66
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:75
