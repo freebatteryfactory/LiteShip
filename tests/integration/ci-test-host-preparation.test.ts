@@ -119,11 +119,13 @@ describe('prepare-ci-test-host — bounded preparation', () => {
       planFakeFfmpeg(dir);
       planHangingInstaller(dir);
 
-      const result = await runPreparation(dir, { LITESHIP_CI_HOST_INSTALL_STEP_TIMEOUT_MS: '800' });
+      const result = await runPreparation(dir, { LITESHIP_CI_HOST_INSTALL_PHASE_TIMEOUT_MS: '800' });
 
       expect(result.timedOut).toBe(false);
       expect(result.exitCode).not.toBe(0);
-      expect(result.stderr).toContain('timed out after 800ms');
+      // The child spawns with the REMAINING phase budget (<=800ms), so the
+      // classified message names whatever remained, not the raw configured value.
+      expect(result.stderr).toMatch(/timed out after \d+ms/u);
       expect(result.stderr).toContain('"ciTestHostPhase":"ffmpeg-install","event":"start"');
       expect(phaseDurationMs(result.stderr, 'ffmpeg-install', 'failed')).toBeLessThan(15_000);
     },
