@@ -7,6 +7,7 @@
  */
 import { afterEach, describe, test, expect } from 'vitest';
 import {
+  DAG,
   GraphPatch,
   Diagnostics,
   HLC,
@@ -481,5 +482,66 @@ describe('graph-query gap replay — HOSTILE fixtures (Law 15)', () => {
     expect(transitions).toEqual([]);
     expect(captured.events.map((event) => event.code)).toContain('core/gap-replay/discrete-transition-unknown-cell');
     Diagnostics.reset();
+  });
+});
+
+// ── #150 — checkpoint-attestation retention across an evicted buffer prefix ──
+
+describe('graph-query gap replay — evicted-prefix retention (#150)', () => {
+  test('an evicted prefix WITHOUT retention refuses not_genesis (the safe floor, unchanged)', async () => {
+    const { mid, server, e2 } = await scenario();
+    // e1 was evicted by the bounded buffer: the retained suffix's first receipt
+    // has previous = e1.hash, not genesis.
+    const result = await replayDiscreteFromPatchReceipts({
+      localBaseId: mid.id,
+      serverGraphId: server.id,
+      entries: [e2],
+      cellStore: freshStore(),
+    });
+    expect(result.transitions).toEqual([]);
+    expect(result.replayedCells).toEqual([]);
+  });
+
+  test('an evicted prefix WITH {base, checkpoint} replays the retained suffix', async () => {
+    const { mid, server, t2, e1, e2 } = await scenario();
+    const minted = await DAG.checkpoint(DAG.fromReceipts([e1.receipt]), { below: e1.receipt.hash });
+    const store = freshStore();
+    const result = await replayDiscreteFromPatchReceipts({
+      localBaseId: mid.id,
+      serverGraphId: server.id,
+      entries: [e2],
+      cellStore: store,
+      chainValidation: { base: e1.receipt.hash, checkpoint: minted.checkpoint },
+    });
+    expect(result.transitions).toEqual([t2]);
+    expect(result.replayedCells).toHaveLength(1);
+  });
+
+  test('a base WITHOUT its checkpoint attestation still refuses — the watermark hole stays closed', async () => {
+    const { mid, server, e1, e2 } = await scenario();
+    const result = await replayDiscreteFromPatchReceipts({
+      localBaseId: mid.id,
+      serverGraphId: server.id,
+      entries: [e2],
+      cellStore: freshStore(),
+      chainValidation: { base: e1.receipt.hash },
+    });
+    expect(result.transitions).toEqual([]);
+  });
+
+  test('a checkpoint committing a DIFFERENT watermark refuses (a truncation cannot self-authorize)', async () => {
+    const { mid, server, e1, e2 } = await scenario();
+    // Mint a REAL checkpoint — but over an unrelated chain, so its subject.id
+    // commits a different watermark than the claimed base.
+    const foreign = await mkEntry(mkTransition(mid.id, server.id, 'state', 'alpha', 9));
+    const minted = await DAG.checkpoint(DAG.fromReceipts([foreign.receipt]), { below: foreign.receipt.hash });
+    const result = await replayDiscreteFromPatchReceipts({
+      localBaseId: mid.id,
+      serverGraphId: server.id,
+      entries: [e2],
+      cellStore: freshStore(),
+      chainValidation: { base: e1.receipt.hash, checkpoint: minted.checkpoint },
+    });
+    expect(result.transitions).toEqual([]);
   });
 });

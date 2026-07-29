@@ -8,7 +8,7 @@
 
 > **applyGraphNativeSnapshot**(`snapshot`, `handlers`): `Promise`\<`void`\>
 
-Defined in: [web/src/stream/recovery.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L199)
+Defined in: [web/src/stream/recovery.ts:209](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L209)
 
 Apply snapshot html and replayable discrete signals only.
 

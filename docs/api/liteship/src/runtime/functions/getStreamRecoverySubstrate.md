@@ -8,7 +8,7 @@
 
 > **getStreamRecoverySubstrate**(`artifactId`): [`ResolvedStreamRecoverySubstrate`](../interfaces/ResolvedStreamRecoverySubstrate.md) \| `undefined`
 
-Defined in: web/dist/stream/recovery-substrate.d.ts:42
+Defined in: web/dist/stream/recovery-substrate.d.ts:53
 
 Look up the registered substrate (with its live receipt buffer) for an artifact.
 

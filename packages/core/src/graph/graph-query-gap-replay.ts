@@ -15,7 +15,12 @@
 
 import type { ContentAddress } from '../schema/brands.js';
 import type { DocumentGraph } from './document-graph.js';
-import { Receipt, type ChainValidationError, type ReceiptEnvelope } from '../evidence/receipt.js';
+import {
+  Receipt,
+  type ChainValidationError,
+  type ChainValidationOptions,
+  type ReceiptEnvelope,
+} from '../evidence/receipt.js';
 import { Diagnostics } from '../evidence/diagnostics.js';
 import { createGraphQueryRefreshBase, graphQueryEtag, sendGraphQuery, type GraphQueryResponse } from './graph-query.js';
 import type { StateCellStore } from '../reactive/state-cell.js';
@@ -40,6 +45,18 @@ export interface ReplayDiscreteFromPatchReceiptsOptions {
   readonly cellStore: StateCellStore;
   /** Typed host reflection of an applied crossing (e.g. dispatch to the DOM). */
   readonly applyTransition?: (transition: DiscreteStateTransition) => void;
+  /**
+   * Checkpoint-attestation retention (issue #150): when the bounded receipt
+   * buffer evicted a prefix, the buffer owner minted a genesis-shaped
+   * `DAG.checkpoint` over the dropped set and retains `{ base, checkpoint }`.
+   * Threading it here lets a retained SUFFIX validate without its dropped
+   * prefix — `validateChainDetailed` widens its genesis predicate to
+   * `previous === base` and integrity-checks the attestation. Omitted, the
+   * genesis-rooted floor applies unchanged (a truncated tail refuses —
+   * `base` without a verified `checkpoint` is deliberately rejected; that
+   * hole was closed once and stays closed).
+   */
+  readonly chainValidation?: ChainValidationOptions;
 }
 
 /** Options for QUERY-backed graph-native gap replay (#133-full). */
@@ -51,6 +68,8 @@ export interface GraphNativeGapReplayOptions {
   readonly adopt: (graph: DocumentGraph) => void;
   /** Typed host reflection of an applied crossing (e.g. dispatch to the DOM). */
   readonly applyTransition?: (transition: DiscreteStateTransition) => void;
+  /** Checkpoint-attestation retention for an evicted buffer prefix (issue #150). */
+  readonly chainValidation?: ChainValidationOptions;
   readonly fetchImpl?: typeof fetch;
   readonly maxRetries?: number;
 }
@@ -273,7 +292,7 @@ export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFro
 
   let validated: { readonly ok: true } | { readonly ok: false; readonly error: ChainValidationError };
   try {
-    await Receipt.validateChainDetailed(chain);
+    await Receipt.validateChainDetailed(chain, options.chainValidation);
     validated = { ok: true };
   } catch (error) {
     // `validateChainDetailed` throws the typed `ChainValidationError` (a plain
@@ -361,6 +380,7 @@ export async function runGraphNativeGapReplay(
     entries: options.entries,
     cellStore: options.cellStore,
     ...(options.applyTransition !== undefined ? { applyTransition: options.applyTransition } : {}),
+    ...(options.chainValidation !== undefined ? { chainValidation: options.chainValidation } : {}),
   });
 
   return { query, replayedCells, transitions };

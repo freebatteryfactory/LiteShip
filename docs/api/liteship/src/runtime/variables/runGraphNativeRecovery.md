@@ -8,7 +8,7 @@
 
 > `const` **runGraphNativeRecovery**: (`options`) => `Promise`\<`void`\>
 
-Defined in: web/dist/stream/recovery.d.ts:88
+Defined in: web/dist/stream/recovery.d.ts:95
 
 Full graph-native recovery (#133).
 

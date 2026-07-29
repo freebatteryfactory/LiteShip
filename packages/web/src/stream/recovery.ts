@@ -6,6 +6,7 @@
  */
 
 import type {
+  ChainValidationOptions,
   DiscreteStateTransition,
   DocumentGraph,
   GraphMutationClient,
@@ -65,6 +66,13 @@ export interface StreamRecoveryOptions {
   readonly cellStore?: StateCellStore;
   /** Transition/receipt chain spanning the missed gap (#133-full). */
   readonly patchReceiptEntries?: readonly PatchReceiptEntry[];
+  /**
+   * Checkpoint-attestation retention for an evicted buffer prefix (issue #150) —
+   * a THUNK because recovery binds once while evictions keep happening: it is
+   * resolved at recovery time so the retained suffix validates against the
+   * CURRENT watermark checkpoint, never a bind-time snapshot.
+   */
+  readonly chainValidation?: () => ChainValidationOptions | undefined;
   /**
    * Whether the rendered DOM is KNOWN-STALE (F-REC-3). Recovery is usually
    * triggered by a rejected morph, which leaves the DOM stale even after
@@ -163,6 +171,7 @@ export const runGraphNativeRecovery = async (options: StreamRecoveryOptions): Pr
     localBase !== undefined;
 
   if (canGapReplay) {
+    const chainValidation = options.chainValidation?.();
     const result = await runGraphNativeGapReplay({
       queryUrl: options.graphQueryUrl!,
       localBase: localBase!,
@@ -170,6 +179,7 @@ export const runGraphNativeRecovery = async (options: StreamRecoveryOptions): Pr
       cellStore: options.cellStore!,
       adopt: (graph) => options.mutationClient!.adopt(graph),
       ...(options.handlers.applyTransition !== undefined ? { applyTransition: options.handlers.applyTransition } : {}),
+      ...(chainValidation !== undefined ? { chainValidation } : {}),
     });
     if (result.query.status === 'ok' || result.query.status === 'not_modified') {
       // F-REC-3: gap-replay corrected the graph + cell store, but a rejected

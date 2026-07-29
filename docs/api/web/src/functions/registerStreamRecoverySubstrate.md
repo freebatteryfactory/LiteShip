@@ -8,7 +8,7 @@
 
 > **registerStreamRecoverySubstrate**(`artifactId`, `substrate`): () => `void`
 
-Defined in: [web/src/stream/recovery-substrate.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L68)
+Defined in: [web/src/stream/recovery-substrate.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L91)
 
 Register the gap-replay substrate for a streamed artifact. Returns a disposer.
 Re-registering an artifact id that is still registered throws — two substrates

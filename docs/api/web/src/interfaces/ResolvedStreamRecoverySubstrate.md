@@ -6,7 +6,7 @@
 
 # Interface: ResolvedStreamRecoverySubstrate
 
-Defined in: [web/src/stream/recovery-substrate.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L43)
+Defined in: [web/src/stream/recovery-substrate.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L50)
 
 Substrate plus the live receipt buffer, as consumed by the stream directive.
 
@@ -20,7 +20,7 @@ Substrate plus the live receipt buffer, as consumed by the stream directive.
 
 > `readonly` **cellStore**: [`StateCellStore`](../../../liteship/src/reactive/interfaces/StateCellStore.md)
 
-Defined in: [web/src/stream/recovery-substrate.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L39)
+Defined in: [web/src/stream/recovery-substrate.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L46)
 
 The host's StateCell store for discrete crossing replay.
 
@@ -30,11 +30,28 @@ The host's StateCell store for discrete crossing replay.
 
 ***
 
+### chainValidation?
+
+> `readonly` `optional` **chainValidation?**: [`ChainValidationOptions`](../../../liteship/src/evidence/interfaces/ChainValidationOptions.md)
+
+Defined in: [web/src/stream/recovery-substrate.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L63)
+
+Checkpoint-attestation retention (issue #150). Present after the bounded
+buffer evicted a prefix: `base` is the evicted watermark receipt's hash (the
+`previous` of the first retained entry) and `checkpoint` is the genesis-shaped
+`DAG.checkpoint` attestation minted over the dropped region AT EVICTION TIME
+(the only moment the dropped envelopes are still in hand). Threading it into
+gap replay lets the retained suffix pass `validateChainDetailed` without its
+dropped prefix — previously a long-lived session's replay failed `not_genesis`
+and every missed crossing silently degraded to the snapshot floor.
+
+***
+
 ### graphQueryUrl
 
 > `readonly` **graphQueryUrl**: `string`
 
-Defined in: [web/src/stream/recovery-substrate.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L35)
+Defined in: [web/src/stream/recovery-substrate.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L42)
 
 The host's QUERY read-leg endpoint (`graphQueryRoute` mount point).
 
@@ -48,7 +65,7 @@ The host's QUERY read-leg endpoint (`graphQueryRoute` mount point).
 
 > `readonly` **mutationClient**: [`StreamRecoveryMutationClient`](../type-aliases/StreamRecoveryMutationClient.md)
 
-Defined in: [web/src/stream/recovery-substrate.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L37)
+Defined in: [web/src/stream/recovery-substrate.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L44)
 
 The host's mutation client — supplies the local base and receives the adopted graph.
 
@@ -62,6 +79,6 @@ The host's mutation client — supplies the local base and receives the adopted 
 
 > `readonly` **patchReceiptEntries**: readonly [`PatchReceiptEntry`](../../../liteship/src/graph/interfaces/PatchReceiptEntry.md)[]
 
-Defined in: [web/src/stream/recovery-substrate.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L45)
+Defined in: [web/src/stream/recovery-substrate.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L52)
 
 LIVE bounded buffer — receipt frames recorded after binding are visible at recovery time.

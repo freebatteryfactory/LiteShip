@@ -8,7 +8,7 @@
 
 > **applyDiscreteSnapshotSignals**(`signals`, `applyDiscreteSignal`): `void`
 
-Defined in: [web/src/stream/recovery.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L121)
+Defined in: [web/src/stream/recovery.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L129)
 
 Dispatch only replayable discrete signal payloads — continuous transients are skipped.
 

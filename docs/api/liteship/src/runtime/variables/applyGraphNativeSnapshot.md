@@ -8,7 +8,7 @@
 
 > `const` **applyGraphNativeSnapshot**: (`snapshot`, `handlers`) => `Promise`\<`void`\>
 
-Defined in: web/dist/stream/recovery.d.ts:90
+Defined in: web/dist/stream/recovery.d.ts:97
 
 Apply snapshot html and replayable discrete signals only.
 

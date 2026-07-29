@@ -6,7 +6,7 @@
 
 # Interface: GraphNativeGapReplayOptions
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:37
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:49
 
 Options for QUERY-backed graph-native gap replay (#133-full).
 
@@ -16,7 +16,7 @@ Options for QUERY-backed graph-native gap replay (#133-full).
 
 > `readonly` **adopt**: (`graph`) => `void`
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:42
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:54
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: core/dist/graph/graph-query-gap-replay.d.ts:42
 
 > `readonly` `optional` **applyTransition?**: (`transition`) => `void`
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:44
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:56
 
 Typed host reflection of an applied crossing (e.g. dispatch to the DOM).
 
@@ -54,7 +54,17 @@ Typed host reflection of an applied crossing (e.g. dispatch to the DOM).
 
 > `readonly` **cellStore**: [`StateCellStore`](../../reactive/interfaces/StateCellStore.md)
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:41
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:53
+
+***
+
+### chainValidation?
+
+> `readonly` `optional` **chainValidation?**: [`ChainValidationOptions`](../../evidence/interfaces/ChainValidationOptions.md)
+
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:58
+
+Checkpoint-attestation retention for an evicted buffer prefix (issue #150).
 
 ***
 
@@ -62,7 +72,7 @@ Defined in: core/dist/graph/graph-query-gap-replay.d.ts:41
 
 > `readonly` **entries**: readonly [`PatchReceiptEntry`](PatchReceiptEntry.md)[]
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:40
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:52
 
 ***
 
@@ -70,7 +80,7 @@ Defined in: core/dist/graph/graph-query-gap-replay.d.ts:40
 
 > `readonly` `optional` **fetchImpl?**: \{(`input`, `init?`): `Promise`\<`Response`\>; (`input`, `init?`): `Promise`\<`Response`\>; \}
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:45
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:59
 
 #### Call Signature
 
@@ -118,7 +128,7 @@ Defined in: core/dist/graph/graph-query-gap-replay.d.ts:45
 
 > `readonly` **localBase**: [`DocumentGraph`](DocumentGraph.md)
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:39
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:51
 
 ***
 
@@ -126,7 +136,7 @@ Defined in: core/dist/graph/graph-query-gap-replay.d.ts:39
 
 > `readonly` `optional` **maxRetries?**: `number`
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:46
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:60
 
 ***
 
@@ -134,4 +144,4 @@ Defined in: core/dist/graph/graph-query-gap-replay.d.ts:46
 
 > `readonly` **queryUrl**: `string`
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:38
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:50

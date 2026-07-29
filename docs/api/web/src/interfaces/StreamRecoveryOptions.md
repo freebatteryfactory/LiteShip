@@ -6,7 +6,7 @@
 
 # Interface: StreamRecoveryOptions
 
-Defined in: [web/src/stream/recovery.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L57)
+Defined in: [web/src/stream/recovery.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L58)
 
 Configuration for [bindRequestSnapshotRecovery](../functions/bindRequestSnapshotRecovery.md) and [runGraphNativeRecovery](../functions/runGraphNativeRecovery.md).
 
@@ -21,7 +21,7 @@ of those are absent.
 
 > `readonly` **artifactId**: `string`
 
-Defined in: [web/src/stream/recovery.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L58)
+Defined in: [web/src/stream/recovery.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L59)
 
 ***
 
@@ -29,9 +29,26 @@ Defined in: [web/src/stream/recovery.ts:58](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **cellStore?**: [`StateCellStore`](../../../liteship/src/reactive/interfaces/StateCellStore.md)
 
-Defined in: [web/src/stream/recovery.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L65)
+Defined in: [web/src/stream/recovery.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L66)
 
 StateCell store for discrete gap-replay (#133-full). Required with [patchReceiptEntries](#patchreceiptentries).
+
+***
+
+### chainValidation?
+
+> `readonly` `optional` **chainValidation?**: () => [`ChainValidationOptions`](../../../liteship/src/evidence/interfaces/ChainValidationOptions.md) \| `undefined`
+
+Defined in: [web/src/stream/recovery.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L75)
+
+Checkpoint-attestation retention for an evicted buffer prefix (issue #150) —
+a THUNK because recovery binds once while evictions keep happening: it is
+resolved at recovery time so the retained suffix validates against the
+CURRENT watermark checkpoint, never a bind-time snapshot.
+
+#### Returns
+
+[`ChainValidationOptions`](../../../liteship/src/evidence/interfaces/ChainValidationOptions.md) \| `undefined`
 
 ***
 
@@ -39,7 +56,7 @@ StateCell store for discrete gap-replay (#133-full). Required with [patchReceipt
 
 > `readonly` `optional` **domStale?**: () => `boolean`
 
-Defined in: [web/src/stream/recovery.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L77)
+Defined in: [web/src/stream/recovery.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L85)
 
 Whether the rendered DOM is KNOWN-STALE (F-REC-3). Recovery is usually
 triggered by a rejected morph, which leaves the DOM stale even after
@@ -59,7 +76,7 @@ fast path (no snapshot fetch when the DOM is already fresh).
 
 > `readonly` `optional` **drainPendingReceipts?**: () => `Promise`\<`void`\>
 
-Defined in: [web/src/stream/recovery.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L87)
+Defined in: [web/src/stream/recovery.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L95)
 
 Await any in-flight receipt-frame attestation before recovery reads the buffer.
 `recordStreamPatchReceipt` is async — it recomputes the sha256 hash to attest a
@@ -79,7 +96,7 @@ reads it. Absent, recovery proceeds immediately (the interim floor is unaffected
 
 > `readonly` `optional` **endpointPolicy?**: [`RuntimeEndpointPolicy`](RuntimeEndpointPolicy.md)
 
-Defined in: [web/src/stream/recovery.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L61)
+Defined in: [web/src/stream/recovery.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L62)
 
 ***
 
@@ -87,7 +104,7 @@ Defined in: [web/src/stream/recovery.ts:61](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **graphQueryUrl?**: `string`
 
-Defined in: [web/src/stream/recovery.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L60)
+Defined in: [web/src/stream/recovery.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L61)
 
 ***
 
@@ -95,7 +112,7 @@ Defined in: [web/src/stream/recovery.ts:60](https://github.com/freebatteryfactor
 
 > `readonly` **handlers**: [`StreamRecoveryHandlers`](StreamRecoveryHandlers.md)
 
-Defined in: [web/src/stream/recovery.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L63)
+Defined in: [web/src/stream/recovery.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L64)
 
 ***
 
@@ -103,7 +120,7 @@ Defined in: [web/src/stream/recovery.ts:63](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **mutationClient?**: [`StreamRecoveryMutationClient`](../type-aliases/StreamRecoveryMutationClient.md)
 
-Defined in: [web/src/stream/recovery.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L62)
+Defined in: [web/src/stream/recovery.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L63)
 
 ***
 
@@ -111,7 +128,7 @@ Defined in: [web/src/stream/recovery.ts:62](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **patchReceiptEntries?**: readonly [`PatchReceiptEntry`](../../../liteship/src/graph/interfaces/PatchReceiptEntry.md)[]
 
-Defined in: [web/src/stream/recovery.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L67)
+Defined in: [web/src/stream/recovery.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L68)
 
 Transition/receipt chain spanning the missed gap (#133-full).
 
@@ -121,4 +138,4 @@ Transition/receipt chain spanning the missed gap (#133-full).
 
 > `readonly` `optional` **snapshotUrl?**: `string`
 
-Defined in: [web/src/stream/recovery.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L59)
+Defined in: [web/src/stream/recovery.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L60)

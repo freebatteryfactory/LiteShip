@@ -30,6 +30,23 @@ The host's StateCell store for discrete crossing replay.
 
 ***
 
+### chainValidation?
+
+> `readonly` `optional` **chainValidation?**: [`ChainValidationOptions`](../../evidence/interfaces/ChainValidationOptions.md)
+
+Defined in: web/dist/stream/recovery-substrate.d.ts:44
+
+Checkpoint-attestation retention (issue #150). Present after the bounded
+buffer evicted a prefix: `base` is the evicted watermark receipt's hash (the
+`previous` of the first retained entry) and `checkpoint` is the genesis-shaped
+`DAG.checkpoint` attestation minted over the dropped region AT EVICTION TIME
+(the only moment the dropped envelopes are still in hand). Threading it into
+gap replay lets the retained suffix pass `validateChainDetailed` without its
+dropped prefix — previously a long-lived session's replay failed `not_genesis`
+and every missed crossing silently degraded to the snapshot floor.
+
+***
+
 ### graphQueryUrl
 
 > `readonly` **graphQueryUrl**: `string`
