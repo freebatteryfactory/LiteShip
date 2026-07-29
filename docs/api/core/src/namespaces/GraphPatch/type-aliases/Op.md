@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [GraphPatch](../README.md) / Op
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [GraphPatch](../README.md) / Op
 
 # Type Alias: Op
 

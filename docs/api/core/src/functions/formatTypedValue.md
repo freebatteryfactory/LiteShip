@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / formatTypedValue
+[LiteShip](../../../README.md) / [core/src](../README.md) / formatTypedValue
 
 # Function: formatTypedValue()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FindingInput
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FindingInput
 
 # Interface: FindingInput
 

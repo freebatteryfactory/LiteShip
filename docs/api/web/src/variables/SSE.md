@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / SSE
+[LiteShip](../../../README.md) / [web/src](../README.md) / SSE
 
 # Variable: SSE
 
 > `const` **SSE**: `object`
 
-Defined in: [web/src/stream/sse.ts:607](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L607)
+Defined in: [web/src/stream/sse.ts:608](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L608)
 
 SSE client namespace.
 

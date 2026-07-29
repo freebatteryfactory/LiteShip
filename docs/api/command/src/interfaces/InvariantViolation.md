@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / InvariantViolation
+[LiteShip](../../../README.md) / [command/src](../README.md) / InvariantViolation
 
 # Interface: InvariantViolation
 

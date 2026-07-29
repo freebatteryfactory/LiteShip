@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / resolveImport
+[LiteShip](../../../README.md) / [audit/src](../README.md) / resolveImport
 
 # Function: resolveImport()
 

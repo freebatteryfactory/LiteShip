@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / CompositionFacts
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / CompositionFacts
 
 # Interface: CompositionFacts
 

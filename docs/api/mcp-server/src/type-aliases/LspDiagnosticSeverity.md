@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / LspDiagnosticSeverity
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / LspDiagnosticSeverity
 
 # Type Alias: LspDiagnosticSeverity
 

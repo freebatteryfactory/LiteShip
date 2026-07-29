@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ThemeDeclaration
+[LiteShip](../../README.md) / [\_spine](../README.md) / ThemeDeclaration
 
 # Interface: ThemeDeclaration
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / LspNotification
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / LspNotification
 
 # Interface: LspNotification
 

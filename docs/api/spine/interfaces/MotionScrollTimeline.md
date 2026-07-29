@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / MotionScrollTimeline
+[LiteShip](../../README.md) / [\_spine](../README.md) / MotionScrollTimeline
 
 # Interface: MotionScrollTimeline
 

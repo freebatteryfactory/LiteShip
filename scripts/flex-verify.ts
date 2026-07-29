@@ -6,12 +6,12 @@
  * Prints a PASS/FAIL table per rating dimension; exits non-zero on any FAIL.
  *
  * The seven rating dimensions:
- *   1. Architecture — ADR coverage of every non-obvious decision
+ *   1. Architecture — every non-obvious decision enforced by a structural rule or gate
  *   2. Type discipline — zero unsanctioned casts; ESLint enforced
  *   3. Testing rigor — full gauntlet test surface green
  *   4. Performance — bench gate clean, no WATCHLIST entries, SSE preflight mandatory
  *   5. Release discipline — feedback:verify + docs:check both pass
- *   6. Docs — TSDoc on public exports; TypeDoc committed without drift; ADR set complete
+ *   6. Docs — TSDoc on public exports; TypeDoc committed without drift; kept prose set present
  *   7. CapsuleFactory — capsule manifest present and structurally valid
  *
  * Folded into gauntlet:full so 10/10 is continuously enforced on every CI run.
@@ -152,25 +152,21 @@ const checks: Check[] = [
   {
     dim: 'Architecture',
     check: () => {
-      if (!existsSync('docs/adr')) {
-        return { pass: false, detail: 'docs/adr/ does not exist' };
+      // Architectural decisions live as ENFORCEMENT, not prose: the structural
+      // rule corpus (sgrules/) and the source-layout authority are the decision
+      // record. A repo whose rules vanished has lost its architecture.
+      if (!existsSync('sgrules')) {
+        return { pass: false, detail: 'sgrules/ does not exist' };
       }
-      const adrs = readdirSync('docs/adr').filter((f) => f.endsWith('.md'));
-      const required = [
-        'README.md',
-        '_template.md',
-        '0001-namespace-pattern.md',
-        '0002-zero-alloc.md',
-        '0003-content-addressing.md',
-        '0004-plan-coordinator.md',
-        '0005-effect-boundary.md',
-        '0006-compiler-dispatch.md',
-      ];
-      const missing = required.filter((f) => !adrs.includes(f));
-      if (missing.length > 0) {
-        return { pass: false, detail: `missing ADRs: ${missing.join(', ')}` };
+      const rules = readdirSync('sgrules').filter((f) => f.endsWith('.yml'));
+      const layoutGate = existsSync('scripts/source-layout-gate.ts');
+      if (rules.length < 8 || !layoutGate) {
+        return {
+          pass: false,
+          detail: `structural rules=${rules.length} (≥ 8 required) source-layout-gate=${layoutGate}`,
+        };
       }
-      return { pass: true, detail: `${adrs.length} ADR files present (≥ ${required.length} required)` };
+      return { pass: true, detail: `${rules.length} structural rules enforced + source-layout gate present` };
     },
   },
 
@@ -262,7 +258,8 @@ const checks: Check[] = [
       //
       // - worker-runtime-startup-shared: transport overhead includes non-shared
       //   seams (state-delivery:message-receipt) that vary per-replicate by
-      //   design; see ADR-0002 worker transport cost floor.
+      //   design — the off-thread transport cost floor is inherent boundary
+      //   cost with no in-process analogue, so it is not modelled as parity.
       // - adaptive: 2μs hot-path measurement; OS-level timer jitter (~0.5μs on
       //   Node+Windows) produces 15-30% replicate-spread swings on each of two
       //   independent 2μs measurements (directive vs manual). Verified across
@@ -385,22 +382,24 @@ const checks: Check[] = [
   {
     dim: 'Docs',
     check: () => {
-      const adrCount = existsSync('docs/adr') ? readdirSync('docs/adr').filter((f) => f.endsWith('.md')).length : 0;
+      // The kept prose set is small and load-bearing: each named doc must exist.
+      const keptDocs = ['README.md', 'GETTING-STARTED.md', 'GLOSSARY.md', 'HOSTING.md', 'CONTRIBUTING.md'];
+      const missingDocs = keptDocs.filter((f) => !existsSync(f));
       const renderRuntimeGone = !existsSync('docs/RENDER-RUNTIME.md');
       const archExists = existsSync('ARCHITECTURE.md');
       // ARCHITECTURE.md must be SELF-SUFFICIENT — it explains the system on its own,
-      // not a thin stub that defers to the ADRs. This INVERTS the old `< 4KB slim
-      // index` cap, which punished rich docs and once got the document-graph + AI-cast
-      // explanations gutted out just to pass CI. The doc must carry real weight (the
-      // old 4KB cap is now the FLOOR) AND actually describe the keystone IR in prose.
+      // never deferring to prose that no longer exists. This INVERTS the old `< 4KB
+      // slim index` cap, which punished rich docs and once got the document-graph +
+      // AI-cast explanations gutted out just to pass CI. The doc must carry real
+      // weight (the old 4KB cap is now the FLOOR) AND describe the keystone IR.
       const archBytes = archExists ? statSync('ARCHITECTURE.md').size : 0;
       const archText = archExists ? readFileSync('ARCHITECTURE.md', 'utf8') : '';
       const archIsSelfSufficient = archExists && archBytes >= 4096 && /document graph/i.test(archText);
       const apiExists = existsSync('docs/api') && readdirSync('docs/api').length > 0;
-      const pass = adrCount >= 8 && renderRuntimeGone && archIsSelfSufficient && apiExists;
+      const pass = missingDocs.length === 0 && renderRuntimeGone && archIsSelfSufficient && apiExists;
       return {
         pass,
-        detail: `adrs=${adrCount} render-runtime-deleted=${renderRuntimeGone} arch-self-sufficient=${archIsSelfSufficient} (bytes=${archBytes}) api-exists=${apiExists}`,
+        detail: `kept-docs-missing=[${missingDocs.join(', ')}] render-runtime-deleted=${renderRuntimeGone} arch-self-sufficient=${archIsSelfSufficient} (bytes=${archBytes}) api-exists=${apiExists}`,
       };
     },
   },
@@ -426,9 +425,10 @@ const checks: Check[] = [
         // to a real instance gate. The type-directed AST walker (Task 2) made
         // factory-wrapped capsules detectable; pre-Spec-1.1 the cachedProjection
         // arm in particular always reported zero instances and the dimension
-        // silently passed. As of the ADR-0008 policyGate amendment, ALL SEVEN
-        // arms ship real instances, so every arm is gated — a missing instance
-        // for any arm fails flex:verify:
+        // silently passed. The assembly catalog is CLOSED at seven arms, and
+        // since the policyGate arm gained a real instance ALL SEVEN ship one,
+        // so every arm is gated — a missing instance for any arm fails
+        // flex:verify:
         //   pureTransform     — CanonicalCbor, BoundaryEvaluate, JsonRpcServer
         //   receiptedMutation — VitestRunner, web.stream.receipt
         //   stateMachine      — SceneRuntime, core.token-buffer

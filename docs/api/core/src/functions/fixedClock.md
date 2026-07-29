@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / fixedClock
+[LiteShip](../../../README.md) / [core/src](../README.md) / fixedClock
 
 # Function: fixedClock()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / LiteshipLocals
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / LiteshipLocals
 
 # Interface: LiteshipLocals
 

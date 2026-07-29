@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / CompiledScrollTimeline
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / CompiledScrollTimeline
 
 # Interface: CompiledScrollTimeline
 

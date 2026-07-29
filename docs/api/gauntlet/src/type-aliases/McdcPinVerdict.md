@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / McdcPinVerdict
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / McdcPinVerdict
 
 # Type Alias: McdcPinVerdict
 

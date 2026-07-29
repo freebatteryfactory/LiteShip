@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / parseQuantizeBlocks
+[LiteShip](../../../README.md) / [vite/src](../README.md) / parseQuantizeBlocks
 
 # Function: parseQuantizeBlocks()
 

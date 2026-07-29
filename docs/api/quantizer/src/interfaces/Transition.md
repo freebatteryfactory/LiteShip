@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [quantizer/src](../README.md) / Transition
+[LiteShip](../../../README.md) / [quantizer/src](../README.md) / Transition
 
 # Interface: Transition\<B\>
 

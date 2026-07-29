@@ -2,7 +2,7 @@
 /**
  * Doc link integrity — a guard for the Front-Door Cut's doc moves.
  *
- * Renaming or relocating a root doc, an ADR, or an example silently breaks every
+ * Renaming or relocating a root doc or an example silently breaks every
  * relative link that pointed at it — and the published npm READMEs hard-code
  * `github.com/.../blob/main/<file>` links that a rename breaks with no local signal.
  * This gate resolves every RELATIVE markdown link (and every `blob/main` link) in the
@@ -63,11 +63,8 @@ const CURRENT_AUTHORITY_DOCS = [
   'ARCHITECTURE.md',
   'ASTRO-RUNTIME-MODEL.md',
   'ASTRO-STATIC-MENTAL-MODEL.md',
-  'AUDIT.md',
   'AUTHORING-MODEL.md',
-  'CAPSULE-FACTORY.md',
   'CONTRIBUTING.md',
-  'DOCS.md',
   'GETTING-STARTED.md',
   'GLOSSARY.md',
   'HOSTING.md',
@@ -75,9 +72,7 @@ const CURRENT_AUTHORITY_DOCS = [
   'README.md',
   'RELEASING.md',
   'SECURITY.md',
-  'SKILL.md',
   'STATUS.md',
-  'TYPEDOC.md',
 ] as const;
 
 describe('doc link integrity', () => {

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FixSizeCap
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FixSizeCap
 
 # Interface: FixSizeCap
 

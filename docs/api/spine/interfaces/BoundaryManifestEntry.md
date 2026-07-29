@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / BoundaryManifestEntry
+[LiteShip](../../README.md) / [\_spine](../README.md) / BoundaryManifestEntry
 
 # Interface: BoundaryManifestEntry
 

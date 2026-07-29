@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / renderWireContractDoc
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / renderWireContractDoc
 
 # Function: renderWireContractDoc()
 

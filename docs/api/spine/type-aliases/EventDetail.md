@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / EventDetail
+[LiteShip](../../README.md) / [\_spine](../README.md) / EventDetail
 
 # Type Alias: EventDetail\<Name\>
 

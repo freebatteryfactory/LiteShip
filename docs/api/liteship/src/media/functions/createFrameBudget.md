@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / createFrameBudget
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / createFrameBudget
 
 # Function: createFrameBudget()
 
@@ -13,7 +13,7 @@ Defined in: core/dist/media/frame-budget.d.ts:54
 Creates a FrameBudget tracker tied to rAF, with priority-based scheduling.
 Critical tasks always run; lower priorities are deferred if budget is exhausted.
 The budget IS its own disposable ([AsyncOwnedResource](../../reactive/interfaces/AsyncOwnedResource.md)) — awaiting
-`budget.dispose()` cancels the rAF loop (verb grammar, ADR-0046).
+`budget.dispose()` cancels the rAF loop (verb grammar).
 
 ## Parameters
 

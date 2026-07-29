@@ -26,8 +26,10 @@
  * directly. An internal-only exported type never reached from the entry is not on
  * the public surface and is not counted — so the snapshot stays stable against
  * internal refactors, matching the api-surface gate's public-contract discipline.
+ * KNOWN LIMIT: `export * as NS from './x'` is not followed (no package uses the
+ * form today); introducing one would silently under-count until this walk learns it.
  *
- * POLICY-FREE (ADR-0012): this module names no LiteShip roster. The host (the
+ * POLICY-FREE: this module names no LiteShip roster. The host (the
  * devops test) supplies the `{ name, entryFile }` roster; the audit engine only
  * folds the AST.
  *
@@ -288,7 +290,8 @@ export function enumeratePackageTypeExports(
 
 /**
  * Build the type-export surface across a roster of packages. The roster is
- * host-supplied (policy-free, ADR-0012); entries are enumerated in name order.
+ * host-supplied (policy-free — the engine names no roster of its own); entries are
+ * enumerated in name order.
  */
 export function buildTypeExportSurface(
   roster: readonly TypeExportRosterEntry[],

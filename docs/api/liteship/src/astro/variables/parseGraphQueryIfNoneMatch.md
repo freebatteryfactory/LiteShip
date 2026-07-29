@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / parseGraphQueryIfNoneMatch
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / parseGraphQueryIfNoneMatch
 
 # Variable: parseGraphQueryIfNoneMatch
 

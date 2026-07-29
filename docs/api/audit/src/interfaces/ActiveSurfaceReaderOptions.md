@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / ActiveSurfaceReaderOptions
+[LiteShip](../../../README.md) / [audit/src](../README.md) / ActiveSurfaceReaderOptions
 
 # Interface: ActiveSurfaceReaderOptions
 

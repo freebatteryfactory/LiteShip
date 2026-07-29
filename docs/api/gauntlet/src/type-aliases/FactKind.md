@@ -2,12 +2,12 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FactKind
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FactKind
 
 # Type Alias: FactKind
 
 > **FactKind** = *typeof* [`FACT_KINDS`](../variables/FACT_KINDS.md)\[`number`\]
 
-Defined in: [gauntlet/src/gate.ts:680](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L680)
+Defined in: [gauntlet/src/gate.ts:681](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L681)
 
 One FactKind — derived from [FACT\_KINDS](../variables/FACT_KINDS.md), never re-typed.

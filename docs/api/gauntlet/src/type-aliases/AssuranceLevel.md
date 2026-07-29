@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / AssuranceLevel
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / AssuranceLevel
 
 # Type Alias: AssuranceLevel
 

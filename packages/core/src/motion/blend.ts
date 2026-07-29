@@ -132,7 +132,7 @@ export function createBlendTree<T extends Record<string, number>>(): OwnedBlendT
  * Public structural type for `BlendTree` -- weighted multi-state blending for
  * numeric records. Add named nodes with values and weights, then compute the
  * weighted average. Construct one with the standalone {@link createBlendTree}
- * (verb grammar, ADR-0046), which returns the tree augmented with its own
+ * (verb grammar), which returns the tree augmented with its own
  * `dispose()`.
  *
  * @example

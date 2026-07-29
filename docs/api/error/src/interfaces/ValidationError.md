@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / ValidationError
+[LiteShip](../../../README.md) / [error/src](../README.md) / ValidationError
 
 # Interface: ValidationError
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / SignalInput
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / SignalInput
 
 # Type Alias: SignalInput\<I\>
 

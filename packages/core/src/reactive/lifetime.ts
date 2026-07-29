@@ -215,7 +215,7 @@ function make(): Lifetime {
 }
 
 // ---------------------------------------------------------------------------
-// Namespace export (ADR-0001)
+// Namespace export (namespace-object pattern)
 // ---------------------------------------------------------------------------
 
 /**
@@ -230,7 +230,7 @@ export const Lifetime = {
 
 /**
  * Build a fresh, undisposed {@link Lifetime} — the standalone verb-grammar
- * constructor (ADR-0046 — `create` allocates a runtime resource). Equivalent to
+ * constructor (`create` allocates a runtime resource). Equivalent to
  * `Lifetime.make()`; `Lifetime` stays as the composition-primitive namespace, and
  * this is the curated authoring-surface spelling the `liteship` root re-exports.
  */

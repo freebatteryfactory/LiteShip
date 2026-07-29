@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / tokenBufferCapsule
+[LiteShip](../../../README.md) / [core/src](../README.md) / tokenBufferCapsule
 
 # Variable: tokenBufferCapsule
 

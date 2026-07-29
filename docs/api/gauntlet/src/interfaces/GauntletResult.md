@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / GauntletResult
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / GauntletResult
 
 # Interface: GauntletResult
 

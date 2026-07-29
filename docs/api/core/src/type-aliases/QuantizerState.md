@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / QuantizerState
+[LiteShip](../../../README.md) / [core/src](../README.md) / QuantizerState
 
 # Type Alias: QuantizerState\<B\>
 

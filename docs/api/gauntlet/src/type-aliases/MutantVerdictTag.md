@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / MutantVerdictTag
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / MutantVerdictTag
 
 # Type Alias: MutantVerdictTag
 

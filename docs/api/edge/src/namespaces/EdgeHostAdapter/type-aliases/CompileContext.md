@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [edge/src](../../../README.md) / [EdgeHostAdapter](../README.md) / CompileContext
+[LiteShip](../../../../../README.md) / [edge/src](../../../README.md) / [EdgeHostAdapter](../README.md) / CompileContext
 
 # Type Alias: CompileContext
 

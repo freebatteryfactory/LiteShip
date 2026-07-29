@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / LifetimeDisposeError
+[LiteShip](../../../README.md) / [core/src](../README.md) / LifetimeDisposeError
 
 # Interface: LifetimeDisposeError
 

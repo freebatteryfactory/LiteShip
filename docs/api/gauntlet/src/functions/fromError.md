@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / fromError
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / fromError
 
 # Function: fromError()
 

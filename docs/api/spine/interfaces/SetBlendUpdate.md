@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / SetBlendUpdate
+[LiteShip](../../README.md) / [\_spine](../README.md) / SetBlendUpdate
 
 # Interface: SetBlendUpdate
 

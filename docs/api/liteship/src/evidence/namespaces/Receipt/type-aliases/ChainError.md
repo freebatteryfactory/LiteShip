@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/evidence](../../../README.md) / [Receipt](../README.md) / ChainError
+[LiteShip](../../../../../../README.md) / [liteship/src/evidence](../../../README.md) / [Receipt](../README.md) / ChainError
 
 # Type Alias: ChainError
 

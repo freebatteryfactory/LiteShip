@@ -1,10 +1,11 @@
 /**
  * Capsule declaration locking {@link chooseTier} — the escalation chooser, the
  * READER of {@link PolicyNode} — as a standing `policyGate` contract. This is the
- * FIRST concrete `policyGate` instance (ADR-0008's closure rule requires one):
+ * FIRST concrete `policyGate` instance (the assembly catalog is closed at seven
+ * arms and admits no speculative one — an arm ships with a real instance):
  * `chooseTier` is the canonical permission/authz check in LiteShip — it admits
  * (`allow`) or rejects (`deny`) a capability TIER for a policy on a runtime site,
- * with a reason naming WHY. The arm ADR-0008 reserved for "permission / authz
+ * with a reason naming WHY. The catalog arm reserved for "permission / authz
  * check" finally has the decision it was reserved for.
  *
  * WHY `policyGate` (not `pureTransform`): a policyGate's job is to resolve a
@@ -17,7 +18,7 @@
  * reason-chain integrity, and determinism for real. A policyGate returns a
  * verdict; it never enforces it — the side-effecting admission (refusing the
  * projection target) lives downstream in the compositor escalation gate
- * (`compositor.ts`), per ADR-0014 "no built-in authority".
+ * (`compositor.ts`), per the "no built-in authority" rule.
  *
  * WHY THE SUBJECT IS SEED MATERIAL (not a raw `PolicyNode`): a `PolicyNode` is a
  * content-addressed graph node — its `id` is minted ONLY through `sealNode` over

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / DEFAULT\_SHADER\_INTEGRITY\_MODE
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / DEFAULT\_SHADER\_INTEGRITY\_MODE
 
 # Variable: DEFAULT\_SHADER\_INTEGRITY\_MODE
 

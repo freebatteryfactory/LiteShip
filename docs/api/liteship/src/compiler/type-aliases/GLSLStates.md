@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / GLSLStates
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / GLSLStates
 
 # Type Alias: GLSLStates
 

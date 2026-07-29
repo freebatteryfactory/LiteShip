@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / LiteshipMiddlewareConfig
+[LiteShip](../../README.md) / [\_spine](../README.md) / LiteshipMiddlewareConfig
 
 # Interface: LiteshipMiddlewareConfig
 

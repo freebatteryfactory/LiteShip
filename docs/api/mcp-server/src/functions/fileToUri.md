@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / fileToUri
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / fileToUri
 
 # Function: fileToUri()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SKIP\_CAPABILITIES
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SKIP\_CAPABILITIES
 
 # Variable: SKIP\_CAPABILITIES
 

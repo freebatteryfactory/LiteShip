@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [EdgeHostAdapter](../README.md) / BoundaryConfig
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [EdgeHostAdapter](../README.md) / BoundaryConfig
 
 # Type Alias: BoundaryConfig
 

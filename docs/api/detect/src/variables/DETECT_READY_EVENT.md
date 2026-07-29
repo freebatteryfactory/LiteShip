@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / DETECT\_READY\_EVENT
+[LiteShip](../../../README.md) / [detect/src](../README.md) / DETECT\_READY\_EVENT
 
 # Variable: DETECT\_READY\_EVENT
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / LspCodeAction
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / LspCodeAction
 
 # Interface: LspCodeAction
 

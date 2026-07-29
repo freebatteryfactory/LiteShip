@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / DocumentGraphEdge
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / DocumentGraphEdge
 
 # Interface: DocumentGraphEdge
 

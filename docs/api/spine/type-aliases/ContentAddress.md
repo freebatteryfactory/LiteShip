@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ContentAddress
+[LiteShip](../../README.md) / [\_spine](../README.md) / ContentAddress
 
 # Type Alias: ContentAddress
 
@@ -12,7 +12,7 @@ Defined in: [\_spine/core.d.ts:81](https://github.com/freebatteryfactory/LiteShi
 
 Content-addressed hash (FNV-1a, fnv1a:hex format).
 
-APEX of THREE intentional homes (ADR-0013) — do NOT merge them. This spine
+APEX of THREE intentional homes — do NOT merge them. This spine
 type is the strictest: a symbol-brand, so a raw `fnv1a:...` string cannot be
 typed as ContentAddress without a validating constructor. `@liteship/core` and
 `@liteship/genui` re-anchor this brand (`type ContentAddress = _ContentAddress`)

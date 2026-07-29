@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / StructEncoded
+[LiteShip](../../../README.md) / [core/src](../README.md) / StructEncoded
 
 # Type Alias: StructEncoded\<F\>
 

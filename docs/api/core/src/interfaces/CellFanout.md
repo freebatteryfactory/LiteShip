@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CellFanout
+[LiteShip](../../../README.md) / [core/src](../README.md) / CellFanout
 
 # Interface: CellFanout\<T\>
 

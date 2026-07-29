@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/migrate](../README.md) / fromMediaQueries
+[LiteShip](../../../../README.md) / [liteship/src/migrate](../README.md) / fromMediaQueries
 
 # Function: fromMediaQueries()
 

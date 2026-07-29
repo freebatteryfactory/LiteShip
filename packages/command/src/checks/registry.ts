@@ -51,7 +51,6 @@ const TYPESCRIPT_CONFIG_INPUTS = [
 const TYPEDOC_FAST_INPUTS = [
   'typedoc.json',
   'tsdoc.json',
-  'TYPEDOC.md',
   'tsconfig*.json',
   'packages/*/package.json',
   'scripts/docs-input-fingerprint.ts',

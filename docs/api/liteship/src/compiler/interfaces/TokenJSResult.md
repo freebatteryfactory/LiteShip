@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / TokenJSResult
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / TokenJSResult
 
 # Interface: TokenJSResult
 

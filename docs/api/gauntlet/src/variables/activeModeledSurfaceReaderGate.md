@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / activeModeledSurfaceReaderGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / activeModeledSurfaceReaderGate
 
 # Variable: activeModeledSurfaceReaderGate
 

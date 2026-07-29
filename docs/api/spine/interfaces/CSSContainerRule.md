@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CSSContainerRule
+[LiteShip](../../README.md) / [\_spine](../README.md) / CSSContainerRule
 
 # Interface: CSSContainerRule
 

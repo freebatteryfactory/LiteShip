@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / LiteShipErrorTag
+[LiteShip](../../../README.md) / [error/src](../README.md) / LiteShipErrorTag
 
 # Type Alias: LiteShipErrorTag
 

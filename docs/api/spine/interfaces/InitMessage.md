@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / InitMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / InitMessage
 
 # Interface: InitMessage
 

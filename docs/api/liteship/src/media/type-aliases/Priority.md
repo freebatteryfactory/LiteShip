@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / Priority
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / Priority
 
 # Type Alias: Priority
 

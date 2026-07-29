@@ -1,4 +1,5 @@
-# Backstops scar S0.4 (docs/plan/scar-ledger.md) + tests/support/repo-truths.ts.
+# Backstops tests/support/repo-truths.ts — two drift-guards once regex-parsed the
+# build script independently, so fixing one left the other silently broken.
 #
 # S0.4 signature: a drift guard privately regex-parses a package.json SCRIPT BODY
 # (`pkg.scripts.<name>`) to extract a truth — the pattern that let

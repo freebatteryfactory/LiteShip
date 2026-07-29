@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / IntegrationConfig
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / IntegrationConfig
 
 # Interface: IntegrationConfig
 

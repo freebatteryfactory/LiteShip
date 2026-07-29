@@ -2,12 +2,12 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ShipCapsule
+[LiteShip](../../../README.md) / [core/src](../README.md) / ShipCapsule
 
 # Type Alias: ShipCapsule
 
 > **ShipCapsule** = `ShipCapsuleShape`
 
-Defined in: [core/src/authoring/ship-capsule.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/ship-capsule.ts#L216)
+Defined in: [core/src/authoring/ship-capsule.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/ship-capsule.ts#L219)
 
 Public structural type for `ShipCapsule`.

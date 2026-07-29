@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [quantizer/src](../README.md) / DefineQuantizerOptions
+[LiteShip](../../../README.md) / [quantizer/src](../README.md) / DefineQuantizerOptions
 
 # Interface: DefineQuantizerOptions\<B, O\>
 

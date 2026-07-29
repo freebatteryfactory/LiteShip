@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / sortSuppressions
+[LiteShip](../../../README.md) / [audit/src](../README.md) / sortSuppressions
 
 # Function: sortSuppressions()
 

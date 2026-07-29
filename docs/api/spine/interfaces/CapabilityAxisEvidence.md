@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CapabilityAxisEvidence
+[LiteShip](../../README.md) / [\_spine](../README.md) / CapabilityAxisEvidence
 
 # Interface: CapabilityAxisEvidence\<Axis\>
 

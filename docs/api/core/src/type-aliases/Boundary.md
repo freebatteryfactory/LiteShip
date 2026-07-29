@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Boundary
+[LiteShip](../../../README.md) / [core/src](../README.md) / Boundary
 
 # Type Alias: Boundary\<I, S\>
 

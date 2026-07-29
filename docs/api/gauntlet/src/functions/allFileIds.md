@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / allFileIds
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / allFileIds
 
 # Function: allFileIds()
 

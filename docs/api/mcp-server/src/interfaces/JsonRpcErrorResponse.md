@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / JsonRpcErrorResponse
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / JsonRpcErrorResponse
 
 # Interface: JsonRpcErrorResponse
 

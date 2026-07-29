@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / WGSLStates
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / WGSLStates
 
 # Type Alias: WGSLStates
 

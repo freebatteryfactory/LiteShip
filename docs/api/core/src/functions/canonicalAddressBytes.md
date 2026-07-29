@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / canonicalAddressBytes
+[LiteShip](../../../README.md) / [core/src](../README.md) / canonicalAddressBytes
 
 # Function: canonicalAddressBytes()
 

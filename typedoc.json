@@ -33,7 +33,7 @@
   "plugin": [
     "typedoc-plugin-markdown"
   ],
-  "readme": "TYPEDOC.md",
+  "readme": "none",
   "excludePrivate": true,
   "excludeInternal": true,
   "excludeExternals": true,

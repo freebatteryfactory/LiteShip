@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / StreamWireAttribute
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / StreamWireAttribute
 
 # Type Alias: StreamWireAttribute
 

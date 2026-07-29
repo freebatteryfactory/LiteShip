@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / defineCommand
+[LiteShip](../../../README.md) / [command/src](../README.md) / defineCommand
 
 # Function: defineCommand()
 

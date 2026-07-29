@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / capabilityGateLinkGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / capabilityGateLinkGate
 
 # Variable: capabilityGateLinkGate
 
 > `const` **capabilityGateLinkGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/capability-gate-link.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/capability-gate-link.ts#L129)
+Defined in: [gauntlet/src/gates/capability-gate-link.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/capability-gate-link.ts#L130)
 
 The qualified gate — fixtures included, so it self-proves via the ratchet.
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / DiagnosticsSink
+[LiteShip](../../../README.md) / [core/src](../README.md) / DiagnosticsSink
 
 # Interface: DiagnosticsSink
 

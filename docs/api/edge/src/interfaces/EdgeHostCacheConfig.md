@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / EdgeHostCacheConfig
+[LiteShip](../../../README.md) / [edge/src](../README.md) / EdgeHostCacheConfig
 
 # Interface: EdgeHostCacheConfig
 

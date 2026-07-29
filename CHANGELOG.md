@@ -105,30 +105,30 @@ ships its enforcing gate.
   security fixes. The aligned Vitest browser-provider family is pinned to 4.1.10. The
   audited transitive floors cover patched `brace-expansion`, `fast-uri`, `js-yaml`,
   `linkify-it`, `sharp`, and `svgo` releases without forking their upstream owners.
-- **One brand — LiteShip (ADR-0044).** The original `@czap` npm scope, the `data-czap-*`
+- **One brand — LiteShip.** The original `@czap` npm scope, the `data-czap-*`
   DOM wire prefix, the `CZAP_*`/`Czap*` identifiers, the `czap` CLI/config, and the
   engine name were retired wholesale in favor of the single **LiteShip** brand:
   `@liteship/*` packages, `data-liteship-*` attributes, `liteship:*` events,
   `--liteship-*` CSS custom properties, the `liteship` bin, and `liteship.config.ts`.
   The permanent brand-residue gate reds on any reintroduction.
-- **One verb grammar (ADR-0046 / ADR-0051).** Every operation class now has one enforced
+- **One verb grammar.** Every operation class now has one enforced
   verb: **define** for immutable authored intent (`defineBoundary` / `defineToken` /
   `defineTheme` / `defineStyle` / `defineConfig` / `defineQuantizer`), **create** for
   runtime allocation (`createSignal` / `createCell` / `createLiveCell` / `createStore` /
   `createTimeline` / `createQuantizer` / `createLifetime`), and **computed** for derived
   reactive values. The namespace-object factories (`Boundary.make`, `Cell.make`, …) were
   replaced by these verbs.
-- **Direct generic types (ADR-0046).** The `.Shape` namespace-type convention was retired:
+- **Direct generic types.** The `.Shape` namespace-type convention was retired:
   every public instance type now shares its value's name directly through declaration
   merging (`Boundary<Input, State>`, `Cell<number>`, `Lifetime`) — no more `Cell.Shape<T>`.
   Disposal is a direct `dispose()` / `Symbol.dispose`, not `.lifetime.dispose()`.
   `sgrules/no-shape-namespace-type.yml` fails any surviving `.Shape` reference.
-- **Source grammar (ADR-0045).** The repository's source layout and naming conventions were
+- **Source grammar.** The repository's source layout and naming conventions were
   regularized into one closed grammar, enforced structurally.
 
 ### Added
 
-- **The `liteship` facade (ADR-0048).** One curated meta-package is the single import path
+- **The `liteship` facade.** One curated meta-package is the single import path
   over the whole stack: authoring verbs from the `liteship` root, and deeper surfaces on
   budgeted domain subpaths — `liteship/schema`, `liteship/reactive`, `liteship/motion`,
   `liteship/graph`, `liteship/media`, `liteship/evidence`, `liteship/compiler`,
@@ -136,9 +136,9 @@ ships its enforcing gate.
   `liteship/migrate`. The root is host-free; the `astro` / `vite` subpaths carry their
   optional host peers behind independent module graphs. The scaffold and the docs now
   teach this one import story.
-- **`defineAdaptive` (ADR-0050).** A first-class authored primitive for an adaptive surface,
+- **`defineAdaptive`.** A first-class authored primitive for an adaptive surface,
   re-exported from the `liteship` root alongside the other `define*` verbs.
-- **Migration adapters (ADR-0049).** `liteship/migrate` re-exports the compiler's migration
+- **Migration adapters.** `liteship/migrate` re-exports the compiler's migration
   adapters for moving existing definitions onto the current authoring grammar.
 - **Developer-experience wave.** Guided example **journeys**, a **hermetic** test/build path,
   and a **devcontainer** matching the CI stack (Node 22 + pnpm 10 + ffmpeg/libx264 +
@@ -247,7 +247,7 @@ per-command boilerplate the fleet had been copying by hand.
 
 ## [0.14.0] - 2026-07-17
 
-The **motion easing generalization** (#148, ADR-0041) — the cross-target byte-law (ADR-0040)
+The **motion easing generalization** (#148) — the cross-target byte-law
 extends from spring to the whole `Easing` catalog, translation composes as an individual
 transform, and the differently-eased `par` gets a faithful renderer instead of a diagnostic.
 
@@ -293,9 +293,9 @@ independently QA'd; the full node vitest suite is green (7786/7809). Resolves #1
   floor when native `animation-timeline` is unavailable; the floor and CSS `linear()` provably sample one
   `Easing.spring` kernel. Adds the `color` interpolation kind.
 - **Multi-transition algebra (#141)** — an explicit `TransitionProgram` (seq/par/choice) with real duration
-  composition and branch selection (ADR-0039), replacing the collapsed routing label.
+  composition and branch selection, replacing the collapsed routing label.
 - **Cross-target motion parity (#130)** — one authored program renders identically across browser CSS,
-  browser runtime, scene, stage, remotion, and worker, proven by a differential oracle (ADR-0040).
+  browser runtime, scene, stage, remotion, and worker, proven by a differential oracle.
 - **Responsive-media effective-candidate law (#140)** — `selectCandidates` so Save-Data is honoured across
   `src`/`srcset`/`<source>`/preload/`image-set()`/cache-key; wired into Astro and Cloudflare hosts.
 - Answer-first npm `description`/`keywords` for all 25 packages from one canonical catalog, with a
@@ -330,7 +330,7 @@ DPU adopt-under, motion/security/tooling fixes, and a workstation-safe local acc
 - **`local-safe` gauntlet profile** — build → capsule:compile → typecheck → lint → structural → invariants → gates → audit:floor → test → standards/capability gates (omits memory-hungry `docs:check`; run separately when API inputs change).
 - **`memberSinks` taint channel** — `document.write` / `document.writeln` classified receiver-qualified (no `stream.write` false positives).
 - **`examples/07-stagger-reveal`** — committed stagger preset + dogfood test (#124).
-- **ADR-0038** — monolith TypeDoc canonical; sharded build experimental only (#136).
+- **TypeDoc build** — monolith TypeDoc canonical; sharded build experimental only (#136).
 - **Docs MCP `computeBundleId`** — recompute/reject at load for sealed bundle integrity.
 
 ### Fixed
@@ -344,7 +344,7 @@ DPU adopt-under, motion/security/tooling fixes, and a workstation-safe local acc
 ### Internal
 
 - **cut9 meta-tests** — local-safe profile law, DNS pin law, B5b cage, skip-law pins.
-- **Architecture/docs cross-links** — README AEO, ROADMAP ledger, ADR 0036/0037 issue links.
+- **Architecture/docs cross-links** — README AEO, ROADMAP ledger, audit findings-stream + consumer-suppression issue links.
 
 Closes #104, #105, #115, #119, #120, #121, #123, #124, #125, #127, #128, #136 (among others in the Phase B wave). Follow-ups: #140–#142; epic #130 remains open.
 
@@ -423,8 +423,8 @@ human client's edit is validated exactly like a model's proposal.
   forged, miswired, or malformed base is refused, not stamped against), and maps a transport failure or
   a non-JSON body to `error` — one shape to consume, never a raw throw. A patch cast against a stale base is
   refused (optimistic concurrency for free); only a validated patch mutates the graph, which
-  re-addresses. The host owns the `GraphStore` (the authority boundary, ADR-0015); LiteShip owns
-  the gate. Full rationale: ADR-0030.
+  re-addresses. The host owns the `GraphStore` (the authority boundary); LiteShip owns
+  the gate.
 - **`@czap/astro` — `graphMutationRoute(store)`.** The host route adapter: a plain
   `(request) => Response` (the `czapFetchLayer` shape) that drops into an Astro API route
   (`export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request)`). 200
@@ -481,20 +481,19 @@ reaches GLSL parity.
   attributes as a `Record` keyed by the full attribute name, built from the
   `CAP_AXES` registry so a new axis appears automatically. `tierDataAttributes`
   (the pre-serialized string) is now derived from the map, so the two forms
-  cannot drift. See ADR-0018.
+  cannot drift.
 - **`@czap/compiler` / `@czap/astro` — vector WGSL uniforms.** Authored `@wgsl`
   values accept `vec2`/`vec3`/`vec4` (emitted `vec2f`/`vec3f`/`vec4f`); the WebGPU
   runtime derives its uniform-buffer byte layout from the bound struct declaration
   (WGSL alignment, 16-byte stride, bounded 64-byte buffer). `u_resolution` is a
   real `vec2<f32>`, closing the GLSL/WGSL parity gap; an overflowing declaration
   warns once (`wgsl-uniform-buffer-full`) instead of silently truncating.
-  See ADR-0029.
 - **`@czap/astro` — directives boot on plain elements.** `client:stream` /
   `client:llm` / `client:gpu` / `client:wasm` / `client:graph` now activate on
   plain elements, not only framework islands, via a scanner whose selectors derive
   from `DIRECTIVE_ATTRIBUTE_REGISTRY` (a new directive is scannable by construction).
   A bare `data-czap-boundary` — also a satellite/worker payload — stays explicit and
-  warns once when found bare instead of silently doing nothing. See ADR-0028.
+  warns once when found bare instead of silently doing nothing.
 
 ### Fixed
 
@@ -566,11 +565,11 @@ hardened by an adversarial review pass.
   a content-addressed checkpoint attestation (drop-only; the spliced DAG equals a
   fresh reload). `Receipt.validateChain` gains `ChainValidationOptions { base,
 checkpoint }` for cross-boundary validation (a compacted tail is verifiable only
-  against its checkpoint). See ADR-0026.
+  against its checkpoint).
 - **`@czap/web` — SSE overflow policy.** `SSEConfig.overflow`
   (`drop-newest | drop-oldest | coalesce-by-id`, default `coalesce-by-id`) + an
   enriched `BackpressureHint` (`policy` / `droppedCount` / `coalescedCount`) + a
-  `stateChanges` edge stream. See ADR-0005 (SSE addendum).
+  `stateChanges` edge stream.
 - **`create-liteship`** now scaffolds `effect` (`^4.0.0-beta.32`), fixing an
   unmet peer on a fresh project.
 
@@ -609,7 +608,7 @@ checkpoint }` for cross-boundary validation (a compacted tail is verifiable only
 
 ### Internal
 
-- Cell↔DOM boundary committed as a guarded law (ADR-0027). Audit consumer-mode
+- Cell↔DOM boundary committed as a guarded law. Audit consumer-mode
   disallowed-edge coverage. Fixed two Effect-beta issues uncovered during review
   (`Scope.use` finalizing immediately; an overflow-buffer CPU spin). api-surface
   snapshot regenerated for the new exports.
@@ -729,13 +728,13 @@ SVGElement` and applies `@czap/scene`'s `applySvgAttrs` to the live DOM each fra
 - **New package `@czap/error`** — a composable tagged-error algebra (a closed variant coproduct
   over an open `TaggedError` contract, value AND type, Effect- and throw-compatible) the whole
   stack now adopts as its foundational zero-dep leaf.
-- **New package `@czap/gauntlet`** — the self-proving rigor engine (ADR-0023): gates, findings,
+- **New package `@czap/gauntlet`** — the self-proving rigor engine: gates, findings,
   assurance levels (L0–L4), and the authority ratchet (a gate earns blocking power only by
   self-proving against its own red/green/mutation fixtures). Lean (no `typescript`; the
   triangulated repo-IR + the mutation / MC-DC / taint / coverage-guided-fuzz / claim-vs-reality /
-  traceability / agent-safety gate families are host-injected via `@czap/audit`, ADR-0012). This
+  traceability / agent-safety gate families are host-injected via `@czap/audit`). This
   is the rigor work the small live-runtime cut grew into when it exposed the gaps.
-- **FactGate — evidence-bound gates (ADR-0019).** Gates can be defined as DATA (`defineFactGate` —
+- **FactGate — evidence-bound gates.** Gates can be defined as DATA (`defineFactGate` —
   `requires` + `decide`) instead of arbitrary closures, closing the stale-green hole where a `run`
   body could read undeclared evidence. Cache identity derives from the declared facts; the
   discriminant is an unforgeable `WeakSet`. The always-blocking no-skipped-test gate has a
@@ -745,7 +744,7 @@ SVGElement` and applies `@czap/scene`'s `applySvgAttrs` to the live DOM each fra
 - **Astro 7 (hard-cut).** The workspace targets Astro 7 + `@astrojs/cloudflare` v14 (Vite 8 /
   Rolldown). `@czap/astro` needs no code changes — the integration hooks, middleware, and
   `client:*` contracts are unchanged — and the batteries Astro 7 ships are now consumed:
-  - `@czap/astro` — **`czapFetchLayer()` (ADR-0024):** request-time adaptation as a layer in
+  - `@czap/astro` — **`czapFetchLayer()`:** request-time adaptation as a layer in
     FRONT of Astro via `src/fetch.ts`. Shares the one `createEdgeHostAdapter().resolve()` with
     `czapMiddleware`; on an opt-in `serveFromEdge` path it serves boundary CSS from the edge and skips Astro
     entirely. `serializeBoundaryCss` exposed. Astro's `Fetchable` / Hono-compatible.
@@ -754,7 +753,7 @@ SVGElement` and applies `@czap/scene`'s `applySvgAttrs` to the live DOM each fra
     (structured `astro dev --json` output); wired in `astro:config:setup`.
   - `@czap/edge` / `@czap/cloudflare` — **active cache invalidation.** `BoundaryCache.invalidateByPath`
     (purge by content address) + `invalidateByTag` (Astro.cache tag parity, index-backed) close
-    ADR-0017's passive-TTL gap; `KVNamespace` gains optional `delete`/`list`, forwarded by the
+    the passive-TTL gap left by expiry-only invalidation; `KVNamespace` gains optional `delete`/`list`, forwarded by the
     Cloudflare adapter, degrading to a diagnostic when a provider omits them.
   - `@czap/cli` — **`czap doctor --target astro`:** an Astro 7 `/_astro/status` dev-server
     liveness probe for agent-run background dev sessions.
@@ -1035,10 +1034,10 @@ structural-lint guard layer. Pre-1.0 break policy applies — breaking changes a
 
 - `@czap/canonical` — self-contained canonical bytes kernel (`CanonicalCbor`, FNV-1a,
   sync `AddressedDigest.of`); sole dependency `@noble/hashes`. `@czap/core` re-exports
-  and re-anchors types to `@czap/_spine` (ADR-0013).
+  and re-anchors types to `@czap/_spine`.
 - `@czap/genui` — host-owned generated UI catalog (`defineComponentCatalog`,
   `validateGeneratedUITree`, `renderFromCatalog`, `renderHash` / `catalogHash`); interactions
-  surface as `genui:interaction` host callbacks only (ADR-0014).
+  surface as `genui:interaction` host callbacks only.
 - `@czap/core` — GenFrame `receiptId` minted from stable canonical bytes (excludes wall clock).
 - `@czap/astro` — `client:llm` catalog path for `{ "_genui": true, ... }` chunks when
   `genuiCatalog` is configured (`data-czap-genui` enables the demo catalog); exports
@@ -1199,7 +1198,7 @@ container-name: <input>`) so the queries actually match; non-viewport
   TransitionSystem maps through the closed catalog (`easeFnFor`). New
   public helpers: `resolveFrameMark`, `addFrameMarks`, `resolveEnvelope`,
   `envelopeFactor`, `easeFnFor`; canonical types land in
-  `@czap/_spine/scene.d.ts` per ADR-0010. `examples/scenes/intro.ts` is
+  `@czap/_spine/scene.d.ts`, the canonical type source. `examples/scenes/intro.ts` is
   now authored in musical time end-to-end.
 - `@czap/audit` — consumer mode verifies **dist truth**: every concrete
   exports-map condition of every installed package must resolve to a real
@@ -1406,10 +1405,10 @@ container-name: <input>`) so the queries actually match; non-viewport
 - `@czap/audit`: audit findings now teach what happened, which subject, and the literal next step — `astro-package-missing` names `surfacePolicy.astroPackage` and both ways out (omit/`''` or `--consumer`); `package-topology` violations name `packageTopology[pkg].allowedInternalImports` and the add-or-remove fix; unresolved relative imports enumerate the real candidate set (verbatim, `.ts/.tsx/.js/.jsx`, `index.ts/index.tsx`, the `.js`→`.ts` mapping); `console-call` drops LiteShip-internal "Diagnostics" jargon and points at the console-call allowlist entry shape; `fallback-laundering` teaches consuming the error binding or allowlisting with a reason (the `returns <expr>` phrase allowlist matchers pin is preserved); vite virtual-module findings name `surfacePolicy.viteVirtualModules` and the actual inventory file path; `export-target-missing` appends the reinstall / publisher `files[]` next step.
 - `@czap/audit`: `readJsonFile` wraps Node's pathless `SyntaxError`/`ENOENT` with the offending file path (`Could not read <path> as JSON: …`, with `cause`); consumer-mode discovery names a nonexistent/unreadable cwd instead of throwing a bare `ENOENT`.
 - `@czap/cli`: `--profile` JSON missing-field errors now append a copy-pasteable minimal profile template (`{ "internalPackagePrefix": "@acme/", "packageTopology": {} }`).
-- **BREAKING** `verify` no longer requires `--capsule`: it defaults to the ship sibling convention (`<tarball basename>.shipcapsule.cbor`) when that file exists; `inputSchema.required` shrinks to `['tarball']`, and omitting `--capsule` can now exit 0/2/3 instead of always 4. The Unknown verdict (exit 4) is preserved when no capsule can be found (ADR-0011). (@czap/command)
+- **BREAKING** `verify` no longer requires `--capsule`: it defaults to the ship sibling convention (`<tarball basename>.shipcapsule.cbor`) when that file exists; `inputSchema.required` shrinks to `['tarball']`, and omitting `--capsule` can now exit 0/2/3 instead of always 4. The Unknown verdict (exit 4) is preserved when no capsule can be found. (@czap/command)
 - `SceneContract` gains optional `width`/`height`; `scene.render` threads them through the `renderScene` capability, and the Node host + CLI render backends fall back to 1280x720 when absent. (@czap/scene, @czap/command, @czap/cli)
 - **BREAKING** `createNodeCommandContext({ cwd })` now resolves `fileExists`/`readFileBytes`/`loadSceneModule`/`loadAssetBytes` against `opts.cwd` (previously only manifest + cache honored it), and `loadAssetBytes` tries the manifest-declared `source` before the `examples/scenes/<id>.wav` convention (candidate order flipped). Asset bytes are now sliced out of Node's Buffer pool instead of returning the shared pool ArrayBuffer. (@czap/command)
-- **BREAKING** Command descriptors declare `requires` (injected `CommandContext` capability names) as data, and `CommandDispatcher.dispatch` enforces presence with one structured failure: `{ error: 'capability_unavailable', missing, hint }`, exit 2. Replaces the per-handler `'vitest runner unavailable'` (exit 2), `'render backend unavailable'` (exit 5), `'audio projection unavailable'` (exit 1), and `'audit engine unavailable'` payloads. New exports: `capabilityUnavailable`, `CommandCapability`. `verify` deliberately declares no requires — capability absence there is its Unknown/Incomplete verdict (ADR-0011). (@czap/command, @czap/_spine)
+- **BREAKING** Command descriptors declare `requires` (injected `CommandContext` capability names) as data, and `CommandDispatcher.dispatch` enforces presence with one structured failure: `{ error: 'capability_unavailable', missing, hint }`, exit 2. Replaces the per-handler `'vitest runner unavailable'` (exit 2), `'render backend unavailable'` (exit 5), `'audio projection unavailable'` (exit 1), and `'audit engine unavailable'` payloads. New exports: `capabilityUnavailable`, `CommandCapability`. `verify` deliberately declares no requires — capability absence there is its Unknown/Incomplete verdict. (@czap/command, @czap/_spine)
 - Dispatcher `unknown_command` failures now carry `didYouMean` (nearest registered name, edit distance ≤ 3) and a `run \`czap help\` for the verb chart`hint;`no_registry_handler`keeps its stable code and gains`executionKind`plus a hint naming the literal`czap <name>` invocation for cli-orchestration commands. (@czap/command)
 - One capsule-manifest failure wording across `capsule.*`/`asset.*`/`scene.verify` (was three phrasings): names `reports/capsule-manifest.json`, the `CZAP_CAPSULE_MANIFEST` override, and `pnpm run capsule:compile`. (@czap/command)
 - Scene failures name their subject and fix: missing capsule/contract errors include the scene path and `czap glossary capsule`; missing `--output` shows the full `czap scene render <scene.ts> -o out.mp4` example. (@czap/command)
@@ -1484,7 +1483,7 @@ container-name: <input>`) so the queries actually match; non-viewport
   examples, which is how a tutorial page that could not build shipped.
 - Cloudflare boundary-cache truth repairs: the middleware docblock and
   docs taught `boundaryId: 'sha256:…'` — the wrong identity family
-  (ADR-0003 mints `fnv1a:xxxxxxxx`) with no sanctioned way to obtain a
+  (content addresses are minted as `fnv1a:xxxxxxxx`) with no sanctioned way to obtain a
   real id. Docs/README/example now derive ids from the build manifest,
   and the integration test mints a real address instead of casting a
   fabricated one (`as never`).

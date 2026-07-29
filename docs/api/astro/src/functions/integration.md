@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / integration
+[LiteShip](../../../README.md) / [astro/src](../README.md) / integration
 
 # Function: integration()
 

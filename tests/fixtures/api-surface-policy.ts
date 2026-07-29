@@ -2,7 +2,7 @@
  * API-surface gate POLICY — the LiteShip-local, host-injectable configuration
  * for the public-surface snapshot + semver gates (Slice C, the avionics tier).
  *
- * This is DATA, not a published surface (ADR-0012): the audit/migration engines
+ * This is DATA, not a published surface: the audit/migration engines
  * are reusable, but WHICH packages LiteShip considers public + the bump rule it
  * enforces are repo-local CONTRACTS, threaded in as a value — never baked into a
  * shipped `@liteship/*` package. A downstream project that vendors the snapshot gate

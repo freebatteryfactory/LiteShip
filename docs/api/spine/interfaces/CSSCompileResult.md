@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CSSCompileResult
+[LiteShip](../../README.md) / [\_spine](../README.md) / CSSCompileResult
 
 # Interface: CSSCompileResult
 

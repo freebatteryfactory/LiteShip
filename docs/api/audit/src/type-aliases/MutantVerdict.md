@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / MutantVerdict
+[LiteShip](../../../README.md) / [audit/src](../README.md) / MutantVerdict
 
 # Type Alias: MutantVerdict\<M\>
 

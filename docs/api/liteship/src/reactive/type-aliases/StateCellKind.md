@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / StateCellKind
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / StateCellKind
 
 # Type Alias: StateCellKind
 

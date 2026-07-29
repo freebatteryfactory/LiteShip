@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / LITESHIP\_WAIVERS
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / LITESHIP\_WAIVERS
 
 # Variable: LITESHIP\_WAIVERS
 

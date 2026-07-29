@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / WGSLCompileResult
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / WGSLCompileResult
 
 # Interface: WGSLCompileResult
 

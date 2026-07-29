@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / editDistance
+[LiteShip](../../../README.md) / [core/src](../README.md) / editDistance
 
 # Function: editDistance()
 

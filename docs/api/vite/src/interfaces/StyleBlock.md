@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / StyleBlock
+[LiteShip](../../../README.md) / [vite/src](../README.md) / StyleBlock
 
 # Interface: StyleBlock
 

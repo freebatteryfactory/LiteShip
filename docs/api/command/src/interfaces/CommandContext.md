@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CommandContext
+[LiteShip](../../../README.md) / [command/src](../README.md) / CommandContext
 
 # Interface: CommandContext
 

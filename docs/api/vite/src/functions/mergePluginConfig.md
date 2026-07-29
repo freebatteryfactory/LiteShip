@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / mergePluginConfig
+[LiteShip](../../../README.md) / [vite/src](../README.md) / mergePluginConfig
 
 # Function: mergePluginConfig()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / schemaToArbitrary
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / schemaToArbitrary
 
 # Variable: schemaToArbitrary
 

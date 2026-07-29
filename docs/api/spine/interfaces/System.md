@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / System
+[LiteShip](../../README.md) / [\_spine](../README.md) / System
 
 # Interface: System\<Q, R, W\>
 
-Defined in: [\_spine/core.d.ts:771](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L771)
+Defined in: [\_spine/core.d.ts:772](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L772)
 
 Typed ECS system with explicit query/read/write authority.
 
@@ -30,7 +30,7 @@ Typed ECS system with explicit query/read/write authority.
 
 > `readonly` **\[SpineSystemWitness\]**: `true`
 
-Defined in: [\_spine/core.d.ts:781](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L781)
+Defined in: [\_spine/core.d.ts:782](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L782)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/core.d.ts:781](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/core.d.ts:776](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L776)
+Defined in: [\_spine/core.d.ts:777](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L777)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [\_spine/core.d.ts:776](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **query**: `Q`
 
-Defined in: [\_spine/core.d.ts:777](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L777)
+Defined in: [\_spine/core.d.ts:778](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L778)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [\_spine/core.d.ts:777](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **reads**: `R`
 
-Defined in: [\_spine/core.d.ts:778](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L778)
+Defined in: [\_spine/core.d.ts:779](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L779)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [\_spine/core.d.ts:778](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **writes**: `W`
 
-Defined in: [\_spine/core.d.ts:779](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L779)
+Defined in: [\_spine/core.d.ts:780](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L780)
 
 ## Methods
 
@@ -70,7 +70,7 @@ Defined in: [\_spine/core.d.ts:779](https://github.com/freebatteryfactory/LiteSh
 
 > **execute**(`entities`, `context`): `void`
 
-Defined in: [\_spine/core.d.ts:780](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L780)
+Defined in: [\_spine/core.d.ts:781](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L781)
 
 #### Parameters
 

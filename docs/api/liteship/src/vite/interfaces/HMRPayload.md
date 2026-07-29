@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / HMRPayload
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / HMRPayload
 
 # Interface: HMRPayload
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / applyResponsiveMediaVary
+[LiteShip](../../../README.md) / [astro/src](../README.md) / applyResponsiveMediaVary
 
 # Function: applyResponsiveMediaVary()
 

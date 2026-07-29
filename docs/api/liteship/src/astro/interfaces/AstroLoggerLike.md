@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / AstroLoggerLike
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / AstroLoggerLike
 
 # Interface: AstroLoggerLike
 

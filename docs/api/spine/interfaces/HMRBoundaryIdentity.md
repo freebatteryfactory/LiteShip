@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / HMRBoundaryIdentity
+[LiteShip](../../README.md) / [\_spine](../README.md) / HMRBoundaryIdentity
 
 # Interface: HMRBoundaryIdentity
 

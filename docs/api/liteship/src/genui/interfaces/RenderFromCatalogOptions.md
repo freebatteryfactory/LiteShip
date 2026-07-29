@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/genui](../README.md) / RenderFromCatalogOptions
+[LiteShip](../../../../README.md) / [liteship/src/genui](../README.md) / RenderFromCatalogOptions
 
 # Interface: RenderFromCatalogOptions
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / weakestLinkPath
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / weakestLinkPath
 
 # Function: weakestLinkPath()
 

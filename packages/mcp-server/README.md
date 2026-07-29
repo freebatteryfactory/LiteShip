@@ -63,7 +63,6 @@ A stdio MCP server prints nothing at startup — silence is normal, not a hang. 
 ## Docs
 
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
-- [Capsule factory](https://github.com/freebatteryfactory/LiteShip/blob/main/CAPSULE-FACTORY.md) — the dispatch model behind the tools
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/mcp-server/src/) — generated from source
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / SvgAttrsFrame
+[LiteShip](../../../README.md) / [scene/src](../README.md) / SvgAttrsFrame
 
 # Type Alias: SvgAttrsFrame
 

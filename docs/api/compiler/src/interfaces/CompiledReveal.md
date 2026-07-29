@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / CompiledReveal
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / CompiledReveal
 
 # Interface: CompiledReveal
 

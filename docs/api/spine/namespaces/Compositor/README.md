@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [\_spine](../../README.md) / Compositor
+[LiteShip](../../../README.md) / [\_spine](../../README.md) / Compositor
 
 # Compositor
 

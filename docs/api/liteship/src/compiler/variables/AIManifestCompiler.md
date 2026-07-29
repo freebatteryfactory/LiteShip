@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / AIManifestCompiler
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / AIManifestCompiler
 
 # Variable: AIManifestCompiler
 

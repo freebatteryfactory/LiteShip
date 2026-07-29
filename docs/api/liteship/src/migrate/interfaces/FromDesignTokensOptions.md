@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/migrate](../README.md) / FromDesignTokensOptions
+[LiteShip](../../../../README.md) / [liteship/src/migrate](../README.md) / FromDesignTokensOptions
 
 # Interface: FromDesignTokensOptions
 

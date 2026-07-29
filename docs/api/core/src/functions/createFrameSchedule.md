@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / createFrameSchedule
+[LiteShip](../../../README.md) / [core/src](../README.md) / createFrameSchedule
 
 # Function: createFrameSchedule()
 

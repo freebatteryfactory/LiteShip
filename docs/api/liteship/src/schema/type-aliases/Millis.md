@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / Millis
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / Millis
 
 # Type Alias: Millis
 

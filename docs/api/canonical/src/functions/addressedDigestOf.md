@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [canonical/src](../README.md) / addressedDigestOf
+[LiteShip](../../../README.md) / [canonical/src](../README.md) / addressedDigestOf
 
 # Function: addressedDigestOf()
 

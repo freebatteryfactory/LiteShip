@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SANCTIONED\_SKIPS
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SANCTIONED\_SKIPS
 
 # Variable: SANCTIONED\_SKIPS
 

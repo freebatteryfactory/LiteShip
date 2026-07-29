@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / computed
+[LiteShip](../../../README.md) / [core/src](../README.md) / computed
 
 # Function: computed()
 

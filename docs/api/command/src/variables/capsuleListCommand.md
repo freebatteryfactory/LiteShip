@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / capsuleListCommand
+[LiteShip](../../../README.md) / [command/src](../README.md) / capsuleListCommand
 
 # Variable: capsuleListCommand
 

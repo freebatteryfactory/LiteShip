@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / filterDiscreteSnapshotSignals
+[LiteShip](../../../README.md) / [core/src](../README.md) / filterDiscreteSnapshotSignals
 
 # Function: filterDiscreteSnapshotSignals()
 

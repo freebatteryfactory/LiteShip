@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / InvariantState
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / InvariantState
 
 # Type Alias: InvariantState
 

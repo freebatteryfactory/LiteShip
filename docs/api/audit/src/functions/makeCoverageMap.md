@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / makeCoverageMap
+[LiteShip](../../../README.md) / [audit/src](../README.md) / makeCoverageMap
 
 # Function: makeCoverageMap()
 

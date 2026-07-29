@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / RootScriptCheckExecution
+[LiteShip](../../../README.md) / [command/src](../README.md) / RootScriptCheckExecution
 
 # Interface: RootScriptCheckExecution
 

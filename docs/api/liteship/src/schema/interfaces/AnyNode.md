@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / AnyNode
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / AnyNode
 
 # Interface: AnyNode
 

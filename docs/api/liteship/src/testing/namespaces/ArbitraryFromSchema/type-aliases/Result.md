@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/testing](../../../README.md) / [ArbitraryFromSchema](../README.md) / Result
+[LiteShip](../../../../../../README.md) / [liteship/src/testing](../../../README.md) / [ArbitraryFromSchema](../README.md) / Result
 
 # Type Alias: Result\<A\>
 

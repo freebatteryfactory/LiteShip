@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / CSSRule
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / CSSRule
 
 # Interface: CSSRule
 

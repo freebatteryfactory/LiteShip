@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / AllowlistUnexercisedEntry
+[LiteShip](../../../README.md) / [audit/src](../README.md) / AllowlistUnexercisedEntry
 
 # Interface: AllowlistUnexercisedEntry
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / VersionPayload
+[LiteShip](../../../README.md) / [command/src](../README.md) / VersionPayload
 
 # Type Alias: VersionPayload
 

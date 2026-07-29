@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / compileQuantizeBlock
+[LiteShip](../../../README.md) / [vite/src](../README.md) / compileQuantizeBlock
 
 # Function: compileQuantizeBlock()
 

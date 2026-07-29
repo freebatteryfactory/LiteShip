@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / rankOf
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / rankOf
 
 # Function: rankOf()
 

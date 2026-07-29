@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / createAudioProcessor
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / createAudioProcessor
 
 # Function: createAudioProcessor()
 

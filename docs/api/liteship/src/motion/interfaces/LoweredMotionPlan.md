@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / LoweredMotionPlan
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / LoweredMotionPlan
 
 # Interface: LoweredMotionPlan
 

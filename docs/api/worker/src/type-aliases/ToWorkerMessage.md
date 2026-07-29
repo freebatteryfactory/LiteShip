@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [worker/src](../README.md) / ToWorkerMessage
+[LiteShip](../../../README.md) / [worker/src](../README.md) / ToWorkerMessage
 
 # Type Alias: ToWorkerMessage
 

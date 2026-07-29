@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/reactive](../../../README.md) / [Signal](../README.md) / Audio
+[LiteShip](../../../../../../README.md) / [liteship/src/reactive](../../../README.md) / [Signal](../README.md) / Audio
 
 # Type Alias: Audio
 

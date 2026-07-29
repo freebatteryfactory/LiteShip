@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / surfaceElementKey
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / surfaceElementKey
 
 # Function: surfaceElementKey()
 

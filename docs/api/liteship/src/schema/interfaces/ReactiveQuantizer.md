@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / ReactiveQuantizer
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / ReactiveQuantizer
 
 # Interface: ReactiveQuantizer\<B\>
 

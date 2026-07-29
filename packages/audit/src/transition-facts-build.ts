@@ -5,7 +5,7 @@
  *
  * `@liteship/gauntlet` DEFINES the {@link TransitionFacts} interface but constructs no
  * reactive primitive and forks no fiber — it is the lean engine and transition
- * conformance is an INJECTED capability (the same ADR-0012 boundary as the IR /
+ * conformance is an INJECTED capability (the same host-injection boundary as the IR /
  * mutation facts). THIS module is the host half: the CALLER (the CLI, wiring the
  * Foundation `reactive-capture` + `reactive-model` harnesses; the meta-proof, wiring a
  * deterministic stub) runs each seeded op history over BOTH the model and the
@@ -30,7 +30,7 @@
  * canonical-encodes each side's observation through the ONE encoder (`@liteship/canonical`'s
  * `CanonicalCbor`) and decides `equivalent` by comparing the EXACT canonical bytes — never
  * a hash equality, so no digest collision can ever launder a real divergence into a false
- * `equivalent` green (SKILL.md §4: a weak hash may not be the sole witness of an L4
+ * `equivalent` green (a weak hash may never be the sole witness of an L4
  * conformance decision). The stored fact digests (the two observation addresses + the
  * history `traceDigest`) are the canonical SHA-256 content address (`sha256:<hex>`) of those
  * same bytes — a collision-resistant, trust-bearing replay identity. Cases sort by `(seed,

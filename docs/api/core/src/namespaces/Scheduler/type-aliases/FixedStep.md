@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [Scheduler](../README.md) / FixedStep
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [Scheduler](../README.md) / FixedStep
 
 # Type Alias: FixedStep
 

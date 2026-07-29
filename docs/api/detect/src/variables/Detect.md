@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / Detect
+[LiteShip](../../../README.md) / [detect/src](../README.md) / Detect
 
 # Variable: Detect
 
 > `const` **Detect**: `object`
 
-Defined in: [detect/src/detect.ts:708](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L708)
+Defined in: [detect/src/detect.ts:711](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L711)
 
 Device capability detection namespace.
 

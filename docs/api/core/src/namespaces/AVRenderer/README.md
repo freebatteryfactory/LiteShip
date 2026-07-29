@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [core/src](../../README.md) / AVRenderer
+[LiteShip](../../../../README.md) / [core/src](../../README.md) / AVRenderer
 
 # AVRenderer
 

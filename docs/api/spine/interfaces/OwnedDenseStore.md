@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / OwnedDenseStore
+[LiteShip](../../README.md) / [\_spine](../README.md) / OwnedDenseStore
 
 # Interface: OwnedDenseStore\<P\>
 
-Defined in: [\_spine/core.d.ts:839](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L839)
+Defined in: [\_spine/core.d.ts:840](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L840)
 
 Read and write halves returned for one allocated dense store.
 
@@ -22,7 +22,7 @@ Read and write halves returned for one allocated dense store.
 
 > `readonly` **store**: [`DenseStore`](DenseStore.md)\<`P`\>
 
-Defined in: [\_spine/core.d.ts:840](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L840)
+Defined in: [\_spine/core.d.ts:841](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L841)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [\_spine/core.d.ts:840](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **writer**: [`DenseStoreWriter`](DenseStoreWriter.md)\<`P`\>
 
-Defined in: [\_spine/core.d.ts:841](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L841)
+Defined in: [\_spine/core.d.ts:842](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L842)

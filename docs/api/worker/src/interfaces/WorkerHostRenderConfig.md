@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [worker/src](../README.md) / WorkerHostRenderConfig
+[LiteShip](../../../README.md) / [worker/src](../README.md) / WorkerHostRenderConfig
 
 # Interface: WorkerHostRenderConfig
 

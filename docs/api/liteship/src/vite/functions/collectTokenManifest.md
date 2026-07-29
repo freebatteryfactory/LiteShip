@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / collectTokenManifest
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / collectTokenManifest
 
 # Function: collectTokenManifest()
 

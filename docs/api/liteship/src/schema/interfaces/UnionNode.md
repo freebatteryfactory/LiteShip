@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / UnionNode
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / UnionNode
 
 # Interface: UnionNode
 

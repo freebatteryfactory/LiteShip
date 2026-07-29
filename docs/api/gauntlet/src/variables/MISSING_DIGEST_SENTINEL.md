@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / MISSING\_DIGEST\_SENTINEL
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / MISSING\_DIGEST\_SENTINEL
 
 # Variable: MISSING\_DIGEST\_SENTINEL
 

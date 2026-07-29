@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / UnsupportedError
+[LiteShip](../../../README.md) / [error/src](../README.md) / UnsupportedError
 
 # Interface: UnsupportedError
 

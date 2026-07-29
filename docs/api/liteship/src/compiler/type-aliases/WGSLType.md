@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / WGSLType
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / WGSLType
 
 # Type Alias: WGSLType
 

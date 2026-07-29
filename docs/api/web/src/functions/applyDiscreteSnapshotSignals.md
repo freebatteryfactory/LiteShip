@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / applyDiscreteSnapshotSignals
+[LiteShip](../../../README.md) / [web/src](../README.md) / applyDiscreteSnapshotSignals
 
 # Function: applyDiscreteSnapshotSignals()
 

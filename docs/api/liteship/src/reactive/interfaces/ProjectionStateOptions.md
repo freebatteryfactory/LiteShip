@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / ProjectionStateOptions
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / ProjectionStateOptions
 
 # Interface: ProjectionStateOptions
 

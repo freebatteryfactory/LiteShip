@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [CellKernel](../README.md) / Sink
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [CellKernel](../README.md) / Sink
 
 # Type Alias: Sink\<T\>
 

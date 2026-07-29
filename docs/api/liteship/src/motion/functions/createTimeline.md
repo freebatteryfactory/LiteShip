@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / createTimeline
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / createTimeline
 
 # Function: createTimeline()
 

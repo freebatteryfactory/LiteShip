@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / SkippedCheck
+[LiteShip](../../../README.md) / [command/src](../README.md) / SkippedCheck
 
 # Interface: SkippedCheck
 

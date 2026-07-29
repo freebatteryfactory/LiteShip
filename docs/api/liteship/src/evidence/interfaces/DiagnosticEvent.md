@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / DiagnosticEvent
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / DiagnosticEvent
 
 # Interface: DiagnosticEvent
 

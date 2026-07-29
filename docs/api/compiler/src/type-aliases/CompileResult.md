@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / CompileResult
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / CompileResult
 
 # Type Alias: CompileResult
 

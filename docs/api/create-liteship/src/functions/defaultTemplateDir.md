@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [create-liteship/src](../README.md) / defaultTemplateDir
+[LiteShip](../../../README.md) / [create-liteship/src](../README.md) / defaultTemplateDir
 
 # Function: defaultTemplateDir()
 

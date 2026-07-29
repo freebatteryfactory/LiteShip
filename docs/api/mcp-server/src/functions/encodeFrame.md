@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / encodeFrame
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / encodeFrame
 
 # Function: encodeFrame()
 

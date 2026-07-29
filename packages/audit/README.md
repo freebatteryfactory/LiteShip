@@ -49,7 +49,6 @@ Consumer discovery walks `node_modules`; before trusting a report, verify `Objec
 ## Docs
 
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
-- [Audit guide](https://github.com/freebatteryfactory/LiteShip/blob/main/AUDIT.md) — profiles, passes, and the receipt contract
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/audit/src/) — generated from source
 

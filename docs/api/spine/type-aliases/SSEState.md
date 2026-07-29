@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / SSEState
+[LiteShip](../../README.md) / [\_spine](../README.md) / SSEState
 
 # Type Alias: SSEState
 

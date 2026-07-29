@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ChainValidationError
+[LiteShip](../../../README.md) / [core/src](../README.md) / ChainValidationError
 
 # Type Alias: ChainValidationError
 

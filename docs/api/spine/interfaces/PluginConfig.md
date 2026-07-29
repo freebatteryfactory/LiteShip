@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / PluginConfig
+[LiteShip](../../README.md) / [\_spine](../README.md) / PluginConfig
 
 # Interface: PluginConfig
 

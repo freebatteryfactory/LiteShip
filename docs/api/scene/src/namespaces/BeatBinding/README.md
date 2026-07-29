@@ -2,12 +2,12 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [scene/src](../../README.md) / BeatBinding
+[LiteShip](../../../../README.md) / [scene/src](../../README.md) / BeatBinding
 
 # BeatBinding
 
 BeatBinding namespace — pure transforms over beat markers.
-Companion type namespace exposes Spawn and Component shapes (ADR-0001).
+Companion type namespace exposes Spawn and Component shapes.
 
 ## Type Aliases
 

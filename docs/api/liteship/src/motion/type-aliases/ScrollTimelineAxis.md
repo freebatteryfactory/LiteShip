@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / ScrollTimelineAxis
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / ScrollTimelineAxis
 
 # Type Alias: ScrollTimelineAxis
 

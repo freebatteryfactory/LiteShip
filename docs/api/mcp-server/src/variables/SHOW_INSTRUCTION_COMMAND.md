@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / SHOW\_INSTRUCTION\_COMMAND
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / SHOW\_INSTRUCTION\_COMMAND
 
 # Variable: SHOW\_INSTRUCTION\_COMMAND
 

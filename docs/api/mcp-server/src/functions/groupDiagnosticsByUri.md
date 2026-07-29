@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / groupDiagnosticsByUri
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / groupDiagnosticsByUri
 
 # Function: groupDiagnosticsByUri()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Signal
+[LiteShip](../../../README.md) / [core/src](../README.md) / Signal
 
 # Variable: Signal
 
@@ -13,7 +13,7 @@ Defined in: [core/src/reactive/signal.ts:430](https://github.com/freebatteryfact
 Signal namespace -- the alternate live-feed constructors.
 
 The primary environment-source constructor is the standalone [createSignal](../functions/createSignal.md)
-(verb grammar, ADR-0046 — `create` allocates a runtime resource). This namespace
+(verb grammar — `create` allocates a runtime resource). This namespace
 carries the two SPECIALIZED constructors: `controllable` (a seekable/pausable
 time signal driven externally) and `audio` (an [AVBridge](AVBridge.md)-backed sample/
 normalized feed). Each signal provides `.read()` and `.subscribe(sink)` backed by

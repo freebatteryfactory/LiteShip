@@ -11,8 +11,10 @@
  * declared fidelity. Each admitted mirror type is classified on TWO orthogonal axes —
  * **Authority** `{spine | runtime | generated}` and **SurfaceRelation** `{exact |
  * public-narrower | public-wider | opaque | brand-reanchored | runtime-exists |
- * intentionally-omitted}` — grounded in ADR-0010 (the spine OWNS branded types; other
- * declarations MIRROR runtime types). The host probes each type's bidirectional
+ * intentionally-omitted}` — grounded in the spine-as-canonical-type-source law: `_spine` is the
+ * single source of truth for branded types (a brand lands in `_spine` BEFORE the runtime re-exports
+ * it, so a brand is never declared twice and the mirror can never fork from its owner), while every
+ * other spine declaration MIRRORS a runtime-owned type. The host probes each type's bidirectional
  * assignability and records the OBSERVED relation; this gate flags every observation
  * whose observed relation no longer satisfies its ADMITTED (frozen) relation — the
  * exact drift class the frozen spine-conformance `IsEqual` pins caught by hand
@@ -70,7 +72,7 @@ function unresolvedFinding(o: SpineRelationObservation): Finding {
       description: 'Restore the resolvable mirror↔runtime pair, or retire the admission and mirror together.',
       steps: [
         `Check whether \`${o.typeName}\` was renamed or removed on the spine side (\`packages/_spine/*.d.ts\`) or the runtime side.`,
-        `If it should still exist, restore the declaration (and re-anchor per ADR-0010 if it is a branded type).`,
+        `If it should still exist, restore the declaration (re-anchoring it from \`_spine\` if it is a branded type — the spine owns brands).`,
         `If the removal is intentional, remove the admission row AND the mirror declaration in the same change — never leave a dangling admission.`,
       ],
     },
@@ -95,7 +97,7 @@ function driftFinding(o: SpineRelationObservation): Finding {
       description: 'Restore the admitted relation, or deliberately re-admit the new relation.',
       steps: [
         `Compare the spine declaration of \`${o.typeName}\` against its runtime source; the observed \`${o.observedRelation}\` says which direction of assignability broke.`,
-        `If the mirror is stale, edit the \`_spine/*.d.ts\` declaration to restore the \`${o.admittedRelation}\` relation (ADR-0010: brand additions land in _spine BEFORE the runtime re-exports them).`,
+        `If the mirror is stale, edit the \`_spine/*.d.ts\` declaration to restore the \`${o.admittedRelation}\` relation (brand additions land in _spine BEFORE the runtime re-exports them).`,
         `If the runtime surface intentionally changed, update the admission row to the new observed relation and record the surface change in the api/type-export snapshots — a reviewed re-admission, never a silent widening.`,
       ],
     },

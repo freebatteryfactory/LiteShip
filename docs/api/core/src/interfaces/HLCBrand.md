@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / HLCBrand
+[LiteShip](../../../README.md) / [core/src](../README.md) / HLCBrand
 
 # Interface: HLCBrand
 

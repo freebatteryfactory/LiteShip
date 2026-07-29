@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / OverflowPolicy
+[LiteShip](../../README.md) / [\_spine](../README.md) / OverflowPolicy
 
 # Type Alias: OverflowPolicy
 

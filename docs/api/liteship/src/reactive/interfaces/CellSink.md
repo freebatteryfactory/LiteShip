@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / CellSink
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / CellSink
 
 # Interface: CellSink\<T\>
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [ClientHints](../README.md) / Headers
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [ClientHints](../README.md) / Headers
 
 # Type Alias: Headers
 

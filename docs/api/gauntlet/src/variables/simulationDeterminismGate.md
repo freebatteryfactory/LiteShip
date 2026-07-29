@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / simulationDeterminismGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / simulationDeterminismGate
 
 # Variable: simulationDeterminismGate
 

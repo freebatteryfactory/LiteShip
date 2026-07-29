@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / asDeclaration
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / asDeclaration
 
 # Function: asDeclaration()
 

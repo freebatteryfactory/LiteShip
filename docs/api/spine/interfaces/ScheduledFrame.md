@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ScheduledFrame
+[LiteShip](../../README.md) / [\_spine](../README.md) / ScheduledFrame
 
 # Interface: ScheduledFrame
 
-Defined in: [\_spine/core.d.ts:1571](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1571)
+Defined in: [\_spine/core.d.ts:1573](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1573)
 
 One deterministic coordinate in an offline frame schedule.
 
@@ -16,7 +16,7 @@ One deterministic coordinate in an offline frame schedule.
 
 > `readonly` **frame**: `number`
 
-Defined in: [\_spine/core.d.ts:1572](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1572)
+Defined in: [\_spine/core.d.ts:1574](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1574)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1572](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **progress**: `number`
 
-Defined in: [\_spine/core.d.ts:1574](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1574)
+Defined in: [\_spine/core.d.ts:1576](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1576)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:1574](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **timestamp**: `number`
 
-Defined in: [\_spine/core.d.ts:1573](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1573)
+Defined in: [\_spine/core.d.ts:1575](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1575)

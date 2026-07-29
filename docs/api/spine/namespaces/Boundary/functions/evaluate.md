@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Boundary](../README.md) / evaluate
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Boundary](../README.md) / evaluate
 
 # Function: evaluate()
 
 > **evaluate**\<`B`\>(`boundary`, `value`): [`StateUnion`](../../../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [\_spine/core.d.ts:278](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L278)
+Defined in: [\_spine/core.d.ts:279](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L279)
 
 ## Type Parameters
 

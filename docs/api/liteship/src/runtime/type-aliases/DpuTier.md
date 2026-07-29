@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / DpuTier
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / DpuTier
 
 # Type Alias: DpuTier
 

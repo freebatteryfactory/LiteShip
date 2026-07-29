@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ProjectionNode
+[LiteShip](../../../README.md) / [core/src](../README.md) / ProjectionNode
 
 # Interface: ProjectionNode
 

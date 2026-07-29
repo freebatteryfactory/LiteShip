@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / lowerAdaptive
+[LiteShip](../../../README.md) / [core/src](../README.md) / lowerAdaptive
 
 # Function: lowerAdaptive()
 

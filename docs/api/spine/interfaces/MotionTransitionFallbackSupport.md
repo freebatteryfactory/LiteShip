@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / MotionTransitionFallbackSupport
+[LiteShip](../../README.md) / [\_spine](../README.md) / MotionTransitionFallbackSupport
 
 # Interface: MotionTransitionFallbackSupport
 

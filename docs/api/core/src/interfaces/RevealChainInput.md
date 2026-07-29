@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / RevealChainInput
+[LiteShip](../../../README.md) / [core/src](../README.md) / RevealChainInput
 
 # Interface: RevealChainInput
 

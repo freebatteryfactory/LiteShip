@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / Component
+[LiteShip](../../README.md) / [\_spine](../README.md) / Component
 
 # Interface: Component\<B, SlotNames\>
 

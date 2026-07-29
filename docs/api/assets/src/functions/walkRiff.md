@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / walkRiff
+[LiteShip](../../../README.md) / [assets/src](../README.md) / walkRiff
 
 # Function: walkRiff()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / GlossaryPayload
+[LiteShip](../../../README.md) / [command/src](../README.md) / GlossaryPayload
 
 # Type Alias: GlossaryPayload
 

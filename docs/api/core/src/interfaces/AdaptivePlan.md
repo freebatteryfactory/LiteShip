@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / AdaptivePlan
+[LiteShip](../../../README.md) / [core/src](../README.md) / AdaptivePlan
 
 # Interface: AdaptivePlan
 

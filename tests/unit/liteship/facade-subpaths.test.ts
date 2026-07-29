@@ -420,7 +420,7 @@ describe('liteship facade — root export budget (exact match + caps)', () => {
   });
 
   it('every listed VALUE in ROOT_VALUE_BUDGET is actually exported at runtime (exact match, no phantom slot)', () => {
-    // The exact-match law's second direction (ADR-0051): a listed value MUST be a
+    // The exact-match law's second direction: a listed value MUST be a
     // real runtime export — no reserved-but-absent slot survives. Type-only budget
     // entries are excluded here (they have no runtime footprint; the built-d.ts gate
     // proves the TYPE direction).

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / TokenCategory
+[LiteShip](../../../README.md) / [core/src](../README.md) / TokenCategory
 
 # Type Alias: TokenCategory
 

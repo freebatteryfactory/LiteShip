@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / EdgeHostCompileContext
+[LiteShip](../../README.md) / [\_spine](../README.md) / EdgeHostCompileContext
 
 # Interface: EdgeHostCompileContext
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ExportNode
+[LiteShip](../../../README.md) / [core/src](../README.md) / ExportNode
 
 # Interface: ExportNode
 

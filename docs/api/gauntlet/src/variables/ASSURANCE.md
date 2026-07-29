@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ASSURANCE
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ASSURANCE
 
 # Variable: ASSURANCE
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [quantizer/src](../README.md) / OutputTarget
+[LiteShip](../../../README.md) / [quantizer/src](../README.md) / OutputTarget
 
 # Type Alias: OutputTarget
 

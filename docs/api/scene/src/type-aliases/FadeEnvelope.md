@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / FadeEnvelope
+[LiteShip](../../../README.md) / [scene/src](../README.md) / FadeEnvelope
 
 # Type Alias: FadeEnvelope
 

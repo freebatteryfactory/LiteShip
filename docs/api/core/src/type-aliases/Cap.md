@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Cap
+[LiteShip](../../../README.md) / [core/src](../README.md) / Cap
 
 # Type Alias: Cap
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FixVerdict
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FixVerdict
 
 # Type Alias: FixVerdict
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / BootstrapQuantizersMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / BootstrapQuantizersMessage
 
 # Interface: BootstrapQuantizersMessage
 

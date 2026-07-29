@@ -2,7 +2,7 @@
  * Canonical CBOR encoder — RFC 8949 §4.2.1 deterministic encoding.
  *
  * Pure encode-only path used to produce stable byte sequences for content
- * addressing and idempotency hashes. Honors ADR-0003: identical inputs
+ * addressing and idempotency hashes. The determinism law: identical inputs
  * (including key-permuted plain objects) emit byte-identical Uint8Arrays
  * across platforms.
  *
@@ -200,7 +200,7 @@ const encode = (value: unknown): Uint8Array => {
   return encodeCanonical(value);
 };
 
-/** Canonical CBOR encoder namespace (ADR-0001 pattern). */
+/** Canonical CBOR encoder namespace (namespace-object pattern). */
 export const CanonicalCbor = { encode } as const;
 
 export declare namespace CanonicalCbor {

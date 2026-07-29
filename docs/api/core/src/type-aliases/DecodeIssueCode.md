@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / DecodeIssueCode
+[LiteShip](../../../README.md) / [core/src](../README.md) / DecodeIssueCode
 
 # Type Alias: DecodeIssueCode
 

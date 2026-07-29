@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / DPU\_DIGEST\_ATTR
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / DPU\_DIGEST\_ATTR
 
 # Variable: DPU\_DIGEST\_ATTR
 

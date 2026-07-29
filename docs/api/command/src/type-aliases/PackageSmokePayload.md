@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PackageSmokePayload
+[LiteShip](../../../README.md) / [command/src](../README.md) / PackageSmokePayload
 
 # Type Alias: PackageSmokePayload
 

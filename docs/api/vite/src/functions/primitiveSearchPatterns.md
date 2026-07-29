@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / primitiveSearchPatterns
+[LiteShip](../../../README.md) / [vite/src](../README.md) / primitiveSearchPatterns
 
 # Function: primitiveSearchPatterns()
 

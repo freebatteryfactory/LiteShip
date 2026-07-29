@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / SVGSystem
+[LiteShip](../../../README.md) / [scene/src](../README.md) / SVGSystem
 
 # Function: SVGSystem()
 

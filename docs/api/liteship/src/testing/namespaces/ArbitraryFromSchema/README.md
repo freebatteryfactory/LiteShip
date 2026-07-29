@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [liteship/src/testing](../../README.md) / ArbitraryFromSchema
+[LiteShip](../../../../../README.md) / [liteship/src/testing](../../README.md) / ArbitraryFromSchema
 
 # ArbitraryFromSchema
 

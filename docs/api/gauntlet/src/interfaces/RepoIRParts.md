@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / RepoIRParts
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / RepoIRParts
 
 # Interface: RepoIRParts
 

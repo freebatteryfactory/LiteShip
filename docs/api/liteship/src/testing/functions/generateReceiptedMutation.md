@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / generateReceiptedMutation
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / generateReceiptedMutation
 
 # Function: generateReceiptedMutation()
 

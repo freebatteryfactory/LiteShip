@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / TransitionProgram
+[LiteShip](../../../README.md) / [core/src](../README.md) / TransitionProgram
 
 # Type Alias: TransitionProgram
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / RevealTransition
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / RevealTransition
 
 # Interface: RevealTransition
 

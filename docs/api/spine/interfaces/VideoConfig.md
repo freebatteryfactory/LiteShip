@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / VideoConfig
+[LiteShip](../../README.md) / [\_spine](../README.md) / VideoConfig
 
 # Interface: VideoConfig
 
-Defined in: [\_spine/core.d.ts:1555](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1555)
+Defined in: [\_spine/core.d.ts:1557](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1557)
 
 Dimensions, frame rate, and duration of a video render schedule.
 
@@ -16,7 +16,7 @@ Dimensions, frame rate, and duration of a video render schedule.
 
 > `readonly` **durationMs**: [`Millis`](../type-aliases/Millis.md)
 
-Defined in: [\_spine/core.d.ts:1559](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1559)
+Defined in: [\_spine/core.d.ts:1561](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1561)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1559](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **fps**: `number`
 
-Defined in: [\_spine/core.d.ts:1556](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1556)
+Defined in: [\_spine/core.d.ts:1558](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1558)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1556](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **height**: `number`
 
-Defined in: [\_spine/core.d.ts:1558](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1558)
+Defined in: [\_spine/core.d.ts:1560](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1560)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:1558](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **width**: `number`
 
-Defined in: [\_spine/core.d.ts:1557](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1557)
+Defined in: [\_spine/core.d.ts:1559](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1559)

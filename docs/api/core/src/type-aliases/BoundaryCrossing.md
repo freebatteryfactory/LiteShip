@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / BoundaryCrossing
+[LiteShip](../../../README.md) / [core/src](../README.md) / BoundaryCrossing
 
 # Type Alias: BoundaryCrossing\<S\>
 

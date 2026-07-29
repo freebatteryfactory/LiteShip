@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / pulse
+[LiteShip](../../../README.md) / [scene/src](../README.md) / pulse
 
 # Variable: pulse
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / McpPrompt
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / McpPrompt
 
 # Interface: McpPrompt
 

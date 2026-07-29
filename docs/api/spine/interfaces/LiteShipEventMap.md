@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / LiteShipEventMap
+[LiteShip](../../README.md) / [\_spine](../README.md) / LiteShipEventMap
 
 # Interface: LiteShipEventMap
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / assetAnalyzeCommand
+[LiteShip](../../../README.md) / [command/src](../README.md) / assetAnalyzeCommand
 
 # Variable: assetAnalyzeCommand
 

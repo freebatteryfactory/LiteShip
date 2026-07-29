@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / QuantizeSheetContext
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / QuantizeSheetContext
 
 # Interface: QuantizeSheetContext
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / featureEdgeConnectivityGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / featureEdgeConnectivityGate
 
 # Variable: featureEdgeConnectivityGate
 

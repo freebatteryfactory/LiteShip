@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [worker/src](../README.md) / RenderWorker
+[LiteShip](../../../README.md) / [worker/src](../README.md) / RenderWorker
 
 # Variable: RenderWorker
 

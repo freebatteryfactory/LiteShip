@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / IslandMode
+[LiteShip](../../README.md) / [\_spine](../README.md) / IslandMode
 
 # Type Alias: IslandMode
 

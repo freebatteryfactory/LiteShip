@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Timeline
+[LiteShip](../../../README.md) / [core/src](../README.md) / Timeline
 
 # Type Alias: Timeline\<B\>
 

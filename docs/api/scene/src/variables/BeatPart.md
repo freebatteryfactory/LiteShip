@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / BeatPart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / BeatPart
 
 # Variable: BeatPart
 

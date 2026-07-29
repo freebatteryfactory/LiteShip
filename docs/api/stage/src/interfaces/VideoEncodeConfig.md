@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [stage/src](../README.md) / VideoEncodeConfig
+[LiteShip](../../../README.md) / [stage/src](../README.md) / VideoEncodeConfig
 
 # Interface: VideoEncodeConfig
 

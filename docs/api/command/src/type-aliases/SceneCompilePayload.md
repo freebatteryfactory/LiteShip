@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / SceneCompilePayload
+[LiteShip](../../../README.md) / [command/src](../README.md) / SceneCompilePayload
 
 # Type Alias: SceneCompilePayload
 

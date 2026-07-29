@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CSSProp
+[LiteShip](../../README.md) / [\_spine](../README.md) / CSSProp
 
 # Type Alias: CSSProp
 

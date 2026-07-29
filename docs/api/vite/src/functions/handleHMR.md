@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / handleHMR
+[LiteShip](../../../README.md) / [vite/src](../README.md) / handleHMR
 
 # Function: handleHMR()
 

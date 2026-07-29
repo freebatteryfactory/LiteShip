@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / createDirtyFlags
+[LiteShip](../../../README.md) / [core/src](../README.md) / createDirtyFlags
 
 # Function: createDirtyFlags()
 

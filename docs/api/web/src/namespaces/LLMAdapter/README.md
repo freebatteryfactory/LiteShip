@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [web/src](../../README.md) / LLMAdapter
+[LiteShip](../../../../README.md) / [web/src](../../README.md) / LLMAdapter
 
 # LLMAdapter
 

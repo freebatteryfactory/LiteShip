@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / runGates
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / runGates
 
 # Function: runGates()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [WorkerHost](../README.md) / StartupTelemetry
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [WorkerHost](../README.md) / StartupTelemetry
 
 # Type Alias: StartupTelemetry
 

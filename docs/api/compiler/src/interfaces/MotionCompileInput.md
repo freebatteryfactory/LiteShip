@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / MotionCompileInput
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / MotionCompileInput
 
 # Interface: MotionCompileInput
 

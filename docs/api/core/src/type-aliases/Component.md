@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Component
+[LiteShip](../../../README.md) / [core/src](../README.md) / Component
 
 # Type Alias: Component\<B, SN\>
 

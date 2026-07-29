@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / VerifiablePatchVerification
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / VerifiablePatchVerification
 
 # Type Alias: VerifiablePatchVerification
 

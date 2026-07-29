@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / streamWireAttr
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / streamWireAttr
 
 # Function: streamWireAttr()
 

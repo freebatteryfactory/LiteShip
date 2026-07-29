@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / DocumentGraphNodeParts
+[LiteShip](../../../README.md) / [core/src](../README.md) / DocumentGraphNodeParts
 
 # Type Alias: DocumentGraphNodeParts\<N\>
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [quantizer/src](../README.md) / InterpolatedFrame
+[LiteShip](../../../README.md) / [quantizer/src](../README.md) / InterpolatedFrame
 
 # Interface: InterpolatedFrame\<B\>
 

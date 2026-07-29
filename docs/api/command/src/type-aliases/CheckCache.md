@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckCache
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckCache
 
 # Type Alias: CheckCache
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / dispatchLiteshipEvent
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / dispatchLiteshipEvent
 
 # Function: dispatchLiteshipEvent()
 

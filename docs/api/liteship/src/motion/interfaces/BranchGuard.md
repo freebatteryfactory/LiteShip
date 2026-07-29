@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / BranchGuard
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / BranchGuard
 
 # Interface: BranchGuard
 

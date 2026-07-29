@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / StructSchemaNode
+[LiteShip](../../README.md) / [\_spine](../README.md) / StructSchemaNode
 
 # Interface: StructSchemaNode
 
-Defined in: [\_spine/core.d.ts:642](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L642)
+Defined in: [\_spine/core.d.ts:643](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L643)
 
 Struct schema AST node.
 
@@ -20,7 +20,7 @@ Struct schema AST node.
 
 > `readonly` `optional` **annotations?**: `Readonly`\<`Record`\<`symbol`, `unknown`\>\>
 
-Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
+Defined in: [\_spine/core.d.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L612)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **fields**: readonly [`StructSchemaField`](StructSchemaField.md)[]
 
-Defined in: [\_spine/core.d.ts:644](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L644)
+Defined in: [\_spine/core.d.ts:645](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L645)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:644](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `"struct"`
 
-Defined in: [\_spine/core.d.ts:643](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L643)
+Defined in: [\_spine/core.d.ts:644](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L644)

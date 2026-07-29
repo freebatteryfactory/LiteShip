@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / AudioTrack
+[LiteShip](../../../README.md) / [scene/src](../README.md) / AudioTrack
 
 # Interface: AudioTrack\<M\>
 

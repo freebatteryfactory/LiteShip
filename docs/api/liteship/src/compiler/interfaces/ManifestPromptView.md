@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / ManifestPromptView
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / ManifestPromptView
 
 # Interface: ManifestPromptView
 

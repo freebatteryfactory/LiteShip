@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [stage/src](../README.md) / exportAstroPage
+[LiteShip](../../../README.md) / [stage/src](../README.md) / exportAstroPage
 
 # Function: exportAstroPage()
 

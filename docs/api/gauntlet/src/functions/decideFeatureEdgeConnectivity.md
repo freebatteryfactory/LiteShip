@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / decideFeatureEdgeConnectivity
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / decideFeatureEdgeConnectivity
 
 # Function: decideFeatureEdgeConnectivity()
 

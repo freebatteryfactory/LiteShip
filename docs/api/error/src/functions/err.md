@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / err
+[LiteShip](../../../README.md) / [error/src](../README.md) / err
 
 # Function: err()
 

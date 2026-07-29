@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / projectLspCapabilities
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / projectLspCapabilities
 
 # Function: projectLspCapabilities()
 

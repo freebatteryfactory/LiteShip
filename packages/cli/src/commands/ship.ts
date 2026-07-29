@@ -1,5 +1,5 @@
 /**
- * `liteship ship` — ADR-0011 publisher verb.
+ * `liteship ship` — the publisher verb.
  *
  * For each target package: validates git, packs the tarball, runs
  * `pnpm publish --dry-run`, addresses each input via ShipCapsule helpers,
@@ -8,9 +8,14 @@
  * the real upload.
  *
  * Doctrinal notes:
+ *   - Publish the TARBALL, never the workspace directory: `pnpm pack` rewrites
+ *     `workspace:*` ranges to concrete versions inside the tarball; a direct
+ *     `npm publish <dir>` skips that rewrite and ships broken ranges.
  *   - Git dirtiness is *recorded*, never blocked. The sin is lying.
- *   - The capsule lives next to the tarball, never inside it (ADR-0011
- *     §Rejected alternatives).
+ *   - The capsule lives next to the tarball, never inside it: the capsule
+ *     addresses the tarball's own contents, so it cannot live inside them.
+ *   - This verb is the SINGLE owner of the publish lifecycle — no per-package
+ *     `prepack`/`postpack` hook duplicates (or races) it.
  *   - Emission goes through the `cli.ship-emit` `receiptedMutation`
  *     capsule — the seven-arm closure is preserved.
  *
@@ -59,7 +64,7 @@ interface ShipOptions {
   readonly unknownFlags: readonly string[];
 }
 
-const SHIP_USAGE = `liteship ship — publish workspace packages (ADR-0011 publisher verb).
+const SHIP_USAGE = `liteship ship — publish workspace packages (the publisher verb).
 
 Usage:
   liteship ship [--filter <pkg>] [--dry-run] [--provenance] [--otp <code>]

@@ -198,7 +198,7 @@ const CLI_OWNED_DESCRIPTORS = [
   },
   {
     name: 'ship',
-    summary: 'Mint ShipCapsule(s) and (unless --dry-run) hand off to pnpm publish (ADR-0011).',
+    summary: 'Mint ShipCapsule(s) and (unless --dry-run) hand off to pnpm publish.',
     inputSchema: {
       type: 'object',
       properties: {

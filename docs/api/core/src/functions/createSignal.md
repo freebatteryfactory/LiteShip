@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / createSignal
+[LiteShip](../../../README.md) / [core/src](../README.md) / createSignal
 
 # Function: createSignal()
 

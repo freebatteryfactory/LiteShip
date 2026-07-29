@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / StyleCSSResult
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / StyleCSSResult
 
 # Interface: StyleCSSResult
 

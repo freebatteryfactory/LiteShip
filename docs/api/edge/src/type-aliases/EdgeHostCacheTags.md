@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / EdgeHostCacheTags
+[LiteShip](../../../README.md) / [edge/src](../README.md) / EdgeHostCacheTags
 
 # Type Alias: EdgeHostCacheTags
 

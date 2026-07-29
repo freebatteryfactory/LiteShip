@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / applySvgAttrs
+[LiteShip](../../../README.md) / [scene/src](../README.md) / applySvgAttrs
 
 # Function: applySvgAttrs()
 

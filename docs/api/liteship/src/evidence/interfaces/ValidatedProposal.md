@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / ValidatedProposal
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / ValidatedProposal
 
 # Interface: ValidatedProposal\<T\>
 

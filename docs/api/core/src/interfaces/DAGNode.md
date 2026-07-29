@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / DAGNode
+[LiteShip](../../../README.md) / [core/src](../README.md) / DAGNode
 
 # Interface: DAGNode
 

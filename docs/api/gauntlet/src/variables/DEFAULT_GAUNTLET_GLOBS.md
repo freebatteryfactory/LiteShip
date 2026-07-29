@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / DEFAULT\_GAUNTLET\_GLOBS
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / DEFAULT\_GAUNTLET\_GLOBS
 
 # Variable: DEFAULT\_GAUNTLET\_GLOBS
 

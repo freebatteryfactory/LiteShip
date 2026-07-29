@@ -44,7 +44,7 @@ export function currentEnvFingerprint(): Record<string, string> {
 
 /** Hash the command + inputs + environment fingerprint into a short hex slug. */
 export function hashInputs(ctx: IdempotencyCtx): string {
-  // ADR-0003: feed SHA-256 RFC 8949 canonical CBOR bytes so the slug is
+  // Feed SHA-256 RFC 8949 canonical CBOR bytes so the slug is
   // invariant under key permutation and JSON stringification quirks. The env
   // fingerprint is part of the identity (a receipt is only valid for the
   // toolchain that produced it), defaulting to the current process.

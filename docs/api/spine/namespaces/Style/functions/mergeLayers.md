@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Style](../README.md) / mergeLayers
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Style](../README.md) / mergeLayers
 
 # Function: mergeLayers()
 

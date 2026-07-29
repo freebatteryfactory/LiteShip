@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / GateVerdictCache
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / GateVerdictCache
 
 # Interface: GateVerdictCache
 

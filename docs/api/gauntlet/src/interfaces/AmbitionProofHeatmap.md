@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / AmbitionProofHeatmap
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / AmbitionProofHeatmap
 
 # Interface: AmbitionProofHeatmap
 

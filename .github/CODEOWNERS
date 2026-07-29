@@ -7,10 +7,10 @@
 
 * @heyoub
 
-# Doctrine + contract surfaces — the sacred docs and the architecture decisions.
+# Doctrine + contract surfaces — the kept docs and the structural rules.
 /*.md @heyoub
 /docs/ @heyoub
-/docs/adr/ @heyoub
+/sgrules/ @heyoub
 
 # The gates themselves — the audit engine, the plumb ledger, the gauntlet phase list.
 /packages/audit/ @heyoub

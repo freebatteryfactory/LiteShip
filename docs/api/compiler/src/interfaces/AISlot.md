@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / AISlot
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / AISlot
 
 # Interface: AISlot
 

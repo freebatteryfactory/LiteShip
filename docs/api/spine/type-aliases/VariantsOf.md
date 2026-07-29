@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / VariantsOf
+[LiteShip](../../README.md) / [\_spine](../README.md) / VariantsOf
 
 # Type Alias: VariantsOf\<T\>
 

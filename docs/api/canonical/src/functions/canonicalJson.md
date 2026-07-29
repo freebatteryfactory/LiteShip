@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [canonical/src](../README.md) / canonicalJson
+[LiteShip](../../../README.md) / [canonical/src](../README.md) / canonicalJson
 
 # Function: canonicalJson()
 

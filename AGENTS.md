@@ -4,8 +4,6 @@ This file is the entry point for AI coding tools that read `AGENTS.md` (Codex, s
 
 **Read these for full context:**
 
-- [SKILL.md](./SKILL.md) — the **battle-scars playbook**: how to reason in this repo (no-silent-drift, complete-don't-nerf, root-fix-not-guard, the operating hazards). Read before changing engine code, records, or docs — no training data covers this.
-- [DOCS.md](./DOCS.md) — the documentation map + a grep-first **discovery index** (where the canonical answer to common questions lives). Start here.
 - [STATUS.md](./STATUS.md) — gates, remaining work, runtime steering
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — package topology and seams; the **document graph IR** + **AI cast** every surface reads from
 - [PACKAGE-SURFACES.md](./PACKAGE-SURFACES.md) — which `@liteship/*` package to reach for, per job
@@ -22,7 +20,9 @@ Public naming: LiteShip (product and engine), `@liteship/*` (packages). See [GLO
 
 ## Agent operating loop
 
-1. Read `SKILL.md`, then use `liteship context --task <id> --json` to locate the semantic owner and proof route.
+House law, in three rules: **no silent drift** (every claim is generated or gated — a mismatch reds, never rots), **complete, don't nerf** (a red gate means fix the subject, never weaken the gate), **root-fix, not guard** (cure the owning contract, never patch the symptom's site).
+
+1. Use `liteship context --task <id> --json` to locate the semantic owner and proof route.
 2. State one falsifiable law; reproduce the red before changing its owner.
 3. Run the smallest focused deterministic proof during implementation. Use `pnpm resources:plan` before heavyweight work.
 4. Before committing, run `pnpm preflight --staged`; it applies the local worker/resource policy and includes TypeDoc only when affected.
@@ -102,8 +102,8 @@ Use this index to find the semantic owner; public subpaths and dependency edges 
 | `liteship scene dev` | Launch Vite + the browser scene player. | CLI orchestration |
 | `liteship scene render` | Render a scene to mp4 (output defaults to <scene>.mp4 beside the scene file). | shared handler |
 | `liteship scene verify` | Run a scene capsule’s generated tests. | shared handler |
-| `liteship ship` | Mint ShipCapsule(s) and (unless --dry-run) hand off to pnpm publish (ADR-0011). | CLI orchestration |
-| `liteship verify` | Locally verify a tarball against its ShipCapsule (ADR-0011; no network). | shared handler |
+| `liteship ship` | Mint ShipCapsule(s) and (unless --dry-run) hand off to pnpm publish. | CLI orchestration |
+| `liteship verify` | Locally verify a tarball against its ShipCapsule (no network). | shared handler |
 | `liteship version` | Report liteship, Node, and pnpm versions. | shared handler |
 
 `liteship describe --format=json` is the machine-readable form of this same catalog.
@@ -128,6 +128,6 @@ Use this index to find the semantic owner; public subpaths and dependency edges 
 | `add-motion` | Motion is a transition program lowered to motion windows. Author the program in @liteship/core/motion and drive it through the quantizer transition path. | `check/test` | `packages/core/src/motion/index.ts`, `packages/core/src/motion/transition-program.ts`, `packages/core/src/motion/interpret-transition.ts`, `packages/quantizer/src/transition.ts`, `tests/unit/quantizer/animated-quantizer.test.ts`, `packages/command/src/checks/registry.ts` |
 | `debug-check-failure` | A blocking check emits Findings via the gauntlet gate fold. Read the Finding, look up its diagnostic code with `liteship explain`, then trace the emitting gate. | `check/gates` | `packages/command/src/commands/check.ts`, `packages/cli/src/commands/check.ts`, `packages/gauntlet/src/engine.ts`, `packages/gauntlet/src/finding.ts`, `packages/error/src/codes.ts`, `tests/unit/command/check.test.ts`, `packages/command/src/checks/registry.ts` |
 | `extend-cli` | Commands are one catalog projected onto the CLI and MCP. Add the handler-backed command, register it in the catalog, and wire the CLI dispatch executor. | `check/plumb-gate` | `packages/command/src/catalog.ts`, `packages/command/src/registry.ts`, `packages/cli/src/dispatch.ts`, `packages/command/src/checks/registry.ts`, `tests/unit/command/catalog.test.ts`, `packages/command/src/checks/registry.ts` |
-| `release` | Release mints a content-addressed ShipCapsule per package and hands off to publish. Read the ship command, the manifest, the release planner, and the SBOM. | `check/package-smoke` | `packages/cli/src/commands/ship.ts`, `packages/cli/src/ship-manifest.ts`, `packages/command/src/commands/ship-planning.ts`, `packages/cli/src/internal/sbom.ts`, `docs/adr/0011-ship-capsule.md`, `tests/unit/ship-manifest.test.ts`, `packages/command/src/checks/registry.ts` |
+| `release` | Release mints a content-addressed ShipCapsule per package and hands off to publish. Read the ship command, the manifest, the release planner, and the SBOM. | `check/package-smoke` | `packages/cli/src/commands/ship.ts`, `packages/cli/src/ship-manifest.ts`, `packages/command/src/commands/ship-planning.ts`, `packages/cli/src/internal/sbom.ts`, `packages/core/src/authoring/ship-capsule.ts`, `tests/unit/ship-manifest.test.ts`, `packages/command/src/checks/registry.ts` |
 | `write-migration-adapter` | A migration adapter translates external source syntax into ordinary LiteShip definitions or emits a stable diagnostic when the source cannot be represented faithfully. | `check/test` | `packages/compiler/src/migrate/index.ts`, `packages/compiler/src/migrate/types.ts`, `packages/compiler/src/migrate/from-media-queries.ts`, `packages/error/src/codes.ts`, `tests/unit/compiler/migrate/from-media-queries.test.ts`, `packages/command/src/checks/registry.ts` |
 <!-- END AGENT-PACKAGE-CONTEXT -->

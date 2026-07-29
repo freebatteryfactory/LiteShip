@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PlumbPayload
+[LiteShip](../../../README.md) / [command/src](../README.md) / PlumbPayload
 
 # Type Alias: PlumbPayload
 

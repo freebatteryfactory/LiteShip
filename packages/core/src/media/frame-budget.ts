@@ -53,7 +53,7 @@ interface FrameBudgetShape {
  * Creates a FrameBudget tracker tied to rAF, with priority-based scheduling.
  * Critical tasks always run; lower priorities are deferred if budget is exhausted.
  * The budget IS its own disposable ({@link AsyncOwnedResource}) — awaiting
- * `budget.dispose()` cancels the rAF loop (verb grammar, ADR-0046).
+ * `budget.dispose()` cancels the rAF loop (verb grammar).
  *
  * @example
  * ```ts

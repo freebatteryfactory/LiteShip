@@ -81,7 +81,7 @@ export function SyncSystem(frameIndex: FrameSource, fps: number = 60): System {
       const currentTimeMs = (frame / fps) * 1000;
       // Last beat at-or-before now. Linear scan is fine — beat counts
       // are tiny relative to per-frame budget; sorted-binary-search
-      // optimization waits for a future ADR-driven `hot-path` pass.
+      // optimization waits for a future `hot-path` pass.
       let lastBeat = -Infinity;
       for (const t of beatTimesMs) {
         if (t <= currentTimeMs) lastBeat = t;

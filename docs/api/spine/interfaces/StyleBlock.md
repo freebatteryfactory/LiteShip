@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / StyleBlock
+[LiteShip](../../README.md) / [\_spine](../README.md) / StyleBlock
 
 # Interface: StyleBlock
 

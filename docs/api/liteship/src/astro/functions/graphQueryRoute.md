@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / graphQueryRoute
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / graphQueryRoute
 
 # Function: graphQueryRoute()
 

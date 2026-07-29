@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [edge/src](../../../README.md) / [EdgeHostAdapter](../README.md) / Config
+[LiteShip](../../../../../README.md) / [edge/src](../../../README.md) / [EdgeHostAdapter](../README.md) / Config
 
 # Type Alias: Config
 

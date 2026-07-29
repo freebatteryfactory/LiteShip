@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / SchemaNode
+[LiteShip](../../../README.md) / [core/src](../README.md) / SchemaNode
 
 # Type Alias: SchemaNode
 

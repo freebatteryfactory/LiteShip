@@ -1,6 +1,7 @@
 /**
  * THE EXTENSIBILITY PROOF — `@liteship/gauntlet` is genuinely extendable, downstream-
- * installable, zero-rebuild, no-fork (ADR-0012's whole point).
+ * installable, zero-rebuild, no-fork — the engine stays lean and capability is
+ * host-INJECTED, so a downstream extends by composing, never by forking.
  *
  * The plan's verification item, verbatim: "a throwaway downstream fixture repo
  * `npm i`s @liteship/gauntlet, registers one custom fitness function, runs green

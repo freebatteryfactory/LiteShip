@@ -67,7 +67,7 @@ export type StateName<S extends string = string> = S & { readonly [StateNameBran
 /**
  * Content-addressed hash (FNV-1a, fnv1a:hex format).
  *
- * APEX of THREE intentional homes (ADR-0013) — do NOT merge them. This spine
+ * APEX of THREE intentional homes — do NOT merge them. This spine
  * type is the strictest: a symbol-brand, so a raw `fnv1a:...` string cannot be
  * typed as ContentAddress without a validating constructor. `@liteship/core` and
  * `@liteship/genui` re-anchor this brand (`type ContentAddress = _ContentAddress`)
@@ -84,7 +84,8 @@ export type ContentAddress = string & { readonly [ContentAddressBrand]: true };
  * Cryptographic content digest. Format: `sha256:<64-hex>` or `blake3:<64-hex>`.
  * The algorithmic complement to {@link ContentAddress}: same canonical bytes,
  * stronger hash. Carried by {@link AddressedDigest} on external/release
- * artifacts where collision resistance matters (see ADR-0011).
+ * artifacts, where a 32-bit fnv1a label is an ergonomic identity but never
+ * tamper evidence against an attacker who can influence the bytes.
  */
 export type IntegrityDigest = string & { readonly [IntegrityDigestBrand]: true };
 
@@ -92,7 +93,7 @@ export type IntegrityDigest = string & { readonly [IntegrityDigestBrand]: true }
  * A pair of hashes over the same canonical bytes: the ergonomic identity
  * ({@link ContentAddress}, fnv1a) plus a cryptographic digest
  * ({@link IntegrityDigest}, sha256 or blake3). Used by external-artifact
- * carriers like ShipCapsule (ADR-0011). `algo` records which hash family
+ * carriers like ShipCapsule. `algo` records which hash family
  * minted the integrity digest; v0.1.0 emits `sha256`, v0.2 will emit `blake3`.
  */
 export interface AddressedDigest {
@@ -168,7 +169,7 @@ export declare namespace Lifetime {
   export function make(): Lifetime;
 }
 
-/** Standalone verb-grammar constructor for a {@link Lifetime} (ADR-0046/0051). */
+/** Standalone verb-grammar constructor for a {@link Lifetime}. */
 export declare function createLifetime(): Lifetime;
 
 /**
@@ -342,7 +343,7 @@ export declare namespace Signal {
 
 /**
  * Standalone verb-grammar constructor for a browser-environment {@link Signal}
- * (ADR-0046/0051 — `create` allocates a runtime resource). The signal IS its own
+ * (verb grammar — `create` allocates a runtime resource). The signal IS its own
  * disposable ({@link AsyncOwnedResource}); the owning `lifetime` stays reachable.
  */
 export declare function createSignal(source: SignalSource): Signal<number> & AsyncOwnedResource;
@@ -515,7 +516,7 @@ export interface BlendTree<T extends Record<string, number>> {
 
 /**
  * Build a blend tree that owns its own teardown via `dispose()` — the standalone
- * verb-grammar constructor (ADR-0046/0051).
+ * verb-grammar constructor.
  */
 export declare function createBlendTree<T extends Record<string, number>>(): BlendTree<T> & AsyncOwnedResource;
 
@@ -536,8 +537,8 @@ export interface FrameBudget {
 }
 
 /**
- * Build a rAF frame-budget tracker — the standalone verb-grammar constructor
- * (ADR-0046/0051). The budget IS its own disposable ({@link AsyncOwnedResource}).
+ * Build a rAF frame-budget tracker — the standalone verb-grammar constructor.
+ * The budget IS its own disposable ({@link AsyncOwnedResource}).
  */
 export declare function createFrameBudget(config?: { targetFps?: number }): FrameBudget & AsyncOwnedResource;
 
@@ -555,7 +556,7 @@ export interface DirtyFlags<K extends string = string> {
   readonly mask: number;
 }
 
-/** Build a bitmask dirty tracker — the standalone verb-grammar constructor (ADR-0046/0051). */
+/** Build a bitmask dirty tracker — the standalone verb-grammar constructor. */
 export declare function createDirtyFlags<K extends string>(keys: readonly K[]): DirtyFlags<K>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -795,7 +796,7 @@ export interface World {
 
 /**
  * Build an ECS world that owns its own teardown via `dispose()` — the standalone
- * verb-grammar constructor (ADR-0046/0051). The world registers zero finalizers
+ * verb-grammar constructor. The world registers zero finalizers
  * (plain in-memory Maps), so `dispose()` is a formal, exactly-once release handle
  * threaded by consumers, not a carrier of real finalizers.
  */
@@ -1032,7 +1033,7 @@ export interface LiveCell<K extends CellKind, T> extends Omit<Cell<T>, '_tag'> {
 }
 
 /**
- * Standalone verb-grammar constructors for a {@link LiveCell} (ADR-0046/0051). Each
+ * Standalone verb-grammar constructors for a {@link LiveCell}. Each
  * live cell IS its own disposable ({@link AsyncOwnedResource}).
  */
 export declare function createLiveCell<K extends CellKind, T>(kind: K, initial: T): LiveCell<K, T> & AsyncOwnedResource;
@@ -1222,7 +1223,7 @@ export interface ChainValidationOptions {
    * structural checks prove the checkpoint is well-formed but not that it attests to
    * the real dropped set; inject a verifier (e.g. a signature check) to close the
    * residual forgery vector in an adversarial setting. Absent, the structural floor
-   * applies (sound for trusted self-compaction). See ADR-0026.
+   * applies (sound for trusted self-compaction).
    */
   readonly verifyCheckpoint?: (checkpoint: ReceiptEnvelope) => Promise<boolean>;
 }
@@ -1480,7 +1481,8 @@ export declare namespace Plan {
  * The permanent schema contract: the phantom `Type`/`Encoded` pair every schema
  * value carries (`A` decodes out, `I` is the encoded form). Structural, so an
  * effect `Schema`/`Codec` value and a kernel schema both satisfy it — the spine
- * names this instead of effect's `Schema` (ADR-0010, spine-first).
+ * names this instead of effect's `Schema` (spine-first: the spine is the canonical
+ * type source, so shared contracts land here before an implementation re-exports them).
  */
 export type SchemaPort<A, I = A> = {
   readonly Type: A;
@@ -1501,8 +1503,8 @@ export declare namespace Codec {
    * The sync tagged result a codec method returns — structurally `@liteship/error`'s
    * `Result<A, E>` (a success arm carrying `A`, or a failure arm carrying `E`,
    * discriminated by the boolean `ok`). Named structurally here rather than
-   * imported so the spine stays install-only with zero `@liteship` runtime deps
-   * (ADR-0010); parity with the runtime `Result` is pinned bidirectionally in
+   * imported so the spine stays install-only with zero `@liteship` runtime deps;
+   * parity with the runtime `Result` is pinned bidirectionally in
    * tests/unit/spine-conformance.test.ts.
    */
   export type Result<A, E> = { readonly ok: true; readonly value: A } | { readonly ok: false; readonly error: E };

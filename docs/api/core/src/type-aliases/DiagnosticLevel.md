@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / DiagnosticLevel
+[LiteShip](../../../README.md) / [core/src](../README.md) / DiagnosticLevel
 
 # Type Alias: DiagnosticLevel
 

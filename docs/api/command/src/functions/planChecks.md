@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / planChecks
+[LiteShip](../../../README.md) / [command/src](../README.md) / planChecks
 
 # Function: planChecks()
 

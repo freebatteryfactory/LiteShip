@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / publicSurfaceForSymbol
+[LiteShip](../../../README.md) / [command/src](../README.md) / publicSurfaceForSymbol
 
 # Function: publicSurfaceForSymbol()
 

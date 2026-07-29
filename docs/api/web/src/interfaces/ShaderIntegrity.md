@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / ShaderIntegrity
+[LiteShip](../../../README.md) / [web/src](../README.md) / ShaderIntegrity
 
 # Interface: ShaderIntegrity
 

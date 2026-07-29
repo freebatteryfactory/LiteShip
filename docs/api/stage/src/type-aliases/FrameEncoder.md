@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [stage/src](../README.md) / FrameEncoder
+[LiteShip](../../../README.md) / [stage/src](../README.md) / FrameEncoder
 
 # Type Alias: FrameEncoder
 

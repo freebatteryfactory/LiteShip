@@ -4,7 +4,7 @@
  * `runGraphNativeGapReplay` needs four things the stream DIRECTIVE cannot invent:
  * the QUERY endpoint, the host's mutation client (base + adopt), the StateCell
  * store, and the patch/receipt chain spanning the gap. The first three are
- * host-owned by design (ADR-0015) — so the host registers them here, keyed by
+ * host-owned by design — so the host registers them here, keyed by
  * artifact id, and the `client:stream` directive looks them up when it binds
  * `liteship:request-snapshot` recovery. Receipt frames arriving on the SSE stream
  * are recorded through {@link recordStreamPatchReceipt}; the registry hands out

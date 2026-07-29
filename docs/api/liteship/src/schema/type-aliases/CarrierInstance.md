@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / CarrierInstance
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / CarrierInstance
 
 # Type Alias: CarrierInstance\<C\>
 

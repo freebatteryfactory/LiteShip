@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / FindingSeverity
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / FindingSeverity
 
 # Type Alias: FindingSeverity
 

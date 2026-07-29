@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / PolicyNode
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / PolicyNode
 
 # Interface: PolicyNode
 

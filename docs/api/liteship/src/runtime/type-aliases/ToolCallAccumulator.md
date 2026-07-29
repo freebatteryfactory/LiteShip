@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / ToolCallAccumulator
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / ToolCallAccumulator
 
 # Type Alias: ToolCallAccumulator
 

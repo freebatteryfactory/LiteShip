@@ -12,7 +12,7 @@
  * and inject the IR.
  *
  * The LiteShip `invariant-regex` ORACLE is constructed HERE (the host), not in
- * `@liteship/audit`. The audit engine is downstream-installable (ADR-0012) and must
+ * `@liteship/audit`. The audit engine is downstream-installable and must
  * reference NO LiteShip-local contract — so its repo-IR builder emits only the
  * STRUCTURAL AST facts (`is-default-export` / `bare-throw`, which any TS repo has)
  * and exposes a `FactOracle` injection hook. The CLI — which legitimately deps
@@ -245,7 +245,7 @@ function scanRule(binding: OracleRuleBinding, rule: CheckInvariantEntry, file: F
 
 /**
  * The LiteShip-LOCAL `invariant-regex` (`text-only`) oracle, constructed in the
- * HOST (the audit engine stays LiteShip-agnostic — ADR-0012). It runs ALL THREE
+ * HOST (the audit engine stays LiteShip-agnostic). It runs ALL THREE
  * canonical triangulated rules — NO_DEFAULT_EXPORT, NO_VAR, NO_REQUIRE — over each
  * file's RAW lines (each rule's committed `pattern`, honouring its committed
  * `exclude`), through ONE generic per-rule code path (the parametric proof). It is
@@ -465,7 +465,7 @@ export async function runGauntletWithRepoIR(
 
   // The `--taint` opt-in (the TAINT-ANALYSIS family): trace the source→sink dataflow
   // in the HOST via @liteship/audit's GENERIC taint oracle, classified by the
-  // LiteShip-LOCAL source/sink/sanitizer registry injected HERE (the ADR-0012 / D7b
+  // LiteShip-LOCAL source/sink/sanitizer registry injected HERE (the D7b host-injection
   // boundary — the audit engine references no LiteShip source/sink name). An
   // UNSANITIZED flow (an untrusted fetch/AI-cast/runtime-URL value reaching a
   // shader-compile / innerHTML / graph-apply / fetch sink with no sanitizer on the
@@ -532,7 +532,7 @@ export async function runGauntletWithRepoIR(
   // half): the host probes each admitted `@liteship/_spine` mirror type's bidirectional
   // assignability against its runtime source via @liteship/audit's `buildSpineRelationFacts` (a
   // ts.Program probe over the spine + runtime surface), classified against the LiteShip-LOCAL
-  // admission table injected HERE (the ADR-0012 boundary — the audit engine names no mirror),
+  // admission table injected HERE (the host-injection boundary — the audit engine names no mirror),
   // and injects the observed facts; compose `spineRelationGate`. An admitted mirror whose
   // OBSERVED relation no longer satisfies its ADMITTED (frozen) relation — or a mirror that no
   // longer resolves — is a public-contract drift finding. Opt-in (NOT always-on): the second
@@ -818,7 +818,7 @@ function toAnalyzerPkg(p: WorkspacePackageIdentity): WorkspacePkg {
 
 /**
  * Compute the {@link SupplyChainFacts} the avionics `supplyChainGate` folds — the
- * HOST's heavy job (ADR-0012): read pnpm-lock.yaml + the workspace manifests, then
+ * HOST's heavy job: read pnpm-lock.yaml + the workspace manifests, then
  * run the @liteship/cli analyzer (lockfile policy + SBOM completeness + CI authority
  * scan). The lockfile bytes are read once and passed as the live address-of source.
  *
@@ -924,7 +924,7 @@ export interface RepoIRGauntletCacheOptions {
    * inject the host-computed {@link TaintFacts} (`liteship check gates --ir --taint`). The host
    * traces the source→sink dataflow via @liteship/audit's GENERIC taint oracle, classified
    * by the LiteShip-LOCAL `LITESHIP_TAINT_REGISTRY` injected from the CLI host (the
-   * ADR-0012 / D7b boundary). It changes BOTH which gates run AND the injected facts,
+   * D7b host-injection boundary). It changes BOTH which gates run AND the injected facts,
    * so the verdict cache is NAMESPACED by this mode (see {@link resolveVerdictCache}):
    * a taint-run verdict can never be served to a non-taint run, or vice versa — exactly
    * the `--symbols` / `--supply-chain` / `--mutate` / `--simulate` cache-soundness
@@ -974,7 +974,7 @@ export interface RepoIRGauntletCacheOptions {
    * check gates --ir --spine-relation`). The host probes each admitted `@liteship/_spine` mirror type's
    * bidirectional assignability against its runtime source (a ts.Program probe over the spine
    * + runtime surface, classified against the LiteShip-LOCAL {@link LITESHIP_SPINE_ADMISSIONS}
-   * injected from the CLI host — the ADR-0012 boundary); a mirror whose observed relation no
+   * injected from the CLI host — the host-injection boundary); a mirror whose observed relation no
    * longer satisfies its admitted one, or no longer resolves, is a public-contract drift. It
    * changes BOTH which gates run AND the injected facts, so the verdict cache is NAMESPACED by
    * this mode (see {@link resolveVerdictCache}). HEAVY (a second ts.Program build, ~3.25s over

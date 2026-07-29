@@ -1,7 +1,7 @@
 /**
  * The HOST-INJECTED LiteShip TAINT REGISTRY — the LiteShip-LOCAL source / sink /
  * sanitizer classification the CLI injects into `@liteship/audit`'s GENERIC taint
- * oracle (the ADR-0012 / D7b boundary).
+ * oracle (the D7b host-injection boundary).
  *
  * The audit taint oracle (`buildRepoIRTaint`) traces dataflow but references NO
  * LiteShip-specific name — it takes the classification as a parameter. THIS module

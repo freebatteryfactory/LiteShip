@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / TokenTailwindResult
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / TokenTailwindResult
 
 # Interface: TokenTailwindResult
 

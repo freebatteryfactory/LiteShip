@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / DecoderFuzzFact
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / DecoderFuzzFact
 
 # Interface: DecoderFuzzFact
 

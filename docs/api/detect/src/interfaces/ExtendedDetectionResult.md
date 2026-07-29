@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / ExtendedDetectionResult
+[LiteShip](../../../README.md) / [detect/src](../README.md) / ExtendedDetectionResult
 
 # Interface: ExtendedDetectionResult
 

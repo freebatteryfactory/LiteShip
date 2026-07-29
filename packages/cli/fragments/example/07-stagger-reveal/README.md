@@ -12,8 +12,8 @@ A stagger is a **par** composition: N children animating together, each offset b
 compile-time delay. `staggerProgram(lowered)` turns a `LoweredStagger` into a real
 `TransitionProgram` (`{ kind: 'par', children: [...] }`), so `interpretProgram` emits
 genuine per-child windows — `par` total is the `max` child window, and each child's
-stagger delay rides its window start — instead of the pre-W9 routing-label collapse
-(see [ADR-0039](../../docs/adr/0039-multi-transition-algebra.md)).
+stagger delay rides its window start — instead of the pre-W9 routing-label collapse, where
+every routing arm lowered to the same two endpoint frames.
 
 For a **seq** (a chain: "A then B") plus a **choice** ("A or B" by signal), author with
 `Reveal.chain` (`lowerRevealChain`). The runnable end-to-end demo — a chain driven

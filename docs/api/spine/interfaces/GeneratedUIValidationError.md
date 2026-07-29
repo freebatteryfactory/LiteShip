@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / GeneratedUIValidationError
+[LiteShip](../../README.md) / [\_spine](../README.md) / GeneratedUIValidationError
 
 # Interface: GeneratedUIValidationError
 

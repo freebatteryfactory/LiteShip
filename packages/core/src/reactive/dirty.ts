@@ -84,7 +84,7 @@ export function createDirtyFlags<K extends string>(keys: readonly K[]): DirtyFla
 /**
  * Public structural type for `DirtyFlags` -- bitmask-based dirty tracking for up to
  * 31 named keys. O(1) mark/clear/check operations using bitwise integer operations.
- * Construct one with the standalone {@link createDirtyFlags} (verb grammar, ADR-0046).
+ * Construct one with the standalone {@link createDirtyFlags} (verb grammar).
  *
  * @example
  * ```ts

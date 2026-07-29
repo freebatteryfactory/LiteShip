@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / DetectReadyDetail
+[LiteShip](../../../README.md) / [detect/src](../README.md) / DetectReadyDetail
 
 # Type Alias: DetectReadyDetail
 

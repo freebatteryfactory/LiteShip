@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:a64a154c",
+  "address": "fnv1a:0730157a",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4832,11 +4832,6 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/security-minimum-gate.ts",
-      "level": "L1"
-    },
-    {
-      "_tag": "assurance-coverage",
-      "file": "scripts/semantic-convergence-report.ts",
       "level": "L1"
     },
     {

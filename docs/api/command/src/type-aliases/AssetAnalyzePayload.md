@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / AssetAnalyzePayload
+[LiteShip](../../../README.md) / [command/src](../README.md) / AssetAnalyzePayload
 
 # Type Alias: AssetAnalyzePayload
 

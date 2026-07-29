@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / LLMChunk
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / LLMChunk
 
 # Interface: LLMChunk
 

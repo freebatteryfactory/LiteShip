@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / GetPromptResult
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / GetPromptResult
 
 # Interface: GetPromptResult
 

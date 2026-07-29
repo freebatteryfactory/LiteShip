@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / BytesCtor
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / BytesCtor
 
 # Type Alias: BytesCtor
 

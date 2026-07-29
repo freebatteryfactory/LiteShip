@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [DAG](../README.md) / Checkpoint
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [DAG](../README.md) / Checkpoint
 
 # Type Alias: Checkpoint
 

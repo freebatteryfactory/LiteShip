@@ -46,7 +46,7 @@
  * the {@link RepoIR}, the per-module test/property/invariant booleans). It reads NO
  * filesystem, NO clock, NO RNG, NO ambient anything. The same inputs fold to the SAME
  * artifact twice — byte-identical. The heavy work (building the IR, scanning the test
- * corpus, reading the JSON) is the HOST's (ADR-0012: the lean engine folds, the host
+ * corpus, reading the JSON) is the HOST's (the lean engine folds, the host
  * computes); this module is the deterministic fold the host calls.
  *
  * @module

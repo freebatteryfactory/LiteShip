@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / canonicalCborDecodeCapsule
+[LiteShip](../../../README.md) / [core/src](../README.md) / canonicalCborDecodeCapsule
 
 # Variable: canonicalCborDecodeCapsule
 

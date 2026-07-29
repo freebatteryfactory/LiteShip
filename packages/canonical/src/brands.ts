@@ -3,7 +3,7 @@
  *
  * Kept self-contained (no `@liteship/_spine`) so the bytes kernel carries no
  * peer-dependency baggage. `@liteship/core` re-anchors to spine types at its
- * export boundary (ADR-0013).
+ * export boundary.
  *
  * The constructors are VALIDATING smart constructors (parse-don't-validate):
  * each throws `ValidationError` on input that does not match the brand's
@@ -30,8 +30,8 @@ const CONTENT_ADDRESS_RE = /^fnv1a:[0-9a-f]{8}$/;
 
 /**
  * An {@link IntegrityDigest} is `sha256:` or `blake3:` followed by exactly 64
- * lowercase hex digits — the full width of a 256-bit cryptographic digest
- * (ADR-0011). Only these two algorithms are sanctioned.
+ * lowercase hex digits — the full width of a 256-bit cryptographic digest.
+ * Only these two algorithms are sanctioned.
  */
 const INTEGRITY_DIGEST_RE = /^(?:sha256|blake3):[0-9a-f]{64}$/;
 

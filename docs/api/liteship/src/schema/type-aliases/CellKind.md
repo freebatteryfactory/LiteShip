@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / CellKind
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / CellKind
 
 # Type Alias: CellKind
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / gateVerdictKey
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / gateVerdictKey
 
 # Function: gateVerdictKey()
 

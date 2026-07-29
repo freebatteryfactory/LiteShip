@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [scene/src](../../../README.md) / [BeatBinding](../README.md) / Spawn
+[LiteShip](../../../../../README.md) / [scene/src](../../../README.md) / [BeatBinding](../README.md) / Spawn
 
 # Type Alias: Spawn
 

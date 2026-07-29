@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [\_spine](../../README.md) / Animation
+[LiteShip](../../../README.md) / [\_spine](../../README.md) / Animation
 
 # Animation
 

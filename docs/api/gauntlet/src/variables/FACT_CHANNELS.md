@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FACT\_CHANNELS
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FACT\_CHANNELS
 
 # Variable: FACT\_CHANNELS
 

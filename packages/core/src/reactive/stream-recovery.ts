@@ -23,7 +23,7 @@ export const asReplayableRecoveryCell = (cell: StateCell): ReplayableRecoveryCel
 
 /**
  * Classify a canonical {@link SignalSource} by the discrete/continuous replay law
- * (ADR-0035 / ROADMAP Epic 9).
+ * (ROADMAP Epic 9): discrete crossings replay, continuous transients never do.
  */
 export function signalSourceKind(source: SignalSource): StateCellKind {
   switch (source.type) {

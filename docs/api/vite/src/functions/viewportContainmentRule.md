@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / viewportContainmentRule
+[LiteShip](../../../README.md) / [vite/src](../README.md) / viewportContainmentRule
 
 # Function: viewportContainmentRule()
 

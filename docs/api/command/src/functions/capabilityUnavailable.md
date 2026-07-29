@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / capabilityUnavailable
+[LiteShip](../../../README.md) / [command/src](../README.md) / capabilityUnavailable
 
 # Function: capabilityUnavailable()
 

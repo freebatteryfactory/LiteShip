@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / projectQualityTiers
+[LiteShip](../../../README.md) / [core/src](../README.md) / projectQualityTiers
 
 # Function: projectQualityTiers()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / NoCoverageVerdict
+[LiteShip](../../../README.md) / [audit/src](../README.md) / NoCoverageVerdict
 
 # Interface: NoCoverageVerdict\<M\>
 

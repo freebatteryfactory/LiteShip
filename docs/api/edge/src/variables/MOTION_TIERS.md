@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / MOTION\_TIERS
+[LiteShip](../../../README.md) / [edge/src](../README.md) / MOTION\_TIERS
 
 # Variable: MOTION\_TIERS
 

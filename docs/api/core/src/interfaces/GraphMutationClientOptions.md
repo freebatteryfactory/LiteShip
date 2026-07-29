@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / GraphMutationClientOptions
+[LiteShip](../../../README.md) / [core/src](../README.md) / GraphMutationClientOptions
 
 # Interface: GraphMutationClientOptions
 
@@ -90,7 +90,7 @@ Defined in: [core/src/graph/graph-mutation-client.ts:31](https://github.com/free
 
 Host-owned base reloader (e.g. GET the host's graph endpoint and decode). When present,
 a `staleBase` refusal triggers reload + re-propose up to `maxStaleRetries` times.
-LiteShip does not dictate the read endpoint's shape — the host owns it (ADR-0015).
+LiteShip does not dictate the read endpoint's shape — the host owns it.
 
 #### Returns
 

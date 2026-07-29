@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / FrameBudget
+[LiteShip](../../README.md) / [\_spine](../README.md) / FrameBudget
 
 # Interface: FrameBudget
 
-Defined in: [\_spine/core.d.ts:530](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L530)
+Defined in: [\_spine/core.d.ts:531](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L531)
 
 Frame-time admission controller for prioritized work.
 
@@ -16,7 +16,7 @@ Frame-time admission controller for prioritized work.
 
 > `readonly` **fpsSync**: `number`
 
-Defined in: [\_spine/core.d.ts:534](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L534)
+Defined in: [\_spine/core.d.ts:535](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L535)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:534](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:535](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L535)
+Defined in: [\_spine/core.d.ts:536](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L536)
 
 ## Methods
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:535](https://github.com/freebatteryfactory/LiteSh
 
 > **canRun**(`priority`): `boolean`
 
-Defined in: [\_spine/core.d.ts:532](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L532)
+Defined in: [\_spine/core.d.ts:533](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L533)
 
 #### Parameters
 
@@ -50,7 +50,7 @@ Defined in: [\_spine/core.d.ts:532](https://github.com/freebatteryfactory/LiteSh
 
 > **remaining**(): `number`
 
-Defined in: [\_spine/core.d.ts:531](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L531)
+Defined in: [\_spine/core.d.ts:532](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L532)
 
 #### Returns
 
@@ -62,7 +62,7 @@ Defined in: [\_spine/core.d.ts:531](https://github.com/freebatteryfactory/LiteSh
 
 > **scheduleSync**\<`A`\>(`priority`, `task`): `A` \| `null`
 
-Defined in: [\_spine/core.d.ts:533](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L533)
+Defined in: [\_spine/core.d.ts:534](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L534)
 
 #### Type Parameters
 

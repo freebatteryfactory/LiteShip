@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / sampleRuntimeEasing
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / sampleRuntimeEasing
 
 # Function: sampleRuntimeEasing()
 

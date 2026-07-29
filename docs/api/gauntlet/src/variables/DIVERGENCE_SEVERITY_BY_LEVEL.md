@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / DIVERGENCE\_SEVERITY\_BY\_LEVEL
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / DIVERGENCE\_SEVERITY\_BY\_LEVEL
 
 # Variable: DIVERGENCE\_SEVERITY\_BY\_LEVEL
 

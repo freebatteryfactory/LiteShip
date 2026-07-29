@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / GapStrategy
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / GapStrategy
 
 # Type Alias: GapStrategy
 

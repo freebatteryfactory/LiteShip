@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PUBLIC\_SURFACE\_CONTEXT
+[LiteShip](../../../README.md) / [command/src](../README.md) / PUBLIC\_SURFACE\_CONTEXT
 
 # Variable: PUBLIC\_SURFACE\_CONTEXT
 

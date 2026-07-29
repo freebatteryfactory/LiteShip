@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / streamReceiptCapsule
+[LiteShip](../../../README.md) / [web/src](../README.md) / streamReceiptCapsule
 
 # Variable: streamReceiptCapsule
 

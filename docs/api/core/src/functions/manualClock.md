@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / manualClock
+[LiteShip](../../../README.md) / [core/src](../README.md) / manualClock
 
 # Function: manualClock()
 

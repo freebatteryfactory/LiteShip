@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / TupleSchemaNode
+[LiteShip](../../README.md) / [\_spine](../README.md) / TupleSchemaNode
 
 # Interface: TupleSchemaNode
 
-Defined in: [\_spine/core.d.ts:652](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L652)
+Defined in: [\_spine/core.d.ts:653](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L653)
 
 Tuple schema AST node.
 
@@ -20,7 +20,7 @@ Tuple schema AST node.
 
 > `readonly` `optional` **annotations?**: `Readonly`\<`Record`\<`symbol`, `unknown`\>\>
 
-Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
+Defined in: [\_spine/core.d.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L612)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **elements**: readonly [`SchemaNode`](../type-aliases/SchemaNode.md)[]
 
-Defined in: [\_spine/core.d.ts:654](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L654)
+Defined in: [\_spine/core.d.ts:655](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L655)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:654](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `"tuple"`
 
-Defined in: [\_spine/core.d.ts:653](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L653)
+Defined in: [\_spine/core.d.ts:654](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L654)

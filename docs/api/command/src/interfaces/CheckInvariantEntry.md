@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckInvariantEntry
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckInvariantEntry
 
 # Interface: CheckInvariantEntry
 

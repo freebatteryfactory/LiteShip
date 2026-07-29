@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / dispatchToolCall
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / dispatchToolCall
 
 # Function: dispatchToolCall()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/export-budget](../README.md) / FacadeSurfaceClass
+[LiteShip](../../../../README.md) / [liteship/src/export-budget](../README.md) / FacadeSurfaceClass
 
 # Type Alias: FacadeSurfaceClass
 

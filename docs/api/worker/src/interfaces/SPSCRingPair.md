@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [worker/src](../README.md) / SPSCRingPair
+[LiteShip](../../../README.md) / [worker/src](../README.md) / SPSCRingPair
 
 # Interface: SPSCRingPair
 

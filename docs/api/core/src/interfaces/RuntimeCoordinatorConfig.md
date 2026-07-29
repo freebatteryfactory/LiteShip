@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / RuntimeCoordinatorConfig
+[LiteShip](../../../README.md) / [core/src](../README.md) / RuntimeCoordinatorConfig
 
 # Interface: RuntimeCoordinatorConfig
 

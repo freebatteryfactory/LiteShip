@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / decodeDiscreteStateTransition
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / decodeDiscreteStateTransition
 
 # Function: decodeDiscreteStateTransition()
 

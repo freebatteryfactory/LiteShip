@@ -1,7 +1,7 @@
 /**
  * BoundaryCache active invalidation — invalidateByPath / invalidateByTag.
  *
- * Closes ADR-0017's one honest gap: the content-addressed keyspace previously
+ * Closes the conditional cache's one honest gap: the content-addressed keyspace previously
  * relied on passive TTL-orphaning. These prove the active purge works against a
  * Cloudflare-shaped KV (get/put/delete/list, paginated) and degrades cleanly to
  * a diagnostic + 0 on a KV that omits delete/list.

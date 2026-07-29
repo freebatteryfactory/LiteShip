@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckInvariantsSummary
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckInvariantsSummary
 
 # Interface: CheckInvariantsSummary
 

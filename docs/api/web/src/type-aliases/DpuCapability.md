@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / DpuCapability
+[LiteShip](../../../README.md) / [web/src](../README.md) / DpuCapability
 
 # Type Alias: DpuCapability
 

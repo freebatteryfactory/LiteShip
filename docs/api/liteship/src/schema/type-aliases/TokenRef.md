@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / TokenRef
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / TokenRef
 
 # Type Alias: TokenRef\<N\>
 

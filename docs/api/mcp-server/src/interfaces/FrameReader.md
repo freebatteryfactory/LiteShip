@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / FrameReader
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / FrameReader
 
 # Interface: FrameReader
 

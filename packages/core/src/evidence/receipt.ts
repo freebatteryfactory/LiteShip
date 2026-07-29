@@ -351,7 +351,7 @@ export const validateChainDetailed = async (
     // `validateChain` lacks that set, so it cannot recompute the summary
     // `content_hash`. An adversarial caller closes the residual forgery vector by
     // injecting `verifyCheckpoint` (e.g. a signature check); absent one, the
-    // structural floor stands (sound for trusted self-compaction). See ADR-0026.
+    // structural floor stands (sound for trusted self-compaction).
     if (options?.verifyCheckpoint !== undefined) {
       const attested = await options.verifyCheckpoint(checkpoint);
       if (!attested) {
@@ -612,7 +612,7 @@ export interface ReceiptInspection {
 
 /**
  * Return a structured, human-debuggable view of a receipt envelope (verb grammar,
- * ADR-0046 — `inspect` returns structured debug information). A thin, synchronous
+ * `inspect` returns structured debug information). A thin, synchronous
  * facade over the existing {@link Receipt} namespace: it derives the causal facts
  * (genesis/merge/signed classification, normalized predecessor links) a caller
  * reads when tracing a chain link, WITHOUT recomputing the hash or touching I/O.

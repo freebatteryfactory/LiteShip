@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / sampleProgram
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / sampleProgram
 
 # Function: sampleProgram()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [worker/src](../README.md) / TransferableCanvas
+[LiteShip](../../../README.md) / [worker/src](../README.md) / TransferableCanvas
 
 # Interface: TransferableCanvas
 

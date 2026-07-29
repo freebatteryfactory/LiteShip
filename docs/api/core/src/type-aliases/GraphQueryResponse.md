@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / GraphQueryResponse
+[LiteShip](../../../README.md) / [core/src](../README.md) / GraphQueryResponse
 
 # Type Alias: GraphQueryResponse
 

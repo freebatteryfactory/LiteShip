@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WallClockTimestamp
+[LiteShip](../../README.md) / [\_spine](../README.md) / WallClockTimestamp
 
 # Type Alias: WallClockTimestamp
 

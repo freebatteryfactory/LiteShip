@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/genui](../README.md) / ValidateGeneratedUIResult
+[LiteShip](../../../../README.md) / [liteship/src/genui](../README.md) / ValidateGeneratedUIResult
 
 # Type Alias: ValidateGeneratedUIResult
 

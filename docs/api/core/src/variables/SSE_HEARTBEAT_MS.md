@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / SSE\_HEARTBEAT\_MS
+[LiteShip](../../../README.md) / [core/src](../README.md) / SSE\_HEARTBEAT\_MS
 
 # Variable: SSE\_HEARTBEAT\_MS
 

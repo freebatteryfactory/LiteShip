@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WGSLType
+[LiteShip](../../README.md) / [\_spine](../README.md) / WGSLType
 
 # Type Alias: WGSLType
 

@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / serializeBoundaryCss
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / serializeBoundaryCss
 
 # Function: serializeBoundaryCss()
 
 > **serializeBoundaryCss**(`resolution`): `string`
 
-Defined in: astro/dist/fetch-layer.d.ts:68
+Defined in: astro/dist/fetch-layer.d.ts:69
 
 Serialize a resolution's compiled boundary outputs into one stylesheet.
 

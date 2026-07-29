@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / getPrompt
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / getPrompt
 
 # Function: getPrompt()
 

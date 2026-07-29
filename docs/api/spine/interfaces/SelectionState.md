@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / SelectionState
+[LiteShip](../../README.md) / [\_spine](../README.md) / SelectionState
 
 # Interface: SelectionState
 

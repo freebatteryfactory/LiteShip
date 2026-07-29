@@ -2,7 +2,7 @@
  * CUT B1 — exactly one canonicalization path mints `fnv1a:` content addresses.
  *
  * The gremlin: `cborg.encode` (which hid inside `TypedRef.canonicalize`) and the
- * `CanonicalCbor` doctrine (ADR-0003) produce DIFFERENT bytes for float16/32-exact
+ * `CanonicalCbor` doctrine produce DIFFERENT bytes for float16/32-exact
  * numbers — cborg shrinks to the smallest float, CanonicalCbor always emits
  * float64. QuantizerConfig + EntityId minted identities through cborg, so the same
  * logical payload could get a different `fnv1a:` address than the documented path.

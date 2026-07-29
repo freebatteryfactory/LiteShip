@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / runGraphNativeRecovery
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / runGraphNativeRecovery
 
 # Variable: runGraphNativeRecovery
 

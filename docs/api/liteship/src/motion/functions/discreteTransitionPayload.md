@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / discreteTransitionPayload
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / discreteTransitionPayload
 
 # Function: discreteTransitionPayload()
 

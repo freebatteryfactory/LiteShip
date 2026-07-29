@@ -2,14 +2,14 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / TaintRegistry
+[LiteShip](../../../README.md) / [audit/src](../README.md) / TaintRegistry
 
 # Interface: TaintRegistry
 
 Defined in: [audit/src/repo-ir-taint.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-taint.ts#L129)
 
 The INJECTED source/sink/sanitizer classification — the host-supplied registry
-(the ADR-0012 / D7b boundary). The oracle references NONE of these names itself;
+(the D7b host-injection boundary). The oracle references NONE of these names itself;
 the `@liteship/cli` host supplies the LiteShip-LOCAL set. Each is matched against a
 call expression's CALLEE NAME — the bare identifier (`fetch`, `eval`) OR the
 member name (`shaderSource`, `createShaderModule`, `innerHTML` as an assignment

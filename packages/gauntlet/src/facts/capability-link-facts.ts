@@ -2,7 +2,7 @@
  * CAPABILITY-LINK FACTS — the host-computed proof that every sanctioned capability-gated skip's GUARD
  * DERIVES FROM its declared capability's probe (codex round-8, #1b). Generic FACTS the lean engine
  * folds; the heavy `ts.Program`/checker dataflow that produces them lives in `@liteship/audit`'s
- * capability-link oracle, injected via `GateContext.capabilityLink` (the ADR-0012 / D7b boundary —
+ * capability-link oracle, injected via `GateContext.capabilityLink` (the injected-capability boundary —
  * the lean gauntlet carries no `typescript`).
  *
  * THE PROOF MODEL (the "linker"). Each capability is DEFINED ONCE as an export of a canonical

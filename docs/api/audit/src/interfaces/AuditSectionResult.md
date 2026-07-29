@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / AuditSectionResult
+[LiteShip](../../../README.md) / [audit/src](../README.md) / AuditSectionResult
 
 # Interface: AuditSectionResult\<TSummary\>
 

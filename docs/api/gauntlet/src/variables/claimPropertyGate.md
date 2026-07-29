@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / claimPropertyGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / claimPropertyGate
 
 # Variable: claimPropertyGate
 

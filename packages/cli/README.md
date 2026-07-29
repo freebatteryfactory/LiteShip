@@ -65,8 +65,8 @@ You should see one JSON line like the above on stdout (shown wrapped here) and, 
 | `liteship scene dev` | Launch Vite + the browser scene player. | CLI orchestration |
 | `liteship scene render` | Render a scene to mp4 (output defaults to <scene>.mp4 beside the scene file). | shared handler |
 | `liteship scene verify` | Run a scene capsule’s generated tests. | shared handler |
-| `liteship ship` | Mint ShipCapsule(s) and (unless --dry-run) hand off to pnpm publish (ADR-0011). | CLI orchestration |
-| `liteship verify` | Locally verify a tarball against its ShipCapsule (ADR-0011; no network). | shared handler |
+| `liteship ship` | Mint ShipCapsule(s) and (unless --dry-run) hand off to pnpm publish. | CLI orchestration |
+| `liteship verify` | Locally verify a tarball against its ShipCapsule (no network). | shared handler |
 | `liteship version` | Report liteship, Node, and pnpm versions. | shared handler |
 
 `liteship describe --format=json` is the machine-readable form of this same catalog.

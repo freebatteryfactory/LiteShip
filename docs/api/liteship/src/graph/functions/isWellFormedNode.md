@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / isWellFormedNode
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / isWellFormedNode
 
 # Function: isWellFormedNode()
 

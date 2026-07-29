@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CommandCapabilityProvision
+[LiteShip](../../../README.md) / [command/src](../README.md) / CommandCapabilityProvision
 
 # Type Alias: CommandCapabilityProvision
 

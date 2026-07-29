@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / DetectionResult
+[LiteShip](../../README.md) / [\_spine](../README.md) / DetectionResult
 
 # Interface: DetectionResult
 

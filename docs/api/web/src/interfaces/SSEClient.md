@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / SSEClient
+[LiteShip](../../../README.md) / [web/src](../README.md) / SSEClient
 
 # Interface: SSEClient
 
-Defined in: [web/src/stream/sse.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L42)
+Defined in: [web/src/stream/sse.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L43)
 
 SSE client instance.
 
@@ -20,7 +20,7 @@ SSE client instance.
 
 > `readonly` **backpressure**: [`BackpressureHint`](BackpressureHint.md)
 
-Defined in: [web/src/stream/sse.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L63)
+Defined in: [web/src/stream/sse.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L64)
 
 Backpressure snapshot for the current buffer occupancy (plain accessor).
 
@@ -30,7 +30,7 @@ Backpressure snapshot for the current buffer occupancy (plain accessor).
 
 > `readonly` **lastEventId**: `string` \| `null`
 
-Defined in: [web/src/stream/sse.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L61)
+Defined in: [web/src/stream/sse.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L62)
 
 Cursor from the most recent message, or `null` (plain accessor).
 
@@ -54,7 +54,7 @@ The owning disposal handle — for advanced/debug composition only.
 
 > `readonly` **messages**: `AsyncIterable`\<[`SSEMessage`](../type-aliases/SSEMessage.md)\>
 
-Defined in: [web/src/stream/sse.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L49)
+Defined in: [web/src/stream/sse.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L50)
 
 Live async stream of parsed messages. Iterating drains the sse-pure
 overflow buffer (so [backpressure](#backpressure) `bufferSize` drops as messages are
@@ -67,7 +67,7 @@ bounded-`Queue` semantics.
 
 > `readonly` **state**: [`SSEState`](../type-aliases/SSEState.md)
 
-Defined in: [web/src/stream/sse.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L59)
+Defined in: [web/src/stream/sse.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L60)
 
 Current connection state (plain accessor).
 
@@ -77,7 +77,7 @@ Current connection state (plain accessor).
 
 > `readonly` **stateChanges**: `AsyncIterable`\<[`SSEState`](../type-aliases/SSEState.md)\>
 
-Defined in: [web/src/stream/sse.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L57)
+Defined in: [web/src/stream/sse.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L58)
 
 Edge stream of connection-state *transitions* (one emission per
 `connecting`/`reconnecting`/`connected`/`error`/`disconnected` change,
@@ -127,7 +127,7 @@ Tear down exactly once; the returned promise settles when async finalizers settl
 
 > **reconnect**(): `void`
 
-Defined in: [web/src/stream/sse.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L65)
+Defined in: [web/src/stream/sse.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L66)
 
 Manual reconnect: cancel timers, close the source, reset backoff, re-open.
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / SendGraphQueryOptions
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / SendGraphQueryOptions
 
 # Interface: SendGraphQueryOptions
 

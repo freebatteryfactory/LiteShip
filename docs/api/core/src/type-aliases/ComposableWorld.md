@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ComposableWorld
+[LiteShip](../../../README.md) / [core/src](../README.md) / ComposableWorld
 
 # Type Alias: ComposableWorld\<Schema\>
 

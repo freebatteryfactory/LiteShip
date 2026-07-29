@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ThresholdValue
+[LiteShip](../../README.md) / [\_spine](../README.md) / ThresholdValue
 
 # Type Alias: ThresholdValue
 

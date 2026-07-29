@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / SvgAttrsPart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / SvgAttrsPart
 
 # Variable: SvgAttrsPart
 

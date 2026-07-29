@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / TransitionFacts
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / TransitionFacts
 
 # Interface: TransitionFacts
 
@@ -10,13 +10,13 @@ Defined in: [gauntlet/src/facts/transition-facts.ts:100](https://github.com/free
 
 The host-supplied bisimulation evidence over one conformance FAMILY's run. The capture
 is LiteShip-local product machinery (driving each seeded op history over the reference
-model + the native transport, in the test tree), so — per ADR-0012/0023 — it runs from
-the repo-local `transition:gate` phase (`scripts/transition-conformance-gate.ts`) on
-every PR, NOT the shipped `liteship check` CLI; when the host did not run it this whole
-capability is simply ABSENT from the [GateContext](GateContext.md) and the gate is not in the
-set (no cost, no noise). When
-present it carries every per-case verdict plus the two transport fingerprints and
-the committed unevidenced BASELINE the ratchet compares against.
+model + the native transport, in the test tree), so — the shipped engine may not depend on
+LiteShip-local test-tree machinery — it runs from the repo-local `transition:gate` phase
+(`scripts/transition-conformance-gate.ts`) on every PR, NOT the shipped `liteship check` CLI;
+when the host did not run it this whole capability is simply ABSENT from the
+[GateContext](GateContext.md) and the gate is not in the set (no cost, no noise). When present it
+carries every per-case verdict plus the two transport fingerprints and the committed
+unevidenced BASELINE the ratchet compares against.
 
 ONE family per facts object (the gate aims a single assurance level at it, resolved
 from the family). A run that spans multiple conformance families builds one

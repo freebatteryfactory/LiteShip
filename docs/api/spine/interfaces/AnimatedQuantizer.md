@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / AnimatedQuantizer
+[LiteShip](../../README.md) / [\_spine](../README.md) / AnimatedQuantizer
 
 # Interface: AnimatedQuantizer\<B\>
 
@@ -26,7 +26,7 @@ Reactive quantizer extended with transition progress and interruption semantics.
 
 > `readonly` **\_tag**: `"Quantizer"`
 
-Defined in: [\_spine/core.d.ts:977](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L977)
+Defined in: [\_spine/core.d.ts:978](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L978)
 
 #### Inherited from
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/core.d.ts:977](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **boundary**: `B`
 
-Defined in: [\_spine/core.d.ts:978](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L978)
+Defined in: [\_spine/core.d.ts:979](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L979)
 
 #### Inherited from
 
@@ -50,7 +50,7 @@ Defined in: [\_spine/core.d.ts:978](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **changes**: [`QuantizerCrossings`](../type-aliases/QuantizerCrossings.md)\<`B`\>
 
-Defined in: [\_spine/core.d.ts:1011](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1011)
+Defined in: [\_spine/core.d.ts:1012](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1012)
 
 #### Inherited from
 
@@ -74,7 +74,7 @@ prior frame.
 
 > `readonly` **state**: [`QuantizerState`](../type-aliases/QuantizerState.md)\<`B`\>
 
-Defined in: [\_spine/core.d.ts:1010](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1010)
+Defined in: [\_spine/core.d.ts:1011](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1011)
 
 #### Inherited from
 
@@ -86,7 +86,7 @@ Defined in: [\_spine/core.d.ts:1010](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **stateSync?**: () => [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [\_spine/core.d.ts:980](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L980)
+Defined in: [\_spine/core.d.ts:981](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L981)
 
 Synchronous state accessor for hot paths (avoids reactive read overhead).
 
@@ -112,7 +112,7 @@ Defined in: [\_spine/quantizer.d.ts:187](https://github.com/freebatteryfactory/L
 
 > **evaluate**(`value`): [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [\_spine/core.d.ts:981](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L981)
+Defined in: [\_spine/core.d.ts:982](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L982)
 
 #### Parameters
 

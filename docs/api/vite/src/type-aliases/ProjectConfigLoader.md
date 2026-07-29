@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / ProjectConfigLoader
+[LiteShip](../../../README.md) / [vite/src](../README.md) / ProjectConfigLoader
 
 # Type Alias: ProjectConfigLoader
 

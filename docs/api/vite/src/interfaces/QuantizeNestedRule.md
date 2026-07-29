@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / QuantizeNestedRule
+[LiteShip](../../../README.md) / [vite/src](../README.md) / QuantizeNestedRule
 
 # Interface: QuantizeNestedRule
 

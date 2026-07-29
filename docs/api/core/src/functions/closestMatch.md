@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / closestMatch
+[LiteShip](../../../README.md) / [core/src](../README.md) / closestMatch
 
 # Function: closestMatch()
 

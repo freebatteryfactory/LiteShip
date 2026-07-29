@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / TransitionConfig
+[LiteShip](../../README.md) / [\_spine](../README.md) / TransitionConfig
 
 # Interface: TransitionConfig
 

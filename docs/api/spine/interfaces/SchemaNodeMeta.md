@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / SchemaNodeMeta
+[LiteShip](../../README.md) / [\_spine](../README.md) / SchemaNodeMeta
 
 # Interface: SchemaNodeMeta
 
-Defined in: [\_spine/core.d.ts:610](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L610)
+Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
 
 Common metadata on every kernel schema node.
 
@@ -33,4 +33,4 @@ Common metadata on every kernel schema node.
 
 > `readonly` `optional` **annotations?**: `Readonly`\<`Record`\<`symbol`, `unknown`\>\>
 
-Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
+Defined in: [\_spine/core.d.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L612)

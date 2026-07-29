@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [create-liteship/src](../README.md) / ScaffoldError
+[LiteShip](../../../README.md) / [create-liteship/src](../README.md) / ScaffoldError
 
 # Interface: ScaffoldError
 

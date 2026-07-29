@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / nodeContext
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / nodeContext
 
 # Function: nodeContext()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / stringsBlanked
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / stringsBlanked
 
 # Function: stringsBlanked()
 

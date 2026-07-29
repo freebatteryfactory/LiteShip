@@ -108,8 +108,8 @@ interface GenFrameConfig {
   readonly getQualityTier: () => UIQualityTier;
   /**
    * Injected time source for the frame's `timestamp` metadata (NOT a content-
-   * address input — ADR-0013 keeps the timestamp out of the receipt id, so the
-   * frame's identity stays deterministic regardless). Defaults to
+   * address input: the timestamp stays out of the receipt id, so the frame's
+   * identity stays deterministic regardless). Defaults to
    * {@link systemClock}; a test passes a {@link fixedClock} for a stable stamp.
    */
   readonly clock?: Clock;
@@ -173,7 +173,7 @@ function _make(config: GenFrameConfig): GenFrameSchedulerShape {
       totalTokensDrained += tokens.length;
       const now = clock.now();
 
-      // Frame content address — stable inputs only; timestamp stays metadata (ADR-0013).
+      // Frame content address — stable inputs only; timestamp stays metadata.
       const receiptId = fnv1aBytes(
         CanonicalCbor.encode({
           frameCount,

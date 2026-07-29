@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / EquivalentMutantRegistry
+[LiteShip](../../../README.md) / [audit/src](../README.md) / EquivalentMutantRegistry
 
 # Interface: EquivalentMutantRegistry
 

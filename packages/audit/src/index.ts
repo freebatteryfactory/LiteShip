@@ -89,7 +89,7 @@ function unverifiedPackageArtifactFindings(
 /**
  * Topology packages absent from a consumer install, surfaced as informational
  * findings — the README's "missing packages are reported" promise, recomputed
- * from the profile so the ADR-0012 profile shape stays untouched. A consumer
+ * from the profile so the profile's fixed field set stays untouched. A consumer
  * audits what it ships, so these are info, never errors.
  */
 function consumerMissingFindings(profile: DevopsProfile): AuditFinding[] {

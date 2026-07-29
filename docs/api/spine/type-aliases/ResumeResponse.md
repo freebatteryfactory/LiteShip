@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ResumeResponse
+[LiteShip](../../README.md) / [\_spine](../README.md) / ResumeResponse
 
 # Type Alias: ResumeResponse
 

@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / RuntimeCoordinatorConfig
+[LiteShip](../../README.md) / [\_spine](../README.md) / RuntimeCoordinatorConfig
 
 # Interface: RuntimeCoordinatorConfig
 
-Defined in: [\_spine/core.d.ts:1049](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1049)
+Defined in: [\_spine/core.d.ts:1050](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1050)
 
 Construction options for the shared runtime coordinator.
 
@@ -16,7 +16,7 @@ Construction options for the shared runtime coordinator.
 
 > `readonly` `optional` **capacity?**: `number`
 
-Defined in: [\_spine/core.d.ts:1050](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1050)
+Defined in: [\_spine/core.d.ts:1051](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1051)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/core.d.ts:1050](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **name?**: `string`
 
-Defined in: [\_spine/core.d.ts:1051](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1051)
+Defined in: [\_spine/core.d.ts:1052](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1052)

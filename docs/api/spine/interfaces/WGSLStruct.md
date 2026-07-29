@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WGSLStruct
+[LiteShip](../../README.md) / [\_spine](../README.md) / WGSLStruct
 
 # Interface: WGSLStruct
 

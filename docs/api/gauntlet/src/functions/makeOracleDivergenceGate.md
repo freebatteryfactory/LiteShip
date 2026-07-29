@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / makeOracleDivergenceGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / makeOracleDivergenceGate
 
 # Function: makeOracleDivergenceGate()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [worker/src](../README.md) / sampleProgramUniforms
+[LiteShip](../../../README.md) / [worker/src](../README.md) / sampleProgramUniforms
 
 # Function: sampleProgramUniforms()
 

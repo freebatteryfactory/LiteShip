@@ -1,5 +1,5 @@
 /**
- * ShipCapsule — release-artifact receipt (ADR-0011).
+ * ShipCapsule — release-artifact receipt.
  *
  * Same canonical-CBOR + ContentAddress kernel as runtime primitives, applied
  * to a published-package tarball. `id` is the fnv1a label over the
@@ -24,6 +24,9 @@ interface ShipCapsuleBuildEnv {
 }
 
 interface ShipCapsuleShape {
+  // Deliberately OUTSIDE the closed seven-arm ASSEMBLY_KINDS union (authoring
+  // assemblies): a release receipt is not an authored assembly, so it reuses the
+  // `_kind` field name without joining the union the name discriminates.
   readonly _kind: 'shipCapsule';
   readonly schema_version: 1;
   readonly id: ContentAddress;
@@ -206,7 +209,7 @@ const decode = (bytes: Uint8Array): Result<ShipCapsuleShape, ShipCapsuleDecodeEr
 };
 
 /**
- * Public namespace for ShipCapsule (ADR-0011). `make` builds a capsule from
+ * Public namespace for ShipCapsule. `make` builds a capsule from
  * input (sync), `canonicalize` encodes it as canonical CBOR for transport /
  * hashing, `decode` round-trips canonical bytes and returns a `Result`
  * (`@liteship/error`) that rejects non-canonical encodings AND unknown

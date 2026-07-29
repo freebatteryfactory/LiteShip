@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [quantizer/src](../README.md) / createQuantizer
+[LiteShip](../../../README.md) / [quantizer/src](../README.md) / createQuantizer
 
 # Function: createQuantizer()
 

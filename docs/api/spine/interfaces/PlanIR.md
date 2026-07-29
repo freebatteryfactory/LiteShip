@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / PlanIR
+[LiteShip](../../README.md) / [\_spine](../README.md) / PlanIR
 
 # Interface: PlanIR
 
-Defined in: [\_spine/core.d.ts:1437](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1437)
+Defined in: [\_spine/core.d.ts:1438](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1438)
 
 Immutable directed execution plan consumed by runtime coordinators.
 
@@ -16,7 +16,7 @@ Immutable directed execution plan consumed by runtime coordinators.
 
 > `readonly` **edges**: readonly [`PlanEdge`](PlanEdge.md)[]
 
-Defined in: [\_spine/core.d.ts:1440](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1440)
+Defined in: [\_spine/core.d.ts:1441](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1441)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1440](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **metadata?**: `Record`\<`string`, `unknown`\>
 
-Defined in: [\_spine/core.d.ts:1441](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1441)
+Defined in: [\_spine/core.d.ts:1442](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1442)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1441](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/core.d.ts:1438](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1438)
+Defined in: [\_spine/core.d.ts:1439](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1439)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:1438](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **steps**: readonly [`PlanStep`](PlanStep.md)[]
 
-Defined in: [\_spine/core.d.ts:1439](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1439)
+Defined in: [\_spine/core.d.ts:1440](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1440)

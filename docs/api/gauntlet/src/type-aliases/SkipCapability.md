@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SkipCapability
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SkipCapability
 
 # Type Alias: SkipCapability
 

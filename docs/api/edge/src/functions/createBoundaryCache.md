@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / createBoundaryCache
+[LiteShip](../../../README.md) / [edge/src](../README.md) / createBoundaryCache
 
 # Function: createBoundaryCache()
 

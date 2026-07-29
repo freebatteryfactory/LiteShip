@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / LspPosition
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / LspPosition
 
 # Interface: LspPosition
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WGSLBinding
+[LiteShip](../../README.md) / [\_spine](../README.md) / WGSLBinding
 
 # Interface: WGSLBinding
 

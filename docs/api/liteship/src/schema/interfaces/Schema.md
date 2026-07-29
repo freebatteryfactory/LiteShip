@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / Schema
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / Schema
 
 # Interface: Schema\<A, I\>
 

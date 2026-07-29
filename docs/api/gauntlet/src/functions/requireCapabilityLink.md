@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / requireCapabilityLink
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / requireCapabilityLink
 
 # Function: requireCapabilityLink()
 
 > **requireCapabilityLink**(`context`, `gateId`): [`CapabilityLinkFacts`](../interfaces/CapabilityLinkFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:1480](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1480)
+Defined in: [gauntlet/src/gate.ts:1481](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1481)
 
 Read the injected [CapabilityLinkFacts](../interfaces/CapabilityLinkFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) (never silently no-ops the gate whose whole job is the capability-link

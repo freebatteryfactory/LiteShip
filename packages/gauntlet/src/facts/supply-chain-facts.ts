@@ -10,7 +10,7 @@
  * analyzer) does the heavy lifting — lockfile parse + policy eval, SBOM build,
  * ShipCapsule provenance re-read, CI-workflow scan — and hands the engine these
  * flat, already-decided facts. The gate's only job is to FOLD them into Findings
- * at the right assurance level (ADR-0012: the lean engine folds facts; the host
+ * at the right assurance level (the lean engine folds facts; the host
  * computes them).
  *
  * "Runtime determinism is clown shoes without a hermetic build" — these facts

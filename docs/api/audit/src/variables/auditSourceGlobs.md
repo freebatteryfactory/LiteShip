@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / auditSourceGlobs
+[LiteShip](../../../README.md) / [audit/src](../README.md) / auditSourceGlobs
 
 # Variable: auditSourceGlobs
 

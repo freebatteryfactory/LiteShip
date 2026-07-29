@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / buildCapabilityLinkFacts
+[LiteShip](../../../README.md) / [audit/src](../README.md) / buildCapabilityLinkFacts
 
 # Function: buildCapabilityLinkFacts()
 

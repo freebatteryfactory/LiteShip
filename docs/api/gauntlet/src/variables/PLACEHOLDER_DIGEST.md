@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / PLACEHOLDER\_DIGEST
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / PLACEHOLDER\_DIGEST
 
 # Variable: PLACEHOLDER\_DIGEST
 

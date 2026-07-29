@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / verifyShaderIntegrity
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / verifyShaderIntegrity
 
 # Function: verifyShaderIntegrity()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / AdaptiveLowering
+[LiteShip](../../../README.md) / [core/src](../README.md) / AdaptiveLowering
 
 # Interface: AdaptiveLowering
 

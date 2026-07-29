@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / replaceGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / replaceGate
 
 # Function: replaceGate()
 

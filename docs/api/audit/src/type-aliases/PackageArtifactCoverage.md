@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / PackageArtifactCoverage
+[LiteShip](../../../README.md) / [audit/src](../README.md) / PackageArtifactCoverage
 
 # Type Alias: PackageArtifactCoverage
 

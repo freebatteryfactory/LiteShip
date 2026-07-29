@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / TransferableCanvas
+[LiteShip](../../README.md) / [\_spine](../README.md) / TransferableCanvas
 
 # Interface: TransferableCanvas
 

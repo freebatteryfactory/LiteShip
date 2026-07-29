@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/media](../../../README.md) / [AVRenderer](../README.md) / FrameOutput
+[LiteShip](../../../../../../README.md) / [liteship/src/media](../../../README.md) / [AVRenderer](../README.md) / FrameOutput
 
 # Type Alias: FrameOutput
 

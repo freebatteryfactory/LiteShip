@@ -238,7 +238,7 @@ export const DOCUMENT_GRAPH_SUT: DecoderSut = {
 };
 
 /**
- * ShipCapsule decode — the version-aware release-artifact reader (ADR-0011).
+ * ShipCapsule decode — the version-aware release-artifact reader.
  *
  * `ShipCapsule.decode` returns a `Result<Shape, ShipCapsuleDecodeError>` whose
  * ERROR arm is a tagged STRING (`'malformed_cbor' | 'invalid_shape' |
@@ -271,7 +271,7 @@ const isShipCapsuleFailClosed = (u: unknown): u is ShipCapsuleFailClosed =>
 export const SHIP_CAPSULE_SUT: DecoderSut = {
   id: 'ship-capsule.decode',
   inputKind: 'bytes',
-  describe: 'ShipCapsule.decode (@liteship/core) — the version-aware release-artifact reader (ADR-0011); Result error arm.',
+  describe: 'ShipCapsule.decode (@liteship/core) — the version-aware release-artifact reader; Result error arm.',
   run: (input) => {
     // A DEFECT (an uncaught throw inside decode) propagates straight out of this
     // call, and the classifier sees an UNTAGGED crash. The EXPECTED tagged error

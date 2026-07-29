@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / ThemeManifest
+[LiteShip](../../../README.md) / [vite/src](../README.md) / ThemeManifest
 
 # Type Alias: ThemeManifest
 

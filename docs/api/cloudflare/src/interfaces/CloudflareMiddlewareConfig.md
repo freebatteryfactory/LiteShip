@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [cloudflare/src](../README.md) / CloudflareMiddlewareConfig
+[LiteShip](../../../README.md) / [cloudflare/src](../README.md) / CloudflareMiddlewareConfig
 
 # Interface: CloudflareMiddlewareConfig
 

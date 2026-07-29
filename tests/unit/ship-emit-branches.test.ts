@@ -1,5 +1,5 @@
 /**
- * `cli.ship-emit` capsule (ADR-0011) — direct coverage of the
+ * `cli.ship-emit` capsule — direct coverage of the
  * `receiptedMutation` arm's surface, bypassing `commands/ship.ts`.
  *
  * `commands/ship.ts` is excluded from coverage matching the existing

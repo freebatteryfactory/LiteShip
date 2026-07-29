@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / FindingLevel
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / FindingLevel
 
 # Type Alias: FindingLevel
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [core/src](../../README.md) / TypeValidator
+[LiteShip](../../../../README.md) / [core/src](../../README.md) / TypeValidator
 
 # TypeValidator
 

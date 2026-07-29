@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [remotion/src](../README.md) / precomputeFrames
+[LiteShip](../../../README.md) / [remotion/src](../README.md) / precomputeFrames
 
 # Function: precomputeFrames()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / ApplyVerifiablePatchResult
+[LiteShip](../../../README.md) / [web/src](../README.md) / ApplyVerifiablePatchResult
 
 # Type Alias: ApplyVerifiablePatchResult
 

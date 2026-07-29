@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / SceneRuntimeOptions
+[LiteShip](../../../README.md) / [scene/src](../README.md) / SceneRuntimeOptions
 
 # Interface: SceneRuntimeOptions
 

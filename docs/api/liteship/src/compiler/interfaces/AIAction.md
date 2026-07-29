@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / AIAction
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / AIAction
 
 # Interface: AIAction
 

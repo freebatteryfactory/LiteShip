@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Theme
+[LiteShip](../../../README.md) / [core/src](../README.md) / Theme
 
 # Type Alias: Theme\<V\>
 

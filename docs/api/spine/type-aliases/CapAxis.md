@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CapAxis
+[LiteShip](../../README.md) / [\_spine](../README.md) / CapAxis
 
 # Type Alias: CapAxis
 

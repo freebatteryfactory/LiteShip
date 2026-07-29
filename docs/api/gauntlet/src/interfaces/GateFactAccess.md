@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / GateFactAccess
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / GateFactAccess
 
 # Interface: GateFactAccess
 
-Defined in: [gauntlet/src/gate.ts:528](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L528)
+Defined in: [gauntlet/src/gate.ts:529](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L529)
 
 A declared fact read and whether composition without that fact is invalid.
 
@@ -16,7 +16,7 @@ A declared fact read and whether composition without that fact is invalid.
 
 > `readonly` **channel**: `"mutation"` \| `"benchmarkSubjects"` \| `"mcdc"` \| `"proof"` \| `"supplyChain"` \| `"transition"` \| `"spineRelation"` \| `"simulation"` \| `"traceability"` \| `"standards"` \| `"declaredFix"` \| `"taint"` \| `"capabilityLink"` \| `"fuzzCorpus"` \| `"composition"` \| `"skipSites"` \| `"activeSurfaceFacts"` \| `"featureEdges"` \| `"checkGovernance"`
 
-Defined in: [gauntlet/src/gate.ts:529](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L529)
+Defined in: [gauntlet/src/gate.ts:530](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L530)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [gauntlet/src/gate.ts:529](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **presence**: `"required"` \| `"optional"`
 
-Defined in: [gauntlet/src/gate.ts:530](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L530)
+Defined in: [gauntlet/src/gate.ts:531](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L531)

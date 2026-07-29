@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / LockfilePolicyFacts
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / LockfilePolicyFacts
 
 # Interface: LockfilePolicyFacts
 

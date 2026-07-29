@@ -104,9 +104,6 @@ export const SCRIPT_EXEMPTIONS: readonly ScriptExemption[] = [
   { script: 'fix', reason: 'Fix workflow: runs format + eslint --fix (mutates files).' },
   { script: 'format', reason: 'Format workflow: prettier --write (mutates files); check/format is the assertion.' },
 
-  // ── Report / diagnostic generators (not a gauntlet/CI pass-fail assertion) ─
-  { script: 'report:semantic-convergence', reason: 'Standalone diagnostic report; not a gauntlet/CI assertion.' },
-
   // ── Test plumbing / dev loops ──────────────────────────────────────────────
   { script: 'test:shard', reason: 'Test plumbing: CI shard splitter for the parallel test lane.' },
   {

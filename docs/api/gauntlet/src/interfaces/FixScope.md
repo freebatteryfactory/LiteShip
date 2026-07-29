@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FixScope
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FixScope
 
 # Interface: FixScope
 

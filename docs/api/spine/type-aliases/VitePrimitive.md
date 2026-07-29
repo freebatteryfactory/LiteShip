@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / VitePrimitive
+[LiteShip](../../README.md) / [\_spine](../README.md) / VitePrimitive
 
 # Type Alias: VitePrimitive\<K\>
 

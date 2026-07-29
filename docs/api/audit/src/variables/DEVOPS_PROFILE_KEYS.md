@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / DEVOPS\_PROFILE\_KEYS
+[LiteShip](../../../README.md) / [audit/src](../README.md) / DEVOPS\_PROFILE\_KEYS
 
 # Variable: DEVOPS\_PROFILE\_KEYS
 

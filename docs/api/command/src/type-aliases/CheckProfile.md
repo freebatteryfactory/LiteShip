@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckProfile
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckProfile
 
 # Type Alias: CheckProfile
 

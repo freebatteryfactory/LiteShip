@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / bindGraphForm
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / bindGraphForm
 
 # Function: bindGraphForm()
 

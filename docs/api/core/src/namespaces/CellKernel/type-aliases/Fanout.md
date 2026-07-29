@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [CellKernel](../README.md) / Fanout
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [CellKernel](../README.md) / Fanout
 
 # Type Alias: Fanout\<T\>
 

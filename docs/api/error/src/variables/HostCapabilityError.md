@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / HostCapabilityError
+[LiteShip](../../../README.md) / [error/src](../README.md) / HostCapabilityError
 
 # Variable: HostCapabilityError
 

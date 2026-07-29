@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / HeadProbeCaps
+[LiteShip](../../../README.md) / [detect/src](../README.md) / HeadProbeCaps
 
 # Interface: HeadProbeCaps
 

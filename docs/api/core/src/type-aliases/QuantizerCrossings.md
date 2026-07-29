@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / QuantizerCrossings
+[LiteShip](../../../README.md) / [core/src](../README.md) / QuantizerCrossings
 
 # Type Alias: QuantizerCrossings\<B\>
 

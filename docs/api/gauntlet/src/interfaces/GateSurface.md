@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / GateSurface
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / GateSurface
 
 # Interface: GateSurface
 

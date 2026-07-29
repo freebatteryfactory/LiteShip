@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / liteship/src/adaptive
+[LiteShip](../../../README.md) / liteship/src/adaptive
 
 # liteship/src/adaptive
 

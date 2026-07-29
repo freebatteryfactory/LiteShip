@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / isDerived
+[LiteShip](../../../README.md) / [core/src](../README.md) / isDerived
 
 # Function: isDerived()
 

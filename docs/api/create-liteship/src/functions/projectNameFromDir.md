@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [create-liteship/src](../README.md) / projectNameFromDir
+[LiteShip](../../../README.md) / [create-liteship/src](../README.md) / projectNameFromDir
 
 # Function: projectNameFromDir()
 

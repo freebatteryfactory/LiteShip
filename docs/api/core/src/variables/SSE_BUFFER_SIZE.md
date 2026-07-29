@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / SSE\_BUFFER\_SIZE
+[LiteShip](../../../README.md) / [core/src](../README.md) / SSE\_BUFFER\_SIZE
 
 # Variable: SSE\_BUFFER\_SIZE
 

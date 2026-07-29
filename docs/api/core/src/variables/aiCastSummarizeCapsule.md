@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / aiCastSummarizeCapsule
+[LiteShip](../../../README.md) / [core/src](../README.md) / aiCastSummarizeCapsule
 
 # Variable: aiCastSummarizeCapsule
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckInvariantExemption
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckInvariantExemption
 
 # Interface: CheckInvariantExemption
 

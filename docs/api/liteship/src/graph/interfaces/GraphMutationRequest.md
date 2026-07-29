@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / GraphMutationRequest
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / GraphMutationRequest
 
 # Interface: GraphMutationRequest
 

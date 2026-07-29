@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / SCRIPT\_EXEMPTIONS
+[LiteShip](../../../README.md) / [command/src](../README.md) / SCRIPT\_EXEMPTIONS
 
 # Variable: SCRIPT\_EXEMPTIONS
 

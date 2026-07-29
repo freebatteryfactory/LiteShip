@@ -20,5 +20,5 @@ function isAllowedKey(key: string): boolean {
   return key.startsWith('aria-') || key === 'role';
 }
 
-/** Shared boundary-attribute policy (ADR-0001 namespace-object style). */
+/** Shared boundary-attribute policy (namespace-object style). */
 export const BoundaryAttribute = { isAllowedKey } as const;

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Theme](../README.md) / tap
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Theme](../README.md) / tap
 
 # Function: tap()
 

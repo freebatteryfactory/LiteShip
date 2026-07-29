@@ -73,7 +73,7 @@ describe('dispatcher-level requires enforcement', () => {
     ]);
   });
 
-  it('verify declares NO requires — capability absence is its Unknown/Incomplete verdict (ADR-0011)', () => {
+  it('verify declares NO requires — capability absence is its Unknown/Incomplete verdict', () => {
     expect(commandRegistry.get('verify')?.descriptor.requires).toBeUndefined();
   });
 

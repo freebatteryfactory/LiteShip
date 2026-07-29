@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [remotion/src](../README.md) / cssVarsFromState
+[LiteShip](../../../README.md) / [remotion/src](../README.md) / cssVarsFromState
 
 # Function: cssVarsFromState()
 

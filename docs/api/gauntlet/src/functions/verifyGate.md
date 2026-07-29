@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / verifyGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / verifyGate
 
 # Function: verifyGate()
 

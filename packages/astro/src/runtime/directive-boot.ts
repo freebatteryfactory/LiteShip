@@ -10,7 +10,7 @@
  * injects this scanner on every page to activate directive markers the
  * Astro runtime never sees.
  *
- * Two marker forms are scanned (both first-class per ADR-0028):
+ * Two marker forms are scanned (both first-class):
  *
  * - `data-liteship-directive="adaptive"` -- explicit marker, emitted by
  *   `adaptiveAttrs()`; space-separated tokens allowed.

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/reactive](../../../README.md) / [Signal](../README.md) / Controllable
+[LiteShip](../../../../../../README.md) / [liteship/src/reactive](../../../README.md) / [Signal](../README.md) / Controllable
 
 # Type Alias: Controllable\<T\>
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / ResolvedStreamRecoverySubstrate
+[LiteShip](../../../README.md) / [web/src](../README.md) / ResolvedStreamRecoverySubstrate
 
 # Interface: ResolvedStreamRecoverySubstrate
 

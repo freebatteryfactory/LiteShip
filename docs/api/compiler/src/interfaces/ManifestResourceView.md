@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / ManifestResourceView
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / ManifestResourceView
 
 # Interface: ManifestResourceView
 

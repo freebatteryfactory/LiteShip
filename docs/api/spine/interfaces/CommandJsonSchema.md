@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CommandJsonSchema
+[LiteShip](../../README.md) / [\_spine](../README.md) / CommandJsonSchema
 
 # Interface: CommandJsonSchema
 

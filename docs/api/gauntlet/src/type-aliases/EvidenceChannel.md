@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / EvidenceChannel
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / EvidenceChannel
 
 # Type Alias: EvidenceChannel
 

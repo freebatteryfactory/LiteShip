@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / featureEdgeSubjectCoverage
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / featureEdgeSubjectCoverage
 
 # Function: featureEdgeSubjectCoverage()
 

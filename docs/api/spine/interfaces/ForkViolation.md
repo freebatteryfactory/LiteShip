@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ForkViolation
+[LiteShip](../../README.md) / [\_spine](../README.md) / ForkViolation
 
 # Interface: ForkViolation
 
-Defined in: [\_spine/core.d.ts:1299](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1299)
+Defined in: [\_spine/core.d.ts:1300](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1300)
 
 Evidence that a receipt graph violates its declared fork policy.
 
@@ -16,7 +16,7 @@ Evidence that a receipt graph violates its declared fork policy.
 
 > `readonly` **actor**: `string`
 
-Defined in: [\_spine/core.d.ts:1300](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1300)
+Defined in: [\_spine/core.d.ts:1301](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1301)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1300](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **attempted**: `string`
 
-Defined in: [\_spine/core.d.ts:1303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1303)
+Defined in: [\_spine/core.d.ts:1304](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1304)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1303](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **existing**: `string`
 
-Defined in: [\_spine/core.d.ts:1302](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1302)
+Defined in: [\_spine/core.d.ts:1303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1303)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:1302](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **prevHash**: `string`
 
-Defined in: [\_spine/core.d.ts:1301](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1301)
+Defined in: [\_spine/core.d.ts:1302](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1302)

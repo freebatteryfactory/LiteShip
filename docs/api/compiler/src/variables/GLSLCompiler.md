@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / GLSLCompiler
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / GLSLCompiler
 
 # Variable: GLSLCompiler
 

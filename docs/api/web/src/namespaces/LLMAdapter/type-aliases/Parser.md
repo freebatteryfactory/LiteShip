@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [web/src](../../../README.md) / [LLMAdapter](../README.md) / Parser
+[LiteShip](../../../../../README.md) / [web/src](../../../README.md) / [LLMAdapter](../README.md) / Parser
 
 # Type Alias: Parser
 

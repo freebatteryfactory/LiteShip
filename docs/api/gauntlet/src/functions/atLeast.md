@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / atLeast
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / atLeast
 
 # Function: atLeast()
 

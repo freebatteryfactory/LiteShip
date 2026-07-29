@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / ColorSpace
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / ColorSpace
 
 # Type Alias: ColorSpace
 

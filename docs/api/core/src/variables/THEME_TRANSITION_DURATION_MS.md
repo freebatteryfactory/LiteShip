@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / THEME\_TRANSITION\_DURATION\_MS
+[LiteShip](../../../README.md) / [core/src](../README.md) / THEME\_TRANSITION\_DURATION\_MS
 
 # Variable: THEME\_TRANSITION\_DURATION\_MS
 

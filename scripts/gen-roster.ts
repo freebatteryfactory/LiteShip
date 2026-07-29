@@ -69,6 +69,9 @@ export const AUDIT_TOPOLOGY_TS = 'packages/cli/src/internal/audit-package-topolo
 export const COMMAND_PLUMB_TS = 'packages/command/src/commands/plumb-registry.generated.ts';
 export const DOC_PACKAGE_GROUPS_TS = 'scripts/lib/package-docs.generated.ts';
 export const API_SURFACE_PACKAGES_TS = 'tests/fixtures/api-surface-packages.generated.ts';
+// packages/cli/fragments/ is a GENERATED mirror of create-liteship templates and
+// examples/ (drift-guarded by the fragment-projection check). Edit the sources,
+// never the mirror — a hand edit here is overwritten on the next regeneration.
 export const CLI_FRAGMENT_ROOT = 'packages/cli/fragments';
 export const CLI_TEMPLATE_RENAMES_TS = 'packages/cli/src/internal/template-renames.generated.ts';
 export const ROOT_TSCONFIG_JSON = 'tsconfig.json';

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / buildRepoIR
+[LiteShip](../../../README.md) / [audit/src](../README.md) / buildRepoIR
 
 # Function: buildRepoIR()
 

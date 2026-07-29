@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / ManifestToolView
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / ManifestToolView
 
 # Interface: ManifestToolView
 

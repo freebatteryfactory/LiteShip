@@ -1,5 +1,5 @@
 /**
- * CUT D7b — the DevopsProfile boundary is executable (ADR-0012).
+ * CUT D7b — the DevopsProfile boundary is executable.
  *
  * `@liteship/audit`'s `DevopsProfile` is THE reusable devops seam. D7 ruled "only fields
  * the audit consumes — no aspirational fields"; that law lived only in a comment.
@@ -8,7 +8,7 @@
  * they never leak onto the profile or into the published engine surface. The two
  * root-derivation families (checkout-root vs caller-root) stay split.
  *
- * Zero behavior change — pure classification + cage. See ADR-0012.
+ * Zero behavior change — pure classification + cage.
  *
  * @module
  */
@@ -52,7 +52,7 @@ describe('D7b — DevopsProfile has exactly the approved fields (no aspirational
     const src = read('packages/audit/src/devops-profile.ts');
     const body = src.match(/export interface DevopsProfile \{([\s\S]*?)\n\}/)?.[1];
     expect(body, 'DevopsProfile interface must be findable').toBeTruthy();
-    // The instant someone adds one of these as a profile field, this fails (ADR-0012).
+    // The instant someone adds one of these as a profile field, this fails.
     expect(body!).not.toMatch(/readonly\s+(invariants|coverage|bench|artifactPaths?|reportPaths|thresholds)\b/);
   });
 });
@@ -99,7 +99,7 @@ describe('D7b — repo-local contracts stay local (not threaded through the prof
   });
 });
 
-describe('ADR-0023 — project policy is host-injected', () => {
+describe('the rigor engine stays LEAN — project policy is host-injected', () => {
   it('the published engine contains no project package literal outside dependency imports', () => {
     const offenders: string[] = [];
     for (const file of auditEngineSources()) {

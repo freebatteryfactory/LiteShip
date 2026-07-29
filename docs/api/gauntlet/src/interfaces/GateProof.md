@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / GateProof
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / GateProof
 
 # Interface: GateProof
 

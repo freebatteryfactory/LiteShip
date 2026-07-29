@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Zap](../README.md) / map
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Zap](../README.md) / map
 
 # Function: map()
 
 > **map**\<`A`, `B`\>(`event`, `f`): [`Zap`](../../../interfaces/Zap.md)\<`B`\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:940](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L940)
+Defined in: [\_spine/core.d.ts:941](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L941)
 
 ## Type Parameters
 

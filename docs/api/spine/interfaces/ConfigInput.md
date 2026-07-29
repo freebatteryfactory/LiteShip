@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ConfigInput
+[LiteShip](../../README.md) / [\_spine](../README.md) / ConfigInput
 
 # Interface: ConfigInput
 

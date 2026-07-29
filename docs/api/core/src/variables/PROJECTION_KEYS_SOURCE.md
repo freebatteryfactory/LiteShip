@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / PROJECTION\_KEYS\_SOURCE
+[LiteShip](../../../README.md) / [core/src](../README.md) / PROJECTION\_KEYS\_SOURCE
 
 # Variable: PROJECTION\_KEYS\_SOURCE
 

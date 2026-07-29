@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / dispatch
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / dispatch
 
 # Function: dispatch()
 

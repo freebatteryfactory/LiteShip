@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / Finalizer
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / Finalizer
 
 # Type Alias: Finalizer
 

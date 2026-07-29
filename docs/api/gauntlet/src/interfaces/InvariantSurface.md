@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / InvariantSurface
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / InvariantSurface
 
 # Interface: InvariantSurface
 

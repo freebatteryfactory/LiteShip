@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / EdgeHostContext
+[LiteShip](../../../README.md) / [edge/src](../README.md) / EdgeHostContext
 
 # Interface: EdgeHostContext
 

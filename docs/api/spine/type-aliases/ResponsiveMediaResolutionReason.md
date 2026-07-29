@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ResponsiveMediaResolutionReason
+[LiteShip](../../README.md) / [\_spine](../README.md) / ResponsiveMediaResolutionReason
 
 # Type Alias: ResponsiveMediaResolutionReason
 

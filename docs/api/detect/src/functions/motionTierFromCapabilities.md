@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / motionTierFromCapabilities
+[LiteShip](../../../README.md) / [detect/src](../README.md) / motionTierFromCapabilities
 
 # Function: motionTierFromCapabilities()
 

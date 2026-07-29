@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / AIConstraint
+[LiteShip](../../README.md) / [\_spine](../README.md) / AIConstraint
 
 # Interface: AIConstraint
 

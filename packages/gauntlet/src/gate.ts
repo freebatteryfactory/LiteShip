@@ -187,8 +187,9 @@ export interface GateContext {
    * {@link transitionConformanceGate} reads ONLY through this; in-memory fixtures supply
    * a literal facts record (no primitive, no capture). When ABSENT the gate is simply not in
    * the set. The reactive model + native-transport oracle are LiteShip-local (product
-   * machinery in the test tree), so — per ADR-0012/0023 — the gate is HOSTED by the repo-local
-   * `transition:gate` phase (`scripts/transition-conformance-gate.ts`, run every PR), NOT the
+   * machinery in the test tree), so — the shipped engine may not depend on LiteShip-local test-tree
+   * machinery — the gate is HOSTED by the repo-local `transition:gate` phase
+   * (`scripts/transition-conformance-gate.ts`, run every PR), NOT the
    * shipped `liteship check` CLI, so there is no per-case cost and no noise on a default run. A
    * `divergent` case carries its SEED, so the behavior change it folds replays
    * byte-for-byte. See {@link TransitionFacts}.
@@ -299,7 +300,7 @@ export interface GateContext {
    * SINK call argument, observing the SANITIZER on the path) lives in a HOST
    * (`@liteship/audit`'s taint oracle, classified by the LiteShip-LOCAL source/sink/
    * sanitizer registry the `@liteship/cli` host injects — the audit engine itself
-   * references NO LiteShip policy, ADR-0012/D7b), which folds the traced flows into
+   * references NO LiteShip policy), which folds the traced flows into
    * flat {@link TaintFacts} (every source→sink flow + its sanitizer, if any + the
    * honest interprocedural depth the trace covered) and lands them here. The
    * {@link taintFlowGate} reads ONLY through this; in-memory fixtures supply a
@@ -314,7 +315,7 @@ export interface GateContext {
    * sanctioned capability-gated skip's GUARD DERIVES FROM its declared capability's probe. The heavy
    * `ts.Program`/checker `linker` lives in a HOST (`@liteship/audit`'s capability-link oracle, fed the
    * canonical capability-module SET + the sanctioned sites the `@liteship/cli` host injects — the audit
-   * engine names no LiteShip capability, ADR-0012/D7b). The {@link capabilityGateLinkGate} reads ONLY
+   * engine names no LiteShip capability). The {@link capabilityGateLinkGate} reads ONLY
    * through this; fixtures supply a literal facts record. When ABSENT the gate is not in the set
    * (capability-link is opt-in: `liteship check gates --ir --capability-gate`). A skip whose guard derives from
    * NO capability probe (`if (Math.random())`) — or the WRONG one (a mislabel) — folds to an L4 finding.

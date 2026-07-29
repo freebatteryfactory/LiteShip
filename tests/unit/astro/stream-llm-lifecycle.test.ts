@@ -18,8 +18,8 @@
  *   4. Overflow is a PRIMITIVE-only feature for buffered async consumers — a
  *      synchronous directive holds no buffer, so a same-id patch flood never
  *      engages the primitive's overflow path and an LLM token flood is processed
- *      in order with nothing dropped (no backpressure diagnostic). See ADR-0005's
- *      SSE addendum.
+ *      in order with nothing dropped (no backpressure diagnostic). Overflow applies
+ *      to the buffered `Stream` path only; no buffer means nothing to overflow.
  *
  * jsdom (not the browser config) is the host here on purpose — the assertions
  * are environment-independent and the EventSourceMock drives them deterministically.

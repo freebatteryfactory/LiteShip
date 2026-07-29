@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [liteship/src](../README.md) / explainDiagnostic
+[LiteShip](../../../README.md) / [liteship/src](../README.md) / explainDiagnostic
 
 # Function: explainDiagnostic()
 

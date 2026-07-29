@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / Beat
+[LiteShip](../../../README.md) / [scene/src](../README.md) / Beat
 
 # Function: Beat()
 

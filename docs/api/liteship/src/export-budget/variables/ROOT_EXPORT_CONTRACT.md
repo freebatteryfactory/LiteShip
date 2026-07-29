@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/export-budget](../README.md) / ROOT\_EXPORT\_CONTRACT
+[LiteShip](../../../../README.md) / [liteship/src/export-budget](../README.md) / ROOT\_EXPORT\_CONTRACT
 
 # Variable: ROOT\_EXPORT\_CONTRACT
 

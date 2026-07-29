@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ReplayableRecoveryCell
+[LiteShip](../../../README.md) / [core/src](../README.md) / ReplayableRecoveryCell
 
 # Type Alias: ReplayableRecoveryCell
 

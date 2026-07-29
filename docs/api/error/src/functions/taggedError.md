@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / taggedError
+[LiteShip](../../../README.md) / [error/src](../README.md) / taggedError
 
 # Function: taggedError()
 

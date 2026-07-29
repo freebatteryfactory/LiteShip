@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [remotion/src](../README.md) / motionCssVars
+[LiteShip](../../../README.md) / [remotion/src](../README.md) / motionCssVars
 
 # Function: motionCssVars()
 

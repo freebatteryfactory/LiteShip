@@ -2,12 +2,13 @@
  * The capability axes carved by detection — the single source of truth for the
  * `data-liteship-*` capability vocabulary.
  *
- * Each axis is BOTH a public, author-facing CSS-keying attribute on `<html>`
- * (`data-liteship-<axis>`) AND a field on `Astro.locals.liteship.tiers`. The axis key
- * IS both names, projected through {@link capAxisAttr} as a template literal —
- * so a DOM attribute that disagrees with its locals field is unrepresentable.
- * This is what closes the `data-liteship-cap`-vs-`data-liteship-tier` drift: one
- * source, projected to the emitter, the locals, and the runtime readers.
+ * The axes are `tier` / `motion` / `design`. Each axis key is BOTH a public,
+ * author-facing CSS-keying attribute on `<html>` (`data-liteship-<axis>`, projected
+ * through {@link capAxisAttr} as a template literal) AND the field name on
+ * `Astro.locals.liteship.tiers` — so a DOM attribute that disagrees with its locals
+ * field is unrepresentable. The edge emitter, the locals, and the runtime readers all
+ * project from this ONE list. Engine state (numeric GPU tier, WebGPU support) is not an
+ * axis and never reaches the DOM; only author-CSS-keying attributes live there.
  *
  * @module
  */

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / JsonRpcNotification
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / JsonRpcNotification
 
 # Interface: JsonRpcNotification
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / designTierFromCapabilities
+[LiteShip](../../../README.md) / [detect/src](../README.md) / designTierFromCapabilities
 
 # Function: designTierFromCapabilities()
 

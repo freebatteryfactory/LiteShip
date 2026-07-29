@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / LspRange
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / LspRange
 
 # Interface: LspRange
 

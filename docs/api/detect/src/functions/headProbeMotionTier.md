@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / headProbeMotionTier
+[LiteShip](../../../README.md) / [detect/src](../README.md) / headProbeMotionTier
 
 # Function: headProbeMotionTier()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CapsuleResultReceipt
+[LiteShip](../../README.md) / [\_spine](../README.md) / CapsuleResultReceipt
 
 # Interface: CapsuleResultReceipt
 

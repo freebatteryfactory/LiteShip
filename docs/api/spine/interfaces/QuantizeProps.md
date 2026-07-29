@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / QuantizeProps
+[LiteShip](../../README.md) / [\_spine](../README.md) / QuantizeProps
 
 # Interface: QuantizeProps\<B\>
 

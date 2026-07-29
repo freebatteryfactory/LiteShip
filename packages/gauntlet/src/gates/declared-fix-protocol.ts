@@ -24,8 +24,10 @@
  * noise to a non-agent-fix run. An `admitted` verdict folds to NOTHING (the green): an
  * in-scope, sized, non-weakening, receipted fix is admitted clean.
  *
- * LEAN BY CONSTRUCTION (ADR-0012): the gate reads NO config off disk, content-addresses
- * NOTHING (the host minted the receipts via `@liteship/core`'s kernel), and reads NO clock
+ * LEAN BY CONSTRUCTION (the published engine carries no heavy dependency, so it stays installable
+ * downstream and every LiteShip-specific decision stays with the host): the gate reads NO config off
+ * disk, content-addresses NOTHING (the host minted the receipts via `@liteship/core`'s kernel), and
+ * reads NO clock
  * (the host injected `now` into the verifier). It only FOLDS the decided verdict.
  * REPORT-not-DECIDE.
  *

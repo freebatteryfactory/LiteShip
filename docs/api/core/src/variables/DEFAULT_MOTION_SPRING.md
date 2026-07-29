@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / DEFAULT\_MOTION\_SPRING
+[LiteShip](../../../README.md) / [core/src](../README.md) / DEFAULT\_MOTION\_SPRING
 
 # Variable: DEFAULT\_MOTION\_SPRING
 

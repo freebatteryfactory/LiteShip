@@ -1,5 +1,6 @@
 /**
- * ShipCapsule input-addressing helpers (ADR-0011 §Decision item 3).
+ * ShipCapsule input-addressing helpers — each release input is carried as an
+ * `AddressedDigest` over deterministic bytes, never over the raw `.tgz`.
  *
  *   - `tarballManifestAddress` -- deterministic over the sorted file manifest
  *     even when the surrounding gzip wrapper differs across pack runs.

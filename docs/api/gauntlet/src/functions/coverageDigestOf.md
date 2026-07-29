@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / coverageDigestOf
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / coverageDigestOf
 
 # Function: coverageDigestOf()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / AssetDescriptor
+[LiteShip](../../../README.md) / [assets/src](../README.md) / AssetDescriptor
 
 # Interface: AssetDescriptor\<K\>
 

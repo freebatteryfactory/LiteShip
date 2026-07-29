@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / compileReveal
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / compileReveal
 
 # Function: compileReveal()
 

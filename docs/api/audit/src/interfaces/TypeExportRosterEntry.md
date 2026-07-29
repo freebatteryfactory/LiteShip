@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / TypeExportRosterEntry
+[LiteShip](../../../README.md) / [audit/src](../README.md) / TypeExportRosterEntry
 
 # Interface: TypeExportRosterEntry
 
-Defined in: [audit/src/type-export-surface.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L57)
+Defined in: [audit/src/type-export-surface.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L59)
 
 One entry in the enumeration roster — a package name and its source entry file.
 
@@ -16,7 +16,7 @@ One entry in the enumeration roster — a package name and its source entry file
 
 > `readonly` **entryFile**: `string`
 
-Defined in: [audit/src/type-export-surface.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L60)
+Defined in: [audit/src/type-export-surface.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L62)
 
 Absolute path to the package's SOURCE entry (`src/index.ts` / `index.d.ts`).
 
@@ -26,4 +26,4 @@ Absolute path to the package's SOURCE entry (`src/index.ts` / `index.d.ts`).
 
 > `readonly` **name**: `string`
 
-Defined in: [audit/src/type-export-surface.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L58)
+Defined in: [audit/src/type-export-surface.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L60)

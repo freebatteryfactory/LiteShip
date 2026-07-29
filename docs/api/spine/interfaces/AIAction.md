@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / AIAction
+[LiteShip](../../README.md) / [\_spine](../README.md) / AIAction
 
 # Interface: AIAction
 

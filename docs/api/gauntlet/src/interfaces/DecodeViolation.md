@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / DecodeViolation
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / DecodeViolation
 
 # Interface: DecodeViolation
 

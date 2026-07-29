@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / MotionSamplePart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / MotionSamplePart
 
 # Variable: MotionSamplePart
 

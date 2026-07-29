@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / stableEvidenceDigest
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / stableEvidenceDigest
 
 # Function: stableEvidenceDigest()
 

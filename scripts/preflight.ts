@@ -16,7 +16,7 @@
  * scripts. It mints no new gate and changes no gate's authority — each step is
  * `pnpm run <existing-script>`, so the sub-checks remain the sole authorities.
  * A green preflight is NECESSARY for a green claim, never sufficient on its own
- * (integration owns the global gates; see docs/plan/scar-ledger.md S6.3).
+ * (integration owns the global gates).
  *
  * Fail-fast: steps run cheapest→heaviest and STOP at the first failure, so a
  * broken slice surfaces the first problem quickly instead of paying for the

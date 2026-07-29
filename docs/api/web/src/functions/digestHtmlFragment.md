@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / digestHtmlFragment
+[LiteShip](../../../README.md) / [web/src](../README.md) / digestHtmlFragment
 
 # Function: digestHtmlFragment()
 

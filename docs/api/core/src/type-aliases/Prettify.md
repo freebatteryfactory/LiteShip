@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Prettify
+[LiteShip](../../../README.md) / [core/src](../README.md) / Prettify
 
 # Type Alias: Prettify\<T\>
 

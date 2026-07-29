@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / LitelaunchCacheOptions
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / LitelaunchCacheOptions
 
 # Interface: LitelaunchCacheOptions
 

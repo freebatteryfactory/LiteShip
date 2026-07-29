@@ -3,6 +3,10 @@
  *
  * Handles connection resumption using lastEventId.
  * Implements replay/snapshot fallback when events are missed.
+ *
+ * The replay payload must NEVER widen to carry signals: signals are ephemeral
+ * continuous transients that must not replay after a gap — recovery is
+ * graph-native (discrete crossings replay; continuous state re-derives live).
  */
 
 import { Millis, decode, wallClock, type Clock, schema } from '@liteship/core';

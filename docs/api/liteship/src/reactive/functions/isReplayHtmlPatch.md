@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / isReplayHtmlPatch
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / isReplayHtmlPatch
 
 # Function: isReplayHtmlPatch()
 

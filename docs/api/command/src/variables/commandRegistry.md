@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / commandRegistry
+[LiteShip](../../../README.md) / [command/src](../README.md) / commandRegistry
 
 # Variable: commandRegistry
 

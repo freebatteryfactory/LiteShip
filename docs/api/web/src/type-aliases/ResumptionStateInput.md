@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / ResumptionStateInput
+[LiteShip](../../../README.md) / [web/src](../README.md) / ResumptionStateInput
 
 # Type Alias: ResumptionStateInput
 

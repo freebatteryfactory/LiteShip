@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / LiteshipEventDisposer
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / LiteshipEventDisposer
 
 # Type Alias: LiteshipEventDisposer
 

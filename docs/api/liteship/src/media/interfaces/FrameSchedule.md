@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / FrameSchedule
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / FrameSchedule
 
 # Interface: FrameSchedule
 

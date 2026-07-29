@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / replayDroppedSignals
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / replayDroppedSignals
 
 # Variable: replayDroppedSignals
 

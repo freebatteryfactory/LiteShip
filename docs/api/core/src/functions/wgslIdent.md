@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / wgslIdent
+[LiteShip](../../../README.md) / [core/src](../README.md) / wgslIdent
 
 # Function: wgslIdent()
 

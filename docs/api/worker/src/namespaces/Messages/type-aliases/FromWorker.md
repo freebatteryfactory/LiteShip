@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [worker/src](../../../README.md) / [Messages](../README.md) / FromWorker
+[LiteShip](../../../../../README.md) / [worker/src](../../../README.md) / [Messages](../README.md) / FromWorker
 
 # Type Alias: FromWorker
 

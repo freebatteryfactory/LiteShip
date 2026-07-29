@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / FromWorkerMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / FromWorkerMessage
 
 # Type Alias: FromWorkerMessage
 

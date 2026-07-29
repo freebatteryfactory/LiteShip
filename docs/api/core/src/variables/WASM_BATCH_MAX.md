@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / WASM\_BATCH\_MAX
+[LiteShip](../../../README.md) / [core/src](../README.md) / WASM\_BATCH\_MAX
 
 # Variable: WASM\_BATCH\_MAX
 

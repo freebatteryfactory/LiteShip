@@ -8,7 +8,7 @@
  *   • STRICT no-DOM — cell/store/derived/live-cell carry zero DOM vocabulary at
  *     all (not even a read); they are pure value graph.
  *   • OUTPUT-SINK — signal/zap may *read* the platform (scroll/pointer values,
- *     `addEventListener`, ADR-0005 Cat-3 input seam) but must never *write/bind*
+ *     `addEventListener`, the sanctioned event-handler-grounding input seam) but must never *write/bind*
  *     a value into the DOM. We ban only the write sinks, after stripping
  *     comments so a doc-comment example (`document.getElementById`) or the word
  *     "documented" doesn't false-fire.
@@ -47,7 +47,7 @@ const STRICT_DOM =
 
 // OUTPUT-SINK tier: only value→DOM WRITE/BIND sinks. addEventListener and
 // scroll/pointer/window reads are deliberately ABSENT — they're the sanctioned
-// input-side seam (ADR-0005 Cat-3).
+// input-side seam (event-handler grounding: browser events are sync, the value layer owns the state).
 const DOM_SINK =
   /querySelector|getElementById|createElement|innerHTML|\.textContent\s*=|setAttribute|appendChild|\.append\(/;
 

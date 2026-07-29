@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / HtmlPolicy
+[LiteShip](../../README.md) / [\_spine](../README.md) / HtmlPolicy
 
 # Type Alias: HtmlPolicy
 

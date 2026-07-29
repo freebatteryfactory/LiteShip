@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / tupleMap
+[LiteShip](../../../README.md) / [core/src](../README.md) / tupleMap
 
 # Function: tupleMap()
 

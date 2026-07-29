@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / raise
+[LiteShip](../../../README.md) / [error/src](../README.md) / raise
 
 # Function: raise()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / noSkippedTestGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / noSkippedTestGate
 
 # Variable: noSkippedTestGate
 

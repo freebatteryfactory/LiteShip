@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / CoverageClass
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / CoverageClass
 
 # Type Alias: CoverageClass
 

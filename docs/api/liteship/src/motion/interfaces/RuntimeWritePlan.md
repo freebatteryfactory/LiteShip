@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / RuntimeWritePlan
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / RuntimeWritePlan
 
 # Interface: RuntimeWritePlan
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / SchemaDecoder
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / SchemaDecoder
 
 # Type Alias: SchemaDecoder\<A, I\>
 

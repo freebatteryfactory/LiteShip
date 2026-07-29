@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ResolvedInvariant
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ResolvedInvariant
 
 # Interface: ResolvedInvariant
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Store
+[LiteShip](../../../README.md) / [core/src](../README.md) / Store
 
 # Type Alias: Store\<S, Msg\>
 

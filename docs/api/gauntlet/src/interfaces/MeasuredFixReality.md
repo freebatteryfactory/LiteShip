@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / MeasuredFixReality
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / MeasuredFixReality
 
 # Interface: MeasuredFixReality
 

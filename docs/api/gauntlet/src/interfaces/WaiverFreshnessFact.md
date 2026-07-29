@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / WaiverFreshnessFact
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / WaiverFreshnessFact
 
 # Interface: WaiverFreshnessFact
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / emitProvisionalDetectScript
+[LiteShip](../../../README.md) / [detect/src](../README.md) / emitProvisionalDetectScript
 
 # Function: emitProvisionalDetectScript()
 

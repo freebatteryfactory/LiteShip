@@ -11,8 +11,9 @@
  * derives from; a skip whose guard derives from NO capability probe, or from the WRONG one, is a
  * finding — a placeholder dressed as a gate, or a mislabel. REPORT-not-DECIDE.
  *
- * LEAN BY CONSTRUCTION (ADR-0012 / D7b): the gate builds NO `ts.Program`, walks NO checker, and names
- * NO LiteShip capability. The HOST (`@liteship/audit`'s capability-link oracle, fed the canonical
+ * LEAN BY CONSTRUCTION (the published engine carries no `typescript` dependency and names no LiteShip
+ * policy, so it stays installable downstream): the gate builds NO `ts.Program`, walks NO checker, and
+ * names NO LiteShip capability. The HOST (`@liteship/audit`'s capability-link oracle, fed the canonical
  * capability-module SET + the sanctioned sites the `@liteship/cli` host injects) does the linking and
  * injects the flat facts via {@link GateContext.capabilityLink}; this gate only folds. It REQUIRES the
  * facts (capability-link is opt-in: `liteship check gates --ir --capability-gate`) — when absent it is simply not

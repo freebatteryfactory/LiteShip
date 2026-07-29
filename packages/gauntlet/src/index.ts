@@ -471,7 +471,7 @@ export { claimPropertyGate, CLAIM_PROPERTY_RULE_ID } from './gates/claim-propert
 // keyword density + effective assurance) ÷ PROOF (has-a-test + property-test + mutation
 // score + bench + enrolled invariant + non-test call-sites). Pure TRIAGE: it is NEVER a
 // gate, has NO authority, NEVER blocks — it surfaces the high-ambition/low-proof hot
-// spots a human investigates. The heavy IR build is host-side (ADR-0012); this module
+// spots a human investigates. The heavy IR build is host-side; this module
 // is the pure fold the host calls with already-loaded data. See {@link computeHeatmap}.
 export {
   type HeatmapInputs,
@@ -515,10 +515,10 @@ export {
 // @liteship/audit's buildTransitionFacts + the LiteShip-local reactive capture/model runner
 // (tests/support/reactive-conformance.ts). Exported but DELIBERATELY NOT in LITESHIP_GATES /
 // LITESHIP_IR_GATES: the model + native-transport oracle are LiteShip-specific product
-// machinery in the test tree, so — per ADR-0012/0023 — the gate is HOSTED by the repo-local
-// `transition:gate` phase (scripts/transition-conformance-gate.ts, run every PR), NOT the
-// shipped `liteship check` CLI. See the DIVERGENCE_SEVERITY_BY_LEVEL / TRANSITION_FAMILY_LEVEL
-// redlinable data.
+// machinery in the test tree, so — the shipped engine may not depend on LiteShip-local test-tree
+// machinery — the gate is HOSTED by the repo-local `transition:gate` phase
+// (scripts/transition-conformance-gate.ts, run every PR), NOT the shipped `liteship check` CLI.
+// See the DIVERGENCE_SEVERITY_BY_LEVEL / TRANSITION_FAMILY_LEVEL redlinable data.
 export {
   transitionConformanceGate,
   DIVERGENCE_SEVERITY_BY_LEVEL,
@@ -576,7 +576,7 @@ export { fuzzCorpusGate } from './gates/fuzz-corpus.js';
 // flow is the guarded-seam green (no finding). The heavy work (the whole-corpus
 // `ts.Program` + type-checker dataflow trace) lives in @liteship/audit's taint oracle,
 // classified by the LiteShip-LOCAL source/sink/sanitizer registry the @liteship/cli
-// host injects (the audit engine references NO LiteShip policy — ADR-0012/D7b).
+// host injects (the audit engine references NO LiteShip policy).
 // Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: taint is
 // OPT-IN (`liteship check gates --ir --taint`) — a whole-corpus trace is too heavy for a
 // default run. The integrator composes it on like supplyChainGate (a ~3-line

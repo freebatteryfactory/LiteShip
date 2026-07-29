@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / handleGraphQuery
+[LiteShip](../../../README.md) / [core/src](../README.md) / handleGraphQuery
 
 # Function: handleGraphQuery()
 

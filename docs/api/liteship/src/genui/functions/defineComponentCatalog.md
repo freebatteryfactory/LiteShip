@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/genui](../README.md) / defineComponentCatalog
+[LiteShip](../../../../README.md) / [liteship/src/genui](../README.md) / defineComponentCatalog
 
 # Function: defineComponentCatalog()
 

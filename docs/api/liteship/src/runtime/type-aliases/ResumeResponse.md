@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / ResumeResponse
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / ResumeResponse
 
 # Type Alias: ResumeResponse
 

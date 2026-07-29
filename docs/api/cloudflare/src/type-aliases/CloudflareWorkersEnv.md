@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [cloudflare/src](../README.md) / CloudflareWorkersEnv
+[LiteShip](../../../README.md) / [cloudflare/src](../README.md) / CloudflareWorkersEnv
 
 # Type Alias: CloudflareWorkersEnv
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SURVIVOR\_SEVERITY\_BY\_LEVEL
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SURVIVOR\_SEVERITY\_BY\_LEVEL
 
 # Variable: SURVIVOR\_SEVERITY\_BY\_LEVEL
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CommandExecutionKind
+[LiteShip](../../README.md) / [\_spine](../README.md) / CommandExecutionKind
 
 # Type Alias: CommandExecutionKind
 

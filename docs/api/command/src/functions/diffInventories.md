@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / diffInventories
+[LiteShip](../../../README.md) / [command/src](../README.md) / diffInventories
 
 # Function: diffInventories()
 

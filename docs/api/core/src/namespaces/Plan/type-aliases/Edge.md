@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [Plan](../README.md) / Edge
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [Plan](../README.md) / Edge
 
 # Type Alias: Edge
 

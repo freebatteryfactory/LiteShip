@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [cloudflare/src](../README.md) / CloudflareEdgeCacheOptions
+[LiteShip](../../../README.md) / [cloudflare/src](../README.md) / CloudflareEdgeCacheOptions
 
 # Interface: CloudflareEdgeCacheOptions
 

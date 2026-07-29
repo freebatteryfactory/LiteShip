@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [DAG](../README.md) / Merge
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [DAG](../README.md) / Merge
 
 # Type Alias: Merge
 

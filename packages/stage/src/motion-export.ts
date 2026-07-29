@@ -4,14 +4,15 @@
  * The video export samples the ONE shared kernel `sampleProgram` (`@liteship/core`, Law 4)
  * at each `FrameRange` index and folds the sampled leaves into per-frame content, then
  * content-addresses the whole track through the SAME `CanonicalCbor.encode` →
- * `AddressedDigest.of` kernel the dual-export video carrier uses (ADR-0003/0011). The
+ * `AddressedDigest.of` kernel the dual-export video carrier uses. The
  * digest IS the built-in oracle for the video leg: two graphs whose authored motion
  * differs address differently, and a frame stream that matches the browser floor
  * addresses identically to one produced from the same program.
  *
  * ADDITIVE to `dual-export.ts`'s video-CROSSFADE carrier — it does not touch
  * `produceVideoFrames` / `TransitionSystem`; authored-motion sampling and the crossfade
- * `_blend` are different concepts (ADR-0035/0039, and the new parity ADR).
+ * `_blend` are different concepts: motion is an authored intent lowered through the ONE
+ * shared kernel, the crossfade is a compositor mix factor between two entities.
  *
  * @module
  */

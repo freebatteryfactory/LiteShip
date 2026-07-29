@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / LLMChunkType
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / LLMChunkType
 
 # Type Alias: LLMChunkType
 

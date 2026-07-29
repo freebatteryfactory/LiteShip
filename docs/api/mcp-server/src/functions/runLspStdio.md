@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / runLspStdio
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / runLspStdio
 
 # Function: runLspStdio()
 

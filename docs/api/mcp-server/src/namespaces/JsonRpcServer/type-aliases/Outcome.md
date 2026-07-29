@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [mcp-server/src](../../../README.md) / [JsonRpcServer](../README.md) / Outcome
+[LiteShip](../../../../../README.md) / [mcp-server/src](../../../README.md) / [JsonRpcServer](../README.md) / Outcome
 
 # Type Alias: Outcome
 

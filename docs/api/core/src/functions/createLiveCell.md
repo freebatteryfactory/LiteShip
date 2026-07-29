@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / createLiveCell
+[LiteShip](../../../README.md) / [core/src](../README.md) / createLiveCell
 
 # Function: createLiveCell()
 

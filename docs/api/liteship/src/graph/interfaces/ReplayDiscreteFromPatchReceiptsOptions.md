@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / ReplayDiscreteFromPatchReceiptsOptions
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / ReplayDiscreteFromPatchReceiptsOptions
 
 # Interface: ReplayDiscreteFromPatchReceiptsOptions
 

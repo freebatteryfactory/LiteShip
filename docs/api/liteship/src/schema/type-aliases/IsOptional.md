@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / IsOptional
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / IsOptional
 
 # Type Alias: IsOptional\<S\>
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / resolveRevealInitialState
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / resolveRevealInitialState
 
 # Function: resolveRevealInitialState()
 

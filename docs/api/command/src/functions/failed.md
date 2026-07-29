@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / failed
+[LiteShip](../../../README.md) / [command/src](../README.md) / failed
 
 # Function: failed()
 

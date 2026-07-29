@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / liteshipFetchLayer
+[LiteShip](../../../README.md) / [astro/src](../README.md) / liteshipFetchLayer
 
 # Function: liteshipFetchLayer()
 
 > **liteshipFetchLayer**(`config?`): [`LiteshipFetchLayer`](../type-aliases/LiteshipFetchLayer.md)
 
-Defined in: [astro/src/fetch-layer.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L162)
+Defined in: [astro/src/fetch-layer.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L163)
 
 Create the liteship fetch layer.
 

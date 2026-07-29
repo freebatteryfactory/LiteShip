@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Computed
+[LiteShip](../../../README.md) / [core/src](../README.md) / Computed
 
 # Type Alias: Computed\<T\>
 

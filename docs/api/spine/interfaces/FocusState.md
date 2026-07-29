@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / FocusState
+[LiteShip](../../README.md) / [\_spine](../README.md) / FocusState
 
 # Interface: FocusState
 

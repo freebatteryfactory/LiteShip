@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / RafDebouncedTrigger
+[LiteShip](../../../README.md) / [core/src](../README.md) / RafDebouncedTrigger
 
 # Interface: RafDebouncedTrigger()
 

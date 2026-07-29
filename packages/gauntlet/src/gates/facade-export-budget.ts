@@ -4,8 +4,10 @@
  *
  * It is a pure fold over two files read through the {@link GateContext}:
  *  1. `packages/liteship/src/export-budget.ts` — the reviewed ALLOWLIST as DATA:
- *     the `ROOT_VALUE_BUDGET` / `ROOT_TYPE_BUDGET` string arrays (the EXACT set,
- *     post-ADR-0051: no reserved-but-absent slots remain).
+ *     the `ROOT_VALUE_BUDGET` / `ROOT_TYPE_BUDGET` string arrays. It is the EXACT
+ *     set: every listed name is backed by a real root export, so no reserved-but-
+ *     absent slot can sit in the allowlist and make the both-directions law below
+ *     vacuous for that symbol.
  *  2. `packages/liteship/dist/index.d.ts` — the BUILT root declaration surface,
  *     whose value + type exports are the reality being judged.
  *

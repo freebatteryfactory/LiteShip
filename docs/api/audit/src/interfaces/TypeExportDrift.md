@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / TypeExportDrift
+[LiteShip](../../../README.md) / [audit/src](../README.md) / TypeExportDrift
 
 # Interface: TypeExportDrift
 
-Defined in: [audit/src/type-export-surface.ts:324](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L324)
+Defined in: [audit/src/type-export-surface.ts:327](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L327)
 
 One per-type difference between a committed and a live type-export surface.
 
@@ -16,7 +16,7 @@ One per-type difference between a committed and a live type-export surface.
 
 > `readonly` **changeClass**: `"added"` \| `"removed"` \| `"kind-changed"` \| `"package-added"` \| `"package-removed"`
 
-Defined in: [audit/src/type-export-surface.ts:327](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L327)
+Defined in: [audit/src/type-export-surface.ts:330](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L330)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [audit/src/type-export-surface.ts:327](https://github.com/freebatter
 
 > `readonly` **detail**: `string`
 
-Defined in: [audit/src/type-export-surface.ts:326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L326)
+Defined in: [audit/src/type-export-surface.ts:329](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L329)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [audit/src/type-export-surface.ts:326](https://github.com/freebatter
 
 > `readonly` **pkg**: `string`
 
-Defined in: [audit/src/type-export-surface.ts:325](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L325)
+Defined in: [audit/src/type-export-surface.ts:328](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L328)

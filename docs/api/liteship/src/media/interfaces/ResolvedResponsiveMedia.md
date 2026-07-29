@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / ResolvedResponsiveMedia
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / ResolvedResponsiveMedia
 
 # Interface: ResolvedResponsiveMedia
 

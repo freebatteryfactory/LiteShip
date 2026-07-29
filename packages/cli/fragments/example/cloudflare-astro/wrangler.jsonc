@@ -7,8 +7,9 @@
     "binding": "ASSETS",
     "not_found_handling": "none",
     // Worker-first for app routes; never for /_liteship/* boundary assets
-    // (ADR-0025) or Vite dev-infrastructure URLs, which must reach Vite
-    // middleware in astro dev. The dev prefixes are production-inert.
+    // (immutable, content-hashed CSS served by Cloudflare's asset layer, not the
+    // Worker) or Vite dev-infrastructure URLs, which must reach Vite middleware
+    // in astro dev. The dev prefixes are production-inert.
     "run_worker_first": ["/*", "!/_liteship/*", "!/@vite/*", "!/@id/*", "!/@fs/*", "!/src/*", "!/node_modules/*"]
   },
   "kv_namespaces": [

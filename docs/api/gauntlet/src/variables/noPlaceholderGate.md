@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / noPlaceholderGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / noPlaceholderGate
 
 # Variable: noPlaceholderGate
 

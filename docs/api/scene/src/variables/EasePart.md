@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / EasePart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / EasePart
 
 # Variable: EasePart
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / SlotConfig
+[LiteShip](../../../README.md) / [core/src](../README.md) / SlotConfig
 
 # Interface: SlotConfig
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / COMPOSITOR\_POOL\_CAP
+[LiteShip](../../../README.md) / [core/src](../README.md) / COMPOSITOR\_POOL\_CAP
 
 # Variable: COMPOSITOR\_POOL\_CAP
 

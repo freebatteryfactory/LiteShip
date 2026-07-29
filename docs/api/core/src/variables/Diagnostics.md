@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Diagnostics
+[LiteShip](../../../README.md) / [core/src](../README.md) / Diagnostics
 
 # Variable: Diagnostics
 

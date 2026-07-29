@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/evidence](../../../README.md) / [Diagnostics](../README.md) / Sink
+[LiteShip](../../../../../../README.md) / [liteship/src/evidence](../../../README.md) / [Diagnostics](../README.md) / Sink
 
 # Type Alias: Sink
 

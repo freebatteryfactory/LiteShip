@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / WGSLBindingType
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / WGSLBindingType
 
 # Type Alias: WGSLBindingType
 

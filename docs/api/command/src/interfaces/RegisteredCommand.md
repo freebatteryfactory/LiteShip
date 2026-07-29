@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / RegisteredCommand
+[LiteShip](../../../README.md) / [command/src](../README.md) / RegisteredCommand
 
 # Interface: RegisteredCommand
 

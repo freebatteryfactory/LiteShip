@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CapabilityEvidenceInput
+[LiteShip](../../README.md) / [\_spine](../README.md) / CapabilityEvidenceInput
 
 # Type Alias: CapabilityEvidenceInput
 

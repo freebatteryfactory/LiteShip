@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / WebCodecsCaptureOptions
+[LiteShip](../../../README.md) / [web/src](../README.md) / WebCodecsCaptureOptions
 
 # Interface: WebCodecsCaptureOptions
 

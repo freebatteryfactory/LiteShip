@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Animation](../README.md) / interpolate
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Animation](../README.md) / interpolate
 
 # Function: interpolate()
 
 > **interpolate**\<`T`\>(`from`, `to`, `eased`, `defaults?`): `T`
 
-Defined in: [\_spine/core.d.ts:420](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L420)
+Defined in: [\_spine/core.d.ts:421](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L421)
 
 ## Type Parameters
 

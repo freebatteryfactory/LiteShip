@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / StaggerChild
+[LiteShip](../../../README.md) / [core/src](../README.md) / StaggerChild
 
 # Interface: StaggerChild
 

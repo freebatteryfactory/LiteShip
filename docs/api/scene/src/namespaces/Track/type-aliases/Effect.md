@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [scene/src](../../../README.md) / [Track](../README.md) / Effect
+[LiteShip](../../../../../README.md) / [scene/src](../../../README.md) / [Track](../README.md) / Effect
 
 # Type Alias: Effect
 

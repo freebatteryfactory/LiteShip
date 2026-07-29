@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [genui/src](../README.md) / tryParseGeneratedUIChunk
+[LiteShip](../../../README.md) / [genui/src](../README.md) / tryParseGeneratedUIChunk
 
 # Function: tryParseGeneratedUIChunk()
 

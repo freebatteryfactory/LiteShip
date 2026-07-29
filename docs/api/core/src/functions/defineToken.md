@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / defineToken
+[LiteShip](../../../README.md) / [core/src](../README.md) / defineToken
 
 # Function: defineToken()
 

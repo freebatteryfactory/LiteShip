@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / auditDiagnosticCode
+[LiteShip](../../../README.md) / [audit/src](../README.md) / auditDiagnosticCode
 
 # Function: auditDiagnosticCode()
 

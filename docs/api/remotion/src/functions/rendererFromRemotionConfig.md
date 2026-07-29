@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [remotion/src](../README.md) / rendererFromRemotionConfig
+[LiteShip](../../../README.md) / [remotion/src](../README.md) / rendererFromRemotionConfig
 
 # Function: rendererFromRemotionConfig()
 

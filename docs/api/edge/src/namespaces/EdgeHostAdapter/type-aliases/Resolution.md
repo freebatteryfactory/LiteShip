@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [edge/src](../../../README.md) / [EdgeHostAdapter](../README.md) / Resolution
+[LiteShip](../../../../../README.md) / [edge/src](../../../README.md) / [EdgeHostAdapter](../README.md) / Resolution
 
 # Type Alias: Resolution
 

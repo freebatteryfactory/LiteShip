@@ -7,7 +7,7 @@
  * imports from HERE, so it does not drag the scanner's code-split directive
  * graph into its bundle. (Regression guard: the e2e stream lib-bundle must
  * stay a single self-contained chunk; importing the scanner made it code-split
- * into 22 chunks the single-file e2e server could not serve. See ADR-0028.)
+ * into 22 chunks the single-file e2e server could not serve.)
  *
  * @module
  */

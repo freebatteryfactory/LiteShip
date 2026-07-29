@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [create-liteship/src](../README.md) / ScaffoldFailureReason
+[LiteShip](../../../README.md) / [create-liteship/src](../README.md) / ScaffoldFailureReason
 
 # Type Alias: ScaffoldFailureReason
 

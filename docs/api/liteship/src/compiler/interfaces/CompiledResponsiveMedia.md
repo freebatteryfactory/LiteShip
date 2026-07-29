@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / CompiledResponsiveMedia
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / CompiledResponsiveMedia
 
 # Interface: CompiledResponsiveMedia
 

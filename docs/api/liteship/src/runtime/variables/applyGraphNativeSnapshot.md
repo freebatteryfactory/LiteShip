@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / applyGraphNativeSnapshot
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / applyGraphNativeSnapshot
 
 # Variable: applyGraphNativeSnapshot
 

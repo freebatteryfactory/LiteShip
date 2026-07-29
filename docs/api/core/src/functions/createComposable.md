@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / createComposable
+[LiteShip](../../../README.md) / [core/src](../README.md) / createComposable
 
 # Function: createComposable()
 
@@ -11,8 +11,8 @@
 Defined in: [core/src/authoring/composable.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L87)
 
 Content-address a component bag into a [ComposableEntity](../interfaces/ComposableEntity.md). Two entities
-with structurally-equal components share the same content address (verb grammar,
-ADR-0046 — `create` allocates a content-addressed unit).
+with structurally-equal components share the same content address (verb
+grammar — `create` allocates a content-addressed unit).
 
 ## Type Parameters
 

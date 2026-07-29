@@ -3,7 +3,7 @@
  *
  * For any boundary definition, the id `collectBoundaryManifest` emits is
  * exactly the content address `defineBoundary` mints for the same
- * definition (ADR-0003 identity law) and matches the pinned
+ * definition (the content-addressing identity law) and matches the pinned
  * `fnv1a:xxxxxxxx` format -- the manifest is a derivation, never a
  * re-hash or a hand-typed value.
  */

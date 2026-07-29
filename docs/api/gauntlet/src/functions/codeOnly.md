@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / codeOnly
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / codeOnly
 
 # Function: codeOnly()
 

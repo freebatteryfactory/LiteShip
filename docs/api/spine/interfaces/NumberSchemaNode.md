@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / NumberSchemaNode
+[LiteShip](../../README.md) / [\_spine](../README.md) / NumberSchemaNode
 
 # Interface: NumberSchemaNode
 
-Defined in: [\_spine/core.d.ts:618](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L618)
+Defined in: [\_spine/core.d.ts:619](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L619)
 
 Number schema AST node.
 
@@ -20,7 +20,7 @@ Number schema AST node.
 
 > `readonly` `optional` **annotations?**: `Readonly`\<`Record`\<`symbol`, `unknown`\>\>
 
-Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
+Defined in: [\_spine/core.d.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L612)
 
 #### Inherited from
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `"number"`
 
-Defined in: [\_spine/core.d.ts:619](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L619)
+Defined in: [\_spine/core.d.ts:620](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L620)

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / SetBlendMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / SetBlendMessage
 
 # Interface: SetBlendMessage
 

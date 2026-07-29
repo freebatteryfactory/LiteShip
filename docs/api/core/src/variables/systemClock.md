@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / systemClock
+[LiteShip](../../../README.md) / [core/src](../README.md) / systemClock
 
 # Variable: systemClock
 

@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / Compositor
+[LiteShip](../../README.md) / [\_spine](../README.md) / Compositor
 
 # Interface: Compositor
 
-Defined in: [\_spine/core.d.ts:474](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L474)
+Defined in: [\_spine/core.d.ts:475](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L475)
 
 Live compositor that evaluates and blends registered states.
 
@@ -16,7 +16,7 @@ Live compositor that evaluates and blends registered states.
 
 > `readonly` **changes**: `Pick`\<[`Replay`](../namespaces/CellKernel/interfaces/Replay.md)\<[`CompositeState`](CompositeState.md)\>, `"subscribe"` \| `"read"` \| `"closed"` \| `"size"`\>
 
-Defined in: [\_spine/core.d.ts:487](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L487)
+Defined in: [\_spine/core.d.ts:488](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L488)
 
 Replay-1 subscription surface of the compositor's extracted [CellKernel](../namespaces/CellKernel/README.md):
 `subscribe` replays the current live state on attach and returns a disposer;
@@ -29,7 +29,7 @@ the compositor is the sole writer and its [Lifetime](Lifetime.md) closes the ker
 
 > `readonly` **runtime**: [`RuntimeCoordinator`](RuntimeCoordinator.md)
 
-Defined in: [\_spine/core.d.ts:488](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L488)
+Defined in: [\_spine/core.d.ts:489](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L489)
 
 ## Methods
 
@@ -37,7 +37,7 @@ Defined in: [\_spine/core.d.ts:488](https://github.com/freebatteryfactory/LiteSh
 
 > **add**\<`B`\>(`name`, `quantizer`): `void`
 
-Defined in: [\_spine/core.d.ts:475](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L475)
+Defined in: [\_spine/core.d.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L476)
 
 #### Type Parameters
 
@@ -65,7 +65,7 @@ Defined in: [\_spine/core.d.ts:475](https://github.com/freebatteryfactory/LiteSh
 
 > **compute**(): [`CompositeState`](CompositeState.md)
 
-Defined in: [\_spine/core.d.ts:477](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L477)
+Defined in: [\_spine/core.d.ts:478](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L478)
 
 #### Returns
 
@@ -77,7 +77,7 @@ Defined in: [\_spine/core.d.ts:477](https://github.com/freebatteryfactory/LiteSh
 
 > **evaluateSpeculative**(`name`, `value`, `velocity?`): `void`
 
-Defined in: [\_spine/core.d.ts:479](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L479)
+Defined in: [\_spine/core.d.ts:480](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L480)
 
 #### Parameters
 
@@ -103,7 +103,7 @@ Defined in: [\_spine/core.d.ts:479](https://github.com/freebatteryfactory/LiteSh
 
 > **remove**(`name`): `void`
 
-Defined in: [\_spine/core.d.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L476)
+Defined in: [\_spine/core.d.ts:477](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L477)
 
 #### Parameters
 
@@ -121,7 +121,7 @@ Defined in: [\_spine/core.d.ts:476](https://github.com/freebatteryfactory/LiteSh
 
 > **scheduleBatch**(): `void`
 
-Defined in: [\_spine/core.d.ts:480](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L480)
+Defined in: [\_spine/core.d.ts:481](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L481)
 
 #### Returns
 
@@ -133,7 +133,7 @@ Defined in: [\_spine/core.d.ts:480](https://github.com/freebatteryfactory/LiteSh
 
 > **setBlendWeights**(`name`, `weights`): `void`
 
-Defined in: [\_spine/core.d.ts:478](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L478)
+Defined in: [\_spine/core.d.ts:479](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L479)
 
 #### Parameters
 

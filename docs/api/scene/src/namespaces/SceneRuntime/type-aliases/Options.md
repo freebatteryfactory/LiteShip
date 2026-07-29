@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [scene/src](../../../README.md) / [SceneRuntime](../README.md) / Options
+[LiteShip](../../../../../README.md) / [scene/src](../../../README.md) / [SceneRuntime](../README.md) / Options
 
 # Type Alias: Options
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CommandCapabilityDisposition
+[LiteShip](../../../README.md) / [command/src](../README.md) / CommandCapabilityDisposition
 
 # Interface: CommandCapabilityDisposition
 

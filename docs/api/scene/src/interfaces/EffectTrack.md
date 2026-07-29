@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / EffectTrack
+[LiteShip](../../../README.md) / [scene/src](../README.md) / EffectTrack
 
 # Interface: EffectTrack\<M\>
 

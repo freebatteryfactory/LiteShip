@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / OutputTarget
+[LiteShip](../../README.md) / [\_spine](../README.md) / OutputTarget
 
 # Type Alias: OutputTarget
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / liteship/src/package-roster.generated
+[LiteShip](../../../README.md) / liteship/src/package-roster.generated
 
 # liteship/src/package-roster.generated
 

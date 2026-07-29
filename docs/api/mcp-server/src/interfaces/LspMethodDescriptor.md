@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / LspMethodDescriptor
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / LspMethodDescriptor
 
 # Interface: LspMethodDescriptor
 

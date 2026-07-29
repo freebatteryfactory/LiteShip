@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / isGoverned
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / isGoverned
 
 # Function: isGoverned()
 

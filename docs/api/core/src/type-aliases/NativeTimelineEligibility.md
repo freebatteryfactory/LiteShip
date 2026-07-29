@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / NativeTimelineEligibility
+[LiteShip](../../../README.md) / [core/src](../README.md) / NativeTimelineEligibility
 
 # Type Alias: NativeTimelineEligibility
 
@@ -22,4 +22,4 @@ keyframe stops (an absent per-keyframe easing is ambiguous: it can also mean ord
 default `ease`). When `eligible: false` the compiler emits NO native ownership block,
 so `getComputedStyle(el).animationName` carries no `liteship-motion-*` name and the
 per-window RUNTIME floor (`client:motion`, which samples each window at its OWN easing)
-stays the faithful renderer (ADR-0041).
+stays the faithful renderer.

@@ -5,7 +5,8 @@
  *
  * `@liteship/gauntlet` DEFINES the {@link McdcFacts} interface but carries no `typescript`
  * dep and runs no test suite — it is the lean engine and MC/DC is an INJECTED capability
- * (the same ADR-0012 boundary as the IR / mutation facts). THIS module is the host half:
+ * (the same host-injected-capability boundary as the IR / mutation facts). THIS module is the
+ * host half:
  * `@liteship/audit` (which deps `typescript`) generates the deterministic condition-mutant
  * catalogue per file ({@link generateConditionMutants}), evaluates each FORCE-TRUE /
  * FORCE-FALSE pin against the INJECTED test runner ({@link evaluateMutant} — the SAME

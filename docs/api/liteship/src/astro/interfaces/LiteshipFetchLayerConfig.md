@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / LiteshipFetchLayerConfig
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / LiteshipFetchLayerConfig
 
 # Interface: LiteshipFetchLayerConfig
 
-Defined in: astro/dist/fetch-layer.d.ts:45
+Defined in: astro/dist/fetch-layer.d.ts:46
 
 Options for [liteshipFetchLayer](../functions/liteshipFetchLayer.md). Extends [LiteshipMiddlewareConfig](LiteshipMiddlewareConfig.md) so the
 `edge` / `detect` / `workers` surface is shared verbatim — a consumer migrates
@@ -50,7 +50,7 @@ Edge host adapter configuration (KV cache, theme compilation).
 
 > `readonly` `optional` **render?**: (`resolution`) => `Response`
 
-Defined in: astro/dist/fetch-layer.d.ts:59
+Defined in: astro/dist/fetch-layer.d.ts:60
 
 How to render the edge-served Response from a resolution. Default:
 [serializeBoundaryCss](../functions/serializeBoundaryCss.md) wrapped in a `text/css` Response. Override to
@@ -72,7 +72,7 @@ match a specific page's exact inlining.
 
 > `readonly` `optional` **serveFromEdge?**: (`request`, `resolution`) => `boolean`
 
-Defined in: astro/dist/fetch-layer.d.ts:53
+Defined in: astro/dist/fetch-layer.d.ts:54
 
 Edge-serve predicate. Given the request and the resolution, decide whether to
 serve the boundary CSS straight from the edge (returning WITHOUT invoking

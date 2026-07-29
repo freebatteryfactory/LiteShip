@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / TypedEcsFeatureEdgeOptions
+[LiteShip](../../../README.md) / [audit/src](../README.md) / TypedEcsFeatureEdgeOptions
 
 # Interface: TypedEcsFeatureEdgeOptions
 

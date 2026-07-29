@@ -1,6 +1,8 @@
 /**
  * ShipCapsule -- make / canonicalize / decode round-trips, identity
- * agreement, and decode error verdicts (ADR-0011 §Decision item 3).
+ * agreement, and decode error verdicts. The capsule describes a published tarball:
+ * subject + `AddressedDigest`-carried inputs + build_env + lifecycle scripts + HLC
+ * `generated_at` + `previous_ship_capsule` for the chain.
  */
 
 import { describe, it, expect } from 'vitest';

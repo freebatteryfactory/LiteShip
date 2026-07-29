@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / ParseOutcome
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / ParseOutcome
 
 # Type Alias: ParseOutcome
 

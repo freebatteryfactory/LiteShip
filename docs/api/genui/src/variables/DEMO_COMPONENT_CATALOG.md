@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [genui/src](../README.md) / DEMO\_COMPONENT\_CATALOG
+[LiteShip](../../../README.md) / [genui/src](../README.md) / DEMO\_COMPONENT\_CATALOG
 
 # Variable: DEMO\_COMPONENT\_CATALOG
 

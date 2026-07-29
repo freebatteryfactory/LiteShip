@@ -1,6 +1,8 @@
 /**
  * AddressedDigest -- dual hash (fnv1a display_id + sha256 integrity_digest)
- * over the same canonical bytes (ADR-0011 §Decision item 2).
+ * over the same canonical bytes: `{ display_id, integrity_digest, algo }` —
+ * one byte stream hashed twice, fnv1a for the ergonomic label and sha256/blake3
+ * for the lock.
  *
  * Re-exported from `@liteship/canonical` via `@liteship/core`; sync API.
  */

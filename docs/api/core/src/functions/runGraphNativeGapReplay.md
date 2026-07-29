@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / runGraphNativeGapReplay
+[LiteShip](../../../README.md) / [core/src](../README.md) / runGraphNativeGapReplay
 
 # Function: runGraphNativeGapReplay()
 

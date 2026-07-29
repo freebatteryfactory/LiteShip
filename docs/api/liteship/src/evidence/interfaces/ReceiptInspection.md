@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / ReceiptInspection
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / ReceiptInspection
 
 # Interface: ReceiptInspection
 

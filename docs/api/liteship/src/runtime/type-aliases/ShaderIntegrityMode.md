@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / ShaderIntegrityMode
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / ShaderIntegrityMode
 
 # Type Alias: ShaderIntegrityMode
 

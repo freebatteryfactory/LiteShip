@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [quantizer/src](../README.md) / AnimatedQuantizer
+[LiteShip](../../../README.md) / [quantizer/src](../README.md) / AnimatedQuantizer
 
 # Interface: AnimatedQuantizer\<B\>
 

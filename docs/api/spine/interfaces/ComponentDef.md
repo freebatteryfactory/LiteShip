@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ComponentDef
+[LiteShip](../../README.md) / [\_spine](../README.md) / ComponentDef
 
 # Interface: ComponentDef
 

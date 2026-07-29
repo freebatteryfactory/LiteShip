@@ -1,17 +1,16 @@
 // @vitest-environment node
 /**
- * Brand-residue gate (permanent) — the enforcement arm of ADR-0044.
+ * Brand-residue gate (permanent) — one brand, enforced.
  *
  * The `@czap` brand (scope, `data-czap-*` wire prefix, `CZAP_*` identifiers, the
  * `czap` CLI/config, the CZAP engine name) was retired wholesale when the project
  * consolidated onto the single LiteShip brand. This gate recursively scans the
  * repository for any `/czap/i` residue and reds if the old brand reappears — a new
  * file, a copy-pasted snippet, a regenerated doc that reintroduces the scope.
+ * Decision lineage for the retirement lives in git history, not in prose.
  *
  * Allowlist (frozen historical records only; a real fix is always preferred to an
  * allowlist entry, and every entry carries its reason):
- *   - `docs/adr/**`                          — immutable ADRs; the audit trail keeps `@czap`.
- *   - `docs/plan/**`                          — historical planning records, likewise.
  *   - `CHANGELOG.md`                          — released history is not rewritten.
  *   - `traceability/effect-shed-receipt.json` — a frozen, content-addressed receipt.
  *   - `traceability/testing-ledger.yaml`      — structural: the requirements trace names THIS
@@ -49,9 +48,9 @@ const SANCTIONED_SENTENCE =
   "LiteShip's packages were originally published under the `@czap` scope (CZAP: content-zoned adaptive projection, the engine's original name); the scope, the `data-czap-*` wire prefix, and `CZAP_*` identifiers were retired wholesale in v0.19.";
 
 /**
- * Directory prefixes out of scope (per ADR-0044's residue-gate scope). These are
- * all gitignored build/output dirs, so `git ls-files` already omits them; the set
- * is kept as a defensive filter in case one ever becomes tracked.
+ * Directory prefixes out of scope. These are all gitignored build/output dirs, so
+ * `git ls-files` already omits them; the set is kept as a defensive filter in
+ * case one ever becomes tracked.
  */
 const EXCLUDED_DIRS = ['node_modules/', 'dist/', '.git/', 'coverage/', 'reports/', 'test-results/'];
 
@@ -66,8 +65,8 @@ const ALLOWLIST = new Set([
   'traceability/testing-ledger.yaml',
 ]);
 
-/** Allowlisted path prefixes (whole subtrees of immutable history). */
-const ALLOWLIST_PREFIXES = ['docs/adr/', 'docs/plan/'];
+/** Allowlisted path prefixes. Empty since the historical doc trees were deleted. */
+const ALLOWLIST_PREFIXES: string[] = [];
 
 /** Exact old-brand literals retained solely by the genuine prior-operation journey fixture. */
 const PRIOR_OPERATION_BRAND_FIXTURE = 'tests/journey/prior-operation-brand.ts';
@@ -141,7 +140,7 @@ function occurrences(haystack: string, needle: string): number {
   }
 }
 
-describe('brand residue — the LiteShip brand is the only brand (ADR-0044)', () => {
+describe('brand residue — the LiteShip brand is the only brand', () => {
   let files: string[] = [];
   beforeAll(async () => {
     files = await trackedTextFiles();

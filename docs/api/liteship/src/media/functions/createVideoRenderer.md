@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / createVideoRenderer
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / createVideoRenderer
 
 # Function: createVideoRenderer()
 

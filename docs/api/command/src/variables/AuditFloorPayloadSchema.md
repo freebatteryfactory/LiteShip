@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / AuditFloorPayloadSchema
+[LiteShip](../../../README.md) / [command/src](../README.md) / AuditFloorPayloadSchema
 
 # Variable: AuditFloorPayloadSchema
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PackageSmokeSpec
+[LiteShip](../../../README.md) / [command/src](../README.md) / PackageSmokeSpec
 
 # Interface: PackageSmokeSpec
 

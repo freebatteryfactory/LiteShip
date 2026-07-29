@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / getStreamRecoverySubstrate
+[LiteShip](../../../README.md) / [web/src](../README.md) / getStreamRecoverySubstrate
 
 # Function: getStreamRecoverySubstrate()
 

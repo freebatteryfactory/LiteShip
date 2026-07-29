@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [Easing](../README.md) / Fn
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [Easing](../README.md) / Fn
 
 # Type Alias: Fn
 

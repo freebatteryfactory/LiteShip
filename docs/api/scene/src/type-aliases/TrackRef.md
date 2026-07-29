@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / TrackRef
+[LiteShip](../../../README.md) / [scene/src](../README.md) / TrackRef
 
 # Type Alias: TrackRef\<K\>
 

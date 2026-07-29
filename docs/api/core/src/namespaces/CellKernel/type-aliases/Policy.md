@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [CellKernel](../README.md) / Policy
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [CellKernel](../README.md) / Policy
 
 # Type Alias: Policy\<T\>
 

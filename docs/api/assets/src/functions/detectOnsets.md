@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / detectOnsets
+[LiteShip](../../../README.md) / [assets/src](../README.md) / detectOnsets
 
 # Function: detectOnsets()
 

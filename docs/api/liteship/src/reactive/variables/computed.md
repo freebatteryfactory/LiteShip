@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / computed
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / computed
 
 # Variable: computed
 

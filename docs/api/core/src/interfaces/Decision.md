@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Decision
+[LiteShip](../../../README.md) / [core/src](../README.md) / Decision
 
 # Interface: Decision
 
-Defined in: [core/src/authoring/capsule.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L86)
+Defined in: [core/src/authoring/capsule.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L87)
 
 The typed verdict a `policyGate` capsule's [CapsuleContract.decide](CapsuleContract.md#decide)
 resolves against a subject: an `allow`/`deny` effect plus a reason chain.
@@ -20,8 +20,9 @@ empty chain. The harness pins exactly this: `reasons` non-empty iff `deny`.
 The decision is the WHOLE authority a policyGate primitive holds — it returns
 a verdict, it never enforces it. Side-effecting admission (refusing a request,
 minting a token, mutating state) lives in the downstream PRODUCER that consumes
-this verdict, never in the capsule primitive (ADR-0014 "no built-in authority",
-consistent with the AI cast-primitive boundary).
+this verdict, never in the capsule primitive (the "no built-in authority" rule:
+LiteShip owns render/decision safety, the host owns authority to act — consistent
+with the AI cast-primitive boundary).
 
 ## Properties
 
@@ -29,7 +30,7 @@ consistent with the AI cast-primitive boundary).
 
 > `readonly` **effect**: `"allow"` \| `"deny"`
 
-Defined in: [core/src/authoring/capsule.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L88)
+Defined in: [core/src/authoring/capsule.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L89)
 
 Whether the subject is admitted (`allow`) or rejected (`deny`).
 
@@ -39,6 +40,6 @@ Whether the subject is admitted (`allow`) or rejected (`deny`).
 
 > `readonly` **reasons**: readonly [`Reason`](Reason.md)[]
 
-Defined in: [core/src/authoring/capsule.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L90)
+Defined in: [core/src/authoring/capsule.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L91)
 
 The reason chain. Non-empty exactly when `effect === 'deny'`.

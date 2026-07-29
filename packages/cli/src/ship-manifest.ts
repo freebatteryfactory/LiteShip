@@ -1,5 +1,5 @@
 /**
- * ShipCapsule release-input addressing helpers (ADR-0011).
+ * ShipCapsule release-input addressing helpers.
  *
  * Pure functions that turn raw artifact bytes into {@link AddressedDigest}
  * values consumed by `ShipCapsule.make`. Tarball identity goes through a

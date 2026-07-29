@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WorkerHost
+[LiteShip](../../README.md) / [\_spine](../README.md) / WorkerHost
 
 # Type Alias: WorkerHost
 

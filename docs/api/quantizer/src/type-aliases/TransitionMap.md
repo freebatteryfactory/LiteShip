@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [quantizer/src](../README.md) / TransitionMap
+[LiteShip](../../../README.md) / [quantizer/src](../README.md) / TransitionMap
 
 # Type Alias: TransitionMap\<S\>
 

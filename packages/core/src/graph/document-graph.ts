@@ -162,7 +162,7 @@ export interface DocumentGraphEdge {
 }
 
 /**
- * The top-level addressable graph. Two-law addressing (ADR-0003/0011): `id` is
+ * The top-level addressable graph. Two-law addressing: `id` is
  * the `fnv1a` identity (dedup), `digest` is the paired `fnv1a`+`sha256`
  * `AddressedDigest` (receipts / exports) — both derived from one CanonicalCbor
  * byte sequence over the sorted node ids + edges, so they cannot disagree.

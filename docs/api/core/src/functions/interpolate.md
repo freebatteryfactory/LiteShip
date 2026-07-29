@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / interpolate
+[LiteShip](../../../README.md) / [core/src](../README.md) / interpolate
 
 # Function: interpolate()
 

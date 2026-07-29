@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / projectResponsiveMediaPicture
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / projectResponsiveMediaPicture
 
 # Function: projectResponsiveMediaPicture()
 

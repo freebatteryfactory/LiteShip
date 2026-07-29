@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / VerifiablePatchEnvelope
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / VerifiablePatchEnvelope
 
 # Interface: VerifiablePatchEnvelope
 

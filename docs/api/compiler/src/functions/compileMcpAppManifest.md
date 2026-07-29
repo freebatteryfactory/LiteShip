@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / compileMcpAppManifest
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / compileMcpAppManifest
 
 # Function: compileMcpAppManifest()
 

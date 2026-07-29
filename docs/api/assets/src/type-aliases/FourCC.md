@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / FourCC
+[LiteShip](../../../README.md) / [assets/src](../README.md) / FourCC
 
 # Type Alias: FourCC
 

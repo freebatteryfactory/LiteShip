@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / EdgePatchOp
+[LiteShip](../../../README.md) / [core/src](../README.md) / EdgePatchOp
 
 # Interface: EdgePatchOp
 

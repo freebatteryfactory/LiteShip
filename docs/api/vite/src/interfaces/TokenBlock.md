@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / TokenBlock
+[LiteShip](../../../README.md) / [vite/src](../README.md) / TokenBlock
 
 # Interface: TokenBlock
 

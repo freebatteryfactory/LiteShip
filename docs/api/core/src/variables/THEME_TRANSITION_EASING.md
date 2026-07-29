@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / THEME\_TRANSITION\_EASING
+[LiteShip](../../../README.md) / [core/src](../README.md) / THEME\_TRANSITION\_EASING
 
 # Variable: THEME\_TRANSITION\_EASING
 

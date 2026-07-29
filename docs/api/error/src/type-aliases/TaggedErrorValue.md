@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / TaggedErrorValue
+[LiteShip](../../../README.md) / [error/src](../README.md) / TaggedErrorValue
 
 # Type Alias: TaggedErrorValue\<Tag, Fields\>
 

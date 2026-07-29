@@ -474,7 +474,7 @@ function buildKeyframes(windows: readonly AbsWindow[], totalMs: number): CssKeyf
  * segment the active windows are exactly those that FULLY cover it, and a segment served by
  * two windows with DIFFERENT normalized curves cannot be expressed by one native per-keyframe
  * timing function. Such a program is DENIED native-timeline ownership (rendered faithfully by
- * the per-window runtime floor instead — ADR-0041, #148); a uniform-easing program (every
+ * the per-window runtime floor instead — #148); a uniform-easing program (every
  * active set agrees) OR a non-overlapping `seq` of differently-eased steps (each segment has
  * ONE active window, so the per-keyframe curve serves it) stays eligible. This is the DATA the
  * lowerer hands the compiler so it never guesses eligibility from an (ambiguous) absent
@@ -590,7 +590,7 @@ export function interpretProgram(
   // Native-timeline eligibility is the LOWERER's call: a composed program whose overlapping
   // windows disagree on easing (`par` of differently-eased children, #148) is denied native
   // ownership so the compiler emits no `animation-name` binding and the per-window runtime
-  // floor stays the faithful renderer (ADR-0041). Uniform + non-overlapping-seq programs stay
+  // floor stays the faithful renderer. Uniform + non-overlapping-seq programs stay
   // eligible for the single native `@keyframes` leg.
   const nativeTimeline: NativeTimelineEligibility = hasMixedEasingOverlap(result.windows, result.totalMs)
     ? { eligible: false, reason: 'mixed-easing-overlap' }

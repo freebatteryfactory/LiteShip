@@ -1,6 +1,6 @@
 /**
- * Command language re-anchored from `@liteship/_spine` (the canonical type source,
- * ADR-0010). The shared command registry runtime lives in `@liteship/command`; these
+ * Command language re-anchored from `@liteship/_spine` (the canonical type
+ * source). The shared command registry runtime lives in `@liteship/command`; these
  * are the declaration-only contract types the CLI and MCP adapters share. (CUT A1)
  *
  * @module

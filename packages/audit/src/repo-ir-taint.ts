@@ -10,7 +10,7 @@
  * parameter ({@link TaintRegistry}), so `@liteship/audit` references NO LiteShip
  * source/sink name. The LiteShip-LOCAL registry (the shader-source fetch, the
  * AI-cast graph-apply, the runtime-URL SSRF seam, …) lives with the `@liteship/cli`
- * HOST and is injected here, exactly the ADR-0012 / D7b boundary the
+ * HOST and is injected here, exactly the D7b host-injection boundary the
  * `invariant-regex` FactOracle hook uses.
  *
  * ─────────────────────────────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ export const DEFAULT_TAINT_INTERPROCEDURAL_DEPTH = 8;
 
 /**
  * The INJECTED source/sink/sanitizer classification — the host-supplied registry
- * (the ADR-0012 / D7b boundary). The oracle references NONE of these names itself;
+ * (the D7b host-injection boundary). The oracle references NONE of these names itself;
  * the `@liteship/cli` host supplies the LiteShip-LOCAL set. Each is matched against a
  * call expression's CALLEE NAME — the bare identifier (`fetch`, `eval`) OR the
  * member name (`shaderSource`, `createShaderModule`, `innerHTML` as an assignment
@@ -751,7 +751,7 @@ function buildCallerIndex(
  * deterministic: same source bytes + same registry → identical {@link TaintFacts}.
  *
  * The SOURCE / SINK / SANITIZER classification is INJECTED via `registry` — the
- * oracle references NO LiteShip-specific name (ADR-0012 / D7b). The depth bound is
+ * oracle references NO LiteShip-specific name (the D7b boundary). The depth bound is
  * carried into the facts so the report is HONEST about what was (and was not)
  * traced. Throws a tagged {@link InvariantViolationError} (never a bare throw) when
  * a non-empty corpus yields no program.

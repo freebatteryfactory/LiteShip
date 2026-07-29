@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / benchHonestyError
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / benchHonestyError
 
 # Function: benchHonestyError()
 

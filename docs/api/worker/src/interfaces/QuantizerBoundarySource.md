@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [worker/src](../README.md) / QuantizerBoundarySource
+[LiteShip](../../../README.md) / [worker/src](../README.md) / QuantizerBoundarySource
 
 # Interface: QuantizerBoundarySource
 
@@ -21,7 +21,7 @@ name make hand-assembled registrations unnecessary.
 
 Defined in: [worker/src/compositor-types.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L61)
 
-Content address computed by `defineBoundary` (ADR-0003).
+Content address computed by `defineBoundary`.
 
 ***
 

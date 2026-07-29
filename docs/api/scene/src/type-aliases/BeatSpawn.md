@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / BeatSpawn
+[LiteShip](../../../README.md) / [scene/src](../README.md) / BeatSpawn
 
 # Type Alias: BeatSpawn
 

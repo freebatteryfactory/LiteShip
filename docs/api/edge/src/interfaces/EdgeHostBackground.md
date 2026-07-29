@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / EdgeHostBackground
+[LiteShip](../../../README.md) / [edge/src](../README.md) / EdgeHostBackground
 
 # Interface: EdgeHostBackground
 

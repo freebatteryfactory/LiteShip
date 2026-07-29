@@ -190,7 +190,7 @@ export function nativeTimelineSupported(): boolean {
  * overlapping windows disagree on easing (`par` of differently-eased children, #148) is
  * `nativeTimeline: { eligible: false }`, so the compiler emits NO ownership block and no
  * `animation-name` binding — this scan then correctly returns false and the floor keeps
- * ownership (ADR-0041). `getComputedStyle().animationName` may still be a comma-separated list
+ * ownership. `getComputedStyle().animationName` may still be a comma-separated list
  * (a single reveal can bind `liteship-motion-*` ALONGSIDE an author `translate`/`opacity`
  * animation), hence the `.split(',').some(...)` scan: ANY `liteship-motion-*` name in it means
  * native CSS is BOTH supported here AND emitted for this element. Absent it, the floor runs

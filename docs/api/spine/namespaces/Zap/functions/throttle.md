@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Zap](../README.md) / throttle
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Zap](../README.md) / throttle
 
 # Function: throttle()
 
 > **throttle**\<`T`\>(`event`, `ms`, `clock?`): [`Zap`](../../../interfaces/Zap.md)\<`T`\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:943](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L943)
+Defined in: [\_spine/core.d.ts:944](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L944)
 
 ## Type Parameters
 

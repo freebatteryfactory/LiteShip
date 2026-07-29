@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / detectEarlyReturnBeforeExpectAST
+[LiteShip](../../../README.md) / [audit/src](../README.md) / detectEarlyReturnBeforeExpectAST
 
 # Function: detectEarlyReturnBeforeExpectAST()
 

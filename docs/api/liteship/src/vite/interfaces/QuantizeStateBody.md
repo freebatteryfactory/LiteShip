@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / QuantizeStateBody
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / QuantizeStateBody
 
 # Interface: QuantizeStateBody
 

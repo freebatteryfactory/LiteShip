@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ImportEdge
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ImportEdge
 
 # Interface: ImportEdge
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / CompiledStagger
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / CompiledStagger
 
 # Interface: CompiledStagger
 

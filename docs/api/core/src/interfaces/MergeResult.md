@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / MergeResult
+[LiteShip](../../../README.md) / [core/src](../README.md) / MergeResult
 
 # Interface: MergeResult
 

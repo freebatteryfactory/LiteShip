@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / isPrivateOrReservedIP
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / isPrivateOrReservedIP
 
 # Function: isPrivateOrReservedIP()
 

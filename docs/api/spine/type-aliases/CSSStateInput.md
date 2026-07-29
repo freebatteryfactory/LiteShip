@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CSSStateInput
+[LiteShip](../../README.md) / [\_spine](../README.md) / CSSStateInput
 
 # Type Alias: CSSStateInput
 

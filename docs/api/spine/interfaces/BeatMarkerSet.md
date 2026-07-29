@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / BeatMarkerSet
+[LiteShip](../../README.md) / [\_spine](../README.md) / BeatMarkerSet
 
 # Interface: BeatMarkerSet
 

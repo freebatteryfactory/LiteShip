@@ -26,7 +26,7 @@ export interface GraphMutationClientOptions {
   /**
    * Host-owned base reloader (e.g. GET the host's graph endpoint and decode). When present,
    * a `staleBase` refusal triggers reload + re-propose up to `maxStaleRetries` times.
-   * LiteShip does not dictate the read endpoint's shape — the host owns it (ADR-0015).
+   * LiteShip does not dictate the read endpoint's shape — the host owns it.
    */
   readonly refreshBase?: () => Promise<DocumentGraph>;
   /** Bounded stale-base retries. Default: 1 when `refreshBase` is provided, else 0. */

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / runAuditPasses
+[LiteShip](../../../README.md) / [audit/src](../README.md) / runAuditPasses
 
 # Function: runAuditPasses()
 

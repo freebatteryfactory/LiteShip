@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SanctionedSkip
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SanctionedSkip
 
 # Interface: SanctionedSkip
 

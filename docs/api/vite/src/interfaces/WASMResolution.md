@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / WASMResolution
+[LiteShip](../../../README.md) / [vite/src](../README.md) / WASMResolution
 
 # Interface: WASMResolution
 

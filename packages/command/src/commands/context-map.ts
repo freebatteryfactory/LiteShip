@@ -189,7 +189,7 @@ export const CONTEXT_MAP: Readonly<Record<string, ContextTask>> = {
       file(
         'entrypoint',
         'packages/cli/src/commands/ship.ts',
-        'The `liteship ship` command — mint ShipCapsule(s) and publish (ADR-0011).',
+        'The `liteship ship` command — mint ShipCapsule(s) and publish.',
       ),
       file('owner-file', 'packages/cli/src/ship-manifest.ts', 'The ShipCapsule manifest — what each capsule pins.'),
       file(
@@ -202,7 +202,11 @@ export const CONTEXT_MAP: Readonly<Record<string, ContextTask>> = {
         'packages/cli/src/internal/sbom.ts',
         'The deterministic CycloneDX SBOM over the lockfile + workspace.',
       ),
-      file('doc', 'docs/adr/0011-ship-capsule.md', 'ADR-0011 — the ShipCapsule design + release flow.'),
+      file(
+        'owner-file',
+        'packages/core/src/authoring/ship-capsule.ts',
+        'The ShipCapsule type — subject, addressed release inputs, build-env fingerprint, capsule chain.',
+      ),
       file('test', 'tests/unit/ship-manifest.test.ts', 'The ship-manifest test to mirror.'),
       check(
         'check/package-smoke',

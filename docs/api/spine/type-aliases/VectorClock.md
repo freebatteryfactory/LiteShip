@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / VectorClock
+[LiteShip](../../README.md) / [\_spine](../README.md) / VectorClock
 
 # Type Alias: VectorClock
 
 > **VectorClock** = `object`
 
-Defined in: [\_spine/core.d.ts:1167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1167)
+Defined in: [\_spine/core.d.ts:1168](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1168)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [\_spine/core.d.ts:1167](https://github.com/freebatteryfactory/LiteS
 
 > **compare**(`a`, `b`): `-1` \| `0` \| `1`
 
-Defined in: [\_spine/core.d.ts:1181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1181)
+Defined in: [\_spine/core.d.ts:1182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1182)
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/core.d.ts:1181](https://github.com/freebatteryfactory/LiteS
 
 > **concurrent**(`a`, `b`): `boolean`
 
-Defined in: [\_spine/core.d.ts:1179](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1179)
+Defined in: [\_spine/core.d.ts:1180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1180)
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Defined in: [\_spine/core.d.ts:1179](https://github.com/freebatteryfactory/LiteS
 
 > **equals**(`a`, `b`): `boolean`
 
-Defined in: [\_spine/core.d.ts:1180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1180)
+Defined in: [\_spine/core.d.ts:1181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1181)
 
 #### Parameters
 
@@ -82,7 +82,7 @@ Defined in: [\_spine/core.d.ts:1180](https://github.com/freebatteryfactory/LiteS
 
 > **from**(`entries`): `VectorClock`
 
-Defined in: [\_spine/core.d.ts:1174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1174)
+Defined in: [\_spine/core.d.ts:1175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1175)
 
 #### Parameters
 
@@ -100,7 +100,7 @@ Defined in: [\_spine/core.d.ts:1174](https://github.com/freebatteryfactory/LiteS
 
 > **get**(`vc`, `peerId`): `number`
 
-Defined in: [\_spine/core.d.ts:1175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1175)
+Defined in: [\_spine/core.d.ts:1176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1176)
 
 #### Parameters
 
@@ -122,7 +122,7 @@ Defined in: [\_spine/core.d.ts:1175](https://github.com/freebatteryfactory/LiteS
 
 > **happensBefore**(`a`, `b`): `boolean`
 
-Defined in: [\_spine/core.d.ts:1178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1178)
+Defined in: [\_spine/core.d.ts:1179](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1179)
 
 #### Parameters
 
@@ -144,7 +144,7 @@ Defined in: [\_spine/core.d.ts:1178](https://github.com/freebatteryfactory/LiteS
 
 > **make**(): `VectorClock`
 
-Defined in: [\_spine/core.d.ts:1173](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1173)
+Defined in: [\_spine/core.d.ts:1174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1174)
 
 #### Returns
 
@@ -156,7 +156,7 @@ Defined in: [\_spine/core.d.ts:1173](https://github.com/freebatteryfactory/LiteS
 
 > **merge**(`a`, `b`): `VectorClock`
 
-Defined in: [\_spine/core.d.ts:1177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1177)
+Defined in: [\_spine/core.d.ts:1178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1178)
 
 #### Parameters
 
@@ -178,7 +178,7 @@ Defined in: [\_spine/core.d.ts:1177](https://github.com/freebatteryfactory/LiteS
 
 > **peers**(`vc`): `string`[]
 
-Defined in: [\_spine/core.d.ts:1183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1183)
+Defined in: [\_spine/core.d.ts:1184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1184)
 
 #### Parameters
 
@@ -196,7 +196,7 @@ Defined in: [\_spine/core.d.ts:1183](https://github.com/freebatteryfactory/LiteS
 
 > **size**(`vc`): `number`
 
-Defined in: [\_spine/core.d.ts:1184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1184)
+Defined in: [\_spine/core.d.ts:1185](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1185)
 
 #### Parameters
 
@@ -214,7 +214,7 @@ Defined in: [\_spine/core.d.ts:1184](https://github.com/freebatteryfactory/LiteS
 
 > **tick**(`vc`, `peerId`): `VectorClock`
 
-Defined in: [\_spine/core.d.ts:1176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1176)
+Defined in: [\_spine/core.d.ts:1177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1177)
 
 #### Parameters
 
@@ -236,7 +236,7 @@ Defined in: [\_spine/core.d.ts:1176](https://github.com/freebatteryfactory/LiteS
 
 > **toObject**(`vc`): `Record`\<`string`, `number`\>
 
-Defined in: [\_spine/core.d.ts:1182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1182)
+Defined in: [\_spine/core.d.ts:1183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1183)
 
 #### Parameters
 

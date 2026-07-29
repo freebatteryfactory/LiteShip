@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [\_spine](../../README.md) / Easing
+[LiteShip](../../../README.md) / [\_spine](../../README.md) / Easing
 
 # Easing
 

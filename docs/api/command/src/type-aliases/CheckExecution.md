@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckExecution
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckExecution
 
 # Type Alias: CheckExecution
 

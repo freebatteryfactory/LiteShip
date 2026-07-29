@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / isZap
+[LiteShip](../../../README.md) / [core/src](../README.md) / isZap
 
 # Function: isZap()
 

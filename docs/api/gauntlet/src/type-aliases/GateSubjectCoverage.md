@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / GateSubjectCoverage
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / GateSubjectCoverage
 
 # Type Alias: GateSubjectCoverage
 
 > **GateSubjectCoverage** = \{ `censusDigest`: `` `sha256:${string}` ``; `enumeratedCount`: `number`; `enumerator`: `string`; `status`: `"complete"`; \} \| \{ `censusDigest`: `` `sha256:${string}` ``; `enumeratedCount`: `number`; `enumerator`: `string`; `reason`: `string`; `status`: `"opaque"`; \}
 
-Defined in: [gauntlet/src/gate.ts:451](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L451)
+Defined in: [gauntlet/src/gate.ts:452](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L452)
 
 A gate's current-head account of the discrete subjects it claims to govern.
 

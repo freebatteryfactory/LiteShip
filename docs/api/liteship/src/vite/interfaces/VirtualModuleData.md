@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / VirtualModuleData
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / VirtualModuleData
 
 # Interface: VirtualModuleData
 

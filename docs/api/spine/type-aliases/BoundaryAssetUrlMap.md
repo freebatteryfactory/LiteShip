@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / BoundaryAssetUrlMap
+[LiteShip](../../README.md) / [\_spine](../README.md) / BoundaryAssetUrlMap
 
 # Type Alias: BoundaryAssetUrlMap
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / InvariantWaived
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / InvariantWaived
 
 # Interface: InvariantWaived
 

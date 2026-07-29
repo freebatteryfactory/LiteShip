@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / McpAppManifest
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / McpAppManifest
 
 # Interface: McpAppManifest
 

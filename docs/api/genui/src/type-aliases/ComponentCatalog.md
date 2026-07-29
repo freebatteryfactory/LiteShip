@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [genui/src](../README.md) / ComponentCatalog
+[LiteShip](../../../README.md) / [genui/src](../README.md) / ComponentCatalog
 
 # Type Alias: ComponentCatalog
 

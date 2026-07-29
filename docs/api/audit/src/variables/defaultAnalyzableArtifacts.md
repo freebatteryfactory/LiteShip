@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / defaultAnalyzableArtifacts
+[LiteShip](../../../README.md) / [audit/src](../README.md) / defaultAnalyzableArtifacts
 
 # Variable: defaultAnalyzableArtifacts
 

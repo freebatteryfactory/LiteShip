@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / transformHTML
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / transformHTML
 
 # Function: transformHTML()
 

@@ -79,8 +79,8 @@ export type {
   JsonSchemaFragment,
 } from './schema/index.js';
 
-// SchemaPort — the permanent, effect-free structural schema contract (ADR-0010,
-// spine-first): the phantom `Type`/`Encoded` pair every schema value carries, so
+// SchemaPort — the permanent, effect-free structural schema contract
+// (spine-first): the phantom `Type`/`Encoded` pair every schema value carries, so
 // a `CapsuleContract`/`Codec`/`Part` slot names THIS instead of `effect`'s Schema.
 export { asDeclaration } from './schema/index.js';
 export type { SchemaPort, DeclarationSchema } from './schema/index.js';
@@ -113,8 +113,8 @@ export { clamp01 } from './motion/index.js';
 export { editDistance, closestMatch } from './evidence/index.js';
 export { normalizeRepoPath } from './repository-path.js';
 
-// Boundary. `BoundarySpec` is exported as a value+type pair (see the
-// namespace-object pattern in ADR-0001); consumers who want only the type
+// Boundary. `BoundarySpec` is exported as a value+type pair (the
+// namespace-object pattern); consumers who want only the type
 // can `import type { BoundarySpec } from '@liteship/core'`.
 export { Boundary, defineBoundary, BoundarySpec } from './authoring/index.js';
 
@@ -436,7 +436,7 @@ export type { OpType, EdgeType } from './authoring/index.js';
 
 // DocumentGraph — the keystone IR (P2). Type (document-graph.ts) + namespace-object
 // value (document-graph-address.ts) merge into one `DocumentGraph` symbol, the
-// ADR-0001 pattern. The addressing kernel is the one mint site for node + graph ids.
+// namespace-object pattern. The addressing kernel is the one mint site for node + graph ids.
 export type {
   DocumentGraph,
   DocumentGraphNode,
@@ -479,7 +479,7 @@ export { contentAddressOf, canonicalAddressBytes } from './evidence/index.js';
 // ── GraphPatch — typed graph mutation + structural differ (P5b) ─────────────
 // Tagged-delta over DocumentGraph: propose/apply (re-address via sealGraph) /
 // preview / validate / diff (round-trips) / receipt / forkOf. The interface +
-// namespace-object value merge into one `GraphPatch` symbol (ADR-0001), exactly
+// namespace-object value merge into one `GraphPatch` symbol, exactly
 // like `Plan`. Kept in a small block so a 3-way merge with sibling phases editing
 // this region is trivial.
 export { GraphPatch, nodeLogicalKey } from './graph/index.js';
@@ -626,7 +626,7 @@ export {
 export { Diagnostics } from './evidence/index.js';
 export type { DiagnosticEvent, DiagnosticLevel, DiagnosticPayload, DiagnosticsSink } from './evidence/index.js';
 
-// AddressedDigest + ShipCapsule (ADR-0011)
+// AddressedDigest + ShipCapsule — the release-artifact receipt pair
 // Browser-bundleable: pure type + crypto.subtle hashing. The Node-only
 // release-input manifest helpers (gzip/tar/yaml) live in @liteship/cli.
 export { AddressedDigest } from './evidence/index.js';

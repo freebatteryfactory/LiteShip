@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / FrameSchedule
+[LiteShip](../../README.md) / [\_spine](../README.md) / FrameSchedule
 
 # Interface: FrameSchedule
 
-Defined in: [\_spine/core.d.ts:1578](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1578)
+Defined in: [\_spine/core.d.ts:1580](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1580)
 
 Host-neutral frame timing shared by every renderer adapter.
 
@@ -20,7 +20,7 @@ Host-neutral frame timing shared by every renderer adapter.
 
 > `readonly` **durationMs**: [`Millis`](../type-aliases/Millis.md)
 
-Defined in: [\_spine/core.d.ts:1580](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1580)
+Defined in: [\_spine/core.d.ts:1582](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1582)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [\_spine/core.d.ts:1580](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **fps**: `number`
 
-Defined in: [\_spine/core.d.ts:1579](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1579)
+Defined in: [\_spine/core.d.ts:1581](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1581)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [\_spine/core.d.ts:1579](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **totalFrames**: `number`
 
-Defined in: [\_spine/core.d.ts:1581](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1581)
+Defined in: [\_spine/core.d.ts:1583](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1583)
 
 ## Methods
 
@@ -44,7 +44,7 @@ Defined in: [\_spine/core.d.ts:1581](https://github.com/freebatteryfactory/LiteS
 
 > **at**(`frame`): [`ScheduledFrame`](ScheduledFrame.md)
 
-Defined in: [\_spine/core.d.ts:1582](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1582)
+Defined in: [\_spine/core.d.ts:1584](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1584)
 
 #### Parameters
 

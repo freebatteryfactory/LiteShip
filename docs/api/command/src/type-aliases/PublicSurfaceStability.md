@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PublicSurfaceStability
+[LiteShip](../../../README.md) / [command/src](../README.md) / PublicSurfaceStability
 
 # Type Alias: PublicSurfaceStability
 

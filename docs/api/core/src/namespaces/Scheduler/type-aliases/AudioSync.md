@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [Scheduler](../README.md) / AudioSync
+[LiteShip](../../../../../README.md) / [core/src](../../../README.md) / [Scheduler](../README.md) / AudioSync
 
 # Type Alias: AudioSync
 

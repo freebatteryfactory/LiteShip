@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CapsuleVerifyPayload
+[LiteShip](../../../README.md) / [command/src](../README.md) / CapsuleVerifyPayload
 
 # Type Alias: CapsuleVerifyPayload
 

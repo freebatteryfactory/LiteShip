@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [genui/src](../README.md) / ComponentCatalogInput
+[LiteShip](../../../README.md) / [genui/src](../README.md) / ComponentCatalogInput
 
 # Interface: ComponentCatalogInput
 

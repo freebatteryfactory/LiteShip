@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / mutationDivergenceGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / mutationDivergenceGate
 
 # Variable: mutationDivergenceGate
 

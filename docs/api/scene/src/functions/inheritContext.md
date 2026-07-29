@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / inheritContext
+[LiteShip](../../../README.md) / [scene/src](../README.md) / inheritContext
 
 # Function: inheritContext()
 

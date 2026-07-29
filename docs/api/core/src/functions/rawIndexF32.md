@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / rawIndexF32
+[LiteShip](../../../README.md) / [core/src](../README.md) / rawIndexF32
 
 # Function: rawIndexF32()
 

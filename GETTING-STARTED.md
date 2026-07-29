@@ -236,8 +236,7 @@ truth moved past your base; with `refreshBase` wired, the client reloads and
 re-proposes automatically, within a bound. Two users editing the same dashboard
 stop clobbering each other for free.
 
-The worked, runnable version is [`examples/06-mutation-roundtrip`](./examples/06-mutation-roundtrip);
-the design is [ADR-0031](./docs/adr/0031-form-mutation-binding-primitive.md).
+The worked, runnable version is [`examples/06-mutation-roundtrip`](./examples/06-mutation-roundtrip).
 
 ## 6. Where to go from here
 
@@ -247,7 +246,6 @@ the design is [ADR-0031](./docs/adr/0031-form-mutation-binding-primitive.md).
 - [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md): how Astro hosts the runtime, directives, and the escalation path
 - [HOSTING.md](./HOSTING.md): host-application first-hour checklist (CSP, Trusted Types, common failure modes)
 - [docs/api/](./docs/api): generated API reference for every package (e.g. `Boundary.evaluate` for evaluating a boundary against sample values outside the DOM)
-- [DOCS.md](./DOCS.md): full documentation map
 
 ## Migrating existing sources
 

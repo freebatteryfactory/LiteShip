@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CliOwnedName
+[LiteShip](../../../README.md) / [command/src](../README.md) / CliOwnedName
 
 # Type Alias: CliOwnedName
 

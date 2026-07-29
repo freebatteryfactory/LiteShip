@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / GATE\_FACT\_CHANNELS
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / GATE\_FACT\_CHANNELS
 
 # Variable: GATE\_FACT\_CHANNELS
 
 > `const` **GATE\_FACT\_CHANNELS**: readonly \[`"supplyChain"`, `"mutation"`, `"transition"`, `"spineRelation"`, `"mcdc"`, `"simulation"`, `"traceability"`, `"standards"`, `"declaredFix"`, `"taint"`, `"capabilityLink"`, `"fuzzCorpus"`, `"proof"`, `"composition"`, `"skipSites"`, `"activeSurfaceFacts"`, `"featureEdges"`, `"checkGovernance"`, `"benchmarkSubjects"`\]
 
-Defined in: [gauntlet/src/gate.ts:502](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L502)
+Defined in: [gauntlet/src/gate.ts:503](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L503)
 
 Runtime fact channels a hosted gate may consume. This tuple is the canonical
 runtime vocabulary used by gate access manifests and by the instrumented

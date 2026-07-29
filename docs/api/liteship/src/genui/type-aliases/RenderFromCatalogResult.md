@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/genui](../README.md) / RenderFromCatalogResult
+[LiteShip](../../../../README.md) / [liteship/src/genui](../README.md) / RenderFromCatalogResult
 
 # Type Alias: RenderFromCatalogResult
 

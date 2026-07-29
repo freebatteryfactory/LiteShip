@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / InteractionEdge
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / InteractionEdge
 
 # Interface: InteractionEdge
 

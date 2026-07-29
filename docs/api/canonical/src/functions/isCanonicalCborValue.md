@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [canonical/src](../README.md) / isCanonicalCborValue
+[LiteShip](../../../README.md) / [canonical/src](../README.md) / isCanonicalCborValue
 
 # Function: isCanonicalCborValue()
 

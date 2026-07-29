@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / MCDC\_SEVERITY\_BY\_LEVEL
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / MCDC\_SEVERITY\_BY\_LEVEL
 
 # Variable: MCDC\_SEVERITY\_BY\_LEVEL
 

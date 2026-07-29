@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / EscalationResult
+[LiteShip](../../../README.md) / [core/src](../README.md) / EscalationResult
 
 # Type Alias: EscalationResult
 

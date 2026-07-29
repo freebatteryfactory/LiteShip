@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [remotion/src](../README.md) / remotionAdapterCapsule
+[LiteShip](../../../README.md) / [remotion/src](../README.md) / remotionAdapterCapsule
 
 # Variable: remotionAdapterCapsule
 

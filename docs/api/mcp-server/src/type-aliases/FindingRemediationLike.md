@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / FindingRemediationLike
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / FindingRemediationLike
 
 # Type Alias: FindingRemediationLike
 

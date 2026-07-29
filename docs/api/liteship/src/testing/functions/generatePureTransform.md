@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / generatePureTransform
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / generatePureTransform
 
 # Function: generatePureTransform()
 

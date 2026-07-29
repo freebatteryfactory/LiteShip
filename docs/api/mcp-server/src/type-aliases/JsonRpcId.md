@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / JsonRpcId
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / JsonRpcId
 
 # Type Alias: JsonRpcId
 

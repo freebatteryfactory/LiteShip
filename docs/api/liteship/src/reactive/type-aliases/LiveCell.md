@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / LiveCell
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / LiveCell
 
 # Type Alias: LiveCell\<K, T\>
 
@@ -15,7 +15,7 @@ reactive graph and the wire protocol. A `LiveCell` wraps a `Cell` with a typed
 [CellEnvelope](../../schema/interfaces/CellEnvelope.md) — kind, content address, HLC, boundary crossings — so
 primitives can travel between peers as self-describing messages. Construct one
 with the standalone [createLiveCell](../functions/createLiveCell.md) / [createLiveCellBoundary](../functions/createLiveCellBoundary.md)
-(verb grammar, ADR-0046 — `create` allocates a runtime resource).
+(verb grammar — `create` allocates a runtime resource).
 
 ## Type Parameters
 

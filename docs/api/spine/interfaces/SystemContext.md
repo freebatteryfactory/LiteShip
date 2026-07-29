@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / SystemContext
+[LiteShip](../../README.md) / [\_spine](../README.md) / SystemContext
 
 # Interface: SystemContext\<Q, R, W\>
 
-Defined in: [\_spine/core.d.ts:759](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L759)
+Defined in: [\_spine/core.d.ts:760](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L760)
 
 Trusted read/write context supplied to one declared system.
 
@@ -30,7 +30,7 @@ Trusted read/write context supplied to one declared system.
 
 > **optional**\<`P`\>(`entity`, `part`): [`PartValue`](../type-aliases/PartValue.md)\<`P`\> \| `undefined`
 
-Defined in: [\_spine/core.d.ts:765](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L765)
+Defined in: [\_spine/core.d.ts:766](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L766)
 
 #### Type Parameters
 
@@ -58,7 +58,7 @@ Defined in: [\_spine/core.d.ts:765](https://github.com/freebatteryfactory/LiteSh
 
 > **query**\<`P`\>(...`parts`): readonly [`Entity`](Entity.md)\<[`TuplePart`](../type-aliases/TuplePart.md)\<`P`\>\>[]
 
-Defined in: [\_spine/core.d.ts:766](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L766)
+Defined in: [\_spine/core.d.ts:767](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L767)
 
 #### Type Parameters
 
@@ -82,7 +82,7 @@ readonly [`Entity`](Entity.md)\<[`TuplePart`](../type-aliases/TuplePart.md)\<`P`
 
 > **read**\<`P`\>(`entity`, `part`): [`PartValue`](../type-aliases/PartValue.md)\<`P`\>
 
-Defined in: [\_spine/core.d.ts:764](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L764)
+Defined in: [\_spine/core.d.ts:765](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L765)
 
 #### Type Parameters
 
@@ -110,7 +110,7 @@ Defined in: [\_spine/core.d.ts:764](https://github.com/freebatteryfactory/LiteSh
 
 > **write**\<`P`\>(`entity`, `part`, `value`): `void`
 
-Defined in: [\_spine/core.d.ts:767](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L767)
+Defined in: [\_spine/core.d.ts:768](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L768)
 
 #### Type Parameters
 

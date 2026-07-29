@@ -580,7 +580,7 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     expect(new Set(kinds).size).toBeGreaterThan(1);
   });
 
-  // ── #148 / ADR-0041 Option A: native-timeline ownership eligibility ───────────
+  // ── #148 Option A: native-timeline ownership eligibility ─────────────────────
   // The LOWERER decides eligibility (it alone sees the overlapping windows + curves) and
   // records it on the plan; the compiler READS that DATA to decide whether to emit the
   // native `animation-name`/`animation-timeline` ownership block — it never guesses from

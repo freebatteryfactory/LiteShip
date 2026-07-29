@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / sortSurfaceElements
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / sortSurfaceElements
 
 # Function: sortSurfaceElements()
 

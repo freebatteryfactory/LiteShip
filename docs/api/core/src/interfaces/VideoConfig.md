@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / VideoConfig
+[LiteShip](../../../README.md) / [core/src](../README.md) / VideoConfig
 
 # Interface: VideoConfig
 

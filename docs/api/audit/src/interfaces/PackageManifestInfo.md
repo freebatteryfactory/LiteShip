@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / PackageManifestInfo
+[LiteShip](../../../README.md) / [audit/src](../README.md) / PackageManifestInfo
 
 # Interface: PackageManifestInfo
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / StringNode
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / StringNode
 
 # Interface: StringNode
 

@@ -42,8 +42,8 @@ import {
 
 /**
  * Build the IR the way the CLI HOST does — audit's structural AST oracle PLUS the
- * host-injected LiteShip `invariant-regex` oracle (ADR-0012: the LiteShip-local
- * regex lives with the host, not the downstream-installable audit engine). Every
+ * host-injected LiteShip `invariant-regex` oracle (the LiteShip-local regex lives
+ * with the host, not the downstream-installable audit engine). Every
  * triangulation assertion below runs over this COMPOSED IR (both oracles' facts),
  * exactly the IR `buildRepoIRForRepo` produces.
  */

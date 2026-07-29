@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / GPU\_TIER\_PATTERNS
+[LiteShip](../../../README.md) / [detect/src](../README.md) / GPU\_TIER\_PATTERNS
 
 # Variable: GPU\_TIER\_PATTERNS
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / Disposer
+[LiteShip](../../../README.md) / [detect/src](../README.md) / Disposer
 
 # Type Alias: Disposer
 

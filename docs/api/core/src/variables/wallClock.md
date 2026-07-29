@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / wallClock
+[LiteShip](../../../README.md) / [core/src](../README.md) / wallClock
 
 # Variable: wallClock
 

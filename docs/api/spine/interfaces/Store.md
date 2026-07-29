@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / Store
+[LiteShip](../../README.md) / [\_spine](../README.md) / Store
 
 # Interface: Store\<S, Msg\>
 
-Defined in: [\_spine/core.d.ts:947](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L947)
+Defined in: [\_spine/core.d.ts:948](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L948)
 
 TEA-style reducer store over CellKernel.replay1 (Effect-free, Wave 6)
 
@@ -26,7 +26,7 @@ TEA-style reducer store over CellKernel.replay1 (Effect-free, Wave 6)
 
 > `readonly` **\_tag**: `"Store"`
 
-Defined in: [\_spine/core.d.ts:948](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L948)
+Defined in: [\_spine/core.d.ts:949](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L949)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/core.d.ts:948](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:952](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L952)
+Defined in: [\_spine/core.d.ts:953](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L953)
 
 ## Methods
 
@@ -42,7 +42,7 @@ Defined in: [\_spine/core.d.ts:952](https://github.com/freebatteryfactory/LiteSh
 
 > **dispatch**(`msg`): `void`
 
-Defined in: [\_spine/core.d.ts:951](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L951)
+Defined in: [\_spine/core.d.ts:952](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L952)
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Defined in: [\_spine/core.d.ts:951](https://github.com/freebatteryfactory/LiteSh
 
 > **read**(): `S`
 
-Defined in: [\_spine/core.d.ts:949](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L949)
+Defined in: [\_spine/core.d.ts:950](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L950)
 
 #### Returns
 
@@ -72,7 +72,7 @@ Defined in: [\_spine/core.d.ts:949](https://github.com/freebatteryfactory/LiteSh
 
 > **subscribe**(`subscriber`): [`Disposer`](../namespaces/CellKernel/type-aliases/Disposer.md)
 
-Defined in: [\_spine/core.d.ts:950](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L950)
+Defined in: [\_spine/core.d.ts:951](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L951)
 
 #### Parameters
 

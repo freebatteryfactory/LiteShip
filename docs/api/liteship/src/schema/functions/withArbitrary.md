@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / withArbitrary
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / withArbitrary
 
 # Function: withArbitrary()
 

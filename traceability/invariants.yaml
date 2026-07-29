@@ -177,7 +177,7 @@ invariants:
 
   # ── Meta — exactly one brand survives (the retired pre-v0.19 scope is gone) ──
   - id: INV-BRAND-RESIDUE-ZERO
-    law: 'Exactly one brand survives: zero retired pre-v0.19 brand-scope residue exists in any tracked text file outside the single sanctioned ARCHITECTURE sentence and the frozen historical allowlist (ADR-0044).'
+    law: 'Exactly one brand survives: zero retired pre-v0.19 brand-scope residue exists in any tracked text file outside the single sanctioned ARCHITECTURE sentence and the frozen historical allowlist (CHANGELOG, the effect-shed receipt, the testing ledger, and the residue test itself).'
     level: L3
     category: meta
 

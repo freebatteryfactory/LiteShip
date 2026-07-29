@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / OpType
+[LiteShip](../../../README.md) / [core/src](../README.md) / OpType
 
 # Type Alias: OpType
 

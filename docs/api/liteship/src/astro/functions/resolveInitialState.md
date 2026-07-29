@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / resolveInitialState
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / resolveInitialState
 
 # Function: resolveInitialState()
 

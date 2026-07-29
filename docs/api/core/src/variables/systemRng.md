@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / systemRng
+[LiteShip](../../../README.md) / [core/src](../README.md) / systemRng
 
 # Variable: systemRng
 

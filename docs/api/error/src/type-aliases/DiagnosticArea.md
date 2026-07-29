@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / DiagnosticArea
+[LiteShip](../../../README.md) / [error/src](../README.md) / DiagnosticArea
 
 # Type Alias: DiagnosticArea
 

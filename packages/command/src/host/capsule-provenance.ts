@@ -53,7 +53,7 @@ import { AddressedDigest, canonicalAddressBytes } from '@liteship/core';
  * normalize home) BEFORE writing `reports/capsule-manifest.json`, so every path
  * that flows back into these digests is already forward-slashed. `@liteship/command`
  * therefore does NOT (and must not) re-normalize: it never imports the heavy
- * `@liteship/audit` TS-compiler/glob engine — the ADR-0012/D7b host-injection
+ * `@liteship/audit` TS-compiler/glob engine — the D7b host-injection
  * boundary that keeps `@liteship/mcp-server` lean.
  *
  * `assertRepoRelativePosix` is a GUARD, not a normalizer: it fails LOUD with a

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / ResolvedStateSnapshot
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / ResolvedStateSnapshot
 
 # Interface: ResolvedStateSnapshot
 

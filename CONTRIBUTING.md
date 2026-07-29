@@ -10,7 +10,7 @@ LiteShip is **maintainer-led and doctrine-protected**. Open source means you can
 
 - **Open a PR directly** for: bug fixes, tests, docs corrections, small compatibility patches.
 - **Open an issue / RFC first** for: new features, public-API changes, architecture or runtime-model changes, new dependencies, or naming changes. Large PRs without prior discussion are usually closed.
-- **A technically-correct patch may still be declined** if it doesn't fit the project's doctrine, performance model, maintenance budget, or conceptual shape. That's not arbitrary — it means it *violates a written invariant*. The invariants are codified, not vibes: the [ADRs](./docs/adr/), the source-of-truth principle (every identity computed from its source, not a proxy beside it), the **plumb-completeness gate** (a built-not-plumbed primitive fails CI), the zero-advisory floor, "split don't bump caps," and every-behavior-change-ships-its-falsifying-test (the SQLite/DO-178B bar). Read [ARCHITECTURE.md](./ARCHITECTURE.md) and the relevant ADR as the contract a PR must not silently break.
+- **A technically-correct patch may still be declined** if it doesn't fit the project's doctrine, performance model, maintenance budget, or conceptual shape. That's not arbitrary — it means it *violates a written invariant*. The invariants are codified, not vibes: the gates themselves (the `sgrules/` structural rules, the check registry, the gauntlet), the source-of-truth principle (every identity computed from its source, not a proxy beside it), the **plumb-completeness gate** (a built-not-plumbed primitive fails CI), the zero-advisory floor, "split don't bump caps," and every-behavior-change-ships-its-falsifying-test (the SQLite/DO-178B bar). Read [ARCHITECTURE.md](./ARCHITECTURE.md) and the gate that governs the surface you are touching as the contract a PR must not silently break.
 - **AI-generated PRs** must be read and understood by the submitter — the same bar the maintainer holds with their own agents. No vibe-dump-and-flee.
 
 The `docs/` chain is **sacred**: match house voice, never restructure autonomously, keep `docs:check` green. `main` is protected (PR + the gauntlet's required checks; no force-push, no deletions; release `v*` tags are protected).
@@ -162,7 +162,7 @@ parity gate (`cargo test` + property suite against the fresh artifact).
   per Node ESM rules)
 - No default exports; named exports only
 - Branded types via a local nominal-brand helper — `brand<T, B extends symbol>()` over unique symbols, with validating smart constructors (see `packages/core/src/schema/brands.ts`)
-- Direct generic types for module facades (ADR-0046, superseding the retired `.Shape` namespace convention): a public instance type shares its value's name directly through declaration merging, so consumers annotate against the bare generic — `Cell<number>`, `Boundary<Input, State>`, `Lifetime` — never `Cell.Shape<number>`. Construction goes through the verb grammar (`defineBoundary`, `createCell`, …), not a namespace factory like `Boundary.make`. `sgrules/no-shape-namespace-type.yml` fails any `.Shape` type reference under `packages/*/src` or the spine.
+- Direct generic types for module facades (superseding the retired `.Shape` namespace convention): a public instance type shares its value's name directly through declaration merging, so consumers annotate against the bare generic — `Cell<number>`, `Boundary<Input, State>`, `Lifetime` — never `Cell.Shape<number>`. Construction goes through the verb grammar (`defineBoundary`, `createCell`, …), not a namespace factory like `Boundary.make`. `sgrules/no-shape-namespace-type.yml` fails any `.Shape` type reference under `packages/*/src` or the spine.
 
   ```ts
   // The instance type and its value share one name (declaration merging).
@@ -296,9 +296,9 @@ Worth noting: `pnpm test` is a registered phase of `pnpm run gauntlet:full` and 
 
 ## Architecture changes
 
-Architectural decisions live in [`docs/adr/`](./docs/adr). New ADRs follow
-[`docs/adr/_template.md`](./docs/adr/_template.md). If you're proposing a
-change that:
+Gates and code are the law here: a decision is binding only where something
+executable enforces it, and its lineage lives in git history. If you're
+proposing a change that:
 
 - alters a public package surface,
 - changes a runtime contract (capsule kind, receipt envelope, plan IR),
@@ -306,18 +306,19 @@ change that:
 - adds a value to a publicly-exported type union (e.g. extending `MotionTier`, `UIQualityTier`, `OutputTarget`),
 - shifts the trust boundary or security posture,
 
-…draft an ADR alongside the code change. The Architecture rating dimension
-in `flex:verify` checks the canonical ADR set is present.
+…land its enforcement in the same change: a gate, a structural rule under
+`sgrules/`, or a test that reds without it. Put the reasoning in the commit
+message, where it stays attached to the diff it explains.
 
 **Extending a public type union** (e.g. adding `'chaotic'` to `MotionTier`) ripples wider than it looks because exhaustive `Record<Tier, …>` tables and any `satisfies` checks downstream stop compiling until every branch is updated. The blast-radius checklist:
 
-1. Update the canonical declaration in `packages/_spine/*.d.ts` first (per ADR-0010).
+1. Update the canonical declaration in `packages/_spine/*.d.ts` first — the spine is the canonical type source.
 2. Update the runtime definition in the owning `packages/*/src/*.ts` file (e.g. `packages/core/src/evidence/ui-quality.ts` for `MotionTier`).
 3. Find every `Record<TheUnion, …>` in the repo and add the new arm. Common offenders: `TIER_TARGETS`, `DEVICE_CAPABILITY_SCORES`, capability-mapping functions.
 4. Update any test that asserts an exhaustive list of values (typed as `T[]`, not `satisfies T[]` — TypeScript widens the manual list).
 5. Document the semantic position in the ladder (or orthogonality) in the owning file's JSDoc.
 
-The framework does not currently dedupe these declarations across `_spine` and the runtime module; the duplication is intentional under ADR-0010 (spine is the canonical type source; runtime modules carry the value-side). If you find a third copy somewhere, that's a bug — file an issue.
+The framework does not currently dedupe these declarations across `_spine` and the runtime module; the duplication is intentional: the spine is the canonical type source, and runtime modules carry the value-side. If you find a third copy somewhere, that's a bug — file an issue.
 
 ## Issues vs feature requests
 

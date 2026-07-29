@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / McpToolCall
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / McpToolCall
 
 # Interface: McpToolCall
 

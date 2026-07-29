@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / TokensOf
+[LiteShip](../../README.md) / [\_spine](../README.md) / TokensOf
 
 # Type Alias: TokensOf\<T\>
 

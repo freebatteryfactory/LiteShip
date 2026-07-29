@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / TokenCSSResult
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / TokenCSSResult
 
 # Interface: TokenCSSResult
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / stableSerialize
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / stableSerialize
 
 # Function: stableSerialize()
 

@@ -95,7 +95,8 @@ export type TrackEnvelope = FadeEnvelope | PulseEnvelope;
 /**
  * Compile-time-resolved envelope — the `Envelope` ECS component shape
  * emitted by `compileScene`. Beat spans are pre-resolved to frame
- * counts so the per-tick read stays arithmetic-only (ADR-0002).
+ * counts so the per-tick read stays arithmetic-only (the per-frame hot
+ * path allocates zero objects).
  */
 export type ResolvedEnvelope =
   | {

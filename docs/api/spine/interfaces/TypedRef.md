@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / TypedRef
+[LiteShip](../../README.md) / [\_spine](../README.md) / TypedRef
 
 # Interface: TypedRef
 
-Defined in: [\_spine/core.d.ts:1124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1124)
+Defined in: [\_spine/core.d.ts:1125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1125)
 
 Content-addressed reference to a payload validated against a schema hash.
 
@@ -16,7 +16,7 @@ Content-addressed reference to a payload validated against a schema hash.
 
 > `readonly` **content\_hash**: `string`
 
-Defined in: [\_spine/core.d.ts:1126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1126)
+Defined in: [\_spine/core.d.ts:1127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1127)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/core.d.ts:1126](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **schema\_hash**: `string`
 
-Defined in: [\_spine/core.d.ts:1125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1125)
+Defined in: [\_spine/core.d.ts:1126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1126)

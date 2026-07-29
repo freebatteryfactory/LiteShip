@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/motion](../../../README.md) / [BlendTree](../README.md) / Node
+[LiteShip](../../../../../../README.md) / [liteship/src/motion](../../../README.md) / [BlendTree](../README.md) / Node
 
 # Type Alias: Node\<T\>
 

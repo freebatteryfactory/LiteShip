@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FEATURE\_EDGE\_ENUMERATORS
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FEATURE\_EDGE\_ENUMERATORS
 
 # Variable: FEATURE\_EDGE\_ENUMERATORS
 

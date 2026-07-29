@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Zap](../README.md) / debounce
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Zap](../README.md) / debounce
 
 # Function: debounce()
 
 > **debounce**\<`T`\>(`event`, `ms`): [`Zap`](../../../interfaces/Zap.md)\<`T`\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:942](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L942)
+Defined in: [\_spine/core.d.ts:943](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L943)
 
 ## Type Parameters
 

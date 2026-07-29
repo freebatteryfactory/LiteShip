@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / CrossOriginEmbedderPolicy
+[LiteShip](../../../README.md) / [astro/src](../README.md) / CrossOriginEmbedderPolicy
 
 # Type Alias: CrossOriginEmbedderPolicy
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / DiagnosticPayload
+[LiteShip](../../../README.md) / [core/src](../README.md) / DiagnosticPayload
 
 # Interface: DiagnosticPayload
 

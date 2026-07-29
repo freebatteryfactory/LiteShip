@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CellSubscriber
+[LiteShip](../../../README.md) / [core/src](../README.md) / CellSubscriber
 
 # Type Alias: CellSubscriber\<T\>
 

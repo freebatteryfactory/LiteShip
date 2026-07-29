@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / CLAIM\_PROPERTY\_RULE\_ID
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / CLAIM\_PROPERTY\_RULE\_ID
 
 # Variable: CLAIM\_PROPERTY\_RULE\_ID
 

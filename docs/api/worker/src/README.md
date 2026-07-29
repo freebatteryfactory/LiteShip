@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / worker/src
+[LiteShip](../../README.md) / worker/src
 
 # worker/src
 

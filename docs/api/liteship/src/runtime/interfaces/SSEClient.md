@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / SSEClient
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / SSEClient
 
 # Interface: SSEClient
 
-Defined in: web/dist/stream/sse.d.ts:31
+Defined in: web/dist/stream/sse.d.ts:32
 
 SSE client instance.
 
@@ -20,7 +20,7 @@ SSE client instance.
 
 > `readonly` **backpressure**: [`BackpressureHint`](BackpressureHint.md)
 
-Defined in: web/dist/stream/sse.d.ts:52
+Defined in: web/dist/stream/sse.d.ts:53
 
 Backpressure snapshot for the current buffer occupancy (plain accessor).
 
@@ -30,7 +30,7 @@ Backpressure snapshot for the current buffer occupancy (plain accessor).
 
 > `readonly` **lastEventId**: `string` \| `null`
 
-Defined in: web/dist/stream/sse.d.ts:50
+Defined in: web/dist/stream/sse.d.ts:51
 
 Cursor from the most recent message, or `null` (plain accessor).
 
@@ -54,7 +54,7 @@ The owning disposal handle — for advanced/debug composition only.
 
 > `readonly` **messages**: `AsyncIterable`\<[`SSEMessage`](../type-aliases/SSEMessage.md)\>
 
-Defined in: web/dist/stream/sse.d.ts:38
+Defined in: web/dist/stream/sse.d.ts:39
 
 Live async stream of parsed messages. Iterating drains the sse-pure
 overflow buffer (so [backpressure](#backpressure) `bufferSize` drops as messages are
@@ -67,7 +67,7 @@ bounded-`Queue` semantics.
 
 > `readonly` **state**: [`SSEState`](../type-aliases/SSEState.md)
 
-Defined in: web/dist/stream/sse.d.ts:48
+Defined in: web/dist/stream/sse.d.ts:49
 
 Current connection state (plain accessor).
 
@@ -77,7 +77,7 @@ Current connection state (plain accessor).
 
 > `readonly` **stateChanges**: `AsyncIterable`\<[`SSEState`](../type-aliases/SSEState.md)\>
 
-Defined in: web/dist/stream/sse.d.ts:46
+Defined in: web/dist/stream/sse.d.ts:47
 
 Edge stream of connection-state *transitions* (one emission per
 `connecting`/`reconnecting`/`connected`/`error`/`disconnected` change,
@@ -127,7 +127,7 @@ Tear down exactly once; the returned promise settles when async finalizers settl
 
 > **reconnect**(): `void`
 
-Defined in: web/dist/stream/sse.d.ts:54
+Defined in: web/dist/stream/sse.d.ts:55
 
 Manual reconnect: cancel timers, close the source, reset backoff, re-open.
 

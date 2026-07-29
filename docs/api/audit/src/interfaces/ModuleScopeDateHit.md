@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / ModuleScopeDateHit
+[LiteShip](../../../README.md) / [audit/src](../README.md) / ModuleScopeDateHit
 
 # Interface: ModuleScopeDateHit
 

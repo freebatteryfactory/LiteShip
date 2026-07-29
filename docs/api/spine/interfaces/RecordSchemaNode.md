@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / RecordSchemaNode
+[LiteShip](../../README.md) / [\_spine](../README.md) / RecordSchemaNode
 
 # Interface: RecordSchemaNode
 
-Defined in: [\_spine/core.d.ts:657](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L657)
+Defined in: [\_spine/core.d.ts:658](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L658)
 
 Record schema AST node.
 
@@ -20,7 +20,7 @@ Record schema AST node.
 
 > `readonly` `optional` **annotations?**: `Readonly`\<`Record`\<`symbol`, `unknown`\>\>
 
-Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L611)
+Defined in: [\_spine/core.d.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L612)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:611](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `"record"`
 
-Defined in: [\_spine/core.d.ts:658](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L658)
+Defined in: [\_spine/core.d.ts:659](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L659)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:658](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **value**: [`SchemaNode`](../type-aliases/SchemaNode.md)
 
-Defined in: [\_spine/core.d.ts:659](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L659)
+Defined in: [\_spine/core.d.ts:660](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L660)

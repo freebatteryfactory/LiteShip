@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / VideoRenderer
+[LiteShip](../../README.md) / [\_spine](../README.md) / VideoRenderer
 
 # Interface: VideoRenderer
 
-Defined in: [\_spine/core.d.ts:1586](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1586)
+Defined in: [\_spine/core.d.ts:1588](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1588)
 
 Canonical frame scheduler over a compositor and video configuration.
 
@@ -16,7 +16,7 @@ Canonical frame scheduler over a compositor and video configuration.
 
 > `readonly` **config**: [`VideoConfig`](VideoConfig.md)
 
-Defined in: [\_spine/core.d.ts:1587](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1587)
+Defined in: [\_spine/core.d.ts:1589](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1589)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1587](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **schedule**: [`FrameSchedule`](FrameSchedule.md)
 
-Defined in: [\_spine/core.d.ts:1588](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1588)
+Defined in: [\_spine/core.d.ts:1590](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1590)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1588](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **scheduler**: [`FixedStep`](../namespaces/Scheduler/interfaces/FixedStep.md)
 
-Defined in: [\_spine/core.d.ts:1590](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1590)
+Defined in: [\_spine/core.d.ts:1592](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1592)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/core.d.ts:1590](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **totalFrames**: `number`
 
-Defined in: [\_spine/core.d.ts:1589](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1589)
+Defined in: [\_spine/core.d.ts:1591](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1591)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/core.d.ts:1589](https://github.com/freebatteryfactory/LiteS
 
 > **frames**(): `AsyncGenerator`\<[`VideoFrameOutput`](VideoFrameOutput.md)\>
 
-Defined in: [\_spine/core.d.ts:1591](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1591)
+Defined in: [\_spine/core.d.ts:1593](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1593)
 
 #### Returns
 

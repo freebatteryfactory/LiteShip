@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / verifyAppliedGraph
+[LiteShip](../../../README.md) / [core/src](../README.md) / verifyAppliedGraph
 
 # Function: verifyAppliedGraph()
 

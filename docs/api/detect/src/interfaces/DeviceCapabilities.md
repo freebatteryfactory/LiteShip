@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / DeviceCapabilities
+[LiteShip](../../../README.md) / [detect/src](../README.md) / DeviceCapabilities
 
 # Interface: DeviceCapabilities
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FloorDirection
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FloorDirection
 
 # Type Alias: FloorDirection
 

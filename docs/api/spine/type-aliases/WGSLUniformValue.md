@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WGSLUniformValue
+[LiteShip](../../README.md) / [\_spine](../README.md) / WGSLUniformValue
 
 # Type Alias: WGSLUniformValue
 

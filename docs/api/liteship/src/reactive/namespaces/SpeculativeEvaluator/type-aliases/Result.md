@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/reactive](../../../README.md) / [SpeculativeEvaluator](../README.md) / Result
+[LiteShip](../../../../../../README.md) / [liteship/src/reactive](../../../README.md) / [SpeculativeEvaluator](../README.md) / Result
 
 # Type Alias: Result\<B\>
 

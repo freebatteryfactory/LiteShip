@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / VideoFrameOutput
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / VideoFrameOutput
 
 # Interface: VideoFrameOutput
 

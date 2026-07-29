@@ -5,7 +5,7 @@
  *
  * `@liteship/gauntlet` DEFINES the {@link MutationFacts} interface but carries no
  * `typescript` dep and runs no test suite — it is the lean engine and mutation is an
- * INJECTED capability (the same ADR-0012 boundary as the IR / supply-chain). THIS
+ * INJECTED capability (the same host-injection boundary as the IR / supply-chain). THIS
  * module is the host half: `@liteship/audit` (which deps `typescript`) generates the
  * deterministic mutant catalogue per file ({@link generateMutants}), evaluates each
  * mutant against the INJECTED test runner ({@link evaluateMutant}), and folds the

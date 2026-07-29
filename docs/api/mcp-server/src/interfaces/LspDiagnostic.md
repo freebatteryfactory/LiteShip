@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / LspDiagnostic
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / LspDiagnostic
 
 # Interface: LspDiagnostic
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / KVNamespace
+[LiteShip](../../../README.md) / [edge/src](../README.md) / KVNamespace
 
 # Interface: KVNamespace
 

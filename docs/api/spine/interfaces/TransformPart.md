@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / TransformPart
+[LiteShip](../../README.md) / [\_spine](../README.md) / TransformPart
 
 # Interface: TransformPart
 
-Defined in: [\_spine/core.d.ts:1361](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1361)
+Defined in: [\_spine/core.d.ts:1362](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1362)
 
 Partial transform components composed into a rendered transform value.
 
@@ -16,7 +16,7 @@ Partial transform components composed into a rendered transform value.
 
 > `readonly` **args**: readonly [`TypedValue`](../type-aliases/TypedValue.md)[]
 
-Defined in: [\_spine/core.d.ts:1363](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1363)
+Defined in: [\_spine/core.d.ts:1364](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1364)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/core.d.ts:1363](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **fn**: `string`
 
-Defined in: [\_spine/core.d.ts:1362](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1362)
+Defined in: [\_spine/core.d.ts:1363](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1363)

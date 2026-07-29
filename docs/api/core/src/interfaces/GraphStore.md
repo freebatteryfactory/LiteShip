@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / GraphStore
+[LiteShip](../../../README.md) / [core/src](../README.md) / GraphStore
 
 # Interface: GraphStore
 

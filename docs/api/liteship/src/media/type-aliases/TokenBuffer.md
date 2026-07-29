@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / TokenBuffer
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / TokenBuffer
 
 # Type Alias: TokenBuffer\<T\>
 

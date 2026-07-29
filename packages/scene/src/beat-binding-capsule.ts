@@ -113,7 +113,7 @@ export function bindBeats(beats: readonly BeatComponent[]): readonly BeatSpawn[]
 
 /**
  * BeatBinding namespace — pure transforms over beat markers.
- * Companion type namespace exposes Spawn and Component shapes (ADR-0001).
+ * Companion type namespace exposes Spawn and Component shapes.
  */
 export const BeatBinding = {
   /** Bind a list of beat markers into spawn descriptors. */

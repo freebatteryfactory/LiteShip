@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CellReplay
+[LiteShip](../../../README.md) / [core/src](../README.md) / CellReplay
 
 # Interface: CellReplay\<T\>
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ComposableEntity
+[LiteShip](../../../README.md) / [core/src](../README.md) / ComposableEntity
 
 # Interface: ComposableEntity\<T\>
 

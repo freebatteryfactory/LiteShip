@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/graph](../README.md) / ComponentNode
+[LiteShip](../../../../README.md) / [liteship/src/graph](../README.md) / ComponentNode
 
 # Interface: ComponentNode
 

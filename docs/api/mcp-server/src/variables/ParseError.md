@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / ParseError
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / ParseError
 
 # Variable: ParseError
 

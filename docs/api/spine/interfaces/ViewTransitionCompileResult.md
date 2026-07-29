@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ViewTransitionCompileResult
+[LiteShip](../../README.md) / [\_spine](../README.md) / ViewTransitionCompileResult
 
 # Interface: ViewTransitionCompileResult
 

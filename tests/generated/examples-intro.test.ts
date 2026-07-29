@@ -77,7 +77,8 @@ describe('examples.intro', () => {
   it('determinism: identical seed produces identical frame stream across 3 runs', async () => {
     // Drive the SAME compiled scene through the ECS runtime three times. The
     // compiled descriptor is pure data and the tick is deterministic arithmetic
-    // (ADR-0002), so every run must produce a byte-identical frame stream —
+    // (the per-frame hot path is plain JS that allocates nothing), so every run
+    // must produce a byte-identical frame stream —
     // compared via the canonical contentAddressOf address, never a hand-rolled
     // deep-equal. A non-determinism regression (Map-iteration leak, Date.now in
     // a system, float drift) breaks the address equality RED.
@@ -132,7 +133,7 @@ describe('examples.intro', () => {
     const handle = await SceneRuntime.build(compiled, { sampleRate });
     try {
       // Structural runtime invariant: the runtime registers exactly its
-      // canonical system set (ADR-0009 ECS substrate) and spawns >= 0 entities.
+      // canonical system set (scenes ARE ECS worlds) and spawns >= 0 entities.
       expect(handle.systemsRegistered).toBe(SceneRuntime.systemCount);
       expect(handle.entitySpawnCount).toBeGreaterThanOrEqual(0);
       for (let i = 0; i < tickCount; i++) {

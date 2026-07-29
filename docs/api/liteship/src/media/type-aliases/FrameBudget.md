@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / FrameBudget
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / FrameBudget
 
 # Type Alias: FrameBudget
 

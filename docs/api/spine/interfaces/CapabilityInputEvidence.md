@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CapabilityInputEvidence
+[LiteShip](../../README.md) / [\_spine](../README.md) / CapabilityInputEvidence
 
 # Interface: CapabilityInputEvidence
 

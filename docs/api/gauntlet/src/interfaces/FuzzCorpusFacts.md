@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FuzzCorpusFacts
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FuzzCorpusFacts
 
 # Interface: FuzzCorpusFacts
 

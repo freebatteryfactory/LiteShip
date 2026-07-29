@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/astro](../README.md) / ResponsiveMediaCapsSource
+[LiteShip](../../../../README.md) / [liteship/src/astro](../README.md) / ResponsiveMediaCapsSource
 
 # Type Alias: ResponsiveMediaCapsSource
 

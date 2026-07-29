@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / RuntimeEndpointPolicy
+[LiteShip](../../README.md) / [\_spine](../README.md) / RuntimeEndpointPolicy
 
 # Interface: RuntimeEndpointPolicy
 

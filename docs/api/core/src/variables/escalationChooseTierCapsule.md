@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / escalationChooseTierCapsule
+[LiteShip](../../../README.md) / [core/src](../README.md) / escalationChooseTierCapsule
 
 # Variable: escalationChooseTierCapsule
 
 > `const` **escalationChooseTierCapsule**: [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`"policyGate"`, \{ `allocClass?`: `"zero"` \| `"bounded"` \| `"unbounded"`; `grants`: readonly (`"static"` \| `"styled"` \| `"reactive"` \| `"animated"` \| `"gpu"`)[]; `memoryMb?`: `number`; `p95Ms?`: `number`; `requires`: `"static"` \| `"styled"` \| `"reactive"` \| `"animated"` \| `"gpu"`; `site`: `"node"` \| `"browser"` \| `"worker"` \| `"edge"`; `sites`: readonly (`"node"` \| `"browser"` \| `"worker"` \| `"edge"`)[]; \}, \{ `effect`: `"allow"` \| `"deny"`; `reasons`: readonly `object`[]; \}, `unknown`\>
 
-Defined in: [core/src/authoring/capsules/escalation-choose-tier.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsules/escalation-choose-tier.ts#L199)
+Defined in: [core/src/authoring/capsules/escalation-choose-tier.ts:200](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsules/escalation-choose-tier.ts#L200)
 
 Declared policyGate capsule for the escalation chooser. Registered in the
 immutable exported declaration; walked by the factory compiler. The

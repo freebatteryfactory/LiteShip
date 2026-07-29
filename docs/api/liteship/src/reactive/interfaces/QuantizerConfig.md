@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / QuantizerConfig
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / QuantizerConfig
 
 # Interface: QuantizerConfig\<B, O\>
 

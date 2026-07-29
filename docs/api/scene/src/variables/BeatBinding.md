@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / BeatBinding
+[LiteShip](../../../README.md) / [scene/src](../README.md) / BeatBinding
 
 # Variable: BeatBinding
 
@@ -11,7 +11,7 @@
 Defined in: [scene/src/beat-binding-capsule.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/beat-binding-capsule.ts#L118)
 
 BeatBinding namespace — pure transforms over beat markers.
-Companion type namespace exposes Spawn and Component shapes (ADR-0001).
+Companion type namespace exposes Spawn and Component shapes.
 
 ## Type Declaration
 

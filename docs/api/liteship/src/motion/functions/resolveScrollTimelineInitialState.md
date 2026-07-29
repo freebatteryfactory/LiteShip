@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / resolveScrollTimelineInitialState
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / resolveScrollTimelineInitialState
 
 # Function: resolveScrollTimelineInitialState()
 

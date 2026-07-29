@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FeatureEdgeEnumerator
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FeatureEdgeEnumerator
 
 # Type Alias: FeatureEdgeEnumerator
 

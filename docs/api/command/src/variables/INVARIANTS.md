@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / INVARIANTS
+[LiteShip](../../../README.md) / [command/src](../README.md) / INVARIANTS
 
 # Variable: INVARIANTS
 

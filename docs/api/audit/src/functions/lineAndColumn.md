@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / lineAndColumn
+[LiteShip](../../../README.md) / [audit/src](../README.md) / lineAndColumn
 
 # Function: lineAndColumn()
 

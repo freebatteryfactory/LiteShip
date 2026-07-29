@@ -15,8 +15,8 @@
  * disagreeing digests, and the first point the traces parted — the engine picks
  * no winner; the reader (or an agent) acts on the seed. The gate NEVER re-runs the
  * harness or re-derives determinism — the HOST (the CLI `--simulate` path) ran the
- * corpus and decided; the gate only folds the already-decided facts (ADR-0012, the
- * same lean pattern as {@link supplyChainGate}).
+ * corpus and decided; the gate only folds the already-decided facts (the same lean
+ * pattern as {@link supplyChainGate}).
  *
  * LEAN BY CONSTRUCTION: the gate mints no world, runs no scenario, addresses no
  * trace, and imports nothing from the DST harness. An ABSENT facts record is an

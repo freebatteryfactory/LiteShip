@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / QuantizeNestedRule
+[LiteShip](../../README.md) / [\_spine](../README.md) / QuantizeNestedRule
 
 # Interface: QuantizeNestedRule
 

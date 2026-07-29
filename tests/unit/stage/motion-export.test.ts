@@ -3,7 +3,8 @@
  *
  * `exportMotionTrack` samples the ONE shared kernel (`sampleProgram`) at every frame and
  * content-addresses the folded per-frame CSS through the SAME `CanonicalCbor.encode` →
- * `AddressedDigest.of` kernel the dual-export carrier uses (ADR-0003/0011/0040). The digest
+ * `AddressedDigest.of` kernel the dual-export carrier uses (one content-addressing law, one
+ * integrity-digest pairing, and ONE `sampleProgram` kernel shared by every render target). The digest
  * IS the built-in oracle for the video leg: the SAME program + frame count addresses
  * identically, while a different program or frame count addresses differently. The
  * cross-target parity oracle proves the frame VALUES equal the reference; this proves the

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / defineAsset
+[LiteShip](../../../README.md) / [assets/src](../README.md) / defineAsset
 
 # Function: defineAsset()
 

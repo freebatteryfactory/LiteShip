@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / WaiverApplication
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / WaiverApplication
 
 # Interface: WaiverApplication
 

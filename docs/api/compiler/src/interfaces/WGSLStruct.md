@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / WGSLStruct
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / WGSLStruct
 
 # Interface: WGSLStruct
 

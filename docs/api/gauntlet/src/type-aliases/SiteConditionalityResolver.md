@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SiteConditionalityResolver
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SiteConditionalityResolver
 
 # Type Alias: SiteConditionalityResolver
 

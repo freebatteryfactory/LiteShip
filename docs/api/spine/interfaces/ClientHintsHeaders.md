@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ClientHintsHeaders
+[LiteShip](../../README.md) / [\_spine](../README.md) / ClientHintsHeaders
 
 # Interface: ClientHintsHeaders
 

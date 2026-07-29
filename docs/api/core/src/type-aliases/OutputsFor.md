@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / OutputsFor
+[LiteShip](../../../README.md) / [core/src](../README.md) / OutputsFor
 
 # Type Alias: OutputsFor\<B, T\>
 

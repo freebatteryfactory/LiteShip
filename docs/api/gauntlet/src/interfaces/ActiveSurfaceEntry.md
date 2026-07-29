@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ActiveSurfaceEntry
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ActiveSurfaceEntry
 
 # Interface: ActiveSurfaceEntry
 

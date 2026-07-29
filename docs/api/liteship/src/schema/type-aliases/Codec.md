@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / Codec
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / Codec
 
 # Type Alias: Codec\<A, I\>
 

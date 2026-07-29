@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / ThemeCompileResult
+[LiteShip](../../../README.md) / [edge/src](../README.md) / ThemeCompileResult
 
 # Interface: ThemeCompileResult
 

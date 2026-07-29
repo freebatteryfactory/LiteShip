@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CommandAnnotations
+[LiteShip](../../../README.md) / [command/src](../README.md) / CommandAnnotations
 
 # Type Alias: CommandAnnotations
 

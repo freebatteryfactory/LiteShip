@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / BeatComponent
+[LiteShip](../../../README.md) / [scene/src](../README.md) / BeatComponent
 
 # Type Alias: BeatComponent
 

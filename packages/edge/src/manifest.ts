@@ -1,6 +1,6 @@
 /**
  * Boundary manifest contract -- the build-to-edge handoff for precompiled
- * boundary outputs (ADR-0003 content addressing).
+ * boundary outputs (content addressing).
  *
  * The build pipeline (`@liteship/vite` `collectBoundaryManifest`) derives every
  * boundary's `ContentAddress` and per-tier {@link CompiledOutputs} at build

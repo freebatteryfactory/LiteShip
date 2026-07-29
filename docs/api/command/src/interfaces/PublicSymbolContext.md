@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / PublicSymbolContext
+[LiteShip](../../../README.md) / [command/src](../README.md) / PublicSymbolContext
 
 # Interface: PublicSymbolContext
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / liteshipMiddleware
+[LiteShip](../../../README.md) / [astro/src](../README.md) / liteshipMiddleware
 
 # Function: liteshipMiddleware()
 

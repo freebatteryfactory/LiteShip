@@ -1,4 +1,7 @@
-/** Property laws for ADR-0045 domain-directory graduation. */
+/**
+ * Property laws for domain-directory graduation: a module stays a top-level `src/` file until a
+ * SECOND module about the same subject appears — the second module earns the directory, not the first.
+ */
 
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

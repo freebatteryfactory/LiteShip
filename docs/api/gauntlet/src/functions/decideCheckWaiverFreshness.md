@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / decideCheckWaiverFreshness
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / decideCheckWaiverFreshness
 
 # Function: decideCheckWaiverFreshness()
 

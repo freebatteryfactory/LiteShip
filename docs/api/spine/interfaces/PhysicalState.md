@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / PhysicalState
+[LiteShip](../../README.md) / [\_spine](../README.md) / PhysicalState
 
 # Interface: PhysicalState
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CaptureFrame
+[LiteShip](../../../README.md) / [core/src](../README.md) / CaptureFrame
 
 # Interface: CaptureFrame
 

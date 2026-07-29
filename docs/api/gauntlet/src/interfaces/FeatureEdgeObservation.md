@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FeatureEdgeObservation
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FeatureEdgeObservation
 
 # Interface: FeatureEdgeObservation
 

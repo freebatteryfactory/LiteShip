@@ -16,7 +16,7 @@ function makeHeaders(overrides: Record<string, string> = {}): Headers {
   });
 }
 
-/** Real minted address -- the KV keyspace is content-addressed (ADR-0003). */
+/** Real minted address -- the KV keyspace is content-addressed. */
 const testBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
@@ -389,7 +389,7 @@ describe('createEdgeHostAdapter', () => {
 });
 
 describe('createEdgeHostAdapter (multi-boundary)', () => {
-  /** Distinct content -> distinct content addresses (ADR-0003). */
+  /** Distinct content -> distinct content addresses. */
   const heroBoundary = defineBoundary({
     input: 'viewport.width',
     at: [

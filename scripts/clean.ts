@@ -5,7 +5,7 @@
  *   - packages/<all>/*.tsbuildinfo
  *   - root tsconfig.tsbuildinfo
  *   - coverage/
- *   - reports/ (only generated artifacts, not docs/adr or other source)
+ *   - reports/ (only generated artifacts, not docs/ or other source)
  *   - .liteship/generated/
  *   - benchmarks/raw/ (keep history.jsonl)
  *

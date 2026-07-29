@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / decode
+[LiteShip](../../../README.md) / [core/src](../README.md) / decode
 
 # Function: decode()
 

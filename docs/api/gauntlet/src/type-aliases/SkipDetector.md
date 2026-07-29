@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SkipDetector
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SkipDetector
 
 # Type Alias: SkipDetector
 

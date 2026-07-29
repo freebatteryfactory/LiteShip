@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / AsyncOwnedResource
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / AsyncOwnedResource
 
 # Interface: AsyncOwnedResource
 

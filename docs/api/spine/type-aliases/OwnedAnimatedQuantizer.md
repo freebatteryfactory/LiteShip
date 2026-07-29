@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / OwnedAnimatedQuantizer
+[LiteShip](../../README.md) / [\_spine](../README.md) / OwnedAnimatedQuantizer
 
 # Type Alias: OwnedAnimatedQuantizer\<B\>
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / sanitizeHTML
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / sanitizeHTML
 
 # Function: sanitizeHTML()
 

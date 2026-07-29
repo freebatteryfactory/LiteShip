@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / DesignTier
+[LiteShip](../../README.md) / [\_spine](../README.md) / DesignTier
 
 # Type Alias: DesignTier
 

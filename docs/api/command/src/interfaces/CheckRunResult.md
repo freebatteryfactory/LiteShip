@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckRunResult
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckRunResult
 
 # Interface: CheckRunResult
 

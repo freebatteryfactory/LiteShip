@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / LSP\_METHOD\_CATALOG
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / LSP\_METHOD\_CATALOG
 
 # Variable: LSP\_METHOD\_CATALOG
 

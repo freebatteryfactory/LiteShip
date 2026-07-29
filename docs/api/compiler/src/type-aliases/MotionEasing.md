@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / MotionEasing
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / MotionEasing
 
 # Type Alias: MotionEasing
 

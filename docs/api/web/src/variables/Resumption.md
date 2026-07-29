@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / Resumption
+[LiteShip](../../../README.md) / [web/src](../README.md) / Resumption
 
 # Variable: Resumption
 
 > `const` **Resumption**: `object`
 
-Defined in: [web/src/stream/resumption.ts:411](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L411)
+Defined in: [web/src/stream/resumption.ts:415](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L415)
 
 SSE resumption protocol namespace.
 

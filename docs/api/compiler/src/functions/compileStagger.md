@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / compileStagger
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / compileStagger
 
 # Function: compileStagger()
 

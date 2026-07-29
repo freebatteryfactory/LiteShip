@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / StreamRecoveryHandlers
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / StreamRecoveryHandlers
 
 # Interface: StreamRecoveryHandlers
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../../modules.md) / [liteship/src/evidence](../../../README.md) / [UIQuality](../README.md) / Tier
+[LiteShip](../../../../../../README.md) / [liteship/src/evidence](../../../README.md) / [UIQuality](../README.md) / Tier
 
 # Type Alias: Tier
 

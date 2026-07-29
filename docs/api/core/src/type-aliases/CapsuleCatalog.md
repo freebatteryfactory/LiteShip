@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CapsuleCatalog
+[LiteShip](../../../README.md) / [core/src](../README.md) / CapsuleCatalog
 
 # Type Alias: CapsuleCatalog
 

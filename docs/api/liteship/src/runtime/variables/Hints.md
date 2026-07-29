@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / Hints
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / Hints
 
 # Variable: Hints
 

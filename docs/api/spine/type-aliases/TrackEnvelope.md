@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / TrackEnvelope
+[LiteShip](../../README.md) / [\_spine](../README.md) / TrackEnvelope
 
 # Type Alias: TrackEnvelope
 

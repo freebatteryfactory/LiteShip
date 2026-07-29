@@ -259,7 +259,7 @@ export const jsonRpcServerCapsule = defineCapsule({
   run: observeJsonRpcProtocol,
 });
 
-// ---------- Namespace surface (ADR-0001) ----------
+// ---------- Namespace surface (namespace-object pattern) ----------
 
 /** Namespaced public surface of the kernel. */
 export const JsonRpcServer = {

@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FACT\_KINDS
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FACT\_KINDS
 
 # Variable: FACT\_KINDS
 
 > `const` **FACT\_KINDS**: readonly \[`"skipSites"`, `"activeSurfaceFacts"`, `"featureEdges"`, `"checkGovernance"`\]
 
-Defined in: [gauntlet/src/gate.ts:677](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L677)
+Defined in: [gauntlet/src/gate.ts:678](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L678)
 
 The runtime tuple of FactKinds a [FactGate](../interfaces/FactGate.md) may require — the SINGLE SOURCE for the
 [FactKind](../type-aliases/FactKind.md) type (derived below, never re-typed) AND the runtime allowlist

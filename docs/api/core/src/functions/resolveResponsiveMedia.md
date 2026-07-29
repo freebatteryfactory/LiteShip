@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / resolveResponsiveMedia
+[LiteShip](../../../README.md) / [core/src](../README.md) / resolveResponsiveMedia
 
 # Function: resolveResponsiveMedia()
 

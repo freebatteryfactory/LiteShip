@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckPlatform
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckPlatform
 
 # Type Alias: CheckPlatform
 

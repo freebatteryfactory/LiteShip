@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / AudioSourcePart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / AudioSourcePart
 
 # Variable: AudioSourcePart
 

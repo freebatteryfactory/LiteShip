@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / SymbolReferenceOracleInput
+[LiteShip](../../../README.md) / [audit/src](../README.md) / SymbolReferenceOracleInput
 
 # Interface: SymbolReferenceOracleInput
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / GraphMutationResponse
+[LiteShip](../../../README.md) / [core/src](../README.md) / GraphMutationResponse
 
 # Type Alias: GraphMutationResponse
 

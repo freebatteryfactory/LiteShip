@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / watchAndPrepare
+[LiteShip](../../../README.md) / [web/src](../README.md) / watchAndPrepare
 
 # Function: watchAndPrepare()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [Messages](../README.md) / ToWorker
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [Messages](../README.md) / ToWorker
 
 # Type Alias: ToWorker
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / GLSLUniform
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / GLSLUniform
 
 # Interface: GLSLUniform
 

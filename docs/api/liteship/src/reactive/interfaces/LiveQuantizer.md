@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / LiveQuantizer
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / LiveQuantizer
 
 # Interface: LiveQuantizer\<B, O\>
 

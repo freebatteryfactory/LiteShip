@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / imageDecoder
+[LiteShip](../../../README.md) / [assets/src](../README.md) / imageDecoder
 
 # Function: imageDecoder()
 

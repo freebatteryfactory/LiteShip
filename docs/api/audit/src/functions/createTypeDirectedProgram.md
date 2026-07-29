@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / createTypeDirectedProgram
+[LiteShip](../../../README.md) / [audit/src](../README.md) / createTypeDirectedProgram
 
 # Function: createTypeDirectedProgram()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / MotionSpringConfig
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / MotionSpringConfig
 
 # Interface: MotionSpringConfig
 

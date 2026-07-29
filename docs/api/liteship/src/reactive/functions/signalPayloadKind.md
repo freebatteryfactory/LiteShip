@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / signalPayloadKind
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / signalPayloadKind
 
 # Function: signalPayloadKind()
 

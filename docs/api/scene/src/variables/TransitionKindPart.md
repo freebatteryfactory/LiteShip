@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / TransitionKindPart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / TransitionKindPart
 
 # Variable: TransitionKindPart
 

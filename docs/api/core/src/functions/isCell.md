@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / isCell
+[LiteShip](../../../README.md) / [core/src](../README.md) / isCell
 
 # Function: isCell()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / tierTargets
+[LiteShip](../../../README.md) / [core/src](../README.md) / tierTargets
 
 # Function: tierTargets()
 

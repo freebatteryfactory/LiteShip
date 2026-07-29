@@ -110,7 +110,7 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     term: 'hot path',
     category: 'primitive',
     definition:
-      'Per-tick runtime code whose steady state avoids allocation. See ADR-0002 for the pool, dirty-flag, and dense-ECS discipline.',
+      'Per-tick runtime code whose steady state allocates zero objects: a pooled composite state, bitmask dirty flags, and dense Float64Array ECS stores.',
   },
   {
     term: 'compile path',
@@ -122,7 +122,7 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     term: 'capsule',
     category: 'primitive',
     definition:
-      'Content-addressed unit of dispatch (ADR-0008). Seven assembly kinds: pureTransform, receiptedMutation, stateMachine, siteAdapter, policyGate, cachedProjection, sceneComposition.',
+      'Content-addressed unit of dispatch. The catalog is closed at seven assembly kinds: pureTransform, receiptedMutation, stateMachine, siteAdapter, policyGate, cachedProjection, sceneComposition.',
     seeAlso: ['receipt'],
   },
   {

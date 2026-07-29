@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / compileTokenBlock
+[LiteShip](../../../README.md) / [vite/src](../README.md) / compileTokenBlock
 
 # Function: compileTokenBlock()
 

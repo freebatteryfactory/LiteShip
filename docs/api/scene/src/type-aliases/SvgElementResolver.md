@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / SvgElementResolver
+[LiteShip](../../../README.md) / [scene/src](../README.md) / SvgElementResolver
 
 # Type Alias: SvgElementResolver
 

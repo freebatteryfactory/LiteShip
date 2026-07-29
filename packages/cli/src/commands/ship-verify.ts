@@ -1,6 +1,6 @@
 /**
  * verify (CLI adapter) — thin projection over `@liteship/command`'s verify command
- * (ADR-0011 local verifier). The four-verdict decision tree lives in
+ * (the local verifier). The four-verdict decision tree lives in
  * `@liteship/command`; this adapter parses argv, injects the file reads and the
  * native (sync) capsule decode + tarball-manifest recompute, and renders the
  * ShipVerifyReceipt. No network, no pnpm, no git.

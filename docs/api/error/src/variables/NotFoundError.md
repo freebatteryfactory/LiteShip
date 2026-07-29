@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / NotFoundError
+[LiteShip](../../../README.md) / [error/src](../README.md) / NotFoundError
 
 # Variable: NotFoundError
 

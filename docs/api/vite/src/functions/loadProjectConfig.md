@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / loadProjectConfig
+[LiteShip](../../../README.md) / [vite/src](../README.md) / loadProjectConfig
 
 # Function: loadProjectConfig()
 

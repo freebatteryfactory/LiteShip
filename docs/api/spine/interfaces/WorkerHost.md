@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WorkerHost
+[LiteShip](../../README.md) / [\_spine](../README.md) / WorkerHost
 
 # Interface: WorkerHost
 
@@ -28,7 +28,7 @@ Defined in: [\_spine/worker.d.ts:474](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L181)
+Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L182)
 
 #### Inherited from
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/worker.d.ts:475](https://github.com/freebatteryfactory/Lite
 
 > **\[asyncDispose\]**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L183)
+Defined in: [\_spine/core.d.ts:184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L184)
 
 #### Returns
 
@@ -82,7 +82,7 @@ Defined in: [\_spine/worker.d.ts:476](https://github.com/freebatteryfactory/Lite
 
 > **dispose**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L182)
+Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L183)
 
 #### Returns
 

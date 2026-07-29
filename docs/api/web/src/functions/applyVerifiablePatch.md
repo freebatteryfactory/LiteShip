@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / applyVerifiablePatch
+[LiteShip](../../../README.md) / [web/src](../README.md) / applyVerifiablePatch
 
 # Function: applyVerifiablePatch()
 

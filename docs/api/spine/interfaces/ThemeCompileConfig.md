@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ThemeCompileConfig
+[LiteShip](../../README.md) / [\_spine](../README.md) / ThemeCompileConfig
 
 # Interface: ThemeCompileConfig
 

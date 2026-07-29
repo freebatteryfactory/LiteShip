@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / RuntimeUrlResolution
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / RuntimeUrlResolution
 
 # Type Alias: RuntimeUrlResolution
 

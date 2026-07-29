@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / RuntimeWriteWindow
+[LiteShip](../../README.md) / [\_spine](../README.md) / RuntimeWriteWindow
 
 # Interface: RuntimeWriteWindow
 
-Defined in: [\_spine/core.d.ts:1397](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1397)
+Defined in: [\_spine/core.d.ts:1398](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1398)
 
 Timed write window containing the properties active over one interval.
 
@@ -16,7 +16,7 @@ Timed write window containing the properties active over one interval.
 
 > `readonly` **easing**: [`RuntimeEasing`](RuntimeEasing.md)
 
-Defined in: [\_spine/core.d.ts:1401](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1401)
+Defined in: [\_spine/core.d.ts:1402](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1402)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1401](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **properties**: readonly [`RuntimeWriteProperty`](RuntimeWriteProperty.md)[]
 
-Defined in: [\_spine/core.d.ts:1400](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1400)
+Defined in: [\_spine/core.d.ts:1401](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1401)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1400](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **windowEnd**: `number`
 
-Defined in: [\_spine/core.d.ts:1399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1399)
+Defined in: [\_spine/core.d.ts:1400](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1400)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:1399](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **windowStart**: `number`
 
-Defined in: [\_spine/core.d.ts:1398](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1398)
+Defined in: [\_spine/core.d.ts:1399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1399)

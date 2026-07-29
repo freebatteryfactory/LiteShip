@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [mcp-server/src](../../../README.md) / [JsonRpcServer](../README.md) / Response
+[LiteShip](../../../../../README.md) / [mcp-server/src](../../../README.md) / [JsonRpcServer](../README.md) / Response
 
 # Type Alias: Response
 

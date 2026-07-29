@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / DecodeViolationClass
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / DecodeViolationClass
 
 # Type Alias: DecodeViolationClass
 

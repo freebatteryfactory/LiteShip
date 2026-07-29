@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / CompositorWorkerStartupStage
+[LiteShip](../../README.md) / [\_spine](../README.md) / CompositorWorkerStartupStage
 
 # Type Alias: CompositorWorkerStartupStage
 

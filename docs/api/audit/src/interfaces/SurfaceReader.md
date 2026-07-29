@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / SurfaceReader
+[LiteShip](../../../README.md) / [audit/src](../README.md) / SurfaceReader
 
 # Interface: SurfaceReader
 
-Defined in: [audit/src/type-export-surface.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L75)
+Defined in: [audit/src/type-export-surface.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L77)
 
 The filesystem seam the enumerator reads through — injectable so the walk is a
 pure unit under test (a virtual file map) and policy-free in production (the
@@ -18,7 +18,7 @@ real `fs`).
 
 > **fileExists**(`path`): `boolean`
 
-Defined in: [audit/src/type-export-surface.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L77)
+Defined in: [audit/src/type-export-surface.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L79)
 
 #### Parameters
 
@@ -36,7 +36,7 @@ Defined in: [audit/src/type-export-surface.ts:77](https://github.com/freebattery
 
 > **readFile**(`path`): `string`
 
-Defined in: [audit/src/type-export-surface.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L76)
+Defined in: [audit/src/type-export-surface.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L78)
 
 #### Parameters
 

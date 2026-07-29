@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / GRAPH\_QUERY\_FALLBACK\_HEADER
+[LiteShip](../../../README.md) / [core/src](../README.md) / GRAPH\_QUERY\_FALLBACK\_HEADER
 
 # Variable: GRAPH\_QUERY\_FALLBACK\_HEADER
 

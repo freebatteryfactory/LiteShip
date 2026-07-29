@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / createCompositorStatePool
+[LiteShip](../../../README.md) / [core/src](../README.md) / createCompositorStatePool
 
 # Function: createCompositorStatePool()
 

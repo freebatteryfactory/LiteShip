@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [error/src](../README.md) / DiagnosticCodeFor
+[LiteShip](../../../README.md) / [error/src](../README.md) / DiagnosticCodeFor
 
 # Type Alias: DiagnosticCodeFor\<A\>
 

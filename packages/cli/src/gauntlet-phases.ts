@@ -172,9 +172,10 @@ const RELEASE_GAUNTLET_PROJECTION: readonly PhaseProjection[] = [
   // conformance INTEGRITY family, beside spine-relation:gate/capability:gate: every pinned
   // op history that bisimulates the CURRENT declared reactive model must still bisimulate on
   // the native transport (each family under its declared EmissionPolicy), or the cut reds. The
-  // reference model + native-transport oracle are LiteShip-local (tests/support), so — per
-  // ADR-0012/0023 — the gate is HOSTED here as a repo-local phase rather than the shipped CLI,
-  // guaranteeing the L4 conformance proof runs on every PR (reachable, never fixture-only).
+  // reference model + native-transport oracle are LiteShip-local (tests/support), and LiteShip-local
+  // capability is host-injected rather than baked into the shipped engine — so the gate is HOSTED
+  // here as a repo-local phase rather than the shipped CLI, guaranteeing the L4 conformance proof
+  // runs on every PR (reachable, never fixture-only).
   { checkId: 'check/transition-gate', label: 'transition:gate' },
   { checkId: 'check/plumb-gate', label: 'plumb:gate' },
   { checkId: 'check/capsule-verify', label: 'capsule:verify' },

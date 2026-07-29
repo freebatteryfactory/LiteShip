@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / conditionSourceDigest
+[LiteShip](../../../README.md) / [audit/src](../README.md) / conditionSourceDigest
 
 # Function: conditionSourceDigest()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / SlotRegistry
+[LiteShip](../../../README.md) / [web/src](../README.md) / SlotRegistry
 
 # Interface: SlotRegistry
 

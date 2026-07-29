@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / mcdcCoverageGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / mcdcCoverageGate
 
 # Variable: mcdcCoverageGate
 

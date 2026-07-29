@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [assets/src](../README.md) / AssetDecl
+[LiteShip](../../../README.md) / [assets/src](../README.md) / AssetDecl
 
 # Interface: AssetDecl\<K\>
 

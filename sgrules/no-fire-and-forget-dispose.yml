@@ -1,4 +1,8 @@
-# Owned-resource error-channel guard (ADR-0051, D1 closure).
+# Owned-resource error-channel guard.
+#
+# Every public owned handle implements ONE protocol — AsyncOwnedResource:
+# `dispose(): Promise<void>` plus `[Symbol.asyncDispose]`. That Promise IS the
+# completion and error channel, so discarding it discards the failure.
 #
 # Synchronous finalizers run before dispose() returns, but its Promise carries
 # aggregate LifetimeDisposeError and joins async siblings. Discarding that

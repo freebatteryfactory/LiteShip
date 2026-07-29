@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [genui/src](../README.md) / catalogHash
+[LiteShip](../../../README.md) / [genui/src](../README.md) / catalogHash
 
 # Function: catalogHash()
 

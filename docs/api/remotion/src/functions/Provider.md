@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [remotion/src](../README.md) / Provider
+[LiteShip](../../../README.md) / [remotion/src](../README.md) / Provider
 
 # Function: Provider()
 

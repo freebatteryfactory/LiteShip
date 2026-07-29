@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / SimulationRecoveryExpectation
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / SimulationRecoveryExpectation
 
 # Interface: SimulationRecoveryExpectation
 

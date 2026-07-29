@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / TopologyCoverageEntry
+[LiteShip](../../../README.md) / [audit/src](../README.md) / TopologyCoverageEntry
 
 # Interface: TopologyCoverageEntry
 

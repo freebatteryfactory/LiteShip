@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [create-liteship/src](../README.md) / ScaffoldOptions
+[LiteShip](../../../README.md) / [create-liteship/src](../README.md) / ScaffoldOptions
 
 # Interface: ScaffoldOptions
 

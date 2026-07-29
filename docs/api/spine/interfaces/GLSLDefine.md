@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / GLSLDefine
+[LiteShip](../../README.md) / [\_spine](../README.md) / GLSLDefine
 
 # Interface: GLSLDefine
 

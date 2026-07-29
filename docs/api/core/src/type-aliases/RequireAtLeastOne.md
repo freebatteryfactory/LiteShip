@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / RequireAtLeastOne
+[LiteShip](../../../README.md) / [core/src](../README.md) / RequireAtLeastOne
 
 # Type Alias: RequireAtLeastOne\<T, Keys\>
 

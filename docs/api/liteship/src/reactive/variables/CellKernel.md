@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / CellKernel
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / CellKernel
 
 # Variable: CellKernel
 

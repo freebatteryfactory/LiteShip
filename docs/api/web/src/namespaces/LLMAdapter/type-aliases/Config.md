@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [web/src](../../../README.md) / [LLMAdapter](../README.md) / Config
+[LiteShip](../../../../../README.md) / [web/src](../../../README.md) / [LLMAdapter](../README.md) / Config
 
 # Type Alias: Config
 

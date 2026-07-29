@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [edge/src](../README.md) / CacheOptions
+[LiteShip](../../../README.md) / [edge/src](../README.md) / CacheOptions
 
 # Interface: CacheOptions
 

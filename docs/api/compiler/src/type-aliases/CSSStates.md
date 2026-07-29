@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [compiler/src](../README.md) / CSSStates
+[LiteShip](../../../README.md) / [compiler/src](../README.md) / CSSStates
 
 # Type Alias: CSSStates
 

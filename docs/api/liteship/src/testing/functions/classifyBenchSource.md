@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / classifyBenchSource
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / classifyBenchSource
 
 # Function: classifyBenchSource()
 

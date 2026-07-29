@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / EffectKindPart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / EffectKindPart
 
 # Variable: EffectKindPart
 

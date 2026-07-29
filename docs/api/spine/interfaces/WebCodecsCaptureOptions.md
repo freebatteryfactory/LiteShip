@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / WebCodecsCaptureOptions
+[LiteShip](../../README.md) / [\_spine](../README.md) / WebCodecsCaptureOptions
 
 # Interface: WebCodecsCaptureOptions
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / AIValidationIssue
+[LiteShip](../../README.md) / [\_spine](../README.md) / AIValidationIssue
 
 # Interface: AIValidationIssue
 

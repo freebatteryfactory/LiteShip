@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / checkNegativeControlGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / checkNegativeControlGate
 
 # Variable: checkNegativeControlGate
 

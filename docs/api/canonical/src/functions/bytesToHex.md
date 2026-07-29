@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [canonical/src](../README.md) / bytesToHex
+[LiteShip](../../../README.md) / [canonical/src](../README.md) / bytesToHex
 
 # Function: bytesToHex()
 

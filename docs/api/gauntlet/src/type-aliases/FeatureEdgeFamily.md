@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FeatureEdgeFamily
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FeatureEdgeFamily
 
 # Type Alias: FeatureEdgeFamily
 

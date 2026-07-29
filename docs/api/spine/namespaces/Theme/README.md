@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [\_spine](../../README.md) / Theme
+[LiteShip](../../../README.md) / [\_spine](../../README.md) / Theme
 
 # Theme
 

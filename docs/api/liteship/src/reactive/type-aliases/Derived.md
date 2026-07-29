@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / Derived
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / Derived
 
 # Type Alias: Derived\<T\>
 

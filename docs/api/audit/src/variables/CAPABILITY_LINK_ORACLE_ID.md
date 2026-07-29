@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / CAPABILITY\_LINK\_ORACLE\_ID
+[LiteShip](../../../README.md) / [audit/src](../README.md) / CAPABILITY\_LINK\_ORACLE\_ID
 
 # Variable: CAPABILITY\_LINK\_ORACLE\_ID
 

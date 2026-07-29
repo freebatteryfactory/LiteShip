@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / LiteshipFetchLayerConfig
+[LiteShip](../../README.md) / [\_spine](../README.md) / LiteshipFetchLayerConfig
 
 # Interface: LiteshipFetchLayerConfig
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / TransitionMap
+[LiteShip](../../README.md) / [\_spine](../README.md) / TransitionMap
 
 # Type Alias: TransitionMap\<S\>
 

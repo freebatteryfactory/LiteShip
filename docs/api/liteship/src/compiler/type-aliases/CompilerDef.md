@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / CompilerDef
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / CompilerDef
 
 # Type Alias: CompilerDef
 

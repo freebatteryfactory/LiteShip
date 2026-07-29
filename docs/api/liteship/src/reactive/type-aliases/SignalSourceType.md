@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/reactive](../README.md) / SignalSourceType
+[LiteShip](../../../../README.md) / [liteship/src/reactive](../README.md) / SignalSourceType
 
 # Type Alias: SignalSourceType
 

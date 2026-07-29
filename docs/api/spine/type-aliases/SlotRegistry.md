@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / SlotRegistry
+[LiteShip](../../README.md) / [\_spine](../README.md) / SlotRegistry
 
 # Type Alias: SlotRegistry
 

@@ -5,8 +5,8 @@
  * normalizes every {@link FrameMark} to a numeric frame index before
  * invariants run (see `../compile.ts`).
  *
- * Canonical type declarations live in `@liteship/_spine` (ADR-0010); this
- * module mirrors them and keeps the runtime constructors.
+ * Canonical type declarations live in `@liteship/_spine`; this module
+ * mirrors them and keeps the runtime constructors.
  *
  * @module
  */

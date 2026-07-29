@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CureArtifact
+[LiteShip](../../../README.md) / [command/src](../README.md) / CureArtifact
 
 # Interface: CureArtifact
 

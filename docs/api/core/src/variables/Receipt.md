@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Receipt
+[LiteShip](../../../README.md) / [core/src](../README.md) / Receipt
 
 # Variable: Receipt
 

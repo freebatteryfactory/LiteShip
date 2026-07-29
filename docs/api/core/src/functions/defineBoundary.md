@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / defineBoundary
+[LiteShip](../../../README.md) / [core/src](../README.md) / defineBoundary
 
 # Function: defineBoundary()
 

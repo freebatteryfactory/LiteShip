@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / performanceContractsGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / performanceContractsGate
 
 # Variable: performanceContractsGate
 

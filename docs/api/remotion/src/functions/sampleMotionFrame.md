@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [remotion/src](../README.md) / sampleMotionFrame
+[LiteShip](../../../README.md) / [remotion/src](../README.md) / sampleMotionFrame
 
 # Function: sampleMotionFrame()
 

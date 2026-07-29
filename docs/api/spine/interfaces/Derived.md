@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / Derived
+[LiteShip](../../README.md) / [\_spine](../README.md) / Derived
 
 # Interface: Derived\<T\>
 
-Defined in: [\_spine/core.d.ts:884](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L884)
+Defined in: [\_spine/core.d.ts:885](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L885)
 
 Read-only derived computation over CellKernel.replay1 (Effect-free, Wave 6)
 
@@ -22,7 +22,7 @@ Read-only derived computation over CellKernel.replay1 (Effect-free, Wave 6)
 
 > `readonly` **\_tag**: `"Derived"`
 
-Defined in: [\_spine/core.d.ts:885](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L885)
+Defined in: [\_spine/core.d.ts:886](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L886)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [\_spine/core.d.ts:885](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:888](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L888)
+Defined in: [\_spine/core.d.ts:889](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L889)
 
 ## Methods
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/core.d.ts:888](https://github.com/freebatteryfactory/LiteSh
 
 > **read**(): `T`
 
-Defined in: [\_spine/core.d.ts:886](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L886)
+Defined in: [\_spine/core.d.ts:887](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L887)
 
 #### Returns
 
@@ -50,7 +50,7 @@ Defined in: [\_spine/core.d.ts:886](https://github.com/freebatteryfactory/LiteSh
 
 > **subscribe**(`subscriber`): [`Disposer`](../namespaces/CellKernel/type-aliases/Disposer.md)
 
-Defined in: [\_spine/core.d.ts:887](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L887)
+Defined in: [\_spine/core.d.ts:888](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L888)
 
 #### Parameters
 

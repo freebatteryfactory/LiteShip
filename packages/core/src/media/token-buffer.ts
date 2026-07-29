@@ -68,7 +68,7 @@ interface TokenBufferConfig {
 /**
  * Create a {@link TokenBuffer} — a ring buffer that absorbs bursty LLM token
  * arrival and hands tokens out at a smooth cadence. Pass a capacity or reuse the
- * defaults (verb grammar, ADR-0046 — `create` allocates a runtime resource).
+ * defaults (verb grammar — `create` allocates a runtime resource).
  */
 export function createTokenBuffer<T = string>(config?: TokenBufferConfig): TokenBuffer<T> {
   const capacity = config?.capacity ?? 256;

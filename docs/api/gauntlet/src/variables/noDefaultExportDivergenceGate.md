@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / noDefaultExportDivergenceGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / noDefaultExportDivergenceGate
 
 # Variable: noDefaultExportDivergenceGate
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/package-roster.generated](../README.md) / LITESHIP\_PACKAGES
+[LiteShip](../../../../README.md) / [liteship/src/package-roster.generated](../README.md) / LITESHIP\_PACKAGES
 
 # Variable: LITESHIP\_PACKAGES
 

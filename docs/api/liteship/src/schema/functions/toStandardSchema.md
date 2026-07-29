@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / toStandardSchema
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / toStandardSchema
 
 # Function: toStandardSchema()
 

@@ -12,7 +12,7 @@
  * for `// PROVES:` headers, run the lifecycle fold against the injected wall-clock
  * date, content-address the resolved ledger — and hands the engine these flat,
  * already-decided facts. The gate's only job is to FOLD them into Findings at each
- * invariant's level (ADR-0012: the lean engine folds facts; the host computes them).
+ * invariant's level (the lean engine folds facts; the host computes them).
  *
  * THE BIG IDEA. Every system INVARIANT (a LAW — determinism / CRDT convergence /
  * content-address identity / assurance propagation / hermeticity) must be TRACED to

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / inputSourceType
+[LiteShip](../../../README.md) / [core/src](../README.md) / inputSourceType
 
 # Function: inputSourceType()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / PROOF\_FLOOR\_BY\_LEVEL
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / PROOF\_FLOOR\_BY\_LEVEL
 
 # Variable: PROOF\_FLOOR\_BY\_LEVEL
 

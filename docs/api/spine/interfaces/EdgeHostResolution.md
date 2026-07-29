@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / EdgeHostResolution
+[LiteShip](../../README.md) / [\_spine](../README.md) / EdgeHostResolution
 
 # Interface: EdgeHostResolution
 

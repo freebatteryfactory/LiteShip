@@ -2,13 +2,13 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [detect/src](../README.md) / projectCapabilityTierEvidence
+[LiteShip](../../../README.md) / [detect/src](../README.md) / projectCapabilityTierEvidence
 
 # Function: projectCapabilityTierEvidence()
 
 > **projectCapabilityTierEvidence**(`source`, `inputs`): [`CapabilityTierEvidence`](../type-aliases/CapabilityTierEvidence.md)
 
-Defined in: [detect/src/cap-axes.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L120)
+Defined in: [detect/src/cap-axes.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L121)
 
 Build one frozen per-axis receipt from complete values and exhaustive primitive provenance.
 

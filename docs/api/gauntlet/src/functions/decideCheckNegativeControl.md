@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / decideCheckNegativeControl
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / decideCheckNegativeControl
 
 # Function: decideCheckNegativeControl()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / AVBridge
+[LiteShip](../../../../README.md) / [liteship/src/media](../README.md) / AVBridge
 
 # Variable: AVBridge
 

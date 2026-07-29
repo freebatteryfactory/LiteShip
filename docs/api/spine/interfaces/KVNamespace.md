@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / KVNamespace
+[LiteShip](../../README.md) / [\_spine](../README.md) / KVNamespace
 
 # Interface: KVNamespace
 

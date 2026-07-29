@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / QUALITY\_TIER\_TARGETS
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / QUALITY\_TIER\_TARGETS
 
 # Variable: QUALITY\_TIER\_TARGETS
 

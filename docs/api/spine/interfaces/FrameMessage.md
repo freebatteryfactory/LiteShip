@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / FrameMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / FrameMessage
 
 # Interface: FrameMessage
 

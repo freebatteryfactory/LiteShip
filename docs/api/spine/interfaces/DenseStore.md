@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / DenseStore
+[LiteShip](../../README.md) / [\_spine](../README.md) / DenseStore
 
 # Interface: DenseStore\<P\>
 
-Defined in: [\_spine/core.d.ts:809](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L809)
+Defined in: [\_spine/core.d.ts:810](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L810)
 
 Dense, fixed-capacity numeric ECS component storage.
 
@@ -22,7 +22,7 @@ Dense, fixed-capacity numeric ECS component storage.
 
 > `readonly` **\_dense**: `true`
 
-Defined in: [\_spine/core.d.ts:813](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L813)
+Defined in: [\_spine/core.d.ts:814](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L814)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [\_spine/core.d.ts:813](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **capacity**: `number`
 
-Defined in: [\_spine/core.d.ts:812](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L812)
+Defined in: [\_spine/core.d.ts:813](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L813)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/core.d.ts:812](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **count**: `number`
 
-Defined in: [\_spine/core.d.ts:816](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L816)
+Defined in: [\_spine/core.d.ts:817](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L817)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [\_spine/core.d.ts:816](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **entityToIndex**: `ReadonlyMap`\<[`EntityId`](../type-aliases/EntityId.md), `number`\>
 
-Defined in: [\_spine/core.d.ts:814](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L814)
+Defined in: [\_spine/core.d.ts:815](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L815)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [\_spine/core.d.ts:814](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **indexToEntity**: readonly [`EntityId`](../type-aliases/EntityId.md)[]
 
-Defined in: [\_spine/core.d.ts:815](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L815)
+Defined in: [\_spine/core.d.ts:816](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L816)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [\_spine/core.d.ts:815](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **name**: `P`\[`"name"`\]
 
-Defined in: [\_spine/core.d.ts:811](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L811)
+Defined in: [\_spine/core.d.ts:812](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L812)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [\_spine/core.d.ts:811](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **part**: `P`
 
-Defined in: [\_spine/core.d.ts:810](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L810)
+Defined in: [\_spine/core.d.ts:811](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L811)
 
 ## Methods
 
@@ -78,7 +78,7 @@ Defined in: [\_spine/core.d.ts:810](https://github.com/freebatteryfactory/LiteSh
 
 > **entities**(): readonly [`EntityId`](../type-aliases/EntityId.md)[]
 
-Defined in: [\_spine/core.d.ts:820](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L820)
+Defined in: [\_spine/core.d.ts:821](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L821)
 
 #### Returns
 
@@ -90,7 +90,7 @@ readonly [`EntityId`](../type-aliases/EntityId.md)[]
 
 > **get**(`entityId`): `number` \| `undefined`
 
-Defined in: [\_spine/core.d.ts:817](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L817)
+Defined in: [\_spine/core.d.ts:818](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L818)
 
 #### Parameters
 
@@ -108,7 +108,7 @@ Defined in: [\_spine/core.d.ts:817](https://github.com/freebatteryfactory/LiteSh
 
 > **has**(`entityId`): `boolean`
 
-Defined in: [\_spine/core.d.ts:818](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L818)
+Defined in: [\_spine/core.d.ts:819](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L819)
 
 #### Parameters
 
@@ -126,7 +126,7 @@ Defined in: [\_spine/core.d.ts:818](https://github.com/freebatteryfactory/LiteSh
 
 > **view**(): [`ReadonlyDenseValues`](ReadonlyDenseValues.md)
 
-Defined in: [\_spine/core.d.ts:819](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L819)
+Defined in: [\_spine/core.d.ts:820](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L820)
 
 #### Returns
 

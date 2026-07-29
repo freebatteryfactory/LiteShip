@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / MatchPriority
+[LiteShip](../../README.md) / [\_spine](../README.md) / MatchPriority
 
 # Type Alias: MatchPriority
 

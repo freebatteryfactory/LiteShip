@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / ModuleHotSpot
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / ModuleHotSpot
 
 # Interface: ModuleHotSpot
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / applyWaivers
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / applyWaivers
 
 # Function: applyWaivers()
 

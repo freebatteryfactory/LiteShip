@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / isHMRPayload
+[LiteShip](../../../README.md) / [vite/src](../README.md) / isHMRPayload
 
 # Function: isHMRPayload()
 

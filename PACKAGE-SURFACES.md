@@ -70,7 +70,7 @@ Main surfaces:
 - `fnv1a` / `fnv1aBytes`
 - `AddressedDigest.of`
 
-`@liteship/core` re-exports these at its public boundary for app authors who already depend on core; import `@liteship/canonical` directly when core is too heavy (ADR-0013).
+`@liteship/core` re-exports these at its public boundary for app authors who already depend on core; import `@liteship/canonical` directly when core is too heavy.
 
 ---
 
@@ -108,7 +108,7 @@ Main surfaces:
 - `catalogHash` / `renderHash`
 - `DEMO_COMPONENT_CATALOG`
 
-Wire protocol discriminator: `{ "_genui": true, "name": "...", "props": { ... } }`. Legacy token/text/HTML streaming is unchanged when the marker is absent (ADR-0014).
+Wire protocol discriminator: `{ "_genui": true, "name": "...", "props": { ... } }`. Legacy token/text/HTML streaming is unchanged when the marker is absent.
 
 ---
 
@@ -170,7 +170,7 @@ Main surfaces: `definePart`, `admitPart`, `defineSystem`, `defineDenseSystem`, `
 
 ### Document graph (the IR)
 
-The content-addressed keystone every cast reads from ([ADR-0015](./docs/adr/0015-document-graph-ir.md)). Reach for it when you need:
+The content-addressed keystone every cast reads from. Reach for it when you need:
 
 - a typed, addressable form of a definition (eight node families: `signal`, `entity`, `component`, `pose`, `transition`, `projection`, `policy`, `export`)
 - proof that two casts share one source (same content address)
@@ -180,7 +180,7 @@ Main surfaces: `DocumentGraph`, `DocumentGraphNode`, `DocumentGraphEdge`, `Docum
 
 ### Authored motion (`TransitionProgram`)
 
-The explicit multi-transition algebra ([ADR-0039](./docs/adr/0039-multi-transition-algebra.md)). Reach for it when you need:
+The explicit multi-transition algebra. Reach for it when you need:
 
 - to compose `TransitionNode`s into a real timeline — `seq` (total `Σ`, disjoint sub-windows), `par` (total `max`, short child holds), `choice` (exactly one branch, selected by a `BranchCondition` over a named signal, auditable receipt)
 - REAL multi-offset keyframes + per-window runtime sub-samplers (not the deleted routing-label two-endpoint collapse) that scrub through the `client:motion` floor
@@ -188,18 +188,18 @@ The explicit multi-transition algebra ([ADR-0039](./docs/adr/0039-multi-transiti
 
 Main surfaces: `interpretTransition` (the single-step leaf reader) and, for composition, `lowerTransitionProgram` (deterministic `[0,1]` timeline, ordered through `Plan.topoSort`), `interpretProgram` (→ `LoweredMotionPlan` with multi-offset `css.keyframes` + `runtime.windows`), `sampleProgramWindows` (the one per-window runtime reader the floor shares), plus the `TransitionProgram` / `BranchCondition` / `ProgramEnv` types. Authoring: `Reveal.chain` (`lowerRevealChain`) and `staggerProgram`. `RuntimeWritePlan` gained one optional `windows` field. Added 0.10.0 (additive).
 
-**The shared motion kernel (#130, ADR-0040).** `sampleProgram(plan, t)` is the ONE reader EVERY non-CSS target samples — it generalizes `sampleProgramWindows` to also cover a flat single-tween plan, returning the typed leaf of every animated `cssVar`. The declarative CSS `@keyframes` are generated from the SAME internal window-walk (`buildKeyframes` and `sampleProgramWindows` share one path; the old `sampleTween` parallel path is gone), so declarative CSS and every sampler provably agree. `sampleProgramUniforms(plan, t)` projects a sample to the `{ css, wgsl }` `liteship:uniform-update` payload shared by the browser floor (`writeContinuousMap`) and the `@liteship/worker` off-thread sampler. `ProgramSample` / `ProgramUniforms` types. Added 0.10.0 (additive). The per-target adapters live in `@liteship/scene` / `@liteship/stage` / `@liteship/remotion` / `@liteship/worker` (below); a differential oracle (`tests/unit/core/motion-parity.test.ts`) pins them all to `sampleProgram`.
+**The shared motion kernel (#130).** `sampleProgram(plan, t)` is the ONE reader EVERY non-CSS target samples — it generalizes `sampleProgramWindows` to also cover a flat single-tween plan, returning the typed leaf of every animated `cssVar`. The declarative CSS `@keyframes` are generated from the SAME internal window-walk (`buildKeyframes` and `sampleProgramWindows` share one path; the old `sampleTween` parallel path is gone), so declarative CSS and every sampler provably agree. `sampleProgramUniforms(plan, t)` projects a sample to the `{ css, wgsl }` `liteship:uniform-update` payload shared by the browser floor (`writeContinuousMap`) and the `@liteship/worker` off-thread sampler. `ProgramSample` / `ProgramUniforms` types. Added 0.10.0 (additive). The per-target adapters live in `@liteship/scene` / `@liteship/stage` / `@liteship/remotion` / `@liteship/worker` (below); a differential oracle (`tests/unit/core/motion-parity.test.ts`) pins them all to `sampleProgram`.
 
-**Generalized easing vocabulary (#148, ADR-0041).** `Easing.easingToLinearCSS(fn, sampleCount)` is the ONE producer of the `linear()` point list behind Law 4: it samples ANY easing function into a `linear(p0, …, pN)` string, and `Easing.springToLinearCSS` now delegates to it (byte-identical). `RuntimeEasing` gains a serialized `points?: readonly number[]` arm and a widened `kind` (`… | 'points' | 'bounce' | 'elastic' | 'back' | 'cubicBezier'`); `sampleRuntimeEasing`'s `points` arm lerps that list piecewise-linearly — the SAME stops the native leg emits — so the whole catalog (not only spring) reads one curve across floors. Native translation is applied through the individual `translate:` CSS property (`@liteship/compiler` `appendTranslateConsumer`), composing independently of author `rotate`/`scale`, never a composite `translate3d`. The differently-eased `par` (#148) is rendered by the per-window runtime floor, so the former `mixed-easing-overlap-approximated` diagnostic is retired. `easingToLinearCSS` + the widened `RuntimeEasing` added 0.14.0 (additive minor); `springToLinearCSS` retained.
+**Generalized easing vocabulary (#148).** `Easing.easingToLinearCSS(fn, sampleCount)` is the ONE producer of the `linear()` point list behind Law 4: it samples ANY easing function into a `linear(p0, …, pN)` string, and `Easing.springToLinearCSS` now delegates to it (byte-identical). `RuntimeEasing` gains a serialized `points?: readonly number[]` arm and a widened `kind` (`… | 'points' | 'bounce' | 'elastic' | 'back' | 'cubicBezier'`); `sampleRuntimeEasing`'s `points` arm lerps that list piecewise-linearly — the SAME stops the native leg emits — so the whole catalog (not only spring) reads one curve across floors. Native translation is applied through the individual `translate:` CSS property (`@liteship/compiler` `appendTranslateConsumer`), composing independently of author `rotate`/`scale`, never a composite `translate3d`. The differently-eased `par` (#148) is rendered by the per-window runtime floor, so the former `mixed-easing-overlap-approximated` diagnostic is retired. `easingToLinearCSS` + the widened `RuntimeEasing` added 0.14.0 (additive minor); `springToLinearCSS` retained.
 
 **The one responsive-media effective-candidate law (#140).** `selectCandidates(intent, caps)` is THE single function every responsive-media output derives from — it returns the `ResponsiveMediaCandidateSet` (`candidates` safe to advertise, the `resolved` `<img src>`, and the `reason`). Under `caps.saveData` it caps ALL candidates to the floor: the authored `saveDataVariant` (`save-data`), else the smallest normal variant (`save-data-floor`) — never a heavier one, even absent an explicit light variant. `resolveResponsiveMedia`, `projectResponsiveMediaPicture` (`src` / `srcset` / `<source>` / preload `imagesrcset`), and `@liteship/compiler`'s `compileResponsiveMedia` (CSS `image-set()` + the content-addressed result digest / cache key) ALL enumerate that one set, so a Save-Data + high-DPR client can never re-fetch a heavy asset through ANY artifact (F-RM-1a..e). `selectCandidates` + `ResponsiveMediaCandidateSet` added 0.10.0 (additive). The host projector lives in `@liteship/astro` (below).
 
 ### AI cast
 
-Cast a graph _out_ to a model and accept its reply safely ([ADR-0015](./docs/adr/0015-document-graph-ir.md)). Reach for it when you need:
+Cast a graph _out_ to a model and accept its reply safely. Reach for it when you need:
 
 - a deterministic, token-budgeted `AIContext` (graph summary + tool schema) for a model call
-- validation of a model's `GraphPatch` proposal (or a genui tree, ADR-0014)
+- validation of a model's `GraphPatch` proposal (or a genui tree)
 - the envelope that keeps raw model output from ever mutating a graph
 
 Main surfaces: `AICast.castContext`, `summarizeGraph`, `validateGraphPatchProposal`, `validateGeneratedUIProposal`, `applyValidatedPatch`, `ValidatedProposal`, `ApplyToken`. The primitive is pure — zero network, zero provider imports — and `mintValidated` is denied at the package subpath, so a consumer cannot forge a proposal. The host owns the model call and the authority to apply.
@@ -412,7 +412,7 @@ Main surfaces:
 - `liteshipMiddleware`
 - `LiteshipMiddlewareConfig`
 - `@liteship/astro/middleware-entry` — the auto-wired detection middleware registered by `liteship({ middleware: true })`; populates a typed `Astro.locals.liteship.tiers.{tier,motion,design}` via an `App.Locals` augmentation
-- `liteshipFetchLayer` / `serializeBoundaryCss` (also `@liteship/astro/fetch-layer`) — request-time adaptation as a layer in FRONT of Astro (Astro 7 `src/fetch.ts`): shares the one `createEdgeHostAdapter().resolve()` with `liteshipMiddleware` and, on an opt-in `serveFromEdge` predicate, serves boundary CSS from the edge and skips Astro entirely; Astro `Fetchable` / Hono-compatible (ADR-0024, 0.4.0)
+- `liteshipFetchLayer` / `serializeBoundaryCss` (also `@liteship/astro/fetch-layer`) — request-time adaptation as a layer in FRONT of Astro (Astro 7 `src/fetch.ts`): shares the one `createEdgeHostAdapter().resolve()` with `liteshipMiddleware` and, on an opt-in `serveFromEdge` predicate, serves boundary CSS from the edge and skips Astro entirely; Astro `Fetchable` / Hono-compatible (0.4.0)
 - `bridgeDiagnosticsToAstroLogger` / `installDiagnosticsBridge` — route `@liteship/*` runtime diagnostics through Astro's logger for structured `astro dev --json` output; wired in `astro:config:setup` (0.4.0)
 - `graphMutationRoute(store)` — the client→server mutation channel's host route adapter: wraps `@liteship/core`'s `handleGraphMutation` into a `(request) => Response` that drops into an Astro API route (`export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request)` — Astro hands the handler an `APIContext`, so unwrap `request`). 200 on apply, 409 on stale-base/lost-update refusal (`staleBase: true`), 422 on other refusals, 400 on a malformed JSON body, 415 on a non-`application/json` body (requiring the JSON content type forces cross-origin POSTs through a CORS preflight — a CSRF-hardening gate; the host still owns session/origin auth). `@liteship/astro` injects no route — the endpoint, `GraphStore`, and authority are the host's (0.7.0; 409 added 0.8.0)
 - responsive-media HOST projection (#140): `liteshipMiddleware` derives Save-Data / DPR caps from THIS request's Client Hints (via `@liteship/edge`'s now-production-wired `ClientHints.responsiveMediaCapabilities`) and injects `Astro.locals.liteship.responsiveMedia(intent)`, projecting through `@liteship/core`'s `selectCandidates` law so a Save-Data client is never advertised a heavy candidate. It also merges the responsive `Vary` axis (`Sec-CH-DPR, Save-Data`) into the response through the Wave-1 `mergeVaryHeader` (union, not clobber) so a CDN keys the light and normal representations apart. `projectResponsiveMediaForRequest(intent, headers)` / `applyResponsiveMediaVary(headers)` are the standalone route-handler helpers (also `ResponsiveMediaCapsSource` / `ResponsiveMediaHostProjection` types). `@liteship/cloudflare`'s `cloudflareMiddleware` inherits the same projector + Vary because it wraps `liteshipMiddleware` — both host paths demonstrated. Added 0.10.0 (additive)
@@ -427,7 +427,7 @@ Host-owned shared runtime surfaces:
 - `@liteship/astro/runtime` continuous signal→uniform driver (`driveUniformFromSignal`) — drive the existing `liteship:uniform-update` GPU event continuously from a continuous signal (e.g. `scroll.progress`) into a GLSL/WGSL uniform, collapsing the hand-rolled scroll→uniform consumer bridge (0.4.0)
 - `@liteship/astro/runtime` runtime DocumentGraph loader (`loadGraphRuntime`, `lowerGraph`, `castGraphDelta`) — lower a serialized `DocumentGraph` onto the live cast pipeline and apply a `GraphPatch` delta at runtime; the `client:graph` directive boots it from `data-liteship-graph` (0.4.0)
 - `@liteship/astro/runtime` scene→live bridge (`bridgeSceneToGraph`) — drive the live graph from a signal-indexed `@liteship/scene`: a discrete crossing re-casts, the continuous tween writes a leaf CSS var / GPU uniform and never patches the graph (0.4.0)
-- `@liteship/astro/runtime` continuous-motion FLOOR (`writeContinuousMap`, `initMotionDirective`, `client:motion`) — now production-driven: the `client:motion` directive strictly admits an SSR-inlined `MotionDirectivePayload` from `data-liteship-motion-payload` and, when native `animation-timeline` is unavailable, scrubs the signal through `writeContinuousMap` every frame — sampling the SAME curve the native CSS `linear()` compiled from (one kernel, Law 4). The easing descriptor spans the whole `Easing` catalog: `linear`/`ease`/`spring` sample analytically, and any other catalog curve rides a serialized `points` list emitted ONCE by `Easing.easingToLinearCSS` (ADR-0041) that both floors read. The separate `data-liteship-motion` attribute remains capability-tier evidence and never boots the directive. The continuous tween never patches the graph, and reduced-motion `settle` pins the final pose with no tween (opt in with `motion: { enabled: true }`)
+- `@liteship/astro/runtime` continuous-motion FLOOR (`writeContinuousMap`, `initMotionDirective`, `client:motion`) — now production-driven: the `client:motion` directive strictly admits an SSR-inlined `MotionDirectivePayload` from `data-liteship-motion-payload` and, when native `animation-timeline` is unavailable, scrubs the signal through `writeContinuousMap` every frame — sampling the SAME curve the native CSS `linear()` compiled from (one kernel, Law 4). The easing descriptor spans the whole `Easing` catalog: `linear`/`ease`/`spring` sample analytically, and any other catalog curve rides a serialized `points` list emitted ONCE by `Easing.easingToLinearCSS` that both floors read. The separate `data-liteship-motion` attribute remains capability-tier evidence and never boots the directive. The continuous tween never patches the graph, and reduced-motion `settle` pins the final pose with no tween (opt in with `motion: { enabled: true }`)
 - `@liteship/astro/runtime` AI-apply seam (`castGraphContext`, `admitGraphPatchProposal`, `adoptAppliedGraph`) — cast the live graph OUT to a model-facing `AIContext`, admit a VALIDATED `GraphPatch` proposal IN through the un-bypassable validate→apply token chain, or adopt a server-applied graph after `verifyAppliedGraph`; re-cast the delta; the model producer is downstream (`adoptAppliedGraph` added 0.8.0, original seam 0.4.0)
 - `@liteship/astro/runtime` SVG last-mile (`attachSvgRuntime`, `client:svg`) — resolve `data-liteship-entity → SVGElement` and apply `@liteship/scene`'s `applySvgAttrs` to the live DOM each frame (0.4.0)
 - internal runtime adapters for `adaptive`, `stream`, `llm`, `worker`, `wasm`, `graph`, `motion`, and `svg`
@@ -514,7 +514,7 @@ Main surfaces:
 
 This package assumes stronger runtime requirements and should be used where the surface meaning justifies off-thread work. The Astro worker directive routes through this package rather than carrying its own worker protocol. By the way, `SPSCRing` is a real lock-free single-producer / single-consumer ring on `SharedArrayBuffer`, with `Atomics.load` and `Atomics.store` only — no `Atomics.wait` or `Atomics.notify`, which keeps it fully non-blocking on both sides.
 
-**Motion adapter (#130, ADR-0040).** The MINIMAL, net-new authored-motion surface: `motionSampleMessage(plan, t)` runs the ONE shared `sampleProgram` kernel off-thread (via `sampleProgramUniforms`, re-exported so a worker script imports its producer here) and returns a structured-clone-safe `{ css, wgsl }` envelope the host relays on the EXISTING `liteship:uniform-update` channel. No new compositor, render loop, or protocol — a thin sampler-posts-uniform, deliberately kept out of the `FromWorkerMessage` union. Sampled by the differential oracle.
+**Motion adapter (#130).** The MINIMAL, net-new authored-motion surface: `motionSampleMessage(plan, t)` runs the ONE shared `sampleProgram` kernel off-thread (via `sampleProgramUniforms`, re-exported so a worker script imports its producer here) and returns a structured-clone-safe `{ css, wgsl }` envelope the host relays on the EXISTING `liteship:uniform-update` channel. No new compositor, render loop, or protocol — a thin sampler-posts-uniform, deliberately kept out of the `FromWorkerMessage` union. Sampled by the differential oracle.
 
 ---
 
@@ -542,7 +542,7 @@ Main surfaces:
 
 This package is for the Remotion / video branch of the ecosystem, not the main Astro static-site path.
 
-**Motion adapter (#130, ADR-0040).** `sampleMotionFrame(plan, frame, durationInFrames)` samples the ONE shared `sampleProgram` kernel at the composition's current frame (`t = frame / max(1, durationInFrames-1)`), and `motionCssVars` folds the typed leaves into a Remotion `style` (formatted through the same `formatTypedValue` the browser floor uses). Pure + React-free so a `calculateMetadata` or test can call it; the composition wraps it with `useCurrentFrame()`. Sampled by the differential oracle.
+**Motion adapter (#130).** `sampleMotionFrame(plan, frame, durationInFrames)` samples the ONE shared `sampleProgram` kernel at the composition's current frame (`t = frame / max(1, durationInFrames-1)`), and `motionCssVars` folds the typed leaves into a Remotion `style` (formatted through the same `formatTypedValue` the browser floor uses). Pure + React-free so a `calculateMetadata` or test can call it; the composition wraps it with `useCurrentFrame()`. Sampled by the differential oracle.
 
 ---
 
@@ -569,7 +569,7 @@ Main surfaces:
 
 The `encode?` seam keeps `@liteship/stage` pure; the node-only ffmpeg backend is a thin adapter on the `@liteship/stage/ffmpeg` subpath — `exportVideoEncoded(graph, ffmpegFrameEncoder())`. When no encoder is wired, frame digests are still real; the bytes are skipped-with-log, not faked. The video carrier's content address is taken over the produced **frames**; the byte-encode is the injected seam, so it never changes the proof's digest.
 
-**Motion adapter (#130, ADR-0040).** `sampleMotionFrames(plan, totalFrames)` samples the ONE shared `sampleProgram` kernel at each `FrameRange` index; `exportMotionTrack` folds the sampled leaves into per-frame content and content-addresses the whole track through the SAME `CanonicalCbor.encode` → `AddressedDigest.of` kernel `dual-export.ts` uses — the built-in oracle for the video leg. ADDITIVE to the video-crossfade carrier / `TransitionSystem`, never a merge. Sampled by the differential oracle.
+**Motion adapter (#130).** `sampleMotionFrames(plan, totalFrames)` samples the ONE shared `sampleProgram` kernel at each `FrameRange` index; `exportMotionTrack` folds the sampled leaves into per-frame content and content-addresses the whole track through the SAME `CanonicalCbor.encode` → `AddressedDigest.of` kernel `dual-export.ts` uses — the built-in oracle for the video leg. ADDITIVE to the video-crossfade carrier / `TransitionSystem`, never a merge. Sampled by the differential oracle.
 
 ---
 
@@ -577,7 +577,7 @@ The `encode?` seam keeps `@liteship/stage` pure; the node-only ffmpeg backend is
 
 Source: [`packages/scene/src/index.ts`](./packages/scene/src/index.ts)
 
-ECS-backed scene composition + timeline authoring (ADR-0009). Runtime status: `host-wired`.
+ECS-backed scene composition + timeline authoring. Runtime status: `host-wired`.
 
 Reach for it when you need:
 
@@ -597,7 +597,7 @@ Main surfaces:
 
 Paired with `@liteship/stage` for the video-export branch — and, as of 0.4.0, a **live** runtime consumer too: `@liteship/astro`'s `bridgeSceneToGraph` drives a scene against the live cast pipeline, and the `client:svg` directive applies its SVG egress to the live DOM (scene is no longer offline/video-only).
 
-**Motion adapter (#130, ADR-0040).** `MotionSampleSystem(frameIndex)` queries each entity's admitted `RuntimeWritePlanPart` + `FrameRangePart`, samples the ONE shared `sampleProgram` kernel at entity-local time, and writes one typed `MotionSamplePart`; `sampleSceneMotion` is the pure aggregate projection the differential oracle reads. This is ADDITIVE to `TransitionSystem`: the video-crossfade `BlendPart` (a compositor mix between two `BetweenPart` entities) and an authored runtime write plan are DIFFERENT concepts that coexist on one world. Free-string motion components and a closure-global plan are retired.
+**Motion adapter (#130).** `MotionSampleSystem(frameIndex)` queries each entity's admitted `RuntimeWritePlanPart` + `FrameRangePart`, samples the ONE shared `sampleProgram` kernel at entity-local time, and writes one typed `MotionSamplePart`; `sampleSceneMotion` is the pure aggregate projection the differential oracle reads. This is ADDITIVE to `TransitionSystem`: the video-crossfade `BlendPart` (a compositor mix between two `BetweenPart` entities) and an authored runtime write plan are DIFFERENT concepts that coexist on one world. Free-string motion components and a closure-global plan are retired.
 
 ---
 
@@ -650,7 +650,7 @@ Entry: `pnpm exec liteship <verb>` in a LiteShip checkout. `liteship help` print
 
 Source: [`packages/audit/src/index.ts`](./packages/audit/src/index.ts)
 
-The profile-driven structure / integrity / surface audit engine, and the host that builds the gauntlet's triangulated repo-IR + oracles (ADR-0012/ADR-0023). Runtime status: deps `@liteship/canonical` + `@liteship/error` + `@liteship/gauntlet` (it builds the `RepoIR` the gauntlet defines) and `typescript`. Consumed by `@liteship/cli`; see [AUDIT.md](./AUDIT.md).
+The profile-driven structure / integrity / surface audit engine, and the host that builds the gauntlet's triangulated repo-IR + oracles. Runtime status: deps `@liteship/canonical` + `@liteship/error` + `@liteship/gauntlet` (it builds the `RepoIR` the gauntlet defines) and `typescript`. Consumed by `@liteship/cli`.
 
 Main surfaces:
 
@@ -664,7 +664,7 @@ Main surfaces:
 
 Source: [`packages/gauntlet/src/index.ts`](./packages/gauntlet/src/index.ts)
 
-The self-proving rigor engine — gates, findings, assurance levels, and the authority ratchet (ADR-0023). Runtime status: lean (deps `@liteship/error` + `fast-glob`; **no** `typescript` — the heavy IR/oracles are host-injected via `GateContext`, ADR-0012). A `Gate` is a `(context) => Finding[]` fitness function that earns BLOCKING authority only by self-proving against its own red/green/mutation fixtures (`verifyGate`); `AssuranceLevel` (L0–L4) aims its rigor. Two gate forms: the closure `defineGate` and the evidence-bound `defineFactGate` (the decision is DATA over a declared FactPack — it cannot read undeclared evidence; ADR-0019). A downstream registers its own gate the same way LiteShip registers its built-ins — no fork, no rebuild. See [AUDIT.md](./AUDIT.md).
+The self-proving rigor engine — gates, findings, assurance levels, and the authority ratchet. Runtime status: lean (deps `@liteship/error` + `fast-glob`; **no** `typescript` — the heavy IR/oracles are host-injected via `GateContext`). A `Gate` is a `(context) => Finding[]` fitness function that earns BLOCKING authority only by self-proving against its own red/green/mutation fixtures (`verifyGate`); `AssuranceLevel` (L0–L4) aims its rigor. Two gate forms: the closure `defineGate` and the evidence-bound `defineFactGate` (the decision is DATA over a declared FactPack — it cannot read undeclared evidence). A downstream registers its own gate the same way LiteShip registers its built-ins — no fork, no rebuild.
 
 Main surfaces:
 

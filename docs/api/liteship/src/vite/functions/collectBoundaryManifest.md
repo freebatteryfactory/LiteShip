@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/vite](../README.md) / collectBoundaryManifest
+[LiteShip](../../../../README.md) / [liteship/src/vite](../README.md) / collectBoundaryManifest
 
 # Function: collectBoundaryManifest()
 

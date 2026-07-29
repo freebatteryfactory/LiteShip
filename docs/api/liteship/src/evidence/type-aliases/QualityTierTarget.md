@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/evidence](../README.md) / QualityTierTarget
+[LiteShip](../../../../README.md) / [liteship/src/evidence](../README.md) / QualityTierTarget
 
 # Type Alias: QualityTierTarget
 

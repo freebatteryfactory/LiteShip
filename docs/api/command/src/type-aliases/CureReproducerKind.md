@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CureReproducerKind
+[LiteShip](../../../README.md) / [command/src](../README.md) / CureReproducerKind
 
 # Type Alias: CureReproducerKind
 

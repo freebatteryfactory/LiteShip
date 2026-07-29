@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / LiteshipLocals
+[LiteShip](../../README.md) / [\_spine](../README.md) / LiteshipLocals
 
 # Interface: LiteshipLocals
 

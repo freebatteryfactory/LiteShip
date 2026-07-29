@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / fuzzCorpusGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / fuzzCorpusGate
 
 # Variable: fuzzCorpusGate
 

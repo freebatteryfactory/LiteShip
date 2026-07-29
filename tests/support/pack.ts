@@ -1,7 +1,7 @@
 /**
  * Shared owner of the in-workspace `pnpm pack` mechanic (scar S0.5).
  *
- * Scar S0.5 (docs/plan/scar-ledger.md): `catalog:` refs broke a *standalone*
+ * The release-pack scar: `catalog:` refs broke a *standalone*
  * `pnpm pack` — `ERR_PNPM_CATALOG_ENTRY_NOT_FOUND` outside workspace context.
  * `catalog:` and `workspace:*` specs only resolve to concrete ranges when pnpm
  * packs from INSIDE the workspace. The real release path

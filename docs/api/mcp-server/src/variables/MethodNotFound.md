@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / MethodNotFound
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / MethodNotFound
 
 # Variable: MethodNotFound
 

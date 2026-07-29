@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / lowerRevealChain
+[LiteShip](../../../../README.md) / [liteship/src/motion](../README.md) / lowerRevealChain
 
 # Function: lowerRevealChain()
 

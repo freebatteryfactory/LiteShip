@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / JsonSchemaObject
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / JsonSchemaObject
 
 # Type Alias: JsonSchemaObject
 

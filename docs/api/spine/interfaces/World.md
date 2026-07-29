@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / World
+[LiteShip](../../README.md) / [\_spine](../README.md) / World
 
 # Interface: World
 
-Defined in: [\_spine/core.d.ts:785](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L785)
+Defined in: [\_spine/core.d.ts:786](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L786)
 
 Live ECS world that owns entities, dense stores, and scheduled systems.
 
@@ -16,7 +16,7 @@ Live ECS world that owns entities, dense stores, and scheduled systems.
 
 > **addDenseStore**\<`P`\>(`owned`): `void`
 
-Defined in: [\_spine/core.d.ts:792](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L792)
+Defined in: [\_spine/core.d.ts:793](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L793)
 
 #### Type Parameters
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/core.d.ts:792](https://github.com/freebatteryfactory/LiteSh
 
 > **addSystem**(`system`): `void`
 
-Defined in: [\_spine/core.d.ts:791](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L791)
+Defined in: [\_spine/core.d.ts:792](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L792)
 
 #### Parameters
 
@@ -58,7 +58,7 @@ Defined in: [\_spine/core.d.ts:791](https://github.com/freebatteryfactory/LiteSh
 
 > **despawn**(`id`): `void`
 
-Defined in: [\_spine/core.d.ts:787](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L787)
+Defined in: [\_spine/core.d.ts:788](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L788)
 
 #### Parameters
 
@@ -76,7 +76,7 @@ Defined in: [\_spine/core.d.ts:787](https://github.com/freebatteryfactory/LiteSh
 
 > **query**\<`P`\>(...`parts`): readonly [`Entity`](Entity.md)\<[`TuplePart`](../type-aliases/TuplePart.md)\<`P`\>\>[]
 
-Defined in: [\_spine/core.d.ts:790](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L790)
+Defined in: [\_spine/core.d.ts:791](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L791)
 
 #### Type Parameters
 
@@ -100,7 +100,7 @@ readonly [`Entity`](Entity.md)\<[`TuplePart`](../type-aliases/TuplePart.md)\<`P`
 
 > **remove**(`id`, `part`): `void`
 
-Defined in: [\_spine/core.d.ts:789](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L789)
+Defined in: [\_spine/core.d.ts:790](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L790)
 
 #### Parameters
 
@@ -122,7 +122,7 @@ Defined in: [\_spine/core.d.ts:789](https://github.com/freebatteryfactory/LiteSh
 
 > **set**\<`P`\>(`id`, `value`): `void`
 
-Defined in: [\_spine/core.d.ts:788](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L788)
+Defined in: [\_spine/core.d.ts:789](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L789)
 
 #### Type Parameters
 
@@ -150,7 +150,7 @@ Defined in: [\_spine/core.d.ts:788](https://github.com/freebatteryfactory/LiteSh
 
 > **spawn**(...`values`): [`EntityId`](../type-aliases/EntityId.md)
 
-Defined in: [\_spine/core.d.ts:786](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L786)
+Defined in: [\_spine/core.d.ts:787](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L787)
 
 #### Parameters
 
@@ -168,7 +168,7 @@ Defined in: [\_spine/core.d.ts:786](https://github.com/freebatteryfactory/LiteSh
 
 > **tick**(): `void`
 
-Defined in: [\_spine/core.d.ts:793](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L793)
+Defined in: [\_spine/core.d.ts:794](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L794)
 
 #### Returns
 

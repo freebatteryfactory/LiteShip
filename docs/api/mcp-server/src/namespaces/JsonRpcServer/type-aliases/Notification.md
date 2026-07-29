@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../../modules.md) / [mcp-server/src](../../../README.md) / [JsonRpcServer](../README.md) / Notification
+[LiteShip](../../../../../README.md) / [mcp-server/src](../../../README.md) / [JsonRpcServer](../README.md) / Notification
 
 # Type Alias: Notification
 

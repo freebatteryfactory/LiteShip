@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / AIManifest
+[LiteShip](../../README.md) / [\_spine](../README.md) / AIManifest
 
 # Interface: AIManifest
 

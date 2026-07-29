@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / replayDroppedSignals
+[LiteShip](../../../README.md) / [core/src](../README.md) / replayDroppedSignals
 
 # Function: replayDroppedSignals()
 

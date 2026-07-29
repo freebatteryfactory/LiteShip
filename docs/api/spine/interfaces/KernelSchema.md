@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / KernelSchema
+[LiteShip](../../README.md) / [\_spine](../README.md) / KernelSchema
 
 # Interface: KernelSchema\<A, I\>
 
-Defined in: [\_spine/core.d.ts:704](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L704)
+Defined in: [\_spine/core.d.ts:705](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L705)
 
 Minimal structural schema contract bound to one Part.
 
@@ -26,7 +26,7 @@ Minimal structural schema contract bound to one Part.
 
 > `readonly` **ast**: [`SchemaNode`](../type-aliases/SchemaNode.md)
 
-Defined in: [\_spine/core.d.ts:705](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L705)
+Defined in: [\_spine/core.d.ts:706](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L706)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/core.d.ts:705](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **Encoded**: `I`
 
-Defined in: [\_spine/core.d.ts:707](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L707)
+Defined in: [\_spine/core.d.ts:708](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L708)
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: [\_spine/core.d.ts:707](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **Type**: `A`
 
-Defined in: [\_spine/core.d.ts:706](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L706)
+Defined in: [\_spine/core.d.ts:707](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L707)

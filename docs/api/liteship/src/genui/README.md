@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / liteship/src/genui
+[LiteShip](../../../README.md) / liteship/src/genui
 
 # liteship/src/genui
 

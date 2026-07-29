@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / decideSkips
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / decideSkips
 
 # Function: decideSkips()
 

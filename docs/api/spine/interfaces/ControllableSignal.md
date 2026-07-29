@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ControllableSignal
+[LiteShip](../../README.md) / [\_spine](../README.md) / ControllableSignal
 
 # Interface: ControllableSignal\<T\>
 
-Defined in: [\_spine/core.d.ts:322](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L322)
+Defined in: [\_spine/core.d.ts:323](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L323)
 
 Signal whose host can seek, pause, and resume the underlying source.
 
@@ -26,7 +26,7 @@ Signal whose host can seek, pause, and resume the underlying source.
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:318](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L318)
+Defined in: [\_spine/core.d.ts:319](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L319)
 
 #### Inherited from
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/core.d.ts:318](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **source**: [`SignalSource`](../type-aliases/SignalSource.md)
 
-Defined in: [\_spine/core.d.ts:315](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L315)
+Defined in: [\_spine/core.d.ts:316](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L316)
 
 #### Inherited from
 
@@ -50,7 +50,7 @@ Defined in: [\_spine/core.d.ts:315](https://github.com/freebatteryfactory/LiteSh
 
 > **pause**(): `void`
 
-Defined in: [\_spine/core.d.ts:324](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L324)
+Defined in: [\_spine/core.d.ts:325](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L325)
 
 #### Returns
 
@@ -62,7 +62,7 @@ Defined in: [\_spine/core.d.ts:324](https://github.com/freebatteryfactory/LiteSh
 
 > **read**(): `T`
 
-Defined in: [\_spine/core.d.ts:316](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L316)
+Defined in: [\_spine/core.d.ts:317](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L317)
 
 #### Returns
 
@@ -78,7 +78,7 @@ Defined in: [\_spine/core.d.ts:316](https://github.com/freebatteryfactory/LiteSh
 
 > **resume**(): `void`
 
-Defined in: [\_spine/core.d.ts:325](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L325)
+Defined in: [\_spine/core.d.ts:326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L326)
 
 #### Returns
 
@@ -90,7 +90,7 @@ Defined in: [\_spine/core.d.ts:325](https://github.com/freebatteryfactory/LiteSh
 
 > **seek**(`to`): `void`
 
-Defined in: [\_spine/core.d.ts:323](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L323)
+Defined in: [\_spine/core.d.ts:324](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L324)
 
 #### Parameters
 
@@ -108,7 +108,7 @@ Defined in: [\_spine/core.d.ts:323](https://github.com/freebatteryfactory/LiteSh
 
 > **subscribe**(`subscriber`): [`Disposer`](../namespaces/CellKernel/type-aliases/Disposer.md)
 
-Defined in: [\_spine/core.d.ts:317](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L317)
+Defined in: [\_spine/core.d.ts:318](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L318)
 
 #### Parameters
 

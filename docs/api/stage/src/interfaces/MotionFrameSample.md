@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [stage/src](../README.md) / MotionFrameSample
+[LiteShip](../../../README.md) / [stage/src](../README.md) / MotionFrameSample
 
 # Interface: MotionFrameSample
 
-Defined in: [stage/src/motion-export.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L24)
+Defined in: [stage/src/motion-export.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L25)
 
 One sampled motion frame: its index, its normalized `t`, and the typed + formatted leaves.
 
@@ -16,7 +16,7 @@ One sampled motion frame: its index, its normalized `t`, and the typed + formatt
 
 > `readonly` **css**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [stage/src/motion-export.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L32)
+Defined in: [stage/src/motion-export.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L33)
 
 The same leaves formatted for frame content (what the encoded video/CSS actually carries).
 
@@ -26,7 +26,7 @@ The same leaves formatted for frame content (what the encoded video/CSS actually
 
 > `readonly` **frame**: `number`
 
-Defined in: [stage/src/motion-export.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L26)
+Defined in: [stage/src/motion-export.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L27)
 
 Frame index in `[0, totalFrames)`.
 
@@ -36,7 +36,7 @@ Frame index in `[0, totalFrames)`.
 
 > `readonly` **t**: `number`
 
-Defined in: [stage/src/motion-export.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L28)
+Defined in: [stage/src/motion-export.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L29)
 
 Normalized program time `frame / max(1, totalFrames-1)` — endpoint-inclusive.
 
@@ -46,6 +46,6 @@ Normalized program time `frame / max(1, totalFrames-1)` — endpoint-inclusive.
 
 > `readonly` **values**: `ReadonlyMap`\<`string`, [`TypedValue`](../../../liteship/src/motion/type-aliases/TypedValue.md)\>
 
-Defined in: [stage/src/motion-export.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L30)
+Defined in: [stage/src/motion-export.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L31)
 
 Typed leaf values (the oracle compares these against the `sampleProgram` reference).

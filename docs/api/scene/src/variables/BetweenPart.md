@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / BetweenPart
+[LiteShip](../../../README.md) / [scene/src](../README.md) / BetweenPart
 
 # Variable: BetweenPart
 

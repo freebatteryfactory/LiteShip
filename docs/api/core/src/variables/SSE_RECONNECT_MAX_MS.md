@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / SSE\_RECONNECT\_MAX\_MS
+[LiteShip](../../../README.md) / [core/src](../README.md) / SSE\_RECONNECT\_MAX\_MS
 
 # Variable: SSE\_RECONNECT\_MAX\_MS
 

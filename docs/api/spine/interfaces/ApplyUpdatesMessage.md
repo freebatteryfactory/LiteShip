@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ApplyUpdatesMessage
+[LiteShip](../../README.md) / [\_spine](../README.md) / ApplyUpdatesMessage
 
 # Interface: ApplyUpdatesMessage
 

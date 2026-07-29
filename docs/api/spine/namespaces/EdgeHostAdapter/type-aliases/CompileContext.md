@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [EdgeHostAdapter](../README.md) / CompileContext
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [EdgeHostAdapter](../README.md) / CompileContext
 
 # Type Alias: CompileContext
 

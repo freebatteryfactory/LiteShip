@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / MotionCompiler
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / MotionCompiler
 
 # Variable: MotionCompiler
 

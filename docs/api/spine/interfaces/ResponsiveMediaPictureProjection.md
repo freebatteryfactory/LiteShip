@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ResponsiveMediaPictureProjection
+[LiteShip](../../README.md) / [\_spine](../README.md) / ResponsiveMediaPictureProjection
 
 # Interface: ResponsiveMediaPictureProjection
 

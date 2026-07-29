@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / earnedAuthority
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / earnedAuthority
 
 # Function: earnedAuthority()
 

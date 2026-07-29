@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / CheckAuthority
+[LiteShip](../../../README.md) / [command/src](../README.md) / CheckAuthority
 
 # Type Alias: CheckAuthority
 

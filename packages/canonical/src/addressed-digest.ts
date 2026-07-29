@@ -1,6 +1,6 @@
 /**
  * AddressedDigest construction — sync fnv1a display_id + sha256/blake3 integrity
- * over the same canonical bytes (ADR-0011).
+ * over the same canonical bytes.
  *
  * @module
  */
@@ -33,7 +33,7 @@ export const bytesToHex = (bytes: Uint8Array): string => {
  * SHA-256 of `input` as PLAIN lowercase hex — no `sha256:` label. The hex HALF
  * of {@link addressedDigestOf}'s `integrity_digest`, for slug consumers that
  * need a bare digest string. The labeled `sha256:`-prefixed receipt form
- * (identity-law #3, ADR-0011) stays SEPARATE — this is not a merge of it.
+ * (identity-law #3) stays SEPARATE — this is not a merge of it.
  * String inputs are hashed as their UTF-8 bytes.
  */
 export function sha256Hex(input: Uint8Array | string): string {

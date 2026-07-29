@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / Invariant
+[LiteShip](../../../README.md) / [core/src](../README.md) / Invariant
 
 # Interface: Invariant\<In, Out\>
 

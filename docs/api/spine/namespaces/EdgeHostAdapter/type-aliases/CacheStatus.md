@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [EdgeHostAdapter](../README.md) / CacheStatus
+[LiteShip](../../../../README.md) / [\_spine](../../../README.md) / [EdgeHostAdapter](../README.md) / CacheStatus
 
 # Type Alias: CacheStatus
 

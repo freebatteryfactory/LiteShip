@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / StreamRecoveryMutationClient
+[LiteShip](../../../../README.md) / [liteship/src/runtime](../README.md) / StreamRecoveryMutationClient
 
 # Type Alias: StreamRecoveryMutationClient
 

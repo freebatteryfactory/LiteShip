@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / FactBundle
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / FactBundle
 
 # Interface: FactBundle
 
-Defined in: [gauntlet/src/gate.ts:687](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L687)
+Defined in: [gauntlet/src/gate.ts:688](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L688)
 
 The bundle a [FactGate](FactGate.md)'s [FactGate.decide](FactGate.md#decide) receives — ONLY the declared
 FactPacks, picked off the context by the engine ([pickFacts](../functions/pickFacts.md)). It carries no
@@ -18,7 +18,7 @@ FactPacks, picked off the context by the engine ([pickFacts](../functions/pickFa
 
 > `readonly` `optional` **activeSurfaceFacts?**: [`ActiveSurfaceFacts`](ActiveSurfaceFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:689](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L689)
+Defined in: [gauntlet/src/gate.ts:690](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L690)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [gauntlet/src/gate.ts:689](https://github.com/freebatteryfactory/Lit
 
 > `readonly` `optional` **checkGovernance?**: [`CheckGovernanceFacts`](CheckGovernanceFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:691](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L691)
+Defined in: [gauntlet/src/gate.ts:692](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L692)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [gauntlet/src/gate.ts:691](https://github.com/freebatteryfactory/Lit
 
 > `readonly` `optional` **featureEdges?**: [`FeatureEdgeFacts`](FeatureEdgeFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:690](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L690)
+Defined in: [gauntlet/src/gate.ts:691](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L691)
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: [gauntlet/src/gate.ts:690](https://github.com/freebatteryfactory/Lit
 
 > `readonly` `optional` **skipSites?**: [`SkipSiteFacts`](SkipSiteFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:688](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L688)
+Defined in: [gauntlet/src/gate.ts:689](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L689)

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / noTsIgnoreGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / noTsIgnoreGate
 
 # Variable: noTsIgnoreGate
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/genui](../README.md) / ComponentDef
+[LiteShip](../../../../README.md) / [liteship/src/genui](../README.md) / ComponentDef
 
 # Type Alias: ComponentDef
 

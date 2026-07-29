@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / partitionAllowlistedFindings
+[LiteShip](../../../README.md) / [audit/src](../README.md) / partitionAllowlistedFindings
 
 # Function: partitionAllowlistedFindings()
 

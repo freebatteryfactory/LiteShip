@@ -1,6 +1,6 @@
 /**
  * THE LITESHIP-LOCAL CAPABILITY-GATE POLICY — the host-injected knowledge the generic
- * `@liteship/audit` capability-link oracle needs (the ADR-0012 / D7b boundary; the audit engine names no
+ * `@liteship/audit` capability-link oracle needs (the D7b host-injection boundary; the audit engine names no
  * LiteShip capability). It supplies (a) the canonical capability symbol-table module SET the linker
  * reads, and (b) the resolved sanctioned skip sites (file + line + declared capability) to prove.
  *

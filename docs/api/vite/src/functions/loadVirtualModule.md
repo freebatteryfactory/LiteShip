@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [vite/src](../README.md) / loadVirtualModule
+[LiteShip](../../../README.md) / [vite/src](../README.md) / loadVirtualModule
 
 # Function: loadVirtualModule()
 

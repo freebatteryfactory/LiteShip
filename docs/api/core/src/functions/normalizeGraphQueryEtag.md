@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / normalizeGraphQueryEtag
+[LiteShip](../../../README.md) / [core/src](../README.md) / normalizeGraphQueryEtag
 
 # Function: normalizeGraphQueryEtag()
 

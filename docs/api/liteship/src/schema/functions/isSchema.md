@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/schema](../README.md) / isSchema
+[LiteShip](../../../../README.md) / [liteship/src/schema](../README.md) / isSchema
 
 # Function: isSchema()
 

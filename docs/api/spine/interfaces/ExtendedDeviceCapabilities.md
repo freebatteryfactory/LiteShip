@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ExtendedDeviceCapabilities
+[LiteShip](../../README.md) / [\_spine](../README.md) / ExtendedDeviceCapabilities
 
 # Interface: ExtendedDeviceCapabilities
 

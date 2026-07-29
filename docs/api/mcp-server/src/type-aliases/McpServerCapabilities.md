@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / McpServerCapabilities
+[LiteShip](../../../README.md) / [mcp-server/src](../README.md) / McpServerCapabilities
 
 # Type Alias: McpServerCapabilities
 

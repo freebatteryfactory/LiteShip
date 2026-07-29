@@ -63,8 +63,6 @@ The authority ratchet is the usual surprise: a gate whose semantic findings stay
 ## Docs
 
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
-- [ADR-0023 — the gauntlet rigor engine](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0023-gauntlet-rigor-engine.md) — the design and the authority ratchet
-- [ADR-0019 — FactGate, evidence-bound gates](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0019-factgate-evidence-bound-gates.md)
 - [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/gauntlet/src/) — generated from source
 
 ---

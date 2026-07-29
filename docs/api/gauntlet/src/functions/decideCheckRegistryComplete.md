@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / decideCheckRegistryComplete
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / decideCheckRegistryComplete
 
 # Function: decideCheckRegistryComplete()
 

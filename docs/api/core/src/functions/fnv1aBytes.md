@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / fnv1aBytes
+[LiteShip](../../../README.md) / [core/src](../README.md) / fnv1aBytes
 
 # Function: fnv1aBytes()
 

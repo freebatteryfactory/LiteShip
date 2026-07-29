@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../modules.md) / [\_spine](../README.md) / ResolvedStateAckPayload
+[LiteShip](../../README.md) / [\_spine](../README.md) / ResolvedStateAckPayload
 
 # Interface: ResolvedStateAckPayload
 

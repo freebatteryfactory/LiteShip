@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / LLMStreamConfig
+[LiteShip](../../../README.md) / [web/src](../README.md) / LLMStreamConfig
 
 # Interface: LLMStreamConfig
 

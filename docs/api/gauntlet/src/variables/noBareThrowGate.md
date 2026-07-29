@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / noBareThrowGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / noBareThrowGate
 
 # Variable: noBareThrowGate
 

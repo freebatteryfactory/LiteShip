@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / SITE\_ADAPTER\_CHECKS
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / SITE\_ADAPTER\_CHECKS
 
 # Variable: SITE\_ADAPTER\_CHECKS
 

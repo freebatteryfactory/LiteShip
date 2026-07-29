@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [scene/src](../README.md) / SyncSystem
+[LiteShip](../../../README.md) / [scene/src](../README.md) / SyncSystem
 
 # Function: SyncSystem()
 

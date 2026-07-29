@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / TransformPart
+[LiteShip](../../../README.md) / [core/src](../README.md) / TransformPart
 
 # Interface: TransformPart
 

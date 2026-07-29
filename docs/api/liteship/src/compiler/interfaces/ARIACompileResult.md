@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / ARIACompileResult
+[LiteShip](../../../../README.md) / [liteship/src/compiler](../README.md) / ARIACompileResult
 
 # Interface: ARIACompileResult\<S\>
 

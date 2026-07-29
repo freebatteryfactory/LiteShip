@@ -23,18 +23,18 @@ import * as ECS from '@liteship/core/ecs';
 
 const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   // ── Rendering primitives ──────────────────────────────────────────
-  // Construction moved to the standalone `defineBoundary` (verb grammar, ADR-0046);
+  // Construction moved to the standalone `defineBoundary` (verb grammar);
   // the `Boundary` namespace object now carries only the pure evaluation faces.
   Boundary: { methods: ['evaluate', 'evaluateWithHysteresis'] },
   BoundarySpec: { methods: ['isActive'] },
   BoundaryAttribute: { methods: ['isAllowedKey'] },
   Token: { methods: ['tap', 'cssVar'] },
   // `TokenBuffer` is now type-only; construction is the standalone `createTokenBuffer`
-  // (verb grammar, ADR-0051 — the reactive-substrate sweep).
+  // (verb grammar — the reactive-substrate sweep).
   Style: { methods: ['tap', 'mergeLayers'] },
   Theme: { methods: ['tap'] },
-  // `Component` is now type-only; construction is the standalone `createComponent` (ADR-0051).
-  // `Signal` construction moved to the standalone `createSignal` (ADR-0051); the namespace
+  // `Component` is now type-only; construction is the standalone `createComponent` (verb grammar).
+  // `Signal` construction moved to the standalone `createSignal` (verb grammar); the namespace
   // object keeps its specialized `controllable` / `audio` constructors.
   Signal: { methods: ['controllable', 'audio'] },
   Easing: {
@@ -65,10 +65,10 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   Compositor: { methods: ['create'] },
   // `CompositorStatePool` / `BlendTree` / `DirtyFlags` / `FrameBudget` are now
   // type-only; construction is the standalone `createCompositorStatePool` / `createBlendTree`
-  // / `createDirtyFlags` / `createFrameBudget` (verb grammar, ADR-0051). The typed
+  // / `createDirtyFlags` / `createFrameBudget` (verb grammar). The typed
   // ECS substrate is intentionally isolated at `@liteship/core/ecs`.
   Scheduler: { methods: ['raf', 'noop', 'fixedStep', 'audioSync'] },
-  // `Composable` construction moved to the standalone `createComposable` (ADR-0051); the
+  // `Composable` construction moved to the standalone `createComposable` (verb grammar); the
   // namespace object keeps its `compose` / `merge` combinators.
   Composable: { methods: ['compose', 'merge'] },
   ComposableWorld: { methods: ['make', 'dense'] },
@@ -87,7 +87,7 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   // transport, zero runtime consumers (the web/astro `wire` is the unrelated
   // liteship:* event registry). `isWire` + the Wire arm of `Primitive` left with it.
   // `LiveCell` is now type-only; construction is the standalone `createLiveCell` /
-  // `createLiveCellBoundary` (verb grammar, ADR-0051 — the reactive-substrate sweep).
+  // `createLiveCellBoundary` (verb grammar — the reactive-substrate sweep).
 
   // ── Schema kernel + disposal/reactive substrate (Wave 0 foundations) ──
   // The effect-free schema substrate: `schema.*` constructors over a frozen
@@ -198,7 +198,7 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   // ── Canonical CBOR (RFC 8949 §4.2.1) ─────────────────────────────
   CanonicalCbor: { methods: ['encode'] },
 
-  // ── ShipCapsule (ADR-0011) ────────────────────────────────────────
+  // ── ShipCapsule ───────────────────────────────────────────────────
   AddressedDigest: { methods: ['of'] },
   ShipCapsule: { methods: ['make', 'canonicalize', 'decode', 'computeId'] },
 
@@ -260,7 +260,7 @@ const STANDALONE_FUNCTIONS = [
   // `@liteship/error` algebra; consumers use `hasTag(e, 'ValidationError')` from
   // `@liteship/error` (no per-package guard re-export, no compat shim).
   'defineConfig',
-  // Verb-grammar construction functions (ADR-0046): the standalone `define*` /
+  // Verb-grammar construction functions: the standalone `define*` /
   // `create*` / `computed` factories that replaced the namespace `.make` / `.from`
   // members on Boundary/Token/Theme/Style/Cell/Derived/Store/Timeline.
   'defineBoundary',
@@ -274,7 +274,7 @@ const STANDALONE_FUNCTIONS = [
   'computed',
   'createStore',
   'createTimeline',
-  // Verb-grammar sweep 2 (ADR-0051): the reactive-substrate factories collapsed onto
+  // Verb-grammar sweep 2: the reactive-substrate factories collapsed onto
   // standalone `create*` functions (the old `.make` / `.makeBoundary` namespace spellings
   // died). Plus `createLifetime` (the Lifetime factory as a curated verb), `inspectReceipt`
   // (the `inspect`-verb debug facade over the Receipt namespace), and the `tierTargets`
@@ -389,7 +389,8 @@ const STANDALONE_FUNCTIONS = [
   'defineCapsuleCatalog',
   // ShipCapsule release-input addressing helpers (tarballManifestAddress,
   // lockfileAddress, workspaceManifestAddress, normalizedDryRunAddress,
-  // normalizeDryRunOutput) live in @liteship/cli per ADR-0011 — they import
+  // normalizeDryRunOutput) live in @liteship/cli (ShipCapsule adds no new package
+  // boundary; the CLI verbs live beside the other commands) — they import
   // node:zlib and must stay out of the browser-bundleable @liteship/core.
   // The determinism substrate (0.4.0) — the FUNCTION half: deterministic clock/rng
   // factories. `fixedClock`/`manualClock` build injectable test clocks; `seededRng`
@@ -486,7 +487,8 @@ const STANDALONE_OBJECTS = [
   // GraphPatch round-trip identity capsule (F): proves encode→decode→diff→patch
   // →re-encode holds under the content-addressed multiset law.
   'graphPatchIdentityCapsule',
-  // Escalation chooser capsule: the FIRST policyGate instance (ADR-0008). Locks
+  // Escalation chooser capsule: the FIRST policyGate instance (one of the seven
+  // closed assembly arms). Locks
   // chooseTier's allow/deny + reason-chain + minimal-downgrade / site-gate laws as
   // a standing policyGate contract — the canonical permission/authz check.
   'escalationChooseTierCapsule',

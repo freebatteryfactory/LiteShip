@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../../modules.md) / [liteship/src/testing](../README.md) / generatePolicyGate
+[LiteShip](../../../../README.md) / [liteship/src/testing](../README.md) / generatePolicyGate
 
 # Function: generatePolicyGate()
 

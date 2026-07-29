@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / RegisteredCheckFact
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / RegisteredCheckFact
 
 # Interface: RegisteredCheckFact
 

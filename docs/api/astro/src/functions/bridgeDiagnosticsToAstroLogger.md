@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [astro/src](../README.md) / bridgeDiagnosticsToAstroLogger
+[LiteShip](../../../README.md) / [astro/src](../README.md) / bridgeDiagnosticsToAstroLogger
 
 # Function: bridgeDiagnosticsToAstroLogger()
 

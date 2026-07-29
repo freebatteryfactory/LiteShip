@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / perfClaimBenchGate
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / perfClaimBenchGate
 
 # Variable: perfClaimBenchGate
 

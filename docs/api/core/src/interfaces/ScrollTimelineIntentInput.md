@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / ScrollTimelineIntentInput
+[LiteShip](../../../README.md) / [core/src](../README.md) / ScrollTimelineIntentInput
 
 # Interface: ScrollTimelineIntentInput
 

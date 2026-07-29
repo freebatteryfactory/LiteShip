@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / levelOf
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / levelOf
 
 # Function: levelOf()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [genui/src](../README.md) / renderFromCatalog
+[LiteShip](../../../README.md) / [genui/src](../README.md) / renderFromCatalog
 
 # Function: renderFromCatalog()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [command/src](../README.md) / observedLifecycleScripts
+[LiteShip](../../../README.md) / [command/src](../README.md) / observedLifecycleScripts
 
 # Function: observedLifecycleScripts()
 

@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [audit/src](../README.md) / TypedEcsPartIdentity
+[LiteShip](../../../README.md) / [audit/src](../README.md) / TypedEcsPartIdentity
 
 # Interface: TypedEcsPartIdentity
 

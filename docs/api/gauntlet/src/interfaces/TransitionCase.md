@@ -2,7 +2,7 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / TransitionCase
+[LiteShip](../../../README.md) / [gauntlet/src](../README.md) / TransitionCase
 
 # Interface: TransitionCase
 
