@@ -93,7 +93,15 @@ function methodNameAt(source: string, start: number): string | null {
   at = skipSpaces(source, at + 1);
   if (source[at] === ':') {
     at++;
-    while (at < source.length && source[at] !== '{' && source[at] !== ';' && source[at] !== '=') at++;
+    // A `=` inside the annotation is only an initializer delimiter when it is
+    // not the `=>` of a function type (`run(): (() => void) | undefined {`).
+    while (at < source.length && source[at] !== '{' && source[at] !== ';') {
+      if (source[at] === '=') {
+        if (source[at + 1] !== '>') break;
+        at++;
+      }
+      at++;
+    }
   }
   return source[skipSpaces(source, at)] === '{' ? name : null;
 }

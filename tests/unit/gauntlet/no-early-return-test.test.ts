@@ -68,6 +68,22 @@ describe('detectEarlyReturnBeforeExpect lean fallback', () => {
     expect(detectEarlyReturnBeforeExpect(src)).toEqual([]);
   });
 
+  it('ignores returns inside methods whose return type contains a function type', () => {
+    // The annotation scan must not stop at the `=` of a function-type arrow
+    // (`(() => void)`): halting there rejects the method head, so its bare
+    // `return;` would count against the enclosing test and falsely block it.
+    const src =
+      "test('x', () => {\n" +
+      '  class Host {\n' +
+      '    run(): (() => void) | undefined {\n' +
+      '      return;\n' +
+      '    }\n' +
+      '  }\n' +
+      '  expect(Host).toBeDefined();\n' +
+      '});\n';
+    expect(detectEarlyReturnBeforeExpect(src)).toEqual([]);
+  });
+
   it('scans long method heads without treating nested returns as test exits', () => {
     const parameters = Array.from({ length: 2_000 }, (_, index) => `p${index}: string`).join(', ');
     const src =
