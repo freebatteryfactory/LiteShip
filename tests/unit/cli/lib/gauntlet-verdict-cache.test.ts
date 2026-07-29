@@ -334,21 +334,22 @@ describe('makeFsVerdictCache.read — the EISDIR/EACCES sound-MISS arm (uncertai
     expect(cache.read('eisdir-key')).toBeNull(); // EISDIR ⇒ MISS
   });
 
-  it.skipIf(eaccesUntestableAsRoot)(
-    'a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw',
-    () => {
-      const cache = makeFsVerdictCache(dir);
-      cache.write('eacces-key', SAMPLE);
-      const gdir = join(dir, '.liteship', 'cache', 'gauntlet');
-      const file = join(gdir, readdirSync(gdir)[0] as string);
-      chmodSync(file, 0o000);
-      try {
-        expect(cache.read('eacces-key')).toBeNull(); // EACCES ⇒ sanctioned MISS
-      } finally {
-        chmodSync(file, 0o644); // restore so afterEach rmSync can clean up
-      }
-    },
-  );
+  // The skip-allowlist SITE discriminator pins this call's raw source LINE (guard
+  // expression + title on one line); a reflow would collapse both EACCES sites in
+  // this file into the same ambiguous `it.skipIf(...)(` line.
+  // prettier-ignore
+  it.skipIf(eaccesUntestableAsRoot)('a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {
+    const cache = makeFsVerdictCache(dir);
+    cache.write('eacces-key', SAMPLE);
+    const gdir = join(dir, '.liteship', 'cache', 'gauntlet');
+    const file = join(gdir, readdirSync(gdir)[0] as string);
+    chmodSync(file, 0o000);
+    try {
+      expect(cache.read('eacces-key')).toBeNull(); // EACCES ⇒ sanctioned MISS
+    } finally {
+      chmodSync(file, 0o644); // restore so afterEach rmSync can clean up
+    }
+  });
 });
 
 describe('makeFsMutantVerdictCache — the B2 content-addressed mutant-verdict store (the sound-MISS twin)', () => {
@@ -398,21 +399,21 @@ describe('makeFsMutantVerdictCache — the B2 content-addressed mutant-verdict s
     expect(cache.read('m-eisdir')).toBeNull();
   });
 
-  it.skipIf(eaccesUntestableAsRoot)(
-    'a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw',
-    () => {
-      const cache = makeFsMutantVerdictCache(dir);
-      cache.write('m-eacces', 'killed');
-      const mdir = join(dir, '.liteship', 'cache', 'mutation');
-      const file = join(mdir, readdirSync(mdir)[0] as string);
-      chmodSync(file, 0o000);
-      try {
-        expect(cache.read('m-eacces')).toBeNull();
-      } finally {
-        chmodSync(file, 0o644);
-      }
-    },
-  );
+  // Same one-line pin as the gauntlet-cache EACCES site above (skip-allowlist
+  // SITE discriminator — see that comment).
+  // prettier-ignore
+  it.skipIf(eaccesUntestableAsRoot)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {
+    const cache = makeFsMutantVerdictCache(dir);
+    cache.write('m-eacces', 'killed');
+    const mdir = join(dir, '.liteship', 'cache', 'mutation');
+    const file = join(mdir, readdirSync(mdir)[0] as string);
+    chmodSync(file, 0o000);
+    try {
+      expect(cache.read('m-eacces')).toBeNull();
+    } finally {
+      chmodSync(file, 0o644);
+    }
+  });
 
   it('write is ATOMIC (no leftover .tmp files after a successful write)', () => {
     const cache = makeFsMutantVerdictCache(dir);
