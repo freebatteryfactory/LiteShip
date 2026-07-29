@@ -98,7 +98,9 @@ function budgetFrom(env: Readonly<Record<string, string | undefined>>, name: str
 /** Resolve preparation budgets, honoring explicit env overrides and refusing malformed ones. */
 export function hostPreparationBudgets(env: Readonly<Record<string, string | undefined>>): HostPreparationBudgets {
   return Object.freeze({
-    installStepTimeoutMs: budgetFrom(env, 'LITESHIP_CI_HOST_INSTALL_STEP_TIMEOUT_MS', 300_000),
+    // 600s: run 30460154199 measured apt-get killed mid-install at 300s on a slow
+    // mirror — valid work proving the budget insufficient (still 20x under the job cap).
+    installStepTimeoutMs: budgetFrom(env, 'LITESHIP_CI_HOST_INSTALL_STEP_TIMEOUT_MS', 600_000),
     fetchTimeoutMs: budgetFrom(env, 'LITESHIP_CI_HOST_FETCH_TIMEOUT_MS', 120_000),
   });
 }

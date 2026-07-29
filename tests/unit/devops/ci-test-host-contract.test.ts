@@ -75,8 +75,11 @@ describe('ffmpeg provisioning', () => {
 
 describe('host preparation budgets (scar for CI run 30382383876)', () => {
   it('defaults every provisioning child to a finite budget far under the 30-minute job ceiling', () => {
+    // 600s install: CI run 30460154199 shard 3 measured apt-get actively installing
+    // packages when the prior 300s budget killed it (a slow-mirror day) — valid work
+    // proving the budget insufficient, the only sanctioned reason to raise one.
     expect(hostPreparationBudgets({})).toEqual({
-      installStepTimeoutMs: 300_000,
+      installStepTimeoutMs: 600_000,
       fetchTimeoutMs: 120_000,
     });
   });
