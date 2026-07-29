@@ -6,7 +6,7 @@
 
 # Type Alias: CompilerDef
 
-> **CompilerDef** = \{ `_tag`: `"CSSCompiler"`; `boundary`: [`Boundary`](../../type-aliases/Boundary.md); `selector?`: `string`; `states`: [`CSSStates`](CSSStates.md); \} \| \{ `_tag`: `"GLSLCompiler"`; `boundary`: [`Boundary`](../../type-aliases/Boundary.md); `states`: [`GLSLStates`](GLSLStates.md); \} \| \{ `_tag`: `"WGSLCompiler"`; `boundary`: [`Boundary`](../../type-aliases/Boundary.md); `states`: [`WGSLStates`](WGSLStates.md); \} \| \{ `_tag`: `"ARIACompiler"`; `boundary`: [`Boundary`](../../type-aliases/Boundary.md); `states`: [`ARIAStates`](../interfaces/ARIAStates.md); \} \| \{ `_tag`: `"AICompiler"`; `manifest`: [`AIManifestInput`](../interfaces/AIManifestInput.md); \} \| \{ `_tag`: `"ConfigCompiler"`; `config`: [`Config`](../../type-aliases/Config.md); \} \| \{ `_tag`: `"MotionCompiler"`; `input`: [`MotionCompileInput`](../interfaces/MotionCompileInput.md); \} \| \{ `_tag`: `"ViewTransitionCompiler"`; `input`: `ViewTransitionCompileInput`; \}
+> **CompilerDef** = \{ `_tag`: `"CSSCompiler"`; `boundary`: [`Boundary`](../../type-aliases/Boundary.md); `selector?`: `string`; `states`: [`CSSStates`](CSSStates.md); \} \| \{ `_tag`: `"GLSLCompiler"`; `boundary`: [`Boundary`](../../type-aliases/Boundary.md); `states`: [`GLSLStates`](GLSLStates.md); \} \| \{ `_tag`: `"WGSLCompiler"`; `boundary`: [`Boundary`](../../type-aliases/Boundary.md); `states`: [`WGSLStates`](WGSLStates.md); \} \| \{ `_tag`: `"ARIACompiler"`; `boundary`: [`Boundary`](../../type-aliases/Boundary.md); `states`: [`ARIAStates`](../interfaces/ARIAStates.md); \} \| \{ `_tag`: `"AICompiler"`; `manifest`: [`AIManifestInput`](../interfaces/AIManifestInput.md); \} \| \{ `_tag`: `"ConfigCompiler"`; `config`: [`Config`](../../type-aliases/Config.md); \} \| \{ `_tag`: `"MotionCompiler"`; `input`: [`MotionCompileInput`](../interfaces/MotionCompileInput.md); \} \| \{ `_tag`: `"ViewTransitionCompiler"`; `input`: [`ViewTransitionCompileInput`](../interfaces/ViewTransitionCompileInput.md); \}
 
 Defined in: compiler/dist/dispatch.d.ts:63
 
@@ -91,4 +91,4 @@ CSS selector for bare properties; defaults to `.liteship-boundary`.
 
 ### Type Literal
 
-\{ `_tag`: `"ViewTransitionCompiler"`; `input`: `ViewTransitionCompileInput`; \}
+\{ `_tag`: `"ViewTransitionCompiler"`; `input`: [`ViewTransitionCompileInput`](../interfaces/ViewTransitionCompileInput.md); \}
