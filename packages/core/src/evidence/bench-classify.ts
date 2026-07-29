@@ -178,6 +178,13 @@ function maskCommentsAndLiterals(source: string): string {
         // regular-expression literal.
         at++;
         regexAllowed = false;
+      } else if (char === '!' && next !== '=') {
+        // `!` preserves the position class rather than resetting it: the
+        // TypeScript postfix non-null assertion follows an operand (where
+        // regexAllowed is already false), so `total! / count` stays division;
+        // prefix negation sits in operator position (already true), so
+        // `!/re/.test(x)` stays a regex literal. `!=`/`!==` fall through to
+        // the generic operator branch.
       } else if (!/\s/u.test(char)) {
         regexAllowed = !')]}'.includes(char);
       }

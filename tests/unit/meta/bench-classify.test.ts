@@ -68,6 +68,20 @@ describe('classifyBenchSource', () => {
     expect(classifyBenchSource(`bench('x', () => { total${operator} / count; });`)).toBe('real');
   });
 
+  it('keeps division visible after a TypeScript non-null assertion', () => {
+    // Postfix `!` follows an operand, so the next `/` is division — treating it
+    // as a regex start would swallow the body's closing delimiters and misread
+    // executable evidence as a placeholder.
+    expect(classifyBenchSource("bench('x', () => { total! / count; });")).toBe('real');
+  });
+
+  it('still masks a regex literal after prefix negation', () => {
+    // Prefix `!` sits in operator position, so `!/…/` IS a regex; if its brace
+    // decoys were scanned as code the callback delimiters would corrupt and a
+    // real body would misclassify.
+    expect(classifyBenchSource("bench('x', () => { if (!/[}{)(]/u.test(s)) { work(); } });")).toBe('real');
+  });
+
   it('preserves executable template interpolations while masking template text', () => {
     expect(classifyBenchSource("bench('x', () => { `${work()}` });")).toBe('real');
     expect(classifyBenchSource("bench('x', () => { `work()` });")).toBe('placeholder');
