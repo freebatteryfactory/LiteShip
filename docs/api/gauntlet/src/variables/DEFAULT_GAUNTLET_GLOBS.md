@@ -8,7 +8,7 @@
 
 > `const` **DEFAULT\_GAUNTLET\_GLOBS**: readonly `string`[]
 
-Defined in: [gauntlet/src/runner.ts:474](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L474)
+Defined in: [gauntlet/src/runner.ts:491](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L491)
 
 The default JUDGED scope: every package's TypeScript source. This is the surface the
 gates FLAG findings on — narrow on purpose (a gate must not red a finding outside the

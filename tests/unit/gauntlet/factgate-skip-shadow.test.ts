@@ -16,8 +16,13 @@
 
 import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import {
+  LITESHIP_GATES,
+  LITESHIP_TEXT_GATES,
+  runGauntletOnRepo,
   noSkippedTestGate,
   noSkippedTestFactGate,
   nodeContext,
@@ -677,5 +682,44 @@ describe('FactGate #6c — shadow-diff over DISJOINT files()/allFiles() + tests/
     expect(fact.length).toBe(1);
     expect(fact[0]).toContain('tests/unit/widget/probe.test.ts');
     expect(JSON.stringify(fact)).not.toContain('tests/generated');
+  });
+});
+
+// ── #12 — the PROMOTION (issue #179): the fact form IS the production gate ────
+
+describe('FactGate #12 — promotion: the production composition runs the fact form, fail-closed', () => {
+  it('LITESHIP_TEXT_GATES and LITESHIP_GATES register the BRANDED fact gate under the always-blocking id', () => {
+    for (const set of [LITESHIP_TEXT_GATES, LITESHIP_GATES]) {
+      const registered = set.filter((gate) => gate.id === RULE);
+      expect(registered.length).toBe(1);
+      expect(registered[0]).toBe(noSkippedTestFactGate);
+      expect(isFactGate(registered[0]!)).toBe(true);
+      // The closure form is the shadow reference, never a second registered authority.
+      expect(set.includes(noSkippedTestGate)).toBe(false);
+    }
+  });
+
+  it('FAIL-CLOSED: running the promoted gate without the fact pack is an invalid plan, never a green', () => {
+    // A downstream host that composes the production set but forgets the producer must
+    // get a deterministic plan error naming the channel — an absent pack folding to an
+    // empty verdict would be the exact false green the promotion must not admit.
+    const bare = memoryContext({ 'tests/unit/widget/unwired.test.ts': "it.skip('unwired', () => {});\n" });
+    expect(() => runGates([noSkippedTestFactGate], bare)).toThrowError(/skipSites/);
+  });
+
+  it('END-TO-END: runGauntletOnRepo produces the pack at context assembly and the promoted gate reds a real skip', () => {
+    const root = mkdtempSync(join(tmpdir(), 'liteship-factgate-promotion-'));
+    try {
+      mkdirSync(join(root, 'tests', 'unit'), { recursive: true });
+      mkdirSync(join(root, 'pkg'), { recursive: true });
+      writeFileSync(join(root, 'pkg', 'clean.ts'), 'export const x = 1;\n', 'utf8');
+      writeFileSync(join(root, 'tests', 'unit', 'unwired.test.ts'), "it.skip('unwired', () => {});\n", 'utf8');
+      const result = runGauntletOnRepo([noSkippedTestFactGate], { repoRoot: root, globs: ['pkg/**/*.ts'] });
+      const flagged = result.findings.filter((finding) => finding.ruleId === RULE);
+      expect(flagged.length).toBe(1);
+      expect(flagged[0]!.location?.file).toContain('unwired.test.ts');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

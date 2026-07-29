@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:0730157a",
+  "address": "fnv1a:d5a7ec2e",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -631,6 +631,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "packages/audit/src/rule-ids.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "packages/audit/src/shared.ts",
       "level": "L1"
     },
@@ -1041,6 +1046,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor/probe-support.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "packages/cli/src/commands/doctor/probes-astro.ts",
       "level": "L2"
     },
@@ -1321,7 +1331,7 @@
     },
     {
       "_tag": "assurance-coverage",
-      "file": "packages/cli/src/internal/package-smoke-helpers.ts",
+      "file": "packages/cli/src/internal/package-smoke-engine.ts",
       "level": "L1"
     },
     {
@@ -1456,7 +1466,7 @@
     },
     {
       "_tag": "assurance-coverage",
-      "file": "packages/cli/src/spawn-helpers.ts",
+      "file": "packages/cli/src/spawn.ts",
       "level": "L1"
     },
     {
@@ -1806,7 +1816,7 @@
     },
     {
       "_tag": "assurance-coverage",
-      "file": "packages/compiler/src/css-utils.ts",
+      "file": "packages/compiler/src/css-syntax.ts",
       "level": "L1"
     },
     {
@@ -1891,7 +1901,7 @@
     },
     {
       "_tag": "assurance-coverage",
-      "file": "packages/compiler/src/motion-utils.ts",
+      "file": "packages/compiler/src/motion-augment.ts",
       "level": "L1"
     },
     {
@@ -3446,6 +3456,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/lsp/protocol.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "packages/mcp-server/src/lsp/server.ts",
       "level": "L1"
     },
@@ -3811,11 +3826,6 @@
     },
     {
       "_tag": "assurance-coverage",
-      "file": "packages/vite/src/resolve-utils.ts",
-      "level": "L1"
-    },
-    {
-      "_tag": "assurance-coverage",
       "file": "packages/vite/src/style-transform.ts",
       "level": "L1"
     },
@@ -3837,6 +3847,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "packages/vite/src/transform-css.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/try-import.ts",
       "level": "L1"
     },
     {
@@ -4562,6 +4577,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/lib/doc-registry.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/effect-residue.ts",
       "level": "L1"
     },
     {

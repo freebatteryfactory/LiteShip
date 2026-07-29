@@ -1243,7 +1243,11 @@ export function factBundleDigest(context: GateContext, requires: readonly FactKi
     let fact: unknown;
     switch (kind) {
       case 'skipSites':
-        fact = normalizeSkipSiteFacts(context.skipSites);
+        // Raw fold for cache soundness (promotion, issue #179) — normalization strips
+        // unknown keys (e.g. the evidence-law perturbation salt) that must still flip
+        // the digest; the DECISION reads the normalized pack, the CACHE KEY folds the
+        // raw injected value.
+        fact = context.skipSites;
         break;
       case 'activeSurfaceFacts':
         // Raw fold for cache soundness — normalization strips unknown keys (e.g. the

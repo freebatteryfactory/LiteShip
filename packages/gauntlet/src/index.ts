@@ -134,9 +134,10 @@ export {
   decideSkipSite,
 } from './facts/skip-site-facts.js';
 
-// The FactGate form of the always-blocking no-skipped-test rule (same ruleId, same findings
-// as the closure noSkippedTestGate) — proven equivalent over the adversarial corpus by the
-// shadow-diff before any promotion to the production gate set.
+// The PRODUCTION form of the always-blocking no-skipped-test rule (issue #179): promoted
+// after the shadow-diff proved it equivalent to the closure gate over the adversarial
+// corpus and SUSPENDER-2 landed the producer-level mutation guard. The closure
+// noSkippedTestGate stays exported below as the shadow-differential reference.
 export { noSkippedTestFactGate, decideSkips } from './gates/no-skipped-test-fact.js';
 
 export {

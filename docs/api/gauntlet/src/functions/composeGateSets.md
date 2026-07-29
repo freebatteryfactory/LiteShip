@@ -8,7 +8,7 @@
 
 > **composeGateSets**(...`sets`): readonly [`Gate`](../interfaces/Gate.md)[]
 
-Defined in: [gauntlet/src/runner.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L136)
+Defined in: [gauntlet/src/runner.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L146)
 
 Compose gate sets by identity, rejecting conflicting duplicate ids. The
 returned order is the first-seen order, so a projection is deterministic and
