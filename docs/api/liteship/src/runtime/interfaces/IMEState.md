@@ -6,7 +6,7 @@
 
 # Interface: IMEState
 
-Defined in: web/dist/types.d.ts:89
+Defined in: web/dist/types.d.ts:81
 
 IME (Input Method Editor) composition state.
 
@@ -16,7 +16,7 @@ IME (Input Method Editor) composition state.
 
 > `readonly` **elementPath**: `string`
 
-Defined in: web/dist/types.d.ts:90
+Defined in: web/dist/types.d.ts:82
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: web/dist/types.d.ts:90
 
 > `readonly` **end**: `number`
 
-Defined in: web/dist/types.d.ts:93
+Defined in: web/dist/types.d.ts:85
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: web/dist/types.d.ts:93
 
 > `readonly` **start**: `number`
 
-Defined in: web/dist/types.d.ts:92
+Defined in: web/dist/types.d.ts:84
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: web/dist/types.d.ts:92
 
 > `readonly` **text**: `string`
 
-Defined in: web/dist/types.d.ts:91
+Defined in: web/dist/types.d.ts:83

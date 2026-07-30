@@ -6,7 +6,7 @@
 
 # Interface: MorphCallbacks
 
-Defined in: [web/src/types.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L147)
+Defined in: [web/src/types.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L140)
 
 Morph lifecycle callbacks. `beforeRemove` runs before a non-opaque Element is
 removed; returning `false` vetoes that removal. `afterAdd` runs immediately
@@ -19,7 +19,7 @@ an attribute is added, updated, or removed.
 
 > `optional` **afterAdd**(`node`): `void`
 
-Defined in: [web/src/types.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L151)
+Defined in: [web/src/types.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L144)
 
 Fires immediately after a newly inserted Element or Text node is connected.
 
@@ -39,7 +39,7 @@ Fires immediately after a newly inserted Element or Text node is connected.
 
 > `optional` **beforeAttributeUpdate**(`element`, `name`, `value`): `boolean`
 
-Defined in: [web/src/types.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L152)
+Defined in: [web/src/types.ts:145](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L145)
 
 #### Parameters
 
@@ -65,7 +65,7 @@ Defined in: [web/src/types.ts:152](https://github.com/freebatteryfactory/LiteShi
 
 > `optional` **beforeRemove**(`node`): `boolean`
 
-Defined in: [web/src/types.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L149)
+Defined in: [web/src/types.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L142)
 
 Return `false` to keep the element in place; opaque elements bypass this callback and are always kept.
 

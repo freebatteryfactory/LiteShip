@@ -30,14 +30,8 @@
  * @module
  */
 
-import {
-  APPLY_PATCH_COMMAND,
-  CodeActionKind,
-  SHOW_INSTRUCTION_COMMAND,
-  type FindingRemediationLike,
-  type LspCodeAction,
-  type LspDiagnostic,
-} from './types.js';
+import { APPLY_PATCH_COMMAND, CodeActionKind, SHOW_INSTRUCTION_COMMAND } from './protocol.js';
+import { type FindingRemediationLike, type LspCodeAction, type LspDiagnostic } from './types.js';
 
 /**
  * Project a finding's remediation to an LSP CodeAction, or `null` when the

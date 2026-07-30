@@ -8,7 +8,7 @@
 
 > **lspRoutedMethodNames**(): readonly `string`[]
 
-Defined in: [mcp-server/src/lsp/server.ts:164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L164)
+Defined in: [mcp-server/src/lsp/server.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L163)
 
 Exact inbound route subjects; the exhaustive dispatch switch consumes this catalog union.
 

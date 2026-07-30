@@ -169,7 +169,7 @@ export default tseslint.config(
       // Brand factories
       'packages/core/src/schema/brands.ts',
       'packages/core/src/ecs/runtime.ts',
-      'packages/web/src/types.ts',
+      'packages/web/src/slot/addressing.ts',
 
       // Tuple + generic-preservation helpers
       'packages/core/src/authoring/tuple-map.ts',
@@ -208,7 +208,7 @@ export default tseslint.config(
 
       // Vite filesystem / dynamic-import boundaries
       'packages/vite/src/resolve-fs.ts',
-      'packages/vite/src/resolve-utils.ts',
+      'packages/vite/src/try-import.ts',
       'packages/vite/src/virtual-modules.ts',
     ],
     rules: {

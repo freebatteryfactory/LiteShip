@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { ARIACompiler } from '../../../packages/compiler/src/aria.js';
-import { NUMBER_RE, inferSyntax } from '../../../packages/compiler/src/css-utils.js';
+import { NUMBER_RE, inferSyntax } from '../../../packages/compiler/src/css-syntax.js';
 import type { Theme } from '@liteship/core';
 import { defineBoundary, defineToken, defineTheme, defineStyle, createComponent } from '@liteship/core';
 import { CSSCompiler } from '../../../packages/compiler/src/css.js';
@@ -698,7 +698,7 @@ describe('compiler branch coverage', () => {
     expect(elapsed).toBeLessThan(10);
   });
 
-  test('inferSyntax covers all CSS syntax branches from the unified css-utils module', () => {
+  test('inferSyntax covers all CSS syntax branches from the unified css-syntax module', () => {
     // length
     expect(inferSyntax('16px')).toBe('<length>');
     expect(inferSyntax('1.5rem')).toBe('<length>');
@@ -711,7 +711,7 @@ describe('compiler branch coverage', () => {
     expect(inferSyntax('180deg')).toBe('<angle>');
     expect(inferSyntax('1.5rad')).toBe('<angle>');
     expect(inferSyntax('0.25turn')).toBe('<angle>');
-    // frequency (only present in css-utils, was missing in token-css.ts)
+    // frequency (only present in css-syntax, was missing in token-css.ts)
     expect(inferSyntax('440Hz')).toBe('<frequency>');
     expect(inferSyntax('2kHz')).toBe('<frequency>');
     // color

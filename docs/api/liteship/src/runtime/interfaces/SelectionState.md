@@ -6,7 +6,7 @@
 
 # Interface: SelectionState
 
-Defined in: web/dist/types.d.ts:80
+Defined in: web/dist/types.d.ts:72
 
 Text selection state.
 
@@ -16,7 +16,7 @@ Text selection state.
 
 > `readonly` **direction**: `string`
 
-Defined in: web/dist/types.d.ts:84
+Defined in: web/dist/types.d.ts:76
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: web/dist/types.d.ts:84
 
 > `readonly` **elementPath**: `string`
 
-Defined in: web/dist/types.d.ts:81
+Defined in: web/dist/types.d.ts:73
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: web/dist/types.d.ts:81
 
 > `readonly` **end**: `number`
 
-Defined in: web/dist/types.d.ts:83
+Defined in: web/dist/types.d.ts:75
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: web/dist/types.d.ts:83
 
 > `readonly` **start**: `number`
 
-Defined in: web/dist/types.d.ts:82
+Defined in: web/dist/types.d.ts:74

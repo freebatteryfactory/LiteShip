@@ -20,7 +20,7 @@ import {
   parseEngineMajor,
   parseMajor,
   unreadable,
-} from '../../../../../packages/cli/src/commands/doctor/types.js';
+} from '../../../../../packages/cli/src/commands/doctor/probe-support.js';
 
 describe('doctor/types — unreadable()', () => {
   it('extracts the message from an Error instance', () => {

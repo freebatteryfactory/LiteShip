@@ -6,7 +6,7 @@
 
 # Interface: SymbolOrphanCoverage
 
-Defined in: [audit/src/types.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L71)
+Defined in: [audit/src/types.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L58)
 
 Symbol-level orphan evidence (CUT A6) — finer than [OrphanCoverage](OrphanCoverage.md).
 
@@ -16,7 +16,7 @@ Symbol-level orphan evidence (CUT A6) — finer than [OrphanCoverage](OrphanCove
 
 > `readonly` **candidateCount**: `number`
 
-Defined in: [audit/src/types.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L78)
+Defined in: [audit/src/types.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L65)
 
 Exported but unreferenced despite the file being reached — the file-proxy gap.
 
@@ -26,7 +26,7 @@ Exported but unreferenced despite the file being reached — the file-proxy gap.
 
 > `readonly` **consumedCount**: `number`
 
-Defined in: [audit/src/types.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L74)
+Defined in: [audit/src/types.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L61)
 
 Exact-name references (incl. barrel re-exports) — proven consumed.
 
@@ -36,7 +36,7 @@ Exact-name references (incl. barrel re-exports) — proven consumed.
 
 > `readonly` **coverage**: `"symbol-evidenced"`
 
-Defined in: [audit/src/types.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L72)
+Defined in: [audit/src/types.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L59)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [audit/src/types.ts:72](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **note**: `string`
 
-Defined in: [audit/src/types.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L79)
+Defined in: [audit/src/types.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L66)
 
 ***
 
@@ -52,6 +52,6 @@ Defined in: [audit/src/types.ts:79](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **starCoveredCount**: `number`
 
-Defined in: [audit/src/types.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L76)
+Defined in: [audit/src/types.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L63)
 
 Covered only by a namespace/`*` import — broad evidence, not exact proof.

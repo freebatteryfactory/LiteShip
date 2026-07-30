@@ -1570,7 +1570,7 @@ export const GENERATED_LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] 
     authority: 'runtime',
     admittedRelation: 'exact',
     spineExpr: 'SlotPath',
-    runtimeModule: 'packages/web/src/types.ts',
+    runtimeModule: 'packages/web/src/slot/addressing.ts',
     runtimeExpr: 'SlotPath',
   },
   {

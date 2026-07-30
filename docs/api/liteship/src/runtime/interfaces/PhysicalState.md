@@ -6,7 +6,7 @@
 
 # Interface: PhysicalState
 
-Defined in: web/dist/types.d.ts:53
+Defined in: web/dist/types.d.ts:45
 
 Physical state captures DOM state that should survive morphing.
 
@@ -16,7 +16,7 @@ Physical state captures DOM state that should survive morphing.
 
 > `readonly` **activeElementPath**: `string` \| `null`
 
-Defined in: web/dist/types.d.ts:54
+Defined in: web/dist/types.d.ts:46
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: web/dist/types.d.ts:54
 
 > `readonly` **focusState**: [`FocusState`](FocusState.md) \| `null`
 
-Defined in: web/dist/types.d.ts:55
+Defined in: web/dist/types.d.ts:47
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: web/dist/types.d.ts:55
 
 > `readonly` **ime**: [`IMEState`](IMEState.md) \| `null`
 
-Defined in: web/dist/types.d.ts:58
+Defined in: web/dist/types.d.ts:50
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: web/dist/types.d.ts:58
 
 > `readonly` **scrollPositions**: `Record`\<`string`, [`ScrollPosition`](ScrollPosition.md)\>
 
-Defined in: web/dist/types.d.ts:56
+Defined in: web/dist/types.d.ts:48
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: web/dist/types.d.ts:56
 
 > `readonly` **selection**: [`SelectionState`](SelectionState.md) \| `null`
 
-Defined in: web/dist/types.d.ts:57
+Defined in: web/dist/types.d.ts:49

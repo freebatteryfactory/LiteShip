@@ -8,6 +8,6 @@
 
 > **IslandMode** = `"static"` \| `"partial"` \| `"rich"` \| `"gpu"`
 
-Defined in: web/dist/types.d.ts:29
+Defined in: web/dist/types.d.ts:21
 
 Island modes -- determines how much JavaScript runs for the island.

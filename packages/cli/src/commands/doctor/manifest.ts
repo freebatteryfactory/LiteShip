@@ -13,7 +13,8 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { type EngineMinima, type Readout, parseEngineMajor, unreadable } from './types.js';
+import { parseEngineMajor, unreadable } from './probe-support.js';
+import { type EngineMinima, type Readout } from './types.js';
 
 /**
  * Walk up from `start` until a workspace marker is found. Probes need

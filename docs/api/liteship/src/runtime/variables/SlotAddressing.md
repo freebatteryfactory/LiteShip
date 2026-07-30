@@ -8,7 +8,7 @@
 
 > `const` **SlotAddressing**: `object`
 
-Defined in: web/dist/slot/addressing.d.ts:44
+Defined in: web/dist/slot/addressing.d.ts:59
 
 Consolidated namespace export matching the spine contract.
 

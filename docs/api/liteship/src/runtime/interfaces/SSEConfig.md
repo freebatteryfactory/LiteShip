@@ -6,7 +6,7 @@
 
 # Interface: SSEConfig
 
-Defined in: web/dist/types.d.ts:205
+Defined in: web/dist/types.d.ts:197
 
 SSE client configuration.
 
@@ -16,7 +16,7 @@ SSE client configuration.
 
 > `readonly` `optional` **artifactId?**: `string`
 
-Defined in: web/dist/types.d.ts:211
+Defined in: web/dist/types.d.ts:203
 
 Appended to the stream URL as a path segment; also the key the
 `Resumption` namespace uses for its `sessionStorage` state.
@@ -27,7 +27,7 @@ Appended to the stream URL as a path segment; also the key the
 
 > `readonly` `optional` **heartbeatInterval?**: [`Millis`](../../../../spine/type-aliases/Millis.md)
 
-Defined in: web/dist/types.d.ts:223
+Defined in: web/dist/types.d.ts:215
 
 ***
 
@@ -35,7 +35,7 @@ Defined in: web/dist/types.d.ts:223
 
 > `readonly` `optional` **lastEventId?**: `string`
 
-Defined in: web/dist/types.d.ts:217
+Defined in: web/dist/types.d.ts:209
 
 Initial cursor re-sent to the server on (re)connect. Seed it from
 `Resumption.loadState` on cold start so the stream resumes where
@@ -47,7 +47,7 @@ the previous session left off.
 
 > `readonly` `optional` **onMessage?**: (`message`) => `void`
 
-Defined in: web/dist/types.d.ts:240
+Defined in: web/dist/types.d.ts:232
 
 Synchronous message sink. When set, each parsed message is delivered to
 this callback *synchronously* inside the `EventSource` `onmessage` handler
@@ -73,7 +73,7 @@ complete within the dispatch turn (the live morph directives); use
 
 > `readonly` `optional` **onStateChange?**: (`state`) => `void`
 
-Defined in: web/dist/types.d.ts:246
+Defined in: web/dist/types.d.ts:238
 
 Synchronous state-transition sink — the callback form of `stateChanges`,
 fired synchronously as each edge is emitted. Pair with `onMessage` for
@@ -95,7 +95,7 @@ fully synchronous directive consumption.
 
 > `readonly` `optional` **overflow?**: [`OverflowPolicy`](../type-aliases/OverflowPolicy.md)
 
-Defined in: web/dist/types.d.ts:230
+Defined in: web/dist/types.d.ts:222
 
 Overflow policy applied when the receive buffer saturates. Partial
 over the engine default (`coalesce-by-id`, see `defaultOverflowPolicy`
@@ -108,7 +108,7 @@ knob without restating the rest.
 
 > `readonly` `optional` **reconnect?**: `Partial`\<[`ReconnectConfig`](ReconnectConfig.md)\>
 
-Defined in: web/dist/types.d.ts:222
+Defined in: web/dist/types.d.ts:214
 
 Partial overrides are merged over `defaultReconnectConfig`
 (maxAttempts 10, initialDelay 1000ms, maxDelay 30000ms, factor 2).
@@ -119,4 +119,4 @@ Partial overrides are merged over `defaultReconnectConfig`
 
 > `readonly` **url**: `string`
 
-Defined in: web/dist/types.d.ts:206
+Defined in: web/dist/types.d.ts:198

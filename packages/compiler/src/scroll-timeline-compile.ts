@@ -19,7 +19,7 @@ import {
 } from '@liteship/core';
 import { MotionCompiler } from './motion.js';
 import type { MotionCompileResult, MotionEasing, MotionScrollTimeline } from './motion.js';
-import { appendReducedMotionGuard, appendTranslateConsumer } from './motion-utils.js';
+import { appendReducedMotionGuard, appendTranslateConsumer } from './motion-augment.js';
 
 /** Compiled scroll-timeline artifacts. */
 export interface CompiledScrollTimeline {

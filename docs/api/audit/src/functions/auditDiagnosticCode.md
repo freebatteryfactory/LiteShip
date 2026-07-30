@@ -8,7 +8,7 @@
 
 > **auditDiagnosticCode**(`rule`): `"audit/console-call"` \| `"audit/consumer-package-missing"` \| `"audit/default-export"` \| `"audit/export-target-missing"` \| `"audit/fallback-laundering"` \| `"audit/host-surface"` \| `"audit/missing-manifest-dependency"` \| `"audit/missing-manifest-dependency-dynamic"` \| `"audit/missing-runtime-capability"` \| `"audit/no-packages-discovered"` \| `"audit/orphan-export-candidate"` \| `"audit/package-export-surface"` \| `"audit/package-artifacts-unverified"` \| `"audit/package-topology"` \| `"audit/placeholder-content"` \| `"audit/stub-marker"` \| `"audit/suspicious-reimplementation"` \| `"audit/symbol-orphan-candidate"` \| `"audit/unknown-internal-package"` \| `"audit/unresolved-internal-import"` \| `"audit/virtual-module-surface"`
 
-Defined in: [audit/src/types.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L23)
+Defined in: [audit/src/rule-ids.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/rule-ids.ts#L20)
 
 Project an audit rule slug onto its stable diagnostic identity.
 

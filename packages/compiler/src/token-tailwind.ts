@@ -8,7 +8,7 @@
  */
 
 import type { Token, TokenCategory } from '@liteship/core';
-import { stringifyCSSValue, groupTokensByCategory } from './css-utils.js';
+import { stringifyCSSValue, groupTokensByCategory } from './css-syntax.js';
 
 // ---------------------------------------------------------------------------
 // Types

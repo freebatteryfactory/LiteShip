@@ -41,11 +41,8 @@ export {
 } from './server.js';
 export { runLspStdio } from './stdio.js';
 export { makeFrameReader, encodeFrame, type FrameReader } from './framing.js';
+export { DiagnosticSeverity, CodeActionKind, APPLY_PATCH_COMMAND, SHOW_INSTRUCTION_COMMAND } from './protocol.js';
 export {
-  DiagnosticSeverity,
-  CodeActionKind,
-  APPLY_PATCH_COMMAND,
-  SHOW_INSTRUCTION_COMMAND,
   type FindingLike,
   type FindingSeverity,
   type FindingLevel,

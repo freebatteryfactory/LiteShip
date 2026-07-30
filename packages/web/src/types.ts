@@ -15,19 +15,12 @@ import type { Millis } from '@liteship/core';
 // =============================================================================
 
 /**
- * Slot path is a forward-slash prefixed branded path string.
- * Used to address regions within the DOM.
+ * Slot path addressing vocabulary. The branded type and its sanctioned
+ * single-site cast factory live together in `slot/addressing.ts`; re-exported
+ * here so this file remains the one type surface (and stays fully erasable).
  */
-export type SlotPath = `/${string}` & { readonly _brand: 'SlotPath' };
-
-/**
- * Brand an already-validated slot path string.
- *
- * Sanctioned single-site cast for `SlotPath`. Callers that have externally
- * validated the shape (e.g. via `SlotAddressing.isValid`, attribute provenance,
- * or a literal `/...` template) should use this helper instead of inline-casting.
- */
-export const SlotPath = (value: string): SlotPath => value as SlotPath;
+export type { SlotPath } from './slot/addressing.js';
+import type { SlotPath } from './slot/addressing.js';
 
 /**
  * Island modes -- determines how much JavaScript runs for the island.

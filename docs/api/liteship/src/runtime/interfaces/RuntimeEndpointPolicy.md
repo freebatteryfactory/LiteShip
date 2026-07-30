@@ -6,7 +6,7 @@
 
 # Interface: RuntimeEndpointPolicy
 
-Defined in: web/dist/types.d.ts:171
+Defined in: web/dist/types.d.ts:163
 
 Host-provided policy that governs which origins the runtime may talk
 to. `same-origin` is the default; `allowlist` consults
@@ -18,7 +18,7 @@ to. `same-origin` is the default; `allowlist` consults
 
 > `readonly` `optional` **allowOrigins?**: readonly `string`[]
 
-Defined in: web/dist/types.d.ts:175
+Defined in: web/dist/types.d.ts:167
 
 Allowed origins when `mode` is `allowlist`.
 
@@ -28,7 +28,7 @@ Allowed origins when `mode` is `allowlist`.
 
 > `readonly` `optional` **byKind?**: `Partial`\<`Record`\<[`RuntimeEndpointKind`](../type-aliases/RuntimeEndpointKind.md), readonly `string`[]\>\>
 
-Defined in: web/dist/types.d.ts:177
+Defined in: web/dist/types.d.ts:169
 
 Optional per-endpoint-kind override allowlists.
 
@@ -38,6 +38,6 @@ Optional per-endpoint-kind override allowlists.
 
 > `readonly` **mode**: `"same-origin"` \| `"allowlist"`
 
-Defined in: web/dist/types.d.ts:173
+Defined in: web/dist/types.d.ts:165
 
 Enforcement mode.

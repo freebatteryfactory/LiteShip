@@ -193,7 +193,7 @@ describe('LESSON (#79): the environments option defaults sensibly and rejects ty
 });
 
 // ---------------------------------------------------------------------------
-// #84 / #87 — resolve-utils error contract
+// #84 / #87 — try-import error contract
 // ---------------------------------------------------------------------------
 
 describe('LESSON (#84/#87): resolve failures teach the exact next step', () => {

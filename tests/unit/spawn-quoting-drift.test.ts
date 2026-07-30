@@ -3,7 +3,7 @@
  * point to the same canonical implementation in scripts/lib/spawn.ts. The
  * function is re-exported by:
  *
- *   - packages/cli/src/spawn-helpers.ts  (production CLI)
+ *   - packages/cli/src/spawn.ts  (production CLI)
  *   - scripts/support/pnpm-process.ts    (gauntlet/scripts)
  *
  * Identity equality (===) is the strongest possible assertion: anyone who
@@ -14,7 +14,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { quoteWindowsArg as quoteFromCanonical } from '../../scripts/lib/spawn.js';
-import { quoteWindowsArg as quoteFromCli } from '../../packages/cli/src/spawn-helpers.js';
+import { quoteWindowsArg as quoteFromCli } from '../../packages/cli/src/spawn.js';
 import { quoteWindowsArg as quoteFromScripts } from '../../scripts/support/pnpm-process.js';
 
 const VECTORS: readonly string[] = [

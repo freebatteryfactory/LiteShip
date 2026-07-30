@@ -6,7 +6,7 @@
 
 # Interface: ScrollPosition
 
-Defined in: web/dist/types.d.ts:73
+Defined in: web/dist/types.d.ts:65
 
 Scroll position for an element.
 
@@ -16,7 +16,7 @@ Scroll position for an element.
 
 > `readonly` **left**: `number`
 
-Defined in: web/dist/types.d.ts:75
+Defined in: web/dist/types.d.ts:67
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: web/dist/types.d.ts:75
 
 > `readonly` **top**: `number`
 
-Defined in: web/dist/types.d.ts:74
+Defined in: web/dist/types.d.ts:66

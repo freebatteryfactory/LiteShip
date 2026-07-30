@@ -15,7 +15,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { tarballFileUrl } from '../../../packages/cli/src/internal/package-smoke-helpers.js';
+import { tarballFileUrl } from '../../../packages/cli/src/internal/package-smoke-engine.js';
 import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 import { runPnpm } from '../../../scripts/support/pnpm-process.js';
 import { scaledTimeout } from '../../../vitest.shared.js';

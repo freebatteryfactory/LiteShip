@@ -48,7 +48,8 @@ import { noBareThrowGate } from './gates/no-bare-throw.js';
 import { noTsIgnoreGate } from './gates/no-ts-ignore.js';
 import { noNondeterminismGate } from './gates/no-nondeterminism.js';
 import { noSilentCatchGate } from './gates/no-silent-catch.js';
-import { noSkippedTestGate } from './gates/no-skipped-test.js';
+import { noSkippedTestFactGate } from './gates/no-skipped-test-fact.js';
+import { produceSkipSiteFactsFromContext } from './facts/skip-site-facts.js';
 import { noPlaceholderGate } from './gates/no-placeholder.js';
 import { noEarlyReturnTestGate } from './gates/no-early-return-test.js';
 import type { EarlyReturnMatch } from './gates/early-return-detect.js';
@@ -72,11 +73,20 @@ import { featureEdgeConnectivityGate } from './gates/feature-edge-connectivity.j
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The three
- * always-blocking gates ({@link noSkippedTestGate} / {@link noPlaceholderGate} /
+ * always-blocking gates ({@link noSkippedTestFactGate} / {@link noPlaceholderGate} /
  * {@link noEarlyReturnTestGate}) are listed alongside the four hygiene gates: their
  * rule ids are exactly the ones {@link ALWAYS_BLOCKING_RULES} reserves, so the
  * forbidden floor now guards rules a REAL gate emits (no inert surface). A downstream
  * project composes its own gates onto this set.
+ *
+ * PROMOTION (issue #179): `gauntlet/no-skipped-test` runs as its FactGate form.
+ * The producer ({@link produceSkipSiteFactsFromContext}) is folded onto the context
+ * by {@link runGauntletOnRepo}; a composition run without the fact pack fails
+ * CLOSED at plan time (the engine's required-fact check), never green. The closure
+ * `noSkippedTestGate` stays exported as the shadow-differential reference — the
+ * adversarial corpus (factgate-skip-shadow) keeps proving the two forms agree, and
+ * its SUSPENDER-2 producer-teeth proof is the producer-level mutation guard the
+ * promotion was conditioned on.
  */
 /** The dependency-free source scanners in the lean composition. */
 export const LITESHIP_TEXT_GATES: readonly Gate[] = [
@@ -84,7 +94,7 @@ export const LITESHIP_TEXT_GATES: readonly Gate[] = [
   noTsIgnoreGate,
   noNondeterminismGate,
   noSilentCatchGate,
-  noSkippedTestGate,
+  noSkippedTestFactGate,
   noPlaceholderGate,
   noEarlyReturnTestGate,
 ];
@@ -455,7 +465,14 @@ export function runGauntletOnRepo(
           ...(opts.featureEdges !== undefined ? { featureEdges: opts.featureEdges } : {}),
         }
       : baseContext;
-  return runGates(gates, context, runOpts);
+  // The SkipSite FactPack is produced HERE, at context assembly, for the promoted
+  // no-skipped-test FactGate (issue #179): the producer reads the same governed
+  // files + injected detector the closure gate read, but the gate's decision then
+  // sees ONLY the declared pack. Produced unconditionally — a composition without
+  // the gate simply ignores the channel, and a downstream that bypasses this
+  // runner without producing facts fails CLOSED at the engine's plan check.
+  const contextWithSkipFacts = { ...context, skipSites: produceSkipSiteFactsFromContext(context) };
+  return runGates(gates, contextWithSkipFacts, runOpts);
 }
 
 /**

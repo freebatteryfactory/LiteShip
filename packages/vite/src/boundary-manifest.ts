@@ -134,7 +134,7 @@ async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<st
   for (const [exportName, value] of Object.entries(imported ?? {})) {
     if (value && typeof value === 'object' && '_tag' in value && value._tag === 'BoundaryDef') {
       // Runtime `_tag` guard validates the shape; same containment cast as
-      // the resolver import boundary in resolve-utils.ts.
+      // the resolver import boundary in try-import.ts.
       found.set(exportName, value as Boundary);
     }
   }

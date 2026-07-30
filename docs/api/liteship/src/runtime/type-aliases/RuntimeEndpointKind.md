@@ -8,7 +8,7 @@
 
 > **RuntimeEndpointKind** = `"stream"` \| `"snapshot"` \| `"replay"` \| `"llm"` \| `"gpu-shader"` \| `"wasm"`
 
-Defined in: web/dist/types.d.ts:165
+Defined in: web/dist/types.d.ts:157
 
 Category of remote runtime endpoint. Used by
 [RuntimeEndpointPolicy](../interfaces/RuntimeEndpointPolicy.md) to narrow the allowlist per feature.

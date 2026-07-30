@@ -6,7 +6,7 @@
 
 # Interface: SelectionState
 
-Defined in: [web/src/types.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L96)
+Defined in: [web/src/types.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L89)
 
 Text selection state.
 
@@ -16,7 +16,7 @@ Text selection state.
 
 > `readonly` **direction**: `string`
 
-Defined in: [web/src/types.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L100)
+Defined in: [web/src/types.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L93)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:100](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **elementPath**: `string`
 
-Defined in: [web/src/types.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L97)
+Defined in: [web/src/types.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L90)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/types.ts:97](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **end**: `number`
 
-Defined in: [web/src/types.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L99)
+Defined in: [web/src/types.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L92)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [web/src/types.ts:99](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **start**: `number`
 
-Defined in: [web/src/types.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L98)
+Defined in: [web/src/types.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L91)

@@ -118,7 +118,7 @@ const SANCTIONED_CAST_FILES = new Set([
 
   // Vite filesystem / dynamic-import boundaries
   'packages/vite/src/resolve-fs.ts',
-  'packages/vite/src/resolve-utils.ts',
+  'packages/vite/src/try-import.ts',
   'packages/vite/src/virtual-modules.ts',
 ]);
 
