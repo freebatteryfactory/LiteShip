@@ -47,6 +47,7 @@ package — it stays repo-local and composes these passes.
 - [EvaluateMutantOptions](interfaces/EvaluateMutantOptions.md)
 - [GenerateConditionMutantsOptions](interfaces/GenerateConditionMutantsOptions.md)
 - [GenerateMutantsOptions](interfaces/GenerateMutantsOptions.md)
+- [InconclusiveVerdict](interfaces/InconclusiveVerdict.md)
 - [IntegritySummary](interfaces/IntegritySummary.md)
 - [KilledVerdict](interfaces/KilledVerdict.md)
 - [McdcBuildOptions](interfaces/McdcBuildOptions.md)

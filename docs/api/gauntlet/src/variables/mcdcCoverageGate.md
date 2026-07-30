@@ -8,7 +8,7 @@
 
 > `const` **mcdcCoverageGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/mcdc-coverage.ts:299](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/mcdc-coverage.ts#L299)
+Defined in: [gauntlet/src/gates/mcdc-coverage.ts:342](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/mcdc-coverage.ts#L342)
 
 The MC/DC-coverage gate — each uncovered atomic condition (its independent effect not
 observed by the suite — a surviving force-true/force-false pin) becomes a

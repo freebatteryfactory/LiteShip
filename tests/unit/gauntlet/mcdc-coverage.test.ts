@@ -47,6 +47,8 @@ function condition(
     column: 7,
     decision: 'a && b',
     condition: 'a',
+    forceTrueInconclusiveReason: null,
+    forceFalseInconclusiveReason: null,
     coveringTests: ['tests/fixture.test.ts'],
     ...over,
   };
@@ -113,6 +115,53 @@ describe('mcdcCoverageGate — floor calibration by level', () => {
     expect(findings[0]!.detail).toContain('a');
     expect(findings[0]!.detail).toContain('a && b');
     expect(findings[0]!.detail).toContain('force-FALSE');
+  });
+
+  it('an INCONCLUSIVE pin finding names the actual refusal reason, never a generic infra label (PR #192 review, round 4)', () => {
+    const findings = mcdcCoverageGate.run(
+      ctx(simpleIR([L4_FILE]), {
+        conditions: [
+          condition({
+            file: L4_FILE,
+            forceTrueVerdict: 'inconclusive',
+            forceFalseVerdict: 'killed',
+            forceTrueInconclusiveReason: 'spawn timeout: the per-mutant budget (240000 ms) expired',
+          }),
+        ],
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    // The reader must see WHICH infra fault refused the verdict — a timeout, a
+    // spawn failure, and a zero-test run demand different responses.
+    expect(findings[0]!.detail).toContain('per-mutant budget (240000 ms) expired');
+  });
+
+  it('an INCONCLUSIVE pin gets refusal prose and infra remediation — never gap-claims about a comparison that was refused (PR #192 review, round 5)', () => {
+    // The sibling of the mutation-divergence round-4 fix, which I applied there
+    // and NOT here: preserving the reason is not enough when the surrounding
+    // sentence still claims the pin "did not flip any covering test" and the
+    // remediation demands a distinguishing test pair — no comparison completed,
+    // so both statements are lies that send the reader away from the runner.
+    const findings = mcdcCoverageGate.run(
+      ctx(simpleIR([L4_FILE]), {
+        conditions: [
+          condition({
+            file: L4_FILE,
+            forceTrueVerdict: 'inconclusive',
+            forceFalseVerdict: 'killed',
+            forceTrueInconclusiveReason: 'spawn timeout: the per-mutant budget (240000 ms) expired',
+          }),
+        ],
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    const f = findings[0]!;
+    expect(f.title).toContain('inconclusive');
+    expect(f.detail).toContain('per-mutant budget (240000 ms) expired');
+    expect(f.detail).not.toMatch(/did not flip any covering test/u);
+    const steps = (f.remediation?.kind === 'instruction' ? f.remediation.steps : []).join(' ');
+    expect(steps).not.toMatch(/distinguishing test|test pair/iu);
+    expect(`${f.remediation?.kind === 'instruction' ? f.remediation.description : ''} ${steps}`).toMatch(/re-run/iu);
   });
 
   it('an L1 uncovered condition is advisory debt (calibrating, never blocks)', () => {

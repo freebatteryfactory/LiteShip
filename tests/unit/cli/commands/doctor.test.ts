@@ -9,11 +9,19 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { doctor, findWorkspaceRoot } from '../../../../packages/cli/src/commands/doctor.js';
+import { DOCTOR_PROBE_TIMEOUT_MS } from '../../../../packages/cli/src/commands/doctor/probe-support.js';
 import { readCliVersion } from '../../../../packages/cli/src/commands/version.js';
 import * as spawnLib from '../../../../packages/cli/src/internal/spawn.js';
 import { captureCli } from '../../../integration/cli/capture.js';
+import { scaledTimeout } from '../../../../vitest.shared.js';
 
-describe('doctor command', () => {
+// These tests run the REAL doctor against the live workspace, so their budget
+// is DERIVED from the per-probe budget: one hung probe legitimately consumes
+// DOCTOR_PROBE_TIMEOUT_MS before doctor moves on, and the 20s raise (crons
+// 30342905791 + 30526718746) pushed that worst case past vitest's 10s default
+// — runs 30567553850 + 30571535144 measured the kill on all three platforms.
+// 2× covers a slow probe plus the remaining fast ones without a raw literal.
+describe('doctor command', { timeout: scaledTimeout(2 * DOCTOR_PROBE_TIMEOUT_MS) }, () => {
   it('emits a receipt with status, verdict, and per-check entries', async () => {
     const { exit, stdout } = await captureCli(() => doctor({ pretty: false }));
     expect([0, 1]).toContain(exit);

@@ -6,9 +6,9 @@
 
 # Type Alias: McdcPinVerdict
 
-> **McdcPinVerdict** = `"killed"` \| `"survived"` \| `"no-coverage"`
+> **McdcPinVerdict** = `"killed"` \| `"survived"` \| `"no-coverage"` \| `"inconclusive"`
 
-Defined in: [gauntlet/src/facts/mcdc-facts.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mcdc-facts.ts#L70)
+Defined in: [gauntlet/src/facts/mcdc-facts.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mcdc-facts.ts#L73)
 
 The kill/survive verdict tag a single condition-mutant pin earned — the same `_tag`
 discriminant the mutation verdict uses (composition), restricted to the three the

@@ -90,10 +90,13 @@ function groupKey(m: ConditionMutant): string {
  * tagged invariant violation, never a silent coercion.
  */
 function pinVerdict(
-  tag: 'killed' | 'survived' | 'no-coverage' | 'equivalent',
+  tag: 'killed' | 'survived' | 'no-coverage' | 'equivalent' | 'inconclusive',
   mutant: ConditionMutant,
 ): McdcPinVerdict {
-  if (tag === 'killed' || tag === 'survived' || tag === 'no-coverage') return tag;
+  // `inconclusive` passes through: the runner refused a trustworthy verdict for
+  // this pin (infra fault) — the gate folds it as an uncovered condition,
+  // fail-closed, instead of the whole campaign aborting.
+  if (tag === 'killed' || tag === 'survived' || tag === 'no-coverage' || tag === 'inconclusive') return tag;
   throw InvariantViolationError(
     'buildMcdcFacts',
     `condition pin ${mutant.id} (${mutant.file}:${mutant.line}:${mutant.column}, ${mutant.force}) earned an "equivalent" verdict — a forced constant is a reachable behaviour change and can never be equivalent (the MC/DC builder injects no equivalent registry), so this is an impossible state`,
@@ -122,6 +125,8 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
     condition: string;
     forceTrue?: McdcPinVerdict;
     forceFalse?: McdcPinVerdict;
+    forceTrueInconclusiveReason: string | null;
+    forceFalseInconclusiveReason: string | null;
     conditionId: string;
     coveringTests: readonly string[];
   }
@@ -144,6 +149,10 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
         ...(options.toolchainDigest !== undefined ? { toolchainDigest: options.toolchainDigest } : {}),
       });
       const tag = pinVerdict(verdict._tag, mutant);
+      // The refusal reason survives the fold (PR #192 review, round 4): the tag
+      // alone collapsed a timeout, a spawn failure, and a zero-test run into one
+      // unactionable "infra fault" label at the gate.
+      const reason = verdict._tag === 'inconclusive' ? verdict.reason : null;
 
       const key = groupKey(mutant);
       const existing = byCondition.get(key);
@@ -153,10 +162,12 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
         column: mutant.column,
         decision: mutant.decision,
         condition: mutant.condition,
+        forceTrueInconclusiveReason: null,
+        forceFalseInconclusiveReason: null,
         conditionId: conditionId(mutant.file, mutant.line, mutant.column, mutant.condition),
         coveringTests: [...options.coverage.covering(mutant.file, mutant.line)].sort((a, b) => a.localeCompare(b)),
       };
-      assignPin(partial, mutant.force, tag);
+      assignPin(partial, mutant.force, tag, reason);
       byCondition.set(key, partial);
     }
   }
@@ -178,6 +189,8 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
       condition: partial.condition,
       forceTrueVerdict: partial.forceTrue,
       forceFalseVerdict: partial.forceFalse,
+      forceTrueInconclusiveReason: partial.forceTrueInconclusiveReason,
+      forceFalseInconclusiveReason: partial.forceFalseInconclusiveReason,
       coveringTests: partial.coveringTests,
     });
   }
@@ -191,12 +204,23 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
   return { conditions, targetCensus };
 }
 
-/** Assign one pin's verdict into the partial outcome by its force direction. */
+/** Assign one pin's verdict (and, for a refusal, its preserved reason) by force direction. */
 function assignPin(
-  partial: { forceTrue?: McdcPinVerdict; forceFalse?: McdcPinVerdict },
+  partial: {
+    forceTrue?: McdcPinVerdict;
+    forceFalse?: McdcPinVerdict;
+    forceTrueInconclusiveReason: string | null;
+    forceFalseInconclusiveReason: string | null;
+  },
   force: ConditionForce,
   verdict: McdcPinVerdict,
+  inconclusiveReason: string | null,
 ): void {
-  if (force === 'force-condition-true') partial.forceTrue = verdict;
-  else partial.forceFalse = verdict;
+  if (force === 'force-condition-true') {
+    partial.forceTrue = verdict;
+    partial.forceTrueInconclusiveReason = inconclusiveReason;
+  } else {
+    partial.forceFalse = verdict;
+    partial.forceFalseInconclusiveReason = inconclusiveReason;
+  }
 }

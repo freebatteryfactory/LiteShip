@@ -6,7 +6,7 @@
 
 # Interface: MutantVerdictCache
 
-Defined in: [audit/src/mutation-verdict.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L183)
+Defined in: [audit/src/mutation-verdict.ts:208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L208)
 
 The injected verdict store — the B2 content-addressed cache for mutant verdicts,
 mirroring `@liteship/gauntlet`'s `GateVerdictCache`. Keys on the mutant's content
@@ -20,9 +20,9 @@ host.
 
 ### read()
 
-> **read**(`key`): `"killed"` \| `"survived"` \| `"no-coverage"` \| `"equivalent"` \| `null`
+> **read**(`key`): `"killed"` \| `"survived"` \| `"no-coverage"` \| `"equivalent"` \| `"inconclusive"` \| `null`
 
-Defined in: [audit/src/mutation-verdict.ts:185](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L185)
+Defined in: [audit/src/mutation-verdict.ts:210](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L210)
 
 The cached verdict tag for `key`, or `null` on a MISS (re-run).
 
@@ -34,7 +34,7 @@ The cached verdict tag for `key`, or `null` on a MISS (re-run).
 
 #### Returns
 
-`"killed"` \| `"survived"` \| `"no-coverage"` \| `"equivalent"` \| `null`
+`"killed"` \| `"survived"` \| `"no-coverage"` \| `"equivalent"` \| `"inconclusive"` \| `null`
 
 ***
 
@@ -42,7 +42,7 @@ The cached verdict tag for `key`, or `null` on a MISS (re-run).
 
 > **write**(`key`, `tag`): `void`
 
-Defined in: [audit/src/mutation-verdict.ts:187](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L187)
+Defined in: [audit/src/mutation-verdict.ts:212](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L212)
 
 Record the verdict tag produced for `key`.
 
@@ -54,7 +54,7 @@ Record the verdict tag produced for `key`.
 
 ##### tag
 
-`"killed"` \| `"survived"` \| `"no-coverage"` \| `"equivalent"`
+`"killed"` \| `"survived"` \| `"no-coverage"` \| `"equivalent"` \| `"inconclusive"`
 
 #### Returns
 

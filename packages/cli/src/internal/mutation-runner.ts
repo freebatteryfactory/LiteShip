@@ -54,7 +54,8 @@
 
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, join, resolve } from 'node:path';
 import { IoError } from '@liteship/error';
 import type { MutantTestRunner } from '@liteship/audit';
 
@@ -221,11 +222,21 @@ function defaultVitestSpawn(
     '--no-file-parallelism',
     ...coveringTests,
   ];
-  const result = spawnSync('pnpm', ['exec', ...args], {
+  // Spawn the CURRENT node against the repo's resolved vitest entry directly —
+  // never the `pnpm` shim. Two proven defects lived in the shim path: on win32
+  // `spawnSync('pnpm', ..., { shell: false })` is an instant ENOENT (the shim is
+  // pnpm.cmd), so a local campaign could never run at all; and every mutant paid
+  // a pnpm-exec boot on top of vitest's own, pure per-mutant waste at campaign
+  // scale. `shell: false` argv semantics are unchanged.
+  const vitestEntry = join(
+    dirname(createRequire(join(repoRoot, 'package.json')).resolve('vitest/package.json')),
+    'vitest.mjs',
+  );
+  const result = spawnSync(process.execPath, [vitestEntry, ...args.slice(1)], {
     cwd: repoRoot,
     // Pin CI=1 so vitest uses its non-interactive, deterministic reporter path and
     // never opens a watch/TTY prompt; inherit the rest of the environment so the
-    // toolchain (node, pnpm) resolves exactly as a normal suite run.
+    // toolchain resolves exactly as a normal suite run.
     env: { ...process.env, CI: '1' },
     encoding: 'utf8',
     timeout: timeoutMs,
@@ -271,10 +282,17 @@ function runCoveringTests(
   const result = spawn(repoRoot, config, coveringTests, timeoutMs);
 
   // A spawn-level error (binary not found, EACCES) → infra fault, never a verdict.
+  // ETIMEDOUT is split out BY NAME: spawnSync's timeout sets BOTH `error` and
+  // `signal`, and this branch runs first — so the July-30 MC/DC cron reported a
+  // per-mutant-budget expiry as "failed to spawn" and the diagnosis chased a
+  // phantom spawn fault. The message must name what actually happened.
   if (result.error !== undefined && result.error !== null) {
+    const timedOut = (result.error as NodeJS.ErrnoException).code === 'ETIMEDOUT';
     throw IoError(
       'makeVitestMutationRunner',
-      `the vitest subprocess for "${targetFile}" failed to spawn — an infra fault, not a kill/survive verdict (refusing to mint a false verdict)`,
+      timedOut
+        ? `the vitest subprocess for "${targetFile}" exceeded the ${timeoutMs}ms per-mutant budget and was killed — an infra fault (slow covering suite or contended host), not a kill/survive verdict`
+        : `the vitest subprocess for "${targetFile}" failed to spawn — an infra fault, not a kill/survive verdict (refusing to mint a false verdict)`,
       { cause: result.error },
     );
   }
@@ -360,26 +378,55 @@ function parseVitestReport(stdout: string | null): { readonly total: number; rea
  * Restore the original bytes to `absTarget` and VERIFY the restore byte-for-byte.
  * A failed restore (the write threw, or the bytes on disk differ from the backup)
  * is a tagged throw — a mutated trust-spine file left on disk is the worst failure
- * class this runner can produce, so it can never be swallowed.
+ * class this runner can produce, so it can never be swallowed. Marked
+ * `campaignFatal`: `evaluateMutant` folds every OTHER runner throw into an
+ * `inconclusive` verdict and continues the campaign, but nothing may continue
+ * over a working tree that still holds mutated bytes.
  */
 function restoreAndVerify(absTarget: string, original: Buffer, targetFile: string): void {
   try {
     writeFileSync(absTarget, original);
   } catch (cause) {
-    throw IoError(
-      'makeVitestMutationRunner',
-      `FAILED to restore the original bytes of "${targetFile}" after a mutation — the working tree may hold a mutated source. Restore it from git before re-running.`,
-      { path: absTarget, cause },
+    throw campaignFatal(
+      IoError(
+        'makeVitestMutationRunner',
+        `FAILED to restore the original bytes of "${targetFile}" after a mutation — the working tree may hold a mutated source. Restore it from git before re-running.`,
+        { path: absTarget, cause },
+      ),
     );
   }
-  const afterRestore = readFileSync(absTarget);
+  // The verification READ is as load-bearing as the write (PR #192 review,
+  // confirmed P1): if it throws (target concurrently deleted / unreadable),
+  // the restore was never CONFIRMED — an unmarked fs error here would fold to
+  // an `inconclusive` verdict and the campaign would continue over a working
+  // tree in unknown state.
+  let afterRestore: Buffer;
+  try {
+    afterRestore = readFileSync(absTarget);
+  } catch (cause) {
+    throw campaignFatal(
+      IoError(
+        'makeVitestMutationRunner',
+        `the restore of "${targetFile}" could not be VERIFIED (the post-restore read failed) — the working tree state is unknown. Restore it from git before re-running.`,
+        { path: absTarget, cause },
+      ),
+    );
+  }
   if (!afterRestore.equals(original)) {
-    throw IoError(
-      'makeVitestMutationRunner',
-      `the restore of "${targetFile}" did not reproduce the original bytes — the working tree holds a divergent source. Restore it from git before re-running.`,
-      { path: absTarget },
+    throw campaignFatal(
+      IoError(
+        'makeVitestMutationRunner',
+        `the restore of "${targetFile}" did not reproduce the original bytes — the working tree holds a divergent source. Restore it from git before re-running.`,
+        { path: absTarget },
+      ),
     );
   }
+}
+
+/** Mark an error non-recoverable for the campaign (see `isCampaignFatal` in @liteship/audit). */
+function campaignFatal<E extends object>(error: E): E {
+  (error as E & { campaignFatal?: boolean }).campaignFatal = true;
+  return error;
 }
 
 /** A short tail of captured stderr for an infra-fault message (never the full dump). */

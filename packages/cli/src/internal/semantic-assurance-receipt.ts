@@ -41,6 +41,8 @@ export interface SemanticAssuranceTargetReceipt {
   readonly survived: number;
   readonly noCoverage: number;
   readonly equivalent: number;
+  /** Outcomes whose runner refused a trustworthy verdict — always a FAILING target. */
+  readonly inconclusive: number;
   readonly executedTests: readonly string[];
   readonly outcomeDigest: `sha256:${string}`;
   readonly verdict: 'pass' | 'fail' | 'not-applicable';
@@ -129,7 +131,22 @@ function mutationTargetReceipt(
   const survived = outcomes.filter((outcome) => outcome.verdict === 'survived').length;
   const noCoverage = outcomes.filter((outcome) => outcome.verdict === 'no-coverage').length;
   const equivalent = outcomes.filter((outcome) => outcome.verdict === 'equivalent').length;
-  const executedTests = sortedUnique(outcomes.flatMap((outcome) => outcome.coveringTests));
+  // Inconclusive outcomes (PR #192 review, confirmed): the runner refused a
+  // trustworthy verdict. Counted so the closure law still holds, and ALWAYS a
+  // failing target — an unproven site can never ride a passing receipt.
+  const inconclusive = outcomes.filter((outcome) => outcome.verdict === 'inconclusive').length;
+  // ONLY execution-proving verdicts feed executedTests (PR #192 review, round
+  // 6, confirmed): coveringTests is what the runner was ASKED to run, and an
+  // inconclusive refusal (timeout / spawn failure / zero-test run) may prove
+  // nothing executed — copying its requested tests would make the durable
+  // receipt claim execution its own refusal reason disproves. A killed or
+  // survived verdict is keyed on CONFIRMED test counts, so those outcomes are
+  // the proof.
+  const executedTests = sortedUnique(
+    outcomes
+      .filter((outcome) => outcome.verdict === 'killed' || outcome.verdict === 'survived')
+      .flatMap((outcome) => outcome.coveringTests),
+  );
   const executable = killed + survived;
   if (executable > 0 && executedTests.length === 0) {
     invalidReceipt(`mutation target ${row.file} records executed outcomes but no executed tests`);
@@ -137,7 +154,7 @@ function mutationTargetReceipt(
   const verdict =
     row.applicableMutants === 0
       ? 'not-applicable'
-      : survived > 0 || noCoverage > 0 || (executable > 0 && executedTests.length === 0)
+      : survived > 0 || noCoverage > 0 || inconclusive > 0 || (executable > 0 && executedTests.length === 0)
         ? 'fail'
         : 'pass';
   return Object.freeze({
@@ -150,6 +167,7 @@ function mutationTargetReceipt(
     survived,
     noCoverage,
     equivalent,
+    inconclusive,
     executedTests: Object.freeze(executedTests),
     outcomeDigest: digest(outcomes),
     verdict,
@@ -173,15 +191,37 @@ function mcdcTargetReceipt(
   const noCoverage = outcomes.filter(
     (outcome) => outcome.forceTrueVerdict === 'no-coverage' && outcome.forceFalseVerdict === 'no-coverage',
   ).length;
-  const survived = outcomes.length - killed - noCoverage;
-  const executedTests = sortedUnique(outcomes.flatMap((outcome) => outcome.coveringTests));
-  if (row.applicableConditions > 0 && executedTests.length === 0) {
+  // A condition with ANY inconclusive pin (and not fully no-coverage) is
+  // recorded by NAME rather than laundered into `survived` (PR #192 review):
+  // both spellings fail the target, but the receipt must say what happened.
+  const inconclusive = outcomes.filter(
+    (outcome) =>
+      (outcome.forceTrueVerdict === 'inconclusive' || outcome.forceFalseVerdict === 'inconclusive') &&
+      !(outcome.forceTrueVerdict === 'no-coverage' && outcome.forceFalseVerdict === 'no-coverage'),
+  ).length;
+  const survived = outcomes.length - killed - noCoverage - inconclusive;
+  // Per-pin execution proof (PR #192 review, round 6, confirmed): a condition
+  // proves its covering tests ran iff at least one pin earned a conclusive
+  // killed/survived verdict; an all-inconclusive condition's coveringTests
+  // are merely what was REQUESTED — its refusal reason may prove nothing ran.
+  const executionProving = outcomes.filter(
+    (outcome) =>
+      outcome.forceTrueVerdict === 'killed' ||
+      outcome.forceTrueVerdict === 'survived' ||
+      outcome.forceFalseVerdict === 'killed' ||
+      outcome.forceFalseVerdict === 'survived',
+  );
+  const executedTests = sortedUnique(executionProving.flatMap((outcome) => outcome.coveringTests));
+  // The anti-lie throw guards CONCLUSIVE claims without tests (a killed pin
+  // with no test named is impossible) — an all-refused target must FAIL its
+  // verdict below, never crash receipt minting.
+  if (executionProving.length > 0 && executedTests.length === 0) {
     invalidReceipt(`MC/DC target ${row.file} records evaluated conditions but no executed tests`);
   }
   const verdict =
     row.applicableConditions === 0
       ? 'not-applicable'
-      : survived > 0 || noCoverage > 0 || executedTests.length === 0
+      : survived > 0 || noCoverage > 0 || inconclusive > 0 || executedTests.length === 0
         ? 'fail'
         : 'pass';
   return Object.freeze({
@@ -194,6 +234,7 @@ function mcdcTargetReceipt(
     survived,
     noCoverage,
     equivalent: 0,
+    inconclusive,
     executedTests: Object.freeze(executedTests),
     outcomeDigest: digest(outcomes),
     verdict,
@@ -313,6 +354,7 @@ export function parseSemanticAssuranceReceipt(value: unknown): SemanticAssurance
         'survived',
         'noCoverage',
         'equivalent',
+        'inconclusive',
         'executedTests',
         'outcomeDigest',
         'verdict',
@@ -326,6 +368,7 @@ export function parseSemanticAssuranceReceipt(value: unknown): SemanticAssurance
       target.survived,
       target.noCoverage,
       target.equivalent,
+      target.inconclusive,
     ];
     if (
       typeof target.file !== 'string' ||
@@ -345,8 +388,16 @@ export function parseSemanticAssuranceReceipt(value: unknown): SemanticAssurance
     }
     seen.add(target.file);
     if (target.evaluated !== target.applicable) malformedReceipt(`target ${target.file} is partial`);
-    if (target.killed + target.survived + target.noCoverage + target.equivalent !== target.evaluated) {
+    if (
+      target.killed + target.survived + target.noCoverage + target.equivalent + target.inconclusive !==
+      target.evaluated
+    ) {
       malformedReceipt(`target ${target.file} counts do not close`);
+    }
+    // An unproven site can never ride a passing target (PR #192 review): the
+    // parser enforces the same fail-closed verdict rule the producer mints.
+    if (target.inconclusive > 0 && target.verdict === 'pass') {
+      malformedReceipt(`target ${target.file} records inconclusive outcomes but claims a passing verdict`);
     }
     if (target.applicable === 0 && target.verdict !== 'not-applicable') {
       malformedReceipt(`target ${target.file} must record zero applicability explicitly`);

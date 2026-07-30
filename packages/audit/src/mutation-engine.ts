@@ -569,12 +569,77 @@ function unaryNotMutation(node: ts.Node, sourceFile: ts.SourceFile, operator: Mu
  * are deliberately NOT mutated here (their substitutions would need re-balancing) —
  * the operator stays unambiguous.
  */
+/**
+ * Is `node` a LOAD-TIME MODULE SPECIFIER — the string of an `import`/`export …
+ * from '…'` declaration, or the argument of a dynamic `import('…')` that
+ * executes DURING MODULE EVALUATION (top-level await / a bare top-level call)?
+ * Such a specifier is a module-graph address, not program behaviour: mutating
+ * it to `''` cannot be killed or survive — it makes the covering suites fail
+ * to LOAD, which the runner can only refuse (0 tests executed, or vitest
+ * exiting 1 with a 0-failed report when OTHER covering suites still loaded —
+ * the exact inconsistency that aborted the July 28 + 30 exhaustive crons on
+ * `audio-input.ts`). Never a mutation target.
+ *
+ * A LAZY dynamic import — one inside a function body — is the opposite case
+ * (PR #192 review, round 5, confirmed): its rejection happens inside an
+ * EXECUTING test, which observes the failure and kills the mutant. Excluding
+ * those dropped valid mutants from the census and inflated mutation scores,
+ * so deferral, not spelling, is the criterion.
+ */
+function isModuleSpecifier(node: ts.Node): boolean {
+  const parent: ts.Node | undefined = node.parent;
+  if (parent === undefined) return false;
+  if ((ts.isImportDeclaration(parent) || ts.isExportDeclaration(parent)) && parent.moduleSpecifier === node) {
+    return true;
+  }
+  return (
+    ts.isCallExpression(parent) &&
+    parent.expression.kind === ts.SyntaxKind.ImportKeyword &&
+    parent.arguments[0] === node &&
+    executesDuringModuleEvaluation(parent)
+  );
+}
+
+/**
+ * Does `node` execute while the module GRAPH is loading (no enclosing deferred
+ * body)? Two ancestors defer execution: a function-like body, and an INSTANCE
+ * property initializer (it runs at construction — a constructing test observes
+ * the mutant, so excluding it dropped valid mutants; PR #192 review, round 6,
+ * confirmed). Anything not provably deferred — top level, a class static
+ * block, a STATIC field initializer, a computed property NAME — counts as
+ * load-time, FAIL-CLOSED toward the unmintable-refusal class (a
+ * wrongly-deferred classification would resurrect the cron aborts; a
+ * wrongly-load-time one merely leaves a mutant unminted).
+ */
+function executesDuringModuleEvaluation(node: ts.Node): boolean {
+  let child: ts.Node = node;
+  for (
+    let current: ts.Node | undefined = node.parent;
+    current !== undefined;
+    child = current, current = current.parent
+  ) {
+    if (ts.isFunctionLike(current)) return false;
+    // Only the INITIALIZER of a non-static field defers — a computed property
+    // NAME evaluates at class definition (load) time, so the walk must have
+    // arrived through the initializer, not merely be inside the declaration.
+    if (
+      ts.isPropertyDeclaration(current) &&
+      current.initializer === child &&
+      !current.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.StaticKeyword)
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function stringLiteralMutation(
   node: ts.Node,
   sourceFile: ts.SourceFile,
   operator: MutationOperatorId,
 ): readonly Mutation[] {
   if (!ts.isStringLiteral(node) || node.text === '') return [];
+  if (isModuleSpecifier(node)) return [];
   const raw = nodeText(node, sourceFile);
   const quote = raw.charAt(0);
   return [

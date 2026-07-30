@@ -133,8 +133,11 @@ describe('doctor/types — parseMajor()', () => {
 });
 
 describe('doctor/types — constants', () => {
-  it('DOCTOR_PROBE_TIMEOUT_MS is a positive finite bound', () => {
-    expect(DOCTOR_PROBE_TIMEOUT_MS).toBe(4_000);
+  it('DOCTOR_PROBE_TIMEOUT_MS is a positive finite bound (20s: twice-measured cron cargo kills)', () => {
+    // Runs 30342905791 + 30526718746 both measured cargo killed at the prior 4s
+    // bound on the contended scheduled runner, failing the whole strict lane —
+    // the twice-measured raise protocol. Missing tools still fail fast (ENOENT).
+    expect(DOCTOR_PROBE_TIMEOUT_MS).toBe(20_000);
     expect(Number.isFinite(DOCTOR_PROBE_TIMEOUT_MS)).toBe(true);
     expect(DOCTOR_PROBE_TIMEOUT_MS).toBeGreaterThan(0);
   });

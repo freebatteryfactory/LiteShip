@@ -92,3 +92,13 @@ export const coverageInstrumentation = process.env.NODE_V8_COVERAGE !== undefine
 /** `eacces-untestable-as-root` — chmod 0o000 EACCES semantics are not enforceable when the test process runs as root. */
 export const canTestEacces = process.getuid !== undefined && process.getuid() !== 0;
 export const eaccesUntestableAsRoot = !canTestEacces;
+
+/**
+ * `running-as-root` — root bypasses file-MODE write denial entirely (a chmod
+ * 0o444 target still accepts writeFileSync), so a test that stages a failure
+ * via read-only modes cannot produce it under a root-run container. DISTINCT
+ * from {@link eaccesUntestableAsRoot}: on Windows `getuid` is absent (that flag
+ * reads true) yet the read-only attribute DOES deny writes — a mode-denial
+ * test must skip only under actual root, never on Windows.
+ */
+export const runningAsRoot = process.getuid?.() === 0;

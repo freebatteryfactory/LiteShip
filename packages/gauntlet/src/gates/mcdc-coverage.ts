@@ -112,15 +112,25 @@ function isNoCoverage(outcome: McdcConditionOutcome): boolean {
 /** A short human description of which pin(s) failed to be killed — the unobserved effect(s). */
 function gapDescription(outcome: McdcConditionOutcome): string {
   const parts: string[] = [];
-  if (outcome.forceTrueVerdict !== 'killed') parts.push(`force-TRUE (${pinWord(outcome.forceTrueVerdict)})`);
-  if (outcome.forceFalseVerdict !== 'killed') parts.push(`force-FALSE (${pinWord(outcome.forceFalseVerdict)})`);
+  if (outcome.forceTrueVerdict !== 'killed') {
+    parts.push(`force-TRUE (${pinWord(outcome.forceTrueVerdict, outcome.forceTrueInconclusiveReason)})`);
+  }
+  if (outcome.forceFalseVerdict !== 'killed') {
+    parts.push(`force-FALSE (${pinWord(outcome.forceFalseVerdict, outcome.forceFalseInconclusiveReason)})`);
+  }
   return parts.join(' and ');
 }
 
 /** A human word for a pin verdict tag (for the finding prose). */
-function pinWord(verdict: McdcPinVerdict): string {
+function pinWord(verdict: McdcPinVerdict, inconclusiveReason: string | null): string {
   if (verdict === 'survived') return 'survived — no test distinguished this value';
   if (verdict === 'no-coverage') return 'no covering test';
+  // Name the ACTUAL refusal (PR #192 review, round 4): a timeout, a spawn
+  // failure, and a zero-test run demand different responses — a generic
+  // "infra fault" label made every refusal look the same.
+  if (verdict === 'inconclusive') {
+    return `inconclusive — the runner refused a trustworthy verdict (${inconclusiveReason ?? 'unrecorded infra fault'})`;
+  }
   return 'killed';
 }
 
@@ -145,10 +155,39 @@ function uncoveredFinding(
   campaignIds: readonly string[] = [],
 ): Finding {
   const noCoverage = isNoCoverage(outcome);
+  const hasInconclusive = outcome.forceTrueVerdict === 'inconclusive' || outcome.forceFalseVerdict === 'inconclusive';
   const base = MCDC_SEVERITY_BY_LEVEL[level];
   const severity = campaignIds.length > 0 ? 'error' : noCoverage ? louder(base) : base;
   const loc = `${outcome.file}:${outcome.line}:${outcome.column}`;
   const gaps = gapDescription(outcome);
+  const campaignClause =
+    campaignIds.length > 0
+      ? ` Semantic campaign(s) ${campaignIds.join(', ')} independently require MC/DC closure for this public runtime path, so this finding blocks without relabeling the file's actual assurance level.`
+      : '';
+  // An inconclusive pin completed NO comparison (PR #192 review, round 5 — the
+  // sibling of the mutation-divergence round-4 fix): claiming it "did not flip
+  // any covering test" and demanding a distinguishing test pair are both lies
+  // that send the reader away from the actual runner fault. Refusals get
+  // refusal prose and infra remediation.
+  if (hasInconclusive) {
+    return finding({
+      ruleId: GATE_ID,
+      severity,
+      level,
+      title: `Condition MC/DC verdict inconclusive at ${loc} (${level})`,
+      detail: `The atomic condition \`${outcome.condition}\` in the decision \`${outcome.decision}\` earned NO trustworthy MC/DC verdict: ${gaps}. No comparison was completed for the refused pin(s) — nothing is known about whether the suite observes this condition's independent effect, which is exactly why it cannot count as covered at the file's effective ${level} level (MC/DC floor ${MCDC_FLOOR_BY_LEVEL[level]}).${campaignClause} The engine reports the refusal; fix the runner fault, then let a clean re-run settle the verdict.`,
+      location: { file: outcome.file, line: outcome.line, column: outcome.column },
+      remediation: {
+        kind: 'instruction',
+        description: 'Resolve the runner fault and re-run the campaign so this condition earns a real MC/DC verdict.',
+        steps: [
+          `Read the refusal: ${gaps}.`,
+          'Fix the infrastructure fault it names (a timeout budget, a spawn failure, a zero-test collection) — the test suite is not implicated by a refusal.',
+          `Re-run \`liteship check gates --ir --mcdc\`: both pins of \`${outcome.condition}\` must settle to killed for the condition to count as MC/DC-covered.`,
+        ],
+      },
+    });
+  }
   const what = noCoverage
     ? `has NO covering test at all — its independent effect on the decision is entirely unobserved (not even a test that missed it)`
     : `is not MC/DC-covered: the pin(s) ${gaps} did not flip any covering test, so the suite never distinguishes this condition's value changing the decision's outcome`;
@@ -157,7 +196,7 @@ function uncoveredFinding(
     severity,
     level,
     title: `Condition not MC/DC-covered at ${loc} (${level})`,
-    detail: `The atomic condition \`${outcome.condition}\` in the decision \`${outcome.decision}\` ${what}. MC/DC (DO-178B Level A) requires each condition's independent effect to be observed — both its force-true and force-false condition-mutant must be KILLED by a covering test. Here ${gaps} survived, an MC/DC gap at the file's effective ${level} level (MC/DC floor ${MCDC_FLOOR_BY_LEVEL[level]}).${campaignIds.length > 0 ? ` Semantic campaign(s) ${campaignIds.join(', ')} independently require MC/DC closure for this public runtime path, so this finding blocks without relabeling the file's actual assurance level.` : ''} The engine reports the gap; you decide whether to add the missing distinguishing test.`,
+    detail: `The atomic condition \`${outcome.condition}\` in the decision \`${outcome.decision}\` ${what}. MC/DC (DO-178B Level A) requires each condition's independent effect to be observed — both its force-true and force-false condition-mutant must be KILLED by a covering test. Here ${gaps} survived, an MC/DC gap at the file's effective ${level} level (MC/DC floor ${MCDC_FLOOR_BY_LEVEL[level]}).${campaignClause} The engine reports the gap; you decide whether to add the missing distinguishing test.`,
     location: { file: outcome.file, line: outcome.line, column: outcome.column },
     remediation: {
       kind: 'instruction',
@@ -227,6 +266,8 @@ function coveredCondition(): McdcConditionOutcome {
     condition: 'a',
     forceTrueVerdict: 'killed',
     forceFalseVerdict: 'killed',
+    forceTrueInconclusiveReason: null,
+    forceFalseInconclusiveReason: null,
     coveringTests: ['tests/fixture.test.ts'],
   };
 }
@@ -242,6 +283,8 @@ function uncoveredCondition(): McdcConditionOutcome {
     condition: 'x <= hi',
     forceTrueVerdict: 'killed',
     forceFalseVerdict: 'survived',
+    forceTrueInconclusiveReason: null,
+    forceFalseInconclusiveReason: null,
     coveringTests: ['tests/fixture.test.ts'],
   };
 }

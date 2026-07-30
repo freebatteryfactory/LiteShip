@@ -6,7 +6,7 @@
 
 # Interface: MutationScore
 
-Defined in: [audit/src/mutation-verdict.ts:336](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L336)
+Defined in: [audit/src/mutation-verdict.ts:385](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L385)
 
 The mutation SCORE summary over a set of verdicts — killed / scored-total + survivors.
 
@@ -16,9 +16,19 @@ The mutation SCORE summary over a set of verdicts — killed / scored-total + su
 
 > `readonly` **equivalent**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:350](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L350)
+Defined in: [audit/src/mutation-verdict.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L399)
 
 Justified-equivalent mutants (registry-recorded) — excluded from [total](#total).
+
+***
+
+### inconclusive
+
+> `readonly` **inconclusive**: `number`
+
+Defined in: [audit/src/mutation-verdict.ts:401](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L401)
+
+Mutants whose runner refused a trustworthy verdict — counted in [total](#total).
 
 ***
 
@@ -26,9 +36,9 @@ Justified-equivalent mutants (registry-recorded) — excluded from [total](#tota
 
 > `readonly` **killed**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:344](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L344)
+Defined in: [audit/src/mutation-verdict.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L393)
 
-Mutants a covering test killed.
+Mutants a covering test killed. (Total also counts [inconclusive](#inconclusive).)
 
 ***
 
@@ -36,7 +46,7 @@ Mutants a covering test killed.
 
 > `readonly` **noCoverage**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:348](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L348)
+Defined in: [audit/src/mutation-verdict.ts:397](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L397)
 
 Mutants with no covering test at all (untested).
 
@@ -46,7 +56,7 @@ Mutants with no covering test at all (untested).
 
 > `readonly` **score**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:359](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L359)
+Defined in: [audit/src/mutation-verdict.ts:410](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L410)
 
 The kill score in [0, 1] — `killed / total`, where `total` is the NON-EQUIVALENT
 mutant count. A no-coverage mutant counts AGAINST the score (untested); an
@@ -61,7 +71,7 @@ kill-floor compares and the ratchet baseline pins.
 
 > `readonly` **survived**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:346](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L346)
+Defined in: [audit/src/mutation-verdict.ts:395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L395)
 
 Mutants every covering test passed on (coverage divergences).
 
@@ -71,7 +81,7 @@ Mutants every covering test passed on (coverage divergences).
 
 > `readonly` **total**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:342](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L342)
+Defined in: [audit/src/mutation-verdict.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L391)
 
 The SCORED total — killed + survived + no-coverage (the non-equivalent mutants).
 EXCLUDES `equivalent` mutants (they are not a coverage gap, so they are not part

@@ -13,6 +13,7 @@ import {
   makeCoverageMap,
   generateMutants,
   makeEquivalentMutantRegistry,
+  scoreVerdicts,
   MUTATION_OPERATORS,
   type MutantTestRunner,
 } from '@liteship/audit';
@@ -117,5 +118,89 @@ describe('buildMutationFacts — host bridge folds engine + runner into facts', 
     expect(survivorFinding).toBeDefined();
     expect(survivorFinding!.severity).toBe('error'); // L4 survivor blocks
     expect(survivorFinding!.level).toBe('L4');
+  });
+});
+
+describe('inconclusive verdicts — one unmintable verdict must not abort the campaign (crons 30342905791 + 30526718746)', () => {
+  /** A runner that REFUSES the first mutant it sees (a per-mutant infra fault) and kills the rest. */
+  const faultOnceRunner = (): MutantTestRunner => {
+    let first = true;
+    return () => {
+      if (first) {
+        first = false;
+        throw new Error(
+          'the vitest subprocess for "x" exited 1 but its JSON report says 0/29 tests failed — exit code and report disagree',
+        );
+      }
+      return { failed: true };
+    };
+  };
+
+  it('records the refusal as an inconclusive outcome WITH its reason and still evaluates every other mutant', () => {
+    const facts = buildMutationFacts([{ file: FILE, text: SRC }], {
+      runner: faultOnceRunner(),
+      coverage: coverageFor(),
+    });
+    const inconclusive = facts.outcomes.filter((o) => o.verdict === 'inconclusive');
+    expect(inconclusive).toHaveLength(1);
+    expect(inconclusive[0]!.inconclusiveReason).toMatch(/exit code and report disagree/u);
+    // The campaign CONTINUED past the fault: the remaining mutants earned real verdicts.
+    expect(facts.outcomes.filter((o) => o.verdict === 'killed').length).toBeGreaterThan(0);
+    // Conclusive outcomes never carry a reason.
+    for (const outcome of facts.outcomes) {
+      if (outcome.verdict !== 'inconclusive') expect(outcome.inconclusiveReason).toBeNull();
+    }
+  });
+
+  it('a campaignFatal runner throw still ABORTS — a failed restore must never be continued over', () => {
+    const runner: MutantTestRunner = () => {
+      const error = new Error('FAILED to restore the original bytes');
+      (error as Error & { campaignFatal?: boolean }).campaignFatal = true;
+      throw error;
+    };
+    expect(() => buildMutationFacts([{ file: FILE, text: SRC }], { runner, coverage: coverageFor() })).toThrow(
+      /FAILED to restore/u,
+    );
+  });
+
+  it('an inconclusive verdict is never cached — transient infrastructure is not a property of the mutant', () => {
+    const writes: string[] = [];
+    const cache = {
+      read: () => null,
+      write: (_key: string, tag: string) => {
+        writes.push(tag);
+      },
+    };
+    buildMutationFacts([{ file: FILE, text: SRC }], {
+      runner: faultOnceRunner(),
+      coverage: coverageFor(),
+      cache,
+      toolchainDigest: 'blake3:test-toolchain',
+    });
+    expect(writes.length).toBeGreaterThan(0); // conclusive verdicts DID cache
+    expect(writes).not.toContain('inconclusive');
+  });
+
+  it('an inconclusive verdict counts AGAINST the score — an infra fault can only lower it, never launder it', () => {
+    const mutant = { id: 'blake3:x', file: FILE, line: 1, column: 1, originalText: '+', mutatedText: '-' };
+    const score = scoreVerdicts([
+      { _tag: 'killed', mutant: mutant as never, coveringTests: ['t'] },
+      { _tag: 'inconclusive', mutant: mutant as never, coveringTests: ['t'], reason: 'spawn fault' },
+    ] as never);
+    expect(score.total).toBe(2);
+    expect(score.inconclusive).toBe(1);
+    expect(score.score).toBe(0.5);
+  });
+
+  it('END-TO-END: the gate reports the inconclusive site as a blocking L4 finding by name, reason included', () => {
+    const facts = buildMutationFacts([{ file: FILE, text: SRC }], {
+      runner: faultOnceRunner(),
+      coverage: coverageFor(),
+    });
+    const findings = mutationDivergenceGate.run({ ...irFor(), mutation: facts });
+    const inconclusiveFinding = findings.find((f) => f.title.includes('Mutant verdict inconclusive'));
+    expect(inconclusiveFinding).toBeDefined();
+    expect(inconclusiveFinding!.severity).toBe('error'); // L4: fail-closed, blocks
+    expect(inconclusiveFinding!.detail).toContain('exit code and report disagree');
   });
 });

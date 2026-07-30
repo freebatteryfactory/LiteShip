@@ -6,7 +6,7 @@
 
 # Interface: SanctionedSkip
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L88)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L89)
 
 One sanctioned skip — a `(file, site, capability, why)` record sanctioning a SPECIFIC
 skip SITE, not a whole file.
@@ -22,9 +22,9 @@ standards surface.
 
 ### capability
 
-> `readonly` **capability**: `"ffmpeg-absent"` \| `"wasm-absent"` \| `"wasm-dist-staged"` \| `"shared-array-buffer-absent"` \| `"coverage-instrumentation"` \| `"astro-example-not-built"` \| `"offscreen-canvas-absent"` \| `"webcodecs-absent"` \| `"gpu-absent"` \| `"eacces-untestable-as-root"` \| `"symlink-unprivileged"` \| `"fixture-absent"` \| `"capsule-manifest-absent"`
+> `readonly` **capability**: `"ffmpeg-absent"` \| `"wasm-absent"` \| `"wasm-dist-staged"` \| `"shared-array-buffer-absent"` \| `"coverage-instrumentation"` \| `"astro-example-not-built"` \| `"offscreen-canvas-absent"` \| `"webcodecs-absent"` \| `"gpu-absent"` \| `"eacces-untestable-as-root"` \| `"running-as-root"` \| `"symlink-unprivileged"` \| `"fixture-absent"` \| `"capsule-manifest-absent"`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L100)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L101)
 
 The capability whose absence sanctions the skip.
 
@@ -34,7 +34,7 @@ The capability whose absence sanctions the skip.
 
 > `readonly` **file**: `string`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L90)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L91)
 
 Repo-relative path of the test file whose skip is sanctioned.
 
@@ -44,7 +44,7 @@ Repo-relative path of the test file whose skip is sanctioned.
 
 > `readonly` **site**: `string`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L98)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L99)
 
 The SITE discriminator — the whitespace-collapsed raw source line the sanctioned
 skip sits on (the capability-guard expression / test title survive there). Pins the
@@ -58,6 +58,6 @@ entry against the live source so a re-worded skip re-opens the sanction (strengt
 
 > `readonly` **why**: `string`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L102)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L103)
 
 The justification of record — why this skip is honest, not unfinished work.

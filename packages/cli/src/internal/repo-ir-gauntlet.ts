@@ -23,7 +23,7 @@
  *
  * @module
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   buildRepoIR,
@@ -312,6 +312,23 @@ export function buildRepoIRForRepo(repoRoot: string, withSymbolReferences = fals
  * `litelaunchGauntlet` and runs the six regex gates IR-free — the IR-fold gates
  * appear ONLY here, the IR-present composition.
  */
+/**
+ * The next composition debt ledger — SHRINK-ONLY after bootstrap. With no
+ * existing ledger (bootstrap), the first sweep enumerates the whole uncovered
+ * set; with one, regeneration keeps only existing entries that are STILL
+ * uncovered. An addition can never enter through regeneration — a new
+ * uncovered edge stays a blocking finding until the edge is covered.
+ */
+export function shrinkOnlyCompositionBaseline(
+  existing: readonly string[] | undefined,
+  uncovered: readonly string[],
+): readonly string[] {
+  const compare = (left: string, right: string): number => left.localeCompare(right);
+  if (existing === undefined) return [...uncovered].sort(compare);
+  const current = new Set(uncovered);
+  return existing.filter((entry) => current.has(entry)).sort(compare);
+}
+
 export async function runGauntletWithRepoIR(
   repoRoot: string,
   now: Date,
@@ -526,6 +543,42 @@ export async function runGauntletWithRepoIR(
   if (cacheOpts.withComposition === true) {
     gateSet.push(compositionCoverageGate);
     compositionFacts = buildCompositionFacts(repoRoot, ir);
+    // The uncovered-edge RATCHET (issue #164): the committed baseline accepts
+    // the enumerated legacy debt as advisory while every NEW uncovered edge
+    // blocks at full severity. LITESHIP_UPDATE_COMPOSITION_BASELINE=1
+    // regenerates the artifact SHRINK-ONLY (PR #192 review, confirmed): after
+    // bootstrap the regen is the intersection of the existing ledger with THIS
+    // run's uncovered set — a new uncovered edge can NEVER enroll through
+    // regeneration (that would be a sanctioned gate weakening); it stays a
+    // blocking finding until covered, and only a reviewed hand-edit could
+    // claim otherwise.
+    const baselinePath = join(repoRoot, 'benchmarks', 'composition-uncovered-baseline.json');
+    const readBaseline = (): readonly string[] | undefined => {
+      if (!existsSync(baselinePath)) return undefined;
+      const parsed = JSON.parse(readFileSync(baselinePath, 'utf8')) as { schema?: string; edges?: readonly string[] };
+      if (parsed.schema !== 'liteship/composition-uncovered-baseline@1' || !Array.isArray(parsed.edges)) {
+        throw InvariantViolationError(
+          'runGauntletWithRepoIR',
+          `${baselinePath} is not a liteship/composition-uncovered-baseline@1 artifact — refusing a malformed ratchet baseline`,
+        );
+      }
+      return parsed.edges;
+    };
+    if (process.env['LITESHIP_UPDATE_COMPOSITION_BASELINE'] === '1') {
+      const uncovered = (compositionFacts.edges ?? [])
+        .filter((edge) => !edge.integrationCovered)
+        .map((edge) => `${edge.fromFile} -> ${edge.toFile} via ${edge.viaSymbol}`);
+      const next = shrinkOnlyCompositionBaseline(readBaseline(), uncovered);
+      writeFileSync(
+        baselinePath,
+        `${JSON.stringify({ schema: 'liteship/composition-uncovered-baseline@1', edges: next }, null, 2)}\n`,
+        'utf8',
+      );
+    }
+    const accepted = readBaseline();
+    if (accepted !== undefined) {
+      compositionFacts = { ...compositionFacts, acceptedUncovered: accepted };
+    }
   }
 
   // The `--spine-relation` opt-in (Wave 8.5, the public constitution's STATIC-projection

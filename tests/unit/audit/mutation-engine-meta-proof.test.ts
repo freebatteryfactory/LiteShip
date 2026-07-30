@@ -184,11 +184,51 @@ describe('LEVEL 1b — type-only syntax is skipped, runtime syntax is mutated', 
     expect(stringLiterals(src)).toEqual(['"fast"']);
   });
 
-  it('a TYPE-ONLY import specifier is NOT mutated, a value import specifier IS', () => {
-    const src = ['import type { A } from "./a.js";', 'import { b } from "./b.js";'].join('\n');
-    // The `import type` specifier is erased; the value import's specifier is runtime
-    // (a real module-resolution input). Only the value import yields a mutant.
-    expect(stringLiterals(src)).toEqual(['"./b.js"']);
+  it('NO load-time module specifier is EVER mutated — static, export, or module-evaluation dynamic (crons 30342905791 + 30526718746)', () => {
+    // The defect class: a specifier that resolves while the module GRAPH is
+    // loading, mutated to '', is not a behavioural question — it makes covering
+    // suites fail to LOAD, and the runner can only refuse (0 tests, or vitest
+    // exiting 1 beside a 0-failed report when other suites loaded). Both July
+    // exhaustive crons aborted on exactly this shape at audio-input.ts. That
+    // includes a DYNAMIC import that executes during module evaluation
+    // (top-level await / a bare top-level call) — deferral, not spelling, is
+    // the criterion.
+    const src = [
+      'import type { A } from "./a.js";',
+      'import { b } from "./b.js";',
+      'export { c } from "./c.js";',
+      'const eager = await import("./top.js");',
+      'import("./boot.js");',
+    ].join('\n');
+    expect(stringLiterals(src)).toEqual([]);
+  });
+
+  it('a LAZY dynamic-import argument IS mutated — a deferred rejection is observable, killable behaviour (PR #192 review, round 5)', () => {
+    // The over-broad round-3 exclusion dropped these from the census: a
+    // function-scoped `await import('vite')` (packages/scene dev server) runs
+    // AFTER the suite loaded — mutating its argument makes the import reject
+    // inside an executing test, which reports failure and KILLS the mutant.
+    // Excluding it was a false green that inflated mutation scores.
+    const src = [
+      'export const load = () => import("./d.js");',
+      'export async function boot(): Promise<unknown> { return import("./e.js"); }',
+    ].join('\n');
+    expect(stringLiterals(src)).toEqual(['"./d.js"', '"./e.js"']);
+  });
+
+  it('an INSTANCE-field import is deferred (minted); static fields and static blocks are load-time (PR #192 review, round 6)', () => {
+    // An instance property initializer runs at CONSTRUCTION — a test that
+    // constructs the class observes the empty-specifier rejection and kills
+    // the mutant, so excluding it (as the function-ancestor-only walk did)
+    // silently dropped valid mutants. STATIC fields and static blocks run at
+    // class definition, i.e. module evaluation — they stay excluded.
+    const deferred = 'export class Lazy { module = import("./f.js"); }';
+    expect(stringLiterals(deferred)).toEqual(['"./f.js"']);
+    const loadTime = [
+      'export class Eager { static module = import("./g.js"); }',
+      'class Boot { static { import("./h.js"); } }',
+    ].join('\n');
+    expect(stringLiterals(loadTime)).toEqual([]);
   });
 
   it('a runtime CALL ARGUMENT string literal IS mutated (the control — runtime is never skipped)', () => {

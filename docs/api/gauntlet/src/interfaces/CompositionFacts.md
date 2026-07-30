@@ -18,6 +18,24 @@ finding (honest under-coverage, never a silent green) — see
 
 ## Properties
 
+### acceptedUncovered?
+
+> `readonly` `optional` **acceptedUncovered?**: readonly `string`[]
+
+Defined in: [gauntlet/src/facts/composition-facts.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/composition-facts.ts#L71)
+
+The committed uncovered-edge BASELINE (the ratchet artifact,
+`benchmarks/composition-uncovered-baseline.json`) — accepted legacy debt
+enumerated by EXACT edge identity (`from -> to via symbol`; the first full
+sweep on cured main named 535 of them, issue #164). The fold discipline is
+the test-constitution ratchet: an uncovered edge IN the baseline reports as
+`advisory` (recorded, reviewable debt); an uncovered edge NOT in it blocks
+at full severity (no NEW untested interaction ever lands silently); a
+baseline entry that is no longer uncovered reports as a `warning` naming
+the stale entry (the baseline only ever SHRINKS). Absent = empty.
+
+***
+
 ### edges?
 
 > `readonly` `optional` **edges?**: readonly [`InteractionEdge`](InteractionEdge.md)[]

@@ -97,8 +97,14 @@ export interface MutationOperatorApplicability {
  *    test exists; an equivalent mutant proves no test COULD exist (there is nothing to
  *    observe). Type-level (erased) mutations are excluded at the SOURCE by the engine
  *    and never reach a verdict; `equivalent` is only ever a justified RUNTIME mutant.
+ *  - `inconclusive` — the runner could not mint a trustworthy kill/survive verdict
+ *    for this mutant (subprocess spawn fault, exit/report disagreement, zero tests
+ *    executed). Recorded fail-closed: it counts in the score denominator and folds
+ *    to a BLOCKING finding, but it no longer aborts the whole campaign — the twice-
+ *    measured defect (crons 30342905791 + 30526718746) where ONE unmintable verdict
+ *    80 minutes in discarded every verdict already earned.
  */
-export type MutantVerdictTag = 'killed' | 'survived' | 'no-coverage' | 'equivalent';
+export type MutantVerdictTag = 'killed' | 'survived' | 'no-coverage' | 'equivalent' | 'inconclusive';
 
 /**
  * One evaluated mutant's flat, decided outcome — the host's verdict plus the data
@@ -129,6 +135,8 @@ export interface MutantOutcome {
   readonly equivalentJustification: string | null;
   /** Content address of the mutant-bound equivalent proof; null for non-equivalents. */
   readonly equivalentJustificationDigest: string | null;
+  /** WHY the runner refused to mint a verdict; null for every conclusive verdict. */
+  readonly inconclusiveReason: string | null;
   /** Proven mutation-subsumption parents. Empty means no subsumption is claimed. */
   readonly subsumedBy: readonly string[];
 }

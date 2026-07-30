@@ -54,6 +54,11 @@ import { applyMutant } from './mutation-engine.js';
  * boolean. It receives the FULL mutated source (so the production runner can write
  * it to a temp file and run the suite) and the covering test ids (so it runs only
  * the relevant subset).
+ *
+ * THROWING CONTRACT: a throw carrying `campaignFatal: true` names non-recoverable
+ * state (the runner could not restore the original bytes) and aborts the whole
+ * campaign; ANY other throw is a per-mutant refusal to mint a false verdict and
+ * folds into an `inconclusive` verdict — recorded fail-closed, campaign continues.
  */
 export type MutantTestRunner = (
   mutatedSource: string,
@@ -148,12 +153,32 @@ export interface EquivalentVerdict<M extends MutantCore = Mutant> {
 }
 
 /**
+ * An INCONCLUSIVE mutant — the runner threw instead of returning a verdict (a
+ * subprocess spawn fault, an exit/report disagreement, a zero-tests-executed run).
+ * The refusal to mint a false kill/survive is correct and stays; what this verdict
+ * changes is the BLAST RADIUS: the campaign records the site fail-closed (it counts
+ * in the score denominator and folds to a blocking finding) and CONTINUES, instead
+ * of one unmintable verdict 80 minutes in discarding every verdict already earned
+ * (the twice-measured cron defect: runs 30342905791 + 30526718746, both aborted by
+ * the same target file). NEVER cached — the fault is transient infrastructure, not
+ * a property of the mutant.
+ */
+export interface InconclusiveVerdict<M extends MutantCore = Mutant> {
+  readonly _tag: 'inconclusive';
+  readonly mutant: M;
+  /** The covering tests the runner was asked to execute. */
+  readonly coveringTests: readonly string[];
+  /** The runner's refusal message — WHY no trustworthy verdict exists. */
+  readonly reason: string;
+}
+
+/**
  * The closed verdict union — a `_tag` data discriminant (composition). Generic over the
  * mutant shape `M` (defaulting to the classic {@link Mutant}); the MC/DC builder
  * instantiates it at `ConditionMutant` so the same evaluator serves both paths.
  */
 export type MutantVerdict<M extends MutantCore = Mutant> =
-  KilledVerdict<M> | SurvivedVerdict<M> | NoCoverageVerdict<M> | EquivalentVerdict<M>;
+  KilledVerdict<M> | SurvivedVerdict<M> | NoCoverageVerdict<M> | EquivalentVerdict<M> | InconclusiveVerdict<M>;
 
 /**
  * The injected EQUIVALENT-MUTANT registry — resolves a mutant's CONTENT ADDRESS to its
@@ -287,7 +312,20 @@ export function evaluateMutant<M extends MutantCore = Mutant>(
   }
 
   const mutatedSource = applyMutant(options.originalSource, mutant);
-  const { failed } = options.runner(mutatedSource, coveringTests);
+  let failed: boolean;
+  try {
+    ({ failed } = options.runner(mutatedSource, coveringTests));
+  } catch (error) {
+    // A runner throw marked `campaignFatal` is non-recoverable state (a failed
+    // restore left mutated bytes in the working tree) — the campaign MUST abort.
+    // Every other throw is the runner refusing to mint a false verdict for THIS
+    // mutant (spawn fault, exit/report disagreement, zero tests executed):
+    // record it fail-closed and continue — one unmintable verdict must not
+    // discard the rest of the campaign. Never cached (transient infrastructure).
+    if (isCampaignFatal(error)) throw error;
+    const reason = error instanceof Error ? error.message : String(error);
+    return { _tag: 'inconclusive', mutant, coveringTests, reason };
+  }
   const verdict: MutantVerdict<M> = failed
     ? { _tag: 'killed', mutant, coveringTests }
     : { _tag: 'survived', mutant, coveringTests };
@@ -296,6 +334,17 @@ export function evaluateMutant<M extends MutantCore = Mutant>(
     options.cache.write(cacheKey, verdict._tag);
   }
   return verdict;
+}
+
+/**
+ * The runner's non-recoverable marker: a thrown error carrying `campaignFatal:
+ * true` names corrupted state the campaign cannot safely continue over (the
+ * production runner sets it when the post-mutant RESTORE of the original bytes
+ * failed or did not verify — a mutated trust-spine file may be on disk). Any
+ * other runner throw is a per-mutant refusal and folds to `inconclusive`.
+ */
+function isCampaignFatal(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && (error as { campaignFatal?: unknown }).campaignFatal === true;
 }
 
 /**
@@ -328,7 +377,7 @@ function rehydrate<M extends MutantCore>(
   if (tag === 'survived') return { _tag: 'survived', mutant, coveringTests };
   throw InvariantViolationError(
     'evaluateMutant',
-    `cache returned a "${tag}" verdict for a covered mutant (${mutant.id}) — only killed/survived are ever cached (no-coverage and equivalent verdicts never reach the cache path)`,
+    `cache returned a "${tag}" verdict for a covered mutant (${mutant.id}) — only killed/survived are ever cached (no-coverage, equivalent, and inconclusive verdicts never reach the cache path)`,
   );
 }
 
@@ -340,7 +389,7 @@ export interface MutationScore {
    * of the kill denominator).
    */
   readonly total: number;
-  /** Mutants a covering test killed. */
+  /** Mutants a covering test killed. (Total also counts {@link inconclusive}.) */
   readonly killed: number;
   /** Mutants every covering test passed on (coverage divergences). */
   readonly survived: number;
@@ -348,6 +397,8 @@ export interface MutationScore {
   readonly noCoverage: number;
   /** Justified-equivalent mutants (registry-recorded) — excluded from {@link total}. */
   readonly equivalent: number;
+  /** Mutants whose runner refused a trustworthy verdict — counted in {@link total}. */
+  readonly inconclusive: number;
   /**
    * The kill score in [0, 1] — `killed / total`, where `total` is the NON-EQUIVALENT
    * mutant count. A no-coverage mutant counts AGAINST the score (untested); an
@@ -365,13 +416,17 @@ export function scoreVerdicts(verdicts: readonly MutantVerdict[]): MutationScore
   let survived = 0;
   let noCoverage = 0;
   let equivalent = 0;
+  let inconclusive = 0;
   for (const v of verdicts) {
     if (v._tag === 'killed') killed += 1;
     else if (v._tag === 'survived') survived += 1;
     else if (v._tag === 'no-coverage') noCoverage += 1;
+    else if (v._tag === 'inconclusive') inconclusive += 1;
     else equivalent += 1;
   }
-  // The denominator is the non-equivalent mutants (an equivalent mutant is not a gap).
-  const total = killed + survived + noCoverage;
-  return { total, killed, survived, noCoverage, equivalent, score: total === 0 ? 1 : killed / total };
+  // The denominator is the non-equivalent mutants (an equivalent mutant is not a
+  // gap). An INCONCLUSIVE mutant counts against the score — unproven is not
+  // proven, so an infra fault can only lower the number, never launder it.
+  const total = killed + survived + noCoverage + inconclusive;
+  return { total, killed, survived, noCoverage, equivalent, inconclusive, score: total === 0 ? 1 : killed / total };
 }

@@ -8,7 +8,7 @@
 
 > **siteCarriesPlaceholderMarker**(`site`): `boolean`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L160)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L161)
 
 Does `site` (a skip's normalized title / source line) carry a PLACEHOLDER MARKER — the
 tell of an unfinished-work stub? A skip whose site matches is NON-sanctionable and

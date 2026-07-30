@@ -67,7 +67,10 @@ export interface McdcTargetCensus {
  *  - `no-coverage` — no test covers the condition at all (the worst signal — the
  *    decision is entirely untested).
  */
-export type McdcPinVerdict = 'killed' | 'survived' | 'no-coverage';
+// `inconclusive`: the runner could not mint a trustworthy verdict for this pin
+// (infra fault) — recorded fail-closed as an uncovered condition instead of
+// aborting the whole campaign (PR #191 follow-up; crons 30342905791 + 30526718746).
+export type McdcPinVerdict = 'killed' | 'survived' | 'no-coverage' | 'inconclusive';
 
 /**
  * One atomic CONDITION's folded MC/DC outcome — the two pins' verdicts plus the data the
@@ -96,6 +99,16 @@ export interface McdcConditionOutcome {
   readonly forceTrueVerdict: McdcPinVerdict;
   /** The verdict of the force-FALSE pin — `killed` ⇒ the false-effect is observed. */
   readonly forceFalseVerdict: McdcPinVerdict;
+  /**
+   * The runner's stated refusal reason iff {@link forceTrueVerdict} is `inconclusive`,
+   * else null — preserved through the fold so the gate names the ACTUAL infra fault
+   * (a timeout, a spawn failure, and a zero-test run demand different responses; a
+   * generic "infra fault" label is unactionable). Sibling of
+   * `MutantOutcome.inconclusiveReason` (PR #192 review, round 4).
+   */
+  readonly forceTrueInconclusiveReason: string | null;
+  /** The force-FALSE pin's refusal reason iff its verdict is `inconclusive`, else null. */
+  readonly forceFalseInconclusiveReason: string | null;
   /** Sorted tests mapped to the decision site for both condition pins. */
   readonly coveringTests: readonly string[];
 }

@@ -134,7 +134,7 @@ describe('doctor/probes-workspace — consumer package-manager authority', () =>
     });
     expect(spawnMock.spawnArgvCapture).toHaveBeenCalledOnce();
     expect(spawnMock.spawnArgvCapture).toHaveBeenCalledWith('npm', ['--version'], {
-      timeoutMs: 4_000,
+      timeoutMs: 20_000,
     });
   });
 
@@ -149,7 +149,7 @@ describe('doctor/probes-workspace — consumer package-manager authority', () =>
     expect(result.check).toMatchObject({ id: 'pnpm.version', status: 'fail' });
     expect(result.check.detail).toContain('need >= 10');
     expect(spawnMock.spawnArgvCapture).toHaveBeenCalledWith('pnpm', ['--version'], {
-      timeoutMs: 4_000,
+      timeoutMs: 20_000,
     });
   });
 
@@ -171,7 +171,7 @@ describe('doctor/probes-workspace — consumer package-manager authority', () =>
     });
     expect(spawnMock.spawnArgvCapture).toHaveBeenCalledOnce();
     expect(spawnMock.spawnArgvCapture).toHaveBeenCalledWith('pnpm', ['--version'], {
-      timeoutMs: 4_000,
+      timeoutMs: 20_000,
     });
   });
 

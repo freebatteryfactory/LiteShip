@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:03ce3d9d",
+  "address": "fnv1a:7606605e",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -6137,6 +6137,12 @@
       "file": "tests/unit/cli/lib/gauntlet-verdict-cache.test.ts",
       "site": "it.skipIf(eaccesUntestableAsRoot)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
       "capability": "eacces-untestable-as-root"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/cli/lib/mutation-runner.test.ts",
+      "site": "it.skipIf(runningAsRoot)(",
+      "capability": "running-as-root"
     },
     {
       "_tag": "skip-allowlist",

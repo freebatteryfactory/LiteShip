@@ -2028,6 +2028,10 @@
           "kind": "interface"
         },
         {
+          "name": "InconclusiveVerdict",
+          "kind": "interface"
+        },
+        {
           "name": "IntegritySummary",
           "kind": "interface"
         },
