@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { repositoryProofTimeout } from '../../../vitest.shared.js';
 import {
   buildCatalogFeatureEdgeFamily,
   combineFeatureEdgeFamilies,
@@ -32,7 +33,12 @@ function withoutFirstProducer(pack: FeatureEdgeFamilyFacts): FeatureEdgeFamilyFa
   };
 }
 
-describe('live multi-family feature-edge profile', () => {
+// Repository-scale proofs: most cases here build the LIVE census over the real
+// repo (~2-3s each on an idle machine), and the repo-runner cases measured
+// 3.0-3.1s — the default 10s budget was killed three times under Windows CI
+// lane saturation (PR #191 runs 30542682697 x2 + the fix push's run). The
+// canonical repository-proof budget replaces it; scale covers loaded hosts.
+describe('live multi-family feature-edge profile', { timeout: repositoryProofTimeout() }, () => {
   it('enumerates every governed catalog family from canonical owners with no orphan', () => {
     const facts = liveFacts();
     expect(facts.families.map((family) => family.family)).toEqual(FEATURE_EDGE_FAMILIES);
