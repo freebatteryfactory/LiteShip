@@ -195,4 +195,34 @@ describe('directive boot scheduling (#155)', () => {
     await scanAndBootDirectives([...DIRECTIVE_NAMES], fragment, recordingLoaders(booted));
     expect(booted.length).toBe(DIRECTIVE_NAMES.length);
   });
+
+  it('a fragment INSERTED while the scan is parked still boots its moved members (PR #191 review, round 2)', async () => {
+    // Inserting a scanned DocumentFragment-like root MOVES its children out of
+    // it — containment alone would skip an llm element transferred into the
+    // document while parked on the idle deadline. Transfer is not teardown.
+    const fragment = document.createElement('div');
+    const llm = document.createElement('div');
+    llm.setAttribute('data-liteship-directive', 'llm');
+    fragment.append(llm);
+
+    const booted: string[] = [];
+    globalHost.scheduler = { yield: () => Promise.resolve() };
+    let idleCallback: (() => void) | undefined;
+    globalHost.requestIdleCallback = (callback) => {
+      idleCallback = callback;
+      return 1;
+    };
+
+    const scan = scanAndBootDirectives(['llm'], fragment, recordingLoaders(booted));
+    for (let hop = 0; hop < 20; hop += 1) await Promise.resolve();
+    expect(idleCallback).toBeDefined();
+
+    // The prepare-then-insert flow: the member MOVES out of the scanned root.
+    document.body.append(llm);
+    expect(fragment.contains(llm)).toBe(false);
+
+    idleCallback!();
+    await scan;
+    expect(booted).toContain('llm');
+  });
 });

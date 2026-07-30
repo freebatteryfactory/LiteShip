@@ -295,7 +295,23 @@ export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFro
   // the QUERY await made a pre-await snapshot validate a post-await buffer).
   const chainValidation =
     typeof options.chainValidation === 'function' ? options.chainValidation() : options.chainValidation;
-  const branch = chainPatchesBetween(options.localBaseId, options.serverGraphId, options.entries);
+  let branch = chainPatchesBetween(options.localBaseId, options.serverGraphId, options.entries);
+  if (branch.length === 0 && chainValidation?.base !== undefined) {
+    // The local graph anchor itself may have been EVICTED (PR #191 review,
+    // confirmed): with `base → mid` dropped and `mid → server` retained, no
+    // retained transition starts at localBaseId, so selection finds nothing —
+    // before the checkpoint authorization is ever consulted. The watermark
+    // names the receipt whose successor is the FIRST retained entry: re-anchor
+    // selection at that entry's graph base. The suffix still passes the full
+    // structural floor below ({ base, checkpoint } authorizes exactly this
+    // lineage). HONEST LIMIT: crossings that lived only in the evicted prefix
+    // are gone — the QUERY adoption corrects the graph and the snapshot floor
+    // corrects the DOM; this re-anchor only recovers what is still provable.
+    const firstRetained = options.entries.find((entry) => entry.receipt.previous === chainValidation.base);
+    if (firstRetained !== undefined && firstRetained.transition.base !== options.localBaseId) {
+      branch = chainPatchesBetween(firstRetained.transition.base, options.serverGraphId, options.entries);
+    }
+  }
   if (branch.length === 0) {
     return { replayedCells: [], transitions: [] };
   }
