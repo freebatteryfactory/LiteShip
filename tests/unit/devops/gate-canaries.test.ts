@@ -86,8 +86,24 @@ interface TscResult {
  * to stdout, so the combined stream is scanned for the diagnostic code.
  */
 async function runTscBuild(projectPath: string): Promise<TscResult> {
-  const result = await spawnArgvCapture(TSC, ['--build', projectPath]);
-  return { status: result.exitCode, output: result.stdout + result.stderr };
+  // FORCE_COLOR=1 pins the HOSTILE presentation env in every lane: the serial
+  // gauntlet exports it (scripts/gauntlet.ts) and TS7's native tsc honors it,
+  // colorizing diagnostics so ANSI escapes split `error` from `TS2322` — run
+  // 30579292227's truth-linux redded exactly this canary on a diagnostic that
+  // WAS present, while every FORCE_COLOR-free lane stayed green. Forcing the
+  // env here makes every lane prove presentation-independence, not just the
+  // gauntlet's.
+  const saved = process.env['FORCE_COLOR'];
+  process.env['FORCE_COLOR'] = '1';
+  try {
+    // `--pretty false` is the cure: the canary asserts on the DIAGNOSTIC
+    // STREAM, so the stream must be plain bytes regardless of color env.
+    const result = await spawnArgvCapture(TSC, ['--build', projectPath, '--pretty', 'false']);
+    return { status: result.exitCode, output: result.stdout + result.stderr };
+  } finally {
+    if (saved === undefined) delete process.env['FORCE_COLOR'];
+    else process.env['FORCE_COLOR'] = saved;
+  }
 }
 
 function seedFixture(dest: string): void {
