@@ -86,7 +86,9 @@ interface TscResult {
  * to stdout, so the combined stream is scanned for the diagnostic code.
  */
 async function runTscBuild(projectPath: string): Promise<TscResult> {
-  const result = await spawnArgvCapture(TSC, ['--build', projectPath]);
+  // `--pretty false` ensures the canary asserts on a plain diagnostic stream
+  // regardless of the color environment.
+  const result = await spawnArgvCapture(TSC, ['--build', projectPath, '--pretty', 'false']);
   return { status: result.exitCode, output: result.stdout + result.stderr };
 }
 
