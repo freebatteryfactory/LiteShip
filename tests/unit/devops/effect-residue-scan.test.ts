@@ -216,6 +216,39 @@ describe('effect residue — full-scope scan', () => {
     expect(classifyEffectResidueWorkspaceYaml('catalog:\n  pinned: npm:lodash@^4.0.0\n')).toEqual([]);
   });
 
+  it('negative controls — pnpm packageExtensions is a dependency-INJECTION channel (PR #191 review, round 6)', () => {
+    // `pnpm.packageExtensions` grafts dependency blocks onto THIRD-PARTY
+    // packages — pnpm resolves them exactly like authored deps, so a graft of
+    // `effect` (by key or by npm-alias value) restores it to the graph while
+    // every ordinary dependency field stays clean.
+    expect(
+      classifyEffectResidueManifest({
+        pnpm: { packageExtensions: { 'some-lib': { dependencies: { effect: '^3.0.0' } } } },
+      }),
+    ).toEqual(['pnpm.packageExtensions.some-lib.dependencies.effect']);
+    expect(
+      classifyEffectResidueManifest({
+        pnpm: { packageExtensions: { 'some-lib': { peerDependencies: { fx: 'npm:effect@^3.0.0' } } } },
+      }),
+    ).toEqual(['pnpm.packageExtensions.some-lib.peerDependencies.fx -> npm:effect@^3.0.0']);
+    // Extending `effect` itself (any selector spelling) implies it is in the
+    // resolved graph — the extension KEY is the evidence.
+    expect(
+      classifyEffectResidueManifest({ pnpm: { packageExtensions: { 'effect@^3': { dependencies: {} } } } }),
+    ).toEqual(['pnpm.packageExtensions.effect@^3']);
+    // The workspace file carries the same channel (pnpm reads settings from
+    // pnpm-workspace.yaml too) — the section joins the scanned set.
+    expect(
+      classifyEffectResidueWorkspaceYaml('packageExtensions:\n  some-lib:\n    dependencies:\n      effect: ^3.0.0\n'),
+    ).toEqual(['packageExtensions.effect']);
+    // A benign extension stays clean.
+    expect(
+      classifyEffectResidueManifest({
+        pnpm: { packageExtensions: { 'some-lib': { dependencies: { lodash: '^4.0.0' } } } },
+      }),
+    ).toEqual([]);
+  });
+
   it('negative controls — an npm ALIAS installing effect is residue by VALUE (PR #191 review)', () => {
     // The side door: `"fx": "npm:effect@^3"` installs the library under a name
     // no import/call scanner can match — the dependency VALUE is the evidence.

@@ -166,6 +166,16 @@ function verifyChangeIntent(raw: Uint8Array, plan: AffectedTestPlan, expected: T
   } else if (intent.actorClass.value !== 'automation' || intent.actorClass.provenance !== 'github-verified') {
     fail('fail-broad change intent must carry the host-derived automation classification');
   }
+  // Execution provenance is the actorClass rule's sibling (PR #191 review,
+  // round 6, confirmed): the GitHub adapter mints it 'agent-self-declared'
+  // for EVERY channel — including the fail-broad fallback (execution is
+  // inherently self-reported by the run that authored the change; the host
+  // never verifies it). A 'github-verified' execution label in the evidence
+  // bytes is forged host verification, and although the admission fold does
+  // not consult it, the durable record would carry the lie.
+  if (intent.execution.provenance !== 'agent-self-declared') {
+    fail('change intent execution provenance claims a verification no channel can mint');
+  }
   const admission = admitChangeIntent(intent);
   if (!admission.accepted) fail(`change intent was not admitted: ${admission.reasons.join(', ')}`);
   if (

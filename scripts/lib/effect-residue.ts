@@ -78,15 +78,25 @@ export function classifyEffectResidueLine(line: string): readonly EffectResidueK
 }
 
 /**
+ * Is this dependency-map KEY (or packageExtensions selector) the effect package?
+ * Selectors may carry a range (`effect@^3`), so the bare name, the ranged name,
+ * and the scope all count; `effect-free-utils` never does.
+ */
+function isEffectPackageKey(name: string): boolean {
+  return name === 'effect' || name.startsWith('effect@') || name.startsWith('@effect/');
+}
+
+/**
  * Classify one parsed manifest. Flags `effect` and `@effect/*` in every dependency
- * field plus pnpm overrides (the resolution-forcing side door).
+ * field plus the pnpm resolution-forcing side doors: overrides, catalog, and
+ * packageExtensions.
  */
 export function classifyEffectResidueManifest(manifest: Record<string, unknown>): readonly string[] {
   const details: string[] = [];
   const flag = (field: string, deps: unknown): void => {
     if (typeof deps !== 'object' || deps === null) return;
     for (const [name, spec] of Object.entries(deps)) {
-      if (name === 'effect' || name.startsWith('@effect/')) {
+      if (isEffectPackageKey(name)) {
         details.push(`${field}.${name}`);
         continue;
       }
@@ -103,6 +113,20 @@ export function classifyEffectResidueManifest(manifest: Record<string, unknown>)
   if (pnpm !== undefined) {
     flag('pnpm.overrides', pnpm['overrides']);
     flag('pnpm.catalog', pnpm['catalog']);
+    // packageExtensions graft dependency blocks onto THIRD-PARTY packages
+    // (PR #191 review, round 6, confirmed): pnpm resolves them exactly like
+    // authored deps, so each extension's blocks get the same key + alias-value
+    // rules — and extending `effect` itself names it into the graph.
+    const extensions = pnpm['packageExtensions'];
+    if (typeof extensions === 'object' && extensions !== null) {
+      for (const [pkg, extension] of Object.entries(extensions)) {
+        if (isEffectPackageKey(pkg)) details.push(`pnpm.packageExtensions.${pkg}`);
+        if (typeof extension !== 'object' || extension === null) continue;
+        for (const field of ['dependencies', 'optionalDependencies', 'peerDependencies'] as const) {
+          flag(`pnpm.packageExtensions.${pkg}.${field}`, (extension as Record<string, unknown>)[field]);
+        }
+      }
+    }
   }
   return details;
 }
@@ -126,7 +150,7 @@ export function classifyEffectResidueManifest(manifest: Record<string, unknown>)
 export function classifyEffectResidueWorkspaceYaml(yamlText: string): readonly string[] {
   const details: string[] = [];
   const ALIAS = /^npm:(?:effect(?:@|$)|@effect\/)/;
-  let section: 'catalog' | 'catalogs' | 'overrides' | null = null;
+  let section: 'catalog' | 'catalogs' | 'overrides' | 'packageExtensions' | null = null;
   for (const raw of yamlText.split(/\r?\n/)) {
     const line = raw.split('#')[0]!;
     if (line.trim().length === 0) continue;
@@ -141,7 +165,10 @@ export function classifyEffectResidueWorkspaceYaml(yamlText: string): readonly s
       const header = line.trim().match(/^(\S+?)\s*:\s*(.*)$/);
       const name = header?.[1] ?? line.trim();
       const remainder = (header?.[2] ?? '').trim();
-      if (name === 'catalog' || name === 'catalogs' || name === 'overrides') {
+      // packageExtensions joined the scanned set in round 6 — pnpm reads it
+      // from pnpm-workspace.yaml too, and it grafts dependencies onto
+      // third-party packages exactly like overrides force resolutions.
+      if (name === 'catalog' || name === 'catalogs' || name === 'overrides' || name === 'packageExtensions') {
         if (remainder.length > 0) {
           details.push(
             `${name} -> ${remainder} (inline value on a section header — unparseable by the line scanner, fail-closed)`,
@@ -167,7 +194,7 @@ export function classifyEffectResidueWorkspaceYaml(yamlText: string): readonly s
       .trim()
       .replace(/^(?:[&!]\S+\s+)+/u, '')
       .replace(/^['"]|['"]$/gu, '');
-    if (key === 'effect' || key.startsWith('@effect/')) details.push(`${section}.${key}`);
+    if (isEffectPackageKey(key)) details.push(`${section}.${key}`);
     else if (ALIAS.test(value)) details.push(`${section}.${key} -> ${value}`);
     // A `*ref` alias value is an indirection this line-based parse cannot
     // resolve (the anchor may live in an unscanned section) — fail closed.
