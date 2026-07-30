@@ -602,15 +602,33 @@ function isModuleSpecifier(node: ts.Node): boolean {
 
 /**
  * Does `node` execute while the module GRAPH is loading (no enclosing deferred
- * function body)? Only function-like ancestors defer execution; anything not
- * provably deferred — top level, a class static block, a static property
- * initializer — counts as load-time, FAIL-CLOSED toward the unmintable-refusal
- * class (a wrongly-deferred classification would resurrect the cron aborts; a
+ * body)? Two ancestors defer execution: a function-like body, and an INSTANCE
+ * property initializer (it runs at construction — a constructing test observes
+ * the mutant, so excluding it dropped valid mutants; PR #192 review, round 6,
+ * confirmed). Anything not provably deferred — top level, a class static
+ * block, a STATIC field initializer, a computed property NAME — counts as
+ * load-time, FAIL-CLOSED toward the unmintable-refusal class (a
+ * wrongly-deferred classification would resurrect the cron aborts; a
  * wrongly-load-time one merely leaves a mutant unminted).
  */
 function executesDuringModuleEvaluation(node: ts.Node): boolean {
-  for (let current: ts.Node | undefined = node.parent; current !== undefined; current = current.parent) {
+  let child: ts.Node = node;
+  for (
+    let current: ts.Node | undefined = node.parent;
+    current !== undefined;
+    child = current, current = current.parent
+  ) {
     if (ts.isFunctionLike(current)) return false;
+    // Only the INITIALIZER of a non-static field defers — a computed property
+    // NAME evaluates at class definition (load) time, so the walk must have
+    // arrived through the initializer, not merely be inside the declaration.
+    if (
+      ts.isPropertyDeclaration(current) &&
+      current.initializer === child &&
+      !current.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.StaticKeyword)
+    ) {
+      return false;
+    }
   }
   return true;
 }

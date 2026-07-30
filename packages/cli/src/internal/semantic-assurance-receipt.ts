@@ -135,7 +135,18 @@ function mutationTargetReceipt(
   // trustworthy verdict. Counted so the closure law still holds, and ALWAYS a
   // failing target — an unproven site can never ride a passing receipt.
   const inconclusive = outcomes.filter((outcome) => outcome.verdict === 'inconclusive').length;
-  const executedTests = sortedUnique(outcomes.flatMap((outcome) => outcome.coveringTests));
+  // ONLY execution-proving verdicts feed executedTests (PR #192 review, round
+  // 6, confirmed): coveringTests is what the runner was ASKED to run, and an
+  // inconclusive refusal (timeout / spawn failure / zero-test run) may prove
+  // nothing executed — copying its requested tests would make the durable
+  // receipt claim execution its own refusal reason disproves. A killed or
+  // survived verdict is keyed on CONFIRMED test counts, so those outcomes are
+  // the proof.
+  const executedTests = sortedUnique(
+    outcomes
+      .filter((outcome) => outcome.verdict === 'killed' || outcome.verdict === 'survived')
+      .flatMap((outcome) => outcome.coveringTests),
+  );
   const executable = killed + survived;
   if (executable > 0 && executedTests.length === 0) {
     invalidReceipt(`mutation target ${row.file} records executed outcomes but no executed tests`);
@@ -189,8 +200,22 @@ function mcdcTargetReceipt(
       !(outcome.forceTrueVerdict === 'no-coverage' && outcome.forceFalseVerdict === 'no-coverage'),
   ).length;
   const survived = outcomes.length - killed - noCoverage - inconclusive;
-  const executedTests = sortedUnique(outcomes.flatMap((outcome) => outcome.coveringTests));
-  if (row.applicableConditions > 0 && executedTests.length === 0) {
+  // Per-pin execution proof (PR #192 review, round 6, confirmed): a condition
+  // proves its covering tests ran iff at least one pin earned a conclusive
+  // killed/survived verdict; an all-inconclusive condition's coveringTests
+  // are merely what was REQUESTED — its refusal reason may prove nothing ran.
+  const executionProving = outcomes.filter(
+    (outcome) =>
+      outcome.forceTrueVerdict === 'killed' ||
+      outcome.forceTrueVerdict === 'survived' ||
+      outcome.forceFalseVerdict === 'killed' ||
+      outcome.forceFalseVerdict === 'survived',
+  );
+  const executedTests = sortedUnique(executionProving.flatMap((outcome) => outcome.coveringTests));
+  // The anti-lie throw guards CONCLUSIVE claims without tests (a killed pin
+  // with no test named is impossible) — an all-refused target must FAIL its
+  // verdict below, never crash receipt minting.
+  if (executionProving.length > 0 && executedTests.length === 0) {
     invalidReceipt(`MC/DC target ${row.file} records evaluated conditions but no executed tests`);
   }
   const verdict =

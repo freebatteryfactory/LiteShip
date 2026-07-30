@@ -216,6 +216,21 @@ describe('LEVEL 1b — type-only syntax is skipped, runtime syntax is mutated', 
     expect(stringLiterals(src)).toEqual(['"./d.js"', '"./e.js"']);
   });
 
+  it('an INSTANCE-field import is deferred (minted); static fields and static blocks are load-time (PR #192 review, round 6)', () => {
+    // An instance property initializer runs at CONSTRUCTION — a test that
+    // constructs the class observes the empty-specifier rejection and kills
+    // the mutant, so excluding it (as the function-ancestor-only walk did)
+    // silently dropped valid mutants. STATIC fields and static blocks run at
+    // class definition, i.e. module evaluation — they stay excluded.
+    const deferred = 'export class Lazy { module = import("./f.js"); }';
+    expect(stringLiterals(deferred)).toEqual(['"./f.js"']);
+    const loadTime = [
+      'export class Eager { static module = import("./g.js"); }',
+      'class Boot { static { import("./h.js"); } }',
+    ].join('\n');
+    expect(stringLiterals(loadTime)).toEqual([]);
+  });
+
   it('a runtime CALL ARGUMENT string literal IS mutated (the control — runtime is never skipped)', () => {
     const src = 'export function g(): void { console.log("hi"); }';
     expect(stringLiterals(src)).toEqual(['"hi"']);

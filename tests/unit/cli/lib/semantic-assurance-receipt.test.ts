@@ -244,6 +244,106 @@ describe('semantic assurance execution receipt', () => {
     expect(parseSemanticAssuranceReceipt(JSON.parse(JSON.stringify(receipt)))).toEqual(receipt);
   });
 
+  it('executedTests records only EXECUTION-PROVING outcomes — a refusal cannot claim its requested tests ran (PR #192 review, round 6)', () => {
+    // coveringTests is what the runner was ASKED to run; for an inconclusive
+    // outcome the refusal reason (timeout, spawn failure, zero-test run) may
+    // prove NOTHING executed. Only a killed/survived verdict proves execution
+    // (the runner keys those on confirmed test counts), so only those
+    // outcomes may feed the receipt's executedTests.
+    const base = mutationFacts().outcomes[0]!;
+    const refused = buildSemanticAssuranceReceipt({
+      mode: 'mutation',
+      facts: mutationFacts({
+        outcomes: [
+          {
+            ...base,
+            verdict: 'inconclusive',
+            inconclusiveReason: 'the vitest subprocess failed to spawn — zero tests executed',
+          },
+        ],
+      }),
+      ir: ir(),
+      toolchainDigest: TOOLCHAIN,
+    });
+    expect(refused.targets[0]!.executedTests).toEqual([]);
+    expect(refused.targets[0]!.verdict).toBe('fail');
+    // A mixed target keeps exactly the tests a conclusive verdict proves ran.
+    const mixed = buildSemanticAssuranceReceipt({
+      mode: 'mutation',
+      facts: mutationFacts({
+        outcomes: [
+          base,
+          {
+            ...base,
+            mutantId: 'blake3:mutant-2',
+            line: 2,
+            verdict: 'inconclusive',
+            inconclusiveReason: 'the per-mutant budget expired',
+            coveringTests: ['tests/unit/genui/other.test.ts'],
+          },
+        ],
+        targetCensus: [{ file: FILE, applicableMutants: 2, reasons: [REASON] }],
+        operatorApplicability: [{ file: FILE, operator: 'equality', applicableMutants: 2 }],
+      }),
+      ir: ir(),
+      toolchainDigest: TOOLCHAIN,
+    });
+    expect(mixed.targets[0]!.executedTests).toEqual(['tests/property/genui/catalog.prop.test.ts']);
+    // MC/DC, per pin: a condition with at least one conclusive pin proves its
+    // covering tests ran; an all-inconclusive condition proves nothing — and
+    // an ALL-refused target records executedTests: [] and FAILS, never throws
+    // (the anti-lie throw is for conclusive claims without tests, not for a
+    // campaign whose runner refused everything).
+    const mcdcCondition = {
+      conditionId: 'blake3:condition',
+      file: FILE,
+      line: 1,
+      column: 1,
+      decision: 'a && b',
+      condition: 'a',
+      forceTrueVerdict: 'killed',
+      forceFalseVerdict: 'inconclusive',
+      forceTrueInconclusiveReason: null,
+      forceFalseInconclusiveReason: 'spawn refused',
+      coveringTests: ['tests/property/genui/catalog.prop.test.ts'],
+    } as const;
+    const mcdcMixed: McdcFacts = {
+      conditions: [
+        mcdcCondition,
+        {
+          ...mcdcCondition,
+          conditionId: 'blake3:condition-2',
+          line: 2,
+          forceTrueVerdict: 'inconclusive',
+          forceTrueInconclusiveReason: 'spawn refused',
+          coveringTests: ['tests/unit/genui/other.test.ts'],
+        },
+      ],
+      targetCensus: [{ file: FILE, applicableConditions: 2, reasons: [REASON] }],
+    };
+    const mcdcReceipt = buildSemanticAssuranceReceipt({
+      mode: 'mcdc',
+      facts: mcdcMixed,
+      ir: ir(),
+      toolchainDigest: TOOLCHAIN,
+    });
+    expect(mcdcReceipt.targets[0]!.executedTests).toEqual(['tests/property/genui/catalog.prop.test.ts']);
+    const mcdcRefused: McdcFacts = {
+      conditions: [
+        { ...mcdcCondition, forceTrueVerdict: 'inconclusive', forceTrueInconclusiveReason: 'spawn refused' },
+      ],
+      targetCensus: [{ file: FILE, applicableConditions: 1, reasons: [REASON] }],
+    };
+    const mcdcRefusedReceipt = buildSemanticAssuranceReceipt({
+      mode: 'mcdc',
+      facts: mcdcRefused,
+      ir: ir(),
+      toolchainDigest: TOOLCHAIN,
+    });
+    expect(mcdcRefusedReceipt.targets[0]!.executedTests).toEqual([]);
+    expect(mcdcRefusedReceipt.targets[0]!.verdict).toBe('fail');
+  });
+
   it('records zero applicability explicitly without manufacturing test execution', () => {
     const receipt = buildSemanticAssuranceReceipt({
       mode: 'mutation',
