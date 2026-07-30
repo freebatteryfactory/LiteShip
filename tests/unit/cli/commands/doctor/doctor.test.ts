@@ -147,7 +147,7 @@ describe('doctor/doctor — orchestration', () => {
     expect(ids).not.toContain('pnpm.version');
     expect(ids).toContain('workspace.installed');
     expect(receipt.verdict).not.toBe('blocked');
-    expect(spawn).toHaveBeenCalledWith('npm', ['--version'], { timeoutMs: 4_000 });
+    expect(spawn).toHaveBeenCalledWith('npm', ['--version'], { timeoutMs: 20_000 });
   });
 
   it('a pnpm consumer probes pnpm and keeps pnpm-specific install remediation', async () => {
@@ -171,7 +171,7 @@ describe('doctor/doctor — orchestration', () => {
     expect(manager).toMatchObject({ status: 'ok', detail: '10.32.1' });
     expect(installed).toMatchObject({ status: 'fail', hint: 'Set up: pnpm install' });
     expect(receipt.verdict).toBe('blocked');
-    expect(spawn).toHaveBeenCalledWith('pnpm', ['--version'], { timeoutMs: 4_000 });
+    expect(spawn).toHaveBeenCalledWith('pnpm', ['--version'], { timeoutMs: 20_000 });
   });
 
   it('an unsupported consumer manager blocks without probing another executable', async () => {

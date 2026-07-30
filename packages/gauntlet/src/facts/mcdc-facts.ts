@@ -67,7 +67,10 @@ export interface McdcTargetCensus {
  *  - `no-coverage` — no test covers the condition at all (the worst signal — the
  *    decision is entirely untested).
  */
-export type McdcPinVerdict = 'killed' | 'survived' | 'no-coverage';
+// `inconclusive`: the runner could not mint a trustworthy verdict for this pin
+// (infra fault) — recorded fail-closed as an uncovered condition instead of
+// aborting the whole campaign (PR #191 follow-up; crons 30342905791 + 30526718746).
+export type McdcPinVerdict = 'killed' | 'survived' | 'no-coverage' | 'inconclusive';
 
 /**
  * One atomic CONDITION's folded MC/DC outcome — the two pins' verdicts plus the data the

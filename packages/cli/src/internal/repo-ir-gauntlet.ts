@@ -23,7 +23,7 @@
  *
  * @module
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   buildRepoIR,
@@ -526,6 +526,33 @@ export async function runGauntletWithRepoIR(
   if (cacheOpts.withComposition === true) {
     gateSet.push(compositionCoverageGate);
     compositionFacts = buildCompositionFacts(repoRoot, ir);
+    // The uncovered-edge RATCHET (issue #164): the committed baseline accepts
+    // the enumerated legacy debt as advisory while every NEW uncovered edge
+    // blocks at full severity. LITESHIP_UPDATE_COMPOSITION_BASELINE=1
+    // regenerates the artifact from THIS run's uncovered set (a deliberate,
+    // reviewed act — the diff is the debt ledger changing).
+    const baselinePath = join(repoRoot, 'benchmarks', 'composition-uncovered-baseline.json');
+    if (process.env['LITESHIP_UPDATE_COMPOSITION_BASELINE'] === '1') {
+      const uncovered = (compositionFacts.edges ?? [])
+        .filter((edge) => !edge.integrationCovered)
+        .map((edge) => `${edge.fromFile} -> ${edge.toFile} via ${edge.viaSymbol}`)
+        .sort((left, right) => left.localeCompare(right));
+      writeFileSync(
+        baselinePath,
+        `${JSON.stringify({ schema: 'liteship/composition-uncovered-baseline@1', edges: uncovered }, null, 2)}\n`,
+        'utf8',
+      );
+    }
+    if (existsSync(baselinePath)) {
+      const parsed = JSON.parse(readFileSync(baselinePath, 'utf8')) as { schema?: string; edges?: readonly string[] };
+      if (parsed.schema !== 'liteship/composition-uncovered-baseline@1' || !Array.isArray(parsed.edges)) {
+        throw InvariantViolationError(
+          'runGauntletWithRepoIR',
+          `${baselinePath} is not a liteship/composition-uncovered-baseline@1 artifact — refusing a malformed ratchet baseline`,
+        );
+      }
+      compositionFacts = { ...compositionFacts, acceptedUncovered: parsed.edges };
+    }
   }
 
   // The `--spine-relation` opt-in (Wave 8.5, the public constitution's STATIC-projection

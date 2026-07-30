@@ -184,11 +184,20 @@ describe('LEVEL 1b — type-only syntax is skipped, runtime syntax is mutated', 
     expect(stringLiterals(src)).toEqual(['"fast"']);
   });
 
-  it('a TYPE-ONLY import specifier is NOT mutated, a value import specifier IS', () => {
-    const src = ['import type { A } from "./a.js";', 'import { b } from "./b.js";'].join('\n');
-    // The `import type` specifier is erased; the value import's specifier is runtime
-    // (a real module-resolution input). Only the value import yields a mutant.
-    expect(stringLiterals(src)).toEqual(['"./b.js"']);
+  it('NO module specifier is EVER mutated — type-only, value, export, or dynamic (crons 30342905791 + 30526718746)', () => {
+    // The defect class: a value-import specifier mutated to '' is not a
+    // behavioural question — it makes covering suites fail to LOAD, and the
+    // runner can only refuse (0 tests, or vitest exiting 1 beside a 0-failed
+    // report when other suites loaded). Both July exhaustive crons aborted on
+    // exactly this shape at audio-input.ts. Specifiers are module-graph
+    // addresses, never mutation targets.
+    const src = [
+      'import type { A } from "./a.js";',
+      'import { b } from "./b.js";',
+      'export { c } from "./c.js";',
+      'export const load = () => import("./d.js");',
+    ].join('\n');
+    expect(stringLiterals(src)).toEqual([]);
   });
 
   it('a runtime CALL ARGUMENT string literal IS mutated (the control — runtime is never skipped)', () => {

@@ -120,6 +120,7 @@ export function buildMutationFacts(files: readonly MutationTargetFile[], options
         originalText: mutant.originalText,
         mutatedText: mutant.mutatedText,
         coveringTests,
+        inconclusiveReason: verdict._tag === 'inconclusive' ? verdict.reason : null,
         equivalentJustification: verdict._tag === 'equivalent' ? verdict.justification : null,
         equivalentJustificationDigest:
           verdict._tag === 'equivalent'

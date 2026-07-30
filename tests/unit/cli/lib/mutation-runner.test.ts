@@ -34,7 +34,7 @@
  * @module
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { hasTag } from '@liteship/error';
@@ -155,6 +155,51 @@ describe('makeVitestMutationRunner — the per-mutant safety + verdict proof', (
     });
     expect(() => runner(MUTATED, ['tests/x.test.ts'])).toThrow();
     expect(readFileSync(join(root, TARGET), 'utf8')).toBe(ORIGINAL);
+  });
+
+  it('THE MISLABELED-TIMEOUT GUARD: a spawnSync ETIMEDOUT names the per-mutant budget, not a spawn fault', () => {
+    // spawnSync's timeout sets BOTH `error` (ETIMEDOUT) and `signal`, and the
+    // error branch runs first — so the July-30 MC/DC cron reported a per-mutant
+    // budget expiry as "failed to spawn" and the diagnosis chased a phantom
+    // spawn fault. The refusal message must name what actually happened.
+    const timedOut = Object.assign(new Error('spawnSync pnpm ETIMEDOUT'), { code: 'ETIMEDOUT' });
+    const runner = makeVitestMutationRunner(root, {
+      targetFile: TARGET,
+      spawn: stubSpawn({ status: null, signal: 'SIGTERM', error: timedOut, stdout: '', stderr: '' }),
+    });
+    expect(() => runner(MUTATED, ['tests/x.test.ts'])).toThrow(/per-mutant budget/u);
+    expect(() => runner(MUTATED, ['tests/x.test.ts'])).not.toThrow(/failed to spawn/u);
+    expect(readFileSync(join(root, TARGET), 'utf8')).toBe(ORIGINAL);
+  });
+
+  it('a restore failure is marked campaignFatal — evaluateMutant must abort, never fold it to inconclusive', () => {
+    // The inconclusive fold (crons 30342905791 + 30526718746) continues the
+    // campaign past runner refusals — but a working tree still holding mutated
+    // bytes is non-recoverable, and its throw must carry the abort marker.
+    const runner = makeVitestMutationRunner(root, {
+      targetFile: TARGET,
+      spawn: () => {
+        // Corrupt the on-disk bytes DURING the run so the post-run restore's
+        // byte-for-byte verify cannot succeed against the pre-run backup.
+        writeFileSync(join(root, TARGET), 'sabotaged bytes', 'utf8');
+        const deny = readFileSync(join(root, TARGET));
+        void deny;
+        chmodSync(join(root, TARGET), 0o444);
+        return { status: 0, signal: null, stdout: jsonReport(3, 0), stderr: '' };
+      },
+    });
+    try {
+      try {
+        runner(MUTATED, ['tests/x.test.ts']);
+        expect.unreachable('the sabotaged restore must throw');
+      } catch (err) {
+        expect(hasTag(err, 'IoError')).toBe(true);
+        expect((err as { campaignFatal?: boolean }).campaignFatal).toBe(true);
+      }
+    } finally {
+      chmodSync(join(root, TARGET), 0o644);
+      writeFileSync(join(root, TARGET), ORIGINAL, 'utf8');
+    }
   });
 
   it('throws on a signal kill (the timeout path) AND still restores', () => {

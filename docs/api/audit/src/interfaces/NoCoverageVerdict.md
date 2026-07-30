@@ -6,7 +6,7 @@
 
 # Interface: NoCoverageVerdict\<M\>
 
-Defined in: [audit/src/mutation-verdict.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L125)
+Defined in: [audit/src/mutation-verdict.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L130)
 
 A mutant with no covering test at all — untested code (the worst signal).
 
@@ -22,7 +22,7 @@ A mutant with no covering test at all — untested code (the worst signal).
 
 > `readonly` **\_tag**: `"no-coverage"`
 
-Defined in: [audit/src/mutation-verdict.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L126)
+Defined in: [audit/src/mutation-verdict.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L131)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [audit/src/mutation-verdict.ts:126](https://github.com/freebatteryfa
 
 > `readonly` **mutant**: `M`
 
-Defined in: [audit/src/mutation-verdict.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L127)
+Defined in: [audit/src/mutation-verdict.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L132)

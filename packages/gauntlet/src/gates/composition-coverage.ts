@@ -158,6 +158,49 @@ function notEvidencedFinding(): Finding {
  * (`integrationCovered: false`) → a finding at the edge's effective level; a covered
  * edge produces nothing. Findings are sorted by (from, to, symbol) for determinism.
  */
+/** The stable identity of an edge — the baseline's key (`from -> to via symbol`). */
+export function compositionEdgeId(edge: InteractionEdge): string {
+  return `${edge.fromFile} -> ${edge.toFile} via ${edge.viaSymbol}`;
+}
+
+/** The advisory finding for an uncovered edge the committed baseline accepts as legacy debt. */
+function baselinedEdgeFinding(edge: InteractionEdge, level: AssuranceLevel): Finding {
+  const arrow = `${edge.fromFile} → ${edge.toFile} (via \`${edge.viaSymbol}\`)`;
+  return finding({
+    ruleId: GATE_ID,
+    severity: 'advisory',
+    level,
+    title: `Baselined untested composition edge: ${arrow} (${level})`,
+    detail: `This uncovered composition edge is enrolled in the committed baseline (benchmarks/composition-uncovered-baseline.json — the issue #164 backlog from the first full sweep). It stays VISIBLE as recorded debt but does not block; a NEW uncovered edge outside the baseline blocks at full severity, and the baseline only ever shrinks (covering this edge and deleting its entry is the work).`,
+    location: { file: edge.fromFile },
+    remediation: {
+      kind: 'instruction',
+      description: 'Burn down the baselined edge: cover the composition, then delete its baseline entry.',
+      steps: [
+        `Write the integration test that drives \`${edge.viaSymbol}\` from ${edge.fromFile} into ${edge.toFile}.`,
+        `Delete the entry "${compositionEdgeId(edge)}" from benchmarks/composition-uncovered-baseline.json.`,
+      ],
+    },
+  });
+}
+
+/** The warning for a baseline entry whose edge is no longer uncovered — the ratchet only shrinks. */
+function staleBaselineFinding(entry: string): Finding {
+  return finding({
+    ruleId: GATE_ID,
+    severity: 'warning',
+    level: 'L1',
+    title: `Stale composition baseline entry: ${entry}`,
+    detail:
+      'This benchmarks/composition-uncovered-baseline.json entry no longer matches an uncovered edge (it was covered, or the edge is gone). The baseline is a shrink-only ratchet: a satisfied entry must be DELETED so it can never re-admit a future regression of the same edge.',
+    remediation: {
+      kind: 'instruction',
+      description: 'Delete the satisfied entry from benchmarks/composition-uncovered-baseline.json.',
+      steps: [`Remove "${entry}" from the baseline and commit the shrink.`],
+    },
+  });
+}
+
 function foldComposition(context: GateContext): readonly Finding[] {
   const ir = requireIR(context, GATE_ID);
   const facts = context.composition;
@@ -166,10 +209,21 @@ function foldComposition(context: GateContext): readonly Finding[] {
     return [notEvidencedFinding()];
   }
   const levels = effectiveLevels(ir);
+  const accepted = new Set(facts.acceptedUncovered ?? []);
+  const uncoveredIds = new Set<string>();
   const findings: Finding[] = [];
   for (const edge of facts.edges ?? []) {
     if (edge.integrationCovered) continue; // the composition is covered together — clean.
-    findings.push(uncoveredEdgeFinding(edge, edgeLevel(edge, levels)));
+    const id = compositionEdgeId(edge);
+    uncoveredIds.add(id);
+    findings.push(
+      accepted.has(id)
+        ? baselinedEdgeFinding(edge, edgeLevel(edge, levels))
+        : uncoveredEdgeFinding(edge, edgeLevel(edge, levels)),
+    );
+  }
+  for (const entry of accepted) {
+    if (!uncoveredIds.has(entry)) findings.push(staleBaselineFinding(entry));
   }
   findings.sort(
     (a, b) => (a.location?.file ?? '').localeCompare(b.location?.file ?? '') || a.title.localeCompare(b.title),

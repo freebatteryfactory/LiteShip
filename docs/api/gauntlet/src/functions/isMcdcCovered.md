@@ -8,7 +8,7 @@
 
 > **isMcdcCovered**(`outcome`): `boolean`
 
-Defined in: [gauntlet/src/facts/mcdc-facts.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mcdc-facts.ts#L109)
+Defined in: [gauntlet/src/facts/mcdc-facts.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mcdc-facts.ts#L112)
 
 Is a condition MC/DC-COVERED? Both pins must be KILLED — the suite distinguishes the
 condition being true from being false at the decision (the independent-effect pair).

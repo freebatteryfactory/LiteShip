@@ -6,9 +6,9 @@
 
 # Type Alias: MutantVerdictTag
 
-> **MutantVerdictTag** = `"killed"` \| `"survived"` \| `"no-coverage"` \| `"equivalent"`
+> **MutantVerdictTag** = `"killed"` \| `"survived"` \| `"no-coverage"` \| `"equivalent"` \| `"inconclusive"`
 
-Defined in: [gauntlet/src/facts/mutation-facts.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L101)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L107)
 
 The verdict an evaluated mutant earned — a `_tag` discriminant (composition).
  - `killed` — a covering test failed on the mutation (adequate coverage).
@@ -24,3 +24,9 @@ The verdict an evaluated mutant earned — a `_tag` discriminant (composition).
    test exists; an equivalent mutant proves no test COULD exist (there is nothing to
    observe). Type-level (erased) mutations are excluded at the SOURCE by the engine
    and never reach a verdict; `equivalent` is only ever a justified RUNTIME mutant.
+ - `inconclusive` — the runner could not mint a trustworthy kill/survive verdict
+   for this mutant (subprocess spawn fault, exit/report disagreement, zero tests
+   executed). Recorded fail-closed: it counts in the score denominator and folds
+   to a BLOCKING finding, but it no longer aborts the whole campaign — the twice-
+   measured defect (crons 30342905791 + 30526718746) where ONE unmintable verdict
+   80 minutes in discarded every verdict already earned.

@@ -109,6 +109,48 @@ describe('compositionCoverageGate — the honest over-approximation is STATED', 
   });
 });
 
+describe('compositionCoverageGate — the uncovered-edge ratchet (issue #164 backlog)', () => {
+  const BASELINED_ID = `${L1_CALLER} -> ${L4_FILE} via fn`;
+
+  it('an uncovered edge IN the committed baseline reports as ADVISORY debt, still visible by name', () => {
+    const findings = compositionCoverageGate.run(
+      ctx(edgeIR(L1_CALLER, L4_FILE), {
+        edges: [edge(L1_CALLER, L4_FILE, false, { _tag: 'none' })],
+        acceptedUncovered: [BASELINED_ID],
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.severity).toBe('advisory');
+    expect(findings[0]!.title).toContain('Baselined untested composition edge');
+    expect(findings[0]!.detail).toContain('composition-uncovered-baseline.json');
+  });
+
+  it('a NEW uncovered edge outside the baseline still BLOCKS at full severity (the ratchet has teeth)', () => {
+    const findings = compositionCoverageGate.run(
+      ctx(edgeIR(L1_CALLER, L4_FILE), {
+        edges: [edge(L1_CALLER, L4_FILE, false, { _tag: 'none' })],
+        acceptedUncovered: [`${L1_OTHER} -> ${L4_FILE} via somethingElse`],
+      }),
+    );
+    const blocking = findings.find((f) => f.title.startsWith('Untested composition edge'));
+    expect(blocking).toBeDefined();
+    expect(blocking!.severity).toBe('error'); // L4 edge, unbaselined → blocks
+  });
+
+  it('a baseline entry that is no longer uncovered is a STALE-ENTRY warning (the ratchet only shrinks)', () => {
+    const findings = compositionCoverageGate.run(
+      ctx(edgeIR(L1_CALLER, L4_FILE), {
+        edges: [edge(L1_CALLER, L4_FILE, true, { _tag: 'execution', testId: 'tests/integration/x.test.ts' })],
+        acceptedUncovered: [BASELINED_ID],
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.severity).toBe('warning');
+    expect(findings[0]!.title).toContain('Stale composition baseline entry');
+    expect(findings[0]!.title).toContain(BASELINED_ID);
+  });
+});
+
 describe('compositionCoverageGate — the redlinable severity data', () => {
   it('is the documented ladder', () => {
     expect(COMPOSITION_SEVERITY_BY_LEVEL.L4).toBe('error');

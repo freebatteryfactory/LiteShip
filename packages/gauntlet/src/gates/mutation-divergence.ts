@@ -128,17 +128,20 @@ function requiredCampaigns(facts: MutationFacts, file: string): readonly string[
 
 function survivorFinding(outcome: MutantOutcome, level: AssuranceLevel, campaignIds: readonly string[] = []): Finding {
   const isNoCoverage = outcome.verdict === 'no-coverage';
+  const isInconclusive = outcome.verdict === 'inconclusive';
   const base = SURVIVOR_SEVERITY_BY_LEVEL[level];
   const severity = campaignIds.length > 0 ? 'error' : isNoCoverage ? louder(base) : base;
   const loc = `${outcome.file}:${outcome.line}:${outcome.column}`;
-  const what = isNoCoverage
-    ? 'survived with NO covering test at all — this behaviour is untested (not even a test that missed it)'
-    : 'SURVIVED — every covering test passed on the mutated code, so the mutation changed behaviour and nothing noticed: this code path is untested';
+  const what = isInconclusive
+    ? `earned NO trustworthy verdict — the runner refused to mint one (${outcome.inconclusiveReason ?? 'unrecorded infra fault'}). Unproven is not proven, so this site is fail-closed a divergence until a clean re-run settles it`
+    : isNoCoverage
+      ? 'survived with NO covering test at all — this behaviour is untested (not even a test that missed it)'
+      : 'SURVIVED — every covering test passed on the mutated code, so the mutation changed behaviour and nothing noticed: this code path is untested';
   return finding({
     ruleId: GATE_ID,
     severity,
     level,
-    title: `Mutant survived at ${loc} (${level})`,
+    title: isInconclusive ? `Mutant verdict inconclusive at ${loc} (${level})` : `Mutant survived at ${loc} (${level})`,
     detail: `${rewriteDescription(outcome)} at ${loc} and ${what}. The mutated code and the original produced identical test results when they should have diverged — a coverage divergence at the file's effective ${level} level (kill-floor ${KILL_FLOOR_BY_LEVEL[level]}).${campaignIds.length > 0 ? ` Semantic campaign(s) ${campaignIds.join(', ')} independently require mutation closure for this public runtime path, so this finding blocks without relabeling the file's actual assurance level.` : ''} The engine reports the survivor; you decide whether to add the missing test.`,
     location: { file: outcome.file, line: outcome.line, column: outcome.column },
     remediation: {
@@ -282,6 +285,7 @@ function killedOutcome(): MutantOutcome {
     coveringTests: ['tests/fixture.test.ts'],
     equivalentJustification: null,
     equivalentJustificationDigest: null,
+    inconclusiveReason: null,
     subsumedBy: [],
   };
 }
@@ -300,6 +304,7 @@ function survivedL4Outcome(): MutantOutcome {
     coveringTests: ['tests/fixture.test.ts'],
     equivalentJustification: null,
     equivalentJustificationDigest: null,
+    inconclusiveReason: null,
     subsumedBy: [],
   };
 }

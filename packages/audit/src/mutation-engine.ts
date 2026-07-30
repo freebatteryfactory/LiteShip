@@ -569,12 +569,36 @@ function unaryNotMutation(node: ts.Node, sourceFile: ts.SourceFile, operator: Mu
  * are deliberately NOT mutated here (their substitutions would need re-balancing) —
  * the operator stays unambiguous.
  */
+/**
+ * Is `node` a MODULE SPECIFIER — the string of an `import`/`export … from '…'`
+ * declaration or the argument of a dynamic `import('…')`? A specifier is a
+ * module-graph address, not program behaviour: mutating it to `''` cannot be
+ * killed or survive — it makes the covering suites fail to LOAD, which the
+ * runner can only refuse (0 tests executed, or vitest exiting 1 with a
+ * 0-failed report when OTHER covering suites still loaded — the exact
+ * inconsistency that aborted the July 28 + 30 exhaustive crons on
+ * `audio-input.ts`). Never a mutation target.
+ */
+function isModuleSpecifier(node: ts.Node): boolean {
+  const parent: ts.Node | undefined = node.parent;
+  if (parent === undefined) return false;
+  if ((ts.isImportDeclaration(parent) || ts.isExportDeclaration(parent)) && parent.moduleSpecifier === node) {
+    return true;
+  }
+  return (
+    ts.isCallExpression(parent) &&
+    parent.expression.kind === ts.SyntaxKind.ImportKeyword &&
+    parent.arguments[0] === node
+  );
+}
+
 function stringLiteralMutation(
   node: ts.Node,
   sourceFile: ts.SourceFile,
   operator: MutationOperatorId,
 ): readonly Mutation[] {
   if (!ts.isStringLiteral(node) || node.text === '') return [];
+  if (isModuleSpecifier(node)) return [];
   const raw = nodeText(node, sourceFile);
   const quote = raw.charAt(0);
   return [

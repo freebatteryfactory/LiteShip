@@ -121,6 +121,7 @@ function gapDescription(outcome: McdcConditionOutcome): string {
 function pinWord(verdict: McdcPinVerdict): string {
   if (verdict === 'survived') return 'survived — no test distinguished this value';
   if (verdict === 'no-coverage') return 'no covering test';
+  if (verdict === 'inconclusive') return 'inconclusive — the runner refused a trustworthy verdict (infra fault)';
   return 'killed';
 }
 

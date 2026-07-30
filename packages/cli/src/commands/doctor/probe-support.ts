@@ -25,10 +25,17 @@ export function parseEngineMajor(s: string | undefined): number | null {
  * `wrangler`) shell out; under parallel load those spawns can drag past the test
  * timeout. A bound keeps `liteship doctor` deterministic and non-hanging: a slow/wedged
  * tool degrades to a `warn` ("didn't answer in time") instead of blocking forever.
- * Concurrency (see runAllProbes) makes the path "max single probe", not the sum —
- * so 4s is comfortable.
+ * Concurrency (see runAllProbes) makes the path "max single probe", not the sum.
+ *
+ * 20s: scheduled runs 30342905791 (Jul 28) and 30526718746 (Jul 30) BOTH measured
+ * `cargo --version` killed at the prior 4s bound on the contended cron runner
+ * (rustup's shim resolves a toolchain on first invocation), and strict preflight
+ * folded the warn into a whole-lane failure — twice-measured valid work, the only
+ * sanctioned reason to raise a budget. A genuinely MISSING tool still fails fast
+ * (spawn ENOENT, not a timeout), so the ceiling only bites when the tool is
+ * present-but-slow — exactly the case that must degrade to warn, not kill the lane.
  */
-export const DOCTOR_PROBE_TIMEOUT_MS = 4_000;
+export const DOCTOR_PROBE_TIMEOUT_MS = 20_000;
 
 /** Parse `vMAJOR.MINOR.PATCH` (or `MAJOR.MINOR.PATCH`) into a major-version number. */
 export function parseMajor(version: string): number | null {

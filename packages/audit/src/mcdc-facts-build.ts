@@ -90,10 +90,13 @@ function groupKey(m: ConditionMutant): string {
  * tagged invariant violation, never a silent coercion.
  */
 function pinVerdict(
-  tag: 'killed' | 'survived' | 'no-coverage' | 'equivalent',
+  tag: 'killed' | 'survived' | 'no-coverage' | 'equivalent' | 'inconclusive',
   mutant: ConditionMutant,
 ): McdcPinVerdict {
-  if (tag === 'killed' || tag === 'survived' || tag === 'no-coverage') return tag;
+  // `inconclusive` passes through: the runner refused a trustworthy verdict for
+  // this pin (infra fault) — the gate folds it as an uncovered condition,
+  // fail-closed, instead of the whole campaign aborting.
+  if (tag === 'killed' || tag === 'survived' || tag === 'no-coverage' || tag === 'inconclusive') return tag;
   throw InvariantViolationError(
     'buildMcdcFacts',
     `condition pin ${mutant.id} (${mutant.file}:${mutant.line}:${mutant.column}, ${mutant.force}) earned an "equivalent" verdict — a forced constant is a reachable behaviour change and can never be equivalent (the MC/DC builder injects no equivalent registry), so this is an impossible state`,

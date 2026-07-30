@@ -64,6 +64,23 @@ describe('buildMcdcFacts — folds two pins per condition into one outcome', () 
     }
   });
 
+  it('a runner refusal folds the pin to INCONCLUSIVE and the campaign continues (crons 30342905791 + 30526718746)', () => {
+    // The defect class: one spawn fault 90 minutes into the MC/DC campaign
+    // aborted the whole run. A per-pin refusal must record fail-closed instead.
+    let first = true;
+    const faultOnceRunner: MutantTestRunner = (mutated) => {
+      if (first) {
+        first = false;
+        throw new Error('the vitest subprocess failed to spawn — an infra fault, not a kill/survive verdict');
+      }
+      return { failed: mutated.includes('(false)') || mutated.includes('(true)') };
+    };
+    const facts = buildMcdcFacts([TARGET], { runner: faultOnceRunner, coverage: coverage() });
+    const pins = facts.conditions.flatMap((c) => [c.forceTrueVerdict, c.forceFalseVerdict]);
+    expect(pins.filter((pin) => pin === 'inconclusive')).toHaveLength(1);
+    expect(pins.filter((pin) => pin === 'killed').length).toBeGreaterThan(0); // the rest still evaluated
+  });
+
   it('records an admitted target with zero applicable conditions instead of silently omitting it', () => {
     const file = 'constant.ts';
     const facts = buildMcdcFacts([{ file, text: 'export const answer = 42;' }], {
