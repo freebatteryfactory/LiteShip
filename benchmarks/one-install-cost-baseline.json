@@ -19,15 +19,15 @@
   },
   "fleetPackageCount": 25,
   "total": {
-    "compressedBytes": 4894706,
-    "unpackedBytes": 21707081,
-    "fileCount": 4288
+    "compressedBytes": 4962493,
+    "unpackedBytes": 22042377,
+    "fileCount": 4327
   },
   "packages": [
     {
       "package": "@liteship/_spine",
-      "compressedBytes": 71642,
-      "unpackedBytes": 296784,
+      "compressedBytes": 73148,
+      "unpackedBytes": 304700,
       "fileCount": 24,
       "files": [
         {
@@ -44,7 +44,7 @@
         },
         {
           "path": "compiler.d.ts",
-          "bytes": 19124
+          "bytes": 19958
         },
         {
           "path": "config.d.ts",
@@ -52,7 +52,7 @@
         },
         {
           "path": "core.d.ts",
-          "bytes": 74578
+          "bytes": 80332
         },
         {
           "path": "design.d.ts",
@@ -60,7 +60,7 @@
         },
         {
           "path": "detect.d.ts",
-          "bytes": 6241
+          "bytes": 6576
         },
         {
           "path": "edge.d.ts",
@@ -76,7 +76,7 @@
         },
         {
           "path": "index.d.ts",
-          "bytes": 8876
+          "bytes": 8993
         },
         {
           "path": "LICENSE",
@@ -100,7 +100,7 @@
         },
         {
           "path": "scene.d.ts",
-          "bytes": 4667
+          "bytes": 4707
         },
         {
           "path": "stub.js",
@@ -108,7 +108,7 @@
         },
         {
           "path": "SYMBOLS.md",
-          "bytes": 56844
+          "bytes": 57680
         },
         {
           "path": "tsconfig.json",
@@ -130,7 +130,7 @@
     },
     {
       "package": "@liteship/assets",
-      "compressedBytes": 52181,
+      "compressedBytes": 52182,
       "unpackedBytes": 216938,
       "fileCount": 63,
       "files": [
@@ -390,8 +390,8 @@
     },
     {
       "package": "@liteship/astro",
-      "compressedBytes": 383135,
-      "unpackedBytes": 1568439,
+      "compressedBytes": 388153,
+      "unpackedBytes": 1586093,
       "fileCount": 359,
       "files": [
         {
@@ -652,23 +652,23 @@
         },
         {
           "path": "dist/fetch-layer.d.ts",
-          "bytes": 4771
+          "bytes": 4905
         },
         {
           "path": "dist/fetch-layer.d.ts.map",
-          "bytes": 874
+          "bytes": 875
         },
         {
           "path": "dist/fetch-layer.js",
-          "bytes": 6654
+          "bytes": 6788
         },
         {
           "path": "dist/fetch-layer.js.map",
-          "bytes": 2759
+          "bytes": 2760
         },
         {
           "path": "dist/graph-mutation-route.d.ts",
-          "bytes": 2591
+          "bytes": 2569
         },
         {
           "path": "dist/graph-mutation-route.d.ts.map",
@@ -676,7 +676,7 @@
         },
         {
           "path": "dist/graph-mutation-route.js",
-          "bytes": 4380
+          "bytes": 4358
         },
         {
           "path": "dist/graph-mutation-route.js.map",
@@ -700,19 +700,19 @@
         },
         {
           "path": "dist/headers.d.ts",
-          "bytes": 4838
+          "bytes": 4883
         },
         {
           "path": "dist/headers.d.ts.map",
-          "bytes": 1113
+          "bytes": 1114
         },
         {
           "path": "dist/headers.js",
-          "bytes": 6588
+          "bytes": 6633
         },
         {
           "path": "dist/headers.js.map",
-          "bytes": 3140
+          "bytes": 3141
         },
         {
           "path": "dist/index.d.ts",
@@ -876,23 +876,23 @@
         },
         {
           "path": "dist/runtime/directive-boot.d.ts",
-          "bytes": 3557
+          "bytes": 4474
         },
         {
           "path": "dist/runtime/directive-boot.d.ts.map",
-          "bytes": 706
+          "bytes": 803
         },
         {
           "path": "dist/runtime/directive-boot.js",
-          "bytes": 10504
+          "bytes": 14976
         },
         {
           "path": "dist/runtime/directive-boot.js.map",
-          "bytes": 5766
+          "bytes": 7783
         },
         {
           "path": "dist/runtime/directive-bound.d.ts",
-          "bytes": 2909
+          "bytes": 2895
         },
         {
           "path": "dist/runtime/directive-bound.d.ts.map",
@@ -900,7 +900,7 @@
         },
         {
           "path": "dist/runtime/directive-bound.js",
-          "bytes": 2922
+          "bytes": 2908
         },
         {
           "path": "dist/runtime/directive-bound.js.map",
@@ -1252,7 +1252,7 @@
         },
         {
           "path": "dist/runtime/motion.js",
-          "bytes": 16747
+          "bytes": 16736
         },
         {
           "path": "dist/runtime/motion.js.map",
@@ -1356,19 +1356,19 @@
         },
         {
           "path": "dist/runtime/slots.d.ts",
-          "bytes": 6556
+          "bytes": 7388
         },
         {
           "path": "dist/runtime/slots.d.ts.map",
-          "bytes": 1843
+          "bytes": 2064
         },
         {
           "path": "dist/runtime/slots.js",
-          "bytes": 9826
+          "bytes": 11081
         },
         {
           "path": "dist/runtime/slots.js.map",
-          "bytes": 6854
+          "bytes": 7514
         },
         {
           "path": "dist/runtime/stream-session.d.ts",
@@ -1396,11 +1396,11 @@
         },
         {
           "path": "dist/runtime/stream.js",
-          "bytes": 35974
+          "bytes": 36391
         },
         {
           "path": "dist/runtime/stream.js.map",
-          "bytes": 19929
+          "bytes": 20032
         },
         {
           "path": "dist/runtime/svg.d.ts",
@@ -1612,11 +1612,11 @@
         },
         {
           "path": "src/fetch-layer.ts",
-          "bytes": 8488
+          "bytes": 8622
         },
         {
           "path": "src/graph-mutation-route.ts",
-          "bytes": 4510
+          "bytes": 4488
         },
         {
           "path": "src/graph-query-route.ts",
@@ -1624,7 +1624,7 @@
         },
         {
           "path": "src/headers.ts",
-          "bytes": 7416
+          "bytes": 7461
         },
         {
           "path": "src/index.ts",
@@ -1668,11 +1668,11 @@
         },
         {
           "path": "src/runtime/directive-boot.ts",
-          "bytes": 11322
+          "bytes": 15882
         },
         {
           "path": "src/runtime/directive-bound.ts",
-          "bytes": 3443
+          "bytes": 3429
         },
         {
           "path": "src/runtime/event-protocol.ts",
@@ -1760,7 +1760,7 @@
         },
         {
           "path": "src/runtime/motion.ts",
-          "bytes": 17513
+          "bytes": 17502
         },
         {
           "path": "src/runtime/owned-disposal.ts",
@@ -1788,7 +1788,7 @@
         },
         {
           "path": "src/runtime/slots.ts",
-          "bytes": 10981
+          "bytes": 12296
         },
         {
           "path": "src/runtime/stream-session.ts",
@@ -1796,7 +1796,7 @@
         },
         {
           "path": "src/runtime/stream.ts",
-          "bytes": 35098
+          "bytes": 35475
         },
         {
           "path": "src/runtime/svg.ts",
@@ -1834,9 +1834,9 @@
     },
     {
       "package": "@liteship/audit",
-      "compressedBytes": 335477,
-      "unpackedBytes": 1420872,
-      "fileCount": 166,
+      "compressedBytes": 336002,
+      "unpackedBytes": 1422701,
+      "fileCount": 171,
       "files": [
         {
           "path": "dist/active-surface-reader.d.ts",
@@ -1920,7 +1920,7 @@
         },
         {
           "path": "dist/devops-profile.d.ts",
-          "bytes": 5362
+          "bytes": 5429
         },
         {
           "path": "dist/devops-profile.d.ts.map",
@@ -1928,7 +1928,7 @@
         },
         {
           "path": "dist/devops-profile.js",
-          "bytes": 4761
+          "bytes": 4828
         },
         {
           "path": "dist/devops-profile.js.map",
@@ -1968,19 +1968,19 @@
         },
         {
           "path": "dist/index.d.ts",
-          "bytes": 3096
+          "bytes": 3127
         },
         {
           "path": "dist/index.d.ts.map",
-          "bytes": 1553
+          "bytes": 1574
         },
         {
           "path": "dist/index.js",
-          "bytes": 7421
+          "bytes": 7455
         },
         {
           "path": "dist/index.js.map",
-          "bytes": 4239
+          "bytes": 4260
         },
         {
           "path": "dist/integrity.d.ts",
@@ -2024,15 +2024,15 @@
         },
         {
           "path": "dist/mcdc-facts-build.js",
-          "bytes": 7957
+          "bytes": 7976
         },
         {
           "path": "dist/mcdc-facts-build.js.map",
-          "bytes": 4421
+          "bytes": 4422
         },
         {
           "path": "dist/mutation-engine.d.ts",
-          "bytes": 10703
+          "bytes": 10706
         },
         {
           "path": "dist/mutation-engine.d.ts.map",
@@ -2040,7 +2040,7 @@
         },
         {
           "path": "dist/mutation-engine.js",
-          "bytes": 21606
+          "bytes": 21609
         },
         {
           "path": "dist/mutation-engine.js.map",
@@ -2072,7 +2072,7 @@
         },
         {
           "path": "dist/mutation-facts-build.js",
-          "bytes": 5537
+          "bytes": 5543
         },
         {
           "path": "dist/mutation-facts-build.js.map",
@@ -2144,7 +2144,7 @@
         },
         {
           "path": "dist/repo-ir-build.d.ts",
-          "bytes": 3965
+          "bytes": 3954
         },
         {
           "path": "dist/repo-ir-build.d.ts.map",
@@ -2152,7 +2152,7 @@
         },
         {
           "path": "dist/repo-ir-build.js",
-          "bytes": 26041
+          "bytes": 26034
         },
         {
           "path": "dist/repo-ir-build.js.map",
@@ -2192,7 +2192,7 @@
         },
         {
           "path": "dist/repo-ir-taint.d.ts",
-          "bytes": 5658
+          "bytes": 5664
         },
         {
           "path": "dist/repo-ir-taint.d.ts.map",
@@ -2200,11 +2200,27 @@
         },
         {
           "path": "dist/repo-ir-taint.js",
-          "bytes": 35742
+          "bytes": 35748
         },
         {
           "path": "dist/repo-ir-taint.js.map",
           "bytes": 19921
+        },
+        {
+          "path": "dist/rule-ids.d.ts",
+          "bytes": 1247
+        },
+        {
+          "path": "dist/rule-ids.d.ts.map",
+          "bytes": 368
+        },
+        {
+          "path": "dist/rule-ids.js",
+          "bytes": 787
+        },
+        {
+          "path": "dist/rule-ids.js.map",
+          "bytes": 614
         },
         {
           "path": "dist/shared.d.ts",
@@ -2240,7 +2256,7 @@
         },
         {
           "path": "dist/spine-relation-build.d.ts",
-          "bytes": 4418
+          "bytes": 4405
         },
         {
           "path": "dist/spine-relation-build.d.ts.map",
@@ -2248,7 +2264,7 @@
         },
         {
           "path": "dist/spine-relation-build.js",
-          "bytes": 15000
+          "bytes": 14987
         },
         {
           "path": "dist/spine-relation-build.js.map",
@@ -2264,11 +2280,11 @@
         },
         {
           "path": "dist/structure.js",
-          "bytes": 32244
+          "bytes": 32253
         },
         {
           "path": "dist/structure.js.map",
-          "bytes": 21780
+          "bytes": 21795
         },
         {
           "path": "dist/surface.d.ts",
@@ -2296,7 +2312,7 @@
         },
         {
           "path": "dist/transition-facts-build.js",
-          "bytes": 7094
+          "bytes": 7088
         },
         {
           "path": "dist/transition-facts-build.js.map",
@@ -2320,35 +2336,35 @@
         },
         {
           "path": "dist/type-export-surface.d.ts",
-          "bytes": 5478
+          "bytes": 5669
         },
         {
           "path": "dist/type-export-surface.d.ts.map",
-          "bytes": 1509
+          "bytes": 1512
         },
         {
           "path": "dist/type-export-surface.js",
-          "bytes": 13645
+          "bytes": 13836
         },
         {
           "path": "dist/type-export-surface.js.map",
-          "bytes": 9342
+          "bytes": 9345
         },
         {
           "path": "dist/types.d.ts",
-          "bytes": 5931
+          "bytes": 5062
         },
         {
           "path": "dist/types.d.ts.map",
-          "bytes": 3295
+          "bytes": 3145
         },
         {
           "path": "dist/types.js",
-          "bytes": 864
+          "bytes": 44
         },
         {
           "path": "dist/types.js.map",
-          "bytes": 609
+          "bytes": 102
         },
         {
           "path": "dist/workers-date-scan.d.ts",
@@ -2376,7 +2392,7 @@
         },
         {
           "path": "README.md",
-          "bytes": 3571
+          "bytes": 3441
         },
         {
           "path": "src/active-surface-reader.ts",
@@ -2400,7 +2416,7 @@
         },
         {
           "path": "src/devops-profile.ts",
-          "bytes": 8122
+          "bytes": 8189
         },
         {
           "path": "src/diagnostic-emission-ast.ts",
@@ -2412,7 +2428,7 @@
         },
         {
           "path": "src/index.ts",
-          "bytes": 8131
+          "bytes": 8165
         },
         {
           "path": "src/integrity.ts",
@@ -2424,11 +2440,11 @@
         },
         {
           "path": "src/mcdc-facts-build.ts",
-          "bytes": 9601
+          "bytes": 9620
         },
         {
           "path": "src/mutation-engine.ts",
-          "bytes": 27510
+          "bytes": 27513
         },
         {
           "path": "src/mutation-equivalents.ts",
@@ -2436,7 +2452,7 @@
         },
         {
           "path": "src/mutation-facts-build.ts",
-          "bytes": 7368
+          "bytes": 7374
         },
         {
           "path": "src/mutation-verdict.ts",
@@ -2448,7 +2464,7 @@
         },
         {
           "path": "src/repo-ir-build.ts",
-          "bytes": 29581
+          "bytes": 29563
         },
         {
           "path": "src/repo-ir-capability-link.ts",
@@ -2460,7 +2476,11 @@
         },
         {
           "path": "src/repo-ir-taint.ts",
-          "bytes": 40699
+          "bytes": 40709
+        },
+        {
+          "path": "src/rule-ids.ts",
+          "bytes": 994
         },
         {
           "path": "src/shared.ts",
@@ -2472,11 +2492,11 @@
         },
         {
           "path": "src/spine-relation-build.ts",
-          "bytes": 16936
+          "bytes": 16923
         },
         {
           "path": "src/structure.ts",
-          "bytes": 31282
+          "bytes": 31291
         },
         {
           "path": "src/surface.ts",
@@ -2484,7 +2504,7 @@
         },
         {
           "path": "src/transition-facts-build.ts",
-          "bytes": 9946
+          "bytes": 9940
         },
         {
           "path": "src/ts-program.ts",
@@ -2492,11 +2512,11 @@
         },
         {
           "path": "src/type-export-surface.ts",
-          "bytes": 15982
+          "bytes": 16173
         },
         {
           "path": "src/types.ts",
-          "bytes": 5593
+          "bytes": 4939
         },
         {
           "path": "src/workers-date-scan.ts",
@@ -2506,13 +2526,13 @@
     },
     {
       "package": "@liteship/canonical",
-      "compressedBytes": 28015,
-      "unpackedBytes": 107318,
+      "compressedBytes": 27930,
+      "unpackedBytes": 107047,
       "fileCount": 48,
       "files": [
         {
           "path": "dist/addressed-digest.d.ts",
-          "bytes": 1510
+          "bytes": 1489
         },
         {
           "path": "dist/addressed-digest.d.ts.map",
@@ -2520,7 +2540,7 @@
         },
         {
           "path": "dist/addressed-digest.js",
-          "bytes": 1954
+          "bytes": 1933
         },
         {
           "path": "dist/addressed-digest.js.map",
@@ -2528,7 +2548,7 @@
         },
         {
           "path": "dist/brands.d.ts",
-          "bytes": 1629
+          "bytes": 1618
         },
         {
           "path": "dist/brands.d.ts.map",
@@ -2536,7 +2556,7 @@
         },
         {
           "path": "dist/brands.js",
-          "bytes": 2262
+          "bytes": 2240
         },
         {
           "path": "dist/brands.js.map",
@@ -2576,7 +2596,7 @@
         },
         {
           "path": "dist/cbor.d.ts",
-          "bytes": 1443
+          "bytes": 1455
         },
         {
           "path": "dist/cbor.d.ts.map",
@@ -2584,7 +2604,7 @@
         },
         {
           "path": "dist/cbor.js",
-          "bytes": 6566
+          "bytes": 6578
         },
         {
           "path": "dist/cbor.js.map",
@@ -2664,15 +2684,15 @@
         },
         {
           "path": "README.md",
-          "bytes": 3282
+          "bytes": 3093
         },
         {
           "path": "src/addressed-digest.ts",
-          "bytes": 2241
+          "bytes": 2220
         },
         {
           "path": "src/brands.ts",
-          "bytes": 2618
+          "bytes": 2596
         },
         {
           "path": "src/canonical-json.ts",
@@ -2684,7 +2704,7 @@
         },
         {
           "path": "src/cbor.ts",
-          "bytes": 6865
+          "bytes": 6877
         },
         {
           "path": "src/compare-bytes.ts",
@@ -2706,9 +2726,9 @@
     },
     {
       "package": "@liteship/cli",
-      "compressedBytes": 851046,
-      "unpackedBytes": 4477506,
-      "fileCount": 824,
+      "compressedBytes": 867945,
+      "unpackedBytes": 4595423,
+      "fileCount": 841,
       "files": [
         {
           "path": "dist/bin.d.ts",
@@ -2728,7 +2748,7 @@
         },
         {
           "path": "dist/capsules/ship-emit.d.ts",
-          "bytes": 3281
+          "bytes": 3259
         },
         {
           "path": "dist/capsules/ship-emit.d.ts.map",
@@ -2736,7 +2756,7 @@
         },
         {
           "path": "dist/capsules/ship-emit.js",
-          "bytes": 8013
+          "bytes": 7991
         },
         {
           "path": "dist/capsules/ship-emit.js.map",
@@ -2872,19 +2892,19 @@
         },
         {
           "path": "dist/commands/capsule-verify.d.ts",
-          "bytes": 2032
+          "bytes": 4444
         },
         {
           "path": "dist/commands/capsule-verify.d.ts.map",
-          "bytes": 953
+          "bytes": 1526
         },
         {
           "path": "dist/commands/capsule-verify.js",
-          "bytes": 13515
+          "bytes": 13585
         },
         {
           "path": "dist/commands/capsule-verify.js.map",
-          "bytes": 8350
+          "bytes": 8399
         },
         {
           "path": "dist/commands/capsule.d.ts",
@@ -2908,15 +2928,15 @@
         },
         {
           "path": "dist/commands/check-invariants.d.ts.map",
-          "bytes": 1459
+          "bytes": 1460
         },
         {
           "path": "dist/commands/check-invariants.js",
-          "bytes": 10722
+          "bytes": 11353
         },
         {
           "path": "dist/commands/check-invariants.js.map",
-          "bytes": 8056
+          "bytes": 8520
         },
         {
           "path": "dist/commands/check.d.ts",
@@ -2928,11 +2948,11 @@
         },
         {
           "path": "dist/commands/check.js",
-          "bytes": 28260
+          "bytes": 30088
         },
         {
           "path": "dist/commands/check.js.map",
-          "bytes": 22684
+          "bytes": 24467
         },
         {
           "path": "dist/commands/completion.d.ts",
@@ -2944,11 +2964,11 @@
         },
         {
           "path": "dist/commands/completion.js",
-          "bytes": 4777
+          "bytes": 4407
         },
         {
           "path": "dist/commands/completion.js.map",
-          "bytes": 3314
+          "bytes": 3017
         },
         {
           "path": "dist/commands/context.d.ts",
@@ -3052,15 +3072,31 @@
         },
         {
           "path": "dist/commands/doctor/manifest.d.ts.map",
-          "bytes": 871
+          "bytes": 870
         },
         {
           "path": "dist/commands/doctor/manifest.js",
-          "bytes": 4710
+          "bytes": 4718
         },
         {
           "path": "dist/commands/doctor/manifest.js.map",
-          "bytes": 3682
+          "bytes": 3683
+        },
+        {
+          "path": "dist/commands/doctor/probe-support.d.ts",
+          "bytes": 1365
+        },
+        {
+          "path": "dist/commands/doctor/probe-support.d.ts.map",
+          "bytes": 475
+        },
+        {
+          "path": "dist/commands/doctor/probe-support.js",
+          "bytes": 1574
+        },
+        {
+          "path": "dist/commands/doctor/probe-support.js.map",
+          "bytes": 971
         },
         {
           "path": "dist/commands/doctor/probes-astro.d.ts",
@@ -3068,15 +3104,15 @@
         },
         {
           "path": "dist/commands/doctor/probes-astro.d.ts.map",
-          "bytes": 293
+          "bytes": 292
         },
         {
           "path": "dist/commands/doctor/probes-astro.js",
-          "bytes": 2762
+          "bytes": 2770
         },
         {
           "path": "dist/commands/doctor/probes-astro.js.map",
-          "bytes": 1755
+          "bytes": 1756
         },
         {
           "path": "dist/commands/doctor/probes-cloudflare.d.ts",
@@ -3084,15 +3120,15 @@
         },
         {
           "path": "dist/commands/doctor/probes-cloudflare.d.ts.map",
-          "bytes": 627
+          "bytes": 626
         },
         {
           "path": "dist/commands/doctor/probes-cloudflare.js",
-          "bytes": 11233
+          "bytes": 11241
         },
         {
           "path": "dist/commands/doctor/probes-cloudflare.js.map",
-          "bytes": 8144
+          "bytes": 8145
         },
         {
           "path": "dist/commands/doctor/probes-deployed.d.ts",
@@ -3120,11 +3156,11 @@
         },
         {
           "path": "dist/commands/doctor/probes-workers-date.js",
-          "bytes": 5099
+          "bytes": 5951
         },
         {
           "path": "dist/commands/doctor/probes-workers-date.js.map",
-          "bytes": 4307
+          "bytes": 5082
         },
         {
           "path": "dist/commands/doctor/probes-workspace.d.ts",
@@ -3132,15 +3168,15 @@
         },
         {
           "path": "dist/commands/doctor/probes-workspace.d.ts.map",
-          "bytes": 1454
+          "bytes": 1453
         },
         {
           "path": "dist/commands/doctor/probes-workspace.js",
-          "bytes": 16878
+          "bytes": 16885
         },
         {
           "path": "dist/commands/doctor/probes-workspace.js.map",
-          "bytes": 12878
+          "bytes": 12879
         },
         {
           "path": "dist/commands/doctor/profiles.d.ts",
@@ -3176,19 +3212,19 @@
         },
         {
           "path": "dist/commands/doctor/types.d.ts",
-          "bytes": 3702
+          "bytes": 2953
         },
         {
           "path": "dist/commands/doctor/types.d.ts.map",
-          "bytes": 2057
+          "bytes": 1755
         },
         {
           "path": "dist/commands/doctor/types.js",
-          "bytes": 1468
+          "bytes": 519
         },
         {
           "path": "dist/commands/doctor/types.js.map",
-          "bytes": 944
+          "bytes": 142
         },
         {
           "path": "dist/commands/explain.d.ts",
@@ -3296,11 +3332,11 @@
         },
         {
           "path": "dist/commands/package-smoke.js",
-          "bytes": 43744
+          "bytes": 43830
         },
         {
           "path": "dist/commands/package-smoke.js.map",
-          "bytes": 31099
+          "bytes": 31436
         },
         {
           "path": "dist/commands/plumb.d.ts",
@@ -3400,7 +3436,7 @@
         },
         {
           "path": "dist/commands/ship-verify.d.ts",
-          "bytes": 538
+          "bytes": 533
         },
         {
           "path": "dist/commands/ship-verify.d.ts.map",
@@ -3408,7 +3444,7 @@
         },
         {
           "path": "dist/commands/ship-verify.js",
-          "bytes": 3828
+          "bytes": 3823
         },
         {
           "path": "dist/commands/ship-verify.js.map",
@@ -3416,19 +3452,19 @@
         },
         {
           "path": "dist/commands/ship.d.ts",
-          "bytes": 3132
+          "bytes": 4035
         },
         {
           "path": "dist/commands/ship.d.ts.map",
-          "bytes": 674
+          "bytes": 826
         },
         {
           "path": "dist/commands/ship.js",
-          "bytes": 27379
+          "bytes": 28828
         },
         {
           "path": "dist/commands/ship.js.map",
-          "bytes": 19676
+          "bytes": 20181
         },
         {
           "path": "dist/commands/version.d.ts",
@@ -3456,11 +3492,11 @@
         },
         {
           "path": "dist/dispatch.js",
-          "bytes": 34541
+          "bytes": 36247
         },
         {
           "path": "dist/dispatch.js.map",
-          "bytes": 24090
+          "bytes": 24817
         },
         {
           "path": "dist/gauntlet-argv.d.ts",
@@ -3488,11 +3524,11 @@
         },
         {
           "path": "dist/gauntlet-phases.js",
-          "bytes": 14293
+          "bytes": 14367
         },
         {
           "path": "dist/gauntlet-phases.js.map",
-          "bytes": 8105
+          "bytes": 8118
         },
         {
           "path": "dist/idempotency.d.ts",
@@ -3544,19 +3580,19 @@
         },
         {
           "path": "dist/internal/ansi.d.ts",
-          "bytes": 1899
+          "bytes": 2215
         },
         {
           "path": "dist/internal/ansi.d.ts.map",
-          "bytes": 962
+          "bytes": 1031
         },
         {
           "path": "dist/internal/ansi.js",
-          "bytes": 2548
+          "bytes": 5061
         },
         {
           "path": "dist/internal/ansi.js.map",
-          "bytes": 1731
+          "bytes": 4021
         },
         {
           "path": "dist/internal/api-index.d.ts",
@@ -3632,11 +3668,27 @@
         },
         {
           "path": "dist/internal/capability-policy.js",
-          "bytes": 3126
+          "bytes": 3130
         },
         {
           "path": "dist/internal/capability-policy.js.map",
           "bytes": 1289
+        },
+        {
+          "path": "dist/internal/captured-sync-process.d.ts",
+          "bytes": 1036
+        },
+        {
+          "path": "dist/internal/captured-sync-process.d.ts.map",
+          "bytes": 829
+        },
+        {
+          "path": "dist/internal/captured-sync-process.js",
+          "bytes": 2814
+        },
+        {
+          "path": "dist/internal/captured-sync-process.js.map",
+          "bytes": 2349
         },
         {
           "path": "dist/internal/consumer-app-audit.d.ts",
@@ -3648,11 +3700,11 @@
         },
         {
           "path": "dist/internal/consumer-app-audit.js",
-          "bytes": 5904
+          "bytes": 6252
         },
         {
           "path": "dist/internal/consumer-app-audit.js.map",
-          "bytes": 4964
+          "bytes": 5338
         },
         {
           "path": "dist/internal/cure-packet.d.ts",
@@ -3784,7 +3836,7 @@
         },
         {
           "path": "dist/internal/liteship-audit-profile.d.ts",
-          "bytes": 1083
+          "bytes": 1116
         },
         {
           "path": "dist/internal/liteship-audit-profile.d.ts.map",
@@ -3792,7 +3844,7 @@
         },
         {
           "path": "dist/internal/liteship-audit-profile.js",
-          "bytes": 1751
+          "bytes": 1784
         },
         {
           "path": "dist/internal/liteship-audit-profile.js.map",
@@ -3840,7 +3892,7 @@
         },
         {
           "path": "dist/internal/local-vs-global.js",
-          "bytes": 14298
+          "bytes": 14288
         },
         {
           "path": "dist/internal/local-vs-global.js.map",
@@ -3912,19 +3964,19 @@
         },
         {
           "path": "dist/internal/one-install-cost-gate.d.ts",
-          "bytes": 4184
+          "bytes": 4239
         },
         {
           "path": "dist/internal/one-install-cost-gate.d.ts.map",
-          "bytes": 3058
+          "bytes": 3106
         },
         {
           "path": "dist/internal/one-install-cost-gate.js",
-          "bytes": 19530
+          "bytes": 19567
         },
         {
           "path": "dist/internal/one-install-cost-gate.js.map",
-          "bytes": 18245
+          "bytes": 18266
         },
         {
           "path": "dist/internal/package-metadata-catalog.d.ts",
@@ -3959,20 +4011,36 @@
           "bytes": 2690
         },
         {
+          "path": "dist/internal/package-smoke-engine.d.ts",
+          "bytes": 9421
+        },
+        {
+          "path": "dist/internal/package-smoke-engine.d.ts.map",
+          "bytes": 3587
+        },
+        {
+          "path": "dist/internal/package-smoke-engine.js",
+          "bytes": 24912
+        },
+        {
+          "path": "dist/internal/package-smoke-engine.js.map",
+          "bytes": 18112
+        },
+        {
           "path": "dist/internal/package-smoke-helpers.d.ts",
-          "bytes": 7092
+          "bytes": 9422
         },
         {
           "path": "dist/internal/package-smoke-helpers.d.ts.map",
-          "bytes": 2883
+          "bytes": 3589
         },
         {
           "path": "dist/internal/package-smoke-helpers.js",
-          "bytes": 21063
+          "bytes": 24913
         },
         {
           "path": "dist/internal/package-smoke-helpers.js.map",
-          "bytes": 16118
+          "bytes": 18114
         },
         {
           "path": "dist/internal/physical-path.d.ts",
@@ -3980,31 +4048,31 @@
         },
         {
           "path": "dist/internal/physical-path.d.ts.map",
-          "bytes": 528
+          "bytes": 527
         },
         {
           "path": "dist/internal/physical-path.js",
-          "bytes": 1226
+          "bytes": 1210
         },
         {
           "path": "dist/internal/physical-path.js.map",
-          "bytes": 932
+          "bytes": 929
         },
         {
           "path": "dist/internal/project-package-manager.d.ts",
-          "bytes": 2699
+          "bytes": 3624
         },
         {
           "path": "dist/internal/project-package-manager.d.ts.map",
-          "bytes": 1540
+          "bytes": 1993
         },
         {
           "path": "dist/internal/project-package-manager.js",
-          "bytes": 5965
+          "bytes": 6978
         },
         {
           "path": "dist/internal/project-package-manager.js.map",
-          "bytes": 4711
+          "bytes": 5265
         },
         {
           "path": "dist/internal/release-artifact-bundle.d.ts",
@@ -4016,15 +4084,15 @@
         },
         {
           "path": "dist/internal/release-artifact-bundle.js",
-          "bytes": 10080
+          "bytes": 10072
         },
         {
           "path": "dist/internal/release-artifact-bundle.js.map",
-          "bytes": 9091
+          "bytes": 9089
         },
         {
           "path": "dist/internal/repo-ir-gauntlet.d.ts",
-          "bytes": 13510
+          "bytes": 13507
         },
         {
           "path": "dist/internal/repo-ir-gauntlet.d.ts.map",
@@ -4032,7 +4100,7 @@
         },
         {
           "path": "dist/internal/repo-ir-gauntlet.js",
-          "bytes": 48180
+          "bytes": 48155
         },
         {
           "path": "dist/internal/repo-ir-gauntlet.js.map",
@@ -4120,7 +4188,7 @@
         },
         {
           "path": "dist/internal/simulation-corpus.d.ts",
-          "bytes": 6315
+          "bytes": 6296
         },
         {
           "path": "dist/internal/simulation-corpus.d.ts.map",
@@ -4128,7 +4196,7 @@
         },
         {
           "path": "dist/internal/simulation-corpus.js",
-          "bytes": 20041
+          "bytes": 20022
         },
         {
           "path": "dist/internal/simulation-corpus.js.map",
@@ -4160,15 +4228,15 @@
         },
         {
           "path": "dist/internal/spine-provenance.generated.js",
-          "bytes": 72531
+          "bytes": 73881
         },
         {
           "path": "dist/internal/spine-provenance.generated.js.map",
-          "bytes": 43816
+          "bytes": 44540
         },
         {
           "path": "dist/internal/spine-relation-admissions.d.ts",
-          "bytes": 2786
+          "bytes": 2764
         },
         {
           "path": "dist/internal/spine-relation-admissions.d.ts.map",
@@ -4176,7 +4244,7 @@
         },
         {
           "path": "dist/internal/spine-relation-admissions.js",
-          "bytes": 11491
+          "bytes": 11459
         },
         {
           "path": "dist/internal/spine-relation-admissions.js.map",
@@ -4216,7 +4284,7 @@
         },
         {
           "path": "dist/internal/supply-chain-policy.d.ts",
-          "bytes": 4294
+          "bytes": 4308
         },
         {
           "path": "dist/internal/supply-chain-policy.d.ts.map",
@@ -4224,7 +4292,7 @@
         },
         {
           "path": "dist/internal/supply-chain-policy.js",
-          "bytes": 5944
+          "bytes": 5934
         },
         {
           "path": "dist/internal/supply-chain-policy.js.map",
@@ -4232,7 +4300,7 @@
         },
         {
           "path": "dist/internal/supply-chain.d.ts",
-          "bytes": 5182
+          "bytes": 5171
         },
         {
           "path": "dist/internal/supply-chain.d.ts.map",
@@ -4240,7 +4308,7 @@
         },
         {
           "path": "dist/internal/supply-chain.js",
-          "bytes": 11623
+          "bytes": 11612
         },
         {
           "path": "dist/internal/supply-chain.js.map",
@@ -4248,7 +4316,7 @@
         },
         {
           "path": "dist/internal/taint-policy.d.ts",
-          "bytes": 4068
+          "bytes": 4072
         },
         {
           "path": "dist/internal/taint-policy.d.ts.map",
@@ -4320,11 +4388,11 @@
         },
         {
           "path": "dist/internal/workflow-action-pins.js",
-          "bytes": 2704
+          "bytes": 2773
         },
         {
           "path": "dist/internal/workflow-action-pins.js.map",
-          "bytes": 2548
+          "bytes": 2574
         },
         {
           "path": "dist/internal/workspace.d.ts",
@@ -5080,7 +5148,7 @@
         },
         {
           "path": "dist/receipts.d.ts",
-          "bytes": 5289
+          "bytes": 5276
         },
         {
           "path": "dist/receipts.d.ts.map",
@@ -5112,7 +5180,7 @@
         },
         {
           "path": "dist/ship-manifest.d.ts",
-          "bytes": 3302
+          "bytes": 3291
         },
         {
           "path": "dist/ship-manifest.d.ts.map",
@@ -5120,7 +5188,7 @@
         },
         {
           "path": "dist/ship-manifest.js",
-          "bytes": 8933
+          "bytes": 8922
         },
         {
           "path": "dist/ship-manifest.js.map",
@@ -5141,6 +5209,22 @@
         {
           "path": "dist/spawn-helpers.js.map",
           "bytes": 198
+        },
+        {
+          "path": "dist/spawn.d.ts",
+          "bytes": 523
+        },
+        {
+          "path": "dist/spawn.d.ts.map",
+          "bytes": 261
+        },
+        {
+          "path": "dist/spawn.js",
+          "bytes": 412
+        },
+        {
+          "path": "dist/spawn.js.map",
+          "bytes": 182
         },
         {
           "path": "fragments/example/03-cast-aria/astro.config.ts",
@@ -5216,7 +5300,7 @@
         },
         {
           "path": "fragments/example/07-stagger-reveal/README.md",
-          "bytes": 1173
+          "bytes": 1172
         },
         {
           "path": "fragments/example/07-stagger-reveal/stagger-preset.ts",
@@ -5280,7 +5364,7 @@
         },
         {
           "path": "fragments/example/cloudflare-astro/wrangler.jsonc",
-          "bytes": 791
+          "bytes": 870
         },
         {
           "path": "fragments/example/default/astro.config.ts",
@@ -5576,11 +5660,11 @@
         },
         {
           "path": "package.json",
-          "bytes": 1509
+          "bytes": 1538
         },
         {
           "path": "README.md",
-          "bytes": 11051
+          "bytes": 11028
         },
         {
           "path": "src/bin.ts",
@@ -5588,7 +5672,7 @@
         },
         {
           "path": "src/capsules/ship-emit.ts",
-          "bytes": 8452
+          "bytes": 8430
         },
         {
           "path": "src/capsules/vitest-runner.ts",
@@ -5624,7 +5708,7 @@
         },
         {
           "path": "src/commands/capsule-verify.ts",
-          "bytes": 15243
+          "bytes": 15619
         },
         {
           "path": "src/commands/capsule.ts",
@@ -5632,15 +5716,15 @@
         },
         {
           "path": "src/commands/check-invariants.ts",
-          "bytes": 11896
+          "bytes": 12600
         },
         {
           "path": "src/commands/check.ts",
-          "bytes": 39933
+          "bytes": 41805
         },
         {
           "path": "src/commands/completion.ts",
-          "bytes": 4879
+          "bytes": 4506
         },
         {
           "path": "src/commands/context.ts",
@@ -5668,15 +5752,19 @@
         },
         {
           "path": "src/commands/doctor/manifest.ts",
-          "bytes": 4909
+          "bytes": 4946
+        },
+        {
+          "path": "src/commands/doctor/probe-support.ts",
+          "bytes": 1620
         },
         {
           "path": "src/commands/doctor/probes-astro.ts",
-          "bytes": 2633
+          "bytes": 2670
         },
         {
           "path": "src/commands/doctor/probes-cloudflare.ts",
-          "bytes": 10374
+          "bytes": 10411
         },
         {
           "path": "src/commands/doctor/probes-deployed.ts",
@@ -5684,11 +5772,11 @@
         },
         {
           "path": "src/commands/doctor/probes-workers-date.ts",
-          "bytes": 5036
+          "bytes": 5821
         },
         {
           "path": "src/commands/doctor/probes-workspace.ts",
-          "bytes": 16694
+          "bytes": 16718
         },
         {
           "path": "src/commands/doctor/profiles.ts",
@@ -5700,7 +5788,7 @@
         },
         {
           "path": "src/commands/doctor/types.ts",
-          "bytes": 3905
+          "bytes": 2858
         },
         {
           "path": "src/commands/explain.ts",
@@ -5728,7 +5816,7 @@
         },
         {
           "path": "src/commands/package-smoke.ts",
-          "bytes": 44931
+          "bytes": 45200
         },
         {
           "path": "src/commands/plumb.ts",
@@ -5756,11 +5844,11 @@
         },
         {
           "path": "src/commands/ship-verify.ts",
-          "bytes": 3868
+          "bytes": 3863
         },
         {
           "path": "src/commands/ship.ts",
-          "bytes": 27006
+          "bytes": 28469
         },
         {
           "path": "src/commands/version.ts",
@@ -5768,7 +5856,7 @@
         },
         {
           "path": "src/dispatch.ts",
-          "bytes": 36055
+          "bytes": 37655
         },
         {
           "path": "src/gauntlet-argv.ts",
@@ -5776,7 +5864,7 @@
         },
         {
           "path": "src/gauntlet-phases.ts",
-          "bytes": 18090
+          "bytes": 18162
         },
         {
           "path": "src/idempotency.ts",
@@ -5788,11 +5876,11 @@
         },
         {
           "path": "src/internal/active-surface-policy.ts",
-          "bytes": 1969
+          "bytes": 1958
         },
         {
           "path": "src/internal/ansi.ts",
-          "bytes": 2680
+          "bytes": 4880
         },
         {
           "path": "src/internal/api-index.ts",
@@ -5812,11 +5900,11 @@
         },
         {
           "path": "src/internal/capability-policy.ts",
-          "bytes": 3134
+          "bytes": 3138
         },
         {
           "path": "src/internal/consumer-app-audit.ts",
-          "bytes": 5743
+          "bytes": 6106
         },
         {
           "path": "src/internal/cure-packet.ts",
@@ -5852,7 +5940,7 @@
         },
         {
           "path": "src/internal/liteship-audit-profile.ts",
-          "bytes": 1799
+          "bytes": 1832
         },
         {
           "path": "src/internal/liteship-typescript-aliases.ts",
@@ -5864,7 +5952,7 @@
         },
         {
           "path": "src/internal/local-vs-global.ts",
-          "bytes": 14628
+          "bytes": 14618
         },
         {
           "path": "src/internal/lockfile.ts",
@@ -5884,7 +5972,7 @@
         },
         {
           "path": "src/internal/one-install-cost-gate.ts",
-          "bytes": 21809
+          "bytes": 21862
         },
         {
           "path": "src/internal/package-metadata-catalog.generated.ts",
@@ -5895,24 +5983,24 @@
           "bytes": 4527
         },
         {
-          "path": "src/internal/package-smoke-helpers.ts",
-          "bytes": 23843
+          "path": "src/internal/package-smoke-engine.ts",
+          "bytes": 28294
         },
         {
           "path": "src/internal/physical-path.ts",
-          "bytes": 1452
+          "bytes": 1429
         },
         {
           "path": "src/internal/project-package-manager.ts",
-          "bytes": 6898
+          "bytes": 8389
         },
         {
           "path": "src/internal/release-artifact-bundle.ts",
-          "bytes": 11257
+          "bytes": 11249
         },
         {
           "path": "src/internal/repo-ir-gauntlet.ts",
-          "bytes": 59880
+          "bytes": 59865
         },
         {
           "path": "src/internal/run-command.ts",
@@ -5936,7 +6024,7 @@
         },
         {
           "path": "src/internal/simulation-corpus.ts",
-          "bytes": 21792
+          "bytes": 21773
         },
         {
           "path": "src/internal/spawn.ts",
@@ -5944,11 +6032,11 @@
         },
         {
           "path": "src/internal/spine-provenance.generated.ts",
-          "bytes": 66563
+          "bytes": 67773
         },
         {
           "path": "src/internal/spine-relation-admissions.ts",
-          "bytes": 11347
+          "bytes": 11315
         },
         {
           "path": "src/internal/spine-relation-policy.ts",
@@ -5960,15 +6048,15 @@
         },
         {
           "path": "src/internal/supply-chain-policy.ts",
-          "bytes": 7667
+          "bytes": 7681
         },
         {
           "path": "src/internal/supply-chain.ts",
-          "bytes": 13146
+          "bytes": 13135
         },
         {
           "path": "src/internal/taint-policy.ts",
-          "bytes": 9663
+          "bytes": 9667
         },
         {
           "path": "src/internal/template-renames.generated.ts",
@@ -5984,7 +6072,7 @@
         },
         {
           "path": "src/internal/workflow-action-pins.ts",
-          "bytes": 2790
+          "bytes": 2855
         },
         {
           "path": "src/internal/workspace.ts",
@@ -5996,21 +6084,21 @@
         },
         {
           "path": "src/receipts.ts",
-          "bytes": 5543
+          "bytes": 5530
         },
         {
           "path": "src/ship-manifest.ts",
-          "bytes": 9528
+          "bytes": 9517
         },
         {
-          "path": "src/spawn-helpers.ts",
+          "path": "src/spawn.ts",
           "bytes": 489
         }
       ]
     },
     {
       "package": "@liteship/cloudflare",
-      "compressedBytes": 27089,
+      "compressedBytes": 27090,
       "unpackedBytes": 109458,
       "fileCount": 45,
       "files": [
@@ -6198,25 +6286,25 @@
     },
     {
       "package": "@liteship/command",
-      "compressedBytes": 297319,
-      "unpackedBytes": 1452989,
+      "compressedBytes": 305926,
+      "unpackedBytes": 1484105,
       "fileCount": 271,
       "files": [
         {
           "path": "dist/catalog.d.ts",
-          "bytes": 18366
+          "bytes": 18353
         },
         {
           "path": "dist/catalog.d.ts.map",
-          "bytes": 6684
+          "bytes": 6682
         },
         {
           "path": "dist/catalog.js",
-          "bytes": 18942
+          "bytes": 18929
         },
         {
           "path": "dist/catalog.js.map",
-          "bytes": 13315
+          "bytes": 13312
         },
         {
           "path": "dist/checks/cure-packet.d.ts",
@@ -6236,19 +6324,19 @@
         },
         {
           "path": "dist/checks/definition.d.ts",
-          "bytes": 9830
+          "bytes": 10133
         },
         {
           "path": "dist/checks/definition.d.ts.map",
-          "bytes": 3176
+          "bytes": 3235
         },
         {
           "path": "dist/checks/definition.js",
-          "bytes": 3114
+          "bytes": 3389
         },
         {
           "path": "dist/checks/definition.js.map",
-          "bytes": 1605
+          "bytes": 1919
         },
         {
           "path": "dist/checks/evidence-requirement-derivation.d.ts",
@@ -6300,19 +6388,19 @@
         },
         {
           "path": "dist/checks/plan.d.ts",
-          "bytes": 7124
+          "bytes": 7818
         },
         {
           "path": "dist/checks/plan.d.ts.map",
-          "bytes": 2641
+          "bytes": 2857
         },
         {
           "path": "dist/checks/plan.js",
-          "bytes": 4755
+          "bytes": 7021
         },
         {
           "path": "dist/checks/plan.js.map",
-          "bytes": 3466
+          "bytes": 5533
         },
         {
           "path": "dist/checks/prerequisite.d.ts",
@@ -6340,11 +6428,11 @@
         },
         {
           "path": "dist/checks/registry.js",
-          "bytes": 45585
+          "bytes": 46411
         },
         {
           "path": "dist/checks/registry.js.map",
-          "bytes": 22903
+          "bytes": 23328
         },
         {
           "path": "dist/checks/script-exemptions.d.ts",
@@ -6356,11 +6444,11 @@
         },
         {
           "path": "dist/checks/script-exemptions.js",
-          "bytes": 8498
+          "bytes": 8292
         },
         {
           "path": "dist/checks/script-exemptions.js.map",
-          "bytes": 3260
+          "bytes": 3192
         },
         {
           "path": "dist/commands/asset.d.ts",
@@ -6436,11 +6524,11 @@
         },
         {
           "path": "dist/commands/capsule-verify.js",
-          "bytes": 2871
+          "bytes": 2863
         },
         {
           "path": "dist/commands/capsule-verify.js.map",
-          "bytes": 1760
+          "bytes": 1752
         },
         {
           "path": "dist/commands/capsule.d.ts",
@@ -6516,11 +6604,11 @@
         },
         {
           "path": "dist/commands/context-map.js",
-          "bytes": 8382
+          "bytes": 8438
         },
         {
           "path": "dist/commands/context-map.js.map",
-          "bytes": 3036
+          "bytes": 3037
         },
         {
           "path": "dist/commands/context.d.ts",
@@ -6564,7 +6652,7 @@
         },
         {
           "path": "dist/commands/glossary.js",
-          "bytes": 6199
+          "bytes": 6235
         },
         {
           "path": "dist/commands/glossary.js.map",
@@ -6612,11 +6700,11 @@
         },
         {
           "path": "dist/commands/package-smoke-registry.js",
-          "bytes": 2896
+          "bytes": 2956
         },
         {
           "path": "dist/commands/package-smoke-registry.js.map",
-          "bytes": 685
+          "bytes": 731
         },
         {
           "path": "dist/commands/package-smoke.d.ts",
@@ -6748,19 +6836,19 @@
         },
         {
           "path": "dist/commands/verify.d.ts",
-          "bytes": 2887
+          "bytes": 3395
         },
         {
           "path": "dist/commands/verify.d.ts.map",
-          "bytes": 988
+          "bytes": 995
         },
         {
           "path": "dist/commands/verify.js",
-          "bytes": 6709
+          "bytes": 7303
         },
         {
           "path": "dist/commands/verify.js.map",
-          "bytes": 4604
+          "bytes": 4624
         },
         {
           "path": "dist/commands/version.d.ts",
@@ -6852,7 +6940,7 @@
         },
         {
           "path": "dist/host/capsule-provenance.js",
-          "bytes": 7221
+          "bytes": 7212
         },
         {
           "path": "dist/host/capsule-provenance.js.map",
@@ -6892,19 +6980,19 @@
         },
         {
           "path": "dist/host/ffmpeg-probe.d.ts",
-          "bytes": 798
+          "bytes": 1200
         },
         {
           "path": "dist/host/ffmpeg-probe.d.ts.map",
-          "bytes": 392
+          "bytes": 464
         },
         {
           "path": "dist/host/ffmpeg-probe.js",
-          "bytes": 3232
+          "bytes": 6334
         },
         {
           "path": "dist/host/ffmpeg-probe.js.map",
-          "bytes": 2142
+          "bytes": 3799
         },
         {
           "path": "dist/host/ffmpeg.d.ts",
@@ -6932,7 +7020,7 @@
         },
         {
           "path": "dist/host/idempotency.js",
-          "bytes": 2391
+          "bytes": 2381
         },
         {
           "path": "dist/host/idempotency.js.map",
@@ -6956,19 +7044,19 @@
         },
         {
           "path": "dist/host/launcher.d.ts",
-          "bytes": 2747
+          "bytes": 3516
         },
         {
           "path": "dist/host/launcher.d.ts.map",
-          "bytes": 1613
+          "bytes": 1926
         },
         {
           "path": "dist/host/launcher.js",
-          "bytes": 3880
+          "bytes": 7054
         },
         {
           "path": "dist/host/launcher.js.map",
-          "bytes": 3190
+          "bytes": 5130
         },
         {
           "path": "dist/host/manifest-path.d.ts",
@@ -7012,11 +7100,11 @@
         },
         {
           "path": "dist/host/spawn.js",
-          "bytes": 13406
+          "bytes": 13512
         },
         {
           "path": "dist/host/spawn.js.map",
-          "bytes": 8543
+          "bytes": 8654
         },
         {
           "path": "dist/host/vitest-runner.d.ts",
@@ -7072,7 +7160,7 @@
         },
         {
           "path": "package.json",
-          "bytes": 1652
+          "bytes": 1681
         },
         {
           "path": "README.md",
@@ -7080,7 +7168,7 @@
         },
         {
           "path": "src/catalog.ts",
-          "bytes": 22630
+          "bytes": 22615
         },
         {
           "path": "src/checks/cure-packet.ts",
@@ -7088,7 +7176,7 @@
         },
         {
           "path": "src/checks/definition.ts",
-          "bytes": 10340
+          "bytes": 10845
         },
         {
           "path": "src/checks/evidence-requirement-derivation.ts",
@@ -7100,15 +7188,15 @@
         },
         {
           "path": "src/checks/plan.ts",
-          "bytes": 9425
+          "bytes": 11950
         },
         {
           "path": "src/checks/registry.ts",
-          "bytes": 43516
+          "bytes": 44326
         },
         {
           "path": "src/checks/script-exemptions.ts",
-          "bytes": 8644
+          "bytes": 8441
         },
         {
           "path": "src/commands/asset.ts",
@@ -7128,7 +7216,7 @@
         },
         {
           "path": "src/commands/capsule-verify.ts",
-          "bytes": 4780
+          "bytes": 4772
         },
         {
           "path": "src/commands/capsule.ts",
@@ -7148,7 +7236,7 @@
         },
         {
           "path": "src/commands/context-map.ts",
-          "bytes": 10116
+          "bytes": 10205
         },
         {
           "path": "src/commands/context.ts",
@@ -7160,7 +7248,7 @@
         },
         {
           "path": "src/commands/glossary.ts",
-          "bytes": 6392
+          "bytes": 6428
         },
         {
           "path": "src/commands/manifest.ts",
@@ -7172,7 +7260,7 @@
         },
         {
           "path": "src/commands/package-smoke-registry.ts",
-          "bytes": 3143
+          "bytes": 3204
         },
         {
           "path": "src/commands/package-smoke.ts",
@@ -7208,7 +7296,7 @@
         },
         {
           "path": "src/commands/verify.ts",
-          "bytes": 6894
+          "bytes": 7482
         },
         {
           "path": "src/commands/version.ts",
@@ -7232,7 +7320,7 @@
         },
         {
           "path": "src/host/capsule-provenance.ts",
-          "bytes": 7563
+          "bytes": 7554
         },
         {
           "path": "src/host/check-governance.ts",
@@ -7244,7 +7332,7 @@
         },
         {
           "path": "src/host/ffmpeg-probe.ts",
-          "bytes": 3250
+          "bytes": 6383
         },
         {
           "path": "src/host/ffmpeg.ts",
@@ -7252,7 +7340,7 @@
         },
         {
           "path": "src/host/idempotency.ts",
-          "bytes": 3057
+          "bytes": 3047
         },
         {
           "path": "src/host/index.ts",
@@ -7260,7 +7348,7 @@
         },
         {
           "path": "src/host/launcher.ts",
-          "bytes": 4838
+          "bytes": 8274
         },
         {
           "path": "src/host/manifest-path.ts",
@@ -7272,7 +7360,7 @@
         },
         {
           "path": "src/host/spawn.ts",
-          "bytes": 14945
+          "bytes": 15015
         },
         {
           "path": "src/host/vitest-runner.ts",
@@ -7290,9 +7378,9 @@
     },
     {
       "package": "@liteship/compiler",
-      "compressedBytes": 239823,
-      "unpackedBytes": 1059963,
-      "fileCount": 212,
+      "compressedBytes": 243133,
+      "unpackedBytes": 1087000,
+      "fileCount": 220,
       "files": [
         {
           "path": "dist/adaptive-lowering.d.ts",
@@ -7423,6 +7511,22 @@
           "bytes": 417
         },
         {
+          "path": "dist/css-syntax.d.ts",
+          "bytes": 2541
+        },
+        {
+          "path": "dist/css-syntax.d.ts.map",
+          "bytes": 670
+        },
+        {
+          "path": "dist/css-syntax.js",
+          "bytes": 3285
+        },
+        {
+          "path": "dist/css-syntax.js.map",
+          "bytes": 1429
+        },
+        {
           "path": "dist/css-utils.d.ts",
           "bytes": 2540
         },
@@ -7448,7 +7552,7 @@
         },
         {
           "path": "dist/css.js",
-          "bytes": 13394
+          "bytes": 13396
         },
         {
           "path": "dist/css.js.map",
@@ -7488,11 +7592,11 @@
         },
         {
           "path": "dist/index.d.ts",
-          "bytes": 3206
+          "bytes": 3262
         },
         {
           "path": "dist/index.d.ts.map",
-          "bytes": 2329
+          "bytes": 2355
         },
         {
           "path": "dist/index.js",
@@ -7576,7 +7680,7 @@
         },
         {
           "path": "dist/migrate/from-css-custom-properties.js",
-          "bytes": 20700
+          "bytes": 20701
         },
         {
           "path": "dist/migrate/from-css-custom-properties.js.map",
@@ -7592,7 +7696,7 @@
         },
         {
           "path": "dist/migrate/from-design-tokens.js",
-          "bytes": 32026
+          "bytes": 32027
         },
         {
           "path": "dist/migrate/from-design-tokens.js.map",
@@ -7624,7 +7728,7 @@
         },
         {
           "path": "dist/migrate/from-tailwind-theme.js",
-          "bytes": 21218
+          "bytes": 21219
         },
         {
           "path": "dist/migrate/from-tailwind-theme.js.map",
@@ -7695,6 +7799,22 @@
           "bytes": 132
         },
         {
+          "path": "dist/motion-augment.d.ts",
+          "bytes": 1919
+        },
+        {
+          "path": "dist/motion-augment.d.ts.map",
+          "bytes": 428
+        },
+        {
+          "path": "dist/motion-augment.js",
+          "bytes": 2822
+        },
+        {
+          "path": "dist/motion-augment.js.map",
+          "bytes": 1526
+        },
+        {
           "path": "dist/motion-utils.d.ts",
           "bytes": 1917
         },
@@ -7712,19 +7832,19 @@
         },
         {
           "path": "dist/motion.d.ts",
-          "bytes": 2372
+          "bytes": 3616
         },
         {
           "path": "dist/motion.d.ts.map",
-          "bytes": 1369
+          "bytes": 1934
         },
         {
           "path": "dist/motion.js",
-          "bytes": 15915
+          "bytes": 18336
         },
         {
           "path": "dist/motion.js.map",
-          "bytes": 11205
+          "bytes": 13616
         },
         {
           "path": "dist/parse/css-cascade.d.ts",
@@ -7816,7 +7936,7 @@
         },
         {
           "path": "dist/reveal-compile.js",
-          "bytes": 3230
+          "bytes": 3232
         },
         {
           "path": "dist/reveal-compile.js.map",
@@ -7832,7 +7952,7 @@
         },
         {
           "path": "dist/scroll-timeline-compile.js",
-          "bytes": 3459
+          "bytes": 3461
         },
         {
           "path": "dist/scroll-timeline-compile.js.map",
@@ -7848,7 +7968,7 @@
         },
         {
           "path": "dist/stagger-compile.js",
-          "bytes": 3580
+          "bytes": 3582
         },
         {
           "path": "dist/stagger-compile.js.map",
@@ -7880,7 +8000,7 @@
         },
         {
           "path": "dist/theme-css.js",
-          "bytes": 2739
+          "bytes": 2740
         },
         {
           "path": "dist/theme-css.js.map",
@@ -7896,7 +8016,7 @@
         },
         {
           "path": "dist/token-css.js",
-          "bytes": 3774
+          "bytes": 3776
         },
         {
           "path": "dist/token-css.js.map",
@@ -7912,7 +8032,7 @@
         },
         {
           "path": "dist/token-js.js",
-          "bytes": 2812
+          "bytes": 2813
         },
         {
           "path": "dist/token-js.js.map",
@@ -7928,7 +8048,7 @@
         },
         {
           "path": "dist/token-tailwind.js",
-          "bytes": 3664
+          "bytes": 3665
         },
         {
           "path": "dist/token-tailwind.js.map",
@@ -7944,11 +8064,11 @@
         },
         {
           "path": "dist/view-transition-compile.js",
-          "bytes": 3536
+          "bytes": 4172
         },
         {
           "path": "dist/view-transition-compile.js.map",
-          "bytes": 1596
+          "bytes": 2342
         },
         {
           "path": "dist/wgsl.d.ts",
@@ -8007,12 +8127,12 @@
           "bytes": 575
         },
         {
-          "path": "src/css-utils.ts",
+          "path": "src/css-syntax.ts",
           "bytes": 3443
         },
         {
           "path": "src/css.ts",
-          "bytes": 17263
+          "bytes": 17265
         },
         {
           "path": "src/dispatch.ts",
@@ -8024,7 +8144,7 @@
         },
         {
           "path": "src/index.ts",
-          "bytes": 3748
+          "bytes": 3808
         },
         {
           "path": "src/mcp-app-manifest.ts",
@@ -8044,11 +8164,11 @@
         },
         {
           "path": "src/migrate/from-css-custom-properties.ts",
-          "bytes": 23375
+          "bytes": 23376
         },
         {
           "path": "src/migrate/from-design-tokens.ts",
-          "bytes": 34035
+          "bytes": 34036
         },
         {
           "path": "src/migrate/from-media-queries.ts",
@@ -8056,7 +8176,7 @@
         },
         {
           "path": "src/migrate/from-tailwind-theme.ts",
-          "bytes": 22704
+          "bytes": 22705
         },
         {
           "path": "src/migrate/index.ts",
@@ -8075,12 +8195,12 @@
           "bytes": 4269
         },
         {
-          "path": "src/motion-utils.ts",
+          "path": "src/motion-augment.ts",
           "bytes": 2937
         },
         {
           "path": "src/motion.ts",
-          "bytes": 17509
+          "bytes": 21182
         },
         {
           "path": "src/parse/css-cascade.ts",
@@ -8104,15 +8224,15 @@
         },
         {
           "path": "src/reveal-compile.ts",
-          "bytes": 4013
+          "bytes": 4015
         },
         {
           "path": "src/scroll-timeline-compile.ts",
-          "bytes": 4290
+          "bytes": 4292
         },
         {
           "path": "src/stagger-compile.ts",
-          "bytes": 4407
+          "bytes": 4409
         },
         {
           "path": "src/style-css.ts",
@@ -8120,23 +8240,23 @@
         },
         {
           "path": "src/theme-css.ts",
-          "bytes": 3439
+          "bytes": 3440
         },
         {
           "path": "src/token-css.ts",
-          "bytes": 4704
+          "bytes": 4706
         },
         {
           "path": "src/token-js.ts",
-          "bytes": 3501
+          "bytes": 3502
         },
         {
           "path": "src/token-tailwind.ts",
-          "bytes": 4253
+          "bytes": 4254
         },
         {
           "path": "src/view-transition-compile.ts",
-          "bytes": 5507
+          "bytes": 6054
         },
         {
           "path": "src/wgsl.ts",
@@ -8146,8 +8266,8 @@
     },
     {
       "package": "@liteship/core",
-      "compressedBytes": 887861,
-      "unpackedBytes": 3759974,
+      "compressedBytes": 899868,
+      "unpackedBytes": 3809433,
       "fileCount": 775,
       "files": [
         {
@@ -8192,7 +8312,7 @@
         },
         {
           "path": "dist/authoring/assembly.js",
-          "bytes": 11055
+          "bytes": 11003
         },
         {
           "path": "dist/authoring/assembly.js.map",
@@ -8200,7 +8320,7 @@
         },
         {
           "path": "dist/authoring/boundary-attribute.d.ts",
-          "bytes": 1096
+          "bytes": 1087
         },
         {
           "path": "dist/authoring/boundary-attribute.d.ts.map",
@@ -8208,7 +8328,7 @@
         },
         {
           "path": "dist/authoring/boundary-attribute.js",
-          "bytes": 1073
+          "bytes": 1064
         },
         {
           "path": "dist/authoring/boundary-attribute.js.map",
@@ -8224,7 +8344,7 @@
         },
         {
           "path": "dist/authoring/boundary.js",
-          "bytes": 19021
+          "bytes": 19010
         },
         {
           "path": "dist/authoring/boundary.js.map",
@@ -8232,11 +8352,11 @@
         },
         {
           "path": "dist/authoring/capsule.d.ts",
-          "bytes": 13310
+          "bytes": 13386
         },
         {
           "path": "dist/authoring/capsule.d.ts.map",
-          "bytes": 3520
+          "bytes": 3522
         },
         {
           "path": "dist/authoring/capsule.js",
@@ -8344,19 +8464,19 @@
         },
         {
           "path": "dist/authoring/capsules/escalation-choose-tier.d.ts",
-          "bytes": 7090
+          "bytes": 7168
         },
         {
           "path": "dist/authoring/capsules/escalation-choose-tier.d.ts.map",
-          "bytes": 1010
+          "bytes": 1011
         },
         {
           "path": "dist/authoring/capsules/escalation-choose-tier.js",
-          "bytes": 12821
+          "bytes": 12899
         },
         {
           "path": "dist/authoring/capsules/escalation-choose-tier.js.map",
-          "bytes": 6206
+          "bytes": 6207
         },
         {
           "path": "dist/authoring/capsules/graph-patch-identity.d.ts",
@@ -8392,7 +8512,7 @@
         },
         {
           "path": "dist/authoring/command.d.ts",
-          "bytes": 2057
+          "bytes": 2047
         },
         {
           "path": "dist/authoring/command.d.ts.map",
@@ -8408,7 +8528,7 @@
         },
         {
           "path": "dist/authoring/component.d.ts",
-          "bytes": 2072
+          "bytes": 2062
         },
         {
           "path": "dist/authoring/component.d.ts.map",
@@ -8416,7 +8536,7 @@
         },
         {
           "path": "dist/authoring/component.js",
-          "bytes": 2040
+          "bytes": 2030
         },
         {
           "path": "dist/authoring/component.js.map",
@@ -8424,7 +8544,7 @@
         },
         {
           "path": "dist/authoring/composable.d.ts",
-          "bytes": 3824
+          "bytes": 3804
         },
         {
           "path": "dist/authoring/composable.d.ts.map",
@@ -8432,7 +8552,7 @@
         },
         {
           "path": "dist/authoring/composable.js",
-          "bytes": 8853
+          "bytes": 8833
         },
         {
           "path": "dist/authoring/composable.js.map",
@@ -8520,7 +8640,7 @@
         },
         {
           "path": "dist/authoring/ship-capsule.d.ts",
-          "bytes": 3161
+          "bytes": 3139
         },
         {
           "path": "dist/authoring/ship-capsule.d.ts.map",
@@ -8528,7 +8648,7 @@
         },
         {
           "path": "dist/authoring/ship-capsule.js",
-          "bytes": 7103
+          "bytes": 7081
         },
         {
           "path": "dist/authoring/ship-capsule.js.map",
@@ -8808,35 +8928,35 @@
         },
         {
           "path": "dist/evidence/bench-classify.d.ts",
-          "bytes": 1551
+          "bytes": 1672
         },
         {
           "path": "dist/evidence/bench-classify.d.ts.map",
-          "bytes": 391
+          "bytes": 394
         },
         {
           "path": "dist/evidence/bench-classify.js",
-          "bytes": 4405
+          "bytes": 13930
         },
         {
           "path": "dist/evidence/bench-classify.js.map",
-          "bytes": 1648
+          "bytes": 9482
         },
         {
           "path": "dist/evidence/bench-marker.d.ts",
-          "bytes": 3012
+          "bytes": 1115
         },
         {
           "path": "dist/evidence/bench-marker.d.ts.map",
-          "bytes": 340
+          "bytes": 300
         },
         {
           "path": "dist/evidence/bench-marker.js",
-          "bytes": 3093
+          "bytes": 3359
         },
         {
           "path": "dist/evidence/bench-marker.js.map",
-          "bytes": 435
+          "bytes": 615
         },
         {
           "path": "dist/evidence/caps.d.ts",
@@ -9000,7 +9120,7 @@
         },
         {
           "path": "dist/evidence/receipt.d.ts",
-          "bytes": 14157
+          "bytes": 14144
         },
         {
           "path": "dist/evidence/receipt.d.ts.map",
@@ -9008,7 +9128,7 @@
         },
         {
           "path": "dist/evidence/receipt.js",
-          "bytes": 20359
+          "bytes": 20332
         },
         {
           "path": "dist/evidence/receipt.js.map",
@@ -9016,7 +9136,7 @@
         },
         {
           "path": "dist/evidence/typed-ref.d.ts",
-          "bytes": 4054
+          "bytes": 4044
         },
         {
           "path": "dist/evidence/typed-ref.d.ts.map",
@@ -9024,7 +9144,7 @@
         },
         {
           "path": "dist/evidence/typed-ref.js",
-          "bytes": 5017
+          "bytes": 5007
         },
         {
           "path": "dist/evidence/typed-ref.js.map",
@@ -9032,7 +9152,7 @@
         },
         {
           "path": "dist/evidence/ui-quality.d.ts",
-          "bytes": 2227
+          "bytes": 2221
         },
         {
           "path": "dist/evidence/ui-quality.d.ts.map",
@@ -9064,19 +9184,19 @@
         },
         {
           "path": "dist/fs-walk.d.ts",
-          "bytes": 2616
+          "bytes": 3217
         },
         {
           "path": "dist/fs-walk.d.ts.map",
-          "bytes": 544
+          "bytes": 826
         },
         {
           "path": "dist/fs-walk.js",
-          "bytes": 4079
+          "bytes": 4698
         },
         {
           "path": "dist/fs-walk.js.map",
-          "bytes": 2686
+          "bytes": 3474
         },
         {
           "path": "dist/graph/dag.d.ts",
@@ -9128,7 +9248,7 @@
         },
         {
           "path": "dist/graph/document-graph.d.ts",
-          "bytes": 7901
+          "bytes": 7885
         },
         {
           "path": "dist/graph/document-graph.d.ts.map",
@@ -9144,7 +9264,7 @@
         },
         {
           "path": "dist/graph/graph-mutation-client.d.ts",
-          "bytes": 4052
+          "bytes": 4041
         },
         {
           "path": "dist/graph/graph-mutation-client.d.ts.map",
@@ -9160,7 +9280,7 @@
         },
         {
           "path": "dist/graph/graph-mutation.d.ts",
-          "bytes": 6712
+          "bytes": 6690
         },
         {
           "path": "dist/graph/graph-mutation.d.ts.map",
@@ -9168,7 +9288,7 @@
         },
         {
           "path": "dist/graph/graph-mutation.js",
-          "bytes": 11126
+          "bytes": 11104
         },
         {
           "path": "dist/graph/graph-mutation.js.map",
@@ -9192,19 +9312,19 @@
         },
         {
           "path": "dist/graph/graph-query-gap-replay.d.ts",
-          "bytes": 4787
+          "bytes": 6268
         },
         {
           "path": "dist/graph/graph-query-gap-replay.d.ts.map",
-          "bytes": 1973
+          "bytes": 2189
         },
         {
           "path": "dist/graph/graph-query-gap-replay.js",
-          "bytes": 14881
+          "bytes": 17516
         },
         {
           "path": "dist/graph/graph-query-gap-replay.js.map",
-          "bytes": 9009
+          "bytes": 10569
         },
         {
           "path": "dist/graph/graph-query.d.ts",
@@ -9392,11 +9512,11 @@
         },
         {
           "path": "dist/harness/scene-composition.js",
-          "bytes": 25612
+          "bytes": 25667
         },
         {
           "path": "dist/harness/scene-composition.js.map",
-          "bytes": 6648
+          "bytes": 6649
         },
         {
           "path": "dist/harness/site-adapter.d.ts",
@@ -9432,15 +9552,15 @@
         },
         {
           "path": "dist/index.d.ts",
-          "bytes": 14589
+          "bytes": 14647
         },
         {
           "path": "dist/index.d.ts.map",
-          "bytes": 10700
+          "bytes": 10726
         },
         {
           "path": "dist/index.js",
-          "bytes": 20055
+          "bytes": 20045
         },
         {
           "path": "dist/index.js.map",
@@ -9608,7 +9728,7 @@
         },
         {
           "path": "dist/media/compositor-pool.d.ts",
-          "bytes": 2789
+          "bytes": 2779
         },
         {
           "path": "dist/media/compositor-pool.d.ts.map",
@@ -9640,7 +9760,7 @@
         },
         {
           "path": "dist/media/frame-budget.d.ts",
-          "bytes": 3070
+          "bytes": 3060
         },
         {
           "path": "dist/media/frame-budget.d.ts.map",
@@ -9648,7 +9768,7 @@
         },
         {
           "path": "dist/media/frame-budget.js",
-          "bytes": 4446
+          "bytes": 4436
         },
         {
           "path": "dist/media/frame-budget.js.map",
@@ -9656,7 +9776,7 @@
         },
         {
           "path": "dist/media/gen-frame.d.ts",
-          "bytes": 4354
+          "bytes": 4342
         },
         {
           "path": "dist/media/gen-frame.d.ts.map",
@@ -9664,7 +9784,7 @@
         },
         {
           "path": "dist/media/gen-frame.js",
-          "bytes": 4522
+          "bytes": 4511
         },
         {
           "path": "dist/media/gen-frame.js.map",
@@ -9704,7 +9824,7 @@
         },
         {
           "path": "dist/media/token-buffer.d.ts",
-          "bytes": 3979
+          "bytes": 3969
         },
         {
           "path": "dist/media/token-buffer.d.ts.map",
@@ -9712,7 +9832,7 @@
         },
         {
           "path": "dist/media/token-buffer.js",
-          "bytes": 5490
+          "bytes": 5480
         },
         {
           "path": "dist/media/token-buffer.js.map",
@@ -9752,7 +9872,7 @@
         },
         {
           "path": "dist/motion/blend.d.ts",
-          "bytes": 2977
+          "bytes": 2967
         },
         {
           "path": "dist/motion/blend.d.ts.map",
@@ -9824,15 +9944,15 @@
         },
         {
           "path": "dist/motion/interpolate.js",
-          "bytes": 11183
+          "bytes": 13862
         },
         {
           "path": "dist/motion/interpolate.js.map",
-          "bytes": 10039
+          "bytes": 13583
         },
         {
           "path": "dist/motion/interpret-transition.d.ts",
-          "bytes": 7825
+          "bytes": 7814
         },
         {
           "path": "dist/motion/interpret-transition.d.ts.map",
@@ -9952,7 +10072,7 @@
         },
         {
           "path": "dist/motion/transition-program.js",
-          "bytes": 27597
+          "bytes": 27576
         },
         {
           "path": "dist/motion/transition-program.js.map",
@@ -9968,7 +10088,7 @@
         },
         {
           "path": "dist/reactive/cell-kernel.js",
-          "bytes": 19478
+          "bytes": 19494
         },
         {
           "path": "dist/reactive/cell-kernel.js.map",
@@ -10008,7 +10128,7 @@
         },
         {
           "path": "dist/reactive/dirty.d.ts",
-          "bytes": 1621
+          "bytes": 1611
         },
         {
           "path": "dist/reactive/dirty.d.ts.map",
@@ -10040,7 +10160,7 @@
         },
         {
           "path": "dist/reactive/lifetime.d.ts",
-          "bytes": 6472
+          "bytes": 6459
         },
         {
           "path": "dist/reactive/lifetime.d.ts.map",
@@ -10048,7 +10168,7 @@
         },
         {
           "path": "dist/reactive/lifetime.js",
-          "bytes": 9147
+          "bytes": 9150
         },
         {
           "path": "dist/reactive/lifetime.js.map",
@@ -10056,7 +10176,7 @@
         },
         {
           "path": "dist/reactive/live-cell.d.ts",
-          "bytes": 5454
+          "bytes": 5444
         },
         {
           "path": "dist/reactive/live-cell.d.ts.map",
@@ -10072,7 +10192,7 @@
         },
         {
           "path": "dist/reactive/primitive.d.ts",
-          "bytes": 1133
+          "bytes": 1139
         },
         {
           "path": "dist/reactive/primitive.d.ts.map",
@@ -10136,7 +10256,7 @@
         },
         {
           "path": "dist/reactive/signal.d.ts",
-          "bytes": 8646
+          "bytes": 8636
         },
         {
           "path": "dist/reactive/signal.d.ts.map",
@@ -10144,7 +10264,7 @@
         },
         {
           "path": "dist/reactive/signal.js",
-          "bytes": 14852
+          "bytes": 14842
         },
         {
           "path": "dist/reactive/signal.js.map",
@@ -10200,7 +10320,7 @@
         },
         {
           "path": "dist/reactive/stream-recovery.d.ts",
-          "bytes": 2038
+          "bytes": 2086
         },
         {
           "path": "dist/reactive/stream-recovery.d.ts.map",
@@ -10208,7 +10328,7 @@
         },
         {
           "path": "dist/reactive/stream-recovery.js",
-          "bytes": 5763
+          "bytes": 5811
         },
         {
           "path": "dist/reactive/stream-recovery.js.map",
@@ -10280,7 +10400,7 @@
         },
         {
           "path": "dist/schema/brands.d.ts",
-          "bytes": 5401
+          "bytes": 5379
         },
         {
           "path": "dist/schema/brands.d.ts.map",
@@ -10288,7 +10408,7 @@
         },
         {
           "path": "dist/schema/brands.js",
-          "bytes": 5500
+          "bytes": 5489
         },
         {
           "path": "dist/schema/brands.js.map",
@@ -10360,11 +10480,11 @@
         },
         {
           "path": "dist/schema/index.d.ts",
-          "bytes": 2368
+          "bytes": 2427
         },
         {
           "path": "dist/schema/index.d.ts.map",
-          "bytes": 1527
+          "bytes": 1555
         },
         {
           "path": "dist/schema/index.js",
@@ -10440,19 +10560,19 @@
         },
         {
           "path": "dist/schema/standard.d.ts",
-          "bytes": 3657
+          "bytes": 4335
         },
         {
           "path": "dist/schema/standard.d.ts.map",
-          "bytes": 1209
+          "bytes": 1749
         },
         {
           "path": "dist/schema/standard.js",
-          "bytes": 1622
+          "bytes": 1402
         },
         {
           "path": "dist/schema/standard.js.map",
-          "bytes": 987
+          "bytes": 1146
         },
         {
           "path": "dist/schema/to-json-schema.d.ts",
@@ -10684,19 +10804,19 @@
         },
         {
           "path": "src/authoring/assembly.ts",
-          "bytes": 13483
+          "bytes": 13431
         },
         {
           "path": "src/authoring/boundary-attribute.ts",
-          "bytes": 1053
+          "bytes": 1044
         },
         {
           "path": "src/authoring/boundary.ts",
-          "bytes": 21548
+          "bytes": 21537
         },
         {
           "path": "src/authoring/capsule.ts",
-          "bytes": 13248
+          "bytes": 13324
         },
         {
           "path": "src/authoring/capsules/ai-cast-proposal.ts",
@@ -10724,7 +10844,7 @@
         },
         {
           "path": "src/authoring/capsules/escalation-choose-tier.ts",
-          "bytes": 12987
+          "bytes": 13065
         },
         {
           "path": "src/authoring/capsules/graph-patch-identity.ts",
@@ -10736,15 +10856,15 @@
         },
         {
           "path": "src/authoring/command.ts",
-          "bytes": 2040
+          "bytes": 2030
         },
         {
           "path": "src/authoring/component.ts",
-          "bytes": 3569
+          "bytes": 3559
         },
         {
           "path": "src/authoring/composable.ts",
-          "bytes": 12264
+          "bytes": 12244
         },
         {
           "path": "src/authoring/config.ts",
@@ -10768,7 +10888,7 @@
         },
         {
           "path": "src/authoring/ship-capsule.ts",
-          "bytes": 9044
+          "bytes": 9257
         },
         {
           "path": "src/authoring/style.ts",
@@ -10832,11 +10952,11 @@
         },
         {
           "path": "src/evidence/bench-classify.ts",
-          "bytes": 4436
+          "bytes": 12818
         },
         {
           "path": "src/evidence/bench-marker.ts",
-          "bytes": 3079
+          "bytes": 3335
         },
         {
           "path": "src/evidence/caps.ts",
@@ -10880,15 +11000,15 @@
         },
         {
           "path": "src/evidence/receipt.ts",
-          "bytes": 26169
+          "bytes": 26142
         },
         {
           "path": "src/evidence/typed-ref.ts",
-          "bytes": 5291
+          "bytes": 5281
         },
         {
           "path": "src/evidence/ui-quality.ts",
-          "bytes": 3550
+          "bytes": 3544
         },
         {
           "path": "src/evidence/validated-output.ts",
@@ -10896,7 +11016,7 @@
         },
         {
           "path": "src/fs-walk.ts",
-          "bytes": 4730
+          "bytes": 5990
         },
         {
           "path": "src/graph/dag.ts",
@@ -10912,15 +11032,15 @@
         },
         {
           "path": "src/graph/document-graph.ts",
-          "bytes": 7739
+          "bytes": 7723
         },
         {
           "path": "src/graph/graph-mutation-client.ts",
-          "bytes": 6563
+          "bytes": 6552
         },
         {
           "path": "src/graph/graph-mutation.ts",
-          "bytes": 13940
+          "bytes": 13918
         },
         {
           "path": "src/graph/graph-patch.ts",
@@ -10928,7 +11048,7 @@
         },
         {
           "path": "src/graph/graph-query-gap-replay.ts",
-          "bytes": 16564
+          "bytes": 20686
         },
         {
           "path": "src/graph/graph-query.ts",
@@ -10968,7 +11088,7 @@
         },
         {
           "path": "src/harness/scene-composition.ts",
-          "bytes": 28958
+          "bytes": 29013
         },
         {
           "path": "src/harness/site-adapter.ts",
@@ -10980,7 +11100,7 @@
         },
         {
           "path": "src/index.ts",
-          "bytes": 28227
+          "bytes": 28287
         },
         {
           "path": "src/media/av-bridge.ts",
@@ -10992,7 +11112,7 @@
         },
         {
           "path": "src/media/compositor-pool.ts",
-          "bytes": 5220
+          "bytes": 5210
         },
         {
           "path": "src/media/compositor.ts",
@@ -11000,11 +11120,11 @@
         },
         {
           "path": "src/media/frame-budget.ts",
-          "bytes": 5846
+          "bytes": 5836
         },
         {
           "path": "src/media/gen-frame.ts",
-          "bytes": 7792
+          "bytes": 7769
         },
         {
           "path": "src/media/index.ts",
@@ -11016,7 +11136,7 @@
         },
         {
           "path": "src/media/token-buffer.ts",
-          "bytes": 7254
+          "bytes": 7244
         },
         {
           "path": "src/media/video.ts",
@@ -11028,7 +11148,7 @@
         },
         {
           "path": "src/motion/blend.ts",
-          "bytes": 4992
+          "bytes": 4982
         },
         {
           "path": "src/motion/clamp.ts",
@@ -11044,11 +11164,11 @@
         },
         {
           "path": "src/motion/interpolate.ts",
-          "bytes": 12013
+          "bytes": 14580
         },
         {
           "path": "src/motion/interpret-transition.ts",
-          "bytes": 15301
+          "bytes": 15290
         },
         {
           "path": "src/motion/reveal.ts",
@@ -11076,11 +11196,11 @@
         },
         {
           "path": "src/motion/transition-program.ts",
-          "bytes": 33182
+          "bytes": 33161
         },
         {
           "path": "src/reactive/cell-kernel.ts",
-          "bytes": 22958
+          "bytes": 22974
         },
         {
           "path": "src/reactive/cell.ts",
@@ -11092,7 +11212,7 @@
         },
         {
           "path": "src/reactive/dirty.ts",
-          "bytes": 2606
+          "bytes": 2596
         },
         {
           "path": "src/reactive/index.ts",
@@ -11100,15 +11220,15 @@
         },
         {
           "path": "src/reactive/lifetime.ts",
-          "bytes": 12703
+          "bytes": 12706
         },
         {
           "path": "src/reactive/live-cell.ts",
-          "bytes": 14182
+          "bytes": 14172
         },
         {
           "path": "src/reactive/primitive.ts",
-          "bytes": 1134
+          "bytes": 1140
         },
         {
           "path": "src/reactive/runtime-coordinator.ts",
@@ -11124,7 +11244,7 @@
         },
         {
           "path": "src/reactive/signal.ts",
-          "bytes": 17911
+          "bytes": 17901
         },
         {
           "path": "src/reactive/speculative.ts",
@@ -11140,7 +11260,7 @@
         },
         {
           "path": "src/reactive/stream-recovery.ts",
-          "bytes": 6118
+          "bytes": 6166
         },
         {
           "path": "src/reactive/types.ts",
@@ -11160,7 +11280,7 @@
         },
         {
           "path": "src/schema/brands.ts",
-          "bytes": 7900
+          "bytes": 7867
         },
         {
           "path": "src/schema/cbor.ts",
@@ -11180,7 +11300,7 @@
         },
         {
           "path": "src/schema/index.ts",
-          "bytes": 3639
+          "bytes": 3710
         },
         {
           "path": "src/schema/infer.ts",
@@ -11200,7 +11320,7 @@
         },
         {
           "path": "src/schema/standard.ts",
-          "bytes": 4165
+          "bytes": 5178
         },
         {
           "path": "src/schema/to-json-schema.ts",
@@ -11254,25 +11374,25 @@
     },
     {
       "package": "@liteship/detect",
-      "compressedBytes": 43856,
-      "unpackedBytes": 186596,
+      "compressedBytes": 44190,
+      "unpackedBytes": 187394,
       "fileCount": 43,
       "files": [
         {
           "path": "dist/cap-axes.d.ts",
-          "bytes": 5189
+          "bytes": 5290
         },
         {
           "path": "dist/cap-axes.d.ts.map",
-          "bytes": 2426
+          "bytes": 2427
         },
         {
           "path": "dist/cap-axes.js",
-          "bytes": 3866
+          "bytes": 3967
         },
         {
           "path": "dist/cap-axes.js.map",
-          "bytes": 2686
+          "bytes": 2687
         },
         {
           "path": "dist/detect-ready.d.ts",
@@ -11300,11 +11420,11 @@
         },
         {
           "path": "dist/detect.js",
-          "bytes": 22694
+          "bytes": 22921
         },
         {
           "path": "dist/detect.js.map",
-          "bytes": 14529
+          "bytes": 14568
         },
         {
           "path": "dist/event-protocol.d.ts",
@@ -11400,7 +11520,7 @@
         },
         {
           "path": "src/cap-axes.ts",
-          "bytes": 7301
+          "bytes": 7402
         },
         {
           "path": "src/detect-ready.ts",
@@ -11408,7 +11528,7 @@
         },
         {
           "path": "src/detect.ts",
-          "bytes": 30126
+          "bytes": 30353
         },
         {
           "path": "src/event-protocol.ts",
@@ -11434,8 +11554,8 @@
     },
     {
       "package": "@liteship/edge",
-      "compressedBytes": 64801,
-      "unpackedBytes": 278687,
+      "compressedBytes": 64788,
+      "unpackedBytes": 278626,
       "fileCount": 43,
       "files": [
         {
@@ -11520,7 +11640,7 @@
         },
         {
           "path": "dist/kv-cache.d.ts",
-          "bytes": 11283
+          "bytes": 11266
         },
         {
           "path": "dist/kv-cache.d.ts.map",
@@ -11536,7 +11656,7 @@
         },
         {
           "path": "dist/manifest.d.ts",
-          "bytes": 6216
+          "bytes": 6207
         },
         {
           "path": "dist/manifest.d.ts.map",
@@ -11544,7 +11664,7 @@
         },
         {
           "path": "dist/manifest.js",
-          "bytes": 5813
+          "bytes": 5804
         },
         {
           "path": "dist/manifest.js.map",
@@ -11600,11 +11720,11 @@
         },
         {
           "path": "src/kv-cache.ts",
-          "bytes": 33149
+          "bytes": 33132
         },
         {
           "path": "src/manifest.ts",
-          "bytes": 9890
+          "bytes": 9881
         },
         {
           "path": "src/theme-compiler.ts",
@@ -11614,25 +11734,25 @@
     },
     {
       "package": "@liteship/error",
-      "compressedBytes": 85360,
-      "unpackedBytes": 333520,
+      "compressedBytes": 86327,
+      "unpackedBytes": 343635,
       "fileCount": 28,
       "files": [
         {
           "path": "dist/codes.d.ts",
-          "bytes": 25233
+          "bytes": 25314
         },
         {
           "path": "dist/codes.d.ts.map",
-          "bytes": 1314
+          "bytes": 1315
         },
         {
           "path": "dist/codes.js",
-          "bytes": 97150
+          "bytes": 101812
         },
         {
           "path": "dist/codes.js.map",
-          "bytes": 24205
+          "bytes": 25013
         },
         {
           "path": "dist/contract.d.ts",
@@ -11712,7 +11832,7 @@
         },
         {
           "path": "src/codes.ts",
-          "bytes": 103973
+          "bytes": 108536
         },
         {
           "path": "src/contract.ts",
@@ -11734,13 +11854,13 @@
     },
     {
       "package": "@liteship/gauntlet",
-      "compressedBytes": 712853,
-      "unpackedBytes": 2981133,
+      "compressedBytes": 719809,
+      "unpackedBytes": 3006837,
       "fileCount": 403,
       "files": [
         {
           "path": "dist/ambition-proof.d.ts",
-          "bytes": 8089
+          "bytes": 8079
         },
         {
           "path": "dist/ambition-proof.d.ts.map",
@@ -11748,7 +11868,7 @@
         },
         {
           "path": "dist/ambition-proof.js",
-          "bytes": 10164
+          "bytes": 10154
         },
         {
           "path": "dist/ambition-proof.js.map",
@@ -11820,7 +11940,7 @@
         },
         {
           "path": "dist/declared-fix.d.ts",
-          "bytes": 13378
+          "bytes": 13409
         },
         {
           "path": "dist/declared-fix.d.ts.map",
@@ -11828,7 +11948,7 @@
         },
         {
           "path": "dist/declared-fix.js",
-          "bytes": 16529
+          "bytes": 16560
         },
         {
           "path": "dist/declared-fix.js.map",
@@ -11884,7 +12004,7 @@
         },
         {
           "path": "dist/facts/capability-link-facts.d.ts",
-          "bytes": 2546
+          "bytes": 2551
         },
         {
           "path": "dist/facts/capability-link-facts.d.ts.map",
@@ -11892,7 +12012,7 @@
         },
         {
           "path": "dist/facts/capability-link-facts.js",
-          "bytes": 1242
+          "bytes": 1247
         },
         {
           "path": "dist/facts/capability-link-facts.js.map",
@@ -11916,7 +12036,7 @@
         },
         {
           "path": "dist/facts/composition-facts.d.ts",
-          "bytes": 6595
+          "bytes": 6585
         },
         {
           "path": "dist/facts/composition-facts.d.ts.map",
@@ -11924,7 +12044,7 @@
         },
         {
           "path": "dist/facts/composition-facts.js",
-          "bytes": 3053
+          "bytes": 3043
         },
         {
           "path": "dist/facts/composition-facts.js.map",
@@ -11980,7 +12100,7 @@
         },
         {
           "path": "dist/facts/mutation-facts.d.ts",
-          "bytes": 7222
+          "bytes": 7212
         },
         {
           "path": "dist/facts/mutation-facts.d.ts.map",
@@ -11988,7 +12108,7 @@
         },
         {
           "path": "dist/facts/mutation-facts.js",
-          "bytes": 1583
+          "bytes": 1573
         },
         {
           "path": "dist/facts/mutation-facts.js.map",
@@ -11996,7 +12116,7 @@
         },
         {
           "path": "dist/facts/proof-facts.d.ts",
-          "bytes": 5372
+          "bytes": 5352
         },
         {
           "path": "dist/facts/proof-facts.d.ts.map",
@@ -12004,7 +12124,7 @@
         },
         {
           "path": "dist/facts/proof-facts.js",
-          "bytes": 2676
+          "bytes": 2666
         },
         {
           "path": "dist/facts/proof-facts.js.map",
@@ -12012,7 +12132,7 @@
         },
         {
           "path": "dist/facts/simulation-facts.d.ts",
-          "bytes": 5134
+          "bytes": 5124
         },
         {
           "path": "dist/facts/simulation-facts.d.ts.map",
@@ -12020,7 +12140,7 @@
         },
         {
           "path": "dist/facts/simulation-facts.js",
-          "bytes": 1442
+          "bytes": 1432
         },
         {
           "path": "dist/facts/simulation-facts.js.map",
@@ -12044,23 +12164,23 @@
         },
         {
           "path": "dist/facts/spine-relation-facts.d.ts",
-          "bytes": 7646
+          "bytes": 7752
         },
         {
           "path": "dist/facts/spine-relation-facts.d.ts.map",
-          "bytes": 1140
+          "bytes": 1142
         },
         {
           "path": "dist/facts/spine-relation-facts.js",
-          "bytes": 5526
+          "bytes": 5632
         },
         {
           "path": "dist/facts/spine-relation-facts.js.map",
-          "bytes": 694
+          "bytes": 696
         },
         {
           "path": "dist/facts/standards-facts.d.ts",
-          "bytes": 19569
+          "bytes": 19556
         },
         {
           "path": "dist/facts/standards-facts.d.ts.map",
@@ -12068,7 +12188,7 @@
         },
         {
           "path": "dist/facts/standards-facts.js",
-          "bytes": 32995
+          "bytes": 32982
         },
         {
           "path": "dist/facts/standards-facts.js.map",
@@ -12076,7 +12196,7 @@
         },
         {
           "path": "dist/facts/supply-chain-facts.d.ts",
-          "bytes": 5371
+          "bytes": 5361
         },
         {
           "path": "dist/facts/supply-chain-facts.d.ts.map",
@@ -12084,7 +12204,7 @@
         },
         {
           "path": "dist/facts/supply-chain-facts.js",
-          "bytes": 1286
+          "bytes": 1276
         },
         {
           "path": "dist/facts/supply-chain-facts.js.map",
@@ -12092,7 +12212,7 @@
         },
         {
           "path": "dist/facts/taint-facts.d.ts",
-          "bytes": 6485
+          "bytes": 6475
         },
         {
           "path": "dist/facts/taint-facts.d.ts.map",
@@ -12100,7 +12220,7 @@
         },
         {
           "path": "dist/facts/taint-facts.js",
-          "bytes": 1876
+          "bytes": 1866
         },
         {
           "path": "dist/facts/taint-facts.js.map",
@@ -12108,7 +12228,7 @@
         },
         {
           "path": "dist/facts/traceability-facts.d.ts",
-          "bytes": 6909
+          "bytes": 6899
         },
         {
           "path": "dist/facts/traceability-facts.d.ts.map",
@@ -12116,7 +12236,7 @@
         },
         {
           "path": "dist/facts/traceability-facts.js",
-          "bytes": 1802
+          "bytes": 1792
         },
         {
           "path": "dist/facts/traceability-facts.js.map",
@@ -12124,7 +12244,7 @@
         },
         {
           "path": "dist/facts/transition-facts.d.ts",
-          "bytes": 8580
+          "bytes": 8624
         },
         {
           "path": "dist/facts/transition-facts.d.ts.map",
@@ -12132,7 +12252,7 @@
         },
         {
           "path": "dist/facts/transition-facts.js",
-          "bytes": 2909
+          "bytes": 2899
         },
         {
           "path": "dist/facts/transition-facts.js.map",
@@ -12156,19 +12276,19 @@
         },
         {
           "path": "dist/gate.d.ts",
-          "bytes": 47658
+          "bytes": 47691
         },
         {
           "path": "dist/gate.d.ts.map",
-          "bytes": 8553
+          "bytes": 8554
         },
         {
           "path": "dist/gate.js",
-          "bytes": 38683
+          "bytes": 38985
         },
         {
           "path": "dist/gate.js.map",
-          "bytes": 22625
+          "bytes": 22664
         },
         {
           "path": "dist/gates/active-modeled-surface-reader.d.ts",
@@ -12204,19 +12324,19 @@
         },
         {
           "path": "dist/gates/capability-gate-link.d.ts",
-          "bytes": 2492
+          "bytes": 2601
         },
         {
           "path": "dist/gates/capability-gate-link.d.ts.map",
-          "bytes": 282
+          "bytes": 283
         },
         {
           "path": "dist/gates/capability-gate-link.js",
-          "bytes": 8180
+          "bytes": 8289
         },
         {
           "path": "dist/gates/capability-gate-link.js.map",
-          "bytes": 3299
+          "bytes": 3300
         },
         {
           "path": "dist/gates/check-negative-control.d.ts",
@@ -12268,7 +12388,7 @@
         },
         {
           "path": "dist/gates/claim-property.d.ts",
-          "bytes": 5134
+          "bytes": 5137
         },
         {
           "path": "dist/gates/claim-property.d.ts.map",
@@ -12276,11 +12396,11 @@
         },
         {
           "path": "dist/gates/claim-property.js",
-          "bytes": 38987
+          "bytes": 39108
         },
         {
           "path": "dist/gates/claim-property.js.map",
-          "bytes": 17836
+          "bytes": 17839
         },
         {
           "path": "dist/gates/code-only.d.ts",
@@ -12332,19 +12452,19 @@
         },
         {
           "path": "dist/gates/declared-fix-protocol.d.ts",
-          "bytes": 2599
+          "bytes": 2738
         },
         {
           "path": "dist/gates/declared-fix-protocol.d.ts.map",
-          "bytes": 294
+          "bytes": 296
         },
         {
           "path": "dist/gates/declared-fix-protocol.js",
-          "bytes": 10058
+          "bytes": 10197
         },
         {
           "path": "dist/gates/declared-fix-protocol.js.map",
-          "bytes": 3136
+          "bytes": 3138
         },
         {
           "path": "dist/gates/diagnostic-code-registered.d.ts",
@@ -12368,31 +12488,31 @@
         },
         {
           "path": "dist/gates/early-return-detect.d.ts.map",
-          "bytes": 346
+          "bytes": 347
         },
         {
           "path": "dist/gates/early-return-detect.js",
-          "bytes": 2531
+          "bytes": 5220
         },
         {
           "path": "dist/gates/early-return-detect.js.map",
-          "bytes": 2414
+          "bytes": 5787
         },
         {
           "path": "dist/gates/facade-export-budget.d.ts",
-          "bytes": 2326
+          "bytes": 2465
         },
         {
           "path": "dist/gates/facade-export-budget.d.ts.map",
-          "bytes": 285
+          "bytes": 287
         },
         {
           "path": "dist/gates/facade-export-budget.js",
-          "bytes": 27774
+          "bytes": 27913
         },
         {
           "path": "dist/gates/facade-export-budget.js.map",
-          "bytes": 19054
+          "bytes": 19056
         },
         {
           "path": "dist/gates/feature-edge-connectivity.d.ts",
@@ -12604,35 +12724,35 @@
         },
         {
           "path": "dist/gates/no-skipped-test-fact.d.ts",
-          "bytes": 2306
+          "bytes": 2540
         },
         {
           "path": "dist/gates/no-skipped-test-fact.d.ts.map",
-          "bytes": 528
+          "bytes": 531
         },
         {
           "path": "dist/gates/no-skipped-test-fact.js",
-          "bytes": 8939
+          "bytes": 9147
         },
         {
           "path": "dist/gates/no-skipped-test-fact.js.map",
-          "bytes": 2909
+          "bytes": 2912
         },
         {
           "path": "dist/gates/no-skipped-test.d.ts",
-          "bytes": 2956
+          "bytes": 3480
         },
         {
           "path": "dist/gates/no-skipped-test.d.ts.map",
-          "bytes": 286
+          "bytes": 293
         },
         {
           "path": "dist/gates/no-skipped-test.js",
-          "bytes": 16550
+          "bytes": 17048
         },
         {
           "path": "dist/gates/no-skipped-test.js.map",
-          "bytes": 4948
+          "bytes": 4955
         },
         {
           "path": "dist/gates/no-ts-ignore.d.ts",
@@ -12700,19 +12820,19 @@
         },
         {
           "path": "dist/gates/performance-contracts.d.ts",
-          "bytes": 4990
+          "bytes": 5454
         },
         {
           "path": "dist/gates/performance-contracts.d.ts.map",
-          "bytes": 1072
+          "bytes": 1133
         },
         {
           "path": "dist/gates/performance-contracts.js",
-          "bytes": 36815
+          "bytes": 39556
         },
         {
           "path": "dist/gates/performance-contracts.js.map",
-          "bytes": 21159
+          "bytes": 22615
         },
         {
           "path": "dist/gates/proof-propagation.d.ts",
@@ -12732,7 +12852,7 @@
         },
         {
           "path": "dist/gates/simulation-determinism.d.ts",
-          "bytes": 1979
+          "bytes": 1969
         },
         {
           "path": "dist/gates/simulation-determinism.d.ts.map",
@@ -12740,7 +12860,7 @@
         },
         {
           "path": "dist/gates/simulation-determinism.js",
-          "bytes": 15384
+          "bytes": 15374
         },
         {
           "path": "dist/gates/simulation-determinism.js.map",
@@ -12756,11 +12876,11 @@
         },
         {
           "path": "dist/gates/skip-allowlist.js",
-          "bytes": 29753
+          "bytes": 29416
         },
         {
           "path": "dist/gates/skip-allowlist.js.map",
-          "bytes": 7144
+          "bytes": 7044
         },
         {
           "path": "dist/gates/skip-detect.d.ts",
@@ -12780,51 +12900,51 @@
         },
         {
           "path": "dist/gates/spine-relation.d.ts",
-          "bytes": 3169
+          "bytes": 3399
         },
         {
           "path": "dist/gates/spine-relation.d.ts.map",
-          "bytes": 281
+          "bytes": 283
         },
         {
           "path": "dist/gates/spine-relation.js",
-          "bytes": 12331
+          "bytes": 12582
         },
         {
           "path": "dist/gates/spine-relation.js.map",
-          "bytes": 3991
+          "bytes": 3993
         },
         {
           "path": "dist/gates/standards-integrity.d.ts",
-          "bytes": 2535
+          "bytes": 2673
         },
         {
           "path": "dist/gates/standards-integrity.d.ts.map",
-          "bytes": 287
+          "bytes": 289
         },
         {
           "path": "dist/gates/standards-integrity.js",
-          "bytes": 13302
+          "bytes": 13440
         },
         {
           "path": "dist/gates/standards-integrity.js.map",
-          "bytes": 4891
+          "bytes": 4893
         },
         {
           "path": "dist/gates/supply-chain.d.ts",
-          "bytes": 1842
+          "bytes": 1978
         },
         {
           "path": "dist/gates/supply-chain.d.ts.map",
-          "bytes": 263
+          "bytes": 264
         },
         {
           "path": "dist/gates/supply-chain.js",
-          "bytes": 9155
+          "bytes": 9291
         },
         {
           "path": "dist/gates/supply-chain.js.map",
-          "bytes": 4413
+          "bytes": 4414
         },
         {
           "path": "dist/gates/symbol-orphan-divergence.d.ts",
@@ -12844,39 +12964,39 @@
         },
         {
           "path": "dist/gates/taint-flow.d.ts",
-          "bytes": 2804
+          "bytes": 2913
         },
         {
           "path": "dist/gates/taint-flow.d.ts.map",
-          "bytes": 269
+          "bytes": 270
         },
         {
           "path": "dist/gates/taint-flow.js",
-          "bytes": 10217
+          "bytes": 10326
         },
         {
           "path": "dist/gates/taint-flow.js.map",
-          "bytes": 4600
+          "bytes": 4601
         },
         {
           "path": "dist/gates/traceability-bridge.d.ts",
-          "bytes": 2229
+          "bytes": 2365
         },
         {
           "path": "dist/gates/traceability-bridge.d.ts.map",
-          "bytes": 282
+          "bytes": 283
         },
         {
           "path": "dist/gates/traceability-bridge.js",
-          "bytes": 12307
+          "bytes": 12443
         },
         {
           "path": "dist/gates/traceability-bridge.js.map",
-          "bytes": 5248
+          "bytes": 5249
         },
         {
           "path": "dist/gates/transition-conformance.d.ts",
-          "bytes": 4977
+          "bytes": 5031
         },
         {
           "path": "dist/gates/transition-conformance.d.ts.map",
@@ -12884,7 +13004,7 @@
         },
         {
           "path": "dist/gates/transition-conformance.js",
-          "bytes": 16108
+          "bytes": 16162
         },
         {
           "path": "dist/gates/transition-conformance.js.map",
@@ -12900,11 +13020,11 @@
         },
         {
           "path": "dist/index.js",
-          "bytes": 25768
+          "bytes": 25880
         },
         {
           "path": "dist/index.js.map",
-          "bytes": 7238
+          "bytes": 7251
         },
         {
           "path": "dist/node-context.d.ts",
@@ -12956,19 +13076,19 @@
         },
         {
           "path": "dist/runner.d.ts",
-          "bytes": 31196
+          "bytes": 31813
         },
         {
           "path": "dist/runner.d.ts.map",
-          "bytes": 5661
+          "bytes": 5671
         },
         {
           "path": "dist/runner.js",
-          "bytes": 27417
+          "bytes": 28739
         },
         {
           "path": "dist/runner.js.map",
-          "bytes": 10874
+          "bytes": 11094
         },
         {
           "path": "dist/verdict-cache.d.ts",
@@ -13028,11 +13148,11 @@
         },
         {
           "path": "README.md",
-          "bytes": 4672
+          "bytes": 4338
         },
         {
           "path": "src/ambition-proof.ts",
-          "bytes": 13777
+          "bytes": 13767
         },
         {
           "path": "src/assurance-map.ts",
@@ -13052,7 +13172,7 @@
         },
         {
           "path": "src/declared-fix.ts",
-          "bytes": 26618
+          "bytes": 26649
         },
         {
           "path": "src/engine.ts",
@@ -13068,7 +13188,7 @@
         },
         {
           "path": "src/facts/capability-link-facts.ts",
-          "bytes": 2463
+          "bytes": 2468
         },
         {
           "path": "src/facts/check-governance-facts.ts",
@@ -13076,7 +13196,7 @@
         },
         {
           "path": "src/facts/composition-facts.ts",
-          "bytes": 6478
+          "bytes": 6468
         },
         {
           "path": "src/facts/feature-edge-facts.ts",
@@ -13092,15 +13212,15 @@
         },
         {
           "path": "src/facts/mutation-facts.ts",
-          "bytes": 7123
+          "bytes": 7113
         },
         {
           "path": "src/facts/proof-facts.ts",
-          "bytes": 5297
+          "bytes": 5277
         },
         {
           "path": "src/facts/simulation-facts.ts",
-          "bytes": 5006
+          "bytes": 4996
         },
         {
           "path": "src/facts/skip-site-facts.ts",
@@ -13108,27 +13228,27 @@
         },
         {
           "path": "src/facts/spine-relation-facts.ts",
-          "bytes": 8036
+          "bytes": 8142
         },
         {
           "path": "src/facts/standards-facts.ts",
-          "bytes": 46755
+          "bytes": 46742
         },
         {
           "path": "src/facts/supply-chain-facts.ts",
-          "bytes": 5213
+          "bytes": 5203
         },
         {
           "path": "src/facts/taint-facts.ts",
-          "bytes": 6335
+          "bytes": 6325
         },
         {
           "path": "src/facts/traceability-facts.ts",
-          "bytes": 6770
+          "bytes": 6760
         },
         {
           "path": "src/facts/transition-facts.ts",
-          "bytes": 8437
+          "bytes": 8481
         },
         {
           "path": "src/finding.ts",
@@ -13136,7 +13256,7 @@
         },
         {
           "path": "src/gate.ts",
-          "bytes": 77342
+          "bytes": 77643
         },
         {
           "path": "src/gates/active-modeled-surface-reader.ts",
@@ -13148,7 +13268,7 @@
         },
         {
           "path": "src/gates/capability-gate-link.ts",
-          "bytes": 8345
+          "bytes": 8454
         },
         {
           "path": "src/gates/check-negative-control.ts",
@@ -13164,7 +13284,7 @@
         },
         {
           "path": "src/gates/claim-property.ts",
-          "bytes": 39907
+          "bytes": 40024
         },
         {
           "path": "src/gates/code-only.ts",
@@ -13180,7 +13300,7 @@
         },
         {
           "path": "src/gates/declared-fix-protocol.ts",
-          "bytes": 10111
+          "bytes": 10250
         },
         {
           "path": "src/gates/diagnostic-code-registered.ts",
@@ -13188,11 +13308,11 @@
         },
         {
           "path": "src/gates/early-return-detect.ts",
-          "bytes": 2539
+          "bytes": 5134
         },
         {
           "path": "src/gates/facade-export-budget.ts",
-          "bytes": 28069
+          "bytes": 28208
         },
         {
           "path": "src/gates/feature-edge-connectivity.ts",
@@ -13248,11 +13368,11 @@
         },
         {
           "path": "src/gates/no-skipped-test-fact.ts",
-          "bytes": 8966
+          "bytes": 9174
         },
         {
           "path": "src/gates/no-skipped-test.ts",
-          "bytes": 15810
+          "bytes": 16308
         },
         {
           "path": "src/gates/no-ts-ignore.ts",
@@ -13272,7 +13392,7 @@
         },
         {
           "path": "src/gates/performance-contracts.ts",
-          "bytes": 36947
+          "bytes": 39720
         },
         {
           "path": "src/gates/proof-propagation.ts",
@@ -13280,11 +13400,11 @@
         },
         {
           "path": "src/gates/simulation-determinism.ts",
-          "bytes": 15665
+          "bytes": 15655
         },
         {
           "path": "src/gates/skip-allowlist.ts",
-          "bytes": 31610
+          "bytes": 31293
         },
         {
           "path": "src/gates/skip-detect.ts",
@@ -13292,15 +13412,15 @@
         },
         {
           "path": "src/gates/spine-relation.ts",
-          "bytes": 12360
+          "bytes": 12611
         },
         {
           "path": "src/gates/standards-integrity.ts",
-          "bytes": 13284
+          "bytes": 13422
         },
         {
           "path": "src/gates/supply-chain.ts",
-          "bytes": 8894
+          "bytes": 9030
         },
         {
           "path": "src/gates/symbol-orphan-divergence.ts",
@@ -13308,19 +13428,19 @@
         },
         {
           "path": "src/gates/taint-flow.ts",
-          "bytes": 10190
+          "bytes": 10299
         },
         {
           "path": "src/gates/traceability-bridge.ts",
-          "bytes": 11996
+          "bytes": 12132
         },
         {
           "path": "src/gates/transition-conformance.ts",
-          "bytes": 16283
+          "bytes": 16337
         },
         {
           "path": "src/index.ts",
-          "bytes": 31375
+          "bytes": 31487
         },
         {
           "path": "src/node-context.ts",
@@ -13336,7 +13456,7 @@
         },
         {
           "path": "src/runner.ts",
-          "bytes": 47896
+          "bytes": 49204
         },
         {
           "path": "src/verdict-cache.ts",
@@ -13354,8 +13474,8 @@
     },
     {
       "package": "@liteship/genui",
-      "compressedBytes": 23427,
-      "unpackedBytes": 88475,
+      "compressedBytes": 23392,
+      "unpackedBytes": 88324,
       "fileCount": 58,
       "files": [
         {
@@ -13544,7 +13664,7 @@
         },
         {
           "path": "README.md",
-          "bytes": 3532
+          "bytes": 3381
         },
         {
           "path": "src/brands.ts",
@@ -13594,9 +13714,9 @@
     },
     {
       "package": "@liteship/mcp-server",
-      "compressedBytes": 110837,
-      "unpackedBytes": 431580,
-      "fileCount": 128,
+      "compressedBytes": 111590,
+      "unpackedBytes": 433849,
+      "fileCount": 133,
       "files": [
         {
           "path": "dist/app-render.d.ts",
@@ -13736,7 +13856,7 @@
         },
         {
           "path": "dist/jsonrpc.js",
-          "bytes": 8084
+          "bytes": 8100
         },
         {
           "path": "dist/jsonrpc.js.map",
@@ -13748,15 +13868,15 @@
         },
         {
           "path": "dist/lsp/code-action.d.ts.map",
-          "bytes": 384
+          "bytes": 381
         },
         {
           "path": "dist/lsp/code-action.js",
-          "bytes": 3832
+          "bytes": 3834
         },
         {
           "path": "dist/lsp/code-action.js.map",
-          "bytes": 1085
+          "bytes": 1083
         },
         {
           "path": "dist/lsp/diagnostic.d.ts",
@@ -13768,11 +13888,11 @@
         },
         {
           "path": "dist/lsp/diagnostic.js",
-          "bytes": 9719
+          "bytes": 9721
         },
         {
           "path": "dist/lsp/diagnostic.js.map",
-          "bytes": 4427
+          "bytes": 4426
         },
         {
           "path": "dist/lsp/framing.d.ts",
@@ -13792,31 +13912,47 @@
         },
         {
           "path": "dist/lsp/index.d.ts",
-          "bytes": 1942
+          "bytes": 1974
         },
         {
           "path": "dist/lsp/index.d.ts.map",
-          "bytes": 888
+          "bytes": 916
         },
         {
           "path": "dist/lsp/index.js",
-          "bytes": 1516
+          "bytes": 1518
         },
         {
           "path": "dist/lsp/index.js.map",
-          "bytes": 572
+          "bytes": 569
+        },
+        {
+          "path": "dist/lsp/protocol.d.ts",
+          "bytes": 2317
+        },
+        {
+          "path": "dist/lsp/protocol.d.ts.map",
+          "bytes": 742
+        },
+        {
+          "path": "dist/lsp/protocol.js",
+          "bytes": 1933
+        },
+        {
+          "path": "dist/lsp/protocol.js.map",
+          "bytes": 596
         },
         {
           "path": "dist/lsp/server.d.ts",
-          "bytes": 7369
+          "bytes": 7401
         },
         {
           "path": "dist/lsp/server.d.ts.map",
-          "bytes": 2291
+          "bytes": 2322
         },
         {
           "path": "dist/lsp/server.js",
-          "bytes": 25162
+          "bytes": 25164
         },
         {
           "path": "dist/lsp/server.js.map",
@@ -13840,19 +13976,19 @@
         },
         {
           "path": "dist/lsp/types.d.ts",
-          "bytes": 7730
+          "bytes": 6003
         },
         {
           "path": "dist/lsp/types.d.ts.map",
-          "bytes": 3003
+          "bytes": 2508
         },
         {
           "path": "dist/lsp/types.js",
-          "bytes": 2799
+          "bytes": 1313
         },
         {
           "path": "dist/lsp/types.js.map",
-          "bytes": 605
+          "bytes": 140
         },
         {
           "path": "dist/manifest-resource.d.ts",
@@ -14008,7 +14144,7 @@
         },
         {
           "path": "README.md",
-          "bytes": 4588
+          "bytes": 4451
         },
         {
           "path": "src/app-render.ts",
@@ -14044,15 +14180,15 @@
         },
         {
           "path": "src/jsonrpc.ts",
-          "bytes": 10870
+          "bytes": 10886
         },
         {
           "path": "src/lsp/code-action.ts",
-          "bytes": 3768
+          "bytes": 3787
         },
         {
           "path": "src/lsp/diagnostic.ts",
-          "bytes": 9948
+          "bytes": 9978
         },
         {
           "path": "src/lsp/framing.ts",
@@ -14060,11 +14196,15 @@
         },
         {
           "path": "src/lsp/index.ts",
-          "bytes": 1978
+          "bytes": 2002
+        },
+        {
+          "path": "src/lsp/protocol.ts",
+          "bytes": 2197
         },
         {
           "path": "src/lsp/server.ts",
-          "bytes": 28997
+          "bytes": 29025
         },
         {
           "path": "src/lsp/stdio.ts",
@@ -14072,7 +14212,7 @@
         },
         {
           "path": "src/lsp/types.ts",
-          "bytes": 7687
+          "bytes": 6226
         },
         {
           "path": "src/manifest-resource.ts",
@@ -14114,7 +14254,7 @@
     },
     {
       "package": "@liteship/quantizer",
-      "compressedBytes": 44003,
+      "compressedBytes": 44004,
       "unpackedBytes": 175972,
       "fileCount": 42,
       "files": [
@@ -14290,8 +14430,8 @@
     },
     {
       "package": "@liteship/remotion",
-      "compressedBytes": 16450,
-      "unpackedBytes": 62643,
+      "compressedBytes": 16418,
+      "unpackedBytes": 62528,
       "fileCount": 33,
       "files": [
         {
@@ -14400,7 +14540,7 @@
         },
         {
           "path": "README.md",
-          "bytes": 3834
+          "bytes": 3719
         },
         {
           "path": "src/composition.ts",
@@ -14430,13 +14570,13 @@
     },
     {
       "package": "@liteship/scene",
-      "compressedBytes": 86866,
-      "unpackedBytes": 362531,
+      "compressedBytes": 86763,
+      "unpackedBytes": 362406,
       "fileCount": 143,
       "files": [
         {
           "path": "dist/beat-binding-capsule.d.ts",
-          "bytes": 3200
+          "bytes": 3189
         },
         {
           "path": "dist/beat-binding-capsule.d.ts.map",
@@ -14444,7 +14584,7 @@
         },
         {
           "path": "dist/beat-binding-capsule.js",
-          "bytes": 4180
+          "bytes": 4169
         },
         {
           "path": "dist/beat-binding-capsule.js.map",
@@ -14484,7 +14624,7 @@
         },
         {
           "path": "dist/compile.d.ts",
-          "bytes": 5044
+          "bytes": 5022
         },
         {
           "path": "dist/compile.d.ts.map",
@@ -14492,7 +14632,7 @@
         },
         {
           "path": "dist/compile.js",
-          "bytes": 11914
+          "bytes": 11892
         },
         {
           "path": "dist/compile.js.map",
@@ -14628,7 +14768,7 @@
         },
         {
           "path": "dist/runtime.d.ts",
-          "bytes": 6176
+          "bytes": 6157
         },
         {
           "path": "dist/runtime.d.ts.map",
@@ -14636,7 +14776,7 @@
         },
         {
           "path": "dist/runtime.js",
-          "bytes": 9671
+          "bytes": 9668
         },
         {
           "path": "dist/runtime.js.map",
@@ -14644,7 +14784,7 @@
         },
         {
           "path": "dist/sugar/beat.d.ts",
-          "bytes": 2334
+          "bytes": 2323
         },
         {
           "path": "dist/sugar/beat.d.ts.map",
@@ -14652,7 +14792,7 @@
         },
         {
           "path": "dist/sugar/beat.js",
-          "bytes": 2353
+          "bytes": 2342
         },
         {
           "path": "dist/sugar/beat.js.map",
@@ -14660,23 +14800,23 @@
         },
         {
           "path": "dist/sugar/ease.d.ts",
-          "bytes": 1692
+          "bytes": 1766
         },
         {
           "path": "dist/sugar/ease.d.ts.map",
-          "bytes": 555
+          "bytes": 556
         },
         {
           "path": "dist/sugar/ease.js",
-          "bytes": 1756
+          "bytes": 1830
         },
         {
           "path": "dist/sugar/ease.js.map",
-          "bytes": 1455
+          "bytes": 1456
         },
         {
           "path": "dist/sugar/envelope.d.ts",
-          "bytes": 3164
+          "bytes": 3142
         },
         {
           "path": "dist/sugar/envelope.d.ts.map",
@@ -14684,7 +14824,7 @@
         },
         {
           "path": "dist/sugar/envelope.js",
-          "bytes": 2894
+          "bytes": 2883
         },
         {
           "path": "dist/sugar/envelope.js.map",
@@ -14828,7 +14968,7 @@
         },
         {
           "path": "dist/systems/sync.js",
-          "bytes": 5929
+          "bytes": 5918
         },
         {
           "path": "dist/systems/sync.js.map",
@@ -14892,11 +15032,11 @@
         },
         {
           "path": "README.md",
-          "bytes": 4019
+          "bytes": 3904
         },
         {
           "path": "src/beat-binding-capsule.ts",
-          "bytes": 5129
+          "bytes": 5118
         },
         {
           "path": "src/beat-projection.ts",
@@ -14904,7 +15044,7 @@
         },
         {
           "path": "src/compile.ts",
-          "bytes": 13287
+          "bytes": 13265
         },
         {
           "path": "src/context.ts",
@@ -14944,19 +15084,19 @@
         },
         {
           "path": "src/runtime.ts",
-          "bytes": 12652
+          "bytes": 12649
         },
         {
           "path": "src/sugar/beat.ts",
-          "bytes": 3139
+          "bytes": 3128
         },
         {
           "path": "src/sugar/ease.ts",
-          "bytes": 2376
+          "bytes": 2450
         },
         {
           "path": "src/sugar/envelope.ts",
-          "bytes": 3960
+          "bytes": 3938
         },
         {
           "path": "src/sugar/layout.ts",
@@ -14992,7 +15132,7 @@
         },
         {
           "path": "src/systems/sync.ts",
-          "bytes": 5737
+          "bytes": 5726
         },
         {
           "path": "src/systems/transition.ts",
@@ -15010,13 +15150,13 @@
     },
     {
       "package": "@liteship/stage",
-      "compressedBytes": 34157,
-      "unpackedBytes": 130089,
+      "compressedBytes": 34097,
+      "unpackedBytes": 129965,
       "fileCount": 28,
       "files": [
         {
           "path": "dist/dual-export.d.ts",
-          "bytes": 9398
+          "bytes": 9383
         },
         {
           "path": "dist/dual-export.d.ts.map",
@@ -15024,7 +15164,7 @@
         },
         {
           "path": "dist/dual-export.js",
-          "bytes": 24596
+          "bytes": 24566
         },
         {
           "path": "dist/dual-export.js.map",
@@ -15080,19 +15220,19 @@
         },
         {
           "path": "dist/motion-export.d.ts",
-          "bytes": 3353
+          "bytes": 3431
         },
         {
           "path": "dist/motion-export.d.ts.map",
-          "bytes": 904
+          "bytes": 905
         },
         {
           "path": "dist/motion-export.js",
-          "bytes": 3364
+          "bytes": 3442
         },
         {
           "path": "dist/motion-export.js.map",
-          "bytes": 1619
+          "bytes": 1620
         },
         {
           "path": "LICENSE",
@@ -15104,11 +15244,11 @@
         },
         {
           "path": "README.md",
-          "bytes": 4178
+          "bytes": 3893
         },
         {
           "path": "src/dual-export.ts",
-          "bytes": 29992
+          "bytes": 29962
         },
         {
           "path": "src/ffmpeg-encoder.ts",
@@ -15124,31 +15264,31 @@
         },
         {
           "path": "src/motion-export.ts",
-          "bytes": 4556
+          "bytes": 4634
         }
       ]
     },
     {
       "package": "@liteship/vite",
-      "compressedBytes": 137527,
-      "unpackedBytes": 575895,
-      "fileCount": 134,
+      "compressedBytes": 141830,
+      "unpackedBytes": 594061,
+      "fileCount": 138,
       "files": [
         {
           "path": "dist/boundary-manifest.d.ts",
-          "bytes": 5147
+          "bytes": 5627
         },
         {
           "path": "dist/boundary-manifest.d.ts.map",
-          "bytes": 1493
+          "bytes": 1637
         },
         {
           "path": "dist/boundary-manifest.js",
-          "bytes": 27765
+          "bytes": 30180
         },
         {
           "path": "dist/boundary-manifest.js.map",
-          "bytes": 16861
+          "bytes": 19897
         },
         {
           "path": "dist/boundary-shadowing.d.ts",
@@ -15352,7 +15492,7 @@
         },
         {
           "path": "dist/primitive-resolve.js",
-          "bytes": 5326
+          "bytes": 5323
         },
         {
           "path": "dist/primitive-resolve.js.map",
@@ -15376,19 +15516,19 @@
         },
         {
           "path": "dist/resolve-fs.d.ts",
-          "bytes": 568
+          "bytes": 1027
         },
         {
           "path": "dist/resolve-fs.d.ts.map",
-          "bytes": 320
+          "bytes": 456
         },
         {
           "path": "dist/resolve-fs.js",
-          "bytes": 2658
+          "bytes": 3248
         },
         {
           "path": "dist/resolve-fs.js.map",
-          "bytes": 1870
+          "bytes": 2115
         },
         {
           "path": "dist/resolve-utils.d.ts",
@@ -15448,11 +15588,11 @@
         },
         {
           "path": "dist/token-manifest.js",
-          "bytes": 7685
+          "bytes": 7805
         },
         {
           "path": "dist/token-manifest.js.map",
-          "bytes": 6442
+          "bytes": 6531
         },
         {
           "path": "dist/token-transform.d.ts",
@@ -15485,6 +15625,22 @@
         {
           "path": "dist/transform-css.js.map",
           "bytes": 13118
+        },
+        {
+          "path": "dist/try-import.d.ts",
+          "bytes": 989
+        },
+        {
+          "path": "dist/try-import.d.ts.map",
+          "bytes": 391
+        },
+        {
+          "path": "dist/try-import.js",
+          "bytes": 3828
+        },
+        {
+          "path": "dist/try-import.js.map",
+          "bytes": 2098
         },
         {
           "path": "dist/virtual-modules.d.ts",
@@ -15564,7 +15720,7 @@
         },
         {
           "path": "src/boundary-manifest.ts",
-          "bytes": 29705
+          "bytes": 32098
         },
         {
           "path": "src/boundary-shadowing.ts",
@@ -15604,7 +15760,7 @@
         },
         {
           "path": "src/index.ts",
-          "bytes": 3979
+          "bytes": 3969
         },
         {
           "path": "src/plugin.ts",
@@ -15616,7 +15772,7 @@
         },
         {
           "path": "src/primitive-resolve.ts",
-          "bytes": 6286
+          "bytes": 6283
         },
         {
           "path": "src/project-config.ts",
@@ -15624,11 +15780,7 @@
         },
         {
           "path": "src/resolve-fs.ts",
-          "bytes": 2580
-        },
-        {
-          "path": "src/resolve-utils.ts",
-          "bytes": 3857
+          "bytes": 3243
         },
         {
           "path": "src/style-transform.ts",
@@ -15640,7 +15792,7 @@
         },
         {
           "path": "src/token-manifest.ts",
-          "bytes": 9464
+          "bytes": 9570
         },
         {
           "path": "src/token-transform.ts",
@@ -15649,6 +15801,10 @@
         {
           "path": "src/transform-css.ts",
           "bytes": 21424
+        },
+        {
+          "path": "src/try-import.ts",
+          "bytes": 3857
         },
         {
           "path": "src/virtual-modules.ts",
@@ -15674,8 +15830,8 @@
     },
     {
       "package": "@liteship/web",
-      "compressedBytes": 199816,
-      "unpackedBytes": 869341,
+      "compressedBytes": 205799,
+      "unpackedBytes": 891849,
       "fileCount": 215,
       "files": [
         {
@@ -16048,19 +16204,19 @@
         },
         {
           "path": "dist/slot/addressing.d.ts",
-          "bytes": 1650
+          "bytes": 2231
         },
         {
           "path": "dist/slot/addressing.d.ts.map",
-          "bytes": 781
+          "bytes": 866
         },
         {
           "path": "dist/slot/addressing.js",
-          "bytes": 3320
+          "bytes": 3590
         },
         {
           "path": "dist/slot/addressing.js.map",
-          "bytes": 3338
+          "bytes": 3339
         },
         {
           "path": "dist/slot/registry.d.ts",
@@ -16128,35 +16284,35 @@
         },
         {
           "path": "dist/stream/recovery-substrate.d.ts",
-          "bytes": 2987
+          "bytes": 3735
         },
         {
           "path": "dist/stream/recovery-substrate.d.ts.map",
-          "bytes": 866
+          "bytes": 939
         },
         {
           "path": "dist/stream/recovery-substrate.js",
-          "bytes": 7775
+          "bytes": 12799
         },
         {
           "path": "dist/stream/recovery-substrate.js.map",
-          "bytes": 4097
+          "bytes": 6874
         },
         {
           "path": "dist/stream/recovery.d.ts",
-          "bytes": 5910
+          "bytes": 6333
         },
         {
           "path": "dist/stream/recovery.d.ts.map",
-          "bytes": 2088
+          "bytes": 2173
         },
         {
           "path": "dist/stream/recovery.js",
-          "bytes": 7395
+          "bytes": 7834
         },
         {
           "path": "dist/stream/recovery.js.map",
-          "bytes": 5055
+          "bytes": 5223
         },
         {
           "path": "dist/stream/resumption-pure.d.ts",
@@ -16168,27 +16324,27 @@
         },
         {
           "path": "dist/stream/resumption-pure.js",
-          "bytes": 3708
+          "bytes": 4896
         },
         {
           "path": "dist/stream/resumption-pure.js.map",
-          "bytes": 2900
+          "bytes": 4422
         },
         {
           "path": "dist/stream/resumption.d.ts",
-          "bytes": 4488
+          "bytes": 4723
         },
         {
           "path": "dist/stream/resumption.d.ts.map",
-          "bytes": 1110
+          "bytes": 1114
         },
         {
           "path": "dist/stream/resumption.js",
-          "bytes": 13637
+          "bytes": 13872
         },
         {
           "path": "dist/stream/resumption.js.map",
-          "bytes": 8608
+          "bytes": 8612
         },
         {
           "path": "dist/stream/sse-pure.d.ts",
@@ -16208,35 +16364,35 @@
         },
         {
           "path": "dist/stream/sse.d.ts",
-          "bytes": 6408
+          "bytes": 6521
         },
         {
           "path": "dist/stream/sse.d.ts.map",
-          "bytes": 1303
+          "bytes": 1304
         },
         {
           "path": "dist/stream/sse.js",
-          "bytes": 23995
+          "bytes": 24108
         },
         {
           "path": "dist/stream/sse.js.map",
-          "bytes": 11303
+          "bytes": 11304
         },
         {
           "path": "dist/types.d.ts",
-          "bytes": 12104
+          "bytes": 11901
         },
         {
           "path": "dist/types.d.ts.map",
-          "bytes": 6315
+          "bytes": 6254
         },
         {
           "path": "dist/types.js",
-          "bytes": 602
+          "bytes": 272
         },
         {
           "path": "dist/types.js.map",
-          "bytes": 199
+          "bytes": 118
         },
         {
           "path": "dist/watch-and-prepare.d.ts",
@@ -16460,7 +16616,7 @@
         },
         {
           "path": "src/slot/addressing.ts",
-          "bytes": 3391
+          "bytes": 3981
         },
         {
           "path": "src/slot/registry.ts",
@@ -16480,19 +16636,19 @@
         },
         {
           "path": "src/stream/recovery-substrate.ts",
-          "bytes": 9040
+          "bytes": 15498
         },
         {
           "path": "src/stream/recovery.ts",
-          "bytes": 11422
+          "bytes": 12250
         },
         {
           "path": "src/stream/resumption-pure.ts",
-          "bytes": 3723
+          "bytes": 4803
         },
         {
           "path": "src/stream/resumption.ts",
-          "bytes": 14261
+          "bytes": 14496
         },
         {
           "path": "src/stream/sse-pure.ts",
@@ -16500,11 +16656,11 @@
         },
         {
           "path": "src/stream/sse.ts",
-          "bytes": 24513
+          "bytes": 24626
         },
         {
           "path": "src/types.ts",
-          "bytes": 13055
+          "bytes": 12844
         },
         {
           "path": "src/watch-and-prepare.ts",
@@ -16542,8 +16698,8 @@
     },
     {
       "package": "@liteship/worker",
-      "compressedBytes": 90039,
-      "unpackedBytes": 418420,
+      "compressedBytes": 90001,
+      "unpackedBytes": 418283,
       "fileCount": 78,
       "files": [
         {
@@ -16628,7 +16784,7 @@
         },
         {
           "path": "dist/compositor-types.d.ts",
-          "bytes": 8979
+          "bytes": 8968
         },
         {
           "path": "dist/compositor-types.d.ts.map",
@@ -16796,7 +16952,7 @@
         },
         {
           "path": "README.md",
-          "bytes": 4310
+          "bytes": 4195
         },
         {
           "path": "src/compositor-mode.ts",
@@ -16820,7 +16976,7 @@
         },
         {
           "path": "src/compositor-types.ts",
-          "bytes": 8967
+          "bytes": 8956
         },
         {
           "path": "src/compositor-worker.ts",
@@ -16862,8 +17018,8 @@
     },
     {
       "package": "create-liteship",
-      "compressedBytes": 17248,
-      "unpackedBytes": 55769,
+      "compressedBytes": 17804,
+      "unpackedBytes": 58031,
       "fileCount": 28,
       "files": [
         {
@@ -16892,15 +17048,15 @@
         },
         {
           "path": "dist/scaffold.d.ts.map",
-          "bytes": 1016
+          "bytes": 1017
         },
         {
           "path": "dist/scaffold.js",
-          "bytes": 9324
+          "bytes": 10063
         },
         {
           "path": "dist/scaffold.js.map",
-          "bytes": 6707
+          "bytes": 7558
         },
         {
           "path": "dist/template-renames.d.ts",
@@ -16936,7 +17092,7 @@
         },
         {
           "path": "src/scaffold.ts",
-          "bytes": 11001
+          "bytes": 11672
         },
         {
           "path": "src/template-renames.ts",
@@ -16982,8 +17138,8 @@
     },
     {
       "package": "liteship",
-      "compressedBytes": 53878,
-      "unpackedBytes": 286189,
+      "compressedBytes": 54304,
+      "unpackedBytes": 287719,
       "fileCount": 97,
       "files": [
         {
@@ -17040,19 +17196,19 @@
         },
         {
           "path": "dist/compiler.d.ts",
-          "bytes": 3099
+          "bytes": 3314
         },
         {
           "path": "dist/compiler.d.ts.map",
-          "bytes": 2128
+          "bytes": 2256
         },
         {
           "path": "dist/compiler.js",
-          "bytes": 1426
+          "bytes": 1734
         },
         {
           "path": "dist/compiler.js.map",
-          "bytes": 926
+          "bytes": 1010
         },
         {
           "path": "dist/evidence.d.ts",
@@ -17232,11 +17388,11 @@
         },
         {
           "path": "dist/schema.d.ts",
-          "bytes": 2261
+          "bytes": 2320
         },
         {
           "path": "dist/schema.d.ts.map",
-          "bytes": 1432
+          "bytes": 1460
         },
         {
           "path": "dist/schema.js",
@@ -17304,7 +17460,7 @@
         },
         {
           "path": "README.md",
-          "bytes": 3998
+          "bytes": 4167
         },
         {
           "path": "src/adaptive.ts",
@@ -17316,7 +17472,7 @@
         },
         {
           "path": "src/compiler.ts",
-          "bytes": 3163
+          "bytes": 3631
         },
         {
           "path": "src/evidence.ts",
@@ -17364,7 +17520,7 @@
         },
         {
           "path": "src/schema.ts",
-          "bytes": 2320
+          "bytes": 2391
         },
         {
           "path": "src/testing.ts",
@@ -17477,839 +17633,839 @@
       "moduleCount": 193,
       "packageCount": 8,
       "packages": [
-        "@liteship/canonical@0.23.0",
-        "@liteship/compiler@0.23.0",
-        "@liteship/core@0.23.0",
-        "@liteship/error@0.23.0",
-        "@liteship/quantizer@0.23.0",
+        "@liteship/canonical@0.24.0",
+        "@liteship/compiler@0.24.0",
+        "@liteship/core@0.24.0",
+        "@liteship/error@0.24.0",
+        "@liteship/quantizer@0.24.0",
         "@noble/hashes@1.8.0",
         "cborg@4.5.8",
-        "liteship@0.23.0"
+        "liteship@0.24.0"
       ],
       "modules": [
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/addressed-digest.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/brands.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/canonical-json.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/cbor-decode.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/cbor.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/compare-bytes.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/fnv.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/index.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/value-domain.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/ai-manifest.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/aria.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/capsules/aria-compile.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/capsules/glsl-compile.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/capsules/wgsl-compile.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/component-css.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/css-string.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
-          "path": "dist/css-utils.js"
+          "version": "0.24.0",
+          "path": "dist/css-syntax.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/css.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/dispatch.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/glsl.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/index.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/mcp-app-manifest.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
-          "path": "dist/motion-utils.js"
+          "version": "0.24.0",
+          "path": "dist/motion-augment.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/responsive-media-compile.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reveal-compile.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/scroll-timeline-compile.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/stagger-compile.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/style-css.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/theme-css.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/token-css.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/token-js.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/token-tailwind.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/view-transition-compile.js"
         },
         {
           "package": "@liteship/compiler",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/wgsl.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/adaptive.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/ai-cast.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/assembly.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/boundary-attribute.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/boundary.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/capsule.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/capsules/ai-cast-proposal.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/capsules/ai-cast-summarize.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/capsules/boundary-evaluate.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/capsules/canonical-cbor-decode.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/capsules/canonical-cbor.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/capsules/document-graph-address.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/capsules/escalation-choose-tier.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/capsules/graph-patch-identity.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/capsules/token-buffer.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/component.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/composable.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/config.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/defaults.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/index.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/input-validation.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/plan.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/ship-capsule.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/style.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/theme.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/token.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/authoring/tuple-map.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/clock/clock.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/clock/hlc.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/clock/index.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/clock/rng.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/clock/vector-clock.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/ecs/dense.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/ecs/index.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/ecs/part.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/ecs/world.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/addressed-digest.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/bench-classify.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/bench-marker.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/caps.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/closest-match.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/content-address.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/definition-snapshot.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/diagnostics.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/escalation.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/fnv.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/index.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/quality-tiers.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/receipt.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/typed-ref.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/ui-quality.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evidence/validated-output.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/graph/dag.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/graph/document-graph-address.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/graph/document-graph-schema.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/graph/graph-mutation-client.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/graph/graph-mutation.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/graph/graph-patch.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/graph/graph-query-gap-replay.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/graph/graph-query.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/graph/index.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/graph/projection.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/index.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/media/av-bridge.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/media/av-renderer.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/media/compositor-pool.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/media/compositor.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/media/frame-budget.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/media/gen-frame.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/media/index.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/media/responsive-media.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/media/token-buffer.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/media/video.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/animation.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/blend.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/clamp.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/easing.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/index.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/interpolate.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/interpret-transition.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/reveal.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/runtime-write-plan.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/scroll-timeline.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/stagger.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/state-transition.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/timeline.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/motion/transition-program.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/cell-kernel.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/cell.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/derived.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/dirty.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/index.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/lifetime.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/live-cell.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/primitive.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/runtime-coordinator.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/scheduler.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/signal-input.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/signal.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/speculative.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/state-cell.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/store.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/stream-recovery.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/reactive/zap.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/repository-path.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/schema/ast.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/schema/brands.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/schema/cbor.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/schema/codec.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/schema/constructors.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/schema/decode.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/schema/index.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/schema/schema-port.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/schema/standard.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/schema/to-json-schema.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/wasm/boundary-f32.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/wasm/index.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/wasm/wasm-dispatch.js"
         },
         {
           "package": "@liteship/core",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/wasm/wasm-fallback.js"
         },
         {
           "package": "@liteship/error",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/codes.js"
         },
         {
           "package": "@liteship/error",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/contract.js"
         },
         {
           "package": "@liteship/error",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/index.js"
         },
         {
           "package": "@liteship/error",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/result.js"
         },
         {
           "package": "@liteship/error",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/variants.js"
         },
         {
           "package": "@liteship/quantizer",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/animated-quantizer.js"
         },
         {
           "package": "@liteship/quantizer",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/evaluate.js"
         },
         {
           "package": "@liteship/quantizer",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/index.js"
         },
         {
           "package": "@liteship/quantizer",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/memo-cache.js"
         },
         {
           "package": "@liteship/quantizer",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/quantizer.js"
         },
         {
           "package": "@liteship/quantizer",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/transition.js"
         },
         {
@@ -18444,12 +18600,12 @@
         },
         {
           "package": "liteship",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/adaptive.js"
         },
         {
           "package": "liteship",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/index.js"
         }
       ]
@@ -18459,131 +18615,131 @@
       "moduleCount": 34,
       "packageCount": 5,
       "packages": [
-        "@liteship/canonical@0.23.0",
-        "@liteship/error@0.23.0",
-        "@liteship/genui@0.23.0",
+        "@liteship/canonical@0.24.0",
+        "@liteship/error@0.24.0",
+        "@liteship/genui@0.24.0",
         "@noble/hashes@1.8.0",
-        "liteship@0.23.0"
+        "liteship@0.24.0"
       ],
       "modules": [
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/addressed-digest.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/brands.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/canonical-json.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/cbor-decode.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/cbor.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/compare-bytes.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/fnv.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/index.js"
         },
         {
           "package": "@liteship/canonical",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/value-domain.js"
         },
         {
           "package": "@liteship/error",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/codes.js"
         },
         {
           "package": "@liteship/error",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/contract.js"
         },
         {
           "package": "@liteship/error",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/index.js"
         },
         {
           "package": "@liteship/error",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/result.js"
         },
         {
           "package": "@liteship/error",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/variants.js"
         },
         {
           "package": "@liteship/genui",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/brands.js"
         },
         {
           "package": "@liteship/genui",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/catalog.js"
         },
         {
           "package": "@liteship/genui",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/demo-catalog.js"
         },
         {
           "package": "@liteship/genui",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/guards.js"
         },
         {
           "package": "@liteship/genui",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/identity.js"
         },
         {
           "package": "@liteship/genui",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/index.js"
         },
         {
           "package": "@liteship/genui",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/interaction.js"
         },
         {
           "package": "@liteship/genui",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/parse.js"
         },
         {
           "package": "@liteship/genui",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/render.js"
         },
         {
           "package": "@liteship/genui",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/validate.js"
         },
         {
@@ -18633,7 +18789,7 @@
         },
         {
           "package": "liteship",
-          "version": "0.23.0",
+          "version": "0.24.0",
           "path": "dist/genui.js"
         }
       ]
@@ -18669,5 +18825,5 @@
       ]
     }
   ],
-  "baselineId": "sha256:554bbfad6e7c51dc04a559ae2b1a31a4662894d1fc60dbd080af588202895b8b"
+  "baselineId": "sha256:360a5c7b20cd04b12d7ffbeda08c8dedb9aabb768e6e07c9e8b9686e41078d32"
 }
