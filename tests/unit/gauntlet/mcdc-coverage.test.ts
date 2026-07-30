@@ -47,6 +47,8 @@ function condition(
     column: 7,
     decision: 'a && b',
     condition: 'a',
+    forceTrueInconclusiveReason: null,
+    forceFalseInconclusiveReason: null,
     coveringTests: ['tests/fixture.test.ts'],
     ...over,
   };
@@ -113,6 +115,25 @@ describe('mcdcCoverageGate — floor calibration by level', () => {
     expect(findings[0]!.detail).toContain('a');
     expect(findings[0]!.detail).toContain('a && b');
     expect(findings[0]!.detail).toContain('force-FALSE');
+  });
+
+  it('an INCONCLUSIVE pin finding names the actual refusal reason, never a generic infra label (PR #192 review, round 4)', () => {
+    const findings = mcdcCoverageGate.run(
+      ctx(simpleIR([L4_FILE]), {
+        conditions: [
+          condition({
+            file: L4_FILE,
+            forceTrueVerdict: 'inconclusive',
+            forceFalseVerdict: 'killed',
+            forceTrueInconclusiveReason: 'spawn timeout: the per-mutant budget (240000 ms) expired',
+          }),
+        ],
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    // The reader must see WHICH infra fault refused the verdict — a timeout, a
+    // spawn failure, and a zero-test run demand different responses.
+    expect(findings[0]!.detail).toContain('per-mutant budget (240000 ms) expired');
   });
 
   it('an L1 uncovered condition is advisory debt (calibrating, never blocks)', () => {

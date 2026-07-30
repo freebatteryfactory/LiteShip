@@ -210,6 +210,8 @@ describe('semantic assurance execution receipt', () => {
           condition: 'a',
           forceTrueVerdict: 'killed',
           forceFalseVerdict: 'killed',
+          forceTrueInconclusiveReason: null,
+          forceFalseInconclusiveReason: null,
           coveringTests: [],
         },
       ],

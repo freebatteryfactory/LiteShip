@@ -307,6 +307,8 @@ describe('assurance inventory', () => {
           condition: 'left',
           forceTrueVerdict: 'killed',
           forceFalseVerdict: 'killed',
+          forceTrueInconclusiveReason: null,
+          forceFalseInconclusiveReason: null,
           coveringTests: ['tests/unit/core/value.test.ts'],
         },
       ],

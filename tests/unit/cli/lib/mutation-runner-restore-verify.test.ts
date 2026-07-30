@@ -17,6 +17,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as fsModule from 'node:fs';
 
 const verifyReadDenied = { active: false, targetReads: 0 };
+// The RESTORE-write sibling (PR #192 review, round 4): the chmod-0o444 staging
+// in mutation-runner.test.ts cannot produce a write failure under a root-run
+// container (root ignores file modes), so THIS mock is the root-independent
+// proof of the same campaignFatal contract. Write 1 = apply the mutation;
+// write 2 = the restore — deny only the restore.
+const restoreWriteDenied = { active: false, targetWrites: 0 };
 
 vi.mock('node:fs', async (importOriginal) => {
   const actual = (await importOriginal()) as typeof fsModule;
@@ -31,6 +37,15 @@ vi.mock('node:fs', async (importOriginal) => {
       }
       return (actual.readFileSync as (...a: unknown[]) => unknown)(path, ...rest);
     }) as typeof actual.readFileSync,
+    writeFileSync: ((path: unknown, ...rest: unknown[]) => {
+      if (restoreWriteDenied.active && String(path).endsWith('seam.ts')) {
+        restoreWriteDenied.targetWrites += 1;
+        if (restoreWriteDenied.targetWrites > 1) {
+          throw Object.assign(new Error('EACCES: restore write denied'), { code: 'EACCES' });
+        }
+      }
+      return (actual.writeFileSync as (...a: unknown[]) => unknown)(path, ...rest);
+    }) as typeof actual.writeFileSync,
   };
 });
 
@@ -49,16 +64,20 @@ let root: string;
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'liteship-mutverify-'));
   writeFileSync(join(root, TARGET), ORIGINAL, 'utf8');
-  verifyReadDenied.active = true;
+  verifyReadDenied.active = false;
   verifyReadDenied.targetReads = 0;
+  restoreWriteDenied.active = false;
+  restoreWriteDenied.targetWrites = 0;
 });
 afterEach(() => {
   verifyReadDenied.active = false;
+  restoreWriteDenied.active = false;
   rmSync(root, { recursive: true, force: true });
 });
 
 describe('makeVitestMutationRunner — the verification-read keystone', () => {
   it('a post-restore verification-read failure is campaignFatal, never a foldable per-mutant refusal', () => {
+    verifyReadDenied.active = true;
     const runner = makeVitestMutationRunner(root, {
       targetFile: TARGET,
       spawn: () => ({
@@ -74,6 +93,27 @@ describe('makeVitestMutationRunner — the verification-read keystone', () => {
     } catch (error) {
       expect(hasTag(error, 'IoError')).toBe(true);
       expect((error as { detail?: string }).detail).toMatch(/could not be VERIFIED/u);
+      expect((error as { campaignFatal?: boolean }).campaignFatal).toBe(true);
+    }
+  });
+
+  it('a restore-WRITE failure is campaignFatal in every environment — including root, where file modes deny nothing (PR #192 review, round 4)', () => {
+    restoreWriteDenied.active = true;
+    const runner = makeVitestMutationRunner(root, {
+      targetFile: TARGET,
+      spawn: () => ({
+        status: 0,
+        signal: null,
+        stdout: JSON.stringify({ numTotalTests: 3, numFailedTests: 0, numPassedTests: 3, success: true }),
+        stderr: '',
+      }),
+    });
+    try {
+      runner(MUTATED, ['tests/x.test.ts']);
+      expect.unreachable('a failed restore write must throw');
+    } catch (error) {
+      expect(hasTag(error, 'IoError')).toBe(true);
+      expect((error as { detail?: string }).detail).toMatch(/FAILED to restore/u);
       expect((error as { campaignFatal?: boolean }).campaignFatal).toBe(true);
     }
   });

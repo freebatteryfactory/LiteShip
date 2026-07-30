@@ -81,6 +81,36 @@ describe('buildMcdcFacts — folds two pins per condition into one outcome', () 
     expect(pins.filter((pin) => pin === 'killed').length).toBeGreaterThan(0); // the rest still evaluated
   });
 
+  it('an inconclusive pin PRESERVES its refusal reason — the gate must name the actual fault (PR #192 review, round 4)', () => {
+    // The laundering defect: evaluateMutant records the exact refusal reason on
+    // the InconclusiveVerdict, but the fold kept only the tag — so a timeout, a
+    // spawn failure, and a zero-test run all collapsed to a generic "infra
+    // fault" in the finding. The reason must survive the fold, per pin.
+    let first = true;
+    const faultOnceRunner: MutantTestRunner = (mutated) => {
+      if (first) {
+        first = false;
+        throw new Error('the vitest subprocess failed to spawn — an infra fault, not a kill/survive verdict');
+      }
+      return { failed: mutated.includes('(false)') || mutated.includes('(true)') };
+    };
+    const facts = buildMcdcFacts([TARGET], { runner: faultOnceRunner, coverage: coverage() });
+    const refused = facts.conditions.find(
+      (c) => c.forceTrueVerdict === 'inconclusive' || c.forceFalseVerdict === 'inconclusive',
+    );
+    expect(refused).toBeDefined();
+    const reason =
+      refused!.forceTrueVerdict === 'inconclusive'
+        ? refused!.forceTrueInconclusiveReason
+        : refused!.forceFalseInconclusiveReason;
+    expect(reason).toContain('failed to spawn');
+    // Every settled (non-inconclusive) pin carries NO reason — null, never ''.
+    for (const c of facts.conditions) {
+      if (c.forceTrueVerdict !== 'inconclusive') expect(c.forceTrueInconclusiveReason).toBeNull();
+      if (c.forceFalseVerdict !== 'inconclusive') expect(c.forceFalseInconclusiveReason).toBeNull();
+    }
+  });
+
   it('records an admitted target with zero applicable conditions instead of silently omitting it', () => {
     const file = 'constant.ts';
     const facts = buildMcdcFacts([{ file, text: 'export const answer = 42;' }], {

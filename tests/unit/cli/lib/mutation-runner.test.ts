@@ -38,6 +38,7 @@ import { chmodSync, mkdtempSync, rmSync, readFileSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { hasTag } from '@liteship/error';
+import { runningAsRoot } from '../../../helpers/capabilities.js';
 import {
   makeVitestMutationRunner,
   type MutationSubprocessResult,
@@ -172,35 +173,43 @@ describe('makeVitestMutationRunner — the per-mutant safety + verdict proof', (
     expect(readFileSync(join(root, TARGET), 'utf8')).toBe(ORIGINAL);
   });
 
-  it('a restore failure is marked campaignFatal — evaluateMutant must abort, never fold it to inconclusive', () => {
-    // The inconclusive fold (crons 30342905791 + 30526718746) continues the
-    // campaign past runner refusals — but a working tree still holding mutated
-    // bytes is non-recoverable, and its throw must carry the abort marker.
-    const runner = makeVitestMutationRunner(root, {
-      targetFile: TARGET,
-      spawn: () => {
-        // Corrupt the on-disk bytes DURING the run so the post-run restore's
-        // byte-for-byte verify cannot succeed against the pre-run backup.
-        writeFileSync(join(root, TARGET), 'sabotaged bytes', 'utf8');
-        const deny = readFileSync(join(root, TARGET));
-        void deny;
-        chmodSync(join(root, TARGET), 0o444);
-        return { status: 0, signal: null, stdout: jsonReport(3, 0), stderr: '' };
-      },
-    });
-    try {
+  // Root ignores the 0o444 mode below — the restore write would SUCCEED and the
+  // test would hit expect.unreachable (PR #192 review, round 4, confirmed). The
+  // root-independent proof of the same contract is the fs-mock write denial in
+  // mutation-runner-restore-verify.test.ts; this one keeps the REAL-filesystem
+  // evidence everywhere else (Windows read-only attributes included).
+  it.skipIf(runningAsRoot)(
+    'a restore failure is marked campaignFatal — evaluateMutant must abort, never fold it to inconclusive',
+    () => {
+      // The inconclusive fold (crons 30342905791 + 30526718746) continues the
+      // campaign past runner refusals — but a working tree still holding mutated
+      // bytes is non-recoverable, and its throw must carry the abort marker.
+      const runner = makeVitestMutationRunner(root, {
+        targetFile: TARGET,
+        spawn: () => {
+          // Corrupt the on-disk bytes DURING the run so the post-run restore's
+          // byte-for-byte verify cannot succeed against the pre-run backup.
+          writeFileSync(join(root, TARGET), 'sabotaged bytes', 'utf8');
+          const deny = readFileSync(join(root, TARGET));
+          void deny;
+          chmodSync(join(root, TARGET), 0o444);
+          return { status: 0, signal: null, stdout: jsonReport(3, 0), stderr: '' };
+        },
+      });
       try {
-        runner(MUTATED, ['tests/x.test.ts']);
-        expect.unreachable('the sabotaged restore must throw');
-      } catch (err) {
-        expect(hasTag(err, 'IoError')).toBe(true);
-        expect((err as { campaignFatal?: boolean }).campaignFatal).toBe(true);
+        try {
+          runner(MUTATED, ['tests/x.test.ts']);
+          expect.unreachable('the sabotaged restore must throw');
+        } catch (err) {
+          expect(hasTag(err, 'IoError')).toBe(true);
+          expect((err as { campaignFatal?: boolean }).campaignFatal).toBe(true);
+        }
+      } finally {
+        chmodSync(join(root, TARGET), 0o644);
+        writeFileSync(join(root, TARGET), ORIGINAL, 'utf8');
       }
-    } finally {
-      chmodSync(join(root, TARGET), 0o644);
-      writeFileSync(join(root, TARGET), ORIGINAL, 'utf8');
-    }
-  });
+    },
+  );
 
   it('throws on a signal kill (the timeout path) AND still restores', () => {
     const runner = makeVitestMutationRunner(root, {

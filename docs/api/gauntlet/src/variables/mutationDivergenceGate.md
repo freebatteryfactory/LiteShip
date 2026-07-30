@@ -8,7 +8,7 @@
 
 > `const` **mutationDivergenceGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/mutation-divergence.ts:367](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/mutation-divergence.ts#L367)
+Defined in: [gauntlet/src/gates/mutation-divergence.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/mutation-divergence.ts#L389)
 
 The mutation-divergence gate — each surviving / no-coverage mutant becomes a
 self-explaining Finding at the file's propagated assurance level, the kill-floor

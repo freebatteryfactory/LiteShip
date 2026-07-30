@@ -48,6 +48,7 @@ function outcome(over: Partial<MutantOutcome> & Pick<MutantOutcome, 'file' | 've
     coveringTests: ['tests/fixture.test.ts'],
     equivalentJustification: null,
     equivalentJustificationDigest: null,
+    inconclusiveReason: null,
     subsumedBy: [],
     ...over,
   };
@@ -99,6 +100,32 @@ describe('mutationDivergenceGate — kill-floor calibration by level', () => {
     // The finding names the exact rewrite (so the reader sees what survived).
     expect(findings[0]!.detail).toContain('===');
     expect(findings[0]!.detail).toContain('!==');
+  });
+
+  it('an INCONCLUSIVE mutant gets refusal prose — never the survivor claim of a comparison that was refused (PR #192 review, round 4)', () => {
+    const findings = mutationDivergenceGate.run(
+      ctx(simpleIR([L4_FILE]), {
+        outcomes: [
+          outcome({
+            file: L4_FILE,
+            verdict: 'inconclusive',
+            inconclusiveReason: 'spawn timeout: the per-mutant budget (240000 ms) expired',
+          }),
+        ],
+        scoreBaseline: {},
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    const f = findings[0]!;
+    expect(f.title).toContain('inconclusive');
+    expect(f.detail).toContain('per-mutant budget (240000 ms) expired');
+    // NO comparison was completed — claiming the original and mutant "produced
+    // identical test results" would be a lie, and telling the reader to
+    // strengthen assertions chases a phantom test gap instead of the runner.
+    expect(f.detail).not.toMatch(/identical test results/u);
+    const steps = (f.remediation?.kind === 'instruction' ? f.remediation.steps : []).join(' ');
+    expect(steps).not.toMatch(/strengthen/iu);
+    expect(`${f.remediation?.kind === 'instruction' ? f.remediation.description : ''} ${steps}`).toMatch(/re-run/iu);
   });
 
   it('an L1 survivor is advisory debt (calibrating, never blocks)', () => {

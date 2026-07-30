@@ -112,16 +112,25 @@ function isNoCoverage(outcome: McdcConditionOutcome): boolean {
 /** A short human description of which pin(s) failed to be killed — the unobserved effect(s). */
 function gapDescription(outcome: McdcConditionOutcome): string {
   const parts: string[] = [];
-  if (outcome.forceTrueVerdict !== 'killed') parts.push(`force-TRUE (${pinWord(outcome.forceTrueVerdict)})`);
-  if (outcome.forceFalseVerdict !== 'killed') parts.push(`force-FALSE (${pinWord(outcome.forceFalseVerdict)})`);
+  if (outcome.forceTrueVerdict !== 'killed') {
+    parts.push(`force-TRUE (${pinWord(outcome.forceTrueVerdict, outcome.forceTrueInconclusiveReason)})`);
+  }
+  if (outcome.forceFalseVerdict !== 'killed') {
+    parts.push(`force-FALSE (${pinWord(outcome.forceFalseVerdict, outcome.forceFalseInconclusiveReason)})`);
+  }
   return parts.join(' and ');
 }
 
 /** A human word for a pin verdict tag (for the finding prose). */
-function pinWord(verdict: McdcPinVerdict): string {
+function pinWord(verdict: McdcPinVerdict, inconclusiveReason: string | null): string {
   if (verdict === 'survived') return 'survived — no test distinguished this value';
   if (verdict === 'no-coverage') return 'no covering test';
-  if (verdict === 'inconclusive') return 'inconclusive — the runner refused a trustworthy verdict (infra fault)';
+  // Name the ACTUAL refusal (PR #192 review, round 4): a timeout, a spawn
+  // failure, and a zero-test run demand different responses — a generic
+  // "infra fault" label made every refusal look the same.
+  if (verdict === 'inconclusive') {
+    return `inconclusive — the runner refused a trustworthy verdict (${inconclusiveReason ?? 'unrecorded infra fault'})`;
+  }
   return 'killed';
 }
 
@@ -228,6 +237,8 @@ function coveredCondition(): McdcConditionOutcome {
     condition: 'a',
     forceTrueVerdict: 'killed',
     forceFalseVerdict: 'killed',
+    forceTrueInconclusiveReason: null,
+    forceFalseInconclusiveReason: null,
     coveringTests: ['tests/fixture.test.ts'],
   };
 }
@@ -243,6 +254,8 @@ function uncoveredCondition(): McdcConditionOutcome {
     condition: 'x <= hi',
     forceTrueVerdict: 'killed',
     forceFalseVerdict: 'survived',
+    forceTrueInconclusiveReason: null,
+    forceFalseInconclusiveReason: null,
     coveringTests: ['tests/fixture.test.ts'],
   };
 }
