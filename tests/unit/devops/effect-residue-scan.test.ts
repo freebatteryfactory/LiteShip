@@ -173,6 +173,28 @@ describe('effect residue — full-scope scan', () => {
     expect(scan.swept).toContain('pnpm-workspace.yaml');
   });
 
+  it('negative controls — YAML anchor metadata cannot dress an effect alias, and alias references fail closed (PR #191 review, round 4)', () => {
+    // `fx: &effectAlias npm:effect@^3` is valid YAML — pnpm resolves the scalar
+    // to the effect npm alias, but the raw text starts with `&effectAlias`, not
+    // `npm:`, so a prefix-anchored match sees nothing. Same for `!!str` tags.
+    const anchored = [
+      'catalog:',
+      '  fx: &effectAlias npm:effect@^3.0.0',
+      '  tagged: !!str npm:@effect/schema@0.1.0',
+    ].join('\n');
+    expect(classifyEffectResidueWorkspaceYaml(anchored)).toEqual([
+      'catalog.fx -> npm:effect@^3.0.0',
+      'catalog.tagged -> npm:@effect/schema@0.1.0',
+    ]);
+    // A `*ref` alias value is an indirection a line-based parse CANNOT resolve —
+    // fail closed: flag it, never assume it is clean.
+    expect(classifyEffectResidueWorkspaceYaml('overrides:\n  fx: *effectAlias\n')).toEqual([
+      'overrides.fx -> *effectAlias (unresolved YAML alias — fail-closed)',
+    ]);
+    // A benign anchored value stays clean once the metadata is stripped.
+    expect(classifyEffectResidueWorkspaceYaml('catalog:\n  pinned: &pin npm:lodash@^4.0.0\n')).toEqual([]);
+  });
+
   it('negative controls — an npm ALIAS installing effect is residue by VALUE (PR #191 review)', () => {
     // The side door: `"fx": "npm:effect@^3"` installs the library under a name
     // no import/call scanner can match — the dependency VALUE is the evidence.
