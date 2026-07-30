@@ -232,10 +232,13 @@ export async function scanAndBootDirectives(
     for (const element of elements) {
       // Buckets were captured at scan time, but batches run across yields and
       // the idle deadline — an Astro navigation can replace the document while
-      // this scan is parked. Booting a detached root would recreate listeners
+      // this scan is parked. Booting such a stale root would recreate listeners
       // and runtime resources OUTSIDE the next lifecycle's teardown (PR #189
-      // review, confirmed): skip anything no longer in the document.
-      if (!element.isConnected) {
+      // review, confirmed). The staleness test is CONTAINMENT IN THE SCAN ROOT,
+      // not global connectivity (PR #191 review, confirmed): a caller may scan
+      // an explicitly DETACHED root (a fragment prepared before insertion),
+      // whose members are legitimately bootable while never `isConnected`.
+      if (!root.contains(element)) {
         continue;
       }
       if (boundNames(element).has(name)) {

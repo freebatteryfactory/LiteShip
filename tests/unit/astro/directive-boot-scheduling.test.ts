@@ -175,4 +175,24 @@ describe('directive boot scheduling (#155)', () => {
     await scan;
     expect(booted).not.toContain('llm');
   });
+
+  it('an explicitly DETACHED scan root still boots its members (PR #191 review — containment, not connectivity)', async () => {
+    // The stale-root guard must discriminate by containment in the SCAN ROOT: a
+    // caller may prepare a detached fragment and scan it before insertion —
+    // every member has isConnected === false yet is a legitimate boot target.
+    const fragment = document.createElement('div');
+    for (const name of DIRECTIVE_NAMES) {
+      const element = document.createElement('div');
+      element.setAttribute('data-liteship-directive', name);
+      fragment.append(element);
+    }
+    const booted: string[] = [];
+    globalHost.scheduler = { yield: () => Promise.resolve() };
+    globalHost.requestIdleCallback = (callback) => {
+      callback();
+      return 1;
+    };
+    await scanAndBootDirectives([...DIRECTIVE_NAMES], fragment, recordingLoaders(booted));
+    expect(booted.length).toBe(DIRECTIVE_NAMES.length);
+  });
 });
