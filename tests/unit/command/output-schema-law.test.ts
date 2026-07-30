@@ -116,7 +116,7 @@ describe('D2 — payload conformance + validator teeth', () => {
       repoRoot: '/repo',
       profileSource: 'default',
     },
-    'audit-floor': {
+    'audit.floor': {
       ok: false,
       expectedWarnings: 0,
       actualWarnings: 1,
@@ -138,7 +138,7 @@ describe('D2 — payload conformance + validator teeth', () => {
       generatedPresent: true,
       generatedCorpusMessage: null,
     },
-    'check-invariants': {
+    'check.invariants': {
       ok: false,
       groups: [
         {
@@ -149,7 +149,7 @@ describe('D2 — payload conformance + validator teeth', () => {
       ],
       lineEndings: ['packages/x/src/z.ts: expected .gitattributes attr eol=lf'],
     },
-    'capsule-verify': {
+    'capsule.gate': {
       status: 'stale',
       errors: ['generated bench missing for core.x: tests/generated/core.x.bench.ts'],
       capsuleCount: 42,
@@ -239,10 +239,10 @@ describe('D2 — payload conformance + validator teeth', () => {
     'asset.analyze': AssetAnalyzePayloadSchema,
     verify: VerifyPayloadSchema,
     audit: AuditPayloadSchema,
-    'audit-floor': AuditFloorPayloadSchema,
+    'audit.floor': AuditFloorPayloadSchema,
     'package-smoke': PackageSmokePayloadSchema,
-    'check-invariants': CheckInvariantsPayloadSchema,
-    'capsule-verify': CapsuleVerifyPayloadSchema,
+    'check.invariants': CheckInvariantsPayloadSchema,
+    'capsule.gate': CapsuleVerifyPayloadSchema,
     'check.gates': CheckPayloadSchema,
     explain: ExplainPayloadSchema,
     context: ContextPayloadSchema,

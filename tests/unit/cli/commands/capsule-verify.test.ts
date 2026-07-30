@@ -1,5 +1,5 @@
 /**
- * `liteship capsule-verify` adapter — the CLI-only capsule-corpus freshness gate.
+ * `liteship capsule gate` adapter — the CLI-only capsule-corpus freshness gate.
  *
  * `runCapsuleGateScan` is a subprocess orchestrator at its core (it spawns
  * `capsule:compile` to regeneration-confirm staleness and the generated-corpus
@@ -271,13 +271,13 @@ function lastReceipt(stdout: string): Record<string, unknown> {
   return JSON.parse(stdout.trim().split('\n').pop()!) as Record<string, unknown>;
 }
 
-describe('liteship capsule-verify — adapter projection (receipt + pretty-print)', () => {
+describe('liteship capsule gate — adapter projection (receipt + pretty-print)', () => {
   it('an empty-capsules manifest passes the gate (exit 0, ok receipt)', async () => {
     writeManifest({ generatorVersion: 'gen-v1', capsules: [] });
     const { exit, stdout, stderr } = await captureCli(() => capsuleVerify({ cwd: root, pretty: true }, digestDeps));
     expect(exit).toBe(0);
     const receipt = lastReceipt(stdout);
-    expect(receipt).toMatchObject({ command: 'capsule-verify', status: 'ok', capsuleCount: 0 });
+    expect(receipt).toMatchObject({ command: 'capsule.gate', status: 'ok', capsuleCount: 0 });
     expect(stderr).toBe('');
   });
 

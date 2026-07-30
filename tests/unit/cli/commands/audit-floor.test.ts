@@ -1,5 +1,5 @@
 /**
- * `liteship audit-floor` adapter — the CLI-only projection of the warning-floor gate.
+ * `liteship audit floor` adapter — the CLI-only projection of the warning-floor gate.
  *
  * The CLI is the ONLY adapter that wires the heavy `@liteship/audit` three-pass engine
  * (`runStructureAudit` / `runIntegrityAudit` / `runSurfaceAudit`) into the
@@ -47,13 +47,13 @@ function lastReceipt(stdout: string): Record<string, unknown> {
   return JSON.parse(stdout.trim().split('\n').pop()!) as Record<string, unknown>;
 }
 
-describe('liteship audit-floor — clean inventory matches the empty floor (exit 0)', () => {
+describe('liteship audit floor — clean inventory matches the empty floor (exit 0)', () => {
   it('passes with zero warnings/errors and writes no drift report', async () => {
     const { exit, stdout, stderr } = await captureCli(() => auditFloor({ pretty: true }, deps));
     expect(exit).toBe(0);
     const receipt = lastReceipt(stdout);
     expect(receipt).toMatchObject({
-      command: 'audit-floor',
+      command: 'audit.floor',
       status: 'ok',
       ok: true,
       expectedWarnings: 0,
@@ -65,7 +65,7 @@ describe('liteship audit-floor — clean inventory matches the empty floor (exit
   });
 });
 
-describe('liteship audit-floor — a new warning is drift against the zero floor (exit 1)', () => {
+describe('liteship audit floor — a new warning is drift against the zero floor (exit 1)', () => {
   it('reports the ADDED key in the receipt delta and the pretty drift report', async () => {
     structureMock.mockReturnValue(pass([finding('no-foo', 'warning', 'packages/x/src/a.ts')]));
     const { exit, stdout, stderr } = await captureCli(() => auditFloor({ pretty: true }, deps));

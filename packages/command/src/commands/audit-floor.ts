@@ -69,7 +69,7 @@ export type AuditFloorPayload = {
 /** `audit-floor` — run the three-pass engine, diff the warning inventory against the floor; emit a verdict. */
 export const auditFloorCommand: HandledCommand = {
   descriptor: {
-    name: 'audit-floor',
+    name: 'audit.floor',
     summary:
       'Audit warning-floor gate: fail when the artifact-independent three-pass warning inventory drifts from AUDIT_WARNING_FLOOR or any error is present.',
     requires: ['runAuditFloor'] satisfies readonly CommandCapability[],
@@ -80,7 +80,7 @@ export const auditFloorCommand: HandledCommand = {
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.
-    if (!context.runAuditFloor) return capabilityUnavailable('audit-floor', ['runAuditFloor']);
+    if (!context.runAuditFloor) return capabilityUnavailable('audit.floor', ['runAuditFloor']);
 
     const summary = await context.runAuditFloor();
 
@@ -92,6 +92,6 @@ export const auditFloorCommand: HandledCommand = {
       delta: summary.delta,
       inventory: summary.inventory,
     } satisfies AuditFloorPayload;
-    return summary.ok ? ok('audit-floor', payload) : failed('audit-floor', payload, 1);
+    return summary.ok ? ok('audit.floor', payload) : failed('audit.floor', payload, 1);
   },
 };

@@ -72,7 +72,7 @@ export type CapsuleVerifyPayload = {
 /** `capsule-verify` — freshness + bench-honesty + green-suite gate over the committed capsule corpus. */
 export const capsuleVerifyGateCommand: HandledCommand = {
   descriptor: {
-    name: 'capsule-verify',
+    name: 'capsule.gate',
     summary:
       'Capsule-corpus gate: assert every generated test+bench is fresh and honest, execute both lanes, and admit measured benchmark distributions with uncertainty.',
     requires: ['runCapsuleGate'] satisfies readonly CommandCapability[],
@@ -86,7 +86,7 @@ export const capsuleVerifyGateCommand: HandledCommand = {
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.
-    if (!context.runCapsuleGate) return capabilityUnavailable('capsule-verify', ['runCapsuleGate']);
+    if (!context.runCapsuleGate) return capabilityUnavailable('capsule.gate', ['runCapsuleGate']);
 
     const summary = await context.runCapsuleGate();
 
@@ -96,6 +96,6 @@ export const capsuleVerifyGateCommand: HandledCommand = {
       capsuleCount: summary.capsuleCount,
       benches: summary.benches,
     } satisfies CapsuleVerifyPayload;
-    return summary.status === 'ok' ? ok('capsule-verify', payload) : failed('capsule-verify', payload, 1);
+    return summary.status === 'ok' ? ok('capsule.gate', payload) : failed('capsule.gate', payload, 1);
   },
 };

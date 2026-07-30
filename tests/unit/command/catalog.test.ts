@@ -32,15 +32,15 @@ const EXPECTED_NAMES = [
   'astro.status',
   'astro.stop',
   'audit',
-  'audit-floor',
+  'audit.floor',
   'build',
-  'capsule-verify',
+  'capsule.gate',
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
   'check',
-  'check-invariants',
   'check.gates',
+  'check.invariants',
   'completion',
   'context',
   'describe',
@@ -73,10 +73,10 @@ const EXPECTED_NAMES = [
  * agent tool. `check.gates` IS exposed: it runs the PURE gauntlet gate fold in-process
  * (`litelaunchGauntlet`) and returns the Finding[] work-list — the tasks-vs-gates
  * weld, an ideal agent tool (distinct from the CLI-owned `gauntlet` orchestrator).
- * `check-invariants` is NOT exposed: its scan needs `@liteship/audit`'s
+ * `check.invariants` is NOT exposed: its scan needs `@liteship/audit`'s
  * `normalizeRepoPath` (the one B5b slash-normalize home), so — like `audit`/
- * `audit-floor` — it is CLI-only and the capability is absent over MCP.
- * `capsule-verify` is NOT exposed either: like `package-smoke` its engine is a
+ * `audit.floor` — it is CLI-only and the capability is absent over MCP.
+ * `capsule.gate` is NOT exposed either: like `package-smoke` its engine is a
  * CLI-injected subprocess orchestrator (it spawns `capsule:compile` + `vitest`),
  * so the capability is absent over MCP.
  */
@@ -194,6 +194,28 @@ describe('@liteship/command canonical catalog', () => {
         deployed: { type: 'string' },
       },
     });
+  });
+
+  it('no flat identity extends another command namespace by hyphen (issue #174)', () => {
+    // The collision class: `capsule-verify` sat one keystroke from `capsule.verify`
+    // while doing something unrelated; `check-invariants` shadowed the `check`
+    // family; `audit-floor` shadowed `audit`. The LAW: a hyphenated flat identity
+    // may not have an existing flat command or grouped stem as its first hyphen
+    // segment — a multi-word operation inside an existing namespace must be
+    // GROUPED (dot identity, space invocation). Benign compounds whose stem names
+    // nothing else (`package-smoke`) stay legal.
+    const names = commandRegistry.list().map((d) => d.name);
+    const flat = new Set(names.filter((name) => !name.includes('.')));
+    const groupedStems = new Set(names.filter((name) => name.includes('.')).map((name) => name.split('.')[0]!));
+    for (const name of names) {
+      if (name.includes('.') || !name.includes('-')) continue;
+      const stem = name.slice(0, name.indexOf('-'));
+      const verb = name.slice(name.indexOf('-') + 1);
+      expect(
+        groupedStems.has(stem) || flat.has(stem),
+        `"${name}" hyphen-extends the existing "${stem}" namespace — make it a grouped identity (e.g. "${stem}.${verb}") so the collision is unrepresentable`,
+      ).toBe(false);
+    }
   });
 
   it('assigns every command a presentation group (drives help grouping)', () => {

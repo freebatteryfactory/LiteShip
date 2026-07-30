@@ -1,5 +1,5 @@
 /**
- * `liteship check-invariants` adapter — the CLI-only fast-lane invariant gate.
+ * `liteship check invariants` adapter — the CLI-only fast-lane invariant gate.
  *
  * Two layers, both the adapter's own in-process logic (the line-ending parsing
  * fns are tested separately in tests/unit/meta/invariant-script.test.ts — this
@@ -167,7 +167,7 @@ function lastReceipt(stdout: string): Record<string, unknown> {
   return JSON.parse(stdout.trim().split('\n').pop()!) as Record<string, unknown>;
 }
 
-describe('liteship check-invariants — adapter projection (scan via injected capability)', () => {
+describe('liteship check invariants — adapter projection (scan via injected capability)', () => {
   let root: string;
   beforeEach(() => {
     root = mkdtempSync(join(tmpdir(), 'liteship-inv-adapter-'));
@@ -190,7 +190,7 @@ describe('liteship check-invariants — adapter projection (scan via injected ca
     );
     expect(exit).toBe(0);
     const receipt = lastReceipt(stdout);
-    expect(receipt).toMatchObject({ command: 'check-invariants', status: 'ok', ok: true });
+    expect(receipt).toMatchObject({ command: 'check.invariants', status: 'ok', ok: true });
     expect(receipt['groups']).toEqual([]);
     expect(receipt['lineEndings']).toEqual([]);
     expect(stderr).toBe('');

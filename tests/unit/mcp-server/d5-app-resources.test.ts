@@ -95,7 +95,9 @@ describe('D5 — D4 static surface stays frozen', () => {
     // the static commands UI; keep both projections on one content address.
     // Markdown-is-not-law sweep: catalog summary + glossary definitions inlined
     // their decision-record citations, shifting the shared projection digest.
-    expect(pin).toBe('fnv1a:4a624945');
+    // Issue #174 naming law: the three hyphen-collision identities were grouped
+    // (capsule.gate / check.invariants / audit.floor), shifting the shared digest.
+    expect(pin).toBe('fnv1a:f791ad3c');
   });
 });
 

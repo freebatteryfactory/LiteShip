@@ -2,7 +2,7 @@
 
 Generated from the typed 25-package catalog and the TypeScript export graph. The `liteship` root is the paved road; package and facade subpaths are advanced modules. `public-exports:check` proves every named binding is export-reachable and has a source declaration owner, consumer import spelling, TSDoc purpose, failure policy, invariant, replacement status, and named package proof. The binding total is not a claim that every structural type has a concrete runtime inhabitant: executable allocation/read proof is exhaustive only for paved-road root values; advanced type inhabitation remains an explicit owner contract. Use `liteship explain <symbol>` for the symbol-level answer.
 
-Bindings: **4138** across **87** public specifiers.
+Bindings: **4141** across **87** public specifiers.
 
 | Specifier | Surface | Audience | Stability | Bindings | Declaration owners | Invariant |
 | --- | --- | --- | --- | ---: | ---: | --- |
@@ -81,7 +81,7 @@ Bindings: **4138** across **87** public specifiers.
 | `create-liteship` | advanced-module | operator | stable | 10 | 2 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `liteship` | paved-road | package-author | stable | 17 | 11 | `INV-FACADE-EXPORT-BUDGET` |
 | `liteship/astro` | advanced-module | package-author | stable | 37 | 12 | `INV-FACADE-EXPORT-BUDGET` |
-| `liteship/compiler` | advanced-module | package-author | stable | 78 | 18 | `INV-FACADE-EXPORT-BUDGET` |
+| `liteship/compiler` | advanced-module | package-author | stable | 81 | 19 | `INV-FACADE-EXPORT-BUDGET` |
 | `liteship/evidence` | advanced-module | package-author | stable | 42 | 12 | `INV-FACADE-EXPORT-BUDGET` |
 | `liteship/genui` | advanced-module | package-author | stable | 17 | 8 | `INV-FACADE-EXPORT-BUDGET` |
 | `liteship/graph` | advanced-module | package-author | stable | 67 | 10 | `INV-FACADE-EXPORT-BUDGET` |

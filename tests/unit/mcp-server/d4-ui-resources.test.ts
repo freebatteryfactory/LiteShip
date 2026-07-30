@@ -227,6 +227,9 @@ describe('D4 — projection drift pin', () => {
     // constraints themselves in the catalog `capsule-verify` summary and the
     // zero-allocation / assembly-catalog glossary definitions — the projected
     // bodies embed those strings, re-pinning the digest.
-    expect(address).toBe('fnv1a:4a624945');
+    // Issue #174 naming law: capsule-verify → capsule.gate, check-invariants →
+    // check.invariants, audit-floor → audit.floor — the projected catalog
+    // identities/invocations changed, re-pinning the digest.
+    expect(address).toBe('fnv1a:f791ad3c');
   });
 });
