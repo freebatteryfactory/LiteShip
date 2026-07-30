@@ -107,6 +107,38 @@ export function classifyEffectResidueManifest(manifest: Record<string, unknown>)
   return details;
 }
 
+/**
+ * Classify the pnpm WORKSPACE configuration (PR #191 review, confirmed): pnpm
+ * catalogs live in `pnpm-workspace.yaml`, not any package.json — a catalog
+ * entry `fx: npm:effect@^3` consumed as `"fx": "catalog:"` names `effect`
+ * NOWHERE the manifest walk can see. Line-based parse (the file is ours and
+ * flat): inside the `catalog:` / `catalogs:` / `overrides:` sections, every
+ * `key: value` pair gets the same key + npm-alias-value rules the manifest
+ * classifier applies.
+ */
+export function classifyEffectResidueWorkspaceYaml(yamlText: string): readonly string[] {
+  const details: string[] = [];
+  const ALIAS = /^npm:(?:effect(?:@|$)|@effect\/)/;
+  let section: 'catalog' | 'catalogs' | 'overrides' | null = null;
+  for (const raw of yamlText.split(/\r?\n/)) {
+    const line = raw.split('#')[0]!;
+    if (line.trim().length === 0) continue;
+    if (/^\S/.test(line)) {
+      const name = line.trim().replace(/:\s*$/, '');
+      section = name === 'catalog' || name === 'catalogs' || name === 'overrides' ? name : null;
+      continue;
+    }
+    if (section === null) continue;
+    const pair = line.trim().match(/^(?:'([^']+)'|"([^"]+)"|([^'":\s][^:\s]*))\s*:\s*(.*)$/);
+    if (pair === null) continue;
+    const key = pair[1] ?? pair[2] ?? pair[3] ?? '';
+    const value = (pair[4] ?? '').trim().replace(/^['"]|['"]$/gu, '');
+    if (key === 'effect' || key.startsWith('@effect/')) details.push(`${section}.${key}`);
+    else if (ALIAS.test(value)) details.push(`${section}.${key} -> ${value}`);
+  }
+  return details;
+}
+
 function toPosix(path: string): string {
   return path.split(sep).join('/');
 }
@@ -194,6 +226,14 @@ export function scanEffectResidue(root: string, allowlist: ReadonlySet<string>):
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
     for (const detail of classifyEffectResidueManifest(manifest)) {
       findings.push({ file, line: 0, kind: 'manifest-dependency', detail });
+    }
+  }
+
+  const workspaceYaml = join(root, 'pnpm-workspace.yaml');
+  if (existsSync(workspaceYaml)) {
+    swept.push('pnpm-workspace.yaml');
+    for (const detail of classifyEffectResidueWorkspaceYaml(readFileSync(workspaceYaml, 'utf8'))) {
+      findings.push({ file: 'pnpm-workspace.yaml', line: 0, kind: 'manifest-dependency', detail });
     }
   }
 
