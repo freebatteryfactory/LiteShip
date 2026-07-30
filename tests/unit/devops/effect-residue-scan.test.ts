@@ -195,6 +195,27 @@ describe('effect residue — full-scope scan', () => {
     expect(classifyEffectResidueWorkspaceYaml('catalog:\n  pinned: &pin npm:lodash@^4.0.0\n')).toEqual([]);
   });
 
+  it('negative controls — the workspace scanner FAILS CLOSED on every construct it cannot positively parse (PR #191 review, round 5)', () => {
+    // The class, not the instance: a line-based scanner over an open grammar
+    // (YAML) can never enumerate every evasive spelling — flow-style mappings
+    // defeated the block-style section headers exactly as anchors defeated the
+    // value match a round earlier. The class kill is the inversion: anything in
+    // (or heading) a dependency-resolution section that the scanner cannot
+    // POSITIVELY classify as a plain block-style scalar is a finding, so an
+    // unparsed construct can never again be a false green.
+    // Flow-style section: `catalog: { fx: npm:effect@^3 }` — pnpm resolves it,
+    // the old parser cleared `section` and inspected nothing.
+    expect(classifyEffectResidueWorkspaceYaml('catalog: { fx: "npm:effect@^3.0.0" }')).toEqual([
+      'catalog -> { fx: "npm:effect@^3.0.0" } (inline value on a section header — unparseable by the line scanner, fail-closed)',
+    ]);
+    // Nested flow collection inside a scanned section — same class.
+    expect(classifyEffectResidueWorkspaceYaml('catalogs:\n  legacy: { s: npm:effect@^3.0.0 }\n')).toEqual([
+      'catalogs.legacy -> { s: npm:effect@^3.0.0 } (flow collection — unparseable by the line scanner, fail-closed)',
+    ]);
+    // A block-style file stays clean — nothing to fail closed on.
+    expect(classifyEffectResidueWorkspaceYaml('catalog:\n  pinned: npm:lodash@^4.0.0\n')).toEqual([]);
+  });
+
   it('negative controls — an npm ALIAS installing effect is residue by VALUE (PR #191 review)', () => {
     // The side door: `"fx": "npm:effect@^3"` installs the library under a name
     // no import/call scanner can match — the dependency VALUE is the evidence.

@@ -517,6 +517,22 @@ describe('types-file-purity (d) — a types.ts is type-space only (repo-wide)', 
     expect((await scan(RULE, f)).length).toBe(2);
   });
 
+  it('RED: ANY unlisted runtime form fires — the rule is an allowlist, not a denylist (PR #191 review, round 5)', async () => {
+    // The class, not the instance: `export default 1;` matched no denylist arm
+    // (an export_statement with no source and no banned declaration), exactly
+    // as the value import + bare call slipped a round earlier. TS statement
+    // space is an open grammar — enumerating bad forms never terminates. The
+    // class kill is the inversion: the rule now allowlists the finitely many
+    // TYPE-ONLY top-level forms and flags everything else, so a runtime form
+    // never needs to be foreseen to be caught.
+    const f = fixture(
+      'packages/core/src/hidden3/types.ts',
+      ['export default 1;', 'if (globalThis) { }', ''].join('\n'),
+    );
+    // The default export + the if statement = 2.
+    expect((await scan(RULE, f)).length).toBe(2);
+  });
+
   it('SCOPE: a value-bearing types.ts in a NON-core package fires (issue #178 widened the guard repo-wide)', async () => {
     const f = fixture('packages/mcp-server/src/lsp/types.ts', 'export const SEVERITY = { Error: 1 } as const;\n');
     expect((await scan(RULE, f)).length).toBe(1);
