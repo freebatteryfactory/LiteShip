@@ -143,4 +143,20 @@ describe('effect residue — full-scope scan', () => {
     ]);
     expect(classifyEffectResidueManifest({ dependencies: { 'effect-free-utils': '1.0.0' } })).toEqual([]);
   });
+
+  it('negative controls — an npm ALIAS installing effect is residue by VALUE (PR #191 review)', () => {
+    // The side door: `"fx": "npm:effect@^3"` installs the library under a name
+    // no import/call scanner can match — the dependency VALUE is the evidence.
+    expect(classifyEffectResidueManifest({ dependencies: { fx: 'npm:effect@^3.0.0' } })).toEqual([
+      'dependencies.fx -> npm:effect@^3.0.0',
+    ]);
+    expect(classifyEffectResidueManifest({ devDependencies: { s: 'npm:@effect/schema@0.1.0' } })).toEqual([
+      'devDependencies.s -> npm:@effect/schema@0.1.0',
+    ]);
+    expect(classifyEffectResidueManifest({ pnpm: { overrides: { fx: 'npm:effect@3.0.0' } } })).toEqual([
+      'pnpm.overrides.fx -> npm:effect@3.0.0',
+    ]);
+    // Aliases to UNRELATED packages whose names merely start with "effect" are clean.
+    expect(classifyEffectResidueManifest({ dependencies: { fx: 'npm:effect-free-utils@1.0.0' } })).toEqual([]);
+  });
 });

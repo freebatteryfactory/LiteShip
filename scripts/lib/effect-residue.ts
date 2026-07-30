@@ -85,8 +85,17 @@ export function classifyEffectResidueManifest(manifest: Record<string, unknown>)
   const details: string[] = [];
   const flag = (field: string, deps: unknown): void => {
     if (typeof deps !== 'object' || deps === null) return;
-    for (const name of Object.keys(deps)) {
-      if (name === 'effect' || name.startsWith('@effect/')) details.push(`${field}.${name}`);
+    for (const [name, spec] of Object.entries(deps)) {
+      if (name === 'effect' || name.startsWith('@effect/')) {
+        details.push(`${field}.${name}`);
+        continue;
+      }
+      // npm ALIASES are the side door the key check cannot see (PR #191 review,
+      // confirmed): `"fx": "npm:effect@^3"` installs the library under a name
+      // no import/call scanner matches. The VALUE names the real package.
+      if (typeof spec === 'string' && /^npm:(?:effect(?:@|$)|@effect\/)/.test(spec)) {
+        details.push(`${field}.${name} -> ${spec}`);
+      }
     }
   };
   for (const field of MANIFEST_DEP_FIELDS) flag(field, manifest[field]);
