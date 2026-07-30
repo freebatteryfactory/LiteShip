@@ -8,7 +8,7 @@
 
 > `const` **applyDiscreteSnapshotSignals**: (`signals`, `applyDiscreteSignal`) => `void`
 
-Defined in: web/dist/stream/recovery.d.ts:78
+Defined in: web/dist/stream/recovery.d.ts:85
 
 Dispatch only replayable discrete signal payloads — continuous transients are skipped.
 

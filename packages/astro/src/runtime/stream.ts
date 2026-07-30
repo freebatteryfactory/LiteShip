@@ -801,6 +801,11 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
             mutationClient: substrate.mutationClient,
             cellStore: substrate.cellStore,
             patchReceiptEntries: substrate.patchReceiptEntries,
+            // Checkpoint-attestation retention (#150): a THUNK over the live
+            // substrate — after a buffer eviction the retained suffix validates
+            // against the CURRENT minted watermark checkpoint instead of
+            // refusing not_genesis (evictions keep happening after this bind).
+            chainValidation: () => substrate.chainValidation,
             // Drain any receipt frame still attesting so gap replay never reads a
             // buffer missing a crossing that arrived before this recovery (F-133 race).
             drainPendingReceipts: () => Promise.all([...inFlightReceipts]).then(() => undefined),

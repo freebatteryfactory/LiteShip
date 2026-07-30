@@ -35,11 +35,28 @@ StateCell store for discrete gap-replay (#133-full). Required with [patchReceipt
 
 ***
 
+### chainValidation?
+
+> `readonly` `optional` **chainValidation?**: () => [`ChainValidationOptions`](../../evidence/interfaces/ChainValidationOptions.md) \| `undefined`
+
+Defined in: web/dist/stream/recovery.d.ts:60
+
+Checkpoint-attestation retention for an evicted buffer prefix (issue #150) —
+a THUNK because recovery binds once while evictions keep happening: it is
+resolved at recovery time so the retained suffix validates against the
+CURRENT watermark checkpoint, never a bind-time snapshot.
+
+#### Returns
+
+[`ChainValidationOptions`](../../evidence/interfaces/ChainValidationOptions.md) \| `undefined`
+
+***
+
 ### domStale?
 
 > `readonly` `optional` **domStale?**: () => `boolean`
 
-Defined in: web/dist/stream/recovery.d.ts:63
+Defined in: web/dist/stream/recovery.d.ts:70
 
 Whether the rendered DOM is KNOWN-STALE (F-REC-3). Recovery is usually
 triggered by a rejected morph, which leaves the DOM stale even after
@@ -59,7 +76,7 @@ fast path (no snapshot fetch when the DOM is already fresh).
 
 > `readonly` `optional` **drainPendingReceipts?**: () => `Promise`\<`void`\>
 
-Defined in: web/dist/stream/recovery.d.ts:73
+Defined in: web/dist/stream/recovery.d.ts:80
 
 Await any in-flight receipt-frame attestation before recovery reads the buffer.
 `recordStreamPatchReceipt` is async — it recomputes the sha256 hash to attest a

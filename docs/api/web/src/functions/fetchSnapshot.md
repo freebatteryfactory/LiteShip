@@ -8,7 +8,7 @@
 
 > **fetchSnapshot**(`artifactId`, `config?`): `Promise`\<\{ `html`: `string`; `lastEventId`: `string`; `signals`: `unknown`; `type`: `"snapshot"`; \}\>
 
-Defined in: [web/src/stream/recovery.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L115)
+Defined in: [web/src/stream/recovery.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L123)
 
 Fetch a full snapshot (html + signals + cursor) for graph-native re-sync.
 

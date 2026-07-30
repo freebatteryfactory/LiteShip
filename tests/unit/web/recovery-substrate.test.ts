@@ -5,7 +5,7 @@
  * (forged-hash / wrong-subject / malformed frames refused before buffering).
  */
 import { describe, expect, test } from 'vitest';
-import { StateName, transitionReceipt, type DiscreteStateTransition } from '@liteship/core';
+import { HLC, Receipt, StateName, transitionReceipt, type DiscreteStateTransition } from '@liteship/core';
 import {
   registerStreamRecoverySubstrate,
   getStreamRecoverySubstrate,
@@ -91,6 +91,28 @@ describe('recordStreamPatchReceipt — attested buffering', () => {
 
   test('frames for unregistered artifacts are ignored', async () => {
     expect(await recordStreamPatchReceipt('nobody-home', await validFrame())).toBe(false);
+  });
+
+  test('unawaited concurrent records land in ARRIVAL order, not attestation-completion order (PR #188 review)', async () => {
+    // The defect class: the stream directive fires recordStreamPatchReceipt per
+    // SSE event without awaiting, and attestation hashes asynchronously — so a
+    // later frame whose hash resolved first used to push first, while
+    // compaction treats array order as chronology. The law: the buffer
+    // position is claimed synchronously at call time, so buffer order is
+    // arrival order regardless of per-frame hashing latency.
+    const dispose = registerStreamRecoverySubstrate('art-order', substrate());
+    try {
+      const cells = Array.from({ length: 12 }, (_, index) => `cell-${index}`);
+      const frames = await Promise.all(cells.map((cell) => validFrame('liteship:base', cell)));
+      // Fire ALL records in one synchronous burst — none awaited until the end.
+      const pending = frames.map((frame) => recordStreamPatchReceipt('art-order', frame));
+      const results = await Promise.all(pending);
+      expect(results).toEqual(cells.map(() => true));
+      const buffered = getStreamRecoverySubstrate('art-order')!.patchReceiptEntries;
+      expect(buffered.map((entry) => entry.transition.cell)).toEqual(cells);
+    } finally {
+      dispose();
+    }
   });
 
   test('HOSTILE: a forged-hash frame is refused at record time (never buffered)', async () => {
@@ -184,5 +206,93 @@ describe('recordStreamPatchReceipt — attested buffering', () => {
     const dispose2 = registerStreamRecoverySubstrate('art-race', substrate());
     expect(getStreamRecoverySubstrate('art-race')!.patchReceiptEntries).toHaveLength(0);
     dispose2();
+  });
+});
+
+// ── #150 — buffer eviction mints checkpoint-attestation retention ────────────
+
+describe('recordStreamPatchReceipt — eviction retention (#150)', () => {
+  const BOUND = 256;
+
+  /** Mint `count` chained, attested frames (previous-linked, HLC-advancing). */
+  const chainedFrames = async (count: number) => {
+    const frames: Awaited<ReturnType<typeof validFrame>>[] = [];
+    let clock = HLC.increment(HLC.create('sub-150'), 1_000);
+    let previous: string | undefined;
+    for (let index = 0; index < count; index += 1) {
+      clock = HLC.increment(clock, clock.wall_ms + 1);
+      const transition = mkTransition('liteship:base', 'layout', 'tablet', index + 1);
+      const receipt = await transitionReceipt(transition, {
+        timestamp: clock,
+        ...(previous !== undefined ? { previous } : {}),
+      });
+      previous = receipt.hash;
+      frames.push({ receipt, transition });
+    }
+    return frames;
+  };
+
+  test('overflow evicts the prefix AND retains a validating {base, checkpoint} — live through a prior resolve', async () => {
+    const dispose = registerStreamRecoverySubstrate('art-150', substrate());
+    try {
+      // Resolve BEFORE any eviction: retention must be visible LIVE, not a
+      // bind-time snapshot (recovery binds once; evictions keep happening).
+      const resolved = getStreamRecoverySubstrate('art-150')!;
+      expect(resolved.chainValidation).toBeUndefined();
+
+      const frames = await chainedFrames(BOUND + 2);
+      for (const frame of frames) {
+        expect(await recordStreamPatchReceipt('art-150', frame)).toBe(true);
+      }
+
+      expect(resolved.patchReceiptEntries).toHaveLength(BOUND);
+      const retention = resolved.chainValidation;
+      expect(retention).toBeDefined();
+      // The watermark is the dropped receipt the first retained entry chains to.
+      expect(retention!.base).toBe(resolved.patchReceiptEntries[0]!.receipt.previous);
+      expect(retention!.checkpoint?.subject.id).toBe(`liteship/checkpoint:${retention!.base}`);
+
+      // END-TO-END: the retained suffix VALIDATES against the retention…
+      const retained = resolved.patchReceiptEntries.map((entry) => entry.receipt);
+      await expect(Receipt.validateChainDetailed(retained, retention)).resolves.toBe(true);
+      // …and refuses WITHOUT it (the pre-#150 not_genesis floor).
+      await expect(Receipt.validateChainDetailed(retained)).rejects.toMatchObject({ type: 'not_genesis' });
+    } finally {
+      dispose();
+    }
+  });
+
+  test('successive evictions advance the watermark (retention tracks the CURRENT suffix)', async () => {
+    const dispose = registerStreamRecoverySubstrate('art-150-adv', substrate());
+    try {
+      const resolved = getStreamRecoverySubstrate('art-150-adv')!;
+      const frames = await chainedFrames(BOUND + 4);
+      for (const frame of frames.slice(0, BOUND + 1)) await recordStreamPatchReceipt('art-150-adv', frame);
+      const first = resolved.chainValidation!.base;
+      for (const frame of frames.slice(BOUND + 1)) await recordStreamPatchReceipt('art-150-adv', frame);
+      const second = resolved.chainValidation!.base;
+      expect(first).not.toBe(second);
+      expect(second).toBe(resolved.patchReceiptEntries[0]!.receipt.previous);
+      const retained = resolved.patchReceiptEntries.map((entry) => entry.receipt);
+      await expect(Receipt.validateChainDetailed(retained, resolved.chainValidation)).resolves.toBe(true);
+    } finally {
+      dispose();
+    }
+  });
+
+  test('an unchainable prefix evicts WITHOUT retention (fail-safe, never fail-wrong)', async () => {
+    const dispose = registerStreamRecoverySubstrate('art-150-deg', substrate());
+    try {
+      // Every frame is genesis-rooted (no previous links): the first retained
+      // entry's `previous` names no dropped receipt, so no watermark exists.
+      for (let index = 0; index < BOUND + 1; index += 1) {
+        await recordStreamPatchReceipt('art-150-deg', await validFrame('liteship:base', `cell-${index}`));
+      }
+      const resolved = getStreamRecoverySubstrate('art-150-deg')!;
+      expect(resolved.patchReceiptEntries).toHaveLength(BOUND);
+      expect(resolved.chainValidation).toBeUndefined();
+    } finally {
+      dispose();
+    }
   });
 });

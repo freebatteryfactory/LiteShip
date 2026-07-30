@@ -8,7 +8,7 @@
 
 > **chainPatchesBetween**(`localBaseId`, `serverGraphId`, `entries`): readonly [`DiscreteStateTransition`](../../motion/interfaces/DiscreteStateTransition.md)[]
 
-Defined in: core/dist/graph/graph-query-gap-replay.d.ts:67
+Defined in: core/dist/graph/graph-query-gap-replay.d.ts:90
 
 Find the transition chain from `localBaseId` to `serverGraphId`.
 

@@ -8,7 +8,7 @@
 
 > `const` **adoptRefreshedGraphBase**: (`client`, `graphQueryUrl?`) => `Promise`\<`void`\>
 
-Defined in: web/dist/stream/recovery.d.ts:80
+Defined in: web/dist/stream/recovery.d.ts:87
 
 Adopt a refreshed graph base when the host supplies a mutation client or graph query URL.
 

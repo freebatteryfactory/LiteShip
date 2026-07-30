@@ -1104,6 +1104,11 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'An SSE receipt frame failed receipt-hash, transition-shape, or subject-identity attestation and was refused before graph gap replay.',
     'Emit an authority-minted receipt and transition pair that self-verifies and follows the base#cell subject law.',
   ),
+  'web/stream/receipt-buffer-compaction-unattested': web(
+    'Receipt buffer evicted without checkpoint retention',
+    'The bounded patch-receipt buffer evicted its oldest prefix but could not mint a checkpoint attestation over it (no single watermark, or the watermark does not dominate the dropped lineage), so gap replay across the eviction will refuse the truncated chain.',
+    'Recovery safely degrades to the QUERY/snapshot floor; if this recurs, raise the buffer bound or investigate forked/merge-parent receipt chains on this stream.',
+  ),
   'web/stream/sse-state-listener-threw': web(
     'SSE state listener threw',
     'A stateChanges subscriber threw during an SSE transport transition; transport teardown and reconnect bookkeeping continued.',

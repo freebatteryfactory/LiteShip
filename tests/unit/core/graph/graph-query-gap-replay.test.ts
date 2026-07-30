@@ -7,6 +7,7 @@
  */
 import { afterEach, describe, test, expect } from 'vitest';
 import {
+  DAG,
   GraphPatch,
   Diagnostics,
   HLC,
@@ -481,5 +482,149 @@ describe('graph-query gap replay — HOSTILE fixtures (Law 15)', () => {
     expect(transitions).toEqual([]);
     expect(captured.events.map((event) => event.code)).toContain('core/gap-replay/discrete-transition-unknown-cell');
     Diagnostics.reset();
+  });
+});
+
+// ── #150 — checkpoint-attestation retention across an evicted buffer prefix ──
+
+describe('graph-query gap replay — evicted-prefix retention (#150)', () => {
+  test('an evicted prefix WITHOUT retention refuses not_genesis (the safe floor, unchanged)', async () => {
+    const { mid, server, e2 } = await scenario();
+    // e1 was evicted by the bounded buffer: the retained suffix's first receipt
+    // has previous = e1.hash, not genesis.
+    const result = await replayDiscreteFromPatchReceipts({
+      localBaseId: mid.id,
+      serverGraphId: server.id,
+      entries: [e2],
+      cellStore: freshStore(),
+    });
+    expect(result.transitions).toEqual([]);
+    expect(result.replayedCells).toEqual([]);
+  });
+
+  test('an evicted prefix WITH {base, checkpoint} replays the retained suffix', async () => {
+    const { mid, server, t2, e1, e2 } = await scenario();
+    const minted = await DAG.checkpoint(DAG.fromReceipts([e1.receipt]), { below: e1.receipt.hash });
+    const store = freshStore();
+    const result = await replayDiscreteFromPatchReceipts({
+      localBaseId: mid.id,
+      serverGraphId: server.id,
+      entries: [e2],
+      cellStore: store,
+      chainValidation: { base: e1.receipt.hash, checkpoint: minted.checkpoint },
+    });
+    expect(result.transitions).toEqual([t2]);
+    expect(result.replayedCells).toHaveLength(1);
+  });
+
+  test('a base WITHOUT its checkpoint attestation still refuses — the watermark hole stays closed', async () => {
+    const { mid, server, e1, e2 } = await scenario();
+    const result = await replayDiscreteFromPatchReceipts({
+      localBaseId: mid.id,
+      serverGraphId: server.id,
+      entries: [e2],
+      cellStore: freshStore(),
+      chainValidation: { base: e1.receipt.hash },
+    });
+    expect(result.transitions).toEqual([]);
+  });
+
+  test('a checkpoint committing a DIFFERENT watermark refuses (a truncation cannot self-authorize)', async () => {
+    const { mid, server, e1, e2 } = await scenario();
+    // Mint a REAL checkpoint — but over an unrelated chain, so its subject.id
+    // commits a different watermark than the claimed base.
+    const foreign = await mkEntry(mkTransition(mid.id, server.id, 'state', 'alpha', 9));
+    const minted = await DAG.checkpoint(DAG.fromReceipts([foreign.receipt]), { below: foreign.receipt.hash });
+    const result = await replayDiscreteFromPatchReceipts({
+      localBaseId: mid.id,
+      serverGraphId: server.id,
+      entries: [e2],
+      cellStore: freshStore(),
+      chainValidation: { base: e1.receipt.hash, checkpoint: minted.checkpoint },
+    });
+    expect(result.transitions).toEqual([]);
+  });
+
+  /** base → mid → far → server: four graphs, three crossings, e1 evicted. */
+  const deepScenario = async () => {
+    const base = graph([node('a')]);
+    const midPatch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b.signal') }]);
+    const mid = GraphPatch.apply(base, midPatch);
+    const farPatch = GraphPatch.propose(mid, [{ op: 'add', family: 'signal', node: node('c.signal') }]);
+    const far = GraphPatch.apply(mid, farPatch);
+    const tailPatch = GraphPatch.propose(far, [{ op: 'add', family: 'signal', node: node('d.signal') }]);
+    const server = GraphPatch.apply(far, tailPatch);
+    const t1 = mkTransition(base.id, mid.id, 'state', 'alpha', 1);
+    const t2 = mkTransition(mid.id, far.id, 'state', 'beta', 2);
+    const t3 = mkTransition(far.id, server.id, 'state', 'alpha', 3);
+    const e1 = await mkEntry(t1);
+    const e2 = await mkEntry(t2, e1.receipt.hash);
+    const e3 = await mkEntry(t3, e2.receipt.hash);
+    return { base, mid, far, server, t1, t2, t3, e1, e2, e3 };
+  };
+
+  test('a branch starting PAST the watermark replays via the retained connecting lineage (PR #188 review)', async () => {
+    // The defect class: an earlier recovery adopted `far`, so the branch is
+    // [t3] and its first receipt names e2 — a RETAINED receipt, not the
+    // watermark. The buffered lineage e1(base) ← e2 ← e3 is provable, so the
+    // floor must validate it instead of refusing not_genesis.
+    const { far, server, t3, e1, e2, e3 } = await deepScenario();
+    const minted = await DAG.checkpoint(DAG.fromReceipts([e1.receipt]), { below: e1.receipt.hash });
+    const result = await replayDiscreteFromPatchReceipts({
+      localBaseId: far.id,
+      serverGraphId: server.id,
+      entries: [e2, e3],
+      cellStore: freshStore(),
+      chainValidation: { base: e1.receipt.hash, checkpoint: minted.checkpoint },
+    });
+    expect(result.transitions).toEqual([t3]);
+    expect(result.replayedCells).toHaveLength(1);
+  });
+
+  test('a branch past the watermark with an UNLINKABLE gap still refuses (fail-safe preserved)', async () => {
+    // Same shape, but e2 — the connecting link — is gone from the buffer. The
+    // lineage from base to the branch cannot be proven, so the floor refuses
+    // exactly as before the widening.
+    const { far, server, e1, e3 } = await deepScenario();
+    const minted = await DAG.checkpoint(DAG.fromReceipts([e1.receipt]), { below: e1.receipt.hash });
+    const result = await replayDiscreteFromPatchReceipts({
+      localBaseId: far.id,
+      serverGraphId: server.id,
+      entries: [e3],
+      cellStore: freshStore(),
+      chainValidation: { base: e1.receipt.hash, checkpoint: minted.checkpoint },
+    });
+    expect(result.transitions).toEqual([]);
+  });
+
+  test('retention resolved as a THUNK sees an eviction that lands DURING the query (PR #188 review)', async () => {
+    // The defect class: recovery resolved retention BEFORE the QUERY await
+    // while the live buffer compacted during it — stale retention then
+    // validated a mutated buffer and refused a valid suffix. The law: a thunk
+    // is resolved with the entries read, so the post-eviction retention
+    // governs the post-eviction buffer.
+    const { mid, server, t2, e1, e2 } = await scenario();
+    const liveEntries = [e1, e2];
+    let retention: { base: string; checkpoint: (typeof e1)['receipt'] } | undefined;
+    const fetchImpl: typeof fetch = async () => {
+      // Compaction lands while the QUERY is in flight: e1 evicted, retention minted.
+      const minted = await DAG.checkpoint(DAG.fromReceipts([e1.receipt]), { below: e1.receipt.hash });
+      liveEntries.splice(0, 1);
+      retention = { base: e1.receipt.hash, checkpoint: minted.checkpoint };
+      const result = await handleGraphQuery({}, { loadGraph: () => server });
+      return { status: 200, json: async () => result } as Response;
+    };
+    const store = freshStore();
+    const result = await runGraphNativeGapReplay({
+      queryUrl: 'https://example.test/graph',
+      localBase: mid,
+      entries: liveEntries,
+      cellStore: store,
+      adopt: () => {},
+      chainValidation: () => retention,
+      fetchImpl,
+    });
+    expect(result.query.status).toBe('ok');
+    expect(result.transitions).toEqual([t2]);
   });
 });
