@@ -61,6 +61,7 @@ export const SKIP_CAPABILITIES = [
   'webcodecs-absent', // VideoEncoder / VideoFrame unavailable in the browser harness
   'gpu-absent', // a real WebGPU device is unavailable in the CI/jsdom harness
   'eacces-untestable-as-root', // chmod 0o000 EACCES semantics are not enforceable when the test process runs as root
+  'running-as-root', // root bypasses file-MODE write denial entirely; DISTINCT from eacces-untestable-as-root, which also reads true on Windows where read-only attributes DO deny writes
   'symlink-unprivileged', // directory symlink creation is unavailable (typically Windows without Developer Mode/admin)
   'fixture-absent', // a committed optional fixture asset is absent in this checkout
   'capsule-manifest-absent', // capsule:compile has not produced the manifest needed for corpus-derived proofs
@@ -417,7 +418,7 @@ export const SANCTIONED_SKIPS: readonly SanctionedSkip[] = [
   {
     file: 'tests/unit/cli/lib/mutation-runner.test.ts',
     site: 'it.skipIf(runningAsRoot)(',
-    capability: 'eacces-untestable-as-root',
+    capability: 'running-as-root',
     why: 'the chmod-0o444 restore-failure proof needs a non-root process (root ignores file modes); the fs-mock write-denial law in mutation-runner-restore-verify.test.ts proves the same campaignFatal contract under root.',
   },
   {

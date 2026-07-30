@@ -8,7 +8,7 @@
 
 > **siteConsistentWithCapability**(`site`, `capability`, `conditional?`): `boolean`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L255)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:256](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L256)
 
 Is the sanctioned skip at `site` SELF-CONSISTENT with its declared `capability`?
 
@@ -37,7 +37,7 @@ closed, so never) conservatively requires the conditional form on the token path
 
 ### capability
 
-`"ffmpeg-absent"` \| `"wasm-absent"` \| `"wasm-dist-staged"` \| `"shared-array-buffer-absent"` \| `"coverage-instrumentation"` \| `"astro-example-not-built"` \| `"offscreen-canvas-absent"` \| `"webcodecs-absent"` \| `"gpu-absent"` \| `"eacces-untestable-as-root"` \| `"symlink-unprivileged"` \| `"fixture-absent"` \| `"capsule-manifest-absent"`
+`"ffmpeg-absent"` \| `"wasm-absent"` \| `"wasm-dist-staged"` \| `"shared-array-buffer-absent"` \| `"coverage-instrumentation"` \| `"astro-example-not-built"` \| `"offscreen-canvas-absent"` \| `"webcodecs-absent"` \| `"gpu-absent"` \| `"eacces-untestable-as-root"` \| `"running-as-root"` \| `"symlink-unprivileged"` \| `"fixture-absent"` \| `"capsule-manifest-absent"`
 
 ### conditional?
 

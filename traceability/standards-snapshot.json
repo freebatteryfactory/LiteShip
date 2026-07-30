@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:443dc0df",
+  "address": "fnv1a:7606605e",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -6142,7 +6142,7 @@
       "_tag": "skip-allowlist",
       "file": "tests/unit/cli/lib/mutation-runner.test.ts",
       "site": "it.skipIf(runningAsRoot)(",
-      "capability": "eacces-untestable-as-root"
+      "capability": "running-as-root"
     },
     {
       "_tag": "skip-allowlist",

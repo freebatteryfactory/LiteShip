@@ -8,7 +8,7 @@
 
 > **normalizeSiteLine**(`line`): `string`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L113)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L114)
 
 NORMALIZE a source line into the stable SITE discriminator: collapse every run of
 whitespace to a single space, then trim. Pure, dependency-free (the lean engine never
