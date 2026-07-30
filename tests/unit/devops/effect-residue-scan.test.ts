@@ -20,6 +20,7 @@ import { join, resolve } from 'node:path';
 import {
   classifyEffectResidueLine,
   classifyEffectResidueManifest,
+  classifyEffectResidueWorkspaceYaml,
   scanEffectResidue,
 } from '../../../scripts/lib/effect-residue.js';
 
@@ -142,6 +143,34 @@ describe('effect residue — full-scope scan', () => {
       'pnpm.overrides.effect',
     ]);
     expect(classifyEffectResidueManifest({ dependencies: { 'effect-free-utils': '1.0.0' } })).toEqual([]);
+  });
+
+  it('negative controls — pnpm WORKSPACE catalog/override entries are residue by key and by alias value (PR #191 review, round 3)', () => {
+    // The side door: a catalog entry in pnpm-workspace.yaml consumed as
+    // '"fx": "catalog:"' names effect NOWHERE the manifest walk can see.
+    const yaml = [
+      'packages:',
+      "  - 'packages/*'",
+      'catalog:',
+      '  effect: ^3.0.0',
+      '  fx: npm:effect@^3.0.0 # aliased reintroduction',
+      'catalogs:',
+      '  legacy:',
+      "    '@effect/schema': 0.1.0",
+      '    s: "npm:@effect/schema@0.1.0"',
+      'overrides:',
+      '  clean-package: 1.0.0',
+    ].join('\n');
+    expect(classifyEffectResidueWorkspaceYaml(yaml)).toEqual([
+      'catalog.effect',
+      'catalog.fx -> npm:effect@^3.0.0',
+      'catalogs.@effect/schema',
+      'catalogs.s -> npm:@effect/schema@0.1.0',
+    ]);
+    // The packages globs and unrelated entries never classify.
+    expect(classifyEffectResidueWorkspaceYaml("packages:\n  - 'packages/*'\n")).toEqual([]);
+    // The real workspace file is swept and clean.
+    expect(scan.swept).toContain('pnpm-workspace.yaml');
   });
 
   it('negative controls — an npm ALIAS installing effect is residue by VALUE (PR #191 review)', () => {
