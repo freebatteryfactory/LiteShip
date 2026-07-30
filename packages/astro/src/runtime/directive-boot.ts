@@ -234,11 +234,14 @@ export async function scanAndBootDirectives(
       // the idle deadline — an Astro navigation can replace the document while
       // this scan is parked. Booting such a stale root would recreate listeners
       // and runtime resources OUTSIDE the next lifecycle's teardown (PR #189
-      // review, confirmed). The staleness test is CONTAINMENT IN THE SCAN ROOT,
-      // not global connectivity (PR #191 review, confirmed): a caller may scan
-      // an explicitly DETACHED root (a fragment prepared before insertion),
-      // whose members are legitimately bootable while never `isConnected`.
-      if (!root.contains(element)) {
+      // review, confirmed). STALE means BOTH out of the scan root AND out of
+      // the live document (PR #191 review, twice refined): containment alone
+      // broke explicitly-detached fragment roots; and because INSERTING a
+      // scanned fragment MOVES its children out of it, containment alone would
+      // also skip members transferred into the document while the scan was
+      // parked. An element in either place is a live boot target; an element
+      // in neither was torn down.
+      if (!root.contains(element) && !element.isConnected) {
         continue;
       }
       if (boundNames(element).has(name)) {

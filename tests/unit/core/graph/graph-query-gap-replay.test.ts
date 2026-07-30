@@ -597,6 +597,35 @@ describe('graph-query gap replay — evicted-prefix retention (#150)', () => {
     expect(result.transitions).toEqual([]);
   });
 
+  test('an EVICTED local anchor re-anchors at the watermark and replays the retained suffix (PR #191 review)', async () => {
+    // The hole class: with base→mid evicted and mid→server retained, no
+    // retained transition starts at localBaseId (= base), so selection found
+    // nothing and returned silently BEFORE the checkpoint authorization ran.
+    const { base, server, t2, e1, e2 } = await scenario();
+    const minted = await DAG.checkpoint(DAG.fromReceipts([e1.receipt]), { below: e1.receipt.hash });
+    const store = freshStore();
+    const result = await replayDiscreteFromPatchReceipts({
+      localBaseId: base.id, // the anchor graph — its outgoing crossing (e1) was evicted
+      serverGraphId: server.id,
+      entries: [e2],
+      cellStore: store,
+      chainValidation: { base: e1.receipt.hash, checkpoint: minted.checkpoint },
+    });
+    expect(result.transitions).toEqual([t2]);
+    expect(result.replayedCells).toHaveLength(1);
+  });
+
+  test('an evicted local anchor WITHOUT retention still replays nothing (the safe floor, unchanged)', async () => {
+    const { base, server, e2 } = await scenario();
+    const result = await replayDiscreteFromPatchReceipts({
+      localBaseId: base.id,
+      serverGraphId: server.id,
+      entries: [e2],
+      cellStore: freshStore(),
+    });
+    expect(result.transitions).toEqual([]);
+  });
+
   test('retention resolved as a THUNK sees an eviction that lands DURING the query (PR #188 review)', async () => {
     // The defect class: recovery resolved retention BEFORE the QUERY await
     // while the live buffer compacted during it — stale retention then
