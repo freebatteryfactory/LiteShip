@@ -35,9 +35,7 @@ function read(file: string): string {
  * (e.g. `https://`) so a URL never decapitates a real line.
  */
 function codeOnly(src: string): string {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+  return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
 }
 
 // STRICT tier: zero DOM vocabulary, reads included. \bElement\b also covers
@@ -84,8 +82,8 @@ describe('A6 — Cell↔DOM boundary (value→wire, never value→DOM)', () => {
     });
 
     it('DOM_SINK bites a planted value→DOM write', () => {
-      expect("el.textContent = String(value)").toMatch(DOM_SINK);
-      expect("root.appendChild(node)").toMatch(DOM_SINK);
+      expect('el.textContent = String(value)').toMatch(DOM_SINK);
+      expect('root.appendChild(node)').toMatch(DOM_SINK);
     });
 
     it('DOM_SINK does NOT bite a doc-comment sink once comments are stripped', () => {

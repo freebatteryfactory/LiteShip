@@ -155,11 +155,7 @@ export function topOutliers(
     }));
 }
 
-export function buildPairedTruthGuard(
-  code: string,
-  passed: boolean,
-  summary: string,
-): PairedTruthShapeGuard {
+export function buildPairedTruthGuard(code: string, passed: boolean, summary: string): PairedTruthShapeGuard {
   return { code, passed, summary };
 }
 
@@ -173,7 +169,9 @@ export function hasNegativeStageDurations(stages: Record<string, SampleSummary |
       return false;
     }
 
-    return summary.min < 0 || summary.median < 0 || summary.p75 < 0 || summary.p95 < 0 || summary.p99 < 0 || summary.max < 0;
+    return (
+      summary.min < 0 || summary.median < 0 || summary.p75 < 0 || summary.p95 < 0 || summary.p99 < 0 || summary.max < 0
+    );
   });
 }
 
@@ -192,9 +190,7 @@ export function buildShapeGuards(
     buildPairedTruthGuard(
       `${id}-primary-present`,
       primaryLane.summary !== null,
-      primaryLane.summary
-        ? `${id} primary lane is present.`
-        : `${id} primary lane is missing.`,
+      primaryLane.summary ? `${id} primary lane is present.` : `${id} primary lane is missing.`,
     ),
   );
   guards.push(
@@ -260,9 +256,7 @@ export function buildShapeGuards(
   return guards;
 }
 
-function budgetPasses(
-  primaryLane: PairedTruthEntry['primaryLane'],
-): boolean {
+function budgetPasses(primaryLane: PairedTruthEntry['primaryLane']): boolean {
   const summary = primaryLane.summary;
   if (!summary) {
     return false;

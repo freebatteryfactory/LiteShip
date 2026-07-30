@@ -57,16 +57,18 @@ describe('COMPOSITOR_WORKER_SCRIPT execution', () => {
       states: [{ name: 'layout', state: 'high', generation: 1 }],
       ack: true,
     });
-    expect(worker.take<{ type: 'resolved-state-ack'; additionalOutputsChanged: boolean }>('resolved-state-ack'))
-      .toMatchObject({ additionalOutputsChanged: true });
+    expect(
+      worker.take<{ type: 'resolved-state-ack'; additionalOutputsChanged: boolean }>('resolved-state-ack'),
+    ).toMatchObject({ additionalOutputsChanged: true });
 
     worker.send({
       type: 'apply-resolved-state',
       states: [{ name: 'layout', state: 'high', generation: 2 }],
       ack: true,
     });
-    expect(worker.take<{ type: 'resolved-state-ack'; additionalOutputsChanged: boolean }>('resolved-state-ack'))
-      .toMatchObject({ additionalOutputsChanged: false });
+    expect(
+      worker.take<{ type: 'resolved-state-ack'; additionalOutputsChanged: boolean }>('resolved-state-ack'),
+    ).toMatchObject({ additionalOutputsChanged: false });
   });
 
   test('warm reset clears generations and projections before rebuilding the retained snapshot', () => {

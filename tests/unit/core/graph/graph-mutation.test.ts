@@ -155,7 +155,9 @@ describe('graph mutation channel — handleGraphMutation (server)', () => {
     const a = node('a.signal');
     const base = graph([a]);
     const store = memStore(base);
-    const invalid = GraphPatch.propose(base, [{ op: 'add', edge: { from: a.id, to: 'fnv1a:ghost' as typeof a.id, type: 'seq' } }]);
+    const invalid = GraphPatch.propose(base, [
+      { op: 'add', edge: { from: a.id, to: 'fnv1a:ghost' as typeof a.id, type: 'seq' } },
+    ]);
 
     const res = await handleGraphMutation({ patch: overTheWire(invalid) }, store);
 
@@ -216,7 +218,8 @@ describe('graph mutation channel — sendGraphMutation (client → wire → serv
   });
 
   test('a status with MISSING required fields is rejected (a bare {status:"applied"} without graph is not accepted)', async () => {
-    const fetchImpl: typeof fetch = async () => ({ status: 200, json: async () => ({ status: 'applied' }) }) as Response;
+    const fetchImpl: typeof fetch = async () =>
+      ({ status: 200, json: async () => ({ status: 'applied' }) }) as Response;
     const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([node('scroll.y')]), []), fetchImpl);
     expect(res.status).toBe('error'); // no `graph` → not a well-formed applied response
   });
@@ -224,7 +227,8 @@ describe('graph mutation channel — sendGraphMutation (client → wire → serv
   test('an applied reply whose graph is not a DocumentGraph → error (adopting it would crash on `.nodes`)', async () => {
     // `{ status: 'applied', graph: {} }` clears the discriminant+presence guard but is NOT a graph;
     // without decoding, the client dereferences graph.nodes.length and throws. Decode it to an error.
-    const fetchImpl: typeof fetch = async () => ({ status: 200, json: async () => ({ status: 'applied', graph: {} }) }) as Response;
+    const fetchImpl: typeof fetch = async () =>
+      ({ status: 200, json: async () => ({ status: 'applied', graph: {} }) }) as Response;
     const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([node('scroll.y')]), []), fetchImpl);
     expect(res.status).toBe('error');
     if (res.status === 'error') expect(res.message).toContain('malformed applied graph');

@@ -30,12 +30,7 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, test } from 'vitest';
 import { AVBridge, Signal } from '@liteship/core';
 import { capture } from '../../support/reactive-capture.js';
-import {
-  captureEntry,
-  observationDigest,
-  op,
-  traceDigest,
-} from '../../support/reactive-trace.js';
+import { captureEntry, observationDigest, op, traceDigest } from '../../support/reactive-trace.js';
 import type { CaptureEntry, OpHistory, ReactionSpec } from '../../support/reactive-trace.js';
 
 // ---------------------------------------------------------------------------
@@ -223,7 +218,10 @@ for (const [primitive, corpus] of Object.entries(CORPUS)) {
 
         // Gate 2: golden-fixture match (the byte-law cage).
         const pinned = golden.get(seed);
-        expect(pinned, `missing golden fixture for ${primitive}/${seed} — regenerate with LITESHIP_CAPTURE_UPDATE=1`).toBeDefined();
+        expect(
+          pinned,
+          `missing golden fixture for ${primitive}/${seed} — regenerate with LITESHIP_CAPTURE_UPDATE=1`,
+        ).toBeDefined();
         if (pinned === undefined) return;
         expect(entry.observationDigest).toBe(pinned.observationDigest);
         expect(entry.observation).toEqual(pinned.observation);

@@ -52,9 +52,7 @@ function buildSampleIR(): RepoIR {
       },
       { fromFile: 'packages/core/src/index.ts', specifier: 'node:fs', kind: 'external' },
     ],
-    packages: [
-      { name: '@liteship/core', srcDir: 'packages/core/src', manifestDeps: ['@liteship/error'] },
-    ],
+    packages: [{ name: '@liteship/core', srcDir: 'packages/core/src', manifestDeps: ['@liteship/error'] }],
     refs: new Map([
       [
         'packages/core/src/reactive/cell.ts#makeCell',

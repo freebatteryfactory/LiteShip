@@ -150,7 +150,7 @@ describe('surface pass — host/virtual-module errors name the profile field and
     const finding = result.findings.find((f) => f.rule === 'export-target-missing');
     expect(finding).toBeDefined();
     expect(finding!.summary).toContain('Reinstall the package');
-    expect(finding!.summary).toContain("files[]");
+    expect(finding!.summary).toContain('files[]');
   });
 });
 
@@ -226,10 +226,9 @@ describe('integrity pass — findings teach the allowlist way out', () => {
     );
 
     expect(
-      findAllowlistReason(
-        { ...finding!, location: { file: '../foreign/packages/core/src/index.ts', line: 1 } },
-        [entry],
-      ),
+      findAllowlistReason({ ...finding!, location: { file: '../foreign/packages/core/src/index.ts', line: 1 } }, [
+        entry,
+      ]),
     ).toBeNull();
   });
 
@@ -267,11 +266,15 @@ describe('IO seams — raw Node errors gain the subject path', () => {
 describe('CLI profile loader — missing-field errors append a copy-pasteable template', () => {
   it('missing internalPackagePrefix shows the minimal profile', async () => {
     const root = makeFixture({ 'p.json': JSON.stringify({ packageTopology: {} }) });
-    await expect(loadProfile(resolve(root, 'p.json'), root)).rejects.toThrowError(/A minimal profile: \{ "internalPackagePrefix"/);
+    await expect(loadProfile(resolve(root, 'p.json'), root)).rejects.toThrowError(
+      /A minimal profile: \{ "internalPackagePrefix"/,
+    );
   });
 
   it('missing packageTopology shows the minimal profile', async () => {
     const root = makeFixture({ 'p.json': JSON.stringify({ internalPackagePrefix: '@acme/' }) });
-    await expect(loadProfile(resolve(root, 'p.json'), root)).rejects.toThrowError(/A minimal profile: \{ "internalPackagePrefix"/);
+    await expect(loadProfile(resolve(root, 'p.json'), root)).rejects.toThrowError(
+      /A minimal profile: \{ "internalPackagePrefix"/,
+    );
   });
 });

@@ -12,9 +12,7 @@ import {
 
 function mutablePlan(): RuntimeWritePlan {
   return {
-    properties: [
-      { cssVar: '--liteship-opacity', from: { k: 'opacity', v: 0 }, to: { k: 'opacity', v: 1 } },
-    ],
+    properties: [{ cssVar: '--liteship-opacity', from: { k: 'opacity', v: 0 }, to: { k: 'opacity', v: 1 } }],
     durationMs: 900,
     routing: 'seq',
     fromState: StateName('hidden'),

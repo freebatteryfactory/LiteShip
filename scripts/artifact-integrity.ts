@@ -34,7 +34,4 @@ export {
   createRuntimeSeamsSourceArtifacts,
 } from './artifact-builders.js';
 
-export {
-  verifyRuntimeSeamsReport,
-  verifyFeedbackArtifacts,
-} from './artifact-verifiers.js';
+export { verifyRuntimeSeamsReport, verifyFeedbackArtifacts } from './artifact-verifiers.js';

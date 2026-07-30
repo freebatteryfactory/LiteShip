@@ -13,10 +13,14 @@ describe('liteship asset verify', () => {
   }, scaledTimeout(120_000));
   afterAll(() => iso?.restore());
 
-  it('returns ok for a registered asset', async () => {
-    const { exit } = await captureCli(() => run(['asset', 'verify', 'intro-bed']));
-    expect([0, 1]).toContain(exit);
-  }, scaledTimeout(120_000));
+  it(
+    'returns ok for a registered asset',
+    async () => {
+      const { exit } = await captureCli(() => run(['asset', 'verify', 'intro-bed']));
+      expect([0, 1]).toContain(exit);
+    },
+    scaledTimeout(120_000),
+  );
 
   it('exits 1 for unknown asset', async () => {
     const { exit } = await captureCli(() => run(['asset', 'verify', 'missing-asset-12345']));

@@ -69,16 +69,19 @@ describe('shared frame schedule laws', () => {
         const config = { fps, width: 1, height: 1, durationMs: Millis(durationMs) };
         const compositor = Compositor.create();
         const seen: Array<Pick<CaptureFrame, 'frame' | 'timestamp'>> = [];
-        const capture = attachLifetime({
-          _tag: 'FrameCapture' as const,
-          async init() {},
-          async capture(frame: CaptureFrame) {
-            seen.push({ frame: frame.frame, timestamp: frame.timestamp });
+        const capture = attachLifetime(
+          {
+            _tag: 'FrameCapture' as const,
+            async init() {},
+            async capture(frame: CaptureFrame) {
+              seen.push({ frame: frame.frame, timestamp: frame.timestamp });
+            },
+            async finalize() {
+              return { blob: new Blob(), codec: 'fixture', frames: seen.length, durationMs: config.durationMs };
+            },
           },
-          async finalize() {
-            return { blob: new Blob(), codec: 'fixture', frames: seen.length, durationMs: config.durationMs };
-          },
-        }, Lifetime.make()) satisfies FrameCapture;
+          Lifetime.make(),
+        ) satisfies FrameCapture;
         try {
           const renderer = createVideoRenderer(config, compositor);
           await captureVideo(renderer, capture, () => {});

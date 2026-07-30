@@ -43,9 +43,7 @@ export interface DeliveryEvidenceDownloadSubject {
 }
 
 export type DeliveryEvidenceDownloadFindingKind =
-  | 'missing-delivery-evidence-download'
-  | 'duplicate-delivery-evidence-download'
-  | 'delivery-evidence-outside-reports';
+  'missing-delivery-evidence-download' | 'duplicate-delivery-evidence-download' | 'delivery-evidence-outside-reports';
 
 /** A workflow-topology defect that would hide evidence from admission. */
 export interface DeliveryEvidenceDownloadFinding {

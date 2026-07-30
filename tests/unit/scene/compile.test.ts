@@ -134,8 +134,20 @@ describe('compileScene envelope + ease components (Spec 1 §5.4)', () => {
     tracks: [
       Track.video('hero', { from: Beat(0), to: Beat(8), source: {}, envelope: fade.in(Beat(2)) }),
       Track.audio('bed', { from: Beat(0), to: Beat(8), source: 'bed', envelope: fade.out(Beat(1)) }),
-      Track.transition('xfade', { from: Beat(0), to: Beat(1), kind: 'crossfade', between: [hero, hero], ease: 'cubic' }),
-      Track.effect('fx', { from: Beat(0), to: Beat(8), kind: 'pulse', target: hero, envelope: pulse.every(Beat(0.5), { amplitude: 0.3 }) }),
+      Track.transition('xfade', {
+        from: Beat(0),
+        to: Beat(1),
+        kind: 'crossfade',
+        between: [hero, hero],
+        ease: 'cubic',
+      }),
+      Track.effect('fx', {
+        from: Beat(0),
+        to: Beat(8),
+        kind: 'pulse',
+        target: hero,
+        envelope: pulse.every(Beat(0.5), { amplitude: 0.3 }),
+      }),
     ],
     invariants: [],
     budgets: { p95FrameMs: 16 },
@@ -143,7 +155,10 @@ describe('compileScene envelope + ease components (Spec 1 §5.4)', () => {
   };
 
   const componentOf = (id: string, name: TrackSpawn['components'][number]['part']): unknown =>
-    component(compileScene(scene).trackSpawns.find((s) => s.trackId === id)!, name);
+    component(
+      compileScene(scene).trackSpawns.find((s) => s.trackId === id)!,
+      name,
+    );
 
   it('emits a resolved Envelope component for an enveloped video track', () => {
     expect(componentOf('hero', 'Envelope')).toEqual({ curve: 'linear-in', spanFrames: 56.25 });

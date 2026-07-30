@@ -1,0 +1,6 @@
+# Generated trees whose bytes are owned by a freshness gate. The capsule
+# freshness gate (`liteship capsule-verify`) recompiles tests/generated and
+# diffs the result against what is on disk — a formatter rewriting those bytes
+# would fight the gate that pins them. This list is pinned exactly by
+# tests/unit/devops/format-tree-parity.test.ts; adding a line edits that pin.
+tests/generated/

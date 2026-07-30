@@ -209,11 +209,7 @@ describe('AI cast property: genui GeneratedUITree rides the SAME validated-propo
         fc.string({ maxLength: 12 }).filter((s) => s !== 'Card' && s !== 'Text'),
         (badName) => {
           const badNode: GeneratedUINode = { name: badName, props: {} };
-          const ui = AICast.validateGeneratedUIProposal(
-            badNode,
-            catalog,
-            generatedUiValidator,
-          );
+          const ui = AICast.validateGeneratedUIProposal(badNode, catalog, generatedUiValidator);
           expect(ui.ok).toBe(false);
           if (ui.ok) return;
           // No `proposal` field on a rejection — there is nothing to unwrap/render.

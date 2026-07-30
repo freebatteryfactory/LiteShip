@@ -80,9 +80,7 @@ describe('CanonicalCbor.encode — RFC 8949 Appendix A vectors', () => {
   });
 
   it('encodes Uint8Array as byte string', () => {
-    expect(CanonicalCbor.encode(new Uint8Array([1, 2, 3, 4]))).toEqual(
-      new Uint8Array([0x44, 0x01, 0x02, 0x03, 0x04]),
-    );
+    expect(CanonicalCbor.encode(new Uint8Array([1, 2, 3, 4]))).toEqual(new Uint8Array([0x44, 0x01, 0x02, 0x03, 0x04]));
   });
 });
 
@@ -116,13 +114,9 @@ describe('CanonicalCbor.encode — canonical determinism', () => {
     const nan = CanonicalCbor.encode(Number.NaN);
     expect(nan).toEqual(float64Bytes(0x7ff80000, 0));
     const posInf = CanonicalCbor.encode(Number.POSITIVE_INFINITY);
-    expect(posInf).toEqual(
-      new Uint8Array([0xfb, 0x7f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
-    );
+    expect(posInf).toEqual(new Uint8Array([0xfb, 0x7f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
     const negInf = CanonicalCbor.encode(Number.NEGATIVE_INFINITY);
-    expect(negInf).toEqual(
-      new Uint8Array([0xfb, 0xff, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
-    );
+    expect(negInf).toEqual(new Uint8Array([0xfb, 0xff, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
   });
 
   it('normalizes every JavaScript NaN payload to one portable byte sequence', () => {

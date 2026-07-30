@@ -26,13 +26,7 @@ export const PUBLIC_SURFACE_CONTEXT_TS = 'packages/command/src/commands/public-s
 const ROOT_EXPERT_ROUTES: Readonly<Record<string, readonly string[]>> = {
   '@liteship/core/authoring': ['liteship/reactive', 'liteship/compiler'],
   '@liteship/quantizer': ['liteship/reactive', 'liteship/compiler'],
-  liteship: [
-    'liteship/reactive',
-    'liteship/motion',
-    'liteship/compiler',
-    'liteship/astro',
-    'liteship/vite',
-  ],
+  liteship: ['liteship/reactive', 'liteship/motion', 'liteship/compiler', 'liteship/astro', 'liteship/vite'],
   '@liteship/core/schema': ['liteship/schema'],
   '@liteship/error': ['liteship/evidence'],
 };

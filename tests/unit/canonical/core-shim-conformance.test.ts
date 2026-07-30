@@ -3,7 +3,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { AddressedDigest as CoreAddressedDigest, CanonicalCbor as CoreCbor, fnv1aBytes as coreFnv1aBytes } from '@liteship/core';
+import {
+  AddressedDigest as CoreAddressedDigest,
+  CanonicalCbor as CoreCbor,
+  fnv1aBytes as coreFnv1aBytes,
+} from '@liteship/core';
 import { AddressedDigest, CanonicalCbor, fnv1aBytes } from '@liteship/canonical';
 
 describe('@liteship/core canonical shim conformance', () => {

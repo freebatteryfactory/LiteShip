@@ -12,12 +12,7 @@ import { resolve } from 'node:path';
 import { normalizeRepoPath } from '@liteship/audit';
 import type { AuditFileClass, FullAuditSectionId } from './types.js';
 
-export {
-  auditSourceGlobs,
-  auditIgnoreGlobs,
-  findAllowlistReason,
-  normalizeRepoPath,
-} from '@liteship/audit';
+export { auditSourceGlobs, auditIgnoreGlobs, findAllowlistReason, normalizeRepoPath } from '@liteship/audit';
 export {
   packageTopology,
   foundationalPackages,
@@ -221,7 +216,10 @@ export function sectionForInventoryPath(relativePath: string): FullAuditSectionI
   return 'repo/system/devops';
 }
 
-export function fileClassForInventoryPath(relativePath: string, sectionId = sectionForInventoryPath(relativePath)): AuditFileClass {
+export function fileClassForInventoryPath(
+  relativePath: string,
+  sectionId = sectionForInventoryPath(relativePath),
+): AuditFileClass {
   if (/^packages\/[^/]+\/src\//.test(relativePath) || /^crates\/[^/]+\/src\//.test(relativePath)) {
     return 'runtime/library source';
   }
@@ -253,9 +251,7 @@ export function fileClassForInventoryPath(relativePath: string, sectionId = sect
 }
 
 export function criticalityForInventoryPath(relativePath: string, fileClass: AuditFileClass): number {
-  if (
-    /(^|\/)(README\.md|CONTRIBUTING\.md|AGENTS\.md|CLAUDE\.md|PLAN\.md|LICENSE)$/i.test(relativePath)
-  ) {
+  if (/(^|\/)(README\.md|CONTRIBUTING\.md|AGENTS\.md|CLAUDE\.md|PLAN\.md|LICENSE)$/i.test(relativePath)) {
     return 0.5;
   }
 
@@ -271,7 +267,11 @@ export function criticalityForInventoryPath(relativePath: string, fileClass: Aud
     return 0.8;
   }
 
-  if (sectionForInventoryPath(relativePath) === 'packages/_spine' || fileClass === 'docs/specs' || fileClass === 'examples/integration') {
+  if (
+    sectionForInventoryPath(relativePath) === 'packages/_spine' ||
+    fileClass === 'docs/specs' ||
+    fileClass === 'examples/integration'
+  ) {
     return 0.6;
   }
 

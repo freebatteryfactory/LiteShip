@@ -51,18 +51,9 @@ describe('stream-recovery replay law', () => {
     expect(isReplayHtmlPatch({ type: 'signal', data: { state: 'open' } })).toBe(false);
 
     expect(replayDroppedSignals(['<p>a</p>', '<p>b</p>'])).toBe(false);
+    expect(replayDroppedSignals(['<p>a</p>', { type: 'signal', data: { state: 'open' } }])).toBe(true);
     expect(
-      replayDroppedSignals([
-        '<p>a</p>',
-        { type: 'signal', data: { state: 'open' } },
-      ]),
-    ).toBe(true);
-    expect(
-      replayDroppedSignals([
-        { data: '<section>a</section>' },
-        { html: '<section>b</section>' },
-        { html: 123 },
-      ]),
+      replayDroppedSignals([{ data: '<section>a</section>' }, { html: '<section>b</section>' }, { html: 123 }]),
     ).toBe(false);
   });
 
@@ -75,18 +66,10 @@ describe('stream-recovery replay law', () => {
     };
 
     expect(filterDiscreteSnapshotSignals(signals)).toEqual([{ state: 'open' }]);
-    expect(
-      filterDiscreteSnapshotSignals([
-        { state: 'ready' },
-        { width: 800 },
-        { 'scroll.progress': 0.1 },
-      ]),
-    ).toEqual([{ state: 'ready' }]);
-    expect(
-      filterDiscreteSnapshotSignals([
-        { state: 'ready', 'scroll.progress': 0.1 },
-      ]),
-    ).toEqual([{ state: 'ready' }]);
+    expect(filterDiscreteSnapshotSignals([{ state: 'ready' }, { width: 800 }, { 'scroll.progress': 0.1 }])).toEqual([
+      { state: 'ready' },
+    ]);
+    expect(filterDiscreteSnapshotSignals([{ state: 'ready', 'scroll.progress': 0.1 }])).toEqual([{ state: 'ready' }]);
   });
 
   test('validateSnapshotSignalsField rejects missing or unexpected signals shapes', () => {

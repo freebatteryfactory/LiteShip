@@ -114,9 +114,7 @@ describe('SyncSystem (typed Part path)', () => {
 
   it('rejects malformed Beat values at admission instead of silently skipping them', () => {
     expect(() =>
-      admitScenePartSeed(
-        scenePartSeed(BeatPart, { _tag: 'beat', timeMs: 'oops', strength: 1 } as never),
-      ),
+      admitScenePartSeed(scenePartSeed(BeatPart, { _tag: 'beat', timeMs: 'oops', strength: 1 } as never)),
     ).toThrow(/failed admission/);
   });
 });

@@ -91,7 +91,12 @@ describe('walkFiles — filters + ordering', () => {
     const issues: WalkFilesIssue[] = [];
     expect(walkFiles(missing, { onIssue: (issue) => issues.push(issue) })).toEqual([]);
     expect(issues).toEqual([
-      expect.objectContaining({ operation: 'realpath', path: missing, code: expect.any(String), message: expect.any(String) }),
+      expect.objectContaining({
+        operation: 'realpath',
+        path: missing,
+        code: expect.any(String),
+        message: expect.any(String),
+      }),
     ]);
   });
 });

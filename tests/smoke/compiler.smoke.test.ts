@@ -60,12 +60,17 @@ describe('compiler smoke', () => {
   });
 
   test('dispatch routes aria target', () => {
-    expect(dispatch({ _tag: 'ARIACompiler', boundary, states: { states: { sm: {}, lg: {} }, currentState: 'sm' } }).target).toBe('aria');
+    expect(
+      dispatch({ _tag: 'ARIACompiler', boundary, states: { states: { sm: {}, lg: {} }, currentState: 'sm' } }).target,
+    ).toBe('aria');
   });
 
   test('dispatch routes ai target', () => {
     expect(
-      dispatch({ _tag: 'AICompiler', manifest: { version: '1.0', dimensions: {}, slots: {}, actions: {}, constraints: [] } }).target,
+      dispatch({
+        _tag: 'AICompiler',
+        manifest: { version: '1.0', dimensions: {}, slots: {}, actions: {}, constraints: [] },
+      }).target,
     ).toBe('ai');
   });
 });

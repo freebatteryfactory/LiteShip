@@ -133,16 +133,12 @@ describe('gauntletToolchainDigest — deterministic + dist-sensitive (the anti-l
     ];
 
     fc.assert(
-      fc.property(
-        fc.string({ minLength: 1, maxLength: 6 }),
-        fc.string({ minLength: 1, maxLength: 6 }),
-        (a, b) => {
-          // Two structurally-equal env maps with different insertion order key identically.
-          const forward = toolchainDigestOf(segments, { node: a, platform: b, arch: 'x64', pm: '' });
-          const reordered = toolchainDigestOf(segments, { pm: '', arch: 'x64', platform: b, node: a });
-          expect(forward).toBe(reordered);
-        },
-      ),
+      fc.property(fc.string({ minLength: 1, maxLength: 6 }), fc.string({ minLength: 1, maxLength: 6 }), (a, b) => {
+        // Two structurally-equal env maps with different insertion order key identically.
+        const forward = toolchainDigestOf(segments, { node: a, platform: b, arch: 'x64', pm: '' });
+        const reordered = toolchainDigestOf(segments, { pm: '', arch: 'x64', platform: b, node: a });
+        expect(forward).toBe(reordered);
+      }),
     );
   });
 
@@ -151,7 +147,7 @@ describe('gauntletToolchainDigest — deterministic + dist-sensitive (the anti-l
     expect(gauntletToolchainDigest()).toMatch(/^tc-sha256:[0-9a-f]{32}$/);
   });
 
-  it('an env entry whose value is absent folds as the empty string (the `?? \'\'` arm), still deterministic', () => {
+  it("an env entry whose value is absent folds as the empty string (the `?? ''` arm), still deterministic", () => {
     // A key present in Object.keys but with no own string value exercises the
     // nullish-coalesce arm of the env fold. Built with a null-proto record so the typed
     // surface stays honest (no cast) while the runtime value is genuinely undefined.
@@ -338,6 +334,10 @@ describe('makeFsVerdictCache.read — the EISDIR/EACCES sound-MISS arm (uncertai
     expect(cache.read('eisdir-key')).toBeNull(); // EISDIR ⇒ MISS
   });
 
+  // The skip-allowlist SITE discriminator pins this call's raw source LINE (guard
+  // expression + title on one line); a reflow would collapse both EACCES sites in
+  // this file into the same ambiguous `it.skipIf(...)(` line.
+  // prettier-ignore
   it.skipIf(eaccesUntestableAsRoot)('a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {
     const cache = makeFsVerdictCache(dir);
     cache.write('eacces-key', SAMPLE);
@@ -399,6 +399,9 @@ describe('makeFsMutantVerdictCache — the B2 content-addressed mutant-verdict s
     expect(cache.read('m-eisdir')).toBeNull();
   });
 
+  // Same one-line pin as the gauntlet-cache EACCES site above (skip-allowlist
+  // SITE discriminator — see that comment).
+  // prettier-ignore
   it.skipIf(eaccesUntestableAsRoot)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {
     const cache = makeFsMutantVerdictCache(dir);
     cache.write('m-eacces', 'killed');

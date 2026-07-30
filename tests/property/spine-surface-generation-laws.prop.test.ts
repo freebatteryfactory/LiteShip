@@ -235,9 +235,7 @@ describe('_spine surface generation laws', () => {
           expect(new Set(forward.classifications.map((row) => row.symbol))).toEqual(new Set(names));
           expect(forward.generatedAdmissions.map((row) => row.typeName)).toEqual([...mirrors].sort());
           expect(
-            forward.classifications
-              .filter((row) => row.classification === 'spine-protocol')
-              .map((row) => row.symbol),
+            forward.classifications.filter((row) => row.classification === 'spine-protocol').map((row) => row.symbol),
           ).toEqual(names.filter((name) => !mirrors.includes(name)).sort());
         },
       ),

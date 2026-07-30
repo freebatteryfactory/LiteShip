@@ -23,17 +23,9 @@ describe('remotionAdapterCapsule', () => {
     const inv = remotionAdapterCapsule.invariants.find((i) => i.name === 'frame-indices-are-contiguous');
     expect(inv).toBeDefined();
     // Contiguous: ok.
-    expect(
-      inv!.check({ totalFrames: 3 }, [
-        { frame: 0 }, { frame: 1 }, { frame: 2 },
-      ]),
-    ).toBe(true);
+    expect(inv!.check({ totalFrames: 3 }, [{ frame: 0 }, { frame: 1 }, { frame: 2 }])).toBe(true);
     // Non-contiguous: fail.
-    expect(
-      inv!.check({ totalFrames: 3 }, [
-        { frame: 0 }, { frame: 2 }, { frame: 1 },
-      ]),
-    ).toBe(false);
+    expect(inv!.check({ totalFrames: 3 }, [{ frame: 0 }, { frame: 2 }, { frame: 1 }])).toBe(false);
     // Non-array: fail.
     expect(inv!.check({ totalFrames: 3 }, { not: 'an array' })).toBe(false);
     // Empty array is trivially contiguous.

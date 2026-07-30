@@ -128,9 +128,15 @@ describe('LEVEL 1b — decision coverage + type-only skip', () => {
   });
 
   it('while / do-while / for / ternary decisions are all decomposed', () => {
-    expect(conditionsOf('export function f(a: boolean, b: boolean) { while (a && b) {} }')).toEqual(new Set(['a', 'b']));
-    expect(conditionsOf('export function f(a: boolean, b: boolean) { do {} while (a || b); }')).toEqual(new Set(['a', 'b']));
-    expect(conditionsOf('export function f(a: boolean, b: boolean) { for (; a && b; ) {} }')).toEqual(new Set(['a', 'b']));
+    expect(conditionsOf('export function f(a: boolean, b: boolean) { while (a && b) {} }')).toEqual(
+      new Set(['a', 'b']),
+    );
+    expect(conditionsOf('export function f(a: boolean, b: boolean) { do {} while (a || b); }')).toEqual(
+      new Set(['a', 'b']),
+    );
+    expect(conditionsOf('export function f(a: boolean, b: boolean) { for (; a && b; ) {} }')).toEqual(
+      new Set(['a', 'b']),
+    );
     expect(conditionsOf('export const x = (a: boolean, b: boolean) => (a || b ? 1 : 0);')).toEqual(new Set(['a', 'b']));
   });
 
@@ -202,7 +208,9 @@ describe('LEVEL 2 — observes the independent effect + surfaces the MC/DC gap',
   it('(a) a STRONG suite kills BOTH pins of BOTH conditions → full MC/DC (no gap)', () => {
     const mutants = generateConditionMutants(parse('r.ts', DECISION), { file: 'r.ts' });
     const coverage = decisionCoverage();
-    const verdicts = mutants.map((m) => evaluateMutant(m, { runner: strongRunner, coverage, originalSource: DECISION }));
+    const verdicts = mutants.map((m) =>
+      evaluateMutant(m, { runner: strongRunner, coverage, originalSource: DECISION }),
+    );
     expect(verdicts.every((v) => v._tag === 'killed')).toBe(true);
   });
 
@@ -229,7 +237,9 @@ describe('LEVEL 2 — observes the independent effect + surfaces the MC/DC gap',
       calls += 1;
       return strongRunner(s);
     };
-    const verdicts = mutants.map((m) => evaluateMutant(m, { runner: counting, coverage: emptyCoverage, originalSource: DECISION }));
+    const verdicts = mutants.map((m) =>
+      evaluateMutant(m, { runner: counting, coverage: emptyCoverage, originalSource: DECISION }),
+    );
     expect(verdicts.every((v) => v._tag === 'no-coverage')).toBe(true);
     expect(calls).toBe(0);
   });
@@ -275,7 +285,9 @@ describe('DETERMINISM PROOF — condition-mutants + verdicts are byte-identical 
     const runOnce = () => {
       const mutants = generateConditionMutants(parse('r.ts', DECISION), { file: 'r.ts' });
       const coverage = decisionCoverage();
-      const verdicts = mutants.map((m) => evaluateMutant(m, { runner: weakMidRunner, coverage, originalSource: DECISION }));
+      const verdicts = mutants.map((m) =>
+        evaluateMutant(m, { runner: weakMidRunner, coverage, originalSource: DECISION }),
+      );
       return { mutants, verdicts: verdicts.map((v) => v._tag) };
     };
     const a = runOnce();

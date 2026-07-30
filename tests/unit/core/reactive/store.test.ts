@@ -17,7 +17,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import type { Store} from '@liteship/core';
+import type { Store } from '@liteship/core';
 import { createStore } from '@liteship/core';
 
 type CountMsg = { type: 'increment' } | { type: 'decrement' } | { type: 'set'; value: number };

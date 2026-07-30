@@ -70,14 +70,7 @@ function isTestCallback(node: ts.Node): node is ts.ArrowFunction | ts.FunctionEx
   );
 }
 
-const FAILURE_MATCHERS = new Set([
-  'rejects',
-  'toBeNull',
-  'toBeUndefined',
-  'toThrow',
-  'toThrowError',
-  'unreachable',
-]);
+const FAILURE_MATCHERS = new Set(['rejects', 'toBeNull', 'toBeUndefined', 'toThrow', 'toThrowError', 'unreachable']);
 const FAILURE_FIELDS = new Set([
   'code',
   'diagnostic',

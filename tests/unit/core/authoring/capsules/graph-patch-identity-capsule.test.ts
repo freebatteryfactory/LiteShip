@@ -44,7 +44,14 @@ describe('graph-patch-identity seed→graph builder', () => {
   it('normalizes edge index pairs to an acyclic, in-range, self-loop-free edge set', () => {
     // Out-of-range and reversed indices are normalized to min→max over the node
     // list, so every endpoint exists and the graph stays acyclic.
-    const g = buildGraph({ inputs: ['a', 'b', 'c'], edges: [[2, 0], [0, 0], [9, 1]] });
+    const g = buildGraph({
+      inputs: ['a', 'b', 'c'],
+      edges: [
+        [2, 0],
+        [0, 0],
+        [9, 1],
+      ],
+    });
     // [2,0] → 0→2 ; [0,0] dropped (self-loop) ; [9,1] → 1%3=1, 9%3=0 → 0→1.
     expect(GraphPatch.validate(g, { _tag: 'GraphPatch', _version: 1, base: g.id, ops: [] }).ok).toBe(true);
     expect(g.edges.length).toBeGreaterThan(0);

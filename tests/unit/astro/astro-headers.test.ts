@@ -113,9 +113,7 @@ describe('astro header helpers', () => {
 
     test('dedupes case-insensitively without dropping the existing spelling', () => {
       // field names are case-insensitive; keep the consumer's casing, drop the dup
-      expect(mergeVaryHeader('cookie, sec-ch-dpr', 'Sec-CH-DPR, Save-Data')).toBe(
-        'cookie, sec-ch-dpr, Save-Data',
-      );
+      expect(mergeVaryHeader('cookie, sec-ch-dpr', 'Sec-CH-DPR, Save-Data')).toBe('cookie, sec-ch-dpr, Save-Data');
     });
 
     test('a literal * on either side absorbs the merge', () => {

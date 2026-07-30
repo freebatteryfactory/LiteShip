@@ -37,10 +37,7 @@ describe('scopeContextByLevel', () => {
 
   it('an L3 scope keeps L3 and L4 files, drops L2 and L1', () => {
     const scoped = scopeContextByLevel(ctx, 'L3', LITESHIP_ASSURANCE_MAP);
-    expect([...scoped.files()].sort()).toEqual([
-      'packages/canonical/src/x.ts',
-      'packages/core/src/reactive/zap.ts',
-    ]);
+    expect([...scoped.files()].sort()).toEqual(['packages/canonical/src/x.ts', 'packages/core/src/reactive/zap.ts']);
   });
 
   it('an L1 scope keeps everything (every level is at-least L1)', () => {
@@ -129,7 +126,16 @@ describe('runGates — a waiver is evaluated only at the gate whose rule it targ
         c
           .files()
           .filter((f) => (c.readFile(f) ?? '').includes(token))
-          .map((f) => finding({ ruleId: id, severity: 'error', level: 'L1', title: id, detail: f, location: { file: f, line: 1 } })),
+          .map((f) =>
+            finding({
+              ruleId: id,
+              severity: 'error',
+              level: 'L1',
+              title: id,
+              detail: f,
+              location: { file: f, line: 1 },
+            }),
+          ),
       fixtures: {
         red: { name: 'red', context: memoryContext({ 'bad.ts': token }) },
         green: { name: 'green', context: memoryContext({ 'good.ts': '' }) },
@@ -244,11 +250,7 @@ describe('applyWaivers', () => {
 
   it('a waiver expiring exactly on `now` is still valid (>= now)', () => {
     const f = findingAt('r/a', 'src/x.ts', 10);
-    const { kept, waived, waiverFindings } = applyWaivers(
-      [f],
-      [waiver({ ruleId: 'r/a', expires: '2026-06-20' })],
-      NOW,
-    );
+    const { kept, waived, waiverFindings } = applyWaivers([f], [waiver({ ruleId: 'r/a', expires: '2026-06-20' })], NOW);
     expect(waived).toEqual([f]);
     expect(kept).toEqual([]);
     expect(waiverFindings).toEqual([]);
@@ -314,7 +316,14 @@ describe('forbidden-rule enforcement (a waiver can never cover a skip/placeholde
           .files()
           .filter((f) => (c.readFile(f) ?? '').includes('TODO'))
           .map((f) =>
-            finding({ ruleId: 'gauntlet/no-placeholder', severity: 'error', level: 'L1', title: 't', detail: 'd', location: { file: f, line: 1 } }),
+            finding({
+              ruleId: 'gauntlet/no-placeholder',
+              severity: 'error',
+              level: 'L1',
+              title: 't',
+              detail: 'd',
+              location: { file: f, line: 1 },
+            }),
           ),
       fixtures: {
         red: { name: 'red', context: memoryContext({ 'bad.ts': 'TODO' }) },
@@ -341,7 +350,16 @@ describe('forbidden-rule enforcement (a waiver can never cover a skip/placeholde
         c
           .files()
           .filter((f) => (c.readFile(f) ?? '').includes('flag-me'))
-          .map((f) => finding({ ruleId: 'test/flag', severity: 'error', level: 'L1', title: 't', detail: 'd', location: { file: f, line: 1 } })),
+          .map((f) =>
+            finding({
+              ruleId: 'test/flag',
+              severity: 'error',
+              level: 'L1',
+              title: 't',
+              detail: 'd',
+              location: { file: f, line: 1 },
+            }),
+          ),
       fixtures: {
         red: { name: 'red', context: memoryContext({ 'bad.ts': 'flag-me' }) },
         green: { name: 'green', context: memoryContext({ 'good.ts': 'clean' }) },
@@ -367,7 +385,16 @@ describe('forbidden-rule enforcement (a waiver can never cover a skip/placeholde
         c
           .files()
           .filter((f) => (c.readFile(f) ?? '').includes('flag-me'))
-          .map((f) => finding({ ruleId: 'test/flag2', severity: 'error', level: 'L1', title: 't', detail: 'd', location: { file: f, line: 1 } })),
+          .map((f) =>
+            finding({
+              ruleId: 'test/flag2',
+              severity: 'error',
+              level: 'L1',
+              title: 't',
+              detail: 'd',
+              location: { file: f, line: 1 },
+            }),
+          ),
       fixtures: {
         red: { name: 'red', context: memoryContext({ 'bad.ts': 'flag-me' }) },
         green: { name: 'green', context: memoryContext({ 'good.ts': 'clean' }) },

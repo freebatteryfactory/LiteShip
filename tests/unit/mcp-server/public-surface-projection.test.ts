@@ -112,7 +112,7 @@ describe('LSP method and capability projection', () => {
               }
             : descriptor.method === 'textDocument/diagnostic'
               ? { textDocument: { uri: 'file:///repo/file.ts' } }
-            : undefined;
+              : undefined;
       const raw =
         descriptor.messageKind === 'notification'
           ? notification(descriptor.method, params)

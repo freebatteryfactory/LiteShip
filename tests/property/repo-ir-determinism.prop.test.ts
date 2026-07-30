@@ -102,40 +102,44 @@ function renderTsFile(spec: {
 }
 
 describe('buildRepoIR determinism (INV-REPO-IR-DETERMINISTIC)', () => {
-  it('builds a BYTE-IDENTICAL IR twice over the same corpus — per-file digests + the full fold', () => {
-    fc.assert(
-      fc.property(fc.uniqueArray(tsFileArb, { minLength: 1, maxLength: 5, selector: (s) => s.name }), (specs) => {
-        const files: Record<string, string> = {
-          'package.json': JSON.stringify({ name: 'acme-root', private: true, type: 'module' }),
-          'packages/core/package.json': JSON.stringify({
-            name: '@acme/core',
-            version: '0.0.0',
-            dependencies: {},
-            exports: { '.': { development: './src/index.ts' } },
-          }),
-        };
-        for (const spec of specs) {
-          files[`packages/core/src/mod_${spec.name}.ts`] = renderTsFile(spec);
-        }
-        const root = makeFixture(files);
-        const profile = acmeProfile(root);
+  it(
+    'builds a BYTE-IDENTICAL IR twice over the same corpus — per-file digests + the full fold',
+    () => {
+      fc.assert(
+        fc.property(fc.uniqueArray(tsFileArb, { minLength: 1, maxLength: 5, selector: (s) => s.name }), (specs) => {
+          const files: Record<string, string> = {
+            'package.json': JSON.stringify({ name: 'acme-root', private: true, type: 'module' }),
+            'packages/core/package.json': JSON.stringify({
+              name: '@acme/core',
+              version: '0.0.0',
+              dependencies: {},
+              exports: { '.': { development: './src/index.ts' } },
+            }),
+          };
+          for (const spec of specs) {
+            files[`packages/core/src/mod_${spec.name}.ts`] = renderTsFile(spec);
+          }
+          const root = makeFixture(files);
+          const profile = acmeProfile(root);
 
-        const first = buildRepoIR(profile);
-        const second = buildRepoIR(profile);
+          const first = buildRepoIR(profile);
+          const second = buildRepoIR(profile);
 
-        // Every per-file digest is identical (no mtime/run-id leaked into it).
-        for (const [id, node] of first.files) {
-          expect(second.files.get(id)?.contentDigest).toBe(node.contentDigest);
-        }
-        // The full canonical fold is byte-identical (tables sorted, no Map-order leak).
-        expect(irFold(second)).toBe(irFold(first));
-      }),
-      // Each run spins a full ts.Program over a temp corpus (heavy), so a small
-      // seeded run count is the right trade — determinism is a structural law a
-      // handful of varied corpora exercises decisively, not a rare-event hunt.
-      { numRuns: 6, seed: 0xb2cace },
-    );
-  }, scaledTimeout(60_000));
+          // Every per-file digest is identical (no mtime/run-id leaked into it).
+          for (const [id, node] of first.files) {
+            expect(second.files.get(id)?.contentDigest).toBe(node.contentDigest);
+          }
+          // The full canonical fold is byte-identical (tables sorted, no Map-order leak).
+          expect(irFold(second)).toBe(irFold(first));
+        }),
+        // Each run spins a full ts.Program over a temp corpus (heavy), so a small
+        // seeded run count is the right trade — determinism is a structural law a
+        // handful of varied corpora exercises decisively, not a rare-event hunt.
+        { numRuns: 6, seed: 0xb2cace },
+      );
+    },
+    scaledTimeout(60_000),
+  );
 
   it('a single edited byte CHANGES that file digest (the digest tracks content, the cache-miss trigger)', () => {
     const base = {

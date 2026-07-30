@@ -32,7 +32,7 @@ const VECTORS: readonly string[] = [
   'paren()group',
   'caret^escape',
   'mixed "and" special; chars',
-  "tests/__nonexistent__; echo should-not-execute",
+  'tests/__nonexistent__; echo should-not-execute',
 ];
 
 describe('quoteWindowsArg drift guard', () => {

@@ -29,7 +29,8 @@ const RETIRED_OPERATIONAL_TERMS: ReadonlyArray<{ term: string; pattern: RegExp }
   { term: 'stow', pattern: /\b[Ss]tow\b/ },
   {
     term: 'bearing',
-    pattern: /\bnamed bearings\b|\bbearing changes\b|\bboundary-bearing\b|\bper-check bearings\b|\bCLI bearings\b|\bBearing for\b/,
+    pattern:
+      /\bnamed bearings\b|\bbearing changes\b|\bboundary-bearing\b|\bper-check bearings\b|\bCLI bearings\b|\bBearing for\b/,
   },
   { term: 'trim', pattern: /\bre-trim\b|\bworking deck trim\b/ },
   { term: 'working deck', pattern: /\ba working deck\b|\bworking deck\s*[/]/ },
@@ -59,9 +60,7 @@ function walk(dir: string, ext: readonly string[] = ['.ts', '.mjs', '.sh']): str
 }
 
 function collectCliSurfaceContent(): string {
-  return [...walk(CLI_SRC), ...walk(SCRIPTS_DIR)]
-    .map((file) => readFileSync(file, 'utf8'))
-    .join('\n');
+  return [...walk(CLI_SRC), ...walk(SCRIPTS_DIR)].map((file) => readFileSync(file, 'utf8')).join('\n');
 }
 
 describe('public operational vocabulary', () => {
@@ -69,9 +68,7 @@ describe('public operational vocabulary', () => {
   const glossaryMd = readFileSync(GLOSSARY_MD, 'utf8');
 
   it('keeps the retired maritime register out of CLI and setup output', () => {
-    const hits = RETIRED_OPERATIONAL_TERMS
-      .filter(({ pattern }) => pattern.test(cliContent))
-      .map(({ term }) => term);
+    const hits = RETIRED_OPERATIONAL_TERMS.filter(({ pattern }) => pattern.test(cliContent)).map(({ term }) => term);
     expect(hits, `retired public operational terms: ${hits.join(', ')}`).toEqual([]);
   });
 

@@ -147,10 +147,14 @@ export function main(root = repoRoot): void {
     `standards-integrity: diffing the LIVE surface (${outcome.liveAddress}) against base "${outcome.baseRef}" (${outcome.baseAddress}).`,
   );
   if (outcome.signedWeakenings > 0) {
-    console.log(`  [advisory] ${outcome.signedWeakenings} signed weakening(s) (an in-date owner sign-off) — recorded, not fatal.`);
+    console.log(
+      `  [advisory] ${outcome.signedWeakenings} signed weakening(s) (an in-date owner sign-off) — recorded, not fatal.`,
+    );
   }
   if (outcome.unregeneratedStrengthens > 0) {
-    console.log(`  [warning] ${outcome.unregeneratedStrengthens} stale strengthen(s) — regenerate the committed snapshot.`);
+    console.log(
+      `  [warning] ${outcome.unregeneratedStrengthens} stale strengthen(s) — regenerate the committed snapshot.`,
+    );
   }
 
   const blocking = outcome.unsignedWeakenings + outcome.forbiddenSignoffs + outcome.expiredSignoffs;

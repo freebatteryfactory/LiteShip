@@ -80,7 +80,10 @@ describe('proofPropagationGate — self-proof (the authority ratchet)', () => {
 describe('propagateProofStrength — the lax-functor (min over the dep DAG)', () => {
   it('caps an importer at its weaker dependency (local proof does not compose past a weak dep)', () => {
     const ir = depIR(L4_FILE, DEP);
-    const local = new Map([[L4_FILE, 0.95], [DEP, 0.2]]);
+    const local = new Map([
+      [L4_FILE, 0.95],
+      [DEP, 0.2],
+    ]);
     const eff = propagateProofStrength(ir, (f) => local.get(f) ?? UNMEASURED_PROOF);
     expect(eff.get(L4_FILE)).toBeCloseTo(0.2); // capped by the weak dep
     expect(eff.get(DEP)).toBeCloseTo(0.2); // its own local proof
@@ -88,7 +91,10 @@ describe('propagateProofStrength — the lax-functor (min over the dep DAG)', ()
 
   it('is DETERMINISTIC — the same IR + lookup yields an identical map twice', () => {
     const ir = depIR(L4_FILE, DEP);
-    const local = new Map([[L4_FILE, 0.9], [DEP, 0.4]]);
+    const local = new Map([
+      [L4_FILE, 0.9],
+      [DEP, 0.4],
+    ]);
     const a = propagateProofStrength(ir, (f) => local.get(f) ?? 0);
     const b = propagateProofStrength(ir, (f) => local.get(f) ?? 0);
     expect([...a.entries()].sort()).toEqual([...b.entries()].sort());
@@ -107,7 +113,10 @@ describe('propagateProofStrength — the lax-functor (min over the dep DAG)', ()
         { fromFile: B, specifier: './a.js', kind: 'relative', targetFile: A },
       ],
     });
-    const local = new Map([[A, 0.9], [B, 0.3]]);
+    const local = new Map([
+      [A, 0.9],
+      [B, 0.3],
+    ]);
     const eff = propagateProofStrength(ir, (f) => local.get(f) ?? 0);
     // The whole SCC drops to its minimum member (0.3) and stops changing.
     expect(eff.get(A)).toBeCloseTo(0.3);
@@ -128,7 +137,10 @@ describe('propagateProofStrength — the lax-functor (min over the dep DAG)', ()
 describe('weakestLinkPath — names the capping dependency', () => {
   it('returns the chain to the dependency whose local proof equals the effective floor', () => {
     const ir = depIR(L4_FILE, DEP);
-    const local = new Map([[L4_FILE, 0.95], [DEP, 0.2]]);
+    const local = new Map([
+      [L4_FILE, 0.95],
+      [DEP, 0.2],
+    ]);
     const lookup = (f: string): number => local.get(f) ?? 0;
     const eff = propagateProofStrength(ir, lookup);
     const path = weakestLinkPath(ir, L4_FILE, eff, lookup);
@@ -167,7 +179,12 @@ describe('proofPropagationGate — the floor calibration + THE LAW (propagated l
 });
 
 describe('proofPropagationGate — differentiates measured-weak vs unmeasured (aimed cannon)', () => {
-  const UNMEASURED: ProofSignals = { mutationScore: null, coverage: null, hasPropertyTest: false, hasEnrolledInvariant: false };
+  const UNMEASURED: ProofSignals = {
+    mutationScore: null,
+    coverage: null,
+    hasPropertyTest: false,
+    hasEnrolledInvariant: false,
+  };
 
   it('a MEASURED-and-weak dependency BLOCKS the L4 importer (error)', () => {
     const findings = proofPropagationGate.run(
@@ -193,7 +210,7 @@ describe('proofPropagationGate — differentiates measured-weak vs unmeasured (a
 });
 
 describe('proofPropagationGate — stays in its lane (no double-counting local gaps)', () => {
-  it('a purely-LOCAL gap (effective === local, no weaker dep) is NOT this gate\'s finding', () => {
+  it("a purely-LOCAL gap (effective === local, no weaker dep) is NOT this gate's finding", () => {
     // The L4 file is itself weakly proven (0.2) but its dep is STRONG (1.0) — so the
     // min-fold does NOT lower it (effective === local === 0.2). That is a LOCAL gap the
     // mutation/coverage families own; this gate must stay silent (no double-count).

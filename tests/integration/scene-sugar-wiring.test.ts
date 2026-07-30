@@ -35,14 +35,25 @@ describe('scene sugar wiring (Beat + envelope + ease, end to end)', () => {
     bpm: 128,
     tracks: [
       Track.video('hero', {
-        from: Beat(0), to: Beat(8), source: {}, envelope: fade.in(Beat(2)),
+        from: Beat(0),
+        to: Beat(8),
+        source: {},
+        envelope: fade.in(Beat(2)),
       }),
       Track.video('outro', { from: Beat(4), to: Beat(8), source: {} }),
       Track.audio('bed', {
-        from: Beat(0), to: Beat(8), source: 'bed', mix: { volume: -6 }, envelope: fade.out(Beat(2)),
+        from: Beat(0),
+        to: Beat(8),
+        source: 'bed',
+        mix: { volume: -6 },
+        envelope: fade.out(Beat(2)),
       }),
       Track.transition('xfade', {
-        from: Beat(0), to: Beat(4), kind: 'crossfade', between: [heroId, outroId], ease: 'cubic',
+        from: Beat(0),
+        to: Beat(4),
+        kind: 'crossfade',
+        between: [heroId, outroId],
+        ease: 'cubic',
       }),
     ],
     invariants: [

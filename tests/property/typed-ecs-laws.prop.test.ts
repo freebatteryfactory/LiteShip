@@ -20,9 +20,7 @@ describe('typed ECS properties', () => {
       fc.property(fc.integer(), fc.string(), fc.boolean(), (a, b, reverse) => {
         const admittedA = mustAdmit(A, a);
         const admittedB = mustAdmit(B, b);
-        const id = reverse
-          ? createWorld().spawn(admittedB, admittedA)
-          : createWorld().spawn(admittedA, admittedB);
+        const id = reverse ? createWorld().spawn(admittedB, admittedA) : createWorld().spawn(admittedA, admittedB);
         const canonical = createWorld().spawn(admittedA, admittedB);
         return id.slice(id.indexOf(':') + 1) === canonical.slice(canonical.indexOf(':') + 1);
       }),
@@ -51,22 +49,16 @@ describe('typed ECS properties', () => {
   test('dense swap-remove preserves every non-removed entity/value pair', () => {
     const Value = definePart('property-dense-value', schema.number);
     fc.assert(
-      fc.property(
-        fc.uniqueArray(fc.integer(), { minLength: 1, maxLength: 32 }),
-        fc.nat(),
-        (values, rawIndex) => {
-          const owned = createDenseStore(Value, values.length);
-          const ids = values.map((_value, index) => `property-entity-${index}` as never);
-          values.forEach((value, index) => owned.writer.set(ids[index]!, value));
-          const removedIndex = rawIndex % values.length;
-          owned.writer.delete(ids[removedIndex]!);
-          return values.every((value, index) =>
-            index === removedIndex
-              ? owned.store.get(ids[index]!) === undefined
-              : owned.store.get(ids[index]!) === value,
-          );
-        },
-      ),
+      fc.property(fc.uniqueArray(fc.integer(), { minLength: 1, maxLength: 32 }), fc.nat(), (values, rawIndex) => {
+        const owned = createDenseStore(Value, values.length);
+        const ids = values.map((_value, index) => `property-entity-${index}` as never);
+        values.forEach((value, index) => owned.writer.set(ids[index]!, value));
+        const removedIndex = rawIndex % values.length;
+        owned.writer.delete(ids[removedIndex]!);
+        return values.every((value, index) =>
+          index === removedIndex ? owned.store.get(ids[index]!) === undefined : owned.store.get(ids[index]!) === value,
+        );
+      }),
     );
   });
 

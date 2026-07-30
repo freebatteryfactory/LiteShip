@@ -66,7 +66,10 @@ describe('gpu reinit-race (F-3)', () => {
     document.documentElement.setAttribute('data-liteship-tier', 'gpu');
     _resetRuntimePolicyForTests();
     configureRuntimePolicy();
-    vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn(() => 1),
+    );
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
   });
 
@@ -86,8 +89,12 @@ describe('gpu reinit-race (F-3)', () => {
     // A fetch we resolve MANUALLY, so we can fire liteship:reinit while it's pending.
     // A plain response stub (not a real `Response`) keeps `.text()` on the
     // microtask queue so the deterministic await-drain below settles it.
-    let resolveFetch: (value: { ok: boolean; status: number; statusText: string; text: () => Promise<string> }) => void =
-      () => {};
+    let resolveFetch: (value: {
+      ok: boolean;
+      status: number;
+      statusText: string;
+      text: () => Promise<string>;
+    }) => void = () => {};
     const fetchPending = new Promise<{
       ok: boolean;
       status: number;
@@ -96,7 +103,10 @@ describe('gpu reinit-race (F-3)', () => {
     }>((resolve) => {
       resolveFetch = resolve;
     });
-    vi.stubGlobal('fetch', vi.fn(() => fetchPending));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => fetchPending),
+    );
 
     const canvas = document.createElement('canvas');
     canvas.setAttribute('data-liteship-shader-src', '/shader.frag');

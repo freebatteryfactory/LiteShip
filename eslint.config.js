@@ -8,6 +8,18 @@ export default tseslint.config(
   },
   ...tseslint.configs.recommended,
   {
+    // no-implied-eval resolves timer calls through the global scope, so the
+    // timer globals must be declared for the rule to see them (TS supplies the
+    // types, but ESLint's scope analysis only tracks declared globals).
+    languageOptions: {
+      globals: {
+        setTimeout: 'readonly',
+        setInterval: 'readonly',
+        setImmediate: 'readonly',
+        window: 'readonly',
+        globalThis: 'readonly',
+      },
+    },
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
@@ -25,6 +37,13 @@ export default tseslint.config(
       // Every module uses: export const X = {...}; export declare namespace X { type Shape = ...; }
       '@typescript-eslint/no-namespace': 'off',
       'no-console': 'warn',
+      // Untrusted text never becomes executable JavaScript at runtime
+      // (SECURITY.md). The only sanctioned exceptions are the test
+      // script-execution harnesses enumerated below, and those get
+      // no-new-func only — eval stays banned everywhere.
+      'no-eval': 'error',
+      'no-new-func': 'error',
+      'no-implied-eval': 'error',
     },
   },
   // TSDoc enforcement: configured but initially disabled. Enabled per-package
@@ -194,6 +213,35 @@ export default tseslint.config(
     ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  // Sanctioned script-execution test harnesses.
+  //
+  // Each of these tests proves something ABOUT compiled or generated script
+  // text (a worker script, an inline <script> body, packed/emitted output) by
+  // EXECUTING it — the Function constructor is the harness's execution seam,
+  // and there is no way to run captured script text without one. The exemption
+  // is no-new-func ONLY: no-eval and no-implied-eval stay banned even here
+  // (guarded by tests/unit/devops/blocking-check-negative-controls.test.ts).
+  // Adding a file requires the same shape: a test executing script text it is
+  // the subject-matter authority for.
+  {
+    files: [
+      'tests/support/compositor-script-harness.ts', // executes the compositor worker script string
+      'tests/property/boundary-evaluator-parity.prop.test.ts', // executes the emitted inline evaluator against the runtime one
+      'tests/property/feature-edge-authority-mutation-mcdc.prop.test.ts', // executes compiled mutant modules under the MC-DC harness
+      'tests/integration/wgsl-cast.test.ts', // executes the projection-keys source blob shipped to the worker
+      'tests/unit/core/graph/projection.test.ts', // executes the projection-keys source blob (parity with runtime export)
+      'tests/unit/mcp-server/d5-host-bridge.test.ts', // executes the generated host-bridge script
+      'tests/unit/detect/provisional-detect-drift.test.ts', // executes the inline detect script emitted into HTML
+      'tests/unit/detect/head-probe-drift.test.ts', // executes the inline head-probe script emitted into HTML
+      'tests/component/render-worker.test.ts', // executes the render worker script against a stub self
+      'tests/browser/scene-dev-player.test.ts', // dynamic-import shim: keeps the specifier out of the bundler graph
+      'tests/unit/astro/detect-upgrade-event.test.ts', // executes the detect-upgrade inline script
+      'tests/unit/astro/route-exclude.test.ts', // executes the emitted route-guard inline script
+    ],
+    rules: {
+      'no-new-func': 'off',
     },
   },
   // Bans raw node:child_process imports outside the canonical spawn helper.

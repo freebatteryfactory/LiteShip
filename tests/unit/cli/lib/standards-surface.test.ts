@@ -65,7 +65,11 @@ function activeFacts(result: StandardsIntegrityResult) {
  * so a same-commit weakening that regenerates the working snapshot still diffs vs the
  * base. These hermetic tests inject the base directly (no real git in a temp repo).
  */
-function baseGitShow(base: { snapshotFormat: 1 | 2; elements: readonly StandardsElement[]; address: string }): GitShowReader {
+function baseGitShow(base: {
+  snapshotFormat: 1 | 2;
+  elements: readonly StandardsElement[];
+  address: string;
+}): GitShowReader {
   return (_root, _ref, path) => (path === STANDARDS_SNAPSHOT_PATH ? serializeStandardsSurface(base) : '{}');
 }
 
@@ -337,7 +341,9 @@ describe('readStandardsWaivers — the owner sign-off ledger (the only honest es
     mkdirSync(join(root, 'traceability'), { recursive: true });
     writeFileSync(
       join(root, STANDARDS_WAIVERS_PATH),
-      JSON.stringify({ signoffs: [{ elementKey: 'k', weakening: 'gate-removed', owner: 'o' /* no justification/expiry */ }] }),
+      JSON.stringify({
+        signoffs: [{ elementKey: 'k', weakening: 'gate-removed', owner: 'o' /* no justification/expiry */ }],
+      }),
       'utf8',
     );
     try {
@@ -506,9 +512,7 @@ describe('buildStandardsIntegrityFacts — GENESIS vs CONFIG ERROR (resolvable-b
     // undefined. The backstop must refuse rather than pass without a baseline.
     const gitShow: GitShowReader = (_root, _ref, path) =>
       path === STANDARDS_BASE_PROBE_PATH ? '{"name":"liteship"}' : undefined;
-    expect(() =>
-      buildStandardsIntegrityFacts(root, NOW, { gitShow, gitIntroCommit: () => 'c'.repeat(40) }),
-    ).toThrow();
+    expect(() => buildStandardsIntegrityFacts(root, NOW, { gitShow, gitIntroCommit: () => 'c'.repeat(40) })).toThrow();
   });
 
   it('CONFIG ERROR → FAIL-CLOSED: the base ref is UNRESOLVABLE (even the known-stable probe is absent)', () => {

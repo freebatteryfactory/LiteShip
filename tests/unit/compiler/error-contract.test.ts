@@ -13,7 +13,11 @@ import {
 } from '@liteship/core';
 import { compileReveal, compileScrollTimeline, compileStagger } from '@liteship/compiler';
 
-const META = { created: { wall_ms: 0, counter: 0, node_id: 't' }, updated: { wall_ms: 0, counter: 0, node_id: 't' }, version: 1 };
+const META = {
+  created: { wall_ms: 0, counter: 0, node_id: 't' },
+  updated: { wall_ms: 0, counter: 0, node_id: 't' },
+  version: 1,
+};
 
 const minimalIntent = Reveal.intent({
   target: 'hero',
@@ -26,7 +30,10 @@ const minimalIntent = Reveal.intent({
 
 describe('@liteship/compiler error contract', () => {
   it('compileReveal without a css plan names compileReveal and the missing plan', () => {
-    const empty = sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: META, nodes: [], edges: [] } as Omit<DocumentGraph, 'id' | 'digest'>);
+    const empty = sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: META, nodes: [], edges: [] } as Omit<
+      DocumentGraph,
+      'id' | 'digest'
+    >);
     try {
       compileReveal(empty, 'deadbeef', minimalIntent);
       expect.unreachable('expected throw');

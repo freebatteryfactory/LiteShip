@@ -92,8 +92,7 @@ import type { PrimitiveAdapter } from './reactive-capture.js';
  * tolerance, never a mutation of either observation.
  */
 export type EmissionPolicy =
-  | { readonly kind: 'all' }
-  | { readonly kind: 'distinct'; readonly equals: (a: TraceValue, b: TraceValue) => boolean };
+  { readonly kind: 'all' } | { readonly kind: 'distinct'; readonly equals: (a: TraceValue, b: TraceValue) => boolean };
 
 /** Policy constructors. `distinct` defaults to `Object.is` (the I4/{distinct} default). */
 export const emissionPolicy = {
@@ -168,13 +167,7 @@ export const normalizedDigest = (n: NormalizedObservation): ContentAddress => fn
 // ===========================================================================
 
 /** The axis on which two normalized observations first differ. */
-export type DifferenceAxis =
-  | 'subscriber-set'
-  | 'deliveries'
-  | 'lifecycle'
-  | 'reads'
-  | 'finalValue'
-  | 'disposed';
+export type DifferenceAxis = 'subscriber-set' | 'deliveries' | 'lifecycle' | 'reads' | 'finalValue' | 'disposed';
 
 /**
  * The FIRST structured difference between model and impl — the self-explaining
@@ -197,10 +190,7 @@ const sinkSet = (n: NormalizedObservation): readonly string[] => n.subscribers.m
  * Compute the first difference between two normalized observations, or
  * `undefined` when they are observationally equal (the bisimulation holds).
  */
-export const firstDifference = (
-  model: NormalizedObservation,
-  impl: NormalizedObservation,
-): Difference | undefined => {
+export const firstDifference = (model: NormalizedObservation, impl: NormalizedObservation): Difference | undefined => {
   // 1. Subscriber membership.
   const mSinks = sinkSet(model);
   const iSinks = sinkSet(impl);
@@ -232,7 +222,11 @@ export const firstDifference = (
         };
       }
     }
-    if (ms.interruptedOnDispose !== is.interruptedOnDispose || ms.errored !== is.errored || ms.completed !== is.completed) {
+    if (
+      ms.interruptedOnDispose !== is.interruptedOnDispose ||
+      ms.errored !== is.errored ||
+      ms.completed !== is.completed
+    ) {
       return {
         axis: 'lifecycle',
         sink: ms.sink,

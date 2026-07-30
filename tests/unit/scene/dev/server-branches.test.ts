@@ -104,7 +104,10 @@ describe('url resolution arms', () => {
   });
 
   it('falls back to config.server.port when resolvedUrls is absent', async () => {
-    const handle = await boot('scenes/demo.ts', makeFakeServer({ resolvedUrls: null, config: { server: { port: 4321 } } }));
+    const handle = await boot(
+      'scenes/demo.ts',
+      makeFakeServer({ resolvedUrls: null, config: { server: { port: 4321 } } }),
+    );
     expect(handle.url).toBe('http://localhost:4321/player.html');
   });
 

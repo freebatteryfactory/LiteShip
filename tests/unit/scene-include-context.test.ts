@@ -48,9 +48,11 @@ describe('SceneContext inheritance', () => {
   });
 
   it('inheritContext treats explicit undefined as "no override"', () => {
-    expect(
-      inheritContext(parent, { bpm: undefined, fps: undefined, rootTimeMs: undefined }),
-    ).toEqual({ bpm: 120, fps: 60, rootTimeMs: 0 });
+    expect(inheritContext(parent, { bpm: undefined, fps: undefined, rootTimeMs: undefined })).toEqual({
+      bpm: 120,
+      fps: 60,
+      rootTimeMs: 0,
+    });
   });
 });
 

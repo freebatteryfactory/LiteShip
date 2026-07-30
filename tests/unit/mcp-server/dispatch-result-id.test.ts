@@ -23,7 +23,8 @@ import { describe, it, expect } from 'vitest';
 import { dispatchToolCall } from '../../../packages/mcp-server/src/dispatch.js';
 
 const RECEIPT_KEY = 'liteship/result';
-const idOf = (r: Awaited<ReturnType<typeof dispatchToolCall>>): string => (r._meta?.[RECEIPT_KEY] as { resultId: string }).resultId;
+const idOf = (r: Awaited<ReturnType<typeof dispatchToolCall>>): string =>
+  (r._meta?.[RECEIPT_KEY] as { resultId: string }).resultId;
 
 describe('B5a — resultId depends on its stable fields (not a constant)', () => {
   it('PAYLOAD-sensitive: same command, different arguments → different resultId', async () => {

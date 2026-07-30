@@ -10,14 +10,14 @@ export async function captureCli<T>(fn: () => Promise<T>): Promise<{ exit: T; st
   let stderr = '';
   const origOut = process.stdout.write.bind(process.stdout);
   const origErr = process.stderr.write.bind(process.stderr);
-  (process.stdout as unknown as { write: unknown }).write = ((chunk: string | Uint8Array) => {
+  (process.stdout as unknown as { write: unknown }).write = (chunk: string | Uint8Array) => {
     stdout += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
     return true;
-  });
-  (process.stderr as unknown as { write: unknown }).write = ((chunk: string | Uint8Array) => {
+  };
+  (process.stderr as unknown as { write: unknown }).write = (chunk: string | Uint8Array) => {
     stderr += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
     return true;
-  });
+  };
   try {
     const exit = await fn();
     return { exit, stdout, stderr };

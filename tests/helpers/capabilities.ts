@@ -41,7 +41,10 @@ function capsuleManifestPath(cwd: string): string {
 const REPO_ROOT = resolve(import.meta.dirname, '../..');
 
 /** The cargo-built wasm kernel (the `build:wasm` output the parity suite needs). */
-const WASM_BUILD_ARTIFACT = join(REPO_ROOT, 'crates/liteship-compute/target/wasm32-unknown-unknown/release/liteship_compute.wasm');
+const WASM_BUILD_ARTIFACT = join(
+  REPO_ROOT,
+  'crates/liteship-compute/target/wasm32-unknown-unknown/release/liteship_compute.wasm',
+);
 /** The publish-STAGED wasm copy under `@liteship/core/dist` (the module-graph resolver target). */
 const WASM_DIST_ARTIFACT = join(REPO_ROOT, 'packages/core/dist/liteship-compute.wasm');
 /** The built Astro example's entry HTML (the e2e directive-boot fixture). */

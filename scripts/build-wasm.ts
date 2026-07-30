@@ -26,10 +26,7 @@ import { spawnArgv } from './lib/spawn.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const crateDir = resolve(repoRoot, 'crates/liteship-compute');
-const crateArtifact = resolve(
-  crateDir,
-  'target/wasm32-unknown-unknown/release/liteship_compute.wasm',
-);
+const crateArtifact = resolve(crateDir, 'target/wasm32-unknown-unknown/release/liteship_compute.wasm');
 // The published filename uses the hyphenated package-facing name
 // (`liteship-compute.wasm`), not the crate's underscored cdylib output. The
 // `@liteship/vite` resolver and the `@liteship/core` export subpath both reference

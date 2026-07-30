@@ -225,11 +225,9 @@ function durationBetween(start: number | null, end: number | null, label: string
   return end - start;
 }
 
-function buildDeliveryHealth(
-  input: DeliveryMetricsInput,
-  resolvedCurePackets: ReadonlySet<string>,
-): DeliveryHealth {
-  const intent = input.changeIntent === undefined || input.changeIntent === null ? null : parseChangeIntent(input.changeIntent);
+function buildDeliveryHealth(input: DeliveryMetricsInput, resolvedCurePackets: ReadonlySet<string>): DeliveryHealth {
+  const intent =
+    input.changeIntent === undefined || input.changeIntent === null ? null : parseChangeIntent(input.changeIntent);
   if (intent !== null && intent.sourceSha.value !== input.plan.headSha) {
     throw new TypeError('delivery health change intent belongs to a foreign head');
   }
@@ -268,7 +266,9 @@ function buildDeliveryHealth(
   const batchMs = durationBetween(batchStartedAt, batchCompletedAt, 'delivery health batch');
 
   const quickReports = input.reports.filter((report) => report.profile === 'quick');
-  const quickResults = quickReports.flatMap((report) => report.results).filter((result) => result.verdict !== 'skipped');
+  const quickResults = quickReports
+    .flatMap((report) => report.results)
+    .filter((result) => result.verdict !== 'skipped');
   const quickPacketIds = new Set<string>(
     quickReports.flatMap((report) => report.curePackets.map((packet) => packet.packetId)),
   );
@@ -302,7 +302,9 @@ function buildDeliveryHealth(
         reasons: ['no-affected-package-benchmark-evidence'],
       };
     } else {
-      const admissions = records.map((evidence) => admitBenchmarkEvidence(evidence, input.benchmarkEvidence!.authority));
+      const admissions = records.map((evidence) =>
+        admitBenchmarkEvidence(evidence, input.benchmarkEvidence!.authority),
+      );
       const reasons = [...new Set(admissions.flatMap((admission) => admission.reasons))].sort();
       benchmark = {
         classification: admissions.some((admission) => admission.disposition === 'fail')
@@ -316,9 +318,7 @@ function buildDeliveryHealth(
     }
   }
 
-  const anyFailedReport = input.reports.some((report) =>
-    report.results.some((result) => result.verdict === 'fail'),
-  );
+  const anyFailedReport = input.reports.some((report) => report.results.some((result) => result.verdict === 'fail'));
   const failureRecovery: DeliveryHealth['failureRecovery'] =
     failureAt === null
       ? input.reports.length === 0
@@ -331,12 +331,16 @@ function buildDeliveryHealth(
         : { classification: 'recovered', milliseconds: recoveryMs };
 
   return Object.freeze({
-    scope: Object.freeze({ kind: 'library' as const, packages: Object.freeze([...input.plan.affectedPackages].sort()) }),
+    scope: Object.freeze({
+      kind: 'library' as const,
+      packages: Object.freeze([...input.plan.affectedPackages].sort()),
+    }),
     intentId: intent?.intentId ?? null,
     feedback: Object.freeze({
       classification: 'known' as const,
       milliseconds: input.timings.feedbackLatencyMs,
-      slo: input.timings.feedbackLatencyMs <= DELIVERY_SLOS.feedbackLatencyMsMax ? ('pass' as const) : ('fail' as const),
+      slo:
+        input.timings.feedbackLatencyMs <= DELIVERY_SLOS.feedbackLatencyMsMax ? ('pass' as const) : ('fail' as const),
     }),
     commitToEvidence:
       commitToEvidenceMs === null
@@ -344,7 +348,8 @@ function buildDeliveryHealth(
         : Object.freeze({ classification: 'known' as const, milliseconds: commitToEvidenceMs }),
     failureRecovery: Object.freeze(failureRecovery),
     reviewBatch: Object.freeze({
-      classification: batchMs === null ? ('unknown' as const) : input.reruns > 0 ? ('rebatch' as const) : ('single-batch' as const),
+      classification:
+        batchMs === null ? ('unknown' as const) : input.reruns > 0 ? ('rebatch' as const) : ('single-batch' as const),
       reviewMs,
       batchMs,
     }),
@@ -441,7 +446,17 @@ export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
 
   const health = exactRecord(
     record['health'],
-    ['scope', 'intentId', 'feedback', 'commitToEvidence', 'failureRecovery', 'reviewBatch', 'quickCureCache', 'compute', 'benchmark'],
+    [
+      'scope',
+      'intentId',
+      'feedback',
+      'commitToEvidence',
+      'failureRecovery',
+      'reviewBatch',
+      'quickCureCache',
+      'compute',
+      'benchmark',
+    ],
     'delivery metrics health',
   );
   const scope = exactRecord(health['scope'], ['kind', 'packages'], 'delivery metrics health scope');
@@ -523,11 +538,19 @@ export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
     ['classification', 'executed', 'cacheHits', 'curePacketsEmitted', 'curePacketsResolved'],
     'delivery metrics health quickCureCache',
   );
-  if (!['executed', 'cache-served', 'mixed-cache', 'repair-open', 'repair-closed', 'unknown'].includes(String(quickCureCache['classification']))) {
+  if (
+    !['executed', 'cache-served', 'mixed-cache', 'repair-open', 'repair-closed', 'unknown'].includes(
+      String(quickCureCache['classification']),
+    )
+  ) {
     throw new TypeError('delivery metrics health quickCureCache classification is invalid');
   }
   const quickExecuted = finiteNonNegative(quickCureCache['executed'], 'delivery metrics health quick executed', true);
-  const quickCacheHits = finiteNonNegative(quickCureCache['cacheHits'], 'delivery metrics health quick cache hits', true);
+  const quickCacheHits = finiteNonNegative(
+    quickCureCache['cacheHits'],
+    'delivery metrics health quick cache hits',
+    true,
+  );
   const quickEmitted = finiteNonNegative(
     quickCureCache['curePacketsEmitted'],
     'delivery metrics health quick cure packets emitted',
@@ -586,14 +609,15 @@ export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
     throw new TypeError('delivery metrics health benchmark reasons must be strings');
   }
   const benchmarkReasons = benchmark['reasons'] as string[];
-  if (new Set(benchmarkReasons).size !== benchmarkReasons.length || JSON.stringify(benchmarkReasons) !== JSON.stringify([...benchmarkReasons].sort())) {
+  if (
+    new Set(benchmarkReasons).size !== benchmarkReasons.length ||
+    JSON.stringify(benchmarkReasons) !== JSON.stringify([...benchmarkReasons].sort())
+  ) {
     throw new TypeError('delivery metrics health benchmark reasons must be sorted and unique');
   }
   if (
-    (benchmarkArtifactId === null &&
-      (benchmark['classification'] !== 'unknown' || benchmarkReasons.length !== 0)) ||
-    (benchmark['classification'] === 'pass' &&
-      (benchmarkArtifactId === null || benchmarkReasons.length !== 0)) ||
+    (benchmarkArtifactId === null && (benchmark['classification'] !== 'unknown' || benchmarkReasons.length !== 0)) ||
+    (benchmark['classification'] === 'pass' && (benchmarkArtifactId === null || benchmarkReasons.length !== 0)) ||
     (benchmark['classification'] !== 'pass' && benchmarkArtifactId !== null && benchmarkReasons.length === 0)
   ) {
     throw new TypeError('delivery metrics health benchmark classification contradicts admitted evidence');

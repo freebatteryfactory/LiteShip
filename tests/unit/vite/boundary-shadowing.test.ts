@@ -23,7 +23,12 @@ describe('boundary-shadowing diagnostic (#114)', () => {
 
   test('flags compound selectors that share a boundary class token', () => {
     const boundary = '.hero { color: red; }';
-    for (const foreign of ['.hero:hover { color: blue; }', '.hero.active { color: green; }', 'div.hero { color: cyan; }', '.hero[data-open] { color: yellow; }']) {
+    for (const foreign of [
+      '.hero:hover { color: blue; }',
+      '.hero.active { color: green; }',
+      'div.hero { color: cyan; }',
+      '.hero[data-open] { color: yellow; }',
+    ]) {
       const warnings = diagnoseBoundaryShadowing(boundary, foreign, 'app.css');
       expect(warnings.length, foreign).toBeGreaterThan(0);
     }

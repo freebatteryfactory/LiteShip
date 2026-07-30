@@ -779,68 +779,70 @@ describe('MULTI-COMMIT PUSH GAP — the push base must be github.event.before, n
     // Seven real git spawns on a loaded Windows runner overrun vitest's 10s default.
     { timeout: scaledTimeout(30_000) },
     async () => {
-    const repo = await initRepo('main');
-    try {
-      // The PRE-PUSH tip (`before`): the STRONG floor (value 100). This is the SHA the ref
-      // pointed at before the push — the true range base.
-      const beforeSha = await commitSnapshot(repo, snapshotWithFloor(100), 'c0: strong floor (pre-push tip)');
+      const repo = await initRepo('main');
+      try {
+        // The PRE-PUSH tip (`before`): the STRONG floor (value 100). This is the SHA the ref
+        // pointed at before the push — the true range base.
+        const beforeSha = await commitSnapshot(repo, snapshotWithFloor(100), 'c0: strong floor (pre-push tip)');
 
-      // The push delivers TWO commits:
-      //   c1 — the WEAKENING: the floor is lowered 100 → 50 (a real erosion).
-      //   c2 — an innocuous follow-up that does NOT touch the standards snapshot.
-      await commitSnapshot(repo, snapshotWithFloor(50), 'c1: LOWER the floor (the weakening, 2 commits back)');
-      writeFileSync(join(repo, 'unrelated.txt'), 'a follow-up commit that does not touch standards\n');
-      await git(repo, ['add', 'unrelated.txt']);
-      await git(repo, ['commit', '-q', '-m', 'c2: unrelated follow-up']);
+        // The push delivers TWO commits:
+        //   c1 — the WEAKENING: the floor is lowered 100 → 50 (a real erosion).
+        //   c2 — an innocuous follow-up that does NOT touch the standards snapshot.
+        await commitSnapshot(repo, snapshotWithFloor(50), 'c1: LOWER the floor (the weakening, 2 commits back)');
+        writeFileSync(join(repo, 'unrelated.txt'), 'a follow-up commit that does not touch standards\n');
+        await git(repo, ['add', 'unrelated.txt']);
+        await git(repo, ['commit', '-q', '-m', 'c2: unrelated follow-up']);
 
-      // The LIVE surface at the pushed HEAD already carries the weakened (50) floor.
-      const live = readBaseSnapshot(repo, 'HEAD', defaultGitShow);
-      expect(live.elements.find((e) => e._tag === 'floor')).toMatchObject({ value: 50 });
+        // The LIVE surface at the pushed HEAD already carries the weakened (50) floor.
+        const live = readBaseSnapshot(repo, 'HEAD', defaultGitShow);
+        expect(live.elements.find((e) => e._tag === 'floor')).toMatchObject({ value: 50 });
 
-      // ── RED (the OLD push base): diff live vs HEAD~1 ──────────────────────────────
-      // HEAD~1 is c1 — which ALREADY contains the lowered floor (50). So live (50) vs
-      // HEAD~1 (50) shows NO change. The weakening — landed 2 commits back — sails through.
-      const head1 = readBaseSnapshot(repo, 'HEAD~1', defaultGitShow);
-      expect(head1.elements.find((e) => e._tag === 'floor')).toMatchObject({ value: 50 });
-      const oldChanges = diffStandardsSurface(head1.elements, live.elements);
-      const oldPart = applyStandardsWaivers(oldChanges, [], NOW, ALWAYS_BLOCKING);
-      expect(oldPart.unsignedWeakenings).toEqual([]); // BYPASS: HEAD~1 missed it.
+        // ── RED (the OLD push base): diff live vs HEAD~1 ──────────────────────────────
+        // HEAD~1 is c1 — which ALREADY contains the lowered floor (50). So live (50) vs
+        // HEAD~1 (50) shows NO change. The weakening — landed 2 commits back — sails through.
+        const head1 = readBaseSnapshot(repo, 'HEAD~1', defaultGitShow);
+        expect(head1.elements.find((e) => e._tag === 'floor')).toMatchObject({ value: 50 });
+        const oldChanges = diffStandardsSurface(head1.elements, live.elements);
+        const oldPart = applyStandardsWaivers(oldChanges, [], NOW, ALWAYS_BLOCKING);
+        expect(oldPart.unsignedWeakenings).toEqual([]); // BYPASS: HEAD~1 missed it.
 
-      // ── GREEN (the NEW push base): diff live vs the before-SHA (the whole pushed range) ─
-      // `before` is c0 — the STRONG floor (100). live (50) vs before (100) IS a weakening.
-      // The resolver passes the real before-SHA straight through (highest authority).
-      expect(resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: beforeSha })).toBe(beforeSha);
-      const before = readBaseSnapshot(repo, beforeSha, defaultGitShow);
-      expect(before.elements.find((e) => e._tag === 'floor')).toMatchObject({ value: 100 });
-      const newChanges = diffStandardsSurface(before.elements, live.elements);
-      const newPart = applyStandardsWaivers(newChanges, [], NOW, ALWAYS_BLOCKING);
-      expect(newPart.unsignedWeakenings.some((c) => c.weakening === 'floor-lowered')).toBe(true); // CAUGHT.
-    } finally {
-      rmSync(repo, { recursive: true, force: true });
-    }
-  });
+        // ── GREEN (the NEW push base): diff live vs the before-SHA (the whole pushed range) ─
+        // `before` is c0 — the STRONG floor (100). live (50) vs before (100) IS a weakening.
+        // The resolver passes the real before-SHA straight through (highest authority).
+        expect(resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: beforeSha })).toBe(beforeSha);
+        const before = readBaseSnapshot(repo, beforeSha, defaultGitShow);
+        expect(before.elements.find((e) => e._tag === 'floor')).toMatchObject({ value: 100 });
+        const newChanges = diffStandardsSurface(before.elements, live.elements);
+        const newPart = applyStandardsWaivers(newChanges, [], NOW, ALWAYS_BLOCKING);
+        expect(newPart.unsignedWeakenings.some((c) => c.weakening === 'floor-lowered')).toBe(true); // CAUGHT.
+      } finally {
+        rmSync(repo, { recursive: true, force: true });
+      }
+    },
+  );
 
   test(
     'BOOTSTRAP: an all-zeros before-SHA falls through to main (fail-closed if main lacks the snapshot)',
     // Same real-git fixture as the drill above; scale past the 10s default.
     { timeout: scaledTimeout(30_000) },
     async () => {
-    // The brand-new-branch first push: github.event.before is the all-zeros sentinel. The
-    // resolver must NOT pass it to git — it falls through to main. In a temp repo with no
-    // `main` snapshot reachable, the base read FAILS CLOSED (refuse), never a silent pass.
-    const repo = await initRepo('feature');
-    try {
-      await commitSnapshot(repo, snapshotWithFloor(100), 'only commit on a brand-new branch');
-      const zero = '0000000000000000000000000000000000000000';
-      // The zero-SHA is dropped → resolves to `main`. `main` does not exist here → the base
-      // read throws (fail-closed), never falls back to the working snapshot.
-      const resolved = resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: zero });
-      expect(resolved).toBe(STANDARDS_DEFAULT_BASE_REF);
-      expect(() => readBaseSnapshot(repo, resolved, defaultGitShow)).toThrow();
-    } finally {
-      rmSync(repo, { recursive: true, force: true });
-    }
-  });
+      // The brand-new-branch first push: github.event.before is the all-zeros sentinel. The
+      // resolver must NOT pass it to git — it falls through to main. In a temp repo with no
+      // `main` snapshot reachable, the base read FAILS CLOSED (refuse), never a silent pass.
+      const repo = await initRepo('feature');
+      try {
+        await commitSnapshot(repo, snapshotWithFloor(100), 'only commit on a brand-new branch');
+        const zero = '0000000000000000000000000000000000000000';
+        // The zero-SHA is dropped → resolves to `main`. `main` does not exist here → the base
+        // read throws (fail-closed), never falls back to the working snapshot.
+        const resolved = resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: zero });
+        expect(resolved).toBe(STANDARDS_DEFAULT_BASE_REF);
+        expect(() => readBaseSnapshot(repo, resolved, defaultGitShow)).toThrow();
+      } finally {
+        rmSync(repo, { recursive: true, force: true });
+      }
+    },
+  );
 });
 
 // ───────────── FINDING 2 — a PLACEHOLDER skip can NEVER be sign-sanctioned ─────────
@@ -1058,7 +1060,9 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
     ).toBe('ffmpeg-absent');
     // Even a real sanctioned FILE cannot launder a marker-free placeholder at a DIFFERENT site —
     // the site does not match, so it is unsanctioned regardless of consistency.
-    expect(sanctionedSkipFor('tests/integration/cli/scene-render.test.ts', "it.skip('later', () => {});")).toBeUndefined();
+    expect(
+      sanctionedSkipFor('tests/integration/cli/scene-render.test.ts', "it.skip('later', () => {});"),
+    ).toBeUndefined();
   });
 
   test('RED→GREEN partition: an UNCONDITIONAL `it.skip("later")` + a sign-off stays BLOCKING (void sign-off)', () => {

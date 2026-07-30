@@ -317,8 +317,8 @@ export function renderDocPackageGroups(): string {
   return (
     generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts') +
     `// prettier-ignore\nexport const GENERATED_DOC_PACKAGE_GROUPS = {\n${rows}\n} as const;\n` +
-    `export const GENERATED_PROSE_ONLY = [${prose.join(', ')}] as const;\n` +
-    `export const GENERATED_NO_SURFACE_SECTION = [${noSurface.join(', ')}] as const;\n`
+    `// prettier-ignore\nexport const GENERATED_PROSE_ONLY = [${prose.join(', ')}] as const;\n` +
+    `// prettier-ignore\nexport const GENERATED_NO_SURFACE_SECTION = [${noSurface.join(', ')}] as const;\n`
   );
 }
 

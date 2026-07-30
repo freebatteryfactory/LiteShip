@@ -39,9 +39,11 @@ describe('@liteship/core ships the liteship-compute WASM kernel', () => {
     // export of a build-on-demand artifact fails the package-export audit), but
     // it MUST be in `files` so `npm pack` includes dist/liteship-compute.wasm.
     expect(corePkg.files).toContain('dist');
-    const exportsMap = (JSON.parse(readFileSync(join(REPO, 'packages/core/package.json'), 'utf8')) as {
-      exports: Record<string, unknown>;
-    }).exports;
+    const exportsMap = (
+      JSON.parse(readFileSync(join(REPO, 'packages/core/package.json'), 'utf8')) as {
+        exports: Record<string, unknown>;
+      }
+    ).exports;
     expect('./liteship-compute.wasm' in exportsMap).toBe(false);
   });
 
@@ -67,7 +69,7 @@ describe('@liteship/core ships the liteship-compute WASM kernel', () => {
     expect(resolver).toContain("source: 'package'");
   });
 
-  it("release.yml builds the wasm (with the wasm32 toolchain) BEFORE the ship loop packs it", () => {
+  it('release.yml builds the wasm (with the wasm32 toolchain) BEFORE the ship loop packs it', () => {
     const yml = readFileSync(join(REPO, '.github/workflows/release.yml'), 'utf8');
     const buildWasmAt = yml.indexOf('pnpm run build:wasm');
     const shipLoopAt = yml.indexOf('for pkg in');

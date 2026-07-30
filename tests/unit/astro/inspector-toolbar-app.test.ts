@@ -30,7 +30,8 @@ afterEach(() => {
 
 describe('inspector dev-toolbar app', () => {
   test('mounts a fresh panel on open and tears it down on close', () => {
-    document.body.innerHTML = '<div data-liteship-boundary=\'{"id":"hero","input":"viewport.width","thresholds":[0,768],"states":["compact","wide"]}\'></div>';
+    document.body.innerHTML =
+      '<div data-liteship-boundary=\'{"id":"hero","input":"viewport.width","thresholds":[0,768],"states":["compact","wide"]}\'></div>';
     const canvas = document.createElement('div');
     const bar = fakeToolbar();
 

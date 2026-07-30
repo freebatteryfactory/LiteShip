@@ -34,7 +34,10 @@ import {
 } from '@liteship/gauntlet';
 
 /** Findings for one gate over an in-memory `{ path: body }` world. */
-function run(gate: { run: (c: ReturnType<typeof memoryContext>) => readonly Finding[] }, files: Record<string, string>): readonly Finding[] {
+function run(
+  gate: { run: (c: ReturnType<typeof memoryContext>) => readonly Finding[] },
+  files: Record<string, string>,
+): readonly Finding[] {
   return gate.run(memoryContext(files));
 }
 function locs(findings: readonly Finding[]): string[] {
@@ -176,7 +179,7 @@ describe('the skip-detect oracle + the sanctioned-skip allowlist', () => {
         "it.skip('a', () => {});", // call
         'describe.skipIf(!x)("b", () => {});', // conditional
         'const f = COND ? it : it.skip;', // alias (bare ref)
-        "// a prose it.skip( mention", // comment — ignored
+        '// a prose it.skip( mention', // comment — ignored
         "const s = 'it.skip in a string';", // string — ignored
       ].join('\n'),
     );
@@ -222,10 +225,15 @@ describe('the skip-detect oracle + the sanctioned-skip allowlist', () => {
     // capability — it is not auto-sanctionable. Even pointed at a REAL sanctioned file (intro-render,
     // ffmpeg-absent), the (file, site) does not match the enumerated site, so it stays unsanctioned;
     // and the consistency floor independently rejects the title even if the site DID match.
-    expect(sanctionedSkipFor('tests/integration/cli/scene-render.test.ts', "it.skip('later', () => {});")).toBeUndefined();
+    expect(
+      sanctionedSkipFor('tests/integration/cli/scene-render.test.ts', "it.skip('later', () => {});"),
+    ).toBeUndefined();
     // The real ffmpeg-named site at the same file IS sanctioned (the floor passes a genuine gate).
     expect(
-      sanctionedSkipFor('tests/integration/cli/scene-render.test.ts', 'const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;')?.capability,
+      sanctionedSkipFor(
+        'tests/integration/cli/scene-render.test.ts',
+        'const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;',
+      )?.capability,
     ).toBe('ffmpeg-absent');
   });
 });

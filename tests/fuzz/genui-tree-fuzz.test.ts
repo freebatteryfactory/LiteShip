@@ -50,9 +50,7 @@ describe('generated UI parser fuzz boundary', () => {
           name: 'Text',
           props: { text: String(index) },
         }));
-        const parsed = tryParseGeneratedUIChunk(
-          JSON.stringify({ _genui: true, name: 'Root', props: {}, children }),
-        );
+        const parsed = tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, name: 'Root', props: {}, children }));
         expect(parsed === null).toBe(childCount + 1 > 4096);
       }),
       { numRuns: 20, seed: 0x6e5549 },

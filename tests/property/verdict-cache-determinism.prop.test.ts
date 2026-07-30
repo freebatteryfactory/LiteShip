@@ -109,16 +109,19 @@ describe('verdict-cache key determinism (INV-VERDICT-CACHE-KEY-DETERMINISTIC)', 
 
   it('coverageDigestOf is order- and multiplicity-independent (sorted, de-duped fold)', () => {
     fc.assert(
-      fc.property(fc.uniqueArray(fc.tuple(fileIdArb, digestArb), { minLength: 1, maxLength: 6, selector: (p) => p[0] }), (pairs) => {
-        const ir = irOf(pairs);
-        const ids = pairs.map((p) => p[0]);
-        const forward = coverageDigestOf(ids, ir);
-        const reversed = coverageDigestOf([...ids].reverse(), ir);
-        const duplicated = coverageDigestOf([...ids, ...ids], ir);
-        // The digest is a SET fold: order and duplicates do not change it.
-        expect(reversed).toBe(forward);
-        expect(duplicated).toBe(forward);
-      }),
+      fc.property(
+        fc.uniqueArray(fc.tuple(fileIdArb, digestArb), { minLength: 1, maxLength: 6, selector: (p) => p[0] }),
+        (pairs) => {
+          const ir = irOf(pairs);
+          const ids = pairs.map((p) => p[0]);
+          const forward = coverageDigestOf(ids, ir);
+          const reversed = coverageDigestOf([...ids].reverse(), ir);
+          const duplicated = coverageDigestOf([...ids, ...ids], ir);
+          // The digest is a SET fold: order and duplicates do not change it.
+          expect(reversed).toBe(forward);
+          expect(duplicated).toBe(forward);
+        },
+      ),
       { numRuns: 200, seed: 0xc0e2 },
     );
   });

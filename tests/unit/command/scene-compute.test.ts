@@ -35,7 +35,10 @@ describe('@liteship/command scene.compile', () => {
   });
 
   it('missing scene file → failed exit 1', async () => {
-    const r = await sceneCompileCommand.handler({ name: 'scene.compile', args: { scene: 's.ts' } }, { fileExists: () => false });
+    const r = await sceneCompileCommand.handler(
+      { name: 'scene.compile', args: { scene: 's.ts' } },
+      { fileExists: () => false },
+    );
     expect(r.status).toBe('failed');
     expect(r.exitCode).toBe(1);
   });
@@ -66,7 +69,13 @@ describe('@liteship/command scene.compile', () => {
   it('compile fn throwing → failed exit 1', async () => {
     const r = await sceneCompileCommand.handler(
       { name: 'scene.compile', args: { scene: 's.ts' } },
-      { fileExists: () => true, loadSceneModule: async () => COMPILE_MOD, runSceneCompile: async () => { throw new Error('boom'); } },
+      {
+        fileExists: () => true,
+        loadSceneModule: async () => COMPILE_MOD,
+        runSceneCompile: async () => {
+          throw new Error('boom');
+        },
+      },
     );
     expect(r.status).toBe('failed');
     expect(r.exitCode).toBe(1);
@@ -74,7 +83,12 @@ describe('@liteship/command scene.compile', () => {
 
   it.each([
     ['null result', async () => null],
-    ['throwing provider', async () => { throw new Error('bad module syntax'); }],
+    [
+      'throwing provider',
+      async () => {
+        throw new Error('bad module syntax');
+      },
+    ],
   ])('module load %s → one structured failure and no throw', async (_label, loadSceneModule) => {
     const r = await sceneCompileCommand.handler(
       { name: 'scene.compile', args: { scene: 's.ts' } },
@@ -166,8 +180,14 @@ describe('@liteship/command scene.render', () => {
       {
         fileExists: () => true,
         cache: { read: () => ({ sceneId: 's1', output: 'o.mp4', frameCount: 30, elapsedMs: 5 }), write: () => {} },
-        loadSceneModule: async () => { rendered = true; return RENDER_MOD; },
-        renderScene: async () => { rendered = true; return { frameCount: 0, elapsedMs: 0 }; },
+        loadSceneModule: async () => {
+          rendered = true;
+          return RENDER_MOD;
+        },
+        renderScene: async () => {
+          rendered = true;
+          return { frameCount: 0, elapsedMs: 0 };
+        },
       },
     );
     const p = r.payload as { cached: boolean; sceneId: string };
@@ -201,7 +221,9 @@ describe('@liteship/command scene.render', () => {
         cache: { read: () => null, write: () => {} },
         loadSceneModule: async () => RENDER_MOD,
         runSceneCompile,
-        renderScene: async () => { throw new Error('ffmpeg boom'); },
+        renderScene: async () => {
+          throw new Error('ffmpeg boom');
+        },
       },
     );
     expect(r.status).toBe('failed');
@@ -225,7 +247,9 @@ describe('@liteship/command scene.render', () => {
       {
         fileExists: () => true,
         cache: { read: () => null, write: () => {} },
-        loadSceneModule: async () => { throw new Error('loader exploded'); },
+        loadSceneModule: async () => {
+          throw new Error('loader exploded');
+        },
         runSceneCompile,
         renderScene: async () => ({ frameCount: 0, elapsedMs: 0 }),
       },

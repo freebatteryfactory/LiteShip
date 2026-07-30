@@ -226,19 +226,23 @@ describe('spine-relation gate — REDS on the three historical drift fixtures (t
 });
 
 describe('spine-relation exact census — planted declaration mutations', () => {
-  it('reds on a fake runtime twin instead of admitting a declaration-only name', { timeout: scaledTimeout(60_000) }, () => {
-    const fake: SpineTypeAdmission = {
-      typeName: 'CapSet.fakeRuntimeTwin',
-      authority: 'runtime',
-      admittedRelation: 'exact',
-      spineExpr: 'CapSet',
-      runtimeModule: 'packages/core/src/index.ts',
-      runtimeExpr: 'CapSetThatDoesNotExist',
-    };
-    const facts = buildSpineRelationFacts([fake], REPO_ROOT, SPINE_OPTIONS);
-    expect(facts.observations[0]).toMatchObject({ resolved: false, observedRelation: 'opaque' });
-    expect(gateFindings(facts).some((finding) => finding.title.includes('fakeRuntimeTwin'))).toBe(true);
-  });
+  it(
+    'reds on a fake runtime twin instead of admitting a declaration-only name',
+    { timeout: scaledTimeout(60_000) },
+    () => {
+      const fake: SpineTypeAdmission = {
+        typeName: 'CapSet.fakeRuntimeTwin',
+        authority: 'runtime',
+        admittedRelation: 'exact',
+        spineExpr: 'CapSet',
+        runtimeModule: 'packages/core/src/index.ts',
+        runtimeExpr: 'CapSetThatDoesNotExist',
+      };
+      const facts = buildSpineRelationFacts([fake], REPO_ROOT, SPINE_OPTIONS);
+      expect(facts.observations[0]).toMatchObject({ resolved: false, observedRelation: 'opaque' });
+      expect(gateFindings(facts).some((finding) => finding.title.includes('fakeRuntimeTwin'))).toBe(true);
+    },
+  );
 
   it('reds on a missing required mirror', { timeout: scaledTimeout(60_000) }, () => {
     const facts = driftedFileFacts(COMMAND_DTS, (source) =>

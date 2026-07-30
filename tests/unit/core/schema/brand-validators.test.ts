@@ -171,15 +171,19 @@ const contentAddressHomes = [ContentAddress, CanonAddr, GenuiAddr] as const;
  */
 const malformedAddress: fc.Arbitrary<string> = fc.oneof(
   // wrong prefix, otherwise-valid 8 hex body
-  fc.tuple(fc.constantFrom('sha256', 'blake3', 'fnv1', 'fnv1a2', '', 'FNV1A'), hex8).map(
-    ([p, h]) => `${p}:${h}`,
-  ),
+  fc.tuple(fc.constantFrom('sha256', 'blake3', 'fnv1', 'fnv1a2', '', 'FNV1A'), hex8).map(([p, h]) => `${p}:${h}`),
   // right prefix, wrong hex width (anything but 8)
   fc
-    .tuple(fc.integer({ min: 0, max: 16 }).filter((n) => n !== 8), fc.constantFrom('0', 'a', 'f'))
+    .tuple(
+      fc.integer({ min: 0, max: 16 }).filter((n) => n !== 8),
+      fc.constantFrom('0', 'a', 'f'),
+    )
     .map(([n, c]) => `fnv1a:${c.repeat(n)}`),
   // right prefix + width, but uppercase / non-hex characters in the body
-  fc.stringMatching(/^[0-9A-Fg-z]{8}$/).filter((s) => /[A-Fg-z]/.test(s)).map((b) => `fnv1a:${b}`),
+  fc
+    .stringMatching(/^[0-9A-Fg-z]{8}$/)
+    .filter((s) => /[A-Fg-z]/.test(s))
+    .map((b) => `fnv1a:${b}`),
   // structural degenerates
   fc.constantFrom('', 'fnv1a:', 'fnv1a', 'fnv1a:deadbeef ', ' fnv1a:deadbeef', 'deadbeef'),
   // arbitrary-string backstop (filtered so a fluke valid address can't sneak in)
@@ -187,10 +191,7 @@ const malformedAddress: fc.Arbitrary<string> = fc.oneof(
 );
 
 /** Run `ctor` on `v`; report whether it accepted (and what it returned) or threw. */
-function verdictOf(
-  ctor: (v: string) => string,
-  v: string,
-): { kind: 'ok'; value: string } | { kind: 'throw' } {
+function verdictOf(ctor: (v: string) => string, v: string): { kind: 'ok'; value: string } | { kind: 'throw' } {
   try {
     return { kind: 'ok', value: ctor(v) };
   } catch {
@@ -226,19 +227,23 @@ describe('ContentAddress three-home parity drift-guard', () => {
 
   test('(b′) ACCEPT/REJECT verdict parity over the whole input space (valid ∪ malformed)', () => {
     fc.assert(
-      fc.property(fc.oneof(hex8.map((h) => `fnv1a:${h}`), malformedAddress), (v) => {
-        const verdicts = contentAddressHomes.map((home) => verdictOf(home, v));
-        // Identical accept/reject verdict...
-        const kinds = new Set(verdicts.map((r) => r.kind));
-        expect(kinds.size).toBe(1);
-        // ...and when accepted, identical returned bytes.
-        const accepted = verdicts.filter(
-          (r): r is { kind: 'ok'; value: string } => r.kind === 'ok',
-        );
-        if (accepted.length > 0) {
-          expect(new Set(accepted.map((r) => r.value)).size).toBe(1);
-        }
-      }),
+      fc.property(
+        fc.oneof(
+          hex8.map((h) => `fnv1a:${h}`),
+          malformedAddress,
+        ),
+        (v) => {
+          const verdicts = contentAddressHomes.map((home) => verdictOf(home, v));
+          // Identical accept/reject verdict...
+          const kinds = new Set(verdicts.map((r) => r.kind));
+          expect(kinds.size).toBe(1);
+          // ...and when accepted, identical returned bytes.
+          const accepted = verdicts.filter((r): r is { kind: 'ok'; value: string } => r.kind === 'ok');
+          if (accepted.length > 0) {
+            expect(new Set(accepted.map((r) => r.value)).size).toBe(1);
+          }
+        },
+      ),
     );
   });
 
@@ -274,9 +279,9 @@ describe('IntegrityDigest cross-package parity', () => {
    * wrong hex width, uppercase. Every branch is NOT `(sha256|blake3):<64 hex>`.
    */
   const malformedDigest: fc.Arbitrary<string> = fc.oneof(
-    fc.tuple(fc.constantFrom('sha512', 'sha1', 'md5', 'blake2', '', 'SHA256'), hex64).map(
-      ([algo, h]) => `${algo}:${h}`,
-    ),
+    fc
+      .tuple(fc.constantFrom('sha512', 'sha1', 'md5', 'blake2', '', 'SHA256'), hex64)
+      .map(([algo, h]) => `${algo}:${h}`),
     fc
       .tuple(
         fc.constantFrom('sha256', 'blake3'),

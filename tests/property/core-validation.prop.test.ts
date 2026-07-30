@@ -16,39 +16,49 @@ import { brand } from '../../packages/core/src/schema/brands.js';
 describe('Core validation properties', () => {
   test('ValidationError type guard boolean invariant', () => {
     fc.assert(
-      fc.property(fc.oneof(
-        fc.option(fc.string(), { nil: undefined }),
-        fc.option(fc.object(), { nil: undefined }),
-        fc.integer(),
-        fc.boolean(),
-        fc.array(fc.string()),
-        fc.constant(ValidationError('test-module', 'test-detail'))
-      ), (input) => {
-        const result = hasTag(input, 'ValidationError');
-        return typeof result === 'boolean';
-      }),
+      fc.property(
+        fc.oneof(
+          fc.option(fc.string(), { nil: undefined }),
+          fc.option(fc.object(), { nil: undefined }),
+          fc.integer(),
+          fc.boolean(),
+          fc.array(fc.string()),
+          fc.constant(ValidationError('test-module', 'test-detail')),
+        ),
+        (input) => {
+          const result = hasTag(input, 'ValidationError');
+          return typeof result === 'boolean';
+        },
+      ),
     );
   });
 
   test('ValidationError type guard correctly identifies instances', () => {
     fc.assert(
-      fc.property(fc.string({ minLength: 1, maxLength: 10 }), fc.string({ minLength: 1, maxLength: 20 }), (module, detail) => {
-        const error = ValidationError(module, detail);
-        return hasTag(error, 'ValidationError') === true;
-      }),
+      fc.property(
+        fc.string({ minLength: 1, maxLength: 10 }),
+        fc.string({ minLength: 1, maxLength: 20 }),
+        (module, detail) => {
+          const error = ValidationError(module, detail);
+          return hasTag(error, 'ValidationError') === true;
+        },
+      ),
     );
   });
 
   test('ValidationError type guard rejects non-instances', () => {
     fc.assert(
-      fc.property(fc.oneof(
-        fc.option(fc.string(), { nil: undefined }),
-        fc.option(fc.object(), { nil: undefined }),
-        fc.integer(),
-        fc.boolean()
-      ), (input) => {
-        return hasTag(input, 'ValidationError') === false;
-      }),
+      fc.property(
+        fc.oneof(
+          fc.option(fc.string(), { nil: undefined }),
+          fc.option(fc.object(), { nil: undefined }),
+          fc.integer(),
+          fc.boolean(),
+        ),
+        (input) => {
+          return hasTag(input, 'ValidationError') === false;
+        },
+      ),
     );
   });
 
@@ -63,16 +73,19 @@ describe('Core validation properties', () => {
 
   test('Brand constructor works with different value types', () => {
     fc.assert(
-      fc.property(fc.oneof(
-        fc.string(),
-        fc.integer(),
-        fc.boolean(),
-        fc.float().filter(n => !Number.isNaN(n)), // Filter out NaN
-        fc.array(fc.string())
-      ), (value) => {
-        const branded = brand(value);
-        return branded === value;
-      }),
+      fc.property(
+        fc.oneof(
+          fc.string(),
+          fc.integer(),
+          fc.boolean(),
+          fc.float().filter((n) => !Number.isNaN(n)), // Filter out NaN
+          fc.array(fc.string()),
+        ),
+        (value) => {
+          const branded = brand(value);
+          return branded === value;
+        },
+      ),
     );
   });
 });

@@ -7,7 +7,10 @@ describe('Track.effect', () => {
 
   it('builds an EffectTrack with optional syncTo', () => {
     const t = Track.effect('pulse', {
-      from: 0, to: 60, kind: 'pulse', target: hero,
+      from: 0,
+      to: 60,
+      kind: 'pulse',
+      target: hero,
       syncTo: { anchor: bed, mode: 'beat' },
     });
     expect(t._tag).toBe('effect');

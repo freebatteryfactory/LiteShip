@@ -135,9 +135,8 @@ describe('SVG last-mile directive: live DOM applicator', () => {
     delete globalThis.window;
     try {
       // Re-import not needed: the guard reads `typeof window` at call time.
-      const { attachSvgRuntime: ssrAttach, initSvgDirective: ssrInit } = await import(
-        '../../../packages/astro/src/runtime/svg.js'
-      );
+      const { attachSvgRuntime: ssrAttach, initSvgDirective: ssrInit } =
+        await import('../../../packages/astro/src/runtime/svg.js');
       let cleanup: (() => void) | undefined;
       expect(() => {
         cleanup = ssrAttach(undefined as never);

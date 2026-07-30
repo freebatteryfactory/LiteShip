@@ -206,7 +206,9 @@ function writePhaseTimingsArtifact(
   } catch (err) {
     // Artifact write failures are diagnostic, not fatal — the gauntlet's
     // pass/fail signal is the printed summary, not this side file.
-    console.warn(`  (could not write gauntlet-phase-timings.json: ${err instanceof Error ? err.message : String(err)})`);
+    console.warn(
+      `  (could not write gauntlet-phase-timings.json: ${err instanceof Error ? err.message : String(err)})`,
+    );
   }
 }
 
@@ -218,7 +220,9 @@ async function main() {
   }
 
   if (parsed.help) {
-    console.log('Usage: pnpm run gauntlet:full [--dry-run] [--profile <name>] [--only a,b] [--skip a,b] [--skip-build]');
+    console.log(
+      'Usage: pnpm run gauntlet:full [--dry-run] [--profile <name>] [--only a,b] [--skip a,b] [--skip-build]',
+    );
     process.exit(0);
   }
 
@@ -283,7 +287,9 @@ async function main() {
         const step = stepResults[i]!;
         const isLast = i === stepResults.length - 1;
         const status = isLast ? 'FAILED' : 'ok';
-        console.error(`    ${(i + 1).toString().padStart(2)}. ${step.command.padEnd(50)} ${formatDuration(step.durationMs).padStart(8)}  ${status}`);
+        console.error(
+          `    ${(i + 1).toString().padStart(2)}. ${step.command.padEnd(50)} ${formatDuration(step.durationMs).padStart(8)}  ${status}`,
+        );
       }
       console.error('');
     }

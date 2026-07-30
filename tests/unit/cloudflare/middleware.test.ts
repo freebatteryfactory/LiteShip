@@ -127,10 +127,7 @@ describe('cloudflareMiddleware', () => {
       env: { KV: kv },
       resolveExecutionContext: () => ({ waitUntil: (promise) => deferred.push(promise) }),
     });
-    await middleware(
-      { request: new Request('http://localhost/'), locals: {} },
-      async () => new Response('ok'),
-    );
+    await middleware({ request: new Request('http://localhost/'), locals: {} }, async () => new Response('ok'));
     expect(deferred).toHaveLength(1);
     await Promise.all(deferred);
   });
@@ -159,10 +156,7 @@ describe('cloudflareMiddleware', () => {
         },
       },
     });
-    await middleware(
-      { request: new Request('http://localhost/'), locals: {} },
-      async () => new Response('ok'),
-    );
+    await middleware({ request: new Request('http://localhost/'), locals: {} }, async () => new Response('ok'));
     expect(getOptions).toEqual({ cacheTtl: 120 });
     expect(putOptions).toEqual({ expirationTtl: 3600 });
   });
@@ -409,7 +403,8 @@ describe('cloudflareMiddleware', () => {
     };
     await middleware(context, async () => new Response('ok'));
 
-    const edge = (context.locals.liteship as { edge?: { cacheStatus?: string; compiledOutputs?: { css?: string } } }).edge;
+    const edge = (context.locals.liteship as { edge?: { cacheStatus?: string; compiledOutputs?: { css?: string } } })
+      .edge;
     expect(edge?.cacheStatus).toBe('precompiled');
     expect(edge?.compiledOutputs?.css).toContain('@container');
     // "No KV traffic" means zero reads AND zero writes, not just an empty store.

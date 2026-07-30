@@ -65,7 +65,11 @@ function irFor(opts: {
         file: DECL,
         line: 1,
         property: 'symbol-orphan',
-        value: { name: opts.name, isOrphan: opts.symbolEvidencedOrphan, externalReferenceCount: opts.externalReferenceCount },
+        value: {
+          name: opts.name,
+          isOrphan: opts.symbolEvidencedOrphan,
+          externalReferenceCount: opts.externalReferenceCount,
+        },
         oracleId: SYMBOL_ORACLE,
         coverageClass: 'symbol-evidenced',
       },
@@ -87,7 +91,9 @@ describe('symbolOrphanDivergenceGate — symbol-evidenced ⊕ file-proxy orphan 
 
   it('emits NOTHING when both oracles AGREE the symbol is an orphan', () => {
     const findings = symbolOrphanDivergenceGate.run(
-      ctx(irFor({ name: 'lonely', symbolEvidencedOrphan: true, externalReferenceCount: 0, fileProxyReferenced: false })),
+      ctx(
+        irFor({ name: 'lonely', symbolEvidencedOrphan: true, externalReferenceCount: 0, fileProxyReferenced: false }),
+      ),
     );
     expect(findings).toHaveLength(0);
   });
@@ -110,7 +116,9 @@ describe('symbolOrphanDivergenceGate — symbol-evidenced ⊕ file-proxy orphan 
 
   it('REPORTS a divergence when symbol-evidenced resolves a reference the file-proxy graph missed', () => {
     const findings = symbolOrphanDivergenceGate.run(
-      ctx(irFor({ name: 'hidden', symbolEvidencedOrphan: false, externalReferenceCount: 2, fileProxyReferenced: false })),
+      ctx(
+        irFor({ name: 'hidden', symbolEvidencedOrphan: false, externalReferenceCount: 2, fileProxyReferenced: false }),
+      ),
     );
     expect(findings).toHaveLength(1);
     expect(findings[0]?.detail).toContain('2 cross-file reference');

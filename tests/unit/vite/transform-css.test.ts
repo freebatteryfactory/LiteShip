@@ -133,11 +133,7 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
       join(srcDir, 'foreign.css'),
       ctx,
     );
-    await transformCss(
-      '@quantize layout { mobile { .hero { color: red; } } }',
-      join(srcDir, 'boundary.css'),
-      ctx,
-    );
+    await transformCss('@quantize layout { mobile { .hero { color: red; } } }', join(srcDir, 'boundary.css'), ctx);
 
     expect(warnings.some((warning) => warning.includes('shadows boundary output'))).toBe(true);
   });

@@ -9,11 +9,7 @@ import {
 } from '../../scripts/lib/security-audit-contract.js';
 
 const versionArbitrary = fc
-  .tuple(
-    fc.integer({ min: 0, max: 20 }),
-    fc.integer({ min: 0, max: 30 }),
-    fc.integer({ min: 0, max: 50 }),
-  )
+  .tuple(fc.integer({ min: 0, max: 20 }), fc.integer({ min: 0, max: 30 }), fc.integer({ min: 0, max: 50 }))
   .map(([major, minor, patch]) => ({ major, minor, patch, text: `${major}.${minor}.${patch}` }));
 
 const receiptArbitrary = fc.record({
@@ -58,14 +54,10 @@ describe('security audit contract properties', () => {
 
   it('preserves stable ordering for build and prerelease suffixes', () => {
     fc.assert(
-      fc.property(
-        versionArbitrary,
-        fc.constantFrom('-security.0', '-rc.1', '+build.9'),
-        (version, suffix) => {
-          expect(versionAtLeast(`${version.text}${suffix}`, version.text)).toBe(true);
-          expect(versionAtLeast(version.text, `${version.text}${suffix}`)).toBe(true);
-        },
-      ),
+      fc.property(versionArbitrary, fc.constantFrom('-security.0', '-rc.1', '+build.9'), (version, suffix) => {
+        expect(versionAtLeast(`${version.text}${suffix}`, version.text)).toBe(true);
+        expect(versionAtLeast(version.text, `${version.text}${suffix}`)).toBe(true);
+      }),
       { numRuns: 200 },
     );
   });

@@ -1377,7 +1377,12 @@ describe('@liteship/vite plugin', () => {
 
     const warnings: string[] = [];
     await vitePlugin.transform?.call(
-      { warn(message: string) { warnings.push(message); }, addWatchFile() {} } as never,
+      {
+        warn(message: string) {
+          warnings.push(message);
+        },
+        addWatchFile() {},
+      } as never,
       '.hero { color: green; }',
       join(srcDir, 'foreign.css'),
     );

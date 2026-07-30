@@ -17,14 +17,9 @@ export function buildLiveLiteShipFeatureEdgeFacts(repoRoot: string): FeatureEdge
  * Retained-defect adapter: replace only the ECS family with the historical
  * overlay while every other family still comes from the production host path.
  */
-export function buildLiteShipFeatureEdgeFacts(
-  repoRoot: string,
-  ecs: FeatureEdgeFamilyFacts,
-): FeatureEdgeFacts {
+export function buildLiteShipFeatureEdgeFacts(repoRoot: string, ecs: FeatureEdgeFamilyFacts): FeatureEdgeFacts {
   const live = buildLiveLiteShipFeatureEdgeFacts(repoRoot);
-  return combineFeatureEdgeFamilies(live.families.map((family) =>
-    family.family === 'ecs-component' ? ecs : family,
-  ));
+  return combineFeatureEdgeFamilies(live.families.map((family) => (family.family === 'ecs-component' ? ecs : family)));
 }
 
 /** Catalog-only projection retained for focused per-family mutation tests. */

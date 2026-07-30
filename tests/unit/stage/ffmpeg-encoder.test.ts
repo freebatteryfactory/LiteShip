@@ -15,14 +15,7 @@
  */
 import { describe, test, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import {
-  sealNode,
-  sealGraph,
-  AddressedDigest,
-  CanonicalCbor,
-  projectionKeys,
-  HLC,
-} from '@liteship/core';
+import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, projectionKeys, HLC } from '@liteship/core';
 import type {
   DocumentGraph,
   ComponentNode,
@@ -125,45 +118,54 @@ describe('headless ffmpeg encoder (B) — real bytes behind the encode seam', ()
       );
     });
   } else {
+    test('the stage probe agrees the codec is available', () => {
+      expect(ffmpegEncodeAvailable()).toBe(true);
+    });
 
-  test('the stage probe agrees the codec is available', () => {
-    expect(ffmpegEncodeAvailable()).toBe(true);
-  });
+    test('exportVideoEncoded produces a validatable MP4 (ftyp magic + ffprobe h264)', async () => {
+      const graph = buildGraph();
+      const { node, encoded, bytesDigest } = await exportVideoEncoded(graph, ffmpegFrameEncoder());
 
-  test('exportVideoEncoded produces a validatable MP4 (ftyp magic + ffprobe h264)', async () => {
-    const graph = buildGraph();
-    const { node, encoded, bytesDigest } = await exportVideoEncoded(graph, ffmpegFrameEncoder());
+      // Real bytes: a non-empty ISO-BMFF container.
+      expect(encoded.bytes.byteLength).toBeGreaterThan(0);
+      expect(encoded.container).toBe('video/mp4');
+      expect(isIsoBmff(encoded.bytes)).toBe(true);
 
-    // Real bytes: a non-empty ISO-BMFF container.
-    expect(encoded.bytes.byteLength).toBeGreaterThan(0);
-    expect(encoded.container).toBe('video/mp4');
-    expect(isIsoBmff(encoded.bytes)).toBe(true);
+      // The export node is a content address OF the encoded bytes, not only frames.
+      expect(node.carrier).toBe('video');
+      expect(bytesDigest.integrity_digest).toMatch(/^sha256:/);
+      expect(node.artifactDigest.integrity_digest).toMatch(/^sha256:/);
 
-    // The export node is a content address OF the encoded bytes, not only frames.
-    expect(node.carrier).toBe('video');
-    expect(bytesDigest.integrity_digest).toMatch(/^sha256:/);
-    expect(node.artifactDigest.integrity_digest).toMatch(/^sha256:/);
+      // ffprobe reads the bytes back as a real h264 video stream.
+      const probe = execFileSync(
+        'ffprobe',
+        [
+          '-v',
+          'error',
+          '-select_streams',
+          'v:0',
+          '-show_entries',
+          'stream=codec_name',
+          '-of',
+          'default=nw=1:nk=1',
+          '-',
+        ],
+        { input: Buffer.from(encoded.bytes), encoding: 'utf8' },
+      ).trim();
+      expect(probe).toBe('h264');
+    });
 
-    // ffprobe reads the bytes back as a real h264 video stream.
-    const probe = execFileSync(
-      'ffprobe',
-      ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name', '-of', 'default=nw=1:nk=1', '-'],
-      { input: Buffer.from(encoded.bytes), encoding: 'utf8' },
-    ).trim();
-    expect(probe).toBe('h264');
-  });
+    test('the encoded digest differs from the frame-only digest (bytes are folded in)', async () => {
+      const graph = buildGraph();
+      const frameOnly = exportVideo(graph);
+      const { node } = await exportVideoEncoded(graph, ffmpegFrameEncoder());
 
-  test('the encoded digest differs from the frame-only digest (bytes are folded in)', async () => {
-    const graph = buildGraph();
-    const frameOnly = exportVideo(graph);
-    const { node } = await exportVideoEncoded(graph, ffmpegFrameEncoder());
+      // Pinning the real byte digest changes the artifact address — the encoded
+      // node addresses the BYTES, the plain cast addresses only the frames.
+      expect(node.artifactDigest.display_id).not.toBe(frameOnly.artifactDigest.display_id);
 
-    // Pinning the real byte digest changes the artifact address — the encoded
-    // node addresses the BYTES, the plain cast addresses only the frames.
-    expect(node.artifactDigest.display_id).not.toBe(frameOnly.artifactDigest.display_id);
-
-    // Same source refs either way — both casts read the same projection.
-    expect([...node.sourceRefs].sort()).toEqual([...frameOnly.sourceRefs].sort());
-  });
+      // Same source refs either way — both casts read the same projection.
+      expect([...node.sourceRefs].sort()).toEqual([...frameOnly.sourceRefs].sort());
+    });
   }
 });

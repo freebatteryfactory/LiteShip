@@ -22,7 +22,16 @@
  * @module
  */
 import { describe, test, expect } from 'vitest';
-import { Boundary, Compositor, Cap, sealNode, projectionKeys, wgslIdent, PROJECTION_KEYS_SOURCE, defineBoundary } from '@liteship/core';
+import {
+  Boundary,
+  Compositor,
+  Cap,
+  sealNode,
+  projectionKeys,
+  wgslIdent,
+  PROJECTION_KEYS_SOURCE,
+  defineBoundary,
+} from '@liteship/core';
 import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta, ContentAddress } from '@liteship/core';
 import { adaptiveAttrs } from '@liteship/astro';
 import { applyBoundaryState, parseBoundary } from '../../packages/astro/src/runtime/boundary.js';

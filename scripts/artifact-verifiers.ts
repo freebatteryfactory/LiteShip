@@ -30,11 +30,7 @@ import type {
   BenchArtifact,
 } from './artifact-types.js';
 
-export type {
-  RuntimeSeamsIntegrityCheck,
-  RuntimeSeamsVerification,
-  FeedbackVerification,
-};
+export type { RuntimeSeamsIntegrityCheck, RuntimeSeamsVerification, FeedbackVerification };
 
 function readJson<T>(filePath: string): T {
   return JSON.parse(readFileSync(filePath, 'utf8')) as T;
@@ -44,12 +40,7 @@ function compareJson(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-
-function buildCheck(
-  code: string,
-  passed: boolean,
-  summary: string,
-): RuntimeSeamsIntegrityCheck {
+function buildCheck(code: string, passed: boolean, summary: string): RuntimeSeamsIntegrityCheck {
   return {
     code,
     passed,
@@ -82,38 +73,36 @@ function projectCoverageHotspots(
 
 function projectWorkerStartupSplit(
   split: RuntimeSeamsReportArtifact['workerStartupSplit'] | BenchArtifact['workerStartupSplit'] | null | undefined,
-):
-  | {
-      readonly shared: {
-        readonly label: string;
-        readonly supportMeanNs: number;
-        readonly parityMeanNs: number;
-        readonly residualMeanNs: number;
-        readonly overheadPct: number | null;
-        readonly thresholdPct: number;
-        readonly conclusion: string;
-      };
-      readonly seam: {
-        readonly label: string;
-        readonly absoluteMeanNs: number;
-        readonly derivedPct: number | null;
-        readonly dominantStage: string | null;
-        readonly messageReceiptResidualNs: number | null;
-        readonly dispatchSendResidualNs: number | null;
-      readonly messageReceiptSharePct: number | null;
-      readonly dispatchSendSharePct: number | null;
-      readonly sharedResidualSharePct: number | null;
-      readonly tailRatioP99ToMedian: number | null;
-        readonly conclusion: string;
-        readonly components: ReadonlyArray<{
-          readonly stage: string;
-          readonly label: string;
-          readonly kind: 'worker-only' | 'shared-residual';
-          readonly residualMeanNs: number;
-        }>;
-      };
-    }
-  | null {
+): {
+  readonly shared: {
+    readonly label: string;
+    readonly supportMeanNs: number;
+    readonly parityMeanNs: number;
+    readonly residualMeanNs: number;
+    readonly overheadPct: number | null;
+    readonly thresholdPct: number;
+    readonly conclusion: string;
+  };
+  readonly seam: {
+    readonly label: string;
+    readonly absoluteMeanNs: number;
+    readonly derivedPct: number | null;
+    readonly dominantStage: string | null;
+    readonly messageReceiptResidualNs: number | null;
+    readonly dispatchSendResidualNs: number | null;
+    readonly messageReceiptSharePct: number | null;
+    readonly dispatchSendSharePct: number | null;
+    readonly sharedResidualSharePct: number | null;
+    readonly tailRatioP99ToMedian: number | null;
+    readonly conclusion: string;
+    readonly components: ReadonlyArray<{
+      readonly stage: string;
+      readonly label: string;
+      readonly kind: 'worker-only' | 'shared-residual';
+      readonly residualMeanNs: number;
+    }>;
+  };
+} | null {
   if (!split) {
     return null;
   }
@@ -146,18 +135,17 @@ function projectWorkerStartupSplit(
 }
 
 function projectLLMRuntimeSteadySignals(
-  signals: RuntimeSeamsReportArtifact['llmRuntimeSteadySignals'] | BenchArtifact['llmRuntimeSteadySignals'] | null | undefined,
-):
-  | {
-      readonly label: string;
-      readonly replicateExceedanceRate: number;
-      readonly directiveP99ToBaselineP99: number | null;
-      readonly directiveP75ToBaselineP75: number | null;
-      readonly longSessionSlopeNsPerChunk: number | null;
-      readonly mixedChunkSlopeNsPerChunk: number | null;
-      readonly conclusion: string;
-    }
-  | null {
+  signals:
+    RuntimeSeamsReportArtifact['llmRuntimeSteadySignals'] | BenchArtifact['llmRuntimeSteadySignals'] | null | undefined,
+): {
+  readonly label: string;
+  readonly replicateExceedanceRate: number;
+  readonly directiveP99ToBaselineP99: number | null;
+  readonly directiveP75ToBaselineP75: number | null;
+  readonly longSessionSlopeNsPerChunk: number | null;
+  readonly mixedChunkSlopeNsPerChunk: number | null;
+  readonly conclusion: string;
+} | null {
   if (!signals) {
     return null;
   }
@@ -318,23 +306,23 @@ export function verifyRuntimeSeamsReport(
       'startup-reality-llm-phase-shapes',
       Boolean(
         startupRealityFacts.startupReality.browser.llm.simple.initToFirstTokenMs &&
-          startupRealityFacts.startupReality.browser.llm.simple.openToFirstTokenMs &&
-          startupRealityFacts.startupReality.browser.llm.simple.chunkToFirstTokenMs &&
-          startupRealityFacts.startupReality.browser.llm.simple.resolution &&
-          startupRealityFacts.startupReality.browser.llm.promoted?.initToFirstTokenMs &&
-          startupRealityFacts.startupReality.browser.llm.promoted?.openToFirstTokenMs &&
-          startupRealityFacts.startupReality.browser.llm.promoted?.chunkToFirstTokenMs &&
-          startupRealityFacts.startupReality.browser.llm.promoted?.resolution,
+        startupRealityFacts.startupReality.browser.llm.simple.openToFirstTokenMs &&
+        startupRealityFacts.startupReality.browser.llm.simple.chunkToFirstTokenMs &&
+        startupRealityFacts.startupReality.browser.llm.simple.resolution &&
+        startupRealityFacts.startupReality.browser.llm.promoted?.initToFirstTokenMs &&
+        startupRealityFacts.startupReality.browser.llm.promoted?.openToFirstTokenMs &&
+        startupRealityFacts.startupReality.browser.llm.promoted?.chunkToFirstTokenMs &&
+        startupRealityFacts.startupReality.browser.llm.promoted?.resolution,
       ),
       Boolean(
         startupRealityFacts.startupReality.browser.llm.simple.initToFirstTokenMs &&
-          startupRealityFacts.startupReality.browser.llm.simple.openToFirstTokenMs &&
-          startupRealityFacts.startupReality.browser.llm.simple.chunkToFirstTokenMs &&
-          startupRealityFacts.startupReality.browser.llm.simple.resolution &&
-          startupRealityFacts.startupReality.browser.llm.promoted?.initToFirstTokenMs &&
-          startupRealityFacts.startupReality.browser.llm.promoted?.openToFirstTokenMs &&
-          startupRealityFacts.startupReality.browser.llm.promoted?.chunkToFirstTokenMs &&
-          startupRealityFacts.startupReality.browser.llm.promoted?.resolution,
+        startupRealityFacts.startupReality.browser.llm.simple.openToFirstTokenMs &&
+        startupRealityFacts.startupReality.browser.llm.simple.chunkToFirstTokenMs &&
+        startupRealityFacts.startupReality.browser.llm.simple.resolution &&
+        startupRealityFacts.startupReality.browser.llm.promoted?.initToFirstTokenMs &&
+        startupRealityFacts.startupReality.browser.llm.promoted?.openToFirstTokenMs &&
+        startupRealityFacts.startupReality.browser.llm.promoted?.chunkToFirstTokenMs &&
+        startupRealityFacts.startupReality.browser.llm.promoted?.resolution,
       )
         ? 'Startup reality LLM phase summaries and timer-resolution metadata are present.'
         : 'Startup reality is missing LLM phase summaries or timer-resolution metadata.',
@@ -594,8 +582,14 @@ export function verifyRuntimeSeamsReport(
   checks.push(
     buildCheck(
       'runtime-seams-classification',
-      compareJson(report.metricClassification?.pairedTruth ?? [], (report.pairedTruth ?? []).map((entry) => entry.id)) &&
-        compareJson(report.metricClassification?.singleLaneHardGate ?? [], benchFacts.hardGates.map((pair) => pair.label)) &&
+      compareJson(
+        report.metricClassification?.pairedTruth ?? [],
+        (report.pairedTruth ?? []).map((entry) => entry.id),
+      ) &&
+        compareJson(
+          report.metricClassification?.singleLaneHardGate ?? [],
+          benchFacts.hardGates.map((pair) => pair.label),
+        ) &&
         compareJson(
           report.metricClassification?.singleLaneDiagnostic ?? [],
           (report.diagnostics ?? []).map((entry) => entry.label),
@@ -605,8 +599,14 @@ export function verifyRuntimeSeamsReport(
           (report.transportDiagnostics ?? []).map((entry) => entry.label),
         ) &&
         compareJson(report.metricClassification?.seamNote ?? [], ['worker-runtime-startup-seam']),
-      compareJson(report.metricClassification?.pairedTruth ?? [], (report.pairedTruth ?? []).map((entry) => entry.id)) &&
-        compareJson(report.metricClassification?.singleLaneHardGate ?? [], benchFacts.hardGates.map((pair) => pair.label)) &&
+      compareJson(
+        report.metricClassification?.pairedTruth ?? [],
+        (report.pairedTruth ?? []).map((entry) => entry.id),
+      ) &&
+        compareJson(
+          report.metricClassification?.singleLaneHardGate ?? [],
+          benchFacts.hardGates.map((pair) => pair.label),
+        ) &&
         compareJson(
           report.metricClassification?.singleLaneDiagnostic ?? [],
           (report.diagnostics ?? []).map((entry) => entry.label),
@@ -641,9 +641,13 @@ export function verifyRuntimeSeamsReport(
       ? Number(startupRealityFacts.startupReality.browser.worker.summary.totalStartupMs.median)
       : null;
   const expectedWorkerSeamToBrowserPct =
-    browserWorkerStartupMedianMs === null || browserWorkerStartupMedianMs <= 0 || report.workerStartupSplit?.seam?.absoluteMeanNs === undefined
+    browserWorkerStartupMedianMs === null ||
+    browserWorkerStartupMedianMs <= 0 ||
+    report.workerStartupSplit?.seam?.absoluteMeanNs === undefined
       ? null
-      : Number(((report.workerStartupSplit.seam.absoluteMeanNs / (browserWorkerStartupMedianMs * 1e6)) * 100).toFixed(2));
+      : Number(
+          ((report.workerStartupSplit.seam.absoluteMeanNs / (browserWorkerStartupMedianMs * 1e6)) * 100).toFixed(2),
+        );
   checks.push(
     buildCheck(
       'runtime-seams-worker-startup-seam-browser-ratio',
@@ -658,11 +662,15 @@ export function verifyRuntimeSeamsReport(
       'runtime-seams-llm-runtime-steady-signals',
       compareJson(
         projectLLMRuntimeSteadySignals(report.llmRuntimeSteadySignals),
-        projectLLMRuntimeSteadySignals(benchFacts.bench.llmRuntimeSteadySignals ?? report.llmRuntimeSteadySignals ?? null),
+        projectLLMRuntimeSteadySignals(
+          benchFacts.bench.llmRuntimeSteadySignals ?? report.llmRuntimeSteadySignals ?? null,
+        ),
       ),
       compareJson(
         projectLLMRuntimeSteadySignals(report.llmRuntimeSteadySignals),
-        projectLLMRuntimeSteadySignals(benchFacts.bench.llmRuntimeSteadySignals ?? report.llmRuntimeSteadySignals ?? null),
+        projectLLMRuntimeSteadySignals(
+          benchFacts.bench.llmRuntimeSteadySignals ?? report.llmRuntimeSteadySignals ?? null,
+        ),
       )
         ? 'Runtime seams LLM steady-state signals match the bench artifact.'
         : 'Runtime seams LLM steady-state signals do not match the bench artifact.',
@@ -702,37 +710,39 @@ export function verifyRuntimeSeamsReport(
   checks.push(
     buildCheck(
       'runtime-seams-bench-stability-canary-context',
-      (report.benchStability ?? []).every((entry) =>
-        Array.isArray(entry.replicateCanaryContext) &&
-        entry.replicateCanaryContext.every(
-          (context) =>
-            typeof context.replicate === 'number' &&
-            Array.isArray(context.tasks) &&
-            context.tasks.every(
-              (task) =>
-                typeof task.name === 'string' &&
-                'beforeMeanNs' in task &&
-                'afterMeanNs' in task &&
-                'deltaNs' in task &&
-                'deltaPct' in task,
-            ),
-        ),
+      (report.benchStability ?? []).every(
+        (entry) =>
+          Array.isArray(entry.replicateCanaryContext) &&
+          entry.replicateCanaryContext.every(
+            (context) =>
+              typeof context.replicate === 'number' &&
+              Array.isArray(context.tasks) &&
+              context.tasks.every(
+                (task) =>
+                  typeof task.name === 'string' &&
+                  'beforeMeanNs' in task &&
+                  'afterMeanNs' in task &&
+                  'deltaNs' in task &&
+                  'deltaPct' in task,
+              ),
+          ),
       ),
-      (report.benchStability ?? []).every((entry) =>
-        Array.isArray(entry.replicateCanaryContext) &&
-        entry.replicateCanaryContext.every(
-          (context) =>
-            typeof context.replicate === 'number' &&
-            Array.isArray(context.tasks) &&
-            context.tasks.every(
-              (task) =>
-                typeof task.name === 'string' &&
-                'beforeMeanNs' in task &&
-                'afterMeanNs' in task &&
-                'deltaNs' in task &&
-                'deltaPct' in task,
-            ),
-        ),
+      (report.benchStability ?? []).every(
+        (entry) =>
+          Array.isArray(entry.replicateCanaryContext) &&
+          entry.replicateCanaryContext.every(
+            (context) =>
+              typeof context.replicate === 'number' &&
+              Array.isArray(context.tasks) &&
+              context.tasks.every(
+                (task) =>
+                  typeof task.name === 'string' &&
+                  'beforeMeanNs' in task &&
+                  'afterMeanNs' in task &&
+                  'deltaNs' in task &&
+                  'deltaPct' in task,
+              ),
+          ),
       )
         ? 'Runtime seams bench-stability includes replicate-level canary context.'
         : 'Runtime seams bench-stability is missing replicate-level canary context.',
@@ -767,8 +777,10 @@ export function verifyRuntimeSeamsReport(
   checks.push(
     buildCheck(
       'runtime-seams-startup-breakdown-complete',
-      (report.startupBreakdown ?? []).length > 0 && (report.startupBreakdown ?? []).every((entry) => entry.modeled === true),
-      (report.startupBreakdown ?? []).length > 0 && (report.startupBreakdown ?? []).every((entry) => entry.modeled === true)
+      (report.startupBreakdown ?? []).length > 0 &&
+        (report.startupBreakdown ?? []).every((entry) => entry.modeled === true),
+      (report.startupBreakdown ?? []).length > 0 &&
+        (report.startupBreakdown ?? []).every((entry) => entry.modeled === true)
         ? 'Runtime seams startup breakdown models every worker startup stage.'
         : 'Runtime seams startup breakdown still contains missing worker startup stages.',
     ),
@@ -815,8 +827,9 @@ export function verifyFeedbackArtifacts(root = repoRoot): FeedbackVerification {
     if (auditIsCurrent) {
       const currentContext = buildCurrentArtifactContext(root);
       const runtimeSeamsStatus = getCodebaseAuditRuntimeSeamsStatus(audit);
-      const auditMatches =
-        runtimeSeamsVerification.passed ? runtimeSeamsStatus === 'present' : runtimeSeamsStatus === 'failed';
+      const auditMatches = runtimeSeamsVerification.passed
+        ? runtimeSeamsStatus === 'present'
+        : runtimeSeamsStatus === 'failed';
       auditChecks.push(
         buildCheck(
           'audit-schema-version',

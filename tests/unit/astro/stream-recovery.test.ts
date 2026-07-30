@@ -671,7 +671,8 @@ describe('stream directive graph-native recovery (#133)', () => {
         'data-liteship-stream-artifact': 'hero',
       });
       const recoveries: Array<Record<string, unknown>> = [];
-      el.addEventListener('liteship:request-snapshot', ((e: CustomEvent) => recoveries.push(e.detail)) as EventListener);
+      el.addEventListener('liteship:request-snapshot', ((e: CustomEvent) =>
+        recoveries.push(e.detail)) as EventListener);
       streamDirective(noop, {}, el);
 
       const firstSource = MockEventSource.instances[0]!;

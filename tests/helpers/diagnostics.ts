@@ -4,10 +4,7 @@ export interface CapturedDiagnostics {
   readonly events: Diagnostics.Event[];
 }
 
-function parseConsoleDiagnostic(
-  level: Diagnostics.Level,
-  args: readonly unknown[],
-): Diagnostics.Event | null {
+function parseConsoleDiagnostic(level: Diagnostics.Level, args: readonly unknown[]): Diagnostics.Event | null {
   const [headline, detail, cause] = args;
   if (typeof headline !== 'string') {
     return null;
@@ -80,9 +77,7 @@ export function withCapturedDiagnostics<T>(run: (captured: CapturedDiagnostics) 
   }
 }
 
-export async function withCapturedDiagnosticsAsync<T>(
-  run: (captured: CapturedDiagnostics) => Promise<T>,
-): Promise<T> {
+export async function withCapturedDiagnosticsAsync<T>(run: (captured: CapturedDiagnostics) => Promise<T>): Promise<T> {
   const captured = createCapturedDiagnostics();
 
   try {
@@ -96,9 +91,7 @@ export function captureDiagnostics<T>(run: (captured: CapturedDiagnostics) => T)
   return withCapturedDiagnostics(run);
 }
 
-export async function captureDiagnosticsAsync<T>(
-  run: (captured: CapturedDiagnostics) => Promise<T>,
-): Promise<T> {
+export async function captureDiagnosticsAsync<T>(run: (captured: CapturedDiagnostics) => Promise<T>): Promise<T> {
   return withCapturedDiagnosticsAsync(run);
 }
 

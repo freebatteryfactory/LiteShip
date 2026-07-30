@@ -76,9 +76,9 @@ describe('manifest tier-grid dedupe', () => {
   test('dedupe pools by content, so a producer that allocates per cell still dedupes', () => {
     const grid = makePreDedupeGrid();
     // Fresh object per cell (same bytes) -- reference identity must not matter.
-    const cloned = Object.fromEntries(
-      Object.entries(grid).map(([key, outputs]) => [key, { ...outputs }]),
-    ) as Partial<Record<TierKey, CompiledOutputs>>;
+    const cloned = Object.fromEntries(Object.entries(grid).map(([key, outputs]) => [key, { ...outputs }])) as Partial<
+      Record<TierKey, CompiledOutputs>
+    >;
 
     expect(dedupeOutputsByTier(cloned).outputs).toHaveLength(2);
   });
@@ -91,9 +91,9 @@ describe('manifest tier-grid dedupe', () => {
   });
 
   test('resolving a cell that points outside the pool fails fast with a teaching error', () => {
-    expect(() =>
-      resolveOutputsByTier({ outputs: [], outputsByTier: { 'transitions:standard': 0 } }),
-    ).toThrowError(/outputs\[0\].*0 item\(s\).*rebuild/s);
+    expect(() => resolveOutputsByTier({ outputs: [], outputsByTier: { 'transitions:standard': 0 } })).toThrowError(
+      /outputs\[0\].*0 item\(s\).*rebuild/s,
+    );
   });
 
   test('resolving a pre-v2 entry (CompiledOutputs object in a cell) teaches the rebuild fix', () => {

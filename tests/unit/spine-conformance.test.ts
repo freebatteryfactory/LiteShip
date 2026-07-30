@@ -64,9 +64,7 @@ type _codecParseErrorParity = Assert<IsEqual<SpineCore.Codec.ParseError, RtParse
 void (0 as unknown as _codecResultParity);
 void (0 as unknown as _codecParseErrorParity);
 
-type _planTopoSortParity = Assert<
-  IsEqual<SpineCore.TopoSortResult, ReturnType<typeof CoreImpl.Plan.topoSort>>
->;
+type _planTopoSortParity = Assert<IsEqual<SpineCore.TopoSortResult, ReturnType<typeof CoreImpl.Plan.topoSort>>>;
 type _audioSignalParity = Assert<IsEqual<SpineCore.Signal.Audio, CoreImpl.Signal.Audio>>;
 void (0 as unknown as _planTopoSortParity);
 void (0 as unknown as _audioSignalParity);

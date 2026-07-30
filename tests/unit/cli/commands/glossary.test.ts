@@ -72,7 +72,10 @@ describe('glossary command', () => {
     expect(exit).toBe(0);
     expect(stderr).toContain('gauntlet');
     // No 'see also:' line for this entry.
-    const gauntletBlock = stderr.split('\n').slice(stderr.split('\n').findIndex((l) => l.includes('gauntlet'))).join('\n');
+    const gauntletBlock = stderr
+      .split('\n')
+      .slice(stderr.split('\n').findIndex((l) => l.includes('gauntlet')))
+      .join('\n');
     expect(gauntletBlock).not.toContain('see also:');
   });
 });

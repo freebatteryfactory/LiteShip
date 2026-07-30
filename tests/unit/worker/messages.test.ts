@@ -46,11 +46,7 @@ describe('Messages', () => {
 
   test('builds the resolved-state transport envelope with the current wire shape', () => {
     expect(
-      defineResolvedStateEnvelope(
-        'apply-resolved-state',
-        [{ name: 'layout', state: 'tablet', generation: 2 }],
-        true,
-      ),
+      defineResolvedStateEnvelope('apply-resolved-state', [{ name: 'layout', state: 'tablet', generation: 2 }], true),
     ).toEqual({
       type: 'apply-resolved-state',
       states: [{ name: 'layout', state: 'tablet', generation: 2 }],

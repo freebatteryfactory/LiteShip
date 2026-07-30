@@ -155,7 +155,8 @@ describe('web stream recovery (#133)', () => {
 
     const host = document.createElement('div');
     const errors: Array<{ reason: string; message?: string }> = [];
-    host.addEventListener('liteship:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    host.addEventListener('liteship:stream-error', ((event: CustomEvent) =>
+      errors.push(event.detail)) as EventListener);
 
     const dispose = bindRequestSnapshotRecovery(host, {
       artifactId: 'doc-1',

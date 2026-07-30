@@ -103,13 +103,10 @@ describe('WASMDispatch runtime loading', () => {
     }));
 
     vi.stubGlobal('fetch', fetchMock as never);
-    vi.stubGlobal(
-      'WebAssembly',
-      {
-        instantiate: instantiateMock,
-        Module: function Module() {},
-      } as unknown as typeof WebAssembly,
-    );
+    vi.stubGlobal('WebAssembly', {
+      instantiate: instantiateMock,
+      Module: function Module() {},
+    } as unknown as typeof WebAssembly);
 
     const kernels = await WASMDispatch.load('/liteship-compute.wasm');
 
@@ -132,15 +129,12 @@ describe('WASMDispatch runtime loading', () => {
     const fetchMock = vi.fn();
 
     vi.stubGlobal('fetch', fetchMock as never);
-    vi.stubGlobal(
-      'WebAssembly',
-      {
-        instantiate: vi.fn(async () => ({
-          instance: { exports },
-        })),
-        Module: function Module() {},
-      } as unknown as typeof WebAssembly,
-    );
+    vi.stubGlobal('WebAssembly', {
+      instantiate: vi.fn(async () => ({
+        instance: { exports },
+      })),
+      Module: function Module() {},
+    } as unknown as typeof WebAssembly);
 
     await WASMDispatch.load(new ArrayBuffer(4));
 
@@ -149,13 +143,10 @@ describe('WASMDispatch runtime loading', () => {
   });
 
   test('load(string) rejects when the wasm fetch fails', async () => {
-    vi.stubGlobal(
-      'WebAssembly',
-      {
-        instantiate: vi.fn(),
-        Module: function Module() {},
-      } as unknown as typeof WebAssembly,
-    );
+    vi.stubGlobal('WebAssembly', {
+      instantiate: vi.fn(),
+      Module: function Module() {},
+    } as unknown as typeof WebAssembly);
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => ({

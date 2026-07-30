@@ -34,7 +34,10 @@ function addBoundary(id: string): HTMLElement {
 describe('inspector leak guard', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
-    vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn(() => 1),
+    );
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
   });
 

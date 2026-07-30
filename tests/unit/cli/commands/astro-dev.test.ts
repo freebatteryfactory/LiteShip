@@ -5,10 +5,10 @@ import * as spawnLib from '../../../../packages/cli/src/internal/spawn.js';
 async function captureStdout(fn: () => Promise<number>): Promise<{ exit: number; stdout: string }> {
   let stdout = '';
   const orig = process.stdout.write.bind(process.stdout);
-  (process.stdout as unknown as { write: unknown }).write = ((chunk: string | Uint8Array) => {
+  (process.stdout as unknown as { write: unknown }).write = (chunk: string | Uint8Array) => {
     stdout += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
     return true;
-  });
+  };
   try {
     return { exit: await fn(), stdout };
   } finally {
@@ -22,7 +22,9 @@ afterEach(() => {
 
 describe('astro dev command wrappers', () => {
   test('astro.dev delegates to Astro 7 background mode', async () => {
-    const spawn = vi.spyOn(spawnLib, 'spawnArgvCapture').mockResolvedValue({ exitCode: 0, stdout: 'started', stderr: '' });
+    const spawn = vi
+      .spyOn(spawnLib, 'spawnArgvCapture')
+      .mockResolvedValue({ exitCode: 0, stdout: 'started', stderr: '' });
 
     const { exit, stdout } = await captureStdout(() => astroDev('dev', { cwd: '/app' }));
 
@@ -33,7 +35,9 @@ describe('astro dev command wrappers', () => {
   });
 
   test('astro.status delegates to astro dev status', async () => {
-    const spawn = vi.spyOn(spawnLib, 'spawnArgvCapture').mockResolvedValue({ exitCode: 0, stdout: 'running', stderr: '' });
+    const spawn = vi
+      .spyOn(spawnLib, 'spawnArgvCapture')
+      .mockResolvedValue({ exitCode: 0, stdout: 'running', stderr: '' });
 
     const { stdout } = await captureStdout(() => astroDev('status'));
 

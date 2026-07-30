@@ -17,12 +17,10 @@ if (writes.length === 0) {
       ...findings.map(
         (finding) => `  [${finding.kind}] ${finding.file}:${finding.line} (<<${finding.delimiter}): ${finding.text}`,
       ),
-      ...artifactFindings.map(
-        (finding) => `  [${finding.kind}] ${finding.file}:${finding.line}: ${finding.detail}`,
-      ),
+      ...artifactFindings.map((finding) => `  [${finding.kind}] ${finding.file}:${finding.line}: ${finding.detail}`),
       'A command failing between the delimiter open and close corrupts $GITHUB_OUTPUT and buries the root error.',
       'Compute into a shell variable first; open the heredoc only to echo/printf the already-computed value.',
-      'Delivery evidence must download exactly once beneath reports/, the admission owner\'s canonical root.',
+      "Delivery evidence must download exactly once beneath reports/, the admission owner's canonical root.",
     ].join('\n') + '\n',
   );
   process.exitCode = 1;

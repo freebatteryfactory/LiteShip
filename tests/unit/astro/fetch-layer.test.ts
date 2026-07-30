@@ -132,7 +132,10 @@ describe('liteshipFetchLayer', () => {
   test('resolution parity: same response headers as liteshipMiddleware for the same request', async () => {
     const headers = { 'sec-ch-viewport-width': '1280', 'sec-ch-device-memory': '8' };
 
-    const mwRes = await liteshipMiddleware({ edge: themeEdge })({ request: makeRequest(headers), locals: {} }, nextOk());
+    const mwRes = await liteshipMiddleware({ edge: themeEdge })(
+      { request: makeRequest(headers), locals: {} },
+      nextOk(),
+    );
     const layerRes = await liteshipFetchLayer({ edge: themeEdge })(makeRequest(headers), nextOk());
 
     expect(layerRes.headers.get('Accept-CH')).toBe(mwRes.headers.get('Accept-CH'));

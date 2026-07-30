@@ -67,7 +67,10 @@ export function validateProjectedDetailReferences(
   }
 }
 
-function projectedDetailExports(repoRoot: string, records: readonly EventProtocolRecord[]): ReadonlyMap<string, ReadonlySet<string>> {
+function projectedDetailExports(
+  repoRoot: string,
+  records: readonly EventProtocolRecord[],
+): ReadonlyMap<string, ReadonlySet<string>> {
   const modules = new Set<string>();
   for (const record of records) {
     for (const { moduleName } of projectedDetailReferences(record.detail)) {
@@ -176,7 +179,9 @@ export function collectEventProtocol(repoRoot: string): readonly EventProtocolRe
       if (ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier)) {
         const projectedModule = SPINE_MODULE_BY_OWNER_IMPORT[statement.moduleSpecifier.text];
         if (projectedModule === undefined) {
-          throw new Error(`${catalog}: imported event detail owner ${statement.moduleSpecifier.text} has no spine projection`);
+          throw new Error(
+            `${catalog}: imported event detail owner ${statement.moduleSpecifier.text} has no spine projection`,
+          );
         }
         const bindings = statement.importClause?.namedBindings;
         if (bindings === undefined || !ts.isNamedImports(bindings)) {

@@ -191,7 +191,10 @@ const checks: Check[] = [
           detail: `missing structural rules: [${missing.join(', ')}] source-layout-gate=${layoutGate}`,
         };
       }
-      return { pass: true, detail: `${rules.size} structural rules enforced (${required.length} pinned) + source-layout gate present` };
+      return {
+        pass: true,
+        detail: `${rules.size} structural rules enforced (${required.length} pinned) + source-layout gate present`,
+      };
     },
   },
 

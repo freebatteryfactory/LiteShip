@@ -39,7 +39,12 @@ describe('toJsonSchema — golden derivations (the structure LAW)', () => {
 
   it('a singleton literal → { const }; a union of literals → { enum }', () => {
     expect(
-      toJsonSchema(schema.struct({ tag: schema.literal('fixed'), status: schema.union(schema.literal('a'), schema.literal('b'), schema.literal('c')) })),
+      toJsonSchema(
+        schema.struct({
+          tag: schema.literal('fixed'),
+          status: schema.union(schema.literal('a'), schema.literal('b'), schema.literal('c')),
+        }),
+      ),
     ).toEqual({
       type: 'object',
       properties: { tag: { const: 'fixed' }, status: { enum: ['a', 'b', 'c'] } },
@@ -48,7 +53,11 @@ describe('toJsonSchema — golden derivations (the structure LAW)', () => {
   });
 
   it('array(T) → { type:"array", items: <derived element> }', () => {
-    expect(toJsonSchema(schema.struct({ xs: schema.array(schema.string), pairs: schema.array(schema.struct({ k: schema.number })) }))).toEqual({
+    expect(
+      toJsonSchema(
+        schema.struct({ xs: schema.array(schema.string), pairs: schema.array(schema.struct({ k: schema.number })) }),
+      ),
+    ).toEqual({
       type: 'object',
       properties: {
         xs: { type: 'array', items: { type: 'string' } },
@@ -90,11 +99,13 @@ describe('toJsonSchema — golden derivations (the structure LAW)', () => {
   });
 
   it('unknown/any → {} (the empty schema); array(unknown) → { type:"array", items:{} }', () => {
-    expect(toJsonSchema(schema.struct({ u: schema.unknown, a: schema.any, xs: schema.array(schema.unknown) }))).toEqual({
-      type: 'object',
-      properties: { u: {}, a: {}, xs: { type: 'array', items: {} } },
-      required: ['u', 'a', 'xs'],
-    });
+    expect(toJsonSchema(schema.struct({ u: schema.unknown, a: schema.any, xs: schema.array(schema.unknown) }))).toEqual(
+      {
+        type: 'object',
+        properties: { u: {}, a: {}, xs: { type: 'array', items: {} } },
+        required: ['u', 'a', 'xs'],
+      },
+    );
   });
 
   it('a brand derives its BASE shape (the refinement has no JSON-Schema image beyond base)', () => {
@@ -174,14 +185,18 @@ describe('toJsonSchema — teeth (unsupported throws; derived schema rejects bad
   });
 
   it('the derived schema REJECTS a missing required field and a wrong type', () => {
-    const derived = toJsonSchema(schema.struct({ assetId: schema.string, markerCount: schema.number, cached: schema.boolean }));
+    const derived = toJsonSchema(
+      schema.struct({ assetId: schema.string, markerCount: schema.number, cached: schema.boolean }),
+    );
     expect(validateStructural(derived, { assetId: 'x', cached: false }).length).toBeGreaterThan(0);
     expect(validateStructural(derived, { assetId: 'x', markerCount: 'nope', cached: false }).length).toBeGreaterThan(0);
     expect(validateStructural(derived, { assetId: 'x', markerCount: 3, cached: false })).toEqual([]);
   });
 
   it('the derived enum REJECTS a value outside the literal set', () => {
-    const derived = toJsonSchema(schema.struct({ projection: schema.union(schema.literal('beat'), schema.literal('amplitude')) }));
+    const derived = toJsonSchema(
+      schema.struct({ projection: schema.union(schema.literal('beat'), schema.literal('amplitude')) }),
+    );
     expect(validateStructural(derived, { projection: 'tempo' }).length).toBeGreaterThan(0);
     expect(validateStructural(derived, { projection: 'beat' })).toEqual([]);
   });

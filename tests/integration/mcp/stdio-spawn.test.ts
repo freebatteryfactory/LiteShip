@@ -13,25 +13,32 @@ async function pipeOneRequest(handle: SpawnHandle, request: unknown): Promise<st
 }
 
 describe('MCP stdio transport (auto-run guard, spawned)', () => {
-  it('responds to tools/list piped via stdin', async () => {
-    await withSpawned(
-      'pnpm',
-      ['exec', 'tsx', 'packages/mcp-server/src/stdio-server.ts'],
-      async (handle) => {
-        const responseLine = await pipeOneRequest(handle, {
-          jsonrpc: '2.0', id: 1, method: 'tools/list', params: {},
-        });
-        const response = JSON.parse(responseLine) as {
-          jsonrpc: string;
-          id: number;
-          result: { tools: unknown[] };
-        };
-        expect(response.jsonrpc).toBe('2.0');
-        expect(response.id).toBe(1);
-        expect(Array.isArray(response.result.tools)).toBe(true);
-        expect(response.result.tools.length).toBeGreaterThan(0);
-      },
-      { stdio: ['pipe', 'pipe', 'pipe'] },
-    );
-  }, scaledTimeout(30_000));
+  it(
+    'responds to tools/list piped via stdin',
+    async () => {
+      await withSpawned(
+        'pnpm',
+        ['exec', 'tsx', 'packages/mcp-server/src/stdio-server.ts'],
+        async (handle) => {
+          const responseLine = await pipeOneRequest(handle, {
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'tools/list',
+            params: {},
+          });
+          const response = JSON.parse(responseLine) as {
+            jsonrpc: string;
+            id: number;
+            result: { tools: unknown[] };
+          };
+          expect(response.jsonrpc).toBe('2.0');
+          expect(response.id).toBe(1);
+          expect(Array.isArray(response.result.tools)).toBe(true);
+          expect(response.result.tools.length).toBeGreaterThan(0);
+        },
+        { stdio: ['pipe', 'pipe', 'pipe'] },
+      );
+    },
+    scaledTimeout(30_000),
+  );
 });

@@ -105,7 +105,11 @@ describe('graph query — sendGraphQuery (client)', () => {
     const fetchImpl: typeof fetch = async (_url, init) => {
       expect(init?.method).toBe('QUERY');
       const result = await handleGraphQuery({}, store);
-      return { status: 200, headers: new Headers({ etag: `"${graphQueryEtag(base)}"` }), json: async () => result } as Response;
+      return {
+        status: 200,
+        headers: new Headers({ etag: `"${graphQueryEtag(base)}"` }),
+        json: async () => result,
+      } as Response;
     };
 
     const res = await sendGraphQuery('/api/graph', { fetchImpl });

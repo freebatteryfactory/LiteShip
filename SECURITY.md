@@ -43,7 +43,7 @@ Trust is set explicitly, not by permission default:
 - **Theme/CSS sanitization.** Theme compilation (`compileTheme` in `packages/edge/src/theme-compiler.ts`) rejects unsafe prefixes (e.g. attempts to escape custom-property scoping) and CSS-breaking token values.
 - **Boundary state surface.** Boundary state application (`packages/astro/src/runtime/boundary.ts`) filters CSS keys to `--liteship-*` and DOM attributes to `role` / `aria-*`. Arbitrary attribute injection is rejected at the application layer.
 - **Bootstrap snapshot hardening.** The `__LITESHIP_DETECT__` snapshot is non-enumerable, frozen, and intentionally minimal. Astro integration installs the runtime policy in two places: (1) a module-private store inside `packages/astro/src/runtime/policy.ts` is the canonical source of truth — a closure no external script can reach via `Object.defineProperty`; (2) a frozen `window.__LITESHIP_RUNTIME_POLICY__` cross-bundle broadcast is published once per realm with `configurable: false` + `writable: false`, so an attacker who later runs script on the page cannot redefine the global. HMR re-bootstraps and test harnesses update the module-private store; the window broadcast stays locked at first publish. Reads (`readRuntimePolicy`) check the module-private store first and fall back to the broadcast only for consumers loaded as a separate bundle.
-- **No eval, no new Function.** Untrusted text never becomes executable JavaScript at runtime. Verified by grep across `packages/*/src/`; the discipline is enforced by code review, not by an ESLint rule today (a `no-eval` / `no-new-func` rule is on the roadmap). WASM bytecode does run at runtime, sandboxed by the host's WASM runtime; the no-WASM fallback (`packages/core/src/wasm/wasm-fallback.ts`) keeps the same kernels available in pure TypeScript.
+- **No eval, no new Function.** Untrusted text never becomes executable JavaScript at runtime. Enforced by the `no-eval` / `no-new-func` / `no-implied-eval` ESLint rules (eslint.config.js; `check/lint` is blocking in every profile). The only governed exceptions are the enumerated test script-execution harnesses, which are exempt from `no-new-func` alone — `no-eval` stays banned even there. WASM bytecode does run at runtime, sandboxed by the host's WASM runtime; the no-WASM fallback (`packages/core/src/wasm/wasm-fallback.ts`) keeps the same kernels available in pure TypeScript.
 
 ## CSP and Trusted Types
 
@@ -81,7 +81,7 @@ If the host enforces Trusted Types via the `require-trusted-types-for 'script'` 
 
 ### Defaults summary
 
-- LiteShip itself: no `eval`, no `new Function`. Verified across `packages/*/src/` (no production runtime path uses them). The discipline is enforced by code review, not by an ESLint rule today; a follow-up to add `no-eval` and `no-new-func` ESLint rules is on the roadmap.
+- LiteShip itself: no `eval`, no `new Function`. Enforced by the `no-eval` / `no-new-func` / `no-implied-eval` ESLint rules across every linted tree (no production runtime path uses them).
 - LiteShip itself: when `window.trustedTypes` is available, the runtime looks up (or creates a passthrough) `liteship` policy automatically. Hosts with stricter requirements pre-install their own.
 - LiteShip itself: no auto-set CSP. The host owns the policy.
 

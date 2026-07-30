@@ -209,19 +209,23 @@ describe('D9b-2 — liteship audit (CLI adapter)', () => {
     expect(src).toContain('runAuditPasses');
   });
 
-  it('runs against the default profile in-repo and emits a well-formed receipt', async () => {
-    const { result, stdout } = await captureStdout(() => audit({ pretty: false }));
-    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
-    expect(receipt.command).toBe('audit');
-    expect(receipt.status).toBe('ok');
-    expect(receipt.errorCount).toBe(0);
-    expect(receipt.warningCount).toBe(0); // artifact-independent three-pass engine floor (zero since the advisory cleanup)
-    expect(collectWarningInventory()).toEqual(AUDIT_WARNING_FLOOR);
-    expect(receipt.profileSource).toBe('default');
-    expect(result).toBe(0);
-    // Full three-pass engine over the real repo: blows the 10s default under
-    // parallel vitest load on a busy machine. Honest work, explicit budget.
-  }, scaledTimeout(60_000));
+  it(
+    'runs against the default profile in-repo and emits a well-formed receipt',
+    async () => {
+      const { result, stdout } = await captureStdout(() => audit({ pretty: false }));
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      expect(receipt.command).toBe('audit');
+      expect(receipt.status).toBe('ok');
+      expect(receipt.errorCount).toBe(0);
+      expect(receipt.warningCount).toBe(0); // artifact-independent three-pass engine floor (zero since the advisory cleanup)
+      expect(collectWarningInventory()).toEqual(AUDIT_WARNING_FLOOR);
+      expect(receipt.profileSource).toBe('default');
+      expect(result).toBe(0);
+      // Full three-pass engine over the real repo: blows the 10s default under
+      // parallel vitest load on a busy machine. Honest work, explicit budget.
+    },
+    scaledTimeout(60_000),
+  );
 
   it('loads an explicit .json profile and audits the @acme/ fixture tree', async () => {
     const { root, profilePath } = acmeFixture('json');

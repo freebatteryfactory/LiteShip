@@ -109,7 +109,11 @@ describe('createBoundaryCache', () => {
   test('an entry with no aria round-trips without the field (most boundaries)', async () => {
     const kv = createMockKV();
     const cache = createBoundaryCache(kv);
-    await cache.putCompiledOutputs(boundaryId, tierResult, { css: 'a', propertyRegistrations: '', containerQueries: '' });
+    await cache.putCompiledOutputs(boundaryId, tierResult, {
+      css: 'a',
+      propertyRegistrations: '',
+      containerQueries: '',
+    });
     const result = await cache.getCompiledOutputs(boundaryId, tierResult);
     expect(result).not.toBeNull();
     expect(result!.aria).toBeUndefined();

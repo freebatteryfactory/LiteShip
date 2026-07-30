@@ -2,7 +2,11 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { Diagnostics } from '@liteship/core';
-import { allowRuntimeEndpointUrl, allowSameOriginRuntimeUrl, isSameOriginRuntimeUrl } from '../../../packages/astro/src/runtime/url-policy.js';
+import {
+  allowRuntimeEndpointUrl,
+  allowSameOriginRuntimeUrl,
+  isSameOriginRuntimeUrl,
+} from '../../../packages/astro/src/runtime/url-policy.js';
 import { isPrivateOrReservedIP, resolveRuntimeUrl } from '../../../packages/web/src/security/runtime-url.js';
 import {
   createHtmlFragment,
@@ -38,40 +42,24 @@ describe('runtime security helpers', () => {
     ).toBeNull();
 
     expect(
-      allowRuntimeEndpointUrl(
-        'https://elsewhere.example/chat',
-        'llm',
-        'test',
-        undefined,
-        {
-          mode: 'allowlist',
-          allowOrigins: ['https://trusted.example'],
-        },
-      ),
+      allowRuntimeEndpointUrl('https://elsewhere.example/chat', 'llm', 'test', undefined, {
+        mode: 'allowlist',
+        allowOrigins: ['https://trusted.example'],
+      }),
     ).toBeNull();
 
     expect(
-      allowRuntimeEndpointUrl(
-        'https://trusted.example/shader',
-        'gpu-shader',
-        'test',
-        undefined,
-        {
-          mode: 'allowlist',
-          byKind: {
-            llm: ['https://trusted.example'],
-          },
+      allowRuntimeEndpointUrl('https://trusted.example/shader', 'gpu-shader', 'test', undefined, {
+        mode: 'allowlist',
+        byKind: {
+          llm: ['https://trusted.example'],
         },
-      ),
+      }),
     ).toBeNull();
 
     expect(allowSameOriginRuntimeUrl('/feed', 'test', 'astro/url-policy/cross-origin-url-rejected')).toBe('/feed');
     expect(
-      allowSameOriginRuntimeUrl(
-        'https://evil.example/feed',
-        'test',
-        'astro/url-policy/cross-origin-url-rejected',
-      ),
+      allowSameOriginRuntimeUrl('https://evil.example/feed', 'test', 'astro/url-policy/cross-origin-url-rejected'),
     ).toBeNull();
     expect(isSameOriginRuntimeUrl('/feed')).toBe(true);
     expect(isSameOriginRuntimeUrl('https://evil.example/feed')).toBe(false);
@@ -527,16 +515,10 @@ describe('runtime security helpers', () => {
     Diagnostics.setSink(sink);
 
     expect(
-      allowRuntimeEndpointUrl(
-        'http://192.168.1.1/api',
-        'stream',
-        'test',
-        undefined,
-        {
-          mode: 'allowlist',
-          allowOrigins: ['http://192.168.1.1'],
-        },
-      ),
+      allowRuntimeEndpointUrl('http://192.168.1.1/api', 'stream', 'test', undefined, {
+        mode: 'allowlist',
+        allowOrigins: ['http://192.168.1.1'],
+      }),
     ).toBeNull();
 
     expect(events).toContainEqual(

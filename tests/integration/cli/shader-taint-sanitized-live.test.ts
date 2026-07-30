@@ -39,7 +39,9 @@ describe('LIVE taint oracle — shader content flows are sanitized by verifyShad
   it('reports ZERO unsanitized source→sink flows on this repo', () => {
     const unsanitized = facts.flows.filter((f) => f.sanitizedBy === null);
     // Self-explaining failure: name every unsanitized flow so a regression is legible.
-    const detail = unsanitized.map((f) => `${f.source.callee}@${f.source.file}:${f.source.line} -> ${f.sink.callee}@${f.sink.file}:${f.sink.line}`);
+    const detail = unsanitized.map(
+      (f) => `${f.source.callee}@${f.source.file}:${f.source.line} -> ${f.sink.callee}@${f.sink.file}:${f.sink.line}`,
+    );
     expect(detail).toEqual([]);
   });
 

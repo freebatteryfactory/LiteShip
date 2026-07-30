@@ -16,7 +16,13 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { gunzipSync, gzipSync } from 'node:zlib';
-import { ContentAddress, IntegrityDigest, ShipCapsule, type AddressedDigest, type HLCBrand as HLC } from '@liteship/core';
+import {
+  ContentAddress,
+  IntegrityDigest,
+  ShipCapsule,
+  type AddressedDigest,
+  type HLCBrand as HLC,
+} from '@liteship/core';
 import { tarballManifestAddress } from '../../packages/cli/src/ship-manifest.js';
 import { verify } from '../../packages/cli/src/commands/ship-verify.js';
 

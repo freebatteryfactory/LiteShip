@@ -44,7 +44,9 @@ function main(): void {
     lines.push(`    ${color('dim', 'fast inner loop (~75s)', on)}`);
     lines.push('');
     lines.push('  Find your way around:');
-    lines.push(`    ${color('cyan', 'pnpm scripts', on)}         ${color('dim', '# categorized catalog of all dev scripts', on)}`);
+    lines.push(
+      `    ${color('cyan', 'pnpm scripts', on)}         ${color('dim', '# categorized catalog of all dev scripts', on)}`,
+    );
     lines.push(`    ${color('cyan', 'pnpm run glossary', on)}    ${color('dim', '# look up a LiteShip term', on)}`);
   } else {
     lines.push('');

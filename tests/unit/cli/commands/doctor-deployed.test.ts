@@ -28,7 +28,10 @@ function liteshipHeaders(overrides: Record<string, string> = {}): Record<string,
 
 /** Drive the probe against a single 200 response carrying `headers`, return checks keyed by id. */
 async function probeWith(headers: Record<string, string>): Promise<Record<string, { status: string; detail: string }>> {
-  vi.stubGlobal('fetch', vi.fn(async () => new Response('ok', { status: 200, headers })));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response('ok', { status: 200, headers })),
+  );
   const checks = await probeDeployedSite('https://example.test/');
   return Object.fromEntries(checks.map((c) => [c.id, { status: c.status, detail: c.detail }]));
 }

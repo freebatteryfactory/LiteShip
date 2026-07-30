@@ -7,5 +7,6 @@ const findings = securityMinimumFindings(
   JSON.parse(readFileSync('package.json', 'utf8')) as unknown,
   readFileSync('pnpm-lock.yaml', 'utf8'),
 );
-if (findings.length > 0) throw new Error(`security minimum gate failed:\n${findings.map((item) => `  - ${item}`).join('\n')}`);
+if (findings.length > 0)
+  throw new Error(`security minimum gate failed:\n${findings.map((item) => `  - ${item}`).join('\n')}`);
 console.log('Security minimum gate passed.');

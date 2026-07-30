@@ -151,8 +151,7 @@ function tryExtractKind(checker: ts.TypeChecker, type: ts.Type): string | undefi
   // capsule shape. Requiring the companion contract fields avoids classifying an
   // unrelated object that merely happens to expose a `_kind` literal.
   const structuralKindSymbol = checker.getPropertyOfType(type, '_kind');
-  const structuralKindDeclaration =
-    structuralKindSymbol?.valueDeclaration ?? structuralKindSymbol?.declarations?.[0];
+  const structuralKindDeclaration = structuralKindSymbol?.valueDeclaration ?? structuralKindSymbol?.declarations?.[0];
   const structuralKind =
     structuralKindSymbol !== undefined && structuralKindDeclaration !== undefined
       ? checker.getTypeOfSymbolAtLocation(structuralKindSymbol, structuralKindDeclaration)
@@ -180,8 +179,7 @@ function tryExtractKind(checker: ts.TypeChecker, type: ts.Type): string | undefi
     const aliasName = candidate.aliasSymbol?.getName();
     const structuralName = candidate.getSymbol()?.getName();
     const matchedAlias = aliasName !== undefined && CAPSULE_TYPE_NAMES.has(aliasName);
-    const matchedStructural =
-      structuralName !== undefined && CAPSULE_TYPE_NAMES.has(structuralName);
+    const matchedStructural = structuralName !== undefined && CAPSULE_TYPE_NAMES.has(structuralName);
     if (!matchedAlias && !matchedStructural) continue;
 
     // When the alias matched (CapsuleContract used directly), prefer
@@ -193,9 +191,7 @@ function tryExtractKind(checker: ts.TypeChecker, type: ts.Type): string | undefi
       typeArgs = candidate.aliasTypeArguments;
     }
     if ((!typeArgs || typeArgs.length === 0) && matchedStructural) {
-      typeArgs = checker.getTypeArguments(candidate as ts.TypeReference) as
-        | readonly ts.Type[]
-        | undefined;
+      typeArgs = checker.getTypeArguments(candidate as ts.TypeReference) as readonly ts.Type[] | undefined;
     }
     if (!typeArgs || typeArgs.length === 0) continue;
 
@@ -325,8 +321,7 @@ export function detectCapsuleCalls(files: readonly string[]): readonly DetectedC
               // carries the export modifier when the binding is importable.
               const stmt = p.parent?.parent;
               if (stmt !== undefined && ts.isVariableStatement(stmt)) {
-                exported =
-                  stmt.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) === true;
+                exported = stmt.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) === true;
               }
               break;
             }
@@ -381,8 +376,7 @@ export function detectCapsuleCalls(files: readonly string[]): readonly DetectedC
     if (seen.has(key)) continue;
 
     const callee = hit.callee;
-    const isDirectDefineCapsule =
-      ts.isIdentifier(callee) && callee.text === 'defineCapsule';
+    const isDirectDefineCapsule = ts.isIdentifier(callee) && callee.text === 'defineCapsule';
 
     let name: string | undefined;
     let factory: string | undefined;
@@ -426,11 +420,31 @@ export function detectCapsuleCalls(files: readonly string[]): readonly DetectedC
     const bindingProp = hit.binding !== undefined ? { binding: hit.binding } : {};
     const exportedProp = hit.exported !== undefined ? { exported: hit.exported } : {};
     const declSourceProp = declSource !== undefined ? { declSource } : {};
-    const detected: DetectedCall = factory === undefined
-      ? { file: hit.file, line: hit.line, kind: hit.kind, name, ...bindingProp, ...exportedProp }
-      : args !== undefined && args.length > 0
-        ? { file: hit.file, line: hit.line, kind: hit.kind, name, factory, args, ...bindingProp, ...exportedProp, ...declSourceProp }
-        : { file: hit.file, line: hit.line, kind: hit.kind, name, factory, ...bindingProp, ...exportedProp, ...declSourceProp };
+    const detected: DetectedCall =
+      factory === undefined
+        ? { file: hit.file, line: hit.line, kind: hit.kind, name, ...bindingProp, ...exportedProp }
+        : args !== undefined && args.length > 0
+          ? {
+              file: hit.file,
+              line: hit.line,
+              kind: hit.kind,
+              name,
+              factory,
+              args,
+              ...bindingProp,
+              ...exportedProp,
+              ...declSourceProp,
+            }
+          : {
+              file: hit.file,
+              line: hit.line,
+              kind: hit.kind,
+              name,
+              factory,
+              ...bindingProp,
+              ...exportedProp,
+              ...declSourceProp,
+            };
     out.push(detected);
   }
 

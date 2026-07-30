@@ -52,7 +52,9 @@ describe('capsule manifest isolation (CUT T1)', () => {
 
         // ...and the default path still holds the sentinel (writer did not clobber it).
         const defaultAfter = JSON.parse(readFileSync(defaultManifest, 'utf8'));
-        expect(defaultAfter.sentinel, 'capsule:compile must not write the default path when env override is set').toBe(true);
+        expect(defaultAfter.sentinel, 'capsule:compile must not write the default path when env override is set').toBe(
+          true,
+        );
       } finally {
         if (priorEnv === undefined) delete process.env.LITESHIP_CAPSULE_MANIFEST;
         else process.env.LITESHIP_CAPSULE_MANIFEST = priorEnv;

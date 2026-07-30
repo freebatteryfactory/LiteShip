@@ -1,10 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
-import {
-  DIRECTIVE_BENCH_PAIRS,
-  DIRECTIVE_PRODUCTION_PINS,
-} from '../../../scripts/bench/directive-suite.ts';
+import { DIRECTIVE_BENCH_PAIRS, DIRECTIVE_PRODUCTION_PINS } from '../../../scripts/bench/directive-suite.ts';
 import { repoRoot } from '../../../vitest.shared.ts';
 
 /**

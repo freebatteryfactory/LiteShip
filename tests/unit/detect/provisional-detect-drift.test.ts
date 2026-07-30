@@ -39,11 +39,10 @@ const SCRIPT = emitProvisionalDetectScript();
  * shipped script — not a reimplementation — so any divergence between the
  * emitted cap-tier ladder and canonical surfaces here.
  */
-function runProvisional(input: {
-  cores: number;
-  memory: number;
-  reducedMotion: boolean;
-}): { tier: string | null; provisional: string | null } {
+function runProvisional(input: { cores: number; memory: number; reducedMotion: boolean }): {
+  tier: string | null;
+  provisional: string | null;
+} {
   const realMatchMedia = window.matchMedia;
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,

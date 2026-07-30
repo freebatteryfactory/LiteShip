@@ -68,13 +68,10 @@ function fixtureRepo(): string {
   return makeFixture({
     'package.json': JSON.stringify({ name: 'acme-root', private: true, type: 'module' }),
     'packages/core/package.json': PKG('@acme/core'),
-    'packages/core/src/index.ts':
-      'export const usedThing = 1;\n' +
-      'export const lonelyThing = 2;\n',
+    'packages/core/src/index.ts': 'export const usedThing = 1;\n' + 'export const lonelyThing = 2;\n',
     // consumer references usedThing across the file boundary; never lonelyThing.
     'packages/core/src/consumer.ts':
-      "import { usedThing } from './index.js';\n" +
-      'export const total = usedThing + 1;\n',
+      "import { usedThing } from './index.js';\n" + 'export const total = usedThing + 1;\n',
   });
 }
 
@@ -176,7 +173,15 @@ describe('asOrphanValue — the forced narrowing guard', () => {
       ),
     );
     // Non-orphan shapes narrow to undefined (never a throw, never a mis-read).
-    for (const bad of [null, undefined, 1, 'x', {}, { name: 'a' }, { name: 1, isOrphan: true, externalReferenceCount: 0 }]) {
+    for (const bad of [
+      null,
+      undefined,
+      1,
+      'x',
+      {},
+      { name: 'a' },
+      { name: 1, isOrphan: true, externalReferenceCount: 0 },
+    ]) {
       expect(asOrphanValue(bad)).toBeUndefined();
     }
   });

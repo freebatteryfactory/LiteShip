@@ -79,9 +79,7 @@ function expectAllAgree(thresholds: readonly number[], value: number): void {
   const oracle = simWasmIndex(thresholds, value);
   const got = allIndices(thresholds, value);
   for (const [path, index] of Object.entries(got)) {
-    expect(index, `${path} ≠ oracle (${oracle}) for thresholds=[${thresholds.join(',')}] value=${value}`).toBe(
-      oracle,
-    );
+    expect(index, `${path} ≠ oracle (${oracle}) for thresholds=[${thresholds.join(',')}] value=${value}`).toBe(oracle);
   }
 }
 
@@ -132,9 +130,13 @@ describe('Phase-0 evaluator parity — randomized', () => {
 
   test('every surface agrees with the f32 WASM oracle for arbitrary sorted thresholds × value', () => {
     fc.assert(
-      fc.property(arbThresholds, fc.float({ min: Math.fround(-1000), max: Math.fround(20000) }), (thresholds, value) => {
-        expectAllAgree(thresholds, value);
-      }),
+      fc.property(
+        arbThresholds,
+        fc.float({ min: Math.fround(-1000), max: Math.fround(20000) }),
+        (thresholds, value) => {
+          expectAllAgree(thresholds, value);
+        },
+      ),
       { numRuns: 500 },
     );
   });

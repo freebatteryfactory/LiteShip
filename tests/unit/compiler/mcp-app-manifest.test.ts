@@ -41,16 +41,34 @@ const input: CompileMcpAppManifestInput = {
   protocolVersion: '2025-11-25',
   capabilities: { tools: { listChanged: false } },
   toolDescriptors: [linkedDescriptor, plainDescriptor],
-  resources: [{ uri: 'liteship://registry/commands', name: 'registry/commands', description: 'd', mimeType: 'application/json' }],
+  resources: [
+    { uri: 'liteship://registry/commands', name: 'registry/commands', description: 'd', mimeType: 'application/json' },
+  ],
   uiResources: [
-    { uri: 'ui://liteship/glossary', name: 'glossary (UI)', description: 'd', mimeType: 'text/html;profile=mcp-app',
-      _meta: { ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] } } } },
+    {
+      uri: 'ui://liteship/glossary',
+      name: 'glossary (UI)',
+      description: 'd',
+      mimeType: 'text/html;profile=mcp-app',
+      _meta: { ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] } } },
+    },
   ],
   appResources: [
-    { uri: 'ui://liteship/app/capsule-inspect', name: 'app/capsule-inspect', description: 'd', mimeType: 'text/html;profile=mcp-app',
-      _meta: { ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] } } } },
+    {
+      uri: 'ui://liteship/app/capsule-inspect',
+      name: 'app/capsule-inspect',
+      description: 'd',
+      mimeType: 'text/html;profile=mcp-app',
+      _meta: { ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] } } },
+    },
   ],
-  prompts: [{ name: 'liteship.command.inspect', description: 'd', arguments: [{ name: 'command', description: 'd', required: true }] }],
+  prompts: [
+    {
+      name: 'liteship.command.inspect',
+      description: 'd',
+      arguments: [{ name: 'command', description: 'd', required: true }],
+    },
+  ],
 };
 
 describe('D6 compiler — tool projection mirrors listTools()', () => {
@@ -98,7 +116,18 @@ describe('D6 compiler — no invented fields, constants, determinism', () => {
   it('the manifest has exactly the expected top-level keys (no returns/title/capsules)', () => {
     const m = compileMcpAppManifest(input);
     expect(Object.keys(m).sort()).toEqual(
-      ['appResources', 'capabilities', 'namespacePolicy', 'prompts', 'protocolVersion', 'resources', 'resultEnvelope', 'serverInfo', 'tools', 'uiResources'].sort(),
+      [
+        'appResources',
+        'capabilities',
+        'namespacePolicy',
+        'prompts',
+        'protocolVersion',
+        'resources',
+        'resultEnvelope',
+        'serverInfo',
+        'tools',
+        'uiResources',
+      ].sort(),
     );
     expect('returns' in m.tools[0]!).toBe(false);
   });

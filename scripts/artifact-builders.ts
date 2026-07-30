@@ -78,7 +78,9 @@ function normalizeMetric(summary: MetricSummary | Record<string, number | string
 }
 
 function summaryToObject(
-  summary: { data: Record<MetricKey, MetricSummary | Record<string, number | string>> } | Record<MetricKey, MetricSummary | Record<string, number | string>>,
+  summary:
+    | { data: Record<MetricKey, MetricSummary | Record<string, number | string>> }
+    | Record<MetricKey, MetricSummary | Record<string, number | string>>,
 ): Record<MetricKey, MetricSummary> {
   const raw = 'data' in summary ? summary.data : summary;
   return {
@@ -215,10 +217,7 @@ function normalizeRuntimeSeamPair(pair: BenchArtifact['pairs'][number]): Runtime
   };
 }
 
-function runtimeSeamPairOverheadPct(
-  benchFacts: BenchFacts | undefined,
-  label: string,
-): number | null {
+function runtimeSeamPairOverheadPct(benchFacts: BenchFacts | undefined, label: string): number | null {
   const matchedPair = benchFacts?.hardGates.find((pair) => pair.label === label);
   return matchedPair?.medianOverheadPct ?? null;
 }
@@ -382,9 +381,9 @@ function dominantCanarySpreadMeanNs(bench: BenchArtifact): number | null {
   return Number(Math.max(...spreads).toFixed(2));
 }
 
-function dominantReplicateCanaryContexts(bench: BenchArtifact): readonly NonNullable<
-  NonNullable<BenchArtifact['replicates']>[number]['canaryContext']
->[] {
+function dominantReplicateCanaryContexts(
+  bench: BenchArtifact,
+): readonly NonNullable<NonNullable<BenchArtifact['replicates']>[number]['canaryContext']>[] {
   return (bench.replicates ?? [])
     .map((replicate) => replicate.canaryContext ?? null)
     .filter((context): context is NonNullable<typeof context> => context !== null);
@@ -412,9 +411,9 @@ export function buildExpectedBenchStability(
       const replicateOverheadsPct =
         pair.overheads?.map((value) => (typeof value === 'number' ? Number((value * 100).toFixed(2)) : null)) ?? [];
       const validReplicates =
-        pair.validReplicates ??
-        replicateOverheadsPct.filter((value): value is number => value !== null).length;
-      const spreadPct = pair.spread === null || pair.spread === undefined ? null : Number((pair.spread * 100).toFixed(2));
+        pair.validReplicates ?? replicateOverheadsPct.filter((value): value is number => value !== null).length;
+      const spreadPct =
+        pair.spread === null || pair.spread === undefined ? null : Number((pair.spread * 100).toFixed(2));
       const thresholdPct = Number((pair.threshold * 100).toFixed(2));
       const medianOverheadPct =
         pair.medianOverhead === null || pair.medianOverhead === undefined
@@ -429,13 +428,9 @@ export function buildExpectedBenchStability(
         tasks: replicate.canaryContext?.tasks ?? [],
       }));
       const spreadBeyondCanaryPct =
-        spreadPct === null
-          ? null
-          : Number(Math.max(0, spreadPct - (canarySpreadPct ?? 0)).toFixed(2));
+        spreadPct === null ? null : Number(Math.max(0, spreadPct - (canarySpreadPct ?? 0)).toFixed(2));
       const partialExceedance = exceedances > 0 && exceedances < requiredExceedances;
-      const canaryDominatesThreshold =
-        canarySpreadPct !== null &&
-        canarySpreadPct >= thresholdPct;
+      const canaryDominatesThreshold = canarySpreadPct !== null && canarySpreadPct >= thresholdPct;
       const canaryExplainsSpread =
         canarySpreadPct !== null &&
         spreadPct !== null &&
@@ -452,7 +447,10 @@ export function buildExpectedBenchStability(
         ((spreadPct !== null && spreadPct > thresholdPct * 0.75) ||
           canaryExplainsVariance ||
           partialExceedance ||
-          (canarySpreadMeanNs !== null && spreadPct !== null && spreadPct > thresholdPct * 0.5 && canarySpreadMeanNs > 500));
+          (canarySpreadMeanNs !== null &&
+            spreadPct !== null &&
+            spreadPct > thresholdPct * 0.5 &&
+            canarySpreadMeanNs > 500));
       const trustGrade = noisy ? 'noisy' : watch ? 'watch' : 'stable';
       const trustReason = noisy
         ? spreadPct !== null && spreadPct > thresholdPct
@@ -462,10 +460,10 @@ export function buildExpectedBenchStability(
           ? canaryExplainsVariance
             ? `replicate spread ${spreadPct?.toFixed(2) ?? 'n/a'}% stays within ${spreadBeyondCanaryPct?.toFixed(2) ?? 'n/a'}% task variance beyond ambient canary jitter ${canarySpreadPct?.toFixed(2) ?? 'n/a'}%`
             : partialExceedance
-            ? `only ${exceedances}/${validReplicates} replicates exceeded threshold while canary jitter remained comparable`
-            : spreadPct !== null && spreadPct > thresholdPct * 0.75
-            ? `replicate spread ${spreadPct.toFixed(2)}% is nearing threshold ${thresholdPct.toFixed(2)}%`
-            : `canary spread ${canarySpreadMeanNs?.toFixed(2) ?? 'n/a'}ns suggests ambient jitter`
+              ? `only ${exceedances}/${validReplicates} replicates exceeded threshold while canary jitter remained comparable`
+              : spreadPct !== null && spreadPct > thresholdPct * 0.75
+                ? `replicate spread ${spreadPct.toFixed(2)}% is nearing threshold ${thresholdPct.toFixed(2)}%`
+                : `canary spread ${canarySpreadMeanNs?.toFixed(2) ?? 'n/a'}ns suggests ambient jitter`
           : 'replicates and canaries remain aligned';
 
       return {
@@ -488,17 +486,15 @@ export function buildExpectedBenchStability(
     });
 }
 
-function buildFidelity(
-  options: {
-    readonly supportRawSamples: readonly number[];
-    readonly modeledStages?: readonly string[];
-    readonly missingStages?: readonly string[];
-    readonly dominantSupportStages?: readonly string[];
-    readonly driftTargetPct?: number;
-    readonly eventBoundaryParity?: PairedTruthFidelity['eventBoundaryParity'];
-    readonly supportBaselineKind?: SupportBaselineKind;
-  },
-): PairedTruthFidelity {
+function buildFidelity(options: {
+  readonly supportRawSamples: readonly number[];
+  readonly modeledStages?: readonly string[];
+  readonly missingStages?: readonly string[];
+  readonly dominantSupportStages?: readonly string[];
+  readonly driftTargetPct?: number;
+  readonly eventBoundaryParity?: PairedTruthFidelity['eventBoundaryParity'];
+  readonly supportBaselineKind?: SupportBaselineKind;
+}): PairedTruthFidelity {
   return {
     driftTargetPct: options.driftTargetPct ?? DEFAULT_FIDELITY_DRIFT_TARGET_PCT,
     eventBoundaryParity: options.eventBoundaryParity ?? 'matched',
@@ -525,19 +521,26 @@ export function buildExpectedPairedTruth(
     workerSharedStageNames.map((stage) => normalizeSampleSummary(startupReality.browser.worker.summary.stages[stage])),
   );
   const workerStages = Object.fromEntries(
-    Object.entries(startupReality.browser.worker.summary.stages).map(([stage, summary]) => [stage, normalizeSampleSummary(summary)]),
+    Object.entries(startupReality.browser.worker.summary.stages).map(([stage, summary]) => [
+      stage,
+      normalizeSampleSummary(summary),
+    ]),
   ) as Record<string, SampleSummary | null>;
   const llmSimpleSummary = normalizeSampleSummary(startupReality.browser.llm.simple.chunkToFirstTokenMs);
   const llmPromotedSummary = normalizeSampleSummary(startupReality.browser.llm.promoted?.chunkToFirstTokenMs);
   const workerSupportRawSamples =
     (benchFacts ? workerSharedSupportSamplesMs(benchFacts.bench) : []).length > 0
-      ? (benchFacts ? workerSharedSupportSamplesMs(benchFacts.bench) : [])
+      ? benchFacts
+        ? workerSharedSupportSamplesMs(benchFacts.bench)
+        : []
       : nsValueToMsSamples(startupReality.nodeProxy.workerRuntimeStartupMeanNs);
   const llmSimpleBenchSamples = benchFacts
     ? taskMeanSamplesMs(benchFacts.bench, '[BASELINE] llm-startup-shared -- node first token boundary')
     : [];
   const llmSimpleSupportRawSamples =
-    llmSimpleBenchSamples.length > 0 ? llmSimpleBenchSamples : nsValueToMsSamples(startupReality.nodeProxy.llmRuntimeStartupMeanNs);
+    llmSimpleBenchSamples.length > 0
+      ? llmSimpleBenchSamples
+      : nsValueToMsSamples(startupReality.nodeProxy.llmRuntimeStartupMeanNs);
   const llmPromotedBenchSamples = benchFacts
     ? taskMeanSamplesMs(benchFacts.bench, '[BASELINE] llm-promoted-startup-shared -- node second token boundary')
     : [];
@@ -571,11 +574,7 @@ export function buildExpectedPairedTruth(
     supportBaselineKind: 'node-parity',
     eventBoundaryParity: 'matched',
     modeledStages: ['session-shell-construction', 'runtime-claim-attach', 'queued-flush', 'second-token-boundary'],
-    dominantSupportStages: [
-      'promoted:runtime-claim-attach',
-      'promoted:queued-flush',
-      'promoted:second-token-boundary',
-    ],
+    dominantSupportStages: ['promoted:runtime-claim-attach', 'promoted:queued-flush', 'promoted:second-token-boundary'],
   });
   const workerSupportSummary = supportLaneSummaryFromSamples(workerSupportRawSamples);
   const llmSimpleSupportSummary = supportLaneSummaryFromSamples(llmSimpleSupportRawSamples);
@@ -584,7 +583,8 @@ export function buildExpectedPairedTruth(
   const llmSimpleAbsoluteDeltaMs = sampleSummaryAbsoluteDeltaMs(llmSimpleSummary, llmSimpleSupportSummary);
   const llmPromotedAbsoluteDeltaMs = sampleSummaryAbsoluteDeltaMs(llmPromotedSummary, llmPromotedSupportSummary);
   const workerSharedDivergencePct =
-    runtimeSeamPairOverheadPct(benchFacts, 'worker-runtime-startup-shared') ?? startupReality.divergence.workerRuntimeStartupPct;
+    runtimeSeamPairOverheadPct(benchFacts, 'worker-runtime-startup-shared') ??
+    startupReality.divergence.workerRuntimeStartupPct;
   const llmSharedDivergencePct =
     runtimeSeamPairOverheadPct(benchFacts, 'llm-startup-shared') ?? startupReality.divergence.llmRuntimeStartupPct;
   const llmPromotedSharedDivergencePct =
@@ -619,21 +619,27 @@ export function buildExpectedPairedTruth(
         }),
       },
       fidelity: workerFidelity,
-      shapeGuards: buildShapeGuards('worker-startup', {
-        label: 'browser-shared-startup-slice',
-        unit: 'ms',
-        summary: workerSummary,
-        sampleCount: startupReality.browser.worker.iterations,
-        budget: WORKER_STARTUP_BUDGET,
-        frameBudgetMs: startupReality.browser.worker.frameBudgetMs,
-        exceededFrameBudgetCount: startupReality.browser.worker.exceededFrameBudgetCount,
-      }, {
-        label: 'node-shared-startup-slice',
-        unit: 'ms',
-        summary: workerSupportSummary,
-        sampleCount: workerSupportRawSamples.length > 0 ? workerSupportRawSamples.length : 1,
-        rawSamples: workerSupportRawSamples,
-      }, startupReality.browser.worker.iterations, { stages: workerStages, fidelity: workerFidelity }),
+      shapeGuards: buildShapeGuards(
+        'worker-startup',
+        {
+          label: 'browser-shared-startup-slice',
+          unit: 'ms',
+          summary: workerSummary,
+          sampleCount: startupReality.browser.worker.iterations,
+          budget: WORKER_STARTUP_BUDGET,
+          frameBudgetMs: startupReality.browser.worker.frameBudgetMs,
+          exceededFrameBudgetCount: startupReality.browser.worker.exceededFrameBudgetCount,
+        },
+        {
+          label: 'node-shared-startup-slice',
+          unit: 'ms',
+          summary: workerSupportSummary,
+          sampleCount: workerSupportRawSamples.length > 0 ? workerSupportRawSamples.length : 1,
+          rawSamples: workerSupportRawSamples,
+        },
+        startupReality.browser.worker.iterations,
+        { stages: workerStages, fidelity: workerFidelity },
+      ),
       stages: workerSharedStageNames
         .map((stage) => [stage, workerStages[stage]] as const)
         .filter(([, summary]) => summary !== null)
@@ -646,7 +652,8 @@ export function buildExpectedPairedTruth(
         label: 'browser-chunk-to-first-token',
         unit: 'ms',
         summary: llmSimpleSummary,
-        sampleCount: startupReality.browser.llm.iterations ?? startupReality.browser.llm.simple.rawSamples?.length ?? null,
+        sampleCount:
+          startupReality.browser.llm.iterations ?? startupReality.browser.llm.simple.rawSamples?.length ?? null,
         rawSamples: startupReality.browser.llm.simple.rawSamples,
         budget: LLM_STARTUP_BUDGET,
       },
@@ -670,7 +677,8 @@ export function buildExpectedPairedTruth(
           label: 'browser-simple-shared-startup',
           unit: 'ms',
           summary: llmSimpleSummary,
-          sampleCount: startupReality.browser.llm.iterations ?? startupReality.browser.llm.simple.rawSamples?.length ?? null,
+          sampleCount:
+            startupReality.browser.llm.iterations ?? startupReality.browser.llm.simple.rawSamples?.length ?? null,
           rawSamples: startupReality.browser.llm.simple.rawSamples,
           budget: LLM_STARTUP_BUDGET,
         },
@@ -694,7 +702,8 @@ export function buildExpectedPairedTruth(
         label: 'browser-chunk-to-second-token',
         unit: 'ms',
         summary: llmPromotedSummary,
-        sampleCount: startupReality.browser.llm.iterations ?? startupReality.browser.llm.promoted?.rawSamples?.length ?? null,
+        sampleCount:
+          startupReality.browser.llm.iterations ?? startupReality.browser.llm.promoted?.rawSamples?.length ?? null,
         rawSamples: startupReality.browser.llm.promoted?.rawSamples,
         budget: LLM_STARTUP_BUDGET,
       },
@@ -718,7 +727,8 @@ export function buildExpectedPairedTruth(
           label: 'browser-promoted-shared-startup',
           unit: 'ms',
           summary: llmPromotedSummary,
-          sampleCount: startupReality.browser.llm.iterations ?? startupReality.browser.llm.promoted?.rawSamples?.length ?? null,
+          sampleCount:
+            startupReality.browser.llm.iterations ?? startupReality.browser.llm.promoted?.rawSamples?.length ?? null,
           rawSamples: startupReality.browser.llm.promoted?.rawSamples,
           budget: LLM_STARTUP_BUDGET,
         },

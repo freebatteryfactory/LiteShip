@@ -683,7 +683,10 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     test('the advertised op variants pin additionalProperties:false (the schema-derived source of the extras gate)', () => {
       const base = graph([node('a')]);
       const schema = AICast.graphPatchProposalSchema(base.id).jsonSchema as unknown as {
-        readonly properties?: Record<string, { readonly items?: { readonly oneOf?: readonly { readonly additionalProperties?: boolean }[] } }>;
+        readonly properties?: Record<
+          string,
+          { readonly items?: { readonly oneOf?: readonly { readonly additionalProperties?: boolean }[] } }
+        >;
       };
       const variants = schema.properties?.['ops']?.items?.oneOf ?? [];
       expect(variants.length).toBe(2);
@@ -696,7 +699,10 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
       const base = graph([a, b]);
       const envelope = { _tag: 'GraphPatch', _version: 1, base: base.id } as Record<string, unknown>;
       // node-only op
-      const nodeOnly = { ...envelope, ops: [{ op: 'add', family: 'signal', node: node('c') }] } as unknown as GraphPatch;
+      const nodeOnly = {
+        ...envelope,
+        ops: [{ op: 'add', family: 'signal', node: node('c') }],
+      } as unknown as GraphPatch;
       expect(AICast.validateGraphPatchProposal(base, nodeOnly).ok).toBe(true);
       // edge-only op (between the two pre-existing nodes)
       const edgeOnly = {

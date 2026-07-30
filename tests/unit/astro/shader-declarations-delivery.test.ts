@@ -17,10 +17,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { glslIdent, defineBoundary } from '@liteship/core';
 import { GLSLCompiler, WGSLCompiler } from '@liteship/compiler';
 import { adaptiveAttrs } from '@liteship/astro';
-import {
-  initGPUDirective,
-  prependGlslDeclarations,
-} from '../../../packages/astro/src/runtime/gpu.js';
+import { initGPUDirective, prependGlslDeclarations } from '../../../packages/astro/src/runtime/gpu.js';
 import { prependWgslDeclarations } from '../../../packages/astro/src/runtime/wgpu.js';
 import { createStubRegistry } from '../../helpers/define-property-stub.js';
 
@@ -97,9 +94,7 @@ describe('drift guard: emitted declarations vocabulary === runtime binding vocab
     // Emitted struct field names parsed from the declarations the runtime
     // prepends and `parseWgslUniformLayout` reads back — the same struct.
     const struct = /struct\s+\w+\s*\{([\s\S]*?)\}/.exec(compiled.declarations);
-    const emittedFields = new Set(
-      [...(struct?.[1] ?? '').matchAll(/([A-Za-z_]\w*)\s*:/g)].map((m) => m[1]!),
-    );
+    const emittedFields = new Set([...(struct?.[1] ?? '').matchAll(/([A-Za-z_]\w*)\s*:/g)].map((m) => m[1]!));
 
     // Every bound field is a declared struct field (state_index is emit-only).
     for (const name of boundNames) expect(emittedFields).toContain(name);

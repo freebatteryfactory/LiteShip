@@ -62,10 +62,7 @@ async function main(): Promise<void> {
   const artifactDir = resolve(repoRoot, 'benchmarks');
   const context = ensureArtifactContext(repoRoot);
   const benchConfig = buildDirectiveBenchConfig(DEFAULT_GATE_REPLICATES);
-  const { replicates, source } = await resolveReplicates(
-    context.sourceFingerprint,
-    context.environmentFingerprint,
-  );
+  const { replicates, source } = await resolveReplicates(context.sourceFingerprint, context.environmentFingerprint);
   console.log(
     source === 'cache'
       ? `[bench-gate] Reusing replicates from benchmarks/directive-bench.json (same source + environment fingerprint).`

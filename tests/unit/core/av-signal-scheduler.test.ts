@@ -206,7 +206,10 @@ describe('Scheduler.audioSync', () => {
 describe('Scheduler.raf', () => {
   test('cancel forwards to cancelAnimationFrame', () => {
     const cancelSpy = vi.fn();
-    vi.stubGlobal('requestAnimationFrame', vi.fn(() => 7));
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn(() => 7),
+    );
     vi.stubGlobal('cancelAnimationFrame', cancelSpy);
 
     const sched = Scheduler.raf();

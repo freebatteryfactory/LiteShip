@@ -23,12 +23,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { resolve, join, dirname } from 'node:path';
-import {
-  buildRepoIR,
-  withRepoRoot,
-  resolveDevopsProfile,
-  type DevopsProfile,
-} from '@liteship/audit';
+import { buildRepoIR, withRepoRoot, resolveDevopsProfile, type DevopsProfile } from '@liteship/audit';
 import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 import { liteshipRegexOracle } from '../../../packages/cli/src/internal/repo-ir-gauntlet.js';
 import {
@@ -132,10 +127,7 @@ describe('parity — the IR-fold no-bare-throw fold reproduces the regex gate, m
     const irSet = new Set(irFindings.map((f) => loc(f.location?.file, f.location?.line)));
 
     // Both find the two genuine throws at lines 2 and 5.
-    const expected = new Set([
-      'packages/core/src/index.ts:2',
-      'packages/core/src/index.ts:5',
-    ]);
+    const expected = new Set(['packages/core/src/index.ts:2', 'packages/core/src/index.ts:5']);
     expect(irSet).toEqual(expected);
 
     // The AST fold is a STRICT REFINEMENT of the regex scan: every AST finding is
@@ -250,7 +242,9 @@ describe('B1 close — the LIVE triangulated cross-check over THIS very repo', (
     // exports, the regex oracle saw NONE of them (the exclude), and EVERY such file
     // carries a live policy-exclude marker. The ~9 are all sanctioned, not missed.
     const astDefaults = ir.facts.filter((f) => f.property === 'is-default-export' && f.oracleId === 'ts-ast');
-    const regexDefaults = ir.facts.filter((f) => f.property === 'is-default-export' && f.oracleId === 'invariant-regex');
+    const regexDefaults = ir.facts.filter(
+      (f) => f.property === 'is-default-export' && f.oracleId === 'invariant-regex',
+    );
     const excludedFiles = new Set(
       ir.facts
         .filter((f) => f.property === 'default-export-check-excluded' && f.oracleId === 'invariant-regex')

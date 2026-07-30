@@ -61,9 +61,7 @@ describe('canonical golden vectors', () => {
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
     const d = AddressedDigest.of(bytes);
     expect(d.display_id).toBe('fnv1a:bfe534e8');
-    expect(d.integrity_digest).toBe(
-      'sha256:74f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d0',
-    );
+    expect(d.integrity_digest).toBe('sha256:74f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d0');
     expect(d.algo).toBe('sha256');
   });
 
@@ -75,8 +73,6 @@ describe('canonical golden vectors', () => {
     });
     const d = AddressedDigest.of(payload);
     expect(d.display_id).toBe('fnv1a:ec066d5e');
-    expect(d.integrity_digest).toBe(
-      'sha256:abbcd2e128f338218465330a4b9cc8486b04d6ee08183c5b8fa80477475c2ca6',
-    );
+    expect(d.integrity_digest).toBe('sha256:abbcd2e128f338218465330a4b9cc8486b04d6ee08183c5b8fa80477475c2ca6');
   });
 });

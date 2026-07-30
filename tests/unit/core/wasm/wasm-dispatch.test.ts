@@ -666,53 +666,57 @@ describe('WASMDispatch concurrent loading properties', () => {
     }
   });
 
-  test('session invalidation returns fallback when unload occurs during load', async () => {
-    WASMDispatch.unload();
-
-    const originalFetch = globalThis.fetch;
-    const memory = new WebAssembly.Memory({ initial: 1 });
-    const fakeExports = {
-      memory,
-      spring_curve: vi.fn(() => 0),
-      batch_boundary_eval: vi.fn(() => 0),
-      blend_normalize: vi.fn(),
-    };
-
-    let resolveFetch: (value: Response) => void;
-    const fetchPromise = new Promise<Response>((resolve) => {
-      resolveFetch = resolve;
-    });
-
-    // Mock fetch to hang until we resolve it manually
-    globalThis.fetch = vi.fn(() => fetchPromise) as typeof fetch;
-    const instantiateSpy = vi.spyOn(WebAssembly, 'instantiate').mockResolvedValue({
-      instance: { exports: fakeExports } as unknown as WebAssembly.Instance,
-    });
-
-    try {
-      // Start loading (this will hang at fetch)
-      const loadPromise = WASMDispatch.load('test.wasm');
-
-      // Verify loading is in progress
-      expect(WASMDispatch.isLoaded()).toBe(false);
-
-      // Unload while loading (triggers session invalidation - lines 227-229)
+  test(
+    'session invalidation returns fallback when unload occurs during load',
+    async () => {
       WASMDispatch.unload();
 
-      // Now resolve the fetch - this should trigger session invalidation logic
-      resolveFetch!(new Response(new Uint8Array([0x00, 0x61, 0x73, 0x6d]).buffer));
+      const originalFetch = globalThis.fetch;
+      const memory = new WebAssembly.Memory({ initial: 1 });
+      const fakeExports = {
+        memory,
+        spring_curve: vi.fn(() => 0),
+        batch_boundary_eval: vi.fn(() => 0),
+        blend_normalize: vi.fn(),
+      };
 
-      // Should return fallback due to session invalidation (lines 227-229)
-      const result = await loadPromise;
-      expect(result).toBe(fallbackKernels);
-      expect(WASMDispatch.isLoaded()).toBe(false);
+      let resolveFetch: (value: Response) => void;
+      const fetchPromise = new Promise<Response>((resolve) => {
+        resolveFetch = resolve;
+      });
 
-      // Verify instantiate was called but result was discarded due to session invalidation
-      expect(instantiateSpy).toHaveBeenCalled();
-    } finally {
-      globalThis.fetch = originalFetch;
-      instantiateSpy.mockRestore();
-      WASMDispatch.unload();
-    }
-  }, scaledTimeout(10_000)); // Increase timeout for this complex async test
+      // Mock fetch to hang until we resolve it manually
+      globalThis.fetch = vi.fn(() => fetchPromise) as typeof fetch;
+      const instantiateSpy = vi.spyOn(WebAssembly, 'instantiate').mockResolvedValue({
+        instance: { exports: fakeExports } as unknown as WebAssembly.Instance,
+      });
+
+      try {
+        // Start loading (this will hang at fetch)
+        const loadPromise = WASMDispatch.load('test.wasm');
+
+        // Verify loading is in progress
+        expect(WASMDispatch.isLoaded()).toBe(false);
+
+        // Unload while loading (triggers session invalidation - lines 227-229)
+        WASMDispatch.unload();
+
+        // Now resolve the fetch - this should trigger session invalidation logic
+        resolveFetch!(new Response(new Uint8Array([0x00, 0x61, 0x73, 0x6d]).buffer));
+
+        // Should return fallback due to session invalidation (lines 227-229)
+        const result = await loadPromise;
+        expect(result).toBe(fallbackKernels);
+        expect(WASMDispatch.isLoaded()).toBe(false);
+
+        // Verify instantiate was called but result was discarded due to session invalidation
+        expect(instantiateSpy).toHaveBeenCalled();
+      } finally {
+        globalThis.fetch = originalFetch;
+        instantiateSpy.mockRestore();
+        WASMDispatch.unload();
+      }
+    },
+    scaledTimeout(10_000),
+  ); // Increase timeout for this complex async test
 });

@@ -121,45 +121,49 @@ const readCommittedSnapshot = (): ApiSurfaceSnapshot =>
   JSON.parse(readFileSync(SNAPSHOT_PATH, 'utf8')) as ApiSurfaceSnapshot;
 
 describe('API-surface snapshot gate (drift)', () => {
-  test('the committed snapshot matches the live public surface (regenerate intentionally with LITESHIP_UPDATE_API_SNAPSHOT=1)', { timeout: scaledTimeout(60_000) }, async () => {
-    const live = await buildLiveSnapshot(LITESHIP_API_SURFACE_POLICY);
-    const serialized = serializeSnapshot(live);
+  test(
+    'the committed snapshot matches the live public surface (regenerate intentionally with LITESHIP_UPDATE_API_SNAPSHOT=1)',
+    { timeout: scaledTimeout(60_000) },
+    async () => {
+      const live = await buildLiveSnapshot(LITESHIP_API_SURFACE_POLICY);
+      const serialized = serializeSnapshot(live);
 
-    if (process.env.LITESHIP_UPDATE_API_SNAPSHOT === '1') {
-      writeFileSync(SNAPSHOT_PATH, serialized);
-    } else {
-      const committed = serializeSnapshot(readCommittedSnapshot());
+      if (process.env.LITESHIP_UPDATE_API_SNAPSHOT === '1') {
+        writeFileSync(SNAPSHOT_PATH, serialized);
+      } else {
+        const committed = serializeSnapshot(readCommittedSnapshot());
 
-      // Build a per-export drift report so the failure names exactly what changed.
-      const committedSnapshot = readCommittedSnapshot();
-      const drift: SurfaceDiff[] = [];
-      for (const pkg of LITESHIP_API_SURFACE_POLICY.publicPackages) {
-        const prior = committedSnapshot.packages[pkg];
-        const current = live.packages[pkg]!;
-        if (!prior) {
-          drift.push({
-            pkg,
-            changeClass: 'added',
-            name: '<package>',
-            detail: `package ${pkg} is new to the public surface`,
-          });
-          continue;
+        // Build a per-export drift report so the failure names exactly what changed.
+        const committedSnapshot = readCommittedSnapshot();
+        const drift: SurfaceDiff[] = [];
+        for (const pkg of LITESHIP_API_SURFACE_POLICY.publicPackages) {
+          const prior = committedSnapshot.packages[pkg];
+          const current = live.packages[pkg]!;
+          if (!prior) {
+            drift.push({
+              pkg,
+              changeClass: 'added',
+              name: '<package>',
+              detail: `package ${pkg} is new to the public surface`,
+            });
+            continue;
+          }
+          drift.push(...diffPackageSurface(pkg, prior, current));
         }
-        drift.push(...diffPackageSurface(pkg, prior, current));
-      }
 
-      expect(
-        serialized === committed,
-        drift.length === 0
-          ? 'API surface serialization drifted but no per-export diff was found — the snapshot schema or version stamp changed; run LITESHIP_UPDATE_API_SNAPSHOT=1 to regenerate and review.'
-          : `Public API surface drifted from the committed snapshot:\n` +
-              drift.map((d) => `  • ${d.pkg}: ${d.detail} [${d.changeClass}]`).join('\n') +
-              `\n\nIf this change is intentional, regenerate the snapshot ` +
-              `(LITESHIP_UPDATE_API_SNAPSHOT=1 npx vitest run tests/unit/meta/api-surface.test.ts) ` +
-              `and review the diff. An accidental public-API change must never pass silently.`,
-      ).toBe(true);
-    }
-  });
+        expect(
+          serialized === committed,
+          drift.length === 0
+            ? 'API surface serialization drifted but no per-export diff was found — the snapshot schema or version stamp changed; run LITESHIP_UPDATE_API_SNAPSHOT=1 to regenerate and review.'
+            : `Public API surface drifted from the committed snapshot:\n` +
+                drift.map((d) => `  • ${d.pkg}: ${d.detail} [${d.changeClass}]`).join('\n') +
+                `\n\nIf this change is intentional, regenerate the snapshot ` +
+                `(LITESHIP_UPDATE_API_SNAPSHOT=1 npx vitest run tests/unit/meta/api-surface.test.ts) ` +
+                `and review the diff. An accidental public-API change must never pass silently.`,
+        ).toBe(true);
+      }
+    },
+  );
 
   test('the committed snapshot is byte-canonical (re-serializing it is a no-op)', () => {
     const committed = readFileSync(SNAPSHOT_PATH, 'utf8');
@@ -228,7 +232,10 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
     const prior = parseSemver(priorVersion);
     const current = parseSemver(currentVersion);
     if (!prior || !current) {
-      return { ok: false, reason: `${pkg}: unparseable version (prior="${priorVersion}", current="${currentVersion}")` };
+      return {
+        ok: false,
+        reason: `${pkg}: unparseable version (prior="${priorVersion}", current="${currentVersion}")`,
+      };
     }
     const observed = classifyBump(prior, current);
     if (observed === undefined) {
@@ -244,34 +251,36 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
         reason:
           `${pkg}: surface changed (strongest class "${strongestClass}", requires a ${requiredBump} bump) but version ` +
           `${priorVersion} → ${currentVersion} is only a "${observed}" bump.` +
-          (breaking.length > 0
-            ? ` BREAKING changes present: ${breaking.map((d) => d.detail).join('; ')}.`
-            : ''),
+          (breaking.length > 0 ? ` BREAKING changes present: ${breaking.map((d) => d.detail).join('; ')}.` : ''),
       };
     }
     return { ok: true };
   };
 
-  test('every public package satisfies the bump policy for its live surface vs the committed snapshot', { timeout: scaledTimeout(60_000) }, async () => {
-    const committed = readCommittedSnapshot();
-    const live = await buildLiveSnapshot(LITESHIP_API_SURFACE_POLICY);
-    const failures: string[] = [];
-    for (const pkg of LITESHIP_API_SURFACE_POLICY.publicPackages) {
-      const prior = committed.packages[pkg];
-      const current = live.packages[pkg]!;
-      if (!prior) continue; // a brand-new package has no prior surface to bump against
-      const diffs = diffPackageSurface(pkg, prior, current);
-      const verdict = assertVersionBumpForDiff(
-        pkg,
-        prior.version,
-        current.version,
-        diffs,
-        LITESHIP_API_SURFACE_POLICY,
-      );
-      if (!verdict.ok) failures.push(verdict.reason);
-    }
-    expect(failures, `Semver policy violations:\n${failures.join('\n')}`).toEqual([]);
-  });
+  test(
+    'every public package satisfies the bump policy for its live surface vs the committed snapshot',
+    { timeout: scaledTimeout(60_000) },
+    async () => {
+      const committed = readCommittedSnapshot();
+      const live = await buildLiveSnapshot(LITESHIP_API_SURFACE_POLICY);
+      const failures: string[] = [];
+      for (const pkg of LITESHIP_API_SURFACE_POLICY.publicPackages) {
+        const prior = committed.packages[pkg];
+        const current = live.packages[pkg]!;
+        if (!prior) continue; // a brand-new package has no prior surface to bump against
+        const diffs = diffPackageSurface(pkg, prior, current);
+        const verdict = assertVersionBumpForDiff(
+          pkg,
+          prior.version,
+          current.version,
+          diffs,
+          LITESHIP_API_SURFACE_POLICY,
+        );
+        if (!verdict.ok) failures.push(verdict.reason);
+      }
+      expect(failures, `Semver policy violations:\n${failures.join('\n')}`).toEqual([]);
+    },
+  );
 
   // ── BITE PROOFS — the gates must actually fail on the conditions they guard ──
 
@@ -290,7 +299,13 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
     const diffs = diffPackageSurface('@liteship/demo', prior, current);
     expect(diffs.some((d) => d.changeClass === 'removed' && d.name === 'gone')).toBe(true);
 
-    const verdict = assertVersionBumpForDiff('@liteship/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
+    const verdict = assertVersionBumpForDiff(
+      '@liteship/demo',
+      prior.version,
+      current.version,
+      diffs,
+      LITESHIP_API_SURFACE_POLICY,
+    );
     expect(verdict.ok).toBe(false);
     if (!verdict.ok) expect(verdict.reason).toMatch(/BREAKING changes present/);
   });
@@ -308,7 +323,13 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
       exports: [{ name: 'keep', kind: 'function', signature: '(1)' }],
     };
     const diffs = diffPackageSurface('@liteship/demo', prior, current);
-    const verdict = assertVersionBumpForDiff('@liteship/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
+    const verdict = assertVersionBumpForDiff(
+      '@liteship/demo',
+      prior.version,
+      current.version,
+      diffs,
+      LITESHIP_API_SURFACE_POLICY,
+    );
     expect(verdict.ok).toBe(true);
   });
 
@@ -317,7 +338,13 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
     const current: PackageSurface = { version: '0.4.0', exports: [{ name: 'f', kind: 'function', signature: '(2)' }] };
     const diffs = diffPackageSurface('@liteship/demo', prior, current);
     expect(diffs.some((d) => d.changeClass === 'signature-changed' && d.name === 'f')).toBe(true);
-    const verdict = assertVersionBumpForDiff('@liteship/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
+    const verdict = assertVersionBumpForDiff(
+      '@liteship/demo',
+      prior.version,
+      current.version,
+      diffs,
+      LITESHIP_API_SURFACE_POLICY,
+    );
     expect(verdict.ok).toBe(false);
   });
 
@@ -332,7 +359,13 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
     };
     const diffs = diffPackageSurface('@liteship/demo', prior, current);
     expect(diffs.some((d) => d.changeClass === 'signature-changed' && d.name === 'Boundary')).toBe(true);
-    const verdict = assertVersionBumpForDiff('@liteship/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
+    const verdict = assertVersionBumpForDiff(
+      '@liteship/demo',
+      prior.version,
+      current.version,
+      diffs,
+      LITESHIP_API_SURFACE_POLICY,
+    );
     expect(verdict.ok).toBe(false);
   });
 
@@ -347,7 +380,13 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
     };
     const diffs = diffPackageSurface('@liteship/demo', prior, current);
     expect(diffs.some((d) => d.changeClass === 'added' && d.name === 'b')).toBe(true);
-    const verdict = assertVersionBumpForDiff('@liteship/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
+    const verdict = assertVersionBumpForDiff(
+      '@liteship/demo',
+      prior.version,
+      current.version,
+      diffs,
+      LITESHIP_API_SURFACE_POLICY,
+    );
     expect(verdict.ok).toBe(false);
   });
 
@@ -361,7 +400,13 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
       ],
     };
     const diffs = diffPackageSurface('@liteship/demo', prior, current);
-    const verdict = assertVersionBumpForDiff('@liteship/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
+    const verdict = assertVersionBumpForDiff(
+      '@liteship/demo',
+      prior.version,
+      current.version,
+      diffs,
+      LITESHIP_API_SURFACE_POLICY,
+    );
     expect(verdict.ok).toBe(false);
     if (!verdict.ok) expect(verdict.reason).toMatch(/DOWNGRADE/);
   });

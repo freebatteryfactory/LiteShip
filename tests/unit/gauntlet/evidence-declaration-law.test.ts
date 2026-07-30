@@ -218,8 +218,7 @@ function perturbFile(base: GateContext, path: string): GateContext {
       if (p !== path) return base.readFile(p);
       return wasPresent ? undefined : SENTINEL; // toggle present ↔ absent
     },
-    files: (): readonly string[] =>
-      wasPresent ? base.files().filter((f) => f !== path) : [...base.files(), path],
+    files: (): readonly string[] => (wasPresent ? base.files().filter((f) => f !== path) : [...base.files(), path]),
     allFiles: (): readonly string[] => {
       const all = base.allFiles !== undefined ? base.allFiles() : base.files();
       return wasPresent ? all.filter((f) => f !== path) : [...all, path];
@@ -361,7 +360,6 @@ function perturbFact(base: GateContext, channel: EvidenceChannel): GateContext {
   return clone;
 }
 
-
 /** The channel named by an absent-access read marker (`<channel>:absent`), else undefined. */
 function absentReadChannel(read: string): EvidenceChannel | undefined {
   if (!read.endsWith(ABSENT_SUFFIX)) return undefined;
@@ -502,7 +500,10 @@ describe('THE EVIDENCE-DECLARATION LAW — no gate reads undeclared out-of-IR / 
   for (const gate of ALL_GATES) {
     it(`${gate.id}: every out-of-IR / fact read its green fixture performs is folded by evidenceDigest`, () => {
       const undeclared = undeclaredReads(gate, gate.fixtures.green.context);
-      expect(undeclared, `gate "${gate.id}" reads ${JSON.stringify(undeclared)} but its evidenceDigest does not fold them — a stale-cache hole`).toEqual([]);
+      expect(
+        undeclared,
+        `gate "${gate.id}" reads ${JSON.stringify(undeclared)} but its evidenceDigest does not fold them — a stale-cache hole`,
+      ).toEqual([]);
     });
 
     it(`${gate.id}: the red fixture's reads are also folded (the divergent world keys soundly too)`, () => {
@@ -533,7 +534,8 @@ describe('THE LAW HAS TEETH — a gate that reads allFiles() but declares no evi
   const cheaterGate: Gate = defineGate({
     id: 'gauntlet/__evidence_law_cheater__',
     level: 'L1',
-    describe: 'A deliberately non-conforming gate (reads an out-of-IR tests/ body, declares no evidenceDigest) — a red fixture for the law.',
+    describe:
+      'A deliberately non-conforming gate (reads an out-of-IR tests/ body, declares no evidenceDigest) — a red fixture for the law.',
     run: (context: GateContext): readonly Finding[] => {
       // Read the unscoped corpus AND the body of every out-of-IR tests/ file — real
       // out-of-IR evidence the verdict depends on — but fold NO evidenceDigest.
@@ -544,7 +546,15 @@ describe('THE LAW HAS TEETH — a gate that reads allFiles() but declares no evi
         total += (context.readFile(p) ?? '').length; // the verdict depends on the body
       }
       return total > 999_999
-        ? [finding({ ruleId: 'gauntlet/__evidence_law_cheater__', severity: 'advisory', level: 'L1', title: 'x', detail: 'x' })]
+        ? [
+            finding({
+              ruleId: 'gauntlet/__evidence_law_cheater__',
+              severity: 'advisory',
+              level: 'L1',
+              title: 'x',
+              detail: 'x',
+            }),
+          ]
         : [];
     },
     // NO evidenceDigest — the violation.
@@ -822,7 +832,15 @@ describe('THE LAW IS COMPLETE — a verdict that depends on allFiles().length is
         const corpus = context.allFiles !== undefined ? context.allFiles() : context.files();
         for (const p of corpus) {
           if (p.startsWith('tests/') && (context.readFile(p) ?? '').includes('FORBIDDEN')) {
-            return [finding({ ruleId: 'gauntlet/__evidence_law_enumerator__', severity: 'advisory', level: 'L1', title: 'x', detail: p })];
+            return [
+              finding({
+                ruleId: 'gauntlet/__evidence_law_enumerator__',
+                severity: 'advisory',
+                level: 'L1',
+                title: 'x',
+                detail: p,
+              }),
+            ];
           }
         }
         return [];
@@ -1040,7 +1058,10 @@ describe('THE LAW IS SHAPE-BROAD — list-dependence on ANY out-of-IR shape is c
     // the non-IR source trees PLUS a non-source artifact PLUS a generic deep path.
     const sentinelPaths = LIST_SENTINELS.map(([p]) => p);
     for (const tree of ['tests/', 'benchmarks/', 'traceability/']) {
-      expect(sentinelPaths.some((p) => p.startsWith(tree)), `a sentinel under ${tree}`).toBe(true);
+      expect(
+        sentinelPaths.some((p) => p.startsWith(tree)),
+        `a sentinel under ${tree}`,
+      ).toBe(true);
     }
     expect(sentinelPaths.some((p) => p.startsWith('docs/') && p.endsWith('.md'))).toBe(true);
     expect(sentinelPaths.some((p) => p.startsWith('.github/workflows/'))).toBe(true);
@@ -1195,10 +1216,9 @@ describe('THE ABSENCE KEYSTONE — accessing an ABSENT channel is recorded as a 
       const rec = recordingContext(absentCtx);
       // A minimal probe: access exactly this channel (the recorder's getter fires).
       void (rec.context as Record<string, unknown>)[channel];
-      expect(
-        rec.reads().has(`${channel}${ABSENT_SUFFIX}`),
-        `channel "${channel}" absent-access must be recorded`,
-      ).toBe(true);
+      expect(rec.reads().has(`${channel}${ABSENT_SUFFIX}`), `channel "${channel}" absent-access must be recorded`).toBe(
+        true,
+      );
       expect(rec.reads().has(channel), `channel "${channel}" must NOT record a present marker when absent`).toBe(false);
     }
   });

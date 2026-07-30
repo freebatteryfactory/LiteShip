@@ -3,7 +3,12 @@ import { assetAnalyzeCommand, assetVerifyCommand } from '@liteship/command';
 
 const MANIFEST = JSON.stringify({
   capsules: [
-    { name: 'intro-bed', kind: 'cachedProjection', source: 'examples/scenes/intro-bed.wav', generated: { testFile: 'a.test.ts', benchFile: 'a.bench.ts' } },
+    {
+      name: 'intro-bed',
+      kind: 'cachedProjection',
+      source: 'examples/scenes/intro-bed.wav',
+      generated: { testFile: 'a.test.ts', benchFile: 'a.bench.ts' },
+    },
   ],
 });
 
@@ -98,7 +103,11 @@ describe('@liteship/command asset.verify', () => {
   it('test file present and passing → invariantsChecked 1', async () => {
     const r = await assetVerifyCommand.handler(
       { name: 'asset.verify', args: { asset: 'intro-bed' } },
-      { manifestSource: () => MANIFEST, fileExists: () => true, runVitest: async () => ({ exitCode: 0, stderrTail: '' }) },
+      {
+        manifestSource: () => MANIFEST,
+        fileExists: () => true,
+        runVitest: async () => ({ exitCode: 0, stderrTail: '' }),
+      },
     );
     expect(r.status).toBe('ok');
     expect((r.payload as { invariantsChecked: number }).invariantsChecked).toBe(1);
@@ -107,7 +116,11 @@ describe('@liteship/command asset.verify', () => {
   it('failing generated tests → failed exit 2', async () => {
     const r = await assetVerifyCommand.handler(
       { name: 'asset.verify', args: { asset: 'intro-bed' } },
-      { manifestSource: () => MANIFEST, fileExists: () => true, runVitest: async () => ({ exitCode: 1, stderrTail: 'boom' }) },
+      {
+        manifestSource: () => MANIFEST,
+        fileExists: () => true,
+        runVitest: async () => ({ exitCode: 1, stderrTail: 'boom' }),
+      },
     );
     expect(r.status).toBe('failed');
     expect(r.exitCode).toBe(2);

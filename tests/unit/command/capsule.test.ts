@@ -3,35 +3,60 @@ import { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from 
 
 const MANIFEST = JSON.stringify({
   capsules: [
-    { name: 'alpha', kind: 'pureTransform', source: 'a.ts', generated: { testFile: 'a.test.ts', benchFile: 'a.bench.ts' } },
-    { name: 'beta', kind: 'stateMachine', source: 'b.ts', generated: { testFile: 'b.test.ts', benchFile: 'b.bench.ts' } },
+    {
+      name: 'alpha',
+      kind: 'pureTransform',
+      source: 'a.ts',
+      generated: { testFile: 'a.test.ts', benchFile: 'a.bench.ts' },
+    },
+    {
+      name: 'beta',
+      kind: 'stateMachine',
+      source: 'b.ts',
+      generated: { testFile: 'b.test.ts', benchFile: 'b.bench.ts' },
+    },
   ],
 });
 
 describe('@liteship/command capsule commands', () => {
   it('inspect returns the matching entry as a structured ok result', async () => {
-    const r = await capsuleInspectCommand.handler({ name: 'capsule.inspect', args: { id: 'alpha' } }, { manifestSource: () => MANIFEST });
+    const r = await capsuleInspectCommand.handler(
+      { name: 'capsule.inspect', args: { id: 'alpha' } },
+      { manifestSource: () => MANIFEST },
+    );
     expect(r.status).toBe('ok');
     expect((r.payload as { capsule: { name: string } }).capsule.name).toBe('alpha');
   });
 
   it('inspect fails (exit 1) when the manifest is missing', async () => {
-    const r = await capsuleInspectCommand.handler({ name: 'capsule.inspect', args: { id: 'alpha' } }, { manifestSource: () => null });
+    const r = await capsuleInspectCommand.handler(
+      { name: 'capsule.inspect', args: { id: 'alpha' } },
+      { manifestSource: () => null },
+    );
     expect(r.status).toBe('failed');
     expect(r.exitCode).toBe(1);
   });
 
   it('inspect fails (exit 1) when the id is not found', async () => {
-    const r = await capsuleInspectCommand.handler({ name: 'capsule.inspect', args: { id: 'zzz' } }, { manifestSource: () => MANIFEST });
+    const r = await capsuleInspectCommand.handler(
+      { name: 'capsule.inspect', args: { id: 'zzz' } },
+      { manifestSource: () => MANIFEST },
+    );
     expect(r.status).toBe('failed');
     expect(r.exitCode).toBe(1);
   });
 
   it('list returns all entries, or the kind-filtered subset', async () => {
-    const all = await capsuleListCommand.handler({ name: 'capsule.list', args: {} }, { manifestSource: () => MANIFEST });
+    const all = await capsuleListCommand.handler(
+      { name: 'capsule.list', args: {} },
+      { manifestSource: () => MANIFEST },
+    );
     expect((all.payload as { capsules: unknown[] }).capsules).toHaveLength(2);
 
-    const filtered = await capsuleListCommand.handler({ name: 'capsule.list', args: { kind: 'stateMachine' } }, { manifestSource: () => MANIFEST });
+    const filtered = await capsuleListCommand.handler(
+      { name: 'capsule.list', args: { kind: 'stateMachine' } },
+      { manifestSource: () => MANIFEST },
+    );
     const p = filtered.payload as { capsules: { name: string }[]; kind: string | null };
     expect(p.capsules).toHaveLength(1);
     expect(p.capsules[0]!.name).toBe('beta');

@@ -212,16 +212,12 @@ describe('compileTheme error contracts (properties)', () => {
 
   test('LAW: a value with NO forbidden char never throws for a survivable name (no false reject)', () => {
     fc.assert(
-      fc.property(
-        safeNameArb,
-        fc.stringMatching(/^[a-zA-Z0-9#%., _-]*$/),
-        (name, value) => {
-          // Round-trips cleanly: a benign value is emitted, never rejected.
-          const result = compileTheme({ tokens: { [name]: value } });
-          expect(result.declarations).toHaveLength(1);
-          expect(result.declarations[0]!.value).toBe(value);
-        },
-      ),
+      fc.property(safeNameArb, fc.stringMatching(/^[a-zA-Z0-9#%., _-]*$/), (name, value) => {
+        // Round-trips cleanly: a benign value is emitted, never rejected.
+        const result = compileTheme({ tokens: { [name]: value } });
+        expect(result.declarations).toHaveLength(1);
+        expect(result.declarations[0]!.value).toBe(value);
+      }),
     );
   });
 });

@@ -6,5 +6,7 @@ export const GENERATED_DOC_PACKAGE_GROUPS = {
   "runtime": ["@liteship/web", "@liteship/detect", "@liteship/worker", "@liteship/remotion", "@liteship/scene", "@liteship/assets", "@liteship/stage", "@liteship/cli", "@liteship/mcp-server", "@liteship/_spine"],
   "tooling": ["@liteship/command", "@liteship/audit", "@liteship/gauntlet"],
 } as const;
+// prettier-ignore
 export const GENERATED_PROSE_ONLY = ["liteship", "create-liteship"] as const;
+// prettier-ignore
 export const GENERATED_NO_SURFACE_SECTION = ["@liteship/_spine"] as const;

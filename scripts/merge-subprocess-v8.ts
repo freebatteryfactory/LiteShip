@@ -94,9 +94,8 @@ for (const dumpName of dumpFiles) {
     // Only file:// URLs that resolve into the repo's packages/*/src tree.
     if (!script.url.startsWith('file://')) continue;
     const filePath = decodeURIComponent(new URL(script.url).pathname);
-    const normalized = process.platform === 'win32' && filePath.startsWith('/')
-      ? filePath.slice(1).replace(/\//g, '\\')
-      : filePath;
+    const normalized =
+      process.platform === 'win32' && filePath.startsWith('/') ? filePath.slice(1).replace(/\//g, '\\') : filePath;
     // A file:// URL↔fs path round-trip: forward→back (native abs for V8ToIstanbul)
     // then back→forward via normalizeRepoPath, with a repo-root prefix strip for
     // glob matching.
@@ -129,7 +128,9 @@ for (const dumpName of dumpFiles) {
 }
 
 if (droppedInProcessHits > 0) {
-  console.log(`[merge-subprocess-v8] dropped ${droppedInProcessHits} subprocess script entries already covered in-process`);
+  console.log(
+    `[merge-subprocess-v8] dropped ${droppedInProcessHits} subprocess script entries already covered in-process`,
+  );
 }
 
 writeFileSync(finalPath, JSON.stringify(finalMap.toJSON(), null, 2));

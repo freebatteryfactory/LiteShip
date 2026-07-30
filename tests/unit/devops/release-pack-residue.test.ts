@@ -81,7 +81,10 @@ function isSemverRange(range: string): boolean {
   const trimmed = range.trim();
   if (trimmed === '') return false;
   return trimmed.split('||').every((disjunct) => {
-    const comparators = disjunct.trim().split(/\s+/).filter((c) => c.length > 0);
+    const comparators = disjunct
+      .trim()
+      .split(/\s+/)
+      .filter((c) => c.length > 0);
     return comparators.length > 0 && comparators.every((c) => SEMVER_COMPARATOR.test(c));
   });
 }
@@ -163,10 +166,7 @@ describe('release-pack residue: representative set stays meaningful', () => {
   it('the set collectively carries at least one workspace: source spec', () => {
     const specs = REPRESENTATIVE_DIRS.flatMap((dir) => {
       const manifest = SOURCE_BY_DIR.get(dir);
-      return [
-        ...Object.values(manifest?.dependencies ?? {}),
-        ...Object.values(manifest?.peerDependencies ?? {}),
-      ];
+      return [...Object.values(manifest?.dependencies ?? {}), ...Object.values(manifest?.peerDependencies ?? {})];
     });
     // Post-Wave-8 no real manifest carries a `catalog:` spec (effect was the only
     // catalog dep); the workspace: residue class is what real packing exercises.
@@ -177,31 +177,35 @@ describe('release-pack residue: representative set stays meaningful', () => {
 
 describe('packed release artifacts carry no workspace/catalog residue', () => {
   for (const dir of REPRESENTATIVE_DIRS) {
-    it(`packages/${dir}: packed manifest resolves every catalog:/workspace: spec`, async () => {
-      const source = SOURCE_BY_DIR.get(dir);
-      if (source === undefined) throw new Error(`no source manifest for packages/${dir}`);
+    it(
+      `packages/${dir}: packed manifest resolves every catalog:/workspace: spec`,
+      async () => {
+        const source = SOURCE_BY_DIR.get(dir);
+        if (source === undefined) throw new Error(`no source manifest for packages/${dir}`);
 
-      const workDir = mkdtempSync(join(tmpdir(), `liteship-pack-residue-${dir}-`));
-      try {
-        const tgzPath = await packInWorkspace(join(REPO_ROOT, 'packages', dir), workDir, {
-          ignoreScripts: true,
-        });
-        const packed = readPackedManifest(new Uint8Array(readFileSync(tgzPath)));
+        const workDir = mkdtempSync(join(tmpdir(), `liteship-pack-residue-${dir}-`));
+        try {
+          const tgzPath = await packInWorkspace(join(REPO_ROOT, 'packages', dir), workDir, {
+            ignoreScripts: true,
+          });
+          const packed = readPackedManifest(new Uint8Array(readFileSync(tgzPath)));
 
-        const violations = residueViolations({
-          packageName: source.name ?? dir,
-          source,
-          packed,
-          workspaceVersion: workspaceVersion(),
-          catalog: catalogEntry,
-        });
-        expect(violations).toEqual([]);
-      } finally {
-        rmSync(workDir, { recursive: true, force: true });
-      }
-      // pnpm pack spawns a subprocess (slow on Windows CI); the assertion is
-      // residue-freedom, not speed. Headroom over the 10s default.
-    }, scaledTimeout(30000));
+          const violations = residueViolations({
+            packageName: source.name ?? dir,
+            source,
+            packed,
+            workspaceVersion: workspaceVersion(),
+            catalog: catalogEntry,
+          });
+          expect(violations).toEqual([]);
+        } finally {
+          rmSync(workDir, { recursive: true, force: true });
+        }
+        // pnpm pack spawns a subprocess (slow on Windows CI); the assertion is
+        // residue-freedom, not speed. Headroom over the 10s default.
+      },
+      scaledTimeout(30000),
+    );
   }
 });
 

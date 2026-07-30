@@ -10,7 +10,11 @@ import { Cap, isWellFormedNode, type DocumentGraphNode, type NodeFamily } from '
 
 const ADDR = 'fnv1a:00000001' as const;
 const ADDR2 = 'fnv1a:00000002' as const;
-const META = { created: { wall_ms: 0, counter: 0, node_id: 't' }, updated: { wall_ms: 0, counter: 0, node_id: 't' }, version: 1 };
+const META = {
+  created: { wall_ms: 0, counter: 0, node_id: 't' },
+  updated: { wall_ms: 0, counter: 0, node_id: 't' },
+  version: 1,
+};
 const DIGEST = { display_id: ADDR, integrity_digest: 'sha256:abc', algo: 'sha256' as const };
 
 /** Derive families from the DocumentGraphNode union via the `family` discriminant. */

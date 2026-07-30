@@ -29,7 +29,11 @@ import type {
   CellMeta,
 } from '@liteship/core';
 import { loadGraphRuntime, type GraphRuntimeHandle } from '../../../packages/astro/src/runtime/graph-runtime.js';
-import { castGraphContext, admitGraphPatchProposal, adoptAppliedGraph } from '../../../packages/astro/src/runtime/graph-ai-apply.js';
+import {
+  castGraphContext,
+  admitGraphPatchProposal,
+  adoptAppliedGraph,
+} from '../../../packages/astro/src/runtime/graph-ai-apply.js';
 
 const ts = HLC.increment(HLC.create('test'), 1);
 const meta: CellMeta = { created: ts, updated: ts, version: 1 };

@@ -23,8 +23,20 @@ describe('compositor blob in a real browser Worker', () => {
       const ready = nextMessage<{ type: 'ready' }>(worker, 'ready');
       worker.postMessage({ type: 'init', config: { targetFps: 60 } });
       await ready;
-      worker.postMessage({ type: 'add-quantizer', name: 'a', boundaryId: 'fnv1a:a', states: ['lo', 'hi'], thresholds: [0, 500] });
-      worker.postMessage({ type: 'add-quantizer', name: 'b', boundaryId: 'fnv1a:b', states: ['off', 'on'], thresholds: [0, 500] });
+      worker.postMessage({
+        type: 'add-quantizer',
+        name: 'a',
+        boundaryId: 'fnv1a:a',
+        states: ['lo', 'hi'],
+        thresholds: [0, 500],
+      });
+      worker.postMessage({
+        type: 'add-quantizer',
+        name: 'b',
+        boundaryId: 'fnv1a:b',
+        states: ['off', 'on'],
+        thresholds: [0, 500],
+      });
       const initial = nextMessage<{ type: 'state'; state: { discrete: Record<string, string> } }>(worker, 'state');
       worker.postMessage({ type: 'compute' });
       expect((await initial).state.discrete).toEqual({ a: 'lo', b: 'off' });

@@ -47,33 +47,37 @@ function resolveSanctionedSites(): CapabilitySkipSite[] {
 }
 
 describe('capability-link oracle — the dataflow proof', () => {
-  it('every sanctioned skip links to its DECLARED capability (the real repo)', () => {
-    const sites = resolveSanctionedSites();
-    expect(
-      sites.every((s) => s.line > 0),
-      `unresolved lines: ${JSON.stringify(sites.filter((s) => s.line <= 0))}`,
-    ).toBe(true);
-    const facts = buildCapabilityLinkFacts({
-      repoRoot: REPO_ROOT,
-      capabilityModules: CAPABILITY_MODULES,
-      capabilityIds: CAPABILITY_IDS,
-      sites,
-    });
-    const unlinked = facts.results.filter((r) => !r.linked);
-    expect(
-      unlinked,
-      `unlinked sanctioned skips (guard does not derive from the declared capability's probe):\n${unlinked
-        .map(
-          (r) =>
-            `  ${r.file}:${r.line} [${r.declaredCapability}] guard="${r.guardText}" -> {${r.linkedCapabilities.join(',')}}`,
-        )
-        .join('\n')}`,
-    ).toEqual([]);
-    // The symbol table self-assembled from the canonical modules covers every declared capability.
-    expect(facts.definedCapabilities.sort()).toEqual([...CAPABILITY_IDS].sort());
-    // Real-repo dataflow proof: the program closure grows with the repo, so the budget is
-    // load-scaled like the sibling real-repo oracle (ir-parity-and-divergence).
-  }, scaledTimeout(60_000));
+  it(
+    'every sanctioned skip links to its DECLARED capability (the real repo)',
+    () => {
+      const sites = resolveSanctionedSites();
+      expect(
+        sites.every((s) => s.line > 0),
+        `unresolved lines: ${JSON.stringify(sites.filter((s) => s.line <= 0))}`,
+      ).toBe(true);
+      const facts = buildCapabilityLinkFacts({
+        repoRoot: REPO_ROOT,
+        capabilityModules: CAPABILITY_MODULES,
+        capabilityIds: CAPABILITY_IDS,
+        sites,
+      });
+      const unlinked = facts.results.filter((r) => !r.linked);
+      expect(
+        unlinked,
+        `unlinked sanctioned skips (guard does not derive from the declared capability's probe):\n${unlinked
+          .map(
+            (r) =>
+              `  ${r.file}:${r.line} [${r.declaredCapability}] guard="${r.guardText}" -> {${r.linkedCapabilities.join(',')}}`,
+          )
+          .join('\n')}`,
+      ).toEqual([]);
+      // The symbol table self-assembled from the canonical modules covers every declared capability.
+      expect(facts.definedCapabilities.sort()).toEqual([...CAPABILITY_IDS].sort());
+      // Real-repo dataflow proof: the program closure grows with the repo, so the budget is
+      // load-scaled like the sibling real-repo oracle (ir-parity-and-divergence).
+    },
+    scaledTimeout(60_000),
+  );
 
   it('an UNRELATED runtime guard (if(Math.random())) claiming a capability links to NOTHING (caught)', () => {
     const dir = mkdtempSync(join(tmpdir(), 'caplink-adv-'));
@@ -96,22 +100,26 @@ describe('capability-link oracle — the dataflow proof', () => {
     }
   });
 
-  it('a MISLABELED skip (a genuine ffmpeg guard declared wasm-absent) is caught', () => {
-    // Take a real ffmpeg-gated site but DECLARE it wasm-absent: the guard derives from ffmpeg-absent's
-    // probe, not wasm-absent's, so it links to the wrong capability — `linked: false`.
-    const sites = resolveSanctionedSites().filter((s) => s.declaredCapability === 'ffmpeg-absent' && s.line > 0);
-    expect(sites.length).toBeGreaterThan(0);
-    const mislabeled = { ...sites[0]!, declaredCapability: 'wasm-absent' };
-    const facts = buildCapabilityLinkFacts({
-      repoRoot: REPO_ROOT,
-      capabilityModules: CAPABILITY_MODULES,
-      capabilityIds: CAPABILITY_IDS,
-      sites: [mislabeled],
-    });
-    expect(facts.results[0]?.linked).toBe(false);
-    expect(facts.results[0]?.linkedCapabilities).toEqual(['ffmpeg-absent']);
-    // Same real-repo-sized program as the suite above — same load-scaled budget.
-  }, scaledTimeout(60_000));
+  it(
+    'a MISLABELED skip (a genuine ffmpeg guard declared wasm-absent) is caught',
+    () => {
+      // Take a real ffmpeg-gated site but DECLARE it wasm-absent: the guard derives from ffmpeg-absent's
+      // probe, not wasm-absent's, so it links to the wrong capability — `linked: false`.
+      const sites = resolveSanctionedSites().filter((s) => s.declaredCapability === 'ffmpeg-absent' && s.line > 0);
+      expect(sites.length).toBeGreaterThan(0);
+      const mislabeled = { ...sites[0]!, declaredCapability: 'wasm-absent' };
+      const facts = buildCapabilityLinkFacts({
+        repoRoot: REPO_ROOT,
+        capabilityModules: CAPABILITY_MODULES,
+        capabilityIds: CAPABILITY_IDS,
+        sites: [mislabeled],
+      });
+      expect(facts.results[0]?.linked).toBe(false);
+      expect(facts.results[0]?.linkedCapabilities).toEqual(['ffmpeg-absent']);
+      // Same real-repo-sized program as the suite above — same load-scaled budget.
+    },
+    scaledTimeout(60_000),
+  );
 });
 
 describe('capability-link oracle — codex round-9: proves GATED-BY, not MENTIONS', () => {

@@ -10,13 +10,7 @@
 // PROVES: INV-CONTENT-ADDRESS-DETERMINISTIC
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import {
-  CanonicalCbor,
-  decode,
-  fnv1a,
-  fnv1aBytes,
-  isCanonicalCborValue,
-} from '@liteship/canonical';
+import { CanonicalCbor, decode, fnv1a, fnv1aBytes, isCanonicalCborValue } from '@liteship/canonical';
 
 const SEED = 0x43424f52;
 
@@ -75,9 +69,7 @@ describe('canonical portable-value properties', () => {
           if (highMantissa === 0 && lowMantissa === 0) return;
           const value = nanFromPayload(sign, highMantissa, lowMantissa);
           expect(Number.isNaN(value)).toBe(true);
-          expect(CanonicalCbor.encode(value)).toEqual(
-            new Uint8Array([0xfb, 0x7f, 0xf8, 0, 0, 0, 0, 0, 0]),
-          );
+          expect(CanonicalCbor.encode(value)).toEqual(new Uint8Array([0xfb, 0x7f, 0xf8, 0, 0, 0, 0, 0, 0]));
         },
       ),
       { seed: SEED ^ 0x4e414e, numRuns: 300 },

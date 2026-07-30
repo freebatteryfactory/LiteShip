@@ -35,9 +35,18 @@ function acmeRepo(): string {
   fixtures.push(root);
   const files: Record<string, string> = {
     'package.json': JSON.stringify({ name: 'acme-root', private: true, type: 'module' }),
-    'packages/core/package.json': JSON.stringify({ name: '@acme/core', version: '0.0.0', exports: { '.': { development: './src/index.ts' } } }),
+    'packages/core/package.json': JSON.stringify({
+      name: '@acme/core',
+      version: '0.0.0',
+      exports: { '.': { development: './src/index.ts' } },
+    }),
     'packages/core/src/index.ts': 'export const coreThing = 1;\n',
-    'packages/app/package.json': JSON.stringify({ name: '@acme/app', version: '0.0.0', dependencies: { '@acme/core': 'workspace:*' }, exports: { '.': { development: './src/index.ts' } } }),
+    'packages/app/package.json': JSON.stringify({
+      name: '@acme/app',
+      version: '0.0.0',
+      dependencies: { '@acme/core': 'workspace:*' },
+      exports: { '.': { development: './src/index.ts' } },
+    }),
     'packages/app/src/index.ts': "import { coreThing } from '@acme/core';\nexport const appThing = coreThing + 1;\n",
   };
   for (const [rel, content] of Object.entries(files)) {
@@ -57,7 +66,13 @@ function acmeProfile(root: string): DevopsProfile {
       '@acme/core': { allowedInternalImports: [], kind: 'core' },
     },
     dynamicImportExemptions: new Set<string>(),
-    surfacePolicy: { astroPackage: '', astroClientDirectives: [], astroRuntimeFiles: [], viteVirtualModules: [], knownCapabilityNotes: [] },
+    surfacePolicy: {
+      astroPackage: '',
+      astroClientDirectives: [],
+      astroRuntimeFiles: [],
+      viteVirtualModules: [],
+      knownCapabilityNotes: [],
+    },
   };
 }
 

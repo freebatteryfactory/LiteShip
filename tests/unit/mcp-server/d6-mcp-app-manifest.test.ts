@@ -45,7 +45,9 @@ describe('D6 — manifest is reachable as a resource', () => {
   });
 
   it('resources/read returns the manifest JSON, deterministically', async () => {
-    const a = await result<{ contents: Array<{ uri: string; mimeType: string; text: string }> }>('resources/read', { uri: MANIFEST_URI });
+    const a = await result<{ contents: Array<{ uri: string; mimeType: string; text: string }> }>('resources/read', {
+      uri: MANIFEST_URI,
+    });
     const b = await result<{ contents: Array<{ text: string }> }>('resources/read', { uri: MANIFEST_URI });
     expect(a.contents[0]!.mimeType).toBe('application/json');
     expect(a.contents[0]!.text).toBe(b.contents[0]!.text); // deterministic

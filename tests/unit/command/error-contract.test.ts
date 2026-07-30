@@ -67,14 +67,20 @@ describe('ONE capsule-manifest wording across capsule/asset/scene', () => {
   const MISSING_CONTEXT = { manifestSource: () => null, manifestPath: () => '/repo/reports/capsule-manifest.json' };
 
   it('missing manifest: identical teaching error from every manifest-tier command', async () => {
-    const inspect = await capsuleInspectCommand.handler({ name: 'capsule.inspect', args: { id: 'x' } }, MISSING_CONTEXT);
+    const inspect = await capsuleInspectCommand.handler(
+      { name: 'capsule.inspect', args: { id: 'x' } },
+      MISSING_CONTEXT,
+    );
     const list = await capsuleListCommand.handler({ name: 'capsule.list', args: {} }, MISSING_CONTEXT);
     const verify = await capsuleVerifyCommand.handler({ name: 'capsule.verify', args: { id: 'x' } }, MISSING_CONTEXT);
     const analyze = await assetAnalyzeCommand.handler(
       { name: 'asset.analyze', args: { asset: 'x', projection: 'beat' } },
       MISSING_CONTEXT,
     );
-    const assetVerify = await assetVerifyCommand.handler({ name: 'asset.verify', args: { asset: 'x' } }, MISSING_CONTEXT);
+    const assetVerify = await assetVerifyCommand.handler(
+      { name: 'asset.verify', args: { asset: 'x' } },
+      MISSING_CONTEXT,
+    );
     const sceneVerify = await sceneVerifyCommand.handler(
       { name: 'scene.verify', args: { scene: 's.ts' } },
       {
@@ -155,7 +161,9 @@ describe('registry duplicate-name invariant points at the catalog lists', () => 
     const command = {
       descriptor: { name: 'dup', summary: 'dup', inputSchema: { type: 'object' as const, properties: {} } },
     };
-    expect(() => createCommandRegistry([command, command])).toThrow(/HANDLER_COMMANDS \/ CLI_OWNED_DESCRIPTORS in catalog\.ts/);
+    expect(() => createCommandRegistry([command, command])).toThrow(
+      /HANDLER_COMMANDS \/ CLI_OWNED_DESCRIPTORS in catalog\.ts/,
+    );
   });
 });
 

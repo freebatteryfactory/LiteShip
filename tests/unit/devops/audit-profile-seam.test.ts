@@ -55,7 +55,13 @@ function acmeProfile(root: string): DevopsProfile {
       '@acme/core': { allowedInternalImports: [], kind: 'core' },
     },
     dynamicImportExemptions: new Set<string>(),
-    surfacePolicy: { astroPackage: '', astroClientDirectives: [], astroRuntimeFiles: [], viteVirtualModules: [], knownCapabilityNotes: [] },
+    surfacePolicy: {
+      astroPackage: '',
+      astroClientDirectives: [],
+      astroRuntimeFiles: [],
+      viteVirtualModules: [],
+      knownCapabilityNotes: [],
+    },
   };
 }
 
@@ -135,7 +141,10 @@ describe('D9a — profile.repoRoot is the authoritative audit target', () => {
 
 describe('D9a — the whole bundle decouples (all three passes follow the profile)', () => {
   it('buildCodebaseAuditReport on an @acme/ repo carries no @liteship/ host-surface error and roots at the profile', () => {
-    const report = buildCodebaseAuditReport({ profile: acmeProfile(acmeRepo()), generatedAt: '2026-05-26T00:00:00.000Z' });
+    const report = buildCodebaseAuditReport({
+      profile: acmeProfile(acmeRepo()),
+      generatedAt: '2026-05-26T00:00:00.000Z',
+    });
     expect(report.surface.findings.filter((f) => f.rule === 'host-surface')).toHaveLength(0);
     expect(report.structure.summary.packageEdges).toContainEqual({ from: '@acme/app', to: '@acme/core', count: 1 });
     expect(report.root).toBe('.');
@@ -172,29 +181,33 @@ describe('D9a — default-profile engine floor is unchanged (no drift)', () => {
   // The artifact-INDEPENDENT engine floor: the three audit passes on the real
   // repo with the default profile. (The full `pnpm run audit` gate adds
   // artifact-dependent supporting findings on top — those are gated elsewhere.)
-  it('the real repo holds 0 errors / 0 warnings across structure+integrity+surface', () => {
-    const all = [
-      ...runStructureAudit(liteshipDevopsProfile).findings,
-      ...runIntegrityAudit(liteshipDevopsProfile).findings,
-      ...runSurfaceAudit(liteshipDevopsProfile).findings,
-    ];
-    const bySeverity = (s: string) => all.filter((f) => f.severity === s).length;
-    const inventory = collectWarningInventory();
-    const delta = diffInventories(AUDIT_WARNING_FLOOR, inventory);
-    // Hard floor — D9a must not move these.
-    const blocking = all.filter((finding) => finding.severity !== 'info');
-    const diagnostic = blocking
-      .slice(0, 50)
-      .map((finding) => `${finding.rule} ${finding.location?.file ?? '(no file)'}: ${finding.summary}`)
-      .join('\n');
-    expect(bySeverity('error'), diagnostic).toBe(0);
-    expect(bySeverity('warning'), diagnostic).toBe(0);
-    expect(inventory).toEqual(AUDIT_WARNING_FLOOR);
-    expect(delta.added, `added warnings: ${delta.added.join(', ')}`).toEqual([]);
-    expect(delta.removed, `removed warnings: ${delta.removed.join(', ')}`).toEqual([]);
-    // info is tracked-file-count sensitive — loose by design (Decision 5).
-    expect(bySeverity('info')).toBeGreaterThanOrEqual(1);
-  }, scaledTimeout(60_000));
+  it(
+    'the real repo holds 0 errors / 0 warnings across structure+integrity+surface',
+    () => {
+      const all = [
+        ...runStructureAudit(liteshipDevopsProfile).findings,
+        ...runIntegrityAudit(liteshipDevopsProfile).findings,
+        ...runSurfaceAudit(liteshipDevopsProfile).findings,
+      ];
+      const bySeverity = (s: string) => all.filter((f) => f.severity === s).length;
+      const inventory = collectWarningInventory();
+      const delta = diffInventories(AUDIT_WARNING_FLOOR, inventory);
+      // Hard floor — D9a must not move these.
+      const blocking = all.filter((finding) => finding.severity !== 'info');
+      const diagnostic = blocking
+        .slice(0, 50)
+        .map((finding) => `${finding.rule} ${finding.location?.file ?? '(no file)'}: ${finding.summary}`)
+        .join('\n');
+      expect(bySeverity('error'), diagnostic).toBe(0);
+      expect(bySeverity('warning'), diagnostic).toBe(0);
+      expect(inventory).toEqual(AUDIT_WARNING_FLOOR);
+      expect(delta.added, `added warnings: ${delta.added.join(', ')}`).toEqual([]);
+      expect(delta.removed, `removed warnings: ${delta.removed.join(', ')}`).toEqual([]);
+      // info is tracked-file-count sensitive — loose by design (Decision 5).
+      expect(bySeverity('info')).toBeGreaterThanOrEqual(1);
+    },
+    scaledTimeout(60_000),
+  );
   // (Default-profile == implicit-default reproduction is structurally guaranteed —
   // the default param IS liteshipDevopsProfile — and the structure pass is already
   // pinned in tests/unit/devops/profile.test.ts. The 0/6 floor above is the live
@@ -202,9 +215,7 @@ describe('D9a — default-profile engine floor is unchanged (no drift)', () => {
 });
 
 describe('fallback-laundering — the error-binding rule (advisory cleanup wave)', () => {
-  const HELPERS =
-    'function emit(msg: string): void { void msg; }\n' +
-    'function compute(): number { return 2; }\n';
+  const HELPERS = 'function emit(msg: string): void { void msg; }\n' + 'function compute(): number { return 2; }\n';
 
   const fixtureWith = (body: string): string =>
     makeFixture({
@@ -285,7 +296,7 @@ describe('fallback-laundering — the error-binding rule (advisory cleanup wave)
 
   it('a catch that rethrows keeps its existing exemption', () => {
     const root = fixtureWith(
-      'export function rethrows(): number | null { try { return compute(); } catch { if (compute() > 1) { throw new Error(\'up\'); } return null; } }\n',
+      "export function rethrows(): number | null { try { return compute(); } catch { if (compute() > 1) { throw new Error('up'); } return null; } }\n",
     );
     expect(launderingIn(root)).toHaveLength(0);
   });

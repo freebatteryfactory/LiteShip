@@ -57,13 +57,11 @@ describe('coverage config drift guard', () => {
 
   it('merge-coverage.ts PACKAGE_THRESHOLD_OVERRIDES are pinned', () => {
     const src = readFileSync(resolve(REPO_ROOT, 'scripts', 'merge-coverage.ts'), 'utf8');
-    const block = src.match(
-      /const PACKAGE_THRESHOLD_OVERRIDES[\s\S]*?\};/,
-    )?.[0];
+    const block = src.match(/const PACKAGE_THRESHOLD_OVERRIDES[\s\S]*?\};/)?.[0];
     expect(block).toBeDefined();
-    expect(block).toContain("core: {");
-    expect(block).toContain("functions: 97");
-    expect(block).toContain("web: {");
+    expect(block).toContain('core: {');
+    expect(block).toContain('functions: 97');
+    expect(block).toContain('web: {');
     // Ensure both core and web functions: 97 overrides are present.
     const ninetySevenCount = (block!.match(/functions: 97/g) ?? []).length;
     expect(ninetySevenCount).toBe(2);
@@ -73,7 +71,7 @@ describe('coverage config drift guard', () => {
     // below asserts cli no longer appears in the override block —
     // future regressions surface in this drift guard before they
     // ship instead of being silently masked.
-    expect(block).not.toContain("cli: {");
+    expect(block).not.toContain('cli: {');
   });
 
   it('merge-coverage.ts TOTAL_THRESHOLDS are pinned', () => {

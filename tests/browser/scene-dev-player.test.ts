@@ -63,7 +63,7 @@ describe('scene-dev player UI', () => {
       //    fires on first execution because Vitest's v8 source-maps the URL
       //    back to `packages/scene/src/dev/player.ts`.
       const playerSpec = '../../packages/scene/src/dev/player.ts';
-      await (new Function('s', 'return import(s)'))(playerSpec) as Promise<unknown>;
+      (await new Function('s', 'return import(s)')(playerSpec)) as Promise<unknown>;
 
       // player.ts attaches listeners then sets the ready flag at module top level.
       const readyDeadline = Date.now() + 3000;
@@ -85,7 +85,7 @@ describe('scene-dev player UI', () => {
       };
       const waitForFrame = async (target: string, timeoutMs = 1000): Promise<void> => {
         const deadline = Date.now() + timeoutMs;
-         
+
         while (true) {
           if (frameLabel.textContent === target) return;
           if (Date.now() > deadline) {

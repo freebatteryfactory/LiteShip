@@ -74,9 +74,15 @@ describe('detectSkips — every Vitest skip/disable form is caught (codex round-
     ['const a = it; const b = a; b.skip("x", () => {});', 'transitive rebind on ONE line; b.skip'],
     ['import { test as t2 } from "vitest"; t2.todo("later");', 'import-rename `test as t2`; t2.todo'],
     ['const { todo: gone } = test; gone("x");', 'destructured-and-renamed `{ todo: gone } = test`; gone(...)'],
-    ['const t = cond ? it : myObj; t("x", () => {});', 'SUSPICIOUS rebind to a ternary mentioning a runner — flagged, not passed'],
+    [
+      'const t = cond ? it : myObj; t("x", () => {});',
+      'SUSPICIOUS rebind to a ternary mentioning a runner — flagged, not passed',
+    ],
     // The codex round-5 MULTI-LINE misses (the alias pre-pass was per physical line):
-    ['import {\n  it as spec\n} from "vitest";\nspec.skip("x", () => {});', 'MULTI-LINE import-rename `{\\n it as spec \\n}`; spec.skip'],
+    [
+      'import {\n  it as spec\n} from "vitest";\nspec.skip("x", () => {});',
+      'MULTI-LINE import-rename `{\\n it as spec \\n}`; spec.skip',
+    ],
     ['import * as v from "vitest";\nv.it.skip("x", () => {});', 'NAMESPACE import `import * as v`; v.it.skip'],
     ['import * as v from "vitest";\nv.describe.skip("x", () => {});', 'NAMESPACE import; v.describe.skip'],
     ['const t: typeof it = it;\nt.skip("x", () => {});', 'TYPED rebind `const t: typeof it = it`; t.skip'],
@@ -153,25 +159,52 @@ describe('detectSkips — NO false positives (prose/strings/non-runner chains st
     ['it.only("focused, not skipped", () => {});', 'it.only (focus, not skip)'],
     ['it.each([1, 2])("runs every row", () => {});', 'it.each() with no skip'],
     ['it.concurrent("parallel, not skipped", () => {});', 'it.concurrent with no skip'],
-    ["const s = 'a prose mention of it.skip and it[\"skip\"]';", 'skip mention inside a STRING'],
+    ['const s = \'a prose mention of it.skip and it["skip"]\';', 'skip mention inside a STRING'],
     ['// a comment about it.skip / it.concurrent.skip / it["skip"]', 'skip mention inside a COMMENT'],
     ['myObj.skip("not a runner", () => {});', 'a NON-runner .skip'],
     ['result.todo();', 'a NON-runner .todo'],
     ['foo.it.skip("it is a property here", () => {});', 'obj.it.skip — `it` is a member, not the root'],
     ['queue.fit("not focus", () => {});', 'array.fit — `fit` is a member, not the root'],
     // The codex round-4 ALIAS false-positive guards — a rebind/destructure off a NON-runner must stay clean:
-    ['const t = myObj; t.skip("not a runner", () => {});', 'rebind off a NON-runner `const t = myObj`; t.skip — not a runner alias'],
-    ['const { skip } = config; skip("not a runner", () => {});', 'destructure off a NON-runner `const { skip } = config`; skip(...)'],
+    [
+      'const t = myObj; t.skip("not a runner", () => {});',
+      'rebind off a NON-runner `const t = myObj`; t.skip — not a runner alias',
+    ],
+    [
+      'const { skip } = config; skip("not a runner", () => {});',
+      'destructure off a NON-runner `const { skip } = config`; skip(...)',
+    ],
     ['const log = it.toString; log();', 'capture of a NON-skip member `const log = it.toString`; log() — not a skip'],
-    ['import { it as spec } from "vitest"; spec("a real test", () => {});', 'import-rename then a REAL run `spec(...)` — no skip member'],
+    [
+      'import { it as spec } from "vitest"; spec("a real test", () => {});',
+      'import-rename then a REAL run `spec(...)` — no skip member',
+    ],
     ['const t = it; t("a real test", () => {});', 'local rebind then a REAL run `t(...)` — no skip member'],
-    ['const { each } = it; each([1])("runs", () => {});', 'destructure of a NON-skip member `const { each } = it`; each(...)'],
+    [
+      'const { each } = it; each([1])("runs", () => {});',
+      'destructure of a NON-skip member `const { each } = it`; each(...)',
+    ],
     // The codex round-5 MULTI-LINE false-positive guards — the statement-aware scan must not over-fire:
-    ['const t: typeof myObj = myObj;\nt.skip("not a runner", () => {});', 'TYPED rebind off a NON-runner `const t: typeof myObj = myObj`; t.skip'],
-    ['import * as v from "vitest";\nv.it("a real test", () => {});', 'NAMESPACE import then a REAL run `v.it(...)` — no skip member'],
-    ['const v = makeThing();\nv.it.skip("not a runner", () => {});', 'a NON-namespace `v` (call-result) — `v.it.skip` is not a runner namespace'],
-    ['const {\n  each\n} = it;\neach([1])("runs", () => {});', 'MULTI-LINE destructure of a NON-skip member `{\\n each \\n} = it`; each(...)'],
-    ['const {\n  skip\n} = config;\nskip();', 'MULTI-LINE destructure off a NON-runner `{\\n skip \\n} = config`; skip()'],
+    [
+      'const t: typeof myObj = myObj;\nt.skip("not a runner", () => {});',
+      'TYPED rebind off a NON-runner `const t: typeof myObj = myObj`; t.skip',
+    ],
+    [
+      'import * as v from "vitest";\nv.it("a real test", () => {});',
+      'NAMESPACE import then a REAL run `v.it(...)` — no skip member',
+    ],
+    [
+      'const v = makeThing();\nv.it.skip("not a runner", () => {});',
+      'a NON-namespace `v` (call-result) — `v.it.skip` is not a runner namespace',
+    ],
+    [
+      'const {\n  each\n} = it;\neach([1])("runs", () => {});',
+      'MULTI-LINE destructure of a NON-skip member `{\\n each \\n} = it`; each(...)',
+    ],
+    [
+      'const {\n  skip\n} = config;\nskip();',
+      'MULTI-LINE destructure off a NON-runner `{\\n skip \\n} = config`; skip()',
+    ],
     ['let t: typeof it;\nt = something;', 'an UNINITIALIZED typed declaration `let t: typeof it;` — no `= it` rebind'],
   ];
 
