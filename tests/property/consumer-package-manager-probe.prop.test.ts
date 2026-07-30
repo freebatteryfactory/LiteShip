@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import fc from 'fast-check';
 import { probeProjectPackageManager } from '../../packages/cli/src/commands/doctor/probes-workspace.js';
+import { DOCTOR_PROBE_TIMEOUT_MS } from '../../packages/cli/src/commands/doctor/probe-support.js';
 
 const roots: string[] = [];
 
@@ -56,7 +57,8 @@ describe('consumer package-manager probe properties', () => {
           detail: version,
         });
         expect(spawn).toHaveBeenCalledOnce();
-        expect(spawn).toHaveBeenCalledWith(manager, ['--version'], { timeoutMs: 4_000 });
+        // The exported budget constant, never a raw literal (stale-literal scar).
+        expect(spawn).toHaveBeenCalledWith(manager, ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS });
       }),
       { seed: 0x504d_0001, numRuns: 80 },
     );

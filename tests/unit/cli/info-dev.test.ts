@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { createInfoCommand, info } from '../../../packages/cli/src/commands/info.js';
 import { createDevCommand, dev } from '../../../packages/cli/src/commands/dev.js';
 import { detectHost } from '../../../packages/cli/src/internal/host-detect.js';
+import { DOCTOR_PROBE_TIMEOUT_MS } from '../../../packages/cli/src/commands/doctor/probe-support.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '../../..');
@@ -102,7 +103,10 @@ describe('liteship info', () => {
       expect(receipt.doctor.checks).not.toEqual(
         expect.arrayContaining([expect.objectContaining({ id: 'pnpm.version' })]),
       );
-      expect(spawn).toHaveBeenCalledWith('npm', ['--version'], { timeoutMs: 4_000 });
+      // The budget is the exported constant, never a raw literal — a future
+      // twice-measured raise must not re-red this assertion (PR #192 aftermath:
+      // the 4_000 literal went stale when the budget was raised to 20_000).
+      expect(spawn).toHaveBeenCalledWith('npm', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS });
     } finally {
       rmSync(app, { recursive: true, force: true });
     }
@@ -140,7 +144,7 @@ describe('liteship info', () => {
         expect.objectContaining({ id: 'workspace.installed', status: 'ok' }),
       ]),
     );
-    expect(spawn).toHaveBeenCalledWith('pnpm', ['--version'], { timeoutMs: 4_000 });
+    expect(spawn).toHaveBeenCalledWith('pnpm', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS });
   });
 
   it.each([

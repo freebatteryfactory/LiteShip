@@ -415,6 +415,12 @@ export const SANCTIONED_SKIPS: readonly SanctionedSkip[] = [
     why: 'the mutation-cache EACCES sound-MISS arm needs a non-root process so chmod 0o000 is enforceable.',
   },
   {
+    file: 'tests/unit/cli/lib/mutation-runner.test.ts',
+    site: 'it.skipIf(runningAsRoot)(',
+    capability: 'eacces-untestable-as-root',
+    why: 'the chmod-0o444 restore-failure proof needs a non-root process (root ignores file modes); the fs-mock write-denial law in mutation-runner-restore-verify.test.ts proves the same campaignFatal contract under root.',
+  },
+  {
     file: 'tests/unit/vite/boundary-manifest.test.ts',
     site: "test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives the right entries', async () => {",
     capability: 'symlink-unprivileged',
