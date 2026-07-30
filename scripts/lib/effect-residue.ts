@@ -115,6 +115,13 @@ export function classifyEffectResidueManifest(manifest: Record<string, unknown>)
  * flat): inside the `catalog:` / `catalogs:` / `overrides:` sections, every
  * `key: value` pair gets the same key + npm-alias-value rules the manifest
  * classifier applies.
+ *
+ * THE CLASS RULE (PR #191 review, rounds 4+5): YAML is an open grammar, so this
+ * scanner cannot enumerate every spelling — instead it FAILS CLOSED on its own
+ * incompleteness. Any construct in (or heading) a scanned section that it
+ * cannot positively classify as a plain block-style scalar — an alias `*ref`,
+ * a flow collection `{...}`/`[...]`, an inline value on a section header — is
+ * a finding, never a silently-skipped false green.
  */
 export function classifyEffectResidueWorkspaceYaml(yamlText: string): readonly string[] {
   const details: string[] = [];
@@ -124,8 +131,28 @@ export function classifyEffectResidueWorkspaceYaml(yamlText: string): readonly s
     const line = raw.split('#')[0]!;
     if (line.trim().length === 0) continue;
     if (/^\S/.test(line)) {
-      const name = line.trim().replace(/:\s*$/, '');
-      section = name === 'catalog' || name === 'catalogs' || name === 'overrides' ? name : null;
+      // THE CLASS RULE (PR #191 review, round 5): a line-based scanner over an
+      // open grammar can never enumerate every evasive spelling — flow-style
+      // `catalog: { fx: npm:effect@^3 }` defeated the block-style headers
+      // exactly as anchors defeated the value match a round earlier. So the
+      // scanner FAILS CLOSED on its own incompleteness: a recognized section
+      // key carrying ANY inline remainder is a finding (use block style),
+      // never a silently-skipped construct.
+      const header = line.trim().match(/^(\S+?)\s*:\s*(.*)$/);
+      const name = header?.[1] ?? line.trim();
+      const remainder = (header?.[2] ?? '').trim();
+      if (name === 'catalog' || name === 'catalogs' || name === 'overrides') {
+        if (remainder.length > 0) {
+          details.push(
+            `${name} -> ${remainder} (inline value on a section header — unparseable by the line scanner, fail-closed)`,
+          );
+          section = null;
+        } else {
+          section = name;
+        }
+      } else {
+        section = null;
+      }
       continue;
     }
     if (section === null) continue;
@@ -145,6 +172,12 @@ export function classifyEffectResidueWorkspaceYaml(yamlText: string): readonly s
     // A `*ref` alias value is an indirection this line-based parse cannot
     // resolve (the anchor may live in an unscanned section) — fail closed.
     else if (value.startsWith('*')) details.push(`${section}.${key} -> ${value} (unresolved YAML alias — fail-closed)`);
+    // A flow collection (`{...}` / `[...]`) nests structure this scanner does
+    // not parse — same class rule: incompleteness is a finding, never a false
+    // green.
+    else if (value.startsWith('{') || value.startsWith('[')) {
+      details.push(`${section}.${key} -> ${value} (flow collection — unparseable by the line scanner, fail-closed)`);
+    }
   }
   return details;
 }
