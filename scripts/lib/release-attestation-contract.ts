@@ -143,7 +143,7 @@ export function releaseAttestationFindings(workflow: string): readonly ReleaseAt
   );
   for (const fragment of [
     '.verdict == "accepted"',
-    '.verifier == "delivery-evidence/standalone-v2"',
+    '.verifier == "delivery-evidence/standalone-v3"',
     '.manifestId == $manifest',
     '.headSha == $head',
     '.github.repository == $repository',

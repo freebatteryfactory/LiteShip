@@ -24,7 +24,7 @@ export interface ChangeIntentEvidenceReference {
   readonly kind: 'change-intent';
   readonly path: 'reports/change-intent.json';
   readonly digest: Sha256Digest;
-  readonly verifier: 'delivery-evidence/change-intent-v1';
+  readonly verifier: 'delivery-evidence/change-intent-v2';
 }
 
 export interface CiAuthorityEvidenceReference {
@@ -249,7 +249,7 @@ export function parseDeliveryEvidenceManifest(raw: string | Uint8Array): Deliver
   parseSupporting(value['intent'], 'intent', {
     kind: 'change-intent',
     path: 'reports/change-intent.json',
-    verifier: 'delivery-evidence/change-intent-v1',
+    verifier: 'delivery-evidence/change-intent-v2',
   });
   parseSupporting(value['authority'], 'authority', {
     kind: 'ci-authority',

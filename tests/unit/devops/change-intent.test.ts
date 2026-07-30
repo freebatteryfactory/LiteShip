@@ -3,7 +3,7 @@ import { admitChangeIntent, buildChangeIntent, parseChangeIntent } from '../../.
 
 function validInput(visibility: 'internal' | 'public' | 'trust-boundary' = 'public'): Record<string, unknown> {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sponsor: {
       value: { login: 'heyoub', ownership: 'repository-owner' },
       provenance: 'github-verified',
@@ -42,6 +42,18 @@ function validInput(visibility: 'internal' | 'public' | 'trust-boundary' = 'publ
         nodeId: 'R_kgDOExample',
       },
       provenance: 'github-verified',
+    },
+    execution: {
+      value: {
+        executionId: 'session-fd5a8c98',
+        model: { provider: 'anthropic', id: 'claude-fable-5' },
+        toolScopes: ['network', 'read', 'write'],
+        budgets: { wallClockMs: null, tokens: 500000 },
+        digests: { prompt: null, context: `sha256:${'c'.repeat(64)}`, toolPolicy: null },
+        actionTrace: null,
+        autonomy: 'execute',
+      },
+      provenance: 'agent-self-declared',
     },
   };
 }
@@ -140,6 +152,96 @@ describe('internal ChangeIntent', () => {
     const admission = admitChangeIntent(buildChangeIntent(input));
     expect(admission.accepted).toBe(false);
     expect(admission.reasons).toContain('missing-sponsor-ownership');
+  });
+
+  it('refuses an AGENT actor without declared execution identity (issue #163 fail-closed)', () => {
+    const input = validInput('internal');
+    (input['execution'] as { value: unknown }).value = null;
+    const admission = admitChangeIntent(buildChangeIntent(input));
+    expect(admission.accepted).toBe(false);
+    expect(admission.reasons).toContain('agent-execution-not-declared');
+  });
+
+  it('an explicit-null execution is admissible for humans and HOST-DERIVED automation only', () => {
+    // human (any provenance): a human run has no machine execution to attribute.
+    const human = validInput('internal');
+    (human['actorClass'] as { value: string }).value = 'human';
+    (human['execution'] as { value: unknown }).value = null;
+    expect(admitChangeIntent(buildChangeIntent(human)).accepted).toBe(true);
+    // github-verified automation: the host itself derived the classification
+    // (the push/tag fail-broad fallback) — null execution is the honest state.
+    const derived = validInput('internal');
+    (derived['actorClass'] as { value: string; provenance: string }).value = 'automation';
+    (derived['actorClass'] as { value: string; provenance: string }).provenance = 'github-verified';
+    (derived['execution'] as { value: unknown }).value = null;
+    expect(admitChangeIntent(buildChangeIntent(derived)).accepted).toBe(true);
+  });
+
+  it('a SELF-DECLARED automation actor without execution is refused (PR #190 review — no attribution dodge)', () => {
+    // The bypass class: an agent-authored PR declares actorClass 'automation'
+    // with execution null and escapes the agent attribution requirement. A
+    // self-declared non-human always requires a declared execution identity.
+    const input = validInput('internal');
+    (input['actorClass'] as { value: string }).value = 'automation';
+    (input['execution'] as { value: unknown }).value = null;
+    const admission = admitChangeIntent(buildChangeIntent(input));
+    expect(admission.accepted).toBe(false);
+    expect(admission.reasons).toContain('agent-execution-not-declared');
+  });
+
+  it('refuses a non-human execution claiming the human-owned autonomy tiers (no self-approval)', () => {
+    for (const actorClass of ['agent', 'automation'] as const) {
+      for (const autonomy of ['approve', 'release'] as const) {
+        const input = validInput('internal');
+        (input['actorClass'] as { value: string }).value = actorClass;
+        (input['execution'] as { value: { autonomy: string } }).value.autonomy = autonomy;
+        const admission = admitChangeIntent(buildChangeIntent(input));
+        expect(admission.accepted, `${actorClass}+${autonomy} must refuse`).toBe(false);
+        expect(admission.reasons).toContain('execution-self-approval-refused');
+      }
+    }
+  });
+
+  it('a VERIFIED human actor may hold approve/release autonomy (human ownership retains the gavel)', () => {
+    const input = validInput('internal');
+    (input['actorClass'] as { value: string; provenance: string }).value = 'human';
+    (input['actorClass'] as { value: string; provenance: string }).provenance = 'github-verified';
+    (input['execution'] as { value: { autonomy: string } }).value.autonomy = 'approve';
+    expect(admitChangeIntent(buildChangeIntent(input)).accepted).toBe(true);
+  });
+
+  it('a SELF-DECLARED human claiming approve/release is refused (PR #190 review — no species self-attestation)', () => {
+    // The bypass class: the GitHub adapter verifies sponsor login + permission
+    // but stamps actorClass 'agent-self-declared' — so an agent could declare
+    // actorClass 'human' and hold the human-owned tiers. The classification
+    // must be host-verified before it unlocks approve/release.
+    for (const autonomy of ['approve', 'release'] as const) {
+      const input = validInput('internal');
+      (input['actorClass'] as { value: string }).value = 'human';
+      (input['execution'] as { value: { autonomy: string } }).value.autonomy = autonomy;
+      const admission = admitChangeIntent(buildChangeIntent(input));
+      expect(admission.accepted, `self-declared human + ${autonomy} must refuse`).toBe(false);
+      expect(admission.reasons).toContain('privileged-autonomy-actor-not-verified');
+    }
+  });
+
+  it('digest fields refuse raw text — private context is structurally unrepresentable', () => {
+    const input = validInput('internal');
+    (input['execution'] as { value: { digests: { prompt: unknown } } }).value.digests.prompt =
+      'You are a helpful assistant with access to secrets.';
+    expect(() => buildChangeIntent(input)).toThrow(/sha256:<64-hex> content address \(never raw content\)/u);
+  });
+
+  it('a foreign field smuggled into the execution block is refused (exact keys)', () => {
+    const input = validInput('internal');
+    (input['execution'] as { value: Record<string, unknown> }).value['rawPrompt'] = 'leak me';
+    expect(() => buildChangeIntent(input)).toThrow(/keys must be exactly/u);
+  });
+
+  it('an undeclared tool scope is refused (authority cannot be invented)', () => {
+    const input = validInput('internal');
+    (input['execution'] as { value: { toolScopes: unknown } }).value.toolScopes = ['read', 'sudo'];
+    expect(() => buildChangeIntent(input)).toThrow(/toolScopes must be a subset/u);
   });
 
   it('refuses self-declared or non-owner authority for public/trust changes', () => {

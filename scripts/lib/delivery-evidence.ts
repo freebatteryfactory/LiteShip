@@ -125,7 +125,7 @@ export function buildDeliveryEvidenceManifest(input: DeliveryEvidenceBuilderInpu
       kind: 'change-intent',
       path: 'reports/change-intent.json',
       digest: sha256RawBytes(intentBytes),
-      verifier: 'delivery-evidence/change-intent-v1',
+      verifier: 'delivery-evidence/change-intent-v2',
     }),
     authority: Object.freeze({
       id: addressedId(authority.evidenceId, 'CI authority id'),

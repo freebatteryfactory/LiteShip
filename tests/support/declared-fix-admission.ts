@@ -59,7 +59,7 @@ export function changeIntent(
   } = {},
 ): ChangeIntent {
   return buildChangeIntent({
-    schemaVersion: 1,
+    schemaVersion: 2,
     sponsor: {
       value: { login: 'heyoub', ownership: options.sponsorOwnership ?? 'repository-owner' },
       provenance: options.sponsorProvenance ?? 'github-verified',
@@ -90,6 +90,23 @@ export function changeIntent(
     repositoryIdentity: {
       value: { host: 'github.com', owner: 'freebatteryfactory', name: 'LiteShip', nodeId: 'R_liteship' },
       provenance: 'github-verified',
+    },
+    // Agent actors require declared execution provenance (issue #163); human
+    // and automation actors carry an explicit null.
+    execution: {
+      value:
+        (options.actorClass ?? 'human') === 'agent'
+          ? {
+              executionId: 'session-declared-fix',
+              model: { provider: 'anthropic', id: 'claude-fable-5' },
+              toolScopes: ['read', 'write'],
+              budgets: { wallClockMs: null, tokens: null },
+              digests: { prompt: null, context: null, toolPolicy: null },
+              actionTrace: null,
+              autonomy: 'execute',
+            }
+          : null,
+      provenance: 'agent-self-declared',
     },
   });
 }

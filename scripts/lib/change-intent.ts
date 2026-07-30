@@ -39,8 +39,58 @@ export interface ChangeIntentRepositoryIdentity {
   readonly nodeId: string;
 }
 
+/**
+ * Explicit autonomy levels (issue #163) — the CEILING the executing actor held
+ * for this change, ordered: propose < edit < execute < approve < release.
+ * `approve` and `release` are human-owned: a declared agent/automation
+ * execution claiming either is refused ({@link admitChangeIntent},
+ * `execution-self-approval-refused`) — deterministic controls and human
+ * ownership retain the gavel. And the HUMAN classification itself must be
+ * host-verified to unlock those tiers: an actorClass whose provenance is
+ * merely self-declared cannot claim approve/release
+ * (`privileged-autonomy-actor-not-verified`, PR #190 review) — otherwise an
+ * agent simply declares itself human and walks past both refusals.
+ */
+export type ChangeIntentAutonomy = 'propose' | 'edit' | 'execute' | 'approve' | 'release';
+
+/** Granted tool authority classes an execution declares. */
+export type ChangeIntentToolScope = 'read' | 'write' | 'network' | 'release';
+
+/** A sha256 content address — the ONLY representable form for prompt/context/policy provenance. */
+export type Sha256Address = `sha256:${string}`;
+
+/**
+ * Agent execution provenance (issue #163, schemaVersion 2).
+ *
+ * Digests-only by construction: prompt/context/tool-policy provenance is a
+ * `sha256:` address or an EXPLICIT `null` ("unavailable, declared") — raw
+ * private context is structurally unrepresentable in the durable record (the
+ * exact-key parser refuses any free-text field this block does not declare).
+ * The action/result trace is likewise an addressed reference, never inline.
+ */
+export interface ChangeIntentExecution {
+  /** Stable execution identity for the agent run (session/run token). */
+  readonly executionId: string;
+  /** Model/provider identity, or an explicit null when unavailable. */
+  readonly model: { readonly provider: string; readonly id: string } | null;
+  /** Granted tool scopes — the authority the run actually held. */
+  readonly toolScopes: readonly ChangeIntentToolScope[];
+  /** Bounded budgets where available; null = unbounded/unavailable, declared. */
+  readonly budgets: { readonly wallClockMs: number | null; readonly tokens: number | null };
+  /** Content addresses of the governing prompt/context/tool-policy — never the bytes. */
+  readonly digests: {
+    readonly prompt: Sha256Address | null;
+    readonly context: Sha256Address | null;
+    readonly toolPolicy: Sha256Address | null;
+  };
+  /** Addressed action/result trace reference, or an explicit null. */
+  readonly actionTrace: { readonly path: string; readonly digest: Sha256Address } | null;
+  /** The autonomy ceiling this run held. */
+  readonly autonomy: ChangeIntentAutonomy;
+}
+
 export interface ChangeIntentUnsigned {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly sponsor: Provenanced<ChangeIntentSponsor>;
   readonly hypothesis: Provenanced<string>;
   readonly affectedUserSurface: Provenanced<ChangeIntentSurface>;
@@ -51,6 +101,8 @@ export interface ChangeIntentUnsigned {
   readonly uncertainty: Provenanced<ChangeIntentUncertainty>;
   readonly sourceSha: Provenanced<string>;
   readonly repositoryIdentity: Provenanced<ChangeIntentRepositoryIdentity>;
+  /** Execution provenance, or an EXPLICIT null (absence is unrepresentable — exact keys). */
+  readonly execution: Provenanced<ChangeIntentExecution | null>;
 }
 
 export interface ChangeIntent extends ChangeIntentUnsigned {
@@ -62,7 +114,10 @@ export type ChangeIntentRefusalCode =
   | 'public-or-trust-sponsor-not-github-verified'
   | 'public-or-trust-sponsor-lacks-owner-authority'
   | 'public-or-trust-source-not-github-verified'
-  | 'public-or-trust-repository-not-github-verified';
+  | 'public-or-trust-repository-not-github-verified'
+  | 'agent-execution-not-declared'
+  | 'execution-self-approval-refused'
+  | 'privileged-autonomy-actor-not-verified';
 
 export type ChangeIntentAdmission =
   | { readonly accepted: true; readonly intentId: ChangeIntent['intentId']; readonly reasons: readonly [] }
@@ -86,6 +141,7 @@ const UNSIGNED_KEYS = [
   'uncertainty',
   'sourceSha',
   'repositoryIdentity',
+  'execution',
 ] as const;
 
 function exactRecord(value: unknown, path: string, keys: readonly string[]): RecordValue {
@@ -210,11 +266,85 @@ function parseSha(value: unknown, path: string): string {
   return sha;
 }
 
+function parseSha256Address(value: unknown, path: string): Sha256Address {
+  const address = nonEmptyString(value, path);
+  if (!/^sha256:[0-9a-f]{64}$/u.test(address)) {
+    throw new TypeError(`${path} must be a sha256:<64-hex> content address (never raw content)`);
+  }
+  return address as Sha256Address;
+}
+
+function nullOr<T>(value: unknown, path: string, parseValue: (candidate: unknown, valuePath: string) => T): T | null {
+  return value === null ? null : parseValue(value, path);
+}
+
+function nullOrBudget(value: unknown, path: string): number | null {
+  if (value === null) return null;
+  if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value) || value <= 0) {
+    throw new TypeError(`${path} must be a positive integer or an explicit null`);
+  }
+  return value;
+}
+
+function parseExecution(value: unknown, path: string): ChangeIntentExecution | null {
+  if (value === null) return null;
+  const record = exactRecord(value, path, [
+    'executionId',
+    'model',
+    'toolScopes',
+    'budgets',
+    'digests',
+    'actionTrace',
+    'autonomy',
+  ]);
+  const executionId = nonEmptyString(record['executionId'], `${path}.executionId`);
+  if (executionId.length > 128 || !/^[A-Za-z0-9][A-Za-z0-9._:-]*$/u.test(executionId)) {
+    throw new TypeError(`${path}.executionId must be a stable opaque token (<=128 chars, [A-Za-z0-9._:-])`);
+  }
+  const budgets = exactRecord(record['budgets'], `${path}.budgets`, ['wallClockMs', 'tokens']);
+  const digests = exactRecord(record['digests'], `${path}.digests`, ['prompt', 'context', 'toolPolicy']);
+  const scopes = stringSet(record['toolScopes'], `${path}.toolScopes`);
+  const admittedScopes: readonly ChangeIntentToolScope[] = ['network', 'read', 'release', 'write'];
+  for (const scope of scopes) {
+    if (!admittedScopes.includes(scope as ChangeIntentToolScope)) {
+      throw new TypeError(`${path}.toolScopes must be a subset of: ${admittedScopes.join(', ')}`);
+    }
+  }
+  return {
+    executionId,
+    model: nullOr(record['model'], `${path}.model`, (candidate, modelPath) => {
+      const modelRecord = exactRecord(candidate, modelPath, ['provider', 'id']);
+      return {
+        provider: nonEmptyString(modelRecord['provider'], `${modelPath}.provider`),
+        id: nonEmptyString(modelRecord['id'], `${modelPath}.id`),
+      };
+    }),
+    toolScopes: scopes as readonly ChangeIntentToolScope[],
+    budgets: {
+      wallClockMs: nullOrBudget(budgets['wallClockMs'], `${path}.budgets.wallClockMs`),
+      tokens: nullOrBudget(budgets['tokens'], `${path}.budgets.tokens`),
+    },
+    digests: {
+      prompt: nullOr(digests['prompt'], `${path}.digests.prompt`, parseSha256Address),
+      context: nullOr(digests['context'], `${path}.digests.context`, parseSha256Address),
+      toolPolicy: nullOr(digests['toolPolicy'], `${path}.digests.toolPolicy`, parseSha256Address),
+    },
+    actionTrace: nullOr(record['actionTrace'], `${path}.actionTrace`, (candidate, tracePath) => {
+      const traceRecord = exactRecord(candidate, tracePath, ['path', 'digest']);
+      return {
+        path: nonEmptyString(traceRecord['path'], `${tracePath}.path`),
+        digest: parseSha256Address(traceRecord['digest'], `${tracePath}.digest`),
+      };
+    }),
+    autonomy: enumValue(record['autonomy'], `${path}.autonomy`, ['propose', 'edit', 'execute', 'approve', 'release']),
+  };
+}
+
 function parseUnsigned(value: unknown): ChangeIntentUnsigned {
   const record = exactRecord(value, 'changeIntent', UNSIGNED_KEYS);
-  if (record['schemaVersion'] !== 1) throw new TypeError('changeIntent.schemaVersion must be 1');
+  if (record['schemaVersion'] !== 2) throw new TypeError('changeIntent.schemaVersion must be 2');
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sponsor: provenanced(record['sponsor'], 'changeIntent.sponsor', parseSponsor),
     hypothesis: provenanced(record['hypothesis'], 'changeIntent.hypothesis', nonEmptyString),
     affectedUserSurface: provenanced(record['affectedUserSurface'], 'changeIntent.affectedUserSurface', parseSurface),
@@ -227,6 +357,7 @@ function parseUnsigned(value: unknown): ChangeIntentUnsigned {
     uncertainty: provenanced(record['uncertainty'], 'changeIntent.uncertainty', parseUncertainty),
     sourceSha: provenanced(record['sourceSha'], 'changeIntent.sourceSha', parseSha),
     repositoryIdentity: provenanced(record['repositoryIdentity'], 'changeIntent.repositoryIdentity', parseRepository),
+    execution: provenanced(record['execution'], 'changeIntent.execution', parseExecution),
   };
 }
 
@@ -263,6 +394,43 @@ export function parseChangeIntent(input: unknown): ChangeIntent {
 export function admitChangeIntent(intent: ChangeIntent): ChangeIntentAdmission {
   const reasons: ChangeIntentRefusalCode[] = [];
   if (intent.sponsor.value.ownership === 'none') reasons.push('missing-sponsor-ownership');
+  // Issue #163 — execution provenance fail-closed rules:
+  //  - an AGENT actor without a declared execution identity is refused (a run
+  //    nobody can attribute must never carry a change);
+  //  - a declared non-human execution claiming the human-owned autonomy tiers
+  //    (approve/release) is refused — an agent or workflow cannot self-approve.
+  //    An AGENT always requires it, and so does any SELF-DECLARED non-human:
+  //    an agent could otherwise dodge attribution by declaring itself
+  //    'automation' (PR #190 review, confirmed P1). A github-verified
+  //    automation classification — the host-DERIVED fail-broad fallback for
+  //    push/tag events with no authored block — legitimately carries null.
+  if (
+    intent.execution.value === null &&
+    intent.actorClass.value !== 'human' &&
+    (intent.actorClass.value === 'agent' || intent.actorClass.provenance !== 'github-verified')
+  ) {
+    reasons.push('agent-execution-not-declared');
+  }
+  if (
+    intent.execution.value !== null &&
+    intent.actorClass.value !== 'human' &&
+    ['approve', 'release'].includes(intent.execution.value.autonomy)
+  ) {
+    reasons.push('execution-self-approval-refused');
+  }
+  //  - the human-owned tiers bind to a VERIFIED human, not a self-described
+  //    one: the GitHub adapter stamps actorClass 'agent-self-declared' (it
+  //    verifies the sponsor login and permission, never the author's species),
+  //    so trusting the claimed class would let an agent declare itself human
+  //    and hold approve/release (PR #190 review, confirmed). Same idiom as the
+  //    public-surface github-verified requirements below.
+  if (
+    intent.execution.value !== null &&
+    ['approve', 'release'].includes(intent.execution.value.autonomy) &&
+    intent.actorClass.provenance !== 'github-verified'
+  ) {
+    reasons.push('privileged-autonomy-actor-not-verified');
+  }
   if (intent.affectedUserSurface.value.visibility !== 'internal') {
     if (intent.sponsor.provenance !== 'github-verified') {
       reasons.push('public-or-trust-sponsor-not-github-verified');
