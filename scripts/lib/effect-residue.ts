@@ -132,9 +132,19 @@ export function classifyEffectResidueWorkspaceYaml(yamlText: string): readonly s
     const pair = line.trim().match(/^(?:'([^']+)'|"([^"]+)"|([^'":\s][^:\s]*))\s*:\s*(.*)$/);
     if (pair === null) continue;
     const key = pair[1] ?? pair[2] ?? pair[3] ?? '';
-    const value = (pair[4] ?? '').trim().replace(/^['"]|['"]$/gu, '');
+    // YAML node metadata (`&anchor` / `!tag`) attaches to the scalar WITHOUT
+    // changing what pnpm resolves — `fx: &fx npm:effect@^3` still installs the
+    // effect alias (PR #191 review, round 4, confirmed) — so strip it before
+    // the prefix-anchored match. Strip metadata BEFORE quotes: `&a 'npm:…'`.
+    const value = (pair[4] ?? '')
+      .trim()
+      .replace(/^(?:[&!]\S+\s+)+/u, '')
+      .replace(/^['"]|['"]$/gu, '');
     if (key === 'effect' || key.startsWith('@effect/')) details.push(`${section}.${key}`);
     else if (ALIAS.test(value)) details.push(`${section}.${key} -> ${value}`);
+    // A `*ref` alias value is an indirection this line-based parse cannot
+    // resolve (the anchor may live in an unscanned section) — fail closed.
+    else if (value.startsWith('*')) details.push(`${section}.${key} -> ${value} (unresolved YAML alias — fail-closed)`);
   }
   return details;
 }

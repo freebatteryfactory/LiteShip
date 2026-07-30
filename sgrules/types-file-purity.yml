@@ -9,10 +9,12 @@
 # Flags the VALUE-declaration node kinds —
 #   function_declaration / class_declaration / enum_declaration /
 #   lexical_declaration (const/let) / variable_declaration (var)
-# — plus the two erasure-surviving statement forms: runtime re-exports
+# — plus the erasure-surviving statement forms: runtime re-exports
 # (`export { v } from` / `export * from`, whose `export type` spellings stay
-# legal) and clause-less side-effect imports (`import './m.js'`). Deliberately
-# NOT interface_declaration / type_alias_declaration / `export type ... from` /
+# legal), EVERY import that is not `import type` (a value import or side-effect
+# import loads the module at runtime), and top-level expression statements
+# (`register();` — pure type space has no expressions). Deliberately NOT
+# interface_declaration / type_alias_declaration / `export type ... from` /
 # `import type`, which are exactly what a types.ts is for.
 #
 # SCOPE — every `types.ts` under every package src tree, INCLUDING the src-root
@@ -46,6 +48,17 @@ rule:
         - kind: export_statement
         - has: { field: source, kind: string }
         - not: { regex: "^export\\s+type\\b" }
+    # EVERY import that is not `import type ...` is runtime (PR #191 review,
+    # round 4, confirmed): a value import (`import { register } from ...`) has
+    # an import_clause, so the old clause-less-only ban let it through — and an
+    # inline-type import (`import { type A } from ...`) still EMITS a live
+    # `import {}` under verbatimModuleSyntax. Only the fully-erased top-level
+    # `import type` spelling is legal here.
     - all:
         - kind: import_statement
-        - not: { has: { kind: import_clause } }
+        - not: { regex: "^import\\s+type\\b" }
+    # A top-level expression statement (`register();`) is runtime by
+    # definition — pure type space has no expressions to execute (PR #191
+    # review, round 4, confirmed: `import { register } ...; register();`
+    # passed both this rule and the regular lint).
+    - kind: expression_statement

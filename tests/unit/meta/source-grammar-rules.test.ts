@@ -503,6 +503,20 @@ describe('types-file-purity (d) — a types.ts is type-space only (repo-wide)', 
     expect((await scan(RULE, f)).length).toBe(3);
   });
 
+  it('RED: a runtime value import plus a bare call breaks erasability (PR #191 review, round 4)', async () => {
+    // `import { register } from './runtime.js'; register();` passed the old
+    // rule: the import HAS an import_clause and the call is an unlisted
+    // expression_statement — yet the emitted module imports and EXECUTES code.
+    // A types.ts import must be `import type`; a top-level statement that is
+    // pure expression is runtime by definition.
+    const f = fixture(
+      'packages/core/src/hidden2/types.ts',
+      ["import { register } from './runtime.js';", 'register();', ''].join('\n'),
+    );
+    // The non-type import + the expression statement = 2.
+    expect((await scan(RULE, f)).length).toBe(2);
+  });
+
   it('SCOPE: a value-bearing types.ts in a NON-core package fires (issue #178 widened the guard repo-wide)', async () => {
     const f = fixture('packages/mcp-server/src/lsp/types.ts', 'export const SEVERITY = { Error: 1 } as const;\n');
     expect((await scan(RULE, f)).length).toBe(1);
