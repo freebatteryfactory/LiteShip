@@ -399,7 +399,16 @@ export function admitChangeIntent(intent: ChangeIntent): ChangeIntentAdmission {
   //    nobody can attribute must never carry a change);
   //  - a declared non-human execution claiming the human-owned autonomy tiers
   //    (approve/release) is refused — an agent or workflow cannot self-approve.
-  if (intent.actorClass.value === 'agent' && intent.execution.value === null) {
+  //    An AGENT always requires it, and so does any SELF-DECLARED non-human:
+  //    an agent could otherwise dodge attribution by declaring itself
+  //    'automation' (PR #190 review, confirmed P1). A github-verified
+  //    automation classification — the host-DERIVED fail-broad fallback for
+  //    push/tag events with no authored block — legitimately carries null.
+  if (
+    intent.execution.value === null &&
+    intent.actorClass.value !== 'human' &&
+    (intent.actorClass.value === 'agent' || intent.actorClass.provenance !== 'github-verified')
+  ) {
     reasons.push('agent-execution-not-declared');
   }
   if (

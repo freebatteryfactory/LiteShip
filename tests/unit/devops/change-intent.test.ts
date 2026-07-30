@@ -162,13 +162,31 @@ describe('internal ChangeIntent', () => {
     expect(admission.reasons).toContain('agent-execution-not-declared');
   });
 
-  it('an explicit-null execution is admissible for human and automation actors', () => {
-    for (const actorClass of ['human', 'automation'] as const) {
-      const input = validInput('internal');
-      (input['actorClass'] as { value: string }).value = actorClass;
-      (input['execution'] as { value: unknown }).value = null;
-      expect(admitChangeIntent(buildChangeIntent(input)).accepted).toBe(true);
-    }
+  it('an explicit-null execution is admissible for humans and HOST-DERIVED automation only', () => {
+    // human (any provenance): a human run has no machine execution to attribute.
+    const human = validInput('internal');
+    (human['actorClass'] as { value: string }).value = 'human';
+    (human['execution'] as { value: unknown }).value = null;
+    expect(admitChangeIntent(buildChangeIntent(human)).accepted).toBe(true);
+    // github-verified automation: the host itself derived the classification
+    // (the push/tag fail-broad fallback) — null execution is the honest state.
+    const derived = validInput('internal');
+    (derived['actorClass'] as { value: string; provenance: string }).value = 'automation';
+    (derived['actorClass'] as { value: string; provenance: string }).provenance = 'github-verified';
+    (derived['execution'] as { value: unknown }).value = null;
+    expect(admitChangeIntent(buildChangeIntent(derived)).accepted).toBe(true);
+  });
+
+  it('a SELF-DECLARED automation actor without execution is refused (PR #190 review — no attribution dodge)', () => {
+    // The bypass class: an agent-authored PR declares actorClass 'automation'
+    // with execution null and escapes the agent attribution requirement. A
+    // self-declared non-human always requires a declared execution identity.
+    const input = validInput('internal');
+    (input['actorClass'] as { value: string }).value = 'automation';
+    (input['execution'] as { value: unknown }).value = null;
+    const admission = admitChangeIntent(buildChangeIntent(input));
+    expect(admission.accepted).toBe(false);
+    expect(admission.reasons).toContain('agent-execution-not-declared');
   });
 
   it('refuses a non-human execution claiming the human-owned autonomy tiers (no self-approval)', () => {

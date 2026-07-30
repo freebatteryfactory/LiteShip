@@ -287,6 +287,36 @@ describe('standalone delivery evidence verifier', () => {
     ).toThrow(/change intent was not admitted/u);
   });
 
+  test('reconstructs actor-classification provenance instead of trusting the producer label (PR #190 review)', () => {
+    // The bypass class: a producer serializes actorClass { value: 'human',
+    // provenance: 'github-verified' } plus approve autonomy. The admission
+    // fold ACCEPTS that (the provenance label is the very thing the privileged
+    // rule keys on), so the producer-blind verifier must reject the label
+    // itself: no declared channel can mint a verified classification.
+    const value = current();
+    const parsed = JSON.parse(readFileSync(join(value.root, 'reports', 'change-intent.json'), 'utf8')) as {
+      origin: string;
+      intent: Record<string, unknown>;
+    };
+    const { intentId: _ignored, ...unsigned } = parsed.intent;
+    const execution = unsigned['execution'] as { value: Record<string, unknown>; provenance: string };
+    const intent = buildChangeIntent({
+      ...unsigned,
+      actorClass: { value: 'human', provenance: 'github-verified' },
+      execution: { ...execution, value: { ...execution.value, autonomy: 'approve' } },
+    });
+    const admission = admitChangeIntent(intent);
+    expect(admission.accepted).toBe(true); // the fold alone is walkable — the verifier must not be
+    const raw = `${JSON.stringify({ origin: parsed.origin, intent, admission }, null, 2)}\n`;
+    writeRaw(value.root, 'reports/change-intent.json', raw);
+    expect(() =>
+      verify({
+        ...value.unsigned,
+        intent: { ...value.unsigned.intent, id: intent.intentId, digest: sha256RawBytes(raw) },
+      }),
+    ).toThrow(/no declared channel can mint/u);
+  });
+
   test('derives event/ref CI authority jobs instead of trusting an artifact-owned list', () => {
     const value = current();
     const authority = buildCiAuthorityEvidence({

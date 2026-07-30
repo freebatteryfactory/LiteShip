@@ -205,9 +205,16 @@ function validateParsedGitHubChangeIntentDeclaration(value: unknown): GitHubChan
     'agent',
     'automation',
   ]);
-  if (declaredActorClass === 'agent' && declaredExecution === null) {
+  if (declaredActorClass !== 'human' && declaredExecution === null) {
+    // An authored classification is always agent-self-declared, so BOTH
+    // non-human classes require a declared execution here — an agent must not
+    // dodge attribution by declaring itself 'automation' (PR #190 review).
+    // The host-derived fail-broad fallback (push/tag, no authored block) is the
+    // only legitimate null-execution automation and never passes through this
+    // authored-block validator.
     throw new TypeError(
-      'liteship-change-intent.execution must be declared for an agent actor (admission refuses agent-execution-not-declared)',
+      `liteship-change-intent.execution must be declared for a self-declared ${declaredActorClass} actor ` +
+        '(admission refuses agent-execution-not-declared)',
     );
   }
   if (declaredExecution !== null && ['approve', 'release'].includes(declaredExecution.autonomy)) {

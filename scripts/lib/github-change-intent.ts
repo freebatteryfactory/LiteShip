@@ -132,7 +132,14 @@ export function admitGitHubChangeIntent(value: unknown): AdmittedGitHubChangeInt
     expectedOutcome: provenance(declaration['expectedOutcome'], 'agent-self-declared'),
     guardrails: provenance(declaration['guardrails'], 'agent-self-declared'),
     reversibility: provenance(declaration['reversibility'], 'agent-self-declared'),
-    actorClass: provenance(declaration['actorClass'], 'agent-self-declared'),
+    // An AUTHORED classification is never host-verifiable (the adapter checks
+    // login + permission, not species) — it stays self-declared. The fail-broad
+    // FALLBACK classification is different: the host itself DERIVED 'automation'
+    // from a trusted event fact (a push/tag with no authored block), so it is
+    // github-verified — which is what lets the synthesized intent carry a null
+    // execution past the self-declared-non-human attribution rule (PR #190
+    // review).
+    actorClass: provenance(declaration['actorClass'], parsed === null ? 'github-verified' : 'agent-self-declared'),
     uncertainty: provenance(declaration['uncertainty'], 'agent-self-declared'),
     sourceSha: provenance(input.sourceSha, 'github-verified'),
     repositoryIdentity: provenance({ host: 'github.com', ...input.repository }, 'github-verified'),

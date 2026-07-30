@@ -230,6 +230,32 @@ describe('GitHub ChangeIntent host adapter', () => {
     expect(() => admitGitHubChangeIntent(input({ body }))).toThrow(TypeError);
   });
 
+  it('cold-refuses a self-declared AUTOMATION declaration without execution (PR #190 review — no attribution dodge)', () => {
+    // An authored classification is always self-declared, so 'automation' with
+    // a null execution is the same unattributed-run hole as 'agent' — refused
+    // cold, before the matrix, and by full admission.
+    const payload = { ...declaration('internal'), actorClass: 'automation', execution: null };
+    expect(() =>
+      validateGitHubChangeIntentDeclaration('pull_request', {
+        pull_request: { body: block(payload), user: { login: 'heyoub' } },
+      }),
+    ).toThrow(/agent-execution-not-declared/u);
+    expect(() => admitGitHubChangeIntent(input({ body: block(payload) }))).toThrow(/agent-execution-not-declared/u);
+  });
+
+  it('the push fail-broad fallback carries the HOST-DERIVED automation classification (PR #190 review)', () => {
+    // The fallback intent is synthesized by the adapter from a trusted event
+    // fact (push with no authored block) — its classification is
+    // github-verified, which is exactly what lets its null execution pass the
+    // self-declared-non-human attribution rule, and what the standalone
+    // verifier reconstructs for fail-broad origins.
+    const result = admitGitHubChangeIntent(input({ event: 'push', body: null }));
+    expect(result.origin).toBe('push-fail-broad');
+    expect(result.admission.accepted).toBe(true);
+    expect(result.intent.actorClass).toEqual({ value: 'automation', provenance: 'github-verified' });
+    expect(result.intent.execution.value).toBeNull();
+  });
+
   it('cold-refuses an agent declaration without execution BEFORE the CI matrix (PR #190 review)', () => {
     // The kernel refuses agent-execution-not-declared at full admission — but
     // full admission runs AFTER the expensive authority matrix. The cold
