@@ -204,9 +204,14 @@ function staleBaselineFinding(entry: string): Finding {
 function foldComposition(context: GateContext): readonly Finding[] {
   const ir = requireIR(context, GATE_ID);
   const facts = context.composition;
-  // Absent / empty facts → an honest advisory, never a silent green.
+  // Absent / empty facts → an honest advisory, never a silent green. But the
+  // BASELINE is still processed (PR #192 review, confirmed): the moment the
+  // last qualifying edge is covered or removed, `edges` goes empty — exactly
+  // when every remaining ledger entry is stale and the shrink-only ratchet
+  // must say so, not fall silent forever.
   if (facts === undefined || (facts.edges ?? []).length === 0) {
-    return [notEvidencedFinding()];
+    const staleEntries = [...(facts?.acceptedUncovered ?? [])].sort((a, b) => a.localeCompare(b));
+    return [notEvidencedFinding(), ...staleEntries.map((entry) => staleBaselineFinding(entry))];
   }
   const levels = effectiveLevels(ir);
   const accepted = new Set(facts.acceptedUncovered ?? []);

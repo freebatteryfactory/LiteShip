@@ -395,7 +395,23 @@ function restoreAndVerify(absTarget: string, original: Buffer, targetFile: strin
       ),
     );
   }
-  const afterRestore = readFileSync(absTarget);
+  // The verification READ is as load-bearing as the write (PR #192 review,
+  // confirmed P1): if it throws (target concurrently deleted / unreadable),
+  // the restore was never CONFIRMED — an unmarked fs error here would fold to
+  // an `inconclusive` verdict and the campaign would continue over a working
+  // tree in unknown state.
+  let afterRestore: Buffer;
+  try {
+    afterRestore = readFileSync(absTarget);
+  } catch (cause) {
+    throw campaignFatal(
+      IoError(
+        'makeVitestMutationRunner',
+        `the restore of "${targetFile}" could not be VERIFIED (the post-restore read failed) — the working tree state is unknown. Restore it from git before re-running.`,
+        { path: absTarget, cause },
+      ),
+    );
+  }
   if (!afterRestore.equals(original)) {
     throw campaignFatal(
       IoError(

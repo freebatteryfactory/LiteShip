@@ -137,6 +137,19 @@ describe('compositionCoverageGate — the uncovered-edge ratchet (issue #164 bac
     expect(blocking!.severity).toBe('error'); // L4 edge, unbaselined → blocks
   });
 
+  it('stale entries are STILL reported when NO edges remain — the ledger cannot hide at zero backlog (PR #192 review)', () => {
+    // The hole class: the empty-edges early return skipped baseline
+    // processing, so the moment the LAST qualifying edge disappeared, every
+    // remaining ledger entry silently persisted forever.
+    const findings = compositionCoverageGate.run(
+      ctx(edgeIR(L1_CALLER, L4_FILE), { edges: [], acceptedUncovered: [BASELINED_ID] }),
+    );
+    const stale = findings.find((f) => f.title.includes('Stale composition baseline entry'));
+    expect(stale).toBeDefined();
+    expect(stale!.severity).toBe('warning');
+    expect(stale!.title).toContain(BASELINED_ID);
+  });
+
   it('a baseline entry that is no longer uncovered is a STALE-ENTRY warning (the ratchet only shrinks)', () => {
     const findings = compositionCoverageGate.run(
       ctx(edgeIR(L1_CALLER, L4_FILE), {
