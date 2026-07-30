@@ -176,7 +176,6 @@ package — it stays repo-local and composes these passes.
 - [guardExpressionsOf](functions/guardExpressionsOf.md)
 - [hasModifier](functions/hasModifier.md)
 - [hasModuleScopeDateRead](functions/hasModuleScopeDateRead.md)
-- [isCampaignFatal](functions/isCampaignFatal.md)
 - [isSimpleDefaultExpression](functions/isSimpleDefaultExpression.md)
 - [lineAndColumn](functions/lineAndColumn.md)
 - [listPackageManifests](functions/listPackageManifests.md)

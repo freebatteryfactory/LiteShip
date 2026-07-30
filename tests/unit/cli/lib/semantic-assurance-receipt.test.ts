@@ -61,6 +61,7 @@ function mutationFacts(over: Partial<MutationFacts> = {}): MutationFacts {
         coveringTests: ['tests/property/genui/catalog.prop.test.ts'],
         equivalentJustification: null,
         equivalentJustificationDigest: null,
+        inconclusiveReason: null,
         subsumedBy: [],
       },
     ],
@@ -217,6 +218,28 @@ describe('semantic assurance execution receipt', () => {
     expect(() =>
       buildSemanticAssuranceReceipt({ mode: 'mcdc', facts: mcdc, ir: ir(), toolchainDigest: TOOLCHAIN }),
     ).toThrow(/no executed tests/u);
+  });
+
+  it('an INCONCLUSIVE outcome fails its target with closing counts (PR #192 review — no unproven pass)', () => {
+    const facts = mutationFacts({
+      outcomes: [
+        {
+          ...mutationFacts().outcomes[0]!,
+          verdict: 'inconclusive',
+          inconclusiveReason: 'the vitest subprocess exceeded the per-mutant budget',
+        },
+      ],
+    });
+    const receipt = buildSemanticAssuranceReceipt({ mode: 'mutation', facts, ir: ir(), toolchainDigest: TOOLCHAIN });
+    const target = receipt.targets[0]!;
+    expect(target.verdict).toBe('fail');
+    expect(target.inconclusive).toBe(1);
+    expect(target.killed + target.survived + target.noCoverage + target.equivalent + target.inconclusive).toBe(
+      target.evaluated,
+    );
+    expect(receipt.verdict).toBe('fail');
+    // The widened schema round-trips through the independent parser.
+    expect(parseSemanticAssuranceReceipt(JSON.parse(JSON.stringify(receipt)))).toEqual(receipt);
   });
 
   it('records zero applicability explicitly without manufacturing test execution', () => {

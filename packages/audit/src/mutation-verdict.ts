@@ -343,7 +343,7 @@ export function evaluateMutant<M extends MutantCore = Mutant>(
  * failed or did not verify — a mutated trust-spine file may be on disk). Any
  * other runner throw is a per-mutant refusal and folds to `inconclusive`.
  */
-export function isCampaignFatal(error: unknown): boolean {
+function isCampaignFatal(error: unknown): boolean {
   return typeof error === 'object' && error !== null && (error as { campaignFatal?: unknown }).campaignFatal === true;
 }
 
