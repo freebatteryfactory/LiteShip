@@ -136,6 +136,34 @@ describe('mcdcCoverageGate — floor calibration by level', () => {
     expect(findings[0]!.detail).toContain('per-mutant budget (240000 ms) expired');
   });
 
+  it('an INCONCLUSIVE pin gets refusal prose and infra remediation — never gap-claims about a comparison that was refused (PR #192 review, round 5)', () => {
+    // The sibling of the mutation-divergence round-4 fix, which I applied there
+    // and NOT here: preserving the reason is not enough when the surrounding
+    // sentence still claims the pin "did not flip any covering test" and the
+    // remediation demands a distinguishing test pair — no comparison completed,
+    // so both statements are lies that send the reader away from the runner.
+    const findings = mcdcCoverageGate.run(
+      ctx(simpleIR([L4_FILE]), {
+        conditions: [
+          condition({
+            file: L4_FILE,
+            forceTrueVerdict: 'inconclusive',
+            forceFalseVerdict: 'killed',
+            forceTrueInconclusiveReason: 'spawn timeout: the per-mutant budget (240000 ms) expired',
+          }),
+        ],
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    const f = findings[0]!;
+    expect(f.title).toContain('inconclusive');
+    expect(f.detail).toContain('per-mutant budget (240000 ms) expired');
+    expect(f.detail).not.toMatch(/did not flip any covering test/u);
+    const steps = (f.remediation?.kind === 'instruction' ? f.remediation.steps : []).join(' ');
+    expect(steps).not.toMatch(/distinguishing test|test pair/iu);
+    expect(`${f.remediation?.kind === 'instruction' ? f.remediation.description : ''} ${steps}`).toMatch(/re-run/iu);
+  });
+
   it('an L1 uncovered condition is advisory debt (calibrating, never blocks)', () => {
     const findings = mcdcCoverageGate.run(
       ctx(simpleIR([L1_FILE]), {

@@ -570,14 +570,21 @@ function unaryNotMutation(node: ts.Node, sourceFile: ts.SourceFile, operator: Mu
  * the operator stays unambiguous.
  */
 /**
- * Is `node` a MODULE SPECIFIER — the string of an `import`/`export … from '…'`
- * declaration or the argument of a dynamic `import('…')`? A specifier is a
- * module-graph address, not program behaviour: mutating it to `''` cannot be
- * killed or survive — it makes the covering suites fail to LOAD, which the
- * runner can only refuse (0 tests executed, or vitest exiting 1 with a
- * 0-failed report when OTHER covering suites still loaded — the exact
- * inconsistency that aborted the July 28 + 30 exhaustive crons on
+ * Is `node` a LOAD-TIME MODULE SPECIFIER — the string of an `import`/`export …
+ * from '…'` declaration, or the argument of a dynamic `import('…')` that
+ * executes DURING MODULE EVALUATION (top-level await / a bare top-level call)?
+ * Such a specifier is a module-graph address, not program behaviour: mutating
+ * it to `''` cannot be killed or survive — it makes the covering suites fail
+ * to LOAD, which the runner can only refuse (0 tests executed, or vitest
+ * exiting 1 with a 0-failed report when OTHER covering suites still loaded —
+ * the exact inconsistency that aborted the July 28 + 30 exhaustive crons on
  * `audio-input.ts`). Never a mutation target.
+ *
+ * A LAZY dynamic import — one inside a function body — is the opposite case
+ * (PR #192 review, round 5, confirmed): its rejection happens inside an
+ * EXECUTING test, which observes the failure and kills the mutant. Excluding
+ * those dropped valid mutants from the census and inflated mutation scores,
+ * so deferral, not spelling, is the criterion.
  */
 function isModuleSpecifier(node: ts.Node): boolean {
   const parent: ts.Node | undefined = node.parent;
@@ -588,8 +595,24 @@ function isModuleSpecifier(node: ts.Node): boolean {
   return (
     ts.isCallExpression(parent) &&
     parent.expression.kind === ts.SyntaxKind.ImportKeyword &&
-    parent.arguments[0] === node
+    parent.arguments[0] === node &&
+    executesDuringModuleEvaluation(parent)
   );
+}
+
+/**
+ * Does `node` execute while the module GRAPH is loading (no enclosing deferred
+ * function body)? Only function-like ancestors defer execution; anything not
+ * provably deferred — top level, a class static block, a static property
+ * initializer — counts as load-time, FAIL-CLOSED toward the unmintable-refusal
+ * class (a wrongly-deferred classification would resurrect the cron aborts; a
+ * wrongly-load-time one merely leaves a mutant unminted).
+ */
+function executesDuringModuleEvaluation(node: ts.Node): boolean {
+  for (let current: ts.Node | undefined = node.parent; current !== undefined; current = current.parent) {
+    if (ts.isFunctionLike(current)) return false;
+  }
+  return true;
 }
 
 function stringLiteralMutation(
