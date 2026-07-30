@@ -13,7 +13,7 @@ export interface LocalVerificationStep {
 const INVARIANTS_STEP: LocalVerificationStep = Object.freeze({
   checkId: null,
   label: 'check-invariants',
-  argv: Object.freeze(['exec', 'tsx', 'packages/cli/src/bin.ts', 'check-invariants']),
+  argv: Object.freeze(['exec', 'tsx', 'packages/cli/src/bin.ts', 'check', 'invariants']),
   remedy: 'fix the reported invariant violation, then re-run preflight',
 });
 

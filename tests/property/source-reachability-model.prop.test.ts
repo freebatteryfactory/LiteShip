@@ -166,7 +166,7 @@ describe('source import closure model', () => {
     expect(
       unreachableSourceFiles(
         repoRoot,
-        ['packages/cli/src/index.ts', 'packages/cli/src/bin.ts', 'packages/cli/src/spawn-helpers.ts', ...scriptRoots],
+        ['packages/cli/src/index.ts', 'packages/cli/src/bin.ts', 'packages/cli/src/spawn.ts', ...scriptRoots],
         ['packages/cli/src/internal'],
       ),
       'internal/ is a privacy boundary, never unreachable-code amnesty',

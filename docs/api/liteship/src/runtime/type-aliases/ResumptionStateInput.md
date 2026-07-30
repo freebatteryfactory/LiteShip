@@ -8,7 +8,7 @@
 
 > **ResumptionStateInput** = `Omit`\<[`ResumptionState`](../interfaces/ResumptionState.md), `"timestamp"`\> & `object`
 
-Defined in: web/dist/types.d.ts:325
+Defined in: web/dist/types.d.ts:317
 
 Input accepted by `Resumption.saveState`. The stored shape keeps
 `timestamp` required; on input it defaults to the save clock's `now()`

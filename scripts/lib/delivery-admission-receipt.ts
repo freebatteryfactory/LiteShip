@@ -32,7 +32,7 @@ export interface DeliveryAdmissionReceiptUnsigned {
   readonly planId: Sha256Digest;
   readonly headSha: string;
   readonly github: DeliveryEvidenceManifest['github'];
-  readonly verifier: 'delivery-evidence/standalone-v2';
+  readonly verifier: 'delivery-evidence/standalone-v3';
   readonly admittedAt: string;
   readonly receiptChain: {
     readonly path: 'reports/delivery-receipt-chain.json';
@@ -117,7 +117,7 @@ export function buildDeliveryAdmissionReceipt(input: {
     planId: input.manifest.plan.id,
     headSha: input.manifest.headSha,
     github: Object.freeze({ ...input.manifest.github }),
-    verifier: 'delivery-evidence/standalone-v2',
+    verifier: 'delivery-evidence/standalone-v3',
     admittedAt: input.admittedAt,
     receiptChain: Object.freeze({
       path: 'reports/delivery-receipt-chain.json',
@@ -153,7 +153,7 @@ export function parseDeliveryAdmissionReceipt(value: unknown): DeliveryAdmission
   if (
     receipt.schemaVersion !== 1 ||
     receipt.verdict !== 'accepted' ||
-    receipt.verifier !== 'delivery-evidence/standalone-v2' ||
+    receipt.verifier !== 'delivery-evidence/standalone-v3' ||
     typeof receipt.receiptId !== 'string' ||
     typeof receipt.manifestId !== 'string' ||
     typeof receipt.planId !== 'string' ||

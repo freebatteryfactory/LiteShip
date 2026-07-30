@@ -6,7 +6,7 @@
 
 # Interface: FindingLocationLike
 
-Defined in: [mcp-server/src/lsp/types.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L34)
+Defined in: [mcp-server/src/lsp/types.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L41)
 
 Where a finding points — structurally identical to `@liteship/gauntlet`'s `SourceLocation`.
 
@@ -16,7 +16,7 @@ Where a finding points — structurally identical to `@liteship/gauntlet`'s `Sou
 
 > `readonly` `optional` **column?**: `number`
 
-Defined in: [mcp-server/src/lsp/types.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L37)
+Defined in: [mcp-server/src/lsp/types.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L44)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [mcp-server/src/lsp/types.ts:37](https://github.com/freebatteryfacto
 
 > `readonly` **file**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L35)
+Defined in: [mcp-server/src/lsp/types.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L42)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [mcp-server/src/lsp/types.ts:35](https://github.com/freebatteryfacto
 
 > `readonly` `optional` **line?**: `number`
 
-Defined in: [mcp-server/src/lsp/types.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L36)
+Defined in: [mcp-server/src/lsp/types.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L43)

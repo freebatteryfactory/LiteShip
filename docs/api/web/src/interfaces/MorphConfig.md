@@ -6,7 +6,7 @@
 
 # Interface: MorphConfig
 
-Defined in: [web/src/types.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L133)
+Defined in: [web/src/types.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L126)
 
 Morph configuration.
 
@@ -16,7 +16,7 @@ Morph configuration.
 
 > `readonly` `optional` **callbacks?**: [`MorphCallbacks`](MorphCallbacks.md)
 
-Defined in: [web/src/types.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L138)
+Defined in: [web/src/types.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L131)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:138](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **morphStyle**: `"innerHTML"` \| `"outerHTML"`
 
-Defined in: [web/src/types.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L137)
+Defined in: [web/src/types.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L130)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/types.ts:137](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **preserveFocus**: `boolean`
 
-Defined in: [web/src/types.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L134)
+Defined in: [web/src/types.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L127)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [web/src/types.ts:134](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **preserveScroll**: `boolean`
 
-Defined in: [web/src/types.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L135)
+Defined in: [web/src/types.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L128)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [web/src/types.ts:135](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **preserveSelection**: `boolean`
 
-Defined in: [web/src/types.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L136)
+Defined in: [web/src/types.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L129)

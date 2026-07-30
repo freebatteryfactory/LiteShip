@@ -6,7 +6,7 @@
 
 # Interface: MorphConfig
 
-Defined in: web/dist/types.d.ts:110
+Defined in: web/dist/types.d.ts:102
 
 Morph configuration.
 
@@ -16,7 +16,7 @@ Morph configuration.
 
 > `readonly` `optional` **callbacks?**: [`MorphCallbacks`](MorphCallbacks.md)
 
-Defined in: web/dist/types.d.ts:115
+Defined in: web/dist/types.d.ts:107
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: web/dist/types.d.ts:115
 
 > `readonly` **morphStyle**: `"innerHTML"` \| `"outerHTML"`
 
-Defined in: web/dist/types.d.ts:114
+Defined in: web/dist/types.d.ts:106
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: web/dist/types.d.ts:114
 
 > `readonly` **preserveFocus**: `boolean`
 
-Defined in: web/dist/types.d.ts:111
+Defined in: web/dist/types.d.ts:103
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: web/dist/types.d.ts:111
 
 > `readonly` **preserveScroll**: `boolean`
 
-Defined in: web/dist/types.d.ts:112
+Defined in: web/dist/types.d.ts:104
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: web/dist/types.d.ts:112
 
 > `readonly` **preserveSelection**: `boolean`
 
-Defined in: web/dist/types.d.ts:113
+Defined in: web/dist/types.d.ts:105

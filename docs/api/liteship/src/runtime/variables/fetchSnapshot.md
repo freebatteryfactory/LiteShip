@@ -8,7 +8,7 @@
 
 > `const` **fetchSnapshot**: (`artifactId`, `config?`) => `Promise`\<`SnapshotResponse`\>
 
-Defined in: web/dist/stream/recovery.d.ts:76
+Defined in: web/dist/stream/recovery.d.ts:83
 
 Fetch a full snapshot (html + signals + cursor) for graph-native re-sync.
 

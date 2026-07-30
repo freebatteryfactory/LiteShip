@@ -8,7 +8,7 @@
 
 > **getStreamRecoverySubstrate**(`artifactId`): [`ResolvedStreamRecoverySubstrate`](../interfaces/ResolvedStreamRecoverySubstrate.md) \| `undefined`
 
-Defined in: [web/src/stream/recovery-substrate.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L87)
+Defined in: [web/src/stream/recovery-substrate.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L124)
 
 Look up the registered substrate (with its live receipt buffer) for an artifact.
 

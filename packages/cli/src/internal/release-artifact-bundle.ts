@@ -15,7 +15,7 @@ import { basename, join, resolve } from 'node:path';
 import { PACKAGES } from '@liteship/command';
 import { IntegrityError } from '@liteship/error';
 import { packedPackageIdentity, tarballManifestAddress } from '../ship-manifest.js';
-import { spawnArgvCapture } from '../spawn-helpers.js';
+import { spawnArgvCapture } from '../spawn.js';
 
 export const RELEASE_ARTIFACT_BUNDLE_FILE = 'release-artifacts.json' as const;
 

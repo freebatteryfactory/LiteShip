@@ -107,5 +107,11 @@ export type { CompiledStagger, CompiledStaggerItem } from '@liteship/compiler';
 export { compileScrollTimeline } from '@liteship/compiler';
 export type { CompiledScrollTimeline } from '@liteship/compiler';
 
+// View Transitions (issue #175): the one compile primitive that was missing from
+// this facade while its four siblings above were re-exported — the only measurable
+// gap between the taught `liteship/compiler` surface and `@liteship/compiler`.
+export { compileViewTransition } from '@liteship/compiler';
+export type { ViewTransitionCompileInput, ViewTransitionCompileResult } from '@liteship/compiler';
+
 export { compileResponsiveMedia } from '@liteship/compiler';
 export type { CompiledResponsiveMedia } from '@liteship/compiler';

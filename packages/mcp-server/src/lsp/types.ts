@@ -22,6 +22,13 @@
  * @module
  */
 
+import type { LspDiagnosticSeverity, LspMessageType } from './protocol.js';
+
+// The numeric protocol types live with their constant tables in protocol.ts
+// (types.ts stays fully erasable); re-exported here so the type surface is one
+// import for consumers.
+export type { LspDiagnosticSeverity, LspMessageType } from './protocol.js';
+
 // ---------- The structural Finding contract (mirrors @liteship/gauntlet) ----------
 
 /** Severity vocabulary — structurally identical to `@liteship/gauntlet`'s `Severity`. */
@@ -87,24 +94,6 @@ export interface LspRange {
 }
 
 /**
- * LSP `DiagnosticSeverity` (§Diagnostic). The rigor mapping (documented on
- * {@link severityToDiagnostic}): `error` → Error(1), `warning` → Warning(2),
- * `advisory` → Information(3) — advisory is the authority ratchet's calibrating
- * tier (a real, surfaced finding that does NOT block), which `Information` (a
- * visible, non-actionable-yet notice) models more honestly than `Hint(4)`
- * (which editors fold away behind a fade).
- */
-export const DiagnosticSeverity = {
-  Error: 1,
-  Warning: 2,
-  Information: 3,
-  Hint: 4,
-} as const;
-
-/** A numeric LSP diagnostic severity (1..4). */
-export type LspDiagnosticSeverity = (typeof DiagnosticSeverity)[keyof typeof DiagnosticSeverity];
-
-/**
  * LSP `Diagnostic` (§Diagnostic). `code` carries the gate `ruleId`; `source` is
  * the fixed `'liteship-gauntlet'` provenance; `data` carries the assurance level
  * and rule identity that an editor surfaces and a code-action reads back.
@@ -127,21 +116,6 @@ export interface PublishDiagnosticsParams {
 }
 
 /**
- * LSP `MessageType` (§window/logMessage, §window/showMessage). The numeric
- * severity a server→client log/notification carries. `Error(1)` is the loudest —
- * the type a handler failure logs under.
- */
-export const MessageType = {
-  Error: 1,
-  Warning: 2,
-  Info: 3,
-  Log: 4,
-} as const;
-
-/** A numeric LSP message type (1..4). */
-export type LspMessageType = (typeof MessageType)[keyof typeof MessageType];
-
-/**
  * LSP `LogMessageParams` (§window/logMessage) — a server→client notification the
  * editor records in its output channel WITHOUT a user-facing popup (unlike
  * `showMessage`). The honest channel for surfacing a notification-handler failure:
@@ -160,11 +134,6 @@ export interface LspCommand {
   readonly arguments: readonly unknown[];
 }
 
-/** LSP `CodeActionKind` subset (§CodeActionKind). The rigor projection emits only `quickfix`. */
-export const CodeActionKind = {
-  QuickFix: 'quickfix',
-} as const;
-
 /**
  * LSP `CodeAction` (§textDocument/codeAction). Both patch and instruction
  * remediations project to client-executed commands. The lean server has no
@@ -177,13 +146,3 @@ export interface LspCodeAction {
   readonly diagnostics: readonly LspDiagnostic[];
   readonly command?: LspCommand;
 }
-
-/**
- * The client command id a `patch` workspace-edit and an `instruction` step-list
- * carry, so an editor extension knows which liteship action it is applying. Stable
- * (pinned by a test) so a downstream client can register handlers against it.
- */
-export const APPLY_PATCH_COMMAND = 'liteship.gauntlet.applyPatch' as const;
-
-/** The client command id an `instruction` code-action carries to surface its steps. */
-export const SHOW_INSTRUCTION_COMMAND = 'liteship.gauntlet.showInstruction' as const;

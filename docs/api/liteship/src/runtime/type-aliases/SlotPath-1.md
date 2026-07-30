@@ -8,10 +8,11 @@
 
 > **SlotPath** = `` `/${string}` `` & `object`
 
-Defined in: web/dist/types.d.ts:15
+Defined in: web/dist/slot/addressing.d.ts:11
 
 Slot path is a forward-slash prefixed branded path string.
-Used to address regions within the DOM.
+Used to address regions within the DOM. Declared here beside its branding
+factory (`types.ts` re-exports the type and stays fully erasable).
 
 ## Type Declaration
 

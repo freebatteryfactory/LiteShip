@@ -6,7 +6,7 @@
 
 # Interface: AnalyzedPackageArtifacts
 
-Defined in: [audit/src/types.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L92)
+Defined in: [audit/src/types.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L79)
 
 A package whose declared audit artifacts were physically discovered.
 
@@ -16,7 +16,7 @@ A package whose declared audit artifacts were physically discovered.
 
 > `readonly` **coverage**: `"analyzed"`
 
-Defined in: [audit/src/types.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L94)
+Defined in: [audit/src/types.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L81)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [audit/src/types.ts:94](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **expectedArtifacts**: readonly `string`[]
 
-Defined in: [audit/src/types.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L95)
+Defined in: [audit/src/types.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L82)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [audit/src/types.ts:95](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **matchedFiles**: readonly `string`[]
 
-Defined in: [audit/src/types.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L96)
+Defined in: [audit/src/types.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L83)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [audit/src/types.ts:96](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **package**: `string`
 
-Defined in: [audit/src/types.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L93)
+Defined in: [audit/src/types.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L80)

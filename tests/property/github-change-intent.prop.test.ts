@@ -13,6 +13,15 @@ function declaration(visibility: 'internal' | 'public' | 'trust-boundary' = 'pub
     reversibility: { kind: 'reversible', rollback: 'Revert the isolated change.' },
     actorClass: 'agent',
     uncertainty: { level: 'medium', unknowns: ['host variance'] },
+    execution: {
+      executionId: 'session-gh',
+      model: { provider: 'anthropic', id: 'claude-fable-5' },
+      toolScopes: ['read', 'write'],
+      budgets: { wallClockMs: null, tokens: null },
+      digests: { prompt: null, context: null, toolPolicy: null },
+      actionTrace: null,
+      autonomy: 'execute',
+    },
   };
 }
 
@@ -228,6 +237,18 @@ describe('GitHub ChangeIntent adapter properties', () => {
               : { kind: 'irreversible', rationale: rollbackOrRationale },
             actorClass,
             uncertainty: { level, unknowns },
+            // Always-declared execution keeps every generated actorClass
+            // admissible (agent actors REQUIRE it; autonomy 'execute' is below
+            // the human-owned approve/release tiers for every class).
+            execution: {
+              executionId: 'session-prop-gh',
+              model: null,
+              toolScopes: ['read', 'write'],
+              budgets: { wallClockMs: null, tokens: null },
+              digests: { prompt: null, context: null, toolPolicy: null },
+              actionTrace: null,
+              autonomy: 'execute',
+            },
           };
           const cold = validateGitHubChangeIntentDeclaration('pull_request', {
             pull_request: { body: comment(payload), user: { login: 'heyoub' } },

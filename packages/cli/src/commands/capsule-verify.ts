@@ -33,7 +33,7 @@ import { runGeneratedCorpus } from '../internal/generated-corpus-runner.js';
 
 /** Receipt emitted by `liteship capsule-verify`. */
 export interface CapsuleVerifyReceipt extends CapsuleVerifyPayload {
-  readonly command: 'capsule-verify';
+  readonly command: 'capsule.gate';
   readonly timestamp: WallClockTimestamp;
 }
 
@@ -305,11 +305,11 @@ export async function capsuleVerify(
 
   const context: CommandContext = { cwd, runCapsuleGate: async () => runCapsuleGateScan(cwd, deps) };
 
-  const result = await capsuleVerifyGateCommand.handler({ name: 'capsule-verify', args: {} }, context);
+  const result = await capsuleVerifyGateCommand.handler({ name: 'capsule.gate', args: {} }, context);
   const payload = result.payload as CapsuleVerifyPayload;
 
   const receipt: CapsuleVerifyReceipt = {
-    command: 'capsule-verify',
+    command: 'capsule.gate',
     timestamp: result.timestamp,
     ...payload,
   };

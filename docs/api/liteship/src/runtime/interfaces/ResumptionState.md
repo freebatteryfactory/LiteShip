@@ -6,7 +6,7 @@
 
 # Interface: ResumptionState
 
-Defined in: web/dist/types.d.ts:314
+Defined in: web/dist/types.d.ts:306
 
 Resumption state stored in sessionStorage.
 
@@ -16,7 +16,7 @@ Resumption state stored in sessionStorage.
 
 > `readonly` **artifactId**: `string`
 
-Defined in: web/dist/types.d.ts:317
+Defined in: web/dist/types.d.ts:309
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: web/dist/types.d.ts:317
 
 > `readonly` **lastEventId**: `string`
 
-Defined in: web/dist/types.d.ts:315
+Defined in: web/dist/types.d.ts:307
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: web/dist/types.d.ts:315
 
 > `readonly` **lastSequence**: `number`
 
-Defined in: web/dist/types.d.ts:316
+Defined in: web/dist/types.d.ts:308
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: web/dist/types.d.ts:316
 
 > `readonly` **timestamp**: `number`
 
-Defined in: web/dist/types.d.ts:318
+Defined in: web/dist/types.d.ts:310

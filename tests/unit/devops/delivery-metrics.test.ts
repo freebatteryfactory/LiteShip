@@ -62,7 +62,7 @@ const plan = planAffectedTests(['packages/core/src/index.ts'], PACKAGE_CATALOG, 
 });
 
 const intent = buildChangeIntent({
-  schemaVersion: 1,
+  schemaVersion: 2,
   sponsor: { value: { login: 'heyoub', ownership: 'repository-owner' }, provenance: 'github-verified' },
   hypothesis: { value: 'Measure library delivery health.', provenance: 'agent-self-declared' },
   affectedUserSurface: {
@@ -82,6 +82,7 @@ const intent = buildChangeIntent({
     value: { host: 'github.com', owner: 'freebatteryfactory', name: 'LiteShip', nodeId: 'R_delivery' },
     provenance: 'github-verified',
   },
+  execution: { value: null, provenance: 'agent-self-declared' },
 });
 
 const timeline = {

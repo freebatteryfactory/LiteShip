@@ -9,7 +9,7 @@
 
 import type { Theme } from '@liteship/core';
 import { THEME_TRANSITION_DURATION_MS, THEME_TRANSITION_EASING } from '@liteship/core';
-import { stringifyCSSValue } from './css-utils.js';
+import { stringifyCSSValue } from './css-syntax.js';
 
 // ---------------------------------------------------------------------------
 // Types

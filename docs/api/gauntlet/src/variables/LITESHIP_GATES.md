@@ -8,6 +8,6 @@
 
 > `const` **LITESHIP\_GATES**: readonly [`Gate`](../interfaces/Gate.md)[]
 
-Defined in: [gauntlet/src/runner.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L163)
+Defined in: [gauntlet/src/runner.ts:173](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L173)
 
 The complete lean composition.

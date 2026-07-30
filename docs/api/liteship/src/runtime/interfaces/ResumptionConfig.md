@@ -6,7 +6,7 @@
 
 # Interface: ResumptionConfig
 
-Defined in: web/dist/types.d.ts:298
+Defined in: web/dist/types.d.ts:290
 
 Resumption configuration for gap detection and recovery.
 
@@ -16,7 +16,7 @@ Resumption configuration for gap detection and recovery.
 
 > `readonly` `optional` **endpointPolicy?**: [`RuntimeEndpointPolicy`](RuntimeEndpointPolicy.md)
 
-Defined in: web/dist/types.d.ts:309
+Defined in: web/dist/types.d.ts:301
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: web/dist/types.d.ts:309
 
 > `readonly` **maxGapSize**: `number`
 
-Defined in: web/dist/types.d.ts:305
+Defined in: web/dist/types.d.ts:297
 
 Maximum number of missed events recoverable via patch replay before
 falling back to a full snapshot.
@@ -37,7 +37,7 @@ Default: 50 — see `defaultResumptionConfig`; `Resumption.resume` accepts a `Pa
 
 > `readonly` `optional` **replayUrl?**: `string`
 
-Defined in: web/dist/types.d.ts:307
+Defined in: web/dist/types.d.ts:299
 
 ***
 
@@ -45,7 +45,7 @@ Defined in: web/dist/types.d.ts:307
 
 > `readonly` `optional` **snapshotUrl?**: `string`
 
-Defined in: web/dist/types.d.ts:306
+Defined in: web/dist/types.d.ts:298
 
 ***
 
@@ -53,4 +53,4 @@ Defined in: web/dist/types.d.ts:306
 
 > `readonly` `optional` **timeout?**: [`Millis`](../../../../spine/type-aliases/Millis.md)
 
-Defined in: web/dist/types.d.ts:308
+Defined in: web/dist/types.d.ts:300

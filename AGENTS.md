@@ -74,15 +74,15 @@ Use this index to find the semantic owner; public subpaths and dependency edges 
 | `liteship astro status` | Report Astro 7 background dev-server status. | CLI orchestration |
 | `liteship astro stop` | Stop the Astro 7 background dev server. | CLI orchestration |
 | `liteship audit` | Run the profile-driven structure/integrity/surface audit; report a structured summary. | shared handler |
-| `liteship audit-floor` | Audit warning-floor gate: fail when the artifact-independent three-pass warning inventory drifts from AUDIT_WARNING_FLOOR or any error is present. | shared handler |
+| `liteship audit floor` | Audit warning-floor gate: fail when the artifact-independent three-pass warning inventory drifts from AUDIT_WARNING_FLOOR or any error is present. | shared handler |
 | `liteship build` | Build a LiteShip consumer app (detects liteship.config.ts, runs the astro/vite host build). | CLI orchestration |
-| `liteship capsule-verify` | Capsule-corpus gate: assert every generated test+bench is fresh and honest, execute both lanes, and admit measured benchmark distributions with uncertainty. | shared handler |
+| `liteship capsule gate` | Capsule-corpus gate: assert every generated test+bench is fresh and honest, execute both lanes, and admit measured benchmark distributions with uncertainty. | shared handler |
 | `liteship capsule inspect` | Inspect a capsule manifest entry. | shared handler |
 | `liteship capsule list` | List capsules, optionally filtered by kind. | shared handler |
 | `liteship capsule verify` | Verify a capsule’s generated tests. | shared handler |
 | `liteship check` | Run the quick check profile by default; select quick/full/release/consumer/environment or print the execution plan. | CLI orchestration |
-| `liteship check-invariants` | Fast-lane invariant gate: fail on any banned source pattern (require/module.exports/var/ESM violation) or line-ending policy breach. | shared handler |
 | `liteship check gates` | Run the pure gauntlet gate fold in-process (litelaunchGauntlet) and return structured findings + a blocking verdict. | shared handler |
+| `liteship check invariants` | Fast-lane invariant gate: fail on any banned source pattern (require/module.exports/var/ESM violation) or line-ending policy breach. | shared handler |
 | `liteship completion` | Emit a shell tab-completion script for sourcing into a shell rc. | CLI orchestration |
 | `liteship context` | Get ordered owner/check/proof context for a repo task or curated public symbol. | shared handler |
 | `liteship describe` | Dump the capsule catalog + command schema (the AI discovery surface). | CLI orchestration |

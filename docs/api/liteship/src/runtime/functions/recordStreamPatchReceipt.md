@@ -8,7 +8,7 @@
 
 > **recordStreamPatchReceipt**(`artifactId`, `frame`): `Promise`\<`boolean`\>
 
-Defined in: web/dist/stream/recovery-substrate.d.ts:50
+Defined in: web/dist/stream/recovery-substrate.d.ts:61
 
 Record a receipt frame from the SSE stream into the artifact's live buffer.
 Async because the attestation-check recomputes the sha256 receipt hash

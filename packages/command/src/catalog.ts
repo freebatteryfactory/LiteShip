@@ -68,11 +68,11 @@ export interface CommandMap {
   readonly 'scene.render': SceneRenderPayload;
   readonly verify: VerifyPayload;
   readonly audit: AuditPayload;
-  readonly 'audit-floor': AuditFloorPayload;
+  readonly 'audit.floor': AuditFloorPayload;
   readonly plumb: PlumbPayload;
   readonly 'package-smoke': PackageSmokePayload;
-  readonly 'check-invariants': CheckInvariantsPayload;
-  readonly 'capsule-verify': CapsuleVerifyPayload;
+  readonly 'check.invariants': CheckInvariantsPayload;
+  readonly 'capsule.gate': CapsuleVerifyPayload;
   readonly 'check.gates': CheckPayload;
   readonly explain: ExplainPayload;
   readonly context: ContextPayload;
@@ -371,13 +371,13 @@ const NOT_PERFORMANCE_COMMANDS = [
   'astro.status',
   'astro.stop',
   'audit',
-  'audit-floor',
+  'audit.floor',
   'build',
-  'capsule-verify',
+  'capsule.gate',
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
-  'check-invariants',
+  'check.invariants',
   'check.gates',
   'completion',
   'context',

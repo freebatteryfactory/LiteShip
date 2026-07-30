@@ -34,7 +34,7 @@ import type { Boundary, Token, Theme, TokenCategory } from '@liteship/core';
 import { hasTag } from '@liteship/error';
 import { blankCssCommentsAndStrings } from '@liteship/compiler/parse';
 import { parseOrderedFlatDeclarations } from '../parse/css-scan.js';
-import { inferSyntax } from '../css-utils.js';
+import { inferSyntax } from '../css-syntax.js';
 import type { MigrationDiagnostic, MigrationResult, FromMediaQueriesOptions } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
 import { parseQueryLength } from './query-length.js';

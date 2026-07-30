@@ -36,7 +36,7 @@ import {
   peerDependenciesOnly,
   qualifiedHostOverrides,
   tarballFileUrl,
-} from '../../packages/cli/src/internal/package-smoke-helpers.js';
+} from '../../packages/cli/src/internal/package-smoke-engine.js';
 import { verifyReleaseArtifactBundle } from '../../packages/cli/src/internal/release-artifact-bundle.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 import { runPnpm, type PnpmRunResult } from '../../scripts/support/pnpm-process.js';

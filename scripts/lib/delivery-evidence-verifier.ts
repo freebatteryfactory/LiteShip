@@ -149,6 +149,33 @@ function verifyChangeIntent(raw: Uint8Array, plan: AffectedTestPlan, expected: T
         : ['declared', 'push-fail-broad'];
   if (!admittedOrigins.includes(value['origin'] as string)) fail('change intent origin is foreign to this event/ref');
   const intent = parseChangeIntent(value['intent']);
+  // Producer-blind actor-classification reconstruction (PR #190 review,
+  // confirmed P1): the provenance LABEL on actorClass arrives in the evidence
+  // bytes, and the admission fold below trusts it — so a producer could
+  // serialize { value: 'human', provenance: 'github-verified' } and walk past
+  // the privileged-autonomy refusal. Rebind it from what THIS verifier knows:
+  //  - origin 'declared': the adapter never verifies an authored
+  //    classification — anything but agent-self-declared is forged;
+  //  - fail-broad origins: the intent is host-synthesized and its
+  //    classification is exactly the host-derived, github-verified
+  //    'automation' — anything else is forged.
+  if (value['origin'] === 'declared') {
+    if (intent.actorClass.provenance !== 'agent-self-declared') {
+      fail('change intent actor classification claims a provenance no declared channel can mint');
+    }
+  } else if (intent.actorClass.value !== 'automation' || intent.actorClass.provenance !== 'github-verified') {
+    fail('fail-broad change intent must carry the host-derived automation classification');
+  }
+  // Execution provenance is the actorClass rule's sibling (PR #191 review,
+  // round 6, confirmed): the GitHub adapter mints it 'agent-self-declared'
+  // for EVERY channel — including the fail-broad fallback (execution is
+  // inherently self-reported by the run that authored the change; the host
+  // never verifies it). A 'github-verified' execution label in the evidence
+  // bytes is forged host verification, and although the admission fold does
+  // not consult it, the durable record would carry the lie.
+  if (intent.execution.provenance !== 'agent-self-declared') {
+    fail('change intent execution provenance claims a verification no channel can mint');
+  }
   const admission = admitChangeIntent(intent);
   if (!admission.accepted) fail(`change intent was not admitted: ${admission.reasons.join(', ')}`);
   if (

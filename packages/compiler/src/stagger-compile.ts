@@ -18,7 +18,7 @@ import {
 } from '@liteship/core';
 import { MotionCompiler } from './motion.js';
 import type { MotionCompileResult, MotionEasing } from './motion.js';
-import { appendReducedMotionGuard, appendTranslateConsumer } from './motion-utils.js';
+import { appendReducedMotionGuard, appendTranslateConsumer } from './motion-augment.js';
 
 /** One compiled stagger child. */
 export interface CompiledStaggerItem {

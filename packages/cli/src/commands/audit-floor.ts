@@ -20,7 +20,7 @@ import { liteshipDevopsProfile } from '../internal/liteship-audit-profile.js';
 /** Receipt emitted by `liteship audit-floor`. */
 export interface AuditFloorReceipt extends AuditFloorPayload {
   readonly status: 'ok' | 'failed';
-  readonly command: 'audit-floor';
+  readonly command: 'audit.floor';
   readonly timestamp: WallClockTimestamp;
 }
 
@@ -100,12 +100,12 @@ export async function auditFloor(
 
   const context: CommandContext = { cwd, runAuditFloor: async () => runAuditFloorScan(deps) };
 
-  const result = await auditFloorCommand.handler({ name: 'audit-floor', args: {} }, context);
+  const result = await auditFloorCommand.handler({ name: 'audit.floor', args: {} }, context);
   const payload = result.payload as AuditFloorPayload;
 
   const receipt: AuditFloorReceipt = {
     status: result.status === 'ok' ? 'ok' : 'failed',
-    command: 'audit-floor',
+    command: 'audit.floor',
     timestamp: result.timestamp,
     ...payload,
   };

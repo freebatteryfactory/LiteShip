@@ -6,7 +6,7 @@
 
 # Interface: SlotEntryInput
 
-Defined in: web/dist/types.d.ts:44
+Defined in: web/dist/types.d.ts:36
 
 Input accepted by `SlotRegistry.register`. Registered entries are
 normalized to a full [SlotEntry](SlotEntry.md): `mode` defaults to `'partial'`
@@ -18,7 +18,7 @@ and `mounted` defaults to `true`.
 
 > `readonly` **element**: `Element`
 
-Defined in: web/dist/types.d.ts:46
+Defined in: web/dist/types.d.ts:38
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: web/dist/types.d.ts:46
 
 > `readonly` `optional` **mode?**: [`IslandMode`](../type-aliases/IslandMode.md)
 
-Defined in: web/dist/types.d.ts:47
+Defined in: web/dist/types.d.ts:39
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: web/dist/types.d.ts:47
 
 > `readonly` `optional` **mounted?**: `boolean`
 
-Defined in: web/dist/types.d.ts:48
+Defined in: web/dist/types.d.ts:40
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: web/dist/types.d.ts:48
 
 > `readonly` **path**: [`SlotPath`](../type-aliases/SlotPath.md)
 
-Defined in: web/dist/types.d.ts:45
+Defined in: web/dist/types.d.ts:37

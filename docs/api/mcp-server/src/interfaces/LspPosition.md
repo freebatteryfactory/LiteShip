@@ -6,7 +6,7 @@
 
 # Interface: LspPosition
 
-Defined in: [mcp-server/src/lsp/types.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L78)
+Defined in: [mcp-server/src/lsp/types.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L85)
 
 LSP `Position` (§Text Documents) — 0-based line + character.
 
@@ -16,7 +16,7 @@ LSP `Position` (§Text Documents) — 0-based line + character.
 
 > `readonly` **character**: `number`
 
-Defined in: [mcp-server/src/lsp/types.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L80)
+Defined in: [mcp-server/src/lsp/types.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L87)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [mcp-server/src/lsp/types.ts:80](https://github.com/freebatteryfacto
 
 > `readonly` **line**: `number`
 
-Defined in: [mcp-server/src/lsp/types.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L79)
+Defined in: [mcp-server/src/lsp/types.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L86)

@@ -1,45 +1,93 @@
 # types.ts purity — a `types.ts` is TYPE-SPACE ONLY: `interface`,
 # `type` aliases, and re-exported types. It must be fully ERASABLE — a type-only
-# import of it, or a bundler dropping `import type`, leaves nothing behind. A
-# value definition (function / class / const / let / var / enum) breaks
-# erasability and turns the "types" file into a hidden runtime module. Values
-# with a definition site belong in a domain module; the type that describes them
-# stays here.
+# import of it, or a bundler dropping `import type`, leaves nothing behind.
 #
-# Flags the VALUE-declaration node kinds only —
-#   function_declaration / class_declaration / enum_declaration /
-#   lexical_declaration (const/let) / variable_declaration (var)
-# — and deliberately NOT interface_declaration / type_alias_declaration, which
-# are exactly what a types.ts is for.
+# THE CLASS RULE (PR #191 review, rounds 4+5): this rule is an ALLOWLIST, not a
+# denylist. TS statement space is an open grammar for a hand-picked "bad forms"
+# list — the value-declaration list missed runtime value imports and bare calls
+# in round 4, then `export default 1;` in round 5 — so the rule inverts:
 #
-# SCOPE — packages/core/src only, for now. No core file is named types.ts today,
-# so this GUARDS THE FUTURE: the first `packages/core/src/**/types.ts` that ships
-# a value fails `lint:structural`. (ast-grep globs let `*` cross `/`, so the
-# task's `packages/*/src/*/types.ts` glob would reach every types.ts below src
-# root — and two pre-existing files carry runtime values there today:
-#     packages/mcp-server/src/lsp/types.ts   (LSP protocol constant tables:
-#         DiagnosticSeverity / CodeActionKind / MessageType `as const`, command-id
-#         string constants — co-located with the `typeof`-derived types)
-#     packages/cli/src/commands/doctor/types.ts  (an inline version-parse helper)
-# so a repo-wide glob cannot ship green. Scoping to the fully-migrated `core`
-# package is the same core-first ratchet as no-utils-file. Ratchet plan: relocate
-# the two files' values into domain modules, then widen `packages/core` to
-# `packages/*` here.)
+#   ANCHOR — the COMPLETE statement supertype of the tree-sitter-typescript
+#   grammar (every `kind` a top-level statement can be), a CLOSED set that only
+#   changes with a grammar upgrade. This is not a curated denylist: nothing is
+#   selected, everything statement-shaped is in. `interface_declaration`,
+#   `type_alias_declaration`, and comments are simply NOT statements we anchor
+#   on — they are the structurally-allowed forms.
 #
-# Note: root-level `packages/*/src/types.ts` (audit, genui, web) sit at src root
-# and are a SEPARATE question from the subdirectory types barrel this rule guards.
+#   ALLOWLIST (the `not`) — the only anchored statements excused are the
+#   fully-erased spellings: top-level `import type ...` (the inline
+#   `import { type A }` form still EMITS a live `import {}` under
+#   verbatimModuleSyntax — not legal here), `export type ...` (aliases,
+#   `export type { X } from`, `export type * from`), and `export`-wrapped
+#   interface / type-alias declarations.
+#
+# Everything else fires without needing to be foreseen: value declarations,
+# runtime imports/re-exports, expression statements, `export default`,
+# `export =`, `import X = Y`, namespaces, ambient declares, control flow —
+# and whatever statement form comes next.
+#
+# SCOPE — every `types.ts` under every package src tree, INCLUDING the src-root
+# barrels. The core-first ratchet completed 2026-07-29 (issue #178): the value
+# carriers were relocated into domain modules — mcp-server lsp/types.ts protocol
+# constant tables → lsp/protocol.ts, doctor/types.ts probe helpers →
+# doctor/probe-support.ts, audit/src/types.ts rule-id roster → rule-ids.ts,
+# web/src/types.ts SlotPath brand factory → slot/addressing.ts — so the glob is
+# repo-wide and every types.ts is provably erasable.
 #
 # Run: `pnpm run lint:structural`  (CI: gauntlet `lint:structural` phase)
 id: types-file-purity
 language: typescript
 severity: error
-message: "types.ts is type-space only and must be erasable — no function/class/const/let/var/enum. Move the value into a domain module and keep only its `interface` / `type` here."
+message: "types.ts is type-space only and must be erasable — only `interface`, `type` aliases, `import type`, and `export type` forms are legal here. Move every runtime construct into a domain module and keep only its `interface` / `type` here."
 files:
-  - "**/packages/core/src/**/types.ts"
+  - "**/packages/*/src/**/types.ts"
 rule:
-  any:
-    - kind: function_declaration
-    - kind: class_declaration
-    - kind: enum_declaration
-    - kind: lexical_declaration
-    - kind: variable_declaration
+  all:
+    # Top-level statements only (direct children of the program node): the
+    # allowlist judges what the MODULE does, statement by statement.
+    - inside: { kind: program }
+    # The grammar's complete statement supertype (ast-grep requires concrete
+    # kinds — `kind: statement` and `pattern: $A` cannot anchor a rule).
+    - any:
+        - kind: export_statement
+        - kind: import_statement
+        - kind: expression_statement
+        - kind: debugger_statement
+        - kind: statement_block
+        - kind: if_statement
+        - kind: switch_statement
+        - kind: for_statement
+        - kind: for_in_statement
+        - kind: while_statement
+        - kind: do_statement
+        - kind: try_statement
+        - kind: with_statement
+        - kind: break_statement
+        - kind: continue_statement
+        - kind: return_statement
+        - kind: throw_statement
+        - kind: empty_statement
+        - kind: labeled_statement
+        - kind: function_declaration
+        - kind: generator_function_declaration
+        - kind: class_declaration
+        - kind: abstract_class_declaration
+        - kind: lexical_declaration
+        - kind: variable_declaration
+        - kind: function_signature
+        - kind: enum_declaration
+        - kind: module
+        - kind: internal_module
+        - kind: ambient_declaration
+        - kind: import_alias
+    - not:
+        any:
+          - all:
+              - kind: import_statement
+              - regex: "^import\\s+type\\b"
+          - all:
+              - kind: export_statement
+              - any:
+                  - has: { field: declaration, kind: interface_declaration }
+                  - has: { field: declaration, kind: type_alias_declaration }
+                  - regex: "^export\\s+type\\b"

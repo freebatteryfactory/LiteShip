@@ -430,7 +430,7 @@ describe('no-wildcard-facade-export (b) — a facade re-exports by name, never a
   });
 });
 
-describe('no-utils-file (c) — no grab-bag filenames (core-scoped ratchet)', () => {
+describe('no-utils-file (c) — no grab-bag filenames (repo-wide)', () => {
   const RULE = 'no-utils-file.yml';
 
   it('RED: utils.ts / helpers.ts / *-utils.ts / *-helpers.ts under core fire', async () => {
@@ -445,13 +445,13 @@ describe('no-utils-file (c) — no grab-bag filenames (core-scoped ratchet)', ()
     expect((await scan(RULE, f)).length).toBe(0);
   });
 
-  it('SCOPE: a grab-bag file in a NON-core package is out of scope (ratchet not yet widened)', async () => {
+  it('SCOPE: a grab-bag file in a NON-core package fires (issue #178 widened the ratchet repo-wide)', async () => {
     const f = fixture('packages/compiler/src/css-utils.ts', 'export const x = 1;\n');
-    expect((await scan(RULE, f)).length).toBe(0);
+    expect((await scan(RULE, f)).length).toBe(1);
   });
 });
 
-describe('types-file-purity (d) — a types.ts is type-space only (core-scoped guard)', () => {
+describe('types-file-purity (d) — a types.ts is type-space only (repo-wide)', () => {
   const RULE = 'types-file-purity.yml';
 
   it('RED: value declarations in a core types.ts fire on each', async () => {
@@ -478,15 +478,64 @@ describe('types-file-purity (d) — a types.ts is type-space only (core-scoped g
         'export interface Shape { x: number }',
         'export type Alias = string | number;',
         "export type { Imported } from './elsewhere.js';",
+        "export type * from './everything.js';",
+        "import type { Used } from './used.js';",
+        'export interface Uses { u: Used }',
         '',
       ].join('\n'),
     );
     expect((await scan(RULE, f)).length).toBe(0);
   });
 
-  it('SCOPE: a value-bearing types.ts in a NON-core package is out of scope', async () => {
+  it('RED: runtime re-exports and side-effect imports break erasability (PR #186 review)', async () => {
+    // `export { v } from` re-emits a runtime binding, `export * from` re-emits
+    // them all, and a clause-less import executes the module — all three make
+    // the "types" file a hidden runtime module even with zero declarations.
+    const f = fixture(
+      'packages/web/src/hidden/types.ts',
+      [
+        "export { runtimeValue } from './runtime.js';",
+        "export * from './runtime.js';",
+        "import './side-effect.js';",
+        '',
+      ].join('\n'),
+    );
+    expect((await scan(RULE, f)).length).toBe(3);
+  });
+
+  it('RED: a runtime value import plus a bare call breaks erasability (PR #191 review, round 4)', async () => {
+    // `import { register } from './runtime.js'; register();` passed the old
+    // rule: the import HAS an import_clause and the call is an unlisted
+    // expression_statement — yet the emitted module imports and EXECUTES code.
+    // A types.ts import must be `import type`; a top-level statement that is
+    // pure expression is runtime by definition.
+    const f = fixture(
+      'packages/core/src/hidden2/types.ts',
+      ["import { register } from './runtime.js';", 'register();', ''].join('\n'),
+    );
+    // The non-type import + the expression statement = 2.
+    expect((await scan(RULE, f)).length).toBe(2);
+  });
+
+  it('RED: ANY unlisted runtime form fires — the rule is an allowlist, not a denylist (PR #191 review, round 5)', async () => {
+    // The class, not the instance: `export default 1;` matched no denylist arm
+    // (an export_statement with no source and no banned declaration), exactly
+    // as the value import + bare call slipped a round earlier. TS statement
+    // space is an open grammar — enumerating bad forms never terminates. The
+    // class kill is the inversion: the rule now allowlists the finitely many
+    // TYPE-ONLY top-level forms and flags everything else, so a runtime form
+    // never needs to be foreseen to be caught.
+    const f = fixture(
+      'packages/core/src/hidden3/types.ts',
+      ['export default 1;', 'if (globalThis) { }', ''].join('\n'),
+    );
+    // The default export + the if statement = 2.
+    expect((await scan(RULE, f)).length).toBe(2);
+  });
+
+  it('SCOPE: a value-bearing types.ts in a NON-core package fires (issue #178 widened the guard repo-wide)', async () => {
     const f = fixture('packages/mcp-server/src/lsp/types.ts', 'export const SEVERITY = { Error: 1 } as const;\n');
-    expect((await scan(RULE, f)).length).toBe(0);
+    expect((await scan(RULE, f)).length).toBe(1);
   });
 });
 

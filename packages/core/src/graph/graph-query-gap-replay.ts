@@ -15,7 +15,12 @@
 
 import type { ContentAddress } from '../schema/brands.js';
 import type { DocumentGraph } from './document-graph.js';
-import { Receipt, type ChainValidationError, type ReceiptEnvelope } from '../evidence/receipt.js';
+import {
+  Receipt,
+  type ChainValidationError,
+  type ChainValidationOptions,
+  type ReceiptEnvelope,
+} from '../evidence/receipt.js';
 import { Diagnostics } from '../evidence/diagnostics.js';
 import { createGraphQueryRefreshBase, graphQueryEtag, sendGraphQuery, type GraphQueryResponse } from './graph-query.js';
 import type { StateCellStore } from '../reactive/state-cell.js';
@@ -40,6 +45,23 @@ export interface ReplayDiscreteFromPatchReceiptsOptions {
   readonly cellStore: StateCellStore;
   /** Typed host reflection of an applied crossing (e.g. dispatch to the DOM). */
   readonly applyTransition?: (transition: DiscreteStateTransition) => void;
+  /**
+   * Checkpoint-attestation retention (issue #150): when the bounded receipt
+   * buffer evicted a prefix, the buffer owner minted a genesis-shaped
+   * `DAG.checkpoint` over the dropped set and retains `{ base, checkpoint }`.
+   * Threading it here lets a retained SUFFIX validate without its dropped
+   * prefix — `validateChainDetailed` widens its genesis predicate to
+   * `previous === base` and integrity-checks the attestation. Omitted, the
+   * genesis-rooted floor applies unchanged (a truncated tail refuses —
+   * `base` without a verified `checkpoint` is deliberately rejected; that
+   * hole was closed once and stays closed).
+   *
+   * May be a THUNK: the live buffer's retention advances on every eviction,
+   * and an eviction can land while the QUERY read is in flight. A thunk is
+   * resolved HERE, synchronously with the entries read, so retention and
+   * buffer can never diverge across that await (PR #188 review, confirmed).
+   */
+  readonly chainValidation?: ChainValidationOptions | (() => ChainValidationOptions | undefined);
 }
 
 /** Options for QUERY-backed graph-native gap replay (#133-full). */
@@ -51,6 +73,12 @@ export interface GraphNativeGapReplayOptions {
   readonly adopt: (graph: DocumentGraph) => void;
   /** Typed host reflection of an applied crossing (e.g. dispatch to the DOM). */
   readonly applyTransition?: (transition: DiscreteStateTransition) => void;
+  /**
+   * Checkpoint-attestation retention for an evicted buffer prefix (issue #150).
+   * A thunk defers resolution until the entries are read, keeping retention and
+   * a live buffer consistent across the QUERY await (PR #188 review).
+   */
+  readonly chainValidation?: ChainValidationOptions | (() => ChainValidationOptions | undefined);
   readonly fetchImpl?: typeof fetch;
   readonly maxRetries?: number;
 }
@@ -217,6 +245,37 @@ export function chainPatchesBetween(
 }
 
 /**
+ * Prepend the buffered receipts that link the retention watermark (`base`) to
+ * the selected branch's first receipt, walking `previous` links backward
+ * through the entries. Returns the chain UNCHANGED when the branch already
+ * starts at `base`, or when the lineage cannot be established from the buffer
+ * (missing link, merge-shaped `previous`, cycle) — validation then refuses
+ * exactly as it would have, so this only ever widens what can be PROVEN.
+ */
+function withRetainedLineage(
+  chain: readonly ReceiptEnvelope[],
+  base: string,
+  entries: readonly PatchReceiptEntry[],
+): readonly ReceiptEnvelope[] {
+  if (chain.length === 0) return chain;
+  const byHash = new Map(entries.map((entry) => [entry.receipt.hash, entry.receipt]));
+  const prefix: ReceiptEnvelope[] = [];
+  const seen = new Set<string>();
+  let previous = chain[0]!.previous;
+  for (;;) {
+    if (previous === base || (Array.isArray(previous) && (previous as readonly string[]).includes(base))) {
+      return prefix.length === 0 ? chain : [...prefix, ...chain];
+    }
+    if (typeof previous !== 'string' || seen.has(previous)) return chain;
+    const linked = byHash.get(previous);
+    if (linked === undefined) return chain;
+    seen.add(previous);
+    prefix.unshift(linked);
+    previous = linked.previous;
+  }
+}
+
+/**
  * Replay missed discrete crossings from a transition/receipt chain.
  *
  * The selected branch's receipts are run through the structural floor
@@ -230,7 +289,29 @@ export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFro
   readonly replayedCells: readonly ReplayableRecoveryCell[];
   readonly transitions: readonly DiscreteStateTransition[];
 }> {
-  const branch = chainPatchesBetween(options.localBaseId, options.serverGraphId, options.entries);
+  // Resolve a retention THUNK now — the same microtask that reads `entries`
+  // below, so a live buffer's retention can never be from a different moment
+  // than the entries it governs (PR #188 review: an eviction landing during
+  // the QUERY await made a pre-await snapshot validate a post-await buffer).
+  const chainValidation =
+    typeof options.chainValidation === 'function' ? options.chainValidation() : options.chainValidation;
+  let branch = chainPatchesBetween(options.localBaseId, options.serverGraphId, options.entries);
+  if (branch.length === 0 && chainValidation?.base !== undefined) {
+    // The local graph anchor itself may have been EVICTED (PR #191 review,
+    // confirmed): with `base → mid` dropped and `mid → server` retained, no
+    // retained transition starts at localBaseId, so selection finds nothing —
+    // before the checkpoint authorization is ever consulted. The watermark
+    // names the receipt whose successor is the FIRST retained entry: re-anchor
+    // selection at that entry's graph base. The suffix still passes the full
+    // structural floor below ({ base, checkpoint } authorizes exactly this
+    // lineage). HONEST LIMIT: crossings that lived only in the evicted prefix
+    // are gone — the QUERY adoption corrects the graph and the snapshot floor
+    // corrects the DOM; this re-anchor only recovers what is still provable.
+    const firstRetained = options.entries.find((entry) => entry.receipt.previous === chainValidation.base);
+    if (firstRetained !== undefined && firstRetained.transition.base !== options.localBaseId) {
+      branch = chainPatchesBetween(firstRetained.transition.base, options.serverGraphId, options.entries);
+    }
+  }
   if (branch.length === 0) {
     return { replayedCells: [], transitions: [] };
   }
@@ -271,9 +352,22 @@ export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFro
     .map((transition) => receiptByTransition.get(transition))
     .filter((receipt): receipt is ReceiptEnvelope => receipt !== undefined);
 
+  // When the local base advanced PAST the retention watermark (an earlier
+  // recovery adopted a newer graph while the buffer retained older receipts),
+  // the selected branch starts mid-suffix: its first receipt names a retained
+  // receipt, not `base`, and the widened genesis predicate would refuse a
+  // perfectly retained lineage (PR #188 review, confirmed). Prepend the
+  // buffered receipts linking `base` → branch start so the WHOLE retained
+  // lineage is validated; an unlinkable prefix leaves the chain unchanged and
+  // the floor refuses exactly as before (fail-safe, never fail-wrong).
+  const chainForValidation =
+    chainValidation === undefined || chainValidation.base === undefined
+      ? chain
+      : withRetainedLineage(chain, chainValidation.base, options.entries);
+
   let validated: { readonly ok: true } | { readonly ok: false; readonly error: ChainValidationError };
   try {
-    await Receipt.validateChainDetailed(chain);
+    await Receipt.validateChainDetailed(chainForValidation, chainValidation);
     validated = { ok: true };
   } catch (error) {
     // `validateChainDetailed` throws the typed `ChainValidationError` (a plain
@@ -361,6 +455,7 @@ export async function runGraphNativeGapReplay(
     entries: options.entries,
     cellStore: options.cellStore,
     ...(options.applyTransition !== undefined ? { applyTransition: options.applyTransition } : {}),
+    ...(options.chainValidation !== undefined ? { chainValidation: options.chainValidation } : {}),
   });
 
   return { query, replayedCells, transitions };

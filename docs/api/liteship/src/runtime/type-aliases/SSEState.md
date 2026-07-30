@@ -8,6 +8,6 @@
 
 > **SSEState** = `"connecting"` \| `"connected"` \| `"reconnecting"` \| `"disconnected"` \| `"error"`
 
-Defined in: web/dist/types.d.ts:182
+Defined in: web/dist/types.d.ts:174
 
 SSE connection state.

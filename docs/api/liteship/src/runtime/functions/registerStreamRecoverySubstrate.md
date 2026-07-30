@@ -8,7 +8,7 @@
 
 > **registerStreamRecoverySubstrate**(`artifactId`, `substrate`): () => `void`
 
-Defined in: web/dist/stream/recovery-substrate.d.ts:40
+Defined in: web/dist/stream/recovery-substrate.d.ts:51
 
 Register the gap-replay substrate for a streamed artifact. Returns a disposer.
 Re-registering an artifact id that is still registered throws — two substrates

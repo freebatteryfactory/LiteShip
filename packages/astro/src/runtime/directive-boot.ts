@@ -24,7 +24,8 @@
 
 import { Diagnostics } from '@liteship/core';
 import {
-  collectDirectiveRootsForName,
+  collectDirectiveCandidates,
+  collectDirectiveRootsByName,
   DIRECTIVE_ATTRIBUTE_REGISTRY,
   DIRECTIVE_MARKER_ATTRIBUTE,
   elementHasDirectiveRoot,
@@ -92,16 +93,64 @@ function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean';
 }
 
-function collectMarkedElements(name: DirectiveName, root: ParentNode): HTMLElement[] {
-  return [...collectDirectiveRootsForName(name, root)];
+/**
+ * Boot scheduling class per directive (issue #155). Nothing VISUAL depends on a
+ * non-visual directive's boot completing in the first frame — `llm` (agent
+ * tooling) paints nothing, yet previously paid the same synchronous cost in the
+ * same long frame as `gpu`. `idle` directives boot after the eager pass, at the
+ * host's idle deadline; every visual directive stays `eager`. The scan itself
+ * is one traversal either way — this class only governs WHEN activation runs,
+ * never whether.
+ *
+ * `graph` is EAGER (PR #189 review, confirmed): its boot is not paint-free —
+ * `loadGraphRuntime` seeds every binding through `applyBoundaryState`, writing
+ * the initial `data-liteship-state` and per-state CSS before attaching
+ * observers. Deferring it to idle left graph-driven elements visually stale
+ * through first paint.
+ */
+export const DIRECTIVE_BOOT_PRIORITY: Record<DirectiveName, 'eager' | 'idle'> = {
+  adaptive: 'eager',
+  stream: 'eager',
+  llm: 'idle',
+  worker: 'eager',
+  gpu: 'eager',
+  wasm: 'eager',
+  graph: 'eager',
+  motion: 'eager',
+  svg: 'eager',
+};
+
+/**
+ * Yield the main thread between directive batches so each directive's
+ * activation is its own task (fragments the boot long-frame; the browser can
+ * paint and service input between batches). `scheduler.yield` where the host
+ * has it; a macrotask hop otherwise.
+ */
+function yieldToHost(): Promise<void> {
+  const scheduler = (globalThis as { scheduler?: { yield?: () => Promise<void> } }).scheduler;
+  if (scheduler?.yield !== undefined) {
+    return scheduler.yield.call(scheduler);
+  }
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-function collectElements(root: ParentNode, selector: string): HTMLElement[] {
-  const matches = Array.from(root.querySelectorAll<HTMLElement>(selector));
-  if (root instanceof HTMLElement && root.matches(selector)) {
-    matches.unshift(root);
-  }
-  return matches;
+/**
+ * Idle-boot ceiling: `requestIdleCallback` without a timeout is a promise the
+ * browser may never keep on a busy or throttled page — the idle pass (and the
+ * whole scan promise) would hang and idle directives would never activate
+ * (PR #189 review, confirmed). The timeout forces the callback after at most
+ * this many ms of denied idle time; 2s is far past first paint yet bounded.
+ */
+const IDLE_BOOT_TIMEOUT_MS = 2_000;
+
+/** Resolve at the host's idle deadline (`requestIdleCallback` with a bounded timeout; macrotask fallback). */
+function idleDeadline(): Promise<void> {
+  const ric = (globalThis as { requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number })
+    .requestIdleCallback;
+  return new Promise((resolve) => {
+    if (ric !== undefined) ric(() => resolve(), { timeout: IDLE_BOOT_TIMEOUT_MS });
+    else setTimeout(resolve, 1);
+  });
 }
 
 function hasDirectiveMarker(element: HTMLElement): boolean {
@@ -111,7 +160,7 @@ function hasDirectiveMarker(element: HTMLElement): boolean {
   return DIRECTIVE_NAMES.some((name) => element.hasAttribute(`client:${name}`));
 }
 
-function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
+function warnExplicitOnlyDirectiveAttributes(candidates: readonly HTMLElement[]): void {
   const explicitAttributes = new Set(
     Object.values(DIRECTIVE_ATTRIBUTE_REGISTRY)
       .flat()
@@ -120,7 +169,7 @@ function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
   );
 
   for (const attribute of explicitAttributes) {
-    for (const element of collectElements(root, `[${attribute}]`)) {
+    for (const element of candidates.filter((candidate) => candidate.hasAttribute(attribute))) {
       // Suppress when an explicit marker owns this element or when the registry proves
       // it is a complete descendant-owned payload (SVG). An unrelated implicit peer
       // attribute (e.g. `data-liteship-shader-src`) does not consume the boundary.
@@ -166,29 +215,35 @@ export async function scanAndBootDirectives(
   loaders: Partial<DirectiveLoaders> = {},
 ): Promise<void> {
   const activeLoaders: DirectiveLoaders = { ...LOADERS, ...loaders };
-  warnExplicitOnlyDirectiveAttributes(root);
+
+  // ONE DOM traversal (issue #155): the diagnostics pass and every directive's
+  // root bucket share the same candidates array — previously each directive
+  // (and each explicit attribute) re-walked the whole document in the same
+  // synchronous boot frame.
+  const candidates = collectDirectiveCandidates(root);
+  warnExplicitOnlyDirectiveAttributes(candidates);
+  const buckets = collectDirectiveRootsByName(root, candidates);
 
   const enabledSet = new Set(enabled.filter(isDirectiveName));
 
-  const activations: Promise<void>[] = [];
-
-  for (const name of DIRECTIVE_NAMES) {
-    const elements = collectMarkedElements(name, root);
-    if (elements.length === 0) {
-      continue;
-    }
-
-    if (!enabledSet.has(name)) {
-      Diagnostics.warnOnceRegistered({
-        source: 'liteship/astro.directive-boot',
-        code: 'astro/directive-boot/directive-not-enabled',
-        message: `Found ${name} directive markers but the ${name} directive is not enabled in the liteship integration config. ${directiveEnableFix(name)}`,
-        detail: { name },
-      });
-      continue;
-    }
-
+  /** Boot one directive's marked elements; returns the batch's activation promises. */
+  const bootDirectiveBatch = (name: DirectiveName, elements: readonly HTMLElement[]): readonly Promise<void>[] => {
+    const activations: Promise<void>[] = [];
     for (const element of elements) {
+      // Buckets were captured at scan time, but batches run across yields and
+      // the idle deadline — an Astro navigation can replace the document while
+      // this scan is parked. Booting such a stale root would recreate listeners
+      // and runtime resources OUTSIDE the next lifecycle's teardown (PR #189
+      // review, confirmed). STALE means BOTH out of the scan root AND out of
+      // the live document (PR #191 review, twice refined): containment alone
+      // broke explicitly-detached fragment roots; and because INSERTING a
+      // scanned fragment MOVES its children out of it, containment alone would
+      // also skip members transferred into the document while the scan was
+      // parked. An element in either place is a live boot target; an element
+      // in neither was torn down.
+      if (!root.contains(element) && !element.isConnected) {
+        continue;
+      }
       if (boundNames(element).has(name)) {
         continue;
       }
@@ -230,6 +285,54 @@ export async function scanAndBootDirectives(
             });
           }),
       );
+    }
+    return activations;
+  };
+
+  // Partition the enabled work by boot class, preserving DIRECTIVE_NAMES order.
+  const eager: [DirectiveName, readonly HTMLElement[]][] = [];
+  const idle: [DirectiveName, readonly HTMLElement[]][] = [];
+  for (const name of DIRECTIVE_NAMES) {
+    const elements = buckets.get(name) ?? [];
+    if (elements.length === 0) {
+      continue;
+    }
+    if (!enabledSet.has(name)) {
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/astro.directive-boot',
+        code: 'astro/directive-boot/directive-not-enabled',
+        message: `Found ${name} directive markers but the ${name} directive is not enabled in the liteship integration config. ${directiveEnableFix(name)}`,
+        detail: { name },
+      });
+      continue;
+    }
+    (DIRECTIVE_BOOT_PRIORITY[name] === 'idle' ? idle : eager).push([name, elements]);
+  }
+
+  const activations: Promise<void>[] = [];
+
+  // EAGER pass — each directive's batch is its own task: a yield between
+  // batches fragments the former single long boot frame so the browser can
+  // paint and service input mid-boot (issue #155).
+  for (let index = 0; index < eager.length; index += 1) {
+    const [name, elements] = eager[index]!;
+    activations.push(...bootDirectiveBatch(name, elements));
+    if (index < eager.length - 1) {
+      await yieldToHost();
+    }
+  }
+
+  // IDLE pass — non-visual directives boot at the host's idle deadline, after
+  // the eager pass has left the frame. Still awaited by the returned promise,
+  // so callers (and tests) observe a fully-booted page on resolve.
+  if (idle.length > 0) {
+    await idleDeadline();
+    for (let index = 0; index < idle.length; index += 1) {
+      const [name, elements] = idle[index]!;
+      activations.push(...bootDirectiveBatch(name, elements));
+      if (index < idle.length - 1) {
+        await yieldToHost();
+      }
     }
   }
 

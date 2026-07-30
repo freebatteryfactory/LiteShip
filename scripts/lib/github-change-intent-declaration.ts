@@ -1,5 +1,20 @@
 /** Cold-safe parser for the declarative GitHub change-intent block. @module */
 
+/** Declared agent-execution provenance (issue #163) — digests-only, or an explicit null. */
+export interface GitHubChangeIntentExecutionDeclaration {
+  readonly executionId: string;
+  readonly model: { readonly provider: string; readonly id: string } | null;
+  readonly toolScopes: readonly ('read' | 'write' | 'network' | 'release')[];
+  readonly budgets: { readonly wallClockMs: number | null; readonly tokens: number | null };
+  readonly digests: {
+    readonly prompt: string | null;
+    readonly context: string | null;
+    readonly toolPolicy: string | null;
+  };
+  readonly actionTrace: { readonly path: string; readonly digest: string } | null;
+  readonly autonomy: 'propose' | 'edit' | 'execute' | 'approve' | 'release';
+}
+
 export interface GitHubChangeIntentDeclaration {
   readonly sponsor: string;
   readonly hypothesis: string;
@@ -17,6 +32,8 @@ export interface GitHubChangeIntentDeclaration {
     readonly level: 'low' | 'medium' | 'high';
     readonly unknowns: readonly string[];
   };
+  /** Execution provenance, REQUIRED as a key — null means "none, declared explicitly". */
+  readonly execution: GitHubChangeIntentExecutionDeclaration | null;
 }
 
 const DECLARED_KEYS = [
@@ -28,6 +45,7 @@ const DECLARED_KEYS = [
   'reversibility',
   'actorClass',
   'uncertainty',
+  'execution',
 ] as const;
 
 type RecordValue = Record<string, unknown>;
@@ -88,6 +106,82 @@ function reversibility(value: unknown): GitHubChangeIntentDeclaration['reversibi
   throw new TypeError('liteship-change-intent.reversibility.kind must be reversible or irreversible');
 }
 
+function sha256Address(value: unknown, path: string): string {
+  const address = nonEmptyString(value, path);
+  if (!/^sha256:[0-9a-f]{64}$/u.test(address)) {
+    throw new TypeError(`${path} must be a sha256:<64-hex> content address (never raw content)`);
+  }
+  return address;
+}
+
+function nullOrBudget(value: unknown, path: string): number | null {
+  if (value === null) return null;
+  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+    throw new TypeError(`${path} must be a positive integer or an explicit null`);
+  }
+  return value;
+}
+
+/** Cold-safe mirror of the kernel's execution parser — validated before any CI spend. */
+function executionDeclaration(value: unknown): GitHubChangeIntentExecutionDeclaration | null {
+  if (value === null) return null;
+  const path = 'liteship-change-intent.execution';
+  const record = exactRecord(value, path, [
+    'executionId',
+    'model',
+    'toolScopes',
+    'budgets',
+    'digests',
+    'actionTrace',
+    'autonomy',
+  ]);
+  const executionId = nonEmptyString(record['executionId'], `${path}.executionId`);
+  if (executionId.length > 128 || !/^[A-Za-z0-9][A-Za-z0-9._:-]*$/u.test(executionId)) {
+    throw new TypeError(`${path}.executionId must be a stable opaque token (<=128 chars, [A-Za-z0-9._:-])`);
+  }
+  const budgets = exactRecord(record['budgets'], `${path}.budgets`, ['wallClockMs', 'tokens']);
+  const digests = exactRecord(record['digests'], `${path}.digests`, ['prompt', 'context', 'toolPolicy']);
+  const scopes = stringSet(record['toolScopes'], `${path}.toolScopes`);
+  for (const scope of scopes) {
+    if (!['network', 'read', 'release', 'write'].includes(scope)) {
+      throw new TypeError(`${path}.toolScopes must be a subset of: network, read, release, write`);
+    }
+  }
+  let model: GitHubChangeIntentExecutionDeclaration['model'] = null;
+  if (record['model'] !== null) {
+    const modelRecord = exactRecord(record['model'], `${path}.model`, ['provider', 'id']);
+    model = {
+      provider: nonEmptyString(modelRecord['provider'], `${path}.model.provider`),
+      id: nonEmptyString(modelRecord['id'], `${path}.model.id`),
+    };
+  }
+  let actionTrace: GitHubChangeIntentExecutionDeclaration['actionTrace'] = null;
+  if (record['actionTrace'] !== null) {
+    const traceRecord = exactRecord(record['actionTrace'], `${path}.actionTrace`, ['path', 'digest']);
+    actionTrace = {
+      path: nonEmptyString(traceRecord['path'], `${path}.actionTrace.path`),
+      digest: sha256Address(traceRecord['digest'], `${path}.actionTrace.digest`),
+    };
+  }
+  return Object.freeze({
+    executionId,
+    model: model === null ? null : Object.freeze(model),
+    toolScopes: Object.freeze(scopes) as GitHubChangeIntentExecutionDeclaration['toolScopes'],
+    budgets: Object.freeze({
+      wallClockMs: nullOrBudget(budgets['wallClockMs'], `${path}.budgets.wallClockMs`),
+      tokens: nullOrBudget(budgets['tokens'], `${path}.budgets.tokens`),
+    }),
+    digests: Object.freeze({
+      prompt: digests['prompt'] === null ? null : sha256Address(digests['prompt'], `${path}.digests.prompt`),
+      context: digests['context'] === null ? null : sha256Address(digests['context'], `${path}.digests.context`),
+      toolPolicy:
+        digests['toolPolicy'] === null ? null : sha256Address(digests['toolPolicy'], `${path}.digests.toolPolicy`),
+    }),
+    actionTrace: actionTrace === null ? null : Object.freeze(actionTrace),
+    autonomy: enumValue(record['autonomy'], `${path}.autonomy`, ['propose', 'edit', 'execute', 'approve', 'release']),
+  });
+}
+
 /** Validate and normalize every authored field before any expensive CI job can start. */
 function validateParsedGitHubChangeIntentDeclaration(value: unknown): GitHubChangeIntentDeclaration {
   const record = exactRecord(value, 'liteship-change-intent', DECLARED_KEYS);
@@ -96,6 +190,39 @@ function validateParsedGitHubChangeIntentDeclaration(value: unknown): GitHubChan
     'areas',
   ]);
   const uncertainty = exactRecord(record['uncertainty'], 'liteship-change-intent.uncertainty', ['level', 'unknowns']);
+  // Mirror the kernel's execution admission rules (PR #190 review): this
+  // validator is the ONLY change-intent check before the expensive CI matrix,
+  // so a declaration full admission will certainly refuse must fail HERE, in
+  // the plan job, not after the matrix has burned its minutes.
+  //  - an agent actor with a null execution → `agent-execution-not-declared`;
+  //  - approve/release autonomy → refused outright: a PR-body classification
+  //    is agent-self-declared by construction, and the kernel refuses
+  //    privileged autonomy for any unverified actor
+  //    (`privileged-autonomy-actor-not-verified`).
+  const declaredExecution = executionDeclaration(record['execution']);
+  const declaredActorClass = enumValue(record['actorClass'], 'liteship-change-intent.actorClass', [
+    'human',
+    'agent',
+    'automation',
+  ]);
+  if (declaredActorClass !== 'human' && declaredExecution === null) {
+    // An authored classification is always agent-self-declared, so BOTH
+    // non-human classes require a declared execution here — an agent must not
+    // dodge attribution by declaring itself 'automation' (PR #190 review).
+    // The host-derived fail-broad fallback (push/tag, no authored block) is the
+    // only legitimate null-execution automation and never passes through this
+    // authored-block validator.
+    throw new TypeError(
+      `liteship-change-intent.execution must be declared for a self-declared ${declaredActorClass} actor ` +
+        '(admission refuses agent-execution-not-declared)',
+    );
+  }
+  if (declaredExecution !== null && ['approve', 'release'].includes(declaredExecution.autonomy)) {
+    throw new TypeError(
+      'liteship-change-intent.execution.autonomy approve/release requires a host-verified actor classification; ' +
+        'a PR-body declaration is agent-self-declared, so admission refuses privileged-autonomy-actor-not-verified',
+    );
+  }
   return Object.freeze({
     sponsor: nonEmptyString(record['sponsor'], 'liteship-change-intent.sponsor'),
     hypothesis: nonEmptyString(record['hypothesis'], 'liteship-change-intent.hypothesis'),
@@ -110,11 +237,12 @@ function validateParsedGitHubChangeIntentDeclaration(value: unknown): GitHubChan
     expectedOutcome: nonEmptyString(record['expectedOutcome'], 'liteship-change-intent.expectedOutcome'),
     guardrails: Object.freeze(stringSet(record['guardrails'], 'liteship-change-intent.guardrails')),
     reversibility: Object.freeze(reversibility(record['reversibility'])),
-    actorClass: enumValue(record['actorClass'], 'liteship-change-intent.actorClass', ['human', 'agent', 'automation']),
+    actorClass: declaredActorClass,
     uncertainty: Object.freeze({
       level: enumValue(uncertainty['level'], 'liteship-change-intent.uncertainty.level', ['low', 'medium', 'high']),
       unknowns: Object.freeze(stringSet(uncertainty['unknowns'], 'liteship-change-intent.uncertainty.unknowns', true)),
     }),
+    execution: declaredExecution,
   });
 }
 

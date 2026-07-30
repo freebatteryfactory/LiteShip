@@ -41,7 +41,7 @@ import { scanWorkflowActionPins, scanWorkflowCheckoutCredentials } from '../inte
 /** Receipt emitted by `liteship check-invariants`. */
 export interface CheckInvariantsReceipt extends CheckInvariantsPayload {
   readonly status: 'ok' | 'failed';
-  readonly command: 'check-invariants';
+  readonly command: 'check.invariants';
   readonly timestamp: WallClockTimestamp;
 }
 
@@ -304,12 +304,12 @@ export async function checkInvariants(
     runCheckInvariants: async () => runCheckInvariantsScan(cwd, deps.spawn ?? spawnArgvCapture),
   };
 
-  const result = await checkInvariantsCommand.handler({ name: 'check-invariants', args: {} }, context);
+  const result = await checkInvariantsCommand.handler({ name: 'check.invariants', args: {} }, context);
   const payload = result.payload as CheckInvariantsPayload;
 
   const receipt: CheckInvariantsReceipt = {
     status: result.status === 'ok' ? 'ok' : 'failed',
-    command: 'check-invariants',
+    command: 'check.invariants',
     timestamp: result.timestamp,
     ...payload,
   };

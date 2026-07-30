@@ -8,7 +8,7 @@
 
 > `const` **SlotAddressing**: `object`
 
-Defined in: [web/src/slot/addressing.ts:165](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/slot/addressing.ts#L165)
+Defined in: [web/src/slot/addressing.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/slot/addressing.ts#L180)
 
 Consolidated namespace export matching the spine contract.
 
@@ -53,8 +53,9 @@ Get the last segment of a path.
 Brand an already-validated slot path string.
 
 Sanctioned single-site cast for `SlotPath`. Callers that have externally
-validated the shape (e.g. via `SlotAddressing.isValid`, attribute provenance,
-or a literal `/...` template) should use this helper instead of inline-casting.
+validated the shape (e.g. via [SlotAddressing.isValid](#isvalid), attribute
+provenance, or a literal `/...` template) should use this helper instead of
+inline-casting.
 
 #### Parameters
 

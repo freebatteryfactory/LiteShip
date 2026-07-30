@@ -8,7 +8,7 @@
 
 > `const` **APPLY\_PATCH\_COMMAND**: `"liteship.gauntlet.applyPatch"`
 
-Defined in: [mcp-server/src/lsp/types.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L186)
+Defined in: [mcp-server/src/lsp/protocol.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/protocol.ts#L57)
 
 The client command id a `patch` workspace-edit and an `instruction` step-list
 carry, so an editor extension knows which liteship action it is applying. Stable

@@ -8,7 +8,7 @@
 
 > **supplementReplayIfSignalsDropped**(`patches`, `options`): `Promise`\<`void`\>
 
-Defined in: [web/src/stream/recovery.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L216)
+Defined in: [web/src/stream/recovery.ts:229](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L229)
 
 After HTML gap replay, supplement missed discrete crossings via snapshot re-sync
 when the replay payload dropped non-HTML signal frames.

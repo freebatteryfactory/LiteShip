@@ -6,7 +6,7 @@
 
 # Interface: FocusState
 
-Defined in: [web/src/types.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L77)
+Defined in: [web/src/types.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L70)
 
 Focus state with cursor and selection details for input elements.
 
@@ -16,7 +16,7 @@ Focus state with cursor and selection details for input elements.
 
 > `readonly` **cursorPosition**: `number`
 
-Defined in: [web/src/types.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L79)
+Defined in: [web/src/types.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L72)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:79](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **elementId**: `string`
 
-Defined in: [web/src/types.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L78)
+Defined in: [web/src/types.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L71)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/types.ts:78](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **selectionDirection**: `string`
 
-Defined in: [web/src/types.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L82)
+Defined in: [web/src/types.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L75)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [web/src/types.ts:82](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **selectionEnd**: `number`
 
-Defined in: [web/src/types.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L81)
+Defined in: [web/src/types.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L74)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [web/src/types.ts:81](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **selectionStart**: `number`
 
-Defined in: [web/src/types.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L80)
+Defined in: [web/src/types.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L73)

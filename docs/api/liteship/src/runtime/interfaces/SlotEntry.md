@@ -6,7 +6,7 @@
 
 # Interface: SlotEntry
 
-Defined in: web/dist/types.d.ts:33
+Defined in: web/dist/types.d.ts:25
 
 Slot registry entry -- maps a slot path to its DOM element.
 
@@ -16,7 +16,7 @@ Slot registry entry -- maps a slot path to its DOM element.
 
 > `readonly` **element**: `Element`
 
-Defined in: web/dist/types.d.ts:35
+Defined in: web/dist/types.d.ts:27
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: web/dist/types.d.ts:35
 
 > `readonly` **mode**: [`IslandMode`](../type-aliases/IslandMode.md)
 
-Defined in: web/dist/types.d.ts:36
+Defined in: web/dist/types.d.ts:28
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: web/dist/types.d.ts:36
 
 > `readonly` **mounted**: `boolean`
 
-Defined in: web/dist/types.d.ts:37
+Defined in: web/dist/types.d.ts:29
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: web/dist/types.d.ts:37
 
 > `readonly` **path**: [`SlotPath`](../type-aliases/SlotPath.md)
 
-Defined in: web/dist/types.d.ts:34
+Defined in: web/dist/types.d.ts:26

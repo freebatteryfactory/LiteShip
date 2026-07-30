@@ -6,7 +6,7 @@
 
 # Type Alias: CompileResult
 
-> **CompileResult** = \{ `result`: [`CSSCompileResult`](../interfaces/CSSCompileResult.md); `target`: `"css"`; \} \| \{ `result`: [`GLSLCompileResult`](../interfaces/GLSLCompileResult.md); `target`: `"glsl"`; \} \| \{ `result`: [`WGSLCompileResult`](../interfaces/WGSLCompileResult.md); `target`: `"wgsl"`; \} \| \{ `result`: [`ARIACompileResult`](../interfaces/ARIACompileResult.md); `target`: `"aria"`; \} \| \{ `result`: [`AIManifestCompileResult`](../interfaces/AIManifestCompileResult.md); `target`: `"ai"`; \} \| \{ `result`: [`ConfigTemplateResult`](../interfaces/ConfigTemplateResult.md); `target`: `"config"`; \} \| \{ `result`: [`MotionCompileResult`](../interfaces/MotionCompileResult.md); `target`: `"motion"`; \} \| \{ `result`: `ViewTransitionCompileResult`; `target`: `"view-transition"`; \}
+> **CompileResult** = \{ `result`: [`CSSCompileResult`](../interfaces/CSSCompileResult.md); `target`: `"css"`; \} \| \{ `result`: [`GLSLCompileResult`](../interfaces/GLSLCompileResult.md); `target`: `"glsl"`; \} \| \{ `result`: [`WGSLCompileResult`](../interfaces/WGSLCompileResult.md); `target`: `"wgsl"`; \} \| \{ `result`: [`ARIACompileResult`](../interfaces/ARIACompileResult.md); `target`: `"aria"`; \} \| \{ `result`: [`AIManifestCompileResult`](../interfaces/AIManifestCompileResult.md); `target`: `"ai"`; \} \| \{ `result`: [`ConfigTemplateResult`](../interfaces/ConfigTemplateResult.md); `target`: `"config"`; \} \| \{ `result`: [`MotionCompileResult`](../interfaces/MotionCompileResult.md); `target`: `"motion"`; \} \| \{ `result`: [`ViewTransitionCompileResult`](../interfaces/ViewTransitionCompileResult.md); `target`: `"view-transition"`; \}
 
 Defined in: compiler/dist/dispatch.d.ts:100
 

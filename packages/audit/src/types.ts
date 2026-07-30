@@ -6,23 +6,10 @@
  *
  * @module
  */
-import { DIAGNOSTIC_REGISTRY, type DiagnosticCode } from '@liteship/error';
+import type { DiagnosticCode } from '@liteship/error';
 
 /** Stable audit rule slug, derived from the canonical diagnostic registry. */
 export type AuditRuleId = Extract<DiagnosticCode, `audit/${string}`> extends `audit/${infer Rule}` ? Rule : never;
-
-/** Exact audit-rule projection derived from the one diagnostic registry owner. */
-export const AUDIT_RULE_IDS = Object.freeze(
-  Object.keys(DIAGNOSTIC_REGISTRY)
-    .filter((code): code is Extract<DiagnosticCode, `audit/${string}`> => code.startsWith('audit/'))
-    .map((code) => code.slice('audit/'.length) as AuditRuleId)
-    .sort((left, right) => left.localeCompare(right)),
-);
-
-/** Project an audit rule slug onto its stable diagnostic identity. */
-export function auditDiagnosticCode(rule: AuditRuleId): Extract<DiagnosticCode, `audit/${string}`> {
-  return `audit/${rule}` as Extract<DiagnosticCode, `audit/${string}`>;
-}
 
 /** Severity emitted by an audit finding. */
 export type AuditSeverity = 'error' | 'warning' | 'info';

@@ -5,12 +5,19 @@
  * the IR + the `tests/` tree), allowed ONLY when the file is in the enumerated
  * capability-gated {@link SANCTIONED_SKIPS} allowlist.
  *
- * This is one of the two ALWAYS-BLOCKING gates — its `ruleId`
- * (`gauntlet/no-skipped-test`) is reserved in {@link ALWAYS_BLOCKING_RULES}, so a
- * waiver can NEVER cover it (you cannot waive a lie). A skipped test ships green
- * while proving nothing: it is the exact shape of unfinished work disguised as
- * passing. The owner's #1 directive — "the harness must emit only REAL tests,
- * never `it.skip`" — is this gate.
+ * RETIRED FROM THE PRODUCTION COMPOSITION (issue #179): the registered
+ * always-blocking rule is now the FactGate form ({@link noSkippedTestFactGate} —
+ * same `ruleId`, same findings, decision over a declared fact pack). THIS closure
+ * form is retained as the SHADOW-DIFFERENTIAL REFERENCE: the adversarial corpus
+ * (factgate-skip-shadow) keeps proving the two implementations agree, which is a
+ * strictly stronger guarantee than either alone. It is exported, self-proving, and
+ * runnable — just no longer the gate the repo runs.
+ *
+ * The rule is ALWAYS-BLOCKING — its `ruleId` (`gauntlet/no-skipped-test`) is
+ * reserved in {@link ALWAYS_BLOCKING_RULES}, so a waiver can NEVER cover it (you
+ * cannot waive a lie). A skipped test ships green while proving nothing: it is the
+ * exact shape of unfinished work disguised as passing. The owner's #1 directive —
+ * "the harness must emit only REAL tests, never `it.skip`" — is this rule.
  *
  * THREE things changed to make the guarantee REAL (it was overstated — the gate
  * governed only `packages/* /src`, where the skips do NOT live):

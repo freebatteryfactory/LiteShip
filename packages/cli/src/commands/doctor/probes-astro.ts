@@ -13,7 +13,8 @@
  * @module
  */
 
-import { DOCTOR_PROBE_TIMEOUT_MS, type DoctorCheck } from './types.js';
+import { DOCTOR_PROBE_TIMEOUT_MS } from './probe-support.js';
+import type { DoctorCheck } from './types.js';
 
 /** Default base URL of the Astro dev server (its conventional port), overridable via env. */
 const DEFAULT_ASTRO_DEV_URL = process.env['LITESHIP_ASTRO_DEV_URL'] ?? 'http://127.0.0.1:4321';

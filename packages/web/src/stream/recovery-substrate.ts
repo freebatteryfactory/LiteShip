@@ -17,8 +17,15 @@
  * @module
  */
 
-import type { DiscreteStateTransition, PatchReceiptEntry, ReceiptEnvelope, StateCellStore } from '@liteship/core';
+import type {
+  ChainValidationOptions,
+  DiscreteStateTransition,
+  PatchReceiptEntry,
+  ReceiptEnvelope,
+  StateCellStore,
+} from '@liteship/core';
 import {
+  DAG,
   Diagnostics,
   Receipt,
   TypedRef,
@@ -43,18 +50,43 @@ export interface StreamRecoverySubstrate {
 export interface ResolvedStreamRecoverySubstrate extends StreamRecoverySubstrate {
   /** LIVE bounded buffer — receipt frames recorded after binding are visible at recovery time. */
   readonly patchReceiptEntries: readonly PatchReceiptEntry[];
+  /**
+   * Checkpoint-attestation retention (issue #150). Present after the bounded
+   * buffer evicted a prefix: `base` is the evicted watermark receipt's hash (the
+   * `previous` of the first retained entry) and `checkpoint` is the genesis-shaped
+   * `DAG.checkpoint` attestation minted over the dropped region AT EVICTION TIME
+   * (the only moment the dropped envelopes are still in hand). Threading it into
+   * gap replay lets the retained suffix pass `validateChainDetailed` without its
+   * dropped prefix — previously a long-lived session's replay failed `not_genesis`
+   * and every missed crossing silently degraded to the snapshot floor.
+   */
+  readonly chainValidation?: ChainValidationOptions;
 }
 
 interface SubstrateRecord {
   readonly substrate: StreamRecoverySubstrate;
   readonly entries: PatchReceiptEntry[];
+  /** Live retention state — replaced on every successful prefix compaction. */
+  chainValidation?: ChainValidationOptions;
+  /** Serializes compactions: concurrent overflows must chain, never interleave. */
+  compaction: Promise<void>;
+  /**
+   * Serializes recordings: the directive fires `recordStreamPatchReceipt` per
+   * SSE event WITHOUT awaiting, and attestation hashes asynchronously — so two
+   * frames finishing out of order would push in COMPLETION order while
+   * compaction treats array order as chronology (PR #188 review, confirmed).
+   * Chaining each recording behind the previous makes buffer order = arrival
+   * order regardless of hashing latency.
+   */
+  recording: Promise<unknown>;
 }
 
 /**
  * Bounded receipt buffer per artifact. When the buffer overflows, the OLDEST
  * entries drop first: the QUERY read always re-adopts the authoritative graph,
  * so a truncated chain only degrades discrete-crossing replay (best-effort),
- * never graph correctness.
+ * never graph correctness. Eviction MINTS a checkpoint attestation over the
+ * dropped prefix (issue #150) so the retained suffix stays replayable.
  */
 const MAX_PATCH_RECEIPT_ENTRIES = 256;
 
@@ -73,7 +105,12 @@ export function registerStreamRecoverySubstrate(artifactId: string, substrate: S
     );
   }
 
-  const record: SubstrateRecord = { substrate, entries: [] };
+  const record: SubstrateRecord = {
+    substrate,
+    entries: [],
+    compaction: Promise.resolve(),
+    recording: Promise.resolve(),
+  };
   registry.set(artifactId, record);
 
   return () => {
@@ -89,10 +126,18 @@ export function getStreamRecoverySubstrate(artifactId: string): ResolvedStreamRe
   if (!record) {
     return undefined;
   }
-  return {
+  const resolved = {
     ...record.substrate,
     patchReceiptEntries: record.entries,
   };
+  // LIVE like the buffer: the substrate is resolved at BIND time but evictions
+  // happen later — a snapshot here would hand recovery a stale (or absent)
+  // retention. The getter always reads the record's current state.
+  Object.defineProperty(resolved, 'chainValidation', {
+    enumerable: true,
+    get: () => record.chainValidation,
+  });
+  return resolved as ResolvedStreamRecoverySubstrate;
 }
 
 const warnRejectedFrame = (artifactId: string, reason: string, cause?: unknown): void => {
@@ -200,7 +245,17 @@ export async function recordStreamPatchReceipt(artifactId: string, frame: unknow
   if (!record) {
     return false;
   }
+  // The chain position is claimed SYNCHRONOUSLY at call time, so buffer order
+  // is arrival order even when a later frame's attestation hash resolves first.
+  const task = record.recording.then(() => admitAttestedFrame(artifactId, record, frame));
+  record.recording = task.then(
+    () => undefined,
+    () => undefined,
+  );
+  return task;
+}
 
+async function admitAttestedFrame(artifactId: string, record: SubstrateRecord, frame: unknown): Promise<boolean> {
   const entry = await attestPatchReceiptEntry(artifactId, frame);
   if (!entry) {
     return false;
@@ -215,7 +270,82 @@ export async function recordStreamPatchReceipt(artifactId: string, frame: unknow
 
   live.entries.push(entry);
   if (live.entries.length > MAX_PATCH_RECEIPT_ENTRIES) {
-    live.entries.splice(0, live.entries.length - MAX_PATCH_RECEIPT_ENTRIES);
+    // Serialize compactions: minting the checkpoint hashes via crypto.subtle, and
+    // two overflowing records interleaving at that await would double-drop or
+    // attest against a moved watermark. The chain makes each compaction see the
+    // buffer its predecessor left.
+    live.compaction = live.compaction.then(() => compactBufferPrefix(artifactId, live));
+    await live.compaction;
   }
   return true;
+}
+
+/**
+ * Evict the buffer's oldest prefix, minting checkpoint-attestation retention
+ * over the dropped region (issue #150).
+ *
+ * The watermark is the dropped receipt the first RETAINED entry's `previous`
+ * names — the exact hash `validateChainDetailed`'s widened genesis predicate
+ * will compare against. The attestation is minted by `DAG.checkpoint` over the
+ * dropped envelopes (watermark + its buffered ancestors) BEFORE the prefix is
+ * spliced away: eviction is the only moment the dropped set is still in hand.
+ *
+ * DEGRADATION IS FAIL-SAFE, never fail-wrong: when the watermark cannot be
+ * established (a merge-parent first-retained entry, a fork prefix the watermark
+ * does not dominate, an out-of-buffer `previous`), the prefix is still evicted
+ * but retention is CLEARED — replay then refuses `not_genesis` exactly as
+ * before this feature, and the QUERY/snapshot floor corrects the view.
+ */
+async function compactBufferPrefix(artifactId: string, record: SubstrateRecord): Promise<void> {
+  const overflow = record.entries.length - MAX_PATCH_RECEIPT_ENTRIES;
+  if (overflow <= 0) return;
+  const dropped = record.entries.slice(0, overflow);
+  const firstRetained = record.entries[overflow];
+
+  const evictWithoutRetention = (reason: string): void => {
+    record.entries.splice(0, overflow);
+    record.chainValidation = undefined;
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/web.stream-recovery',
+      code: 'web/stream/receipt-buffer-compaction-unattested',
+      message:
+        `receipt buffer for artifact "${artifactId}" evicted ${overflow} entr(y/ies) WITHOUT checkpoint ` +
+        `retention (${reason}). Gap replay across this eviction will refuse the truncated chain ` +
+        '(not_genesis) and recovery degrades to the QUERY/snapshot floor — safe, but the discrete ' +
+        'crossings in the dropped prefix will not replay.',
+    });
+  };
+
+  const previous = firstRetained?.receipt.previous;
+  const watermark = typeof previous === 'string' ? previous : undefined;
+  if (watermark === undefined || !dropped.some((entry) => entry.receipt.hash === watermark)) {
+    evictWithoutRetention(
+      watermark === undefined
+        ? 'the first retained entry has a merge-parent `previous`, so no single watermark exists'
+        : 'the first retained entry chains to a receipt outside the dropped prefix',
+    );
+    return;
+  }
+
+  try {
+    // Mint over the watermark's OWN lineage (its `previous`-chain within the
+    // dropped prefix), not the whole prefix: a dead fork sibling being evicted
+    // alongside the chain is not an ancestor of the watermark, and including it
+    // would trip `dag.checkpoint`'s dominance precondition for a region the
+    // retained buffer never chains through.
+    const byHash = new Map(dropped.map((entry) => [entry.receipt.hash, entry.receipt]));
+    const lineage: ReceiptEnvelope[] = [];
+    for (let cursor: string | undefined = watermark; cursor !== undefined;) {
+      const envelope: ReceiptEnvelope | undefined = byHash.get(cursor);
+      if (envelope === undefined) break; // pre-buffer ancestor (or prior watermark) — the lineage root.
+      lineage.push(envelope);
+      cursor = typeof envelope.previous === 'string' ? envelope.previous : undefined;
+    }
+    const dag = DAG.fromReceipts(lineage);
+    const minted = await DAG.checkpoint(dag, { below: watermark });
+    record.entries.splice(0, overflow);
+    record.chainValidation = { base: watermark, checkpoint: minted.checkpoint };
+  } catch (cause) {
+    evictWithoutRetention(cause instanceof Error ? cause.message : String(cause));
+  }
 }

@@ -14,7 +14,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnArgvCapture } from '../../internal/spawn.js';
 import { findAstroConfig, hasDep, readCwdPackageJson, readInstalledVersion, readWranglerConfig } from './manifest.js';
-import { DOCTOR_PROBE_TIMEOUT_MS, type DoctorCheck, parseMajor } from './types.js';
+import { DOCTOR_PROBE_TIMEOUT_MS, parseMajor } from './probe-support.js';
+import type { DoctorCheck } from './types.js';
 
 /**
  * Consumer-context probe — the `liteship` umbrella under pnpm's strict

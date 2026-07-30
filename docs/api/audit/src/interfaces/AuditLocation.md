@@ -6,7 +6,7 @@
 
 # Interface: AuditLocation
 
-Defined in: [audit/src/types.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L111)
+Defined in: [audit/src/types.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L98)
 
 Repository-relative source location attached to a finding.
 
@@ -16,7 +16,7 @@ Repository-relative source location attached to a finding.
 
 > `readonly` `optional` **column?**: `number`
 
-Defined in: [audit/src/types.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L114)
+Defined in: [audit/src/types.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L101)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [audit/src/types.ts:114](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **file**: `string`
 
-Defined in: [audit/src/types.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L112)
+Defined in: [audit/src/types.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L99)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [audit/src/types.ts:112](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **line?**: `number`
 
-Defined in: [audit/src/types.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L113)
+Defined in: [audit/src/types.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L100)

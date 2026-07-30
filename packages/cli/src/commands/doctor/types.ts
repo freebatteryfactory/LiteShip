@@ -1,10 +1,11 @@
 /**
  * doctor — shared vocabulary. The probe-result types (status/verdict/check/
- * fix/receipt/target), the discriminated {@link Readout} for environment
- * file probes, and the version-string parsers every probe leans on.
+ * fix/receipt/target) and the discriminated {@link Readout} for environment
+ * file probes. The runtime values every probe leans on (version parsers, the
+ * probe budget, the `unreadable` constructor) live in `probe-support.ts` —
+ * this file is type-space only and fully erasable (types-file-purity).
  *
- * Pure data + parsing only: no fs, no spawn, no world-mutation. The whole
- * doctor module graph depends downward onto this leaf.
+ * The whole doctor module graph depends downward onto this leaf.
  *
  * @module
  */
@@ -51,10 +52,6 @@ export type Readout<T> =
   | { readonly kind: 'absent' }
   | { readonly kind: 'unreadable'; readonly detail: string };
 
-export function unreadable(e: unknown): { kind: 'unreadable'; detail: string } {
-  return { kind: 'unreadable', detail: e instanceof Error ? e.message : String(e) };
-}
-
 /** Receipt shape emitted by `liteship doctor`. */
 export interface DoctorReceipt {
   readonly status: 'ok' | 'failed';
@@ -77,28 +74,4 @@ export interface DoctorReceipt {
 export interface EngineMinima {
   readonly node: number;
   readonly pnpm: number;
-}
-
-export function parseEngineMajor(s: string | undefined): number | null {
-  if (!s) return null;
-  const m = s.match(/(\d+)/);
-  return m ? Number(m[1]) : null;
-}
-
-/**
- * Per-probe subprocess bound (CUT test-flake). External probes (`pnpm`/`cargo`/`git`/
- * `wrangler`) shell out; under parallel load those spawns can drag past the test
- * timeout. A bound keeps `liteship doctor` deterministic and non-hanging: a slow/wedged
- * tool degrades to a `warn` ("didn't answer in time") instead of blocking forever.
- * Concurrency (see runAllProbes) makes the path "max single probe", not the sum —
- * so 4s is comfortable.
- */
-export const DOCTOR_PROBE_TIMEOUT_MS = 4_000;
-
-/** Parse `vMAJOR.MINOR.PATCH` (or `MAJOR.MINOR.PATCH`) into a major-version number. */
-export function parseMajor(version: string): number | null {
-  const cleaned = version.trim().replace(/^v/, '');
-  const [maj] = cleaned.split('.');
-  const n = Number(maj);
-  return Number.isFinite(n) ? n : null;
 }

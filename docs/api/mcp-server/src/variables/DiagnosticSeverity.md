@@ -8,10 +8,10 @@
 
 > `const` **DiagnosticSeverity**: `object`
 
-Defined in: [mcp-server/src/lsp/types.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L97)
+Defined in: [mcp-server/src/lsp/protocol.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/protocol.ts#L22)
 
 LSP `DiagnosticSeverity` (§Diagnostic). The rigor mapping (documented on
-[severityToDiagnostic](../functions/severityToDiagnostic.md)): `error` → Error(1), `warning` → Warning(2),
+`severityToDiagnostic`): `error` → Error(1), `warning` → Warning(2),
 `advisory` → Information(3) — advisory is the authority ratchet's calibrating
 tier (a real, surfaced finding that does NOT block), which `Information` (a
 visible, non-actionable-yet notice) models more honestly than `Hint(4)`

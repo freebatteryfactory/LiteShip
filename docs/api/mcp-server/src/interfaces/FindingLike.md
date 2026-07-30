@@ -6,7 +6,7 @@
 
 # Interface: FindingLike
 
-Defined in: [mcp-server/src/lsp/types.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L52)
+Defined in: [mcp-server/src/lsp/types.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L59)
 
 The structural finding the projections read. The real `@liteship/gauntlet`
 `Finding` is assignable to this (same field names + types). Declaring it here
@@ -20,7 +20,7 @@ supplies values that satisfy this shape.
 
 > `readonly` **detail**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L57)
+Defined in: [mcp-server/src/lsp/types.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L64)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [mcp-server/src/lsp/types.ts:57](https://github.com/freebatteryfacto
 
 > `readonly` **level**: [`FindingLevel`](../type-aliases/FindingLevel.md)
 
-Defined in: [mcp-server/src/lsp/types.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L55)
+Defined in: [mcp-server/src/lsp/types.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L62)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [mcp-server/src/lsp/types.ts:55](https://github.com/freebatteryfacto
 
 > `readonly` `optional` **location?**: [`FindingLocationLike`](FindingLocationLike.md)
 
-Defined in: [mcp-server/src/lsp/types.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L58)
+Defined in: [mcp-server/src/lsp/types.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L65)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [mcp-server/src/lsp/types.ts:58](https://github.com/freebatteryfacto
 
 > `readonly` `optional` **remediation?**: [`FindingRemediationLike`](../type-aliases/FindingRemediationLike.md)
 
-Defined in: [mcp-server/src/lsp/types.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L59)
+Defined in: [mcp-server/src/lsp/types.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L66)
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: [mcp-server/src/lsp/types.ts:59](https://github.com/freebatteryfacto
 
 > `readonly` **ruleId**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L53)
+Defined in: [mcp-server/src/lsp/types.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L60)
 
 ***
 
@@ -60,7 +60,7 @@ Defined in: [mcp-server/src/lsp/types.ts:53](https://github.com/freebatteryfacto
 
 > `readonly` **severity**: [`FindingSeverity`](../type-aliases/FindingSeverity.md)
 
-Defined in: [mcp-server/src/lsp/types.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L54)
+Defined in: [mcp-server/src/lsp/types.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L61)
 
 ***
 
@@ -68,4 +68,4 @@ Defined in: [mcp-server/src/lsp/types.ts:54](https://github.com/freebatteryfacto
 
 > `readonly` **title**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L56)
+Defined in: [mcp-server/src/lsp/types.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L63)

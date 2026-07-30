@@ -4,7 +4,7 @@ import { admitChangeIntent, buildChangeIntent, parseChangeIntent } from '../../s
 
 function input(): Record<string, unknown> {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sponsor: {
       value: { login: 'heyoub', ownership: 'repository-owner' },
       provenance: 'github-verified',
@@ -30,6 +30,18 @@ function input(): Record<string, unknown> {
       value: { host: 'github.com', owner: 'freebatteryfactory', name: 'LiteShip', nodeId: 'R_repo' },
       provenance: 'github-verified',
     },
+    execution: {
+      value: {
+        executionId: 'session-prop',
+        model: { provider: 'anthropic', id: 'claude-fable-5' },
+        toolScopes: ['read', 'write'],
+        budgets: { wallClockMs: 3600000, tokens: null },
+        digests: { prompt: `sha256:${'d'.repeat(64)}`, context: null, toolPolicy: null },
+        actionTrace: { path: 'reports/action-trace.json', digest: `sha256:${'e'.repeat(64)}` },
+        autonomy: 'execute',
+      },
+      provenance: 'agent-self-declared',
+    },
   };
 }
 
@@ -45,6 +57,7 @@ const requiredFields = [
   'uncertainty',
   'sourceSha',
   'repositoryIdentity',
+  'execution',
 ] as const;
 
 describe('ChangeIntent hostile properties', () => {

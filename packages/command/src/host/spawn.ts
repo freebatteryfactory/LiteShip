@@ -13,7 +13,7 @@
  *
  * Lives in `@liteship/command/host` (CUT A1 capstone-1) — the canonical home for
  * Node host execution shared by the CLI and MCP adapters. `@liteship/cli`'s
- * `lib/spawn.ts` / `spawn-helpers.ts` and `scripts/lib/spawn.ts` are thin
+ * `lib/spawn.ts` / `spawn.ts` and `scripts/lib/spawn.ts` are thin
  * re-exports so existing import paths keep working; this is the one impl the
  * spawn drift-guard tests pin.
  *

@@ -15,9 +15,12 @@
  * Because the decision never receives a {@link GateContext}, it physically cannot read
  * undeclared evidence; because cache identity is the declared FactPack's digest
  * ({@link factBundleDigest}, synthesized by {@link defineFactGate}), soundness is structural,
- * not a hand-authored `evidenceDigest`. This is the experiment, not (yet) the production gate:
- * the closure {@link noSkippedTestGate} remains the registered rule; this one is proven
- * equivalent over the adversarial corpus by the shadow-diff before any promotion.
+ * not a hand-authored `evidenceDigest`. PROMOTED (issue #179): this IS the production gate —
+ * registered in the always-blocking composition, with `runGauntletOnRepo` producing the
+ * fact pack at context assembly. The closure {@link noSkippedTestGate} is retained as the
+ * shadow-differential reference: the adversarial corpus (factgate-skip-shadow) proves the
+ * two forms agree, and its SUSPENDER-2 producer-teeth proof is the producer-level mutation
+ * guard the promotion was conditioned on.
  *
  * @module
  */

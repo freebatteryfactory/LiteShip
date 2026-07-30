@@ -31,8 +31,8 @@
 
 import { ValidationError } from '@liteship/error';
 
+import { DiagnosticSeverity } from './protocol.js';
 import {
-  DiagnosticSeverity,
   type FindingLike,
   type FindingSeverity,
   type LspDiagnostic,

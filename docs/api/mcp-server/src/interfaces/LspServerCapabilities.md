@@ -6,7 +6,7 @@
 
 # Interface: LspServerCapabilities
 
-Defined in: [mcp-server/src/lsp/server.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L133)
+Defined in: [mcp-server/src/lsp/server.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L132)
 
 Server capabilities the LSP advertises in the `initialize` response. EXACTLY
 the rigor surface: a code-action provider (quickfix only) + an open/close text
@@ -21,7 +21,7 @@ because its method is implemented (mirrors the MCP `capabilities.ts` law).
 
 > `readonly` **codeActionProvider**: `object`
 
-Defined in: [mcp-server/src/lsp/server.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L135)
+Defined in: [mcp-server/src/lsp/server.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L134)
 
 #### codeActionKinds
 
@@ -33,7 +33,7 @@ Defined in: [mcp-server/src/lsp/server.ts:135](https://github.com/freebatteryfac
 
 > `readonly` **diagnosticProvider**: `object`
 
-Defined in: [mcp-server/src/lsp/server.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L136)
+Defined in: [mcp-server/src/lsp/server.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L135)
 
 #### interFileDependencies
 
@@ -49,4 +49,4 @@ Defined in: [mcp-server/src/lsp/server.ts:136](https://github.com/freebatteryfac
 
 > `readonly` **textDocumentSync**: `0`
 
-Defined in: [mcp-server/src/lsp/server.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L134)
+Defined in: [mcp-server/src/lsp/server.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L133)

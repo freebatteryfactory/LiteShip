@@ -25,7 +25,7 @@ describe('@liteship/cli private source cluster', () => {
     const roots = [
       'packages/cli/src/index.ts',
       'packages/cli/src/bin.ts',
-      'packages/cli/src/spawn-helpers.ts',
+      'packages/cli/src/spawn.ts',
       ...topLevelTypeScriptFiles('scripts'),
     ];
     const reachable = new Set(sourceImportClosure(REPO_ROOT, roots));

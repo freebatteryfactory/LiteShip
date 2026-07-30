@@ -8,7 +8,7 @@
 
 > **projectLspCapabilities**(`catalog`): [`LspServerCapabilities`](../interfaces/LspServerCapabilities.md)
 
-Defined in: [mcp-server/src/lsp/server.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L144)
+Defined in: [mcp-server/src/lsp/server.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L143)
 
 Derive the advertised capability projection from an explicit method catalog.
 Missing either backing handler is a construction error, so a catalog mutation

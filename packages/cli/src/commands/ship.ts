@@ -42,7 +42,7 @@ import {
   tarballManifestAddress,
   workspaceManifestAddress,
 } from '../ship-manifest.js';
-import { spawnArgv, spawnArgvCapture } from '../spawn-helpers.js';
+import { spawnArgv, spawnArgvCapture } from '../spawn.js';
 import { emit, emitError } from '../receipts.js';
 import type { ShipReceipt, ShipSkippedReceipt } from '../receipts.js';
 import { ShipEmit } from '../capsules/ship-emit.js';

@@ -125,7 +125,7 @@ jobs:
             --arg ref "$GITHUB_REF" \
             --arg chainDigest "$CHAIN_DIGEST" \
             --argjson chainStages "$CHAIN_STAGES" \
-            '.schemaVersion == 1 and .verdict == "accepted" and .verifier == "delivery-evidence/standalone-v2" and .headSha == $head and .planId == $plan and .manifestId == $manifest and .github.repository == $repository and .github.workflow == $workflow and .github.runId == $runId and .github.runAttempt == $runAttempt and .github.ref == $ref and .receiptChain.path == "reports/delivery-receipt-chain.json" and .receiptChain.digest == $chainDigest and .receiptChain.stages == $chainStages and [.receiptChain.stages[].kind] == ["delivery-intent", "delivery-plan", "delivery-verification", "delivery-artifact", "delivery-policy", "delivery-release"]' \
+            '.schemaVersion == 1 and .verdict == "accepted" and .verifier == "delivery-evidence/standalone-v3" and .headSha == $head and .planId == $plan and .manifestId == $manifest and .github.repository == $repository and .github.workflow == $workflow and .github.runId == $runId and .github.runAttempt == $runAttempt and .github.ref == $ref and .receiptChain.path == "reports/delivery-receipt-chain.json" and .receiptChain.digest == $chainDigest and .receiptChain.stages == $chainStages and [.receiptChain.stages[].kind] == ["delivery-intent", "delivery-plan", "delivery-verification", "delivery-artifact", "delivery-policy", "delivery-release"]' \
             "$RECEIPT" >/dev/null
           echo "LITESHIP_AFFECTED_PLAN_ID=$PLAN_ID" >> "$GITHUB_ENV"
       - run: pnpm run build
@@ -286,7 +286,7 @@ jobs:
             --arg ref "$GITHUB_REF" \
             --arg chainDigest "$CHAIN_DIGEST" \
             --argjson chainStages "$CHAIN_STAGES" \
-            '.schemaVersion == 1 and .verdict == "accepted" and .verifier == "delivery-evidence/standalone-v2" and .headSha == $head and .planId == $plan and .manifestId == $manifest and .github.repository == $repository and .github.workflow == $workflow and .github.runId == $runId and .github.runAttempt == $runAttempt and .github.ref == $ref and .receiptChain.path == "reports/delivery-receipt-chain.json" and .receiptChain.digest == $chainDigest and .receiptChain.stages == $chainStages and [.receiptChain.stages[].kind] == ["delivery-intent", "delivery-plan", "delivery-verification", "delivery-artifact", "delivery-policy", "delivery-release"]' \
+            '.schemaVersion == 1 and .verdict == "accepted" and .verifier == "delivery-evidence/standalone-v3" and .headSha == $head and .planId == $plan and .manifestId == $manifest and .github.repository == $repository and .github.workflow == $workflow and .github.runId == $runId and .github.runAttempt == $runAttempt and .github.ref == $ref and .receiptChain.path == "reports/delivery-receipt-chain.json" and .receiptChain.digest == $chainDigest and .receiptChain.stages == $chainStages and [.receiptChain.stages[].kind] == ["delivery-intent", "delivery-plan", "delivery-verification", "delivery-artifact", "delivery-policy", "delivery-release"]' \
             "$RECEIPT" >/dev/null
           echo "LITESHIP_AFFECTED_PLAN_ID=$PLAN_ID" >> "$GITHUB_ENV"
       - name: Re-verify the frozen delivery receipt DAG before publish

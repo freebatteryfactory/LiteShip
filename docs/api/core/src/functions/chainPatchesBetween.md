@@ -8,7 +8,7 @@
 
 > **chainPatchesBetween**(`localBaseId`, `serverGraphId`, `entries`): readonly [`DiscreteStateTransition`](../interfaces/DiscreteStateTransition.md)[]
 
-Defined in: [core/src/graph/graph-query-gap-replay.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L78)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:106](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L106)
 
 Find the transition chain from `localBaseId` to `serverGraphId`.
 

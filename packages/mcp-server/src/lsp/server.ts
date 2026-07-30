@@ -40,9 +40,8 @@ import { InvalidParams, InternalError, MethodNotFound } from '../jsonrpc.js';
 import { serverInfo } from '../server-info.js';
 import { groupDiagnosticsByUri, normalizeWorkspaceRootUri, projectFinding } from './diagnostic.js';
 import { projectRemediation } from './code-action.js';
+import { CodeActionKind, MessageType } from './protocol.js';
 import {
-  CodeActionKind,
-  MessageType,
   type FindingLike,
   type LogMessageParams,
   type LspCodeAction,

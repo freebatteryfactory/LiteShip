@@ -6,7 +6,7 @@
 
 # Interface: StreamRecoverySubstrate
 
-Defined in: [web/src/stream/recovery-substrate.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L33)
+Defined in: [web/src/stream/recovery-substrate.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L40)
 
 Host-supplied gap-replay substrate for one streamed artifact.
 
@@ -20,7 +20,7 @@ Host-supplied gap-replay substrate for one streamed artifact.
 
 > `readonly` **cellStore**: [`StateCellStore`](../../../liteship/src/reactive/interfaces/StateCellStore.md)
 
-Defined in: [web/src/stream/recovery-substrate.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L39)
+Defined in: [web/src/stream/recovery-substrate.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L46)
 
 The host's StateCell store for discrete crossing replay.
 
@@ -30,7 +30,7 @@ The host's StateCell store for discrete crossing replay.
 
 > `readonly` **graphQueryUrl**: `string`
 
-Defined in: [web/src/stream/recovery-substrate.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L35)
+Defined in: [web/src/stream/recovery-substrate.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L42)
 
 The host's QUERY read-leg endpoint (`graphQueryRoute` mount point).
 
@@ -40,6 +40,6 @@ The host's QUERY read-leg endpoint (`graphQueryRoute` mount point).
 
 > `readonly` **mutationClient**: [`StreamRecoveryMutationClient`](../type-aliases/StreamRecoveryMutationClient.md)
 
-Defined in: [web/src/stream/recovery-substrate.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L37)
+Defined in: [web/src/stream/recovery-substrate.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L44)
 
 The host's mutation client — supplies the local base and receives the adopted graph.
