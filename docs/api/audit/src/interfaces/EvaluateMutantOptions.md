@@ -34,6 +34,31 @@ The deterministic covering-tests mapping.
 
 ***
 
+### coveringTestDigest?
+
+> `readonly` `optional` **coveringTestDigest?**: (`testId`) => `string`
+
+Defined in: [audit/src/mutation-verdict.ts:253](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L253)
+
+Content digest of ONE covering test file (its bytes, not its path) —
+folded per-test into the verdict key so a covering-test edit flips the
+key even when the mutated source and toolchain are unchanged (PR #194
+review, confirmed P1). REQUIRED wherever the cache PERSISTS beyond one
+process (the exhaustive lane's cross-run bank); an in-run cache may omit
+it — tests cannot change mid-run.
+
+#### Parameters
+
+##### testId
+
+`string`
+
+#### Returns
+
+`string`
+
+***
+
 ### equivalents?
 
 > `readonly` `optional` **equivalents?**: [`EquivalentMutantRegistry`](EquivalentMutantRegistry.md)

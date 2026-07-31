@@ -59,6 +59,8 @@ export interface MutationBuildOptions {
   readonly cache?: MutantVerdictCache;
   /** The toolchain digest the verdict cache keys against (required iff `cache`). */
   readonly toolchainDigest?: string;
+  /** Per-covering-test CONTENT digest — threaded to the verdict key (PR #194 review; required for a cross-run bank). */
+  readonly coveringTestDigest?: (testId: string) => string;
   /**
    * The injected equivalent-mutant registry (the committed, content-addressed
    * `mutation-equivalents.json`). A mutant whose content address it matches is
@@ -108,6 +110,7 @@ export function buildMutationFacts(files: readonly MutationTargetFile[], options
         originalSource: target.text,
         ...(options.cache !== undefined ? { cache: options.cache } : {}),
         ...(options.toolchainDigest !== undefined ? { toolchainDigest: options.toolchainDigest } : {}),
+        ...(options.coveringTestDigest !== undefined ? { coveringTestDigest: options.coveringTestDigest } : {}),
         ...(options.equivalents !== undefined ? { equivalents: options.equivalents } : {}),
       });
       outcomes.push({

@@ -1094,7 +1094,12 @@ jobs:
       # and the next resumes. Fresh key per run + prefix restore = the newest
       # bank always wins; the post-step save runs because the wall budget
       # exits the job NORMALLY instead of being ceiling-killed.
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      # RESTORE/SAVE split, not the combined action (PR #194 review, confirmed
+      # P1): actions/cache declares its save hook `post-if: success()`, and a
+      # budget-exhausted campaign exits 1 (inconclusive findings red the
+      # gates) — the combined action would NEVER save and every nightly would
+      # restart from the same old bank. The explicit save below runs always().
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
           key: exhaustive-verdicts-mutation-${{ github.run_id }}
@@ -1112,6 +1117,12 @@ jobs:
           mkdir -p reports/exhaustive
           set -o pipefail
           pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --mutate 2>&1 | tee reports/exhaustive/mutation.log
+      - name: Save the mutation verdict bank (even when gates exit red)
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        if: always()
+        with:
+          path: .liteship/cache
+          key: exhaustive-verdicts-mutation-${{ github.run_id }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
@@ -1142,7 +1153,9 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      # RESTORE/SAVE split — see the exhaustive-mutation comment (the combined
+      # action's post-if: success() would never save a red campaign's bank).
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
           key: exhaustive-verdicts-mcdc-${{ github.run_id }}
@@ -1157,6 +1170,12 @@ jobs:
           mkdir -p reports/exhaustive
           set -o pipefail
           pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --mcdc 2>&1 | tee reports/exhaustive/mcdc.log
+      - name: Save the MC/DC verdict bank (even when gates exit red)
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        if: always()
+        with:
+          path: .liteship/cache
+          key: exhaustive-verdicts-mcdc-${{ github.run_id }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:

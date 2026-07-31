@@ -37,8 +37,9 @@ import {
 import { liteshipDevopsProfile } from './liteship-audit-profile.js';
 import { INVARIANTS, matchesInvariantExemption, type CheckInvariantEntry } from '@liteship/command/invariants';
 import { buildCheckGovernanceFacts, currentEnvFingerprint } from '@liteship/command/host';
-import { InvariantViolationError } from '@liteship/error';
+import { HostCapabilityError, InvariantViolationError } from '@liteship/error';
 import { systemClock } from '@liteship/core';
+import { addressedDigestOf } from '@liteship/canonical';
 import {
   buildMutationFacts,
   buildMcdcFacts,
@@ -715,10 +716,36 @@ export const CAMPAIGN_WALL_BUDGET_REASON =
  * The runner a budget-exhausted target gets: it refuses every evaluation with
  * the resume reason. `evaluateMutant` folds the throw to `inconclusive`
  * (uncacheable by the existing law), so exhaustion can never mint or cache a
- * fabricated verdict.
+ * fabricated verdict. Tagged (never bare): the exhausted wall clock is a HOST
+ * capability this run no longer holds.
  */
 export function wallBudgetExhaustedRunner(): never {
-  throw new Error(CAMPAIGN_WALL_BUDGET_REASON);
+  throw HostCapabilityError('campaign-wall-clock', CAMPAIGN_WALL_BUDGET_REASON);
+}
+
+/**
+ * A memoized per-covering-test CONTENT digest — folded into every persisted
+ * verdict key (PR #194 review, confirmed P1): without it, weakening an
+ * assertion in an existing covering test changes neither the mutated source
+ * nor the toolchain build, and the cross-run bank would keep serving the old
+ * `killed` tag — stale authority for a test that no longer earns it. An
+ * unreadable test id digests to a distinct absence marker (fail-closed: it
+ * can never collide with real content, so the verdict re-earns).
+ */
+function makeCoveringTestDigestResolver(repoRoot: string): (testId: string) => string {
+  const memo = new Map<string, string>();
+  return (testId: string): string => {
+    const hit = memo.get(testId);
+    if (hit !== undefined) return hit;
+    let digest: string;
+    try {
+      digest = addressedDigestOf(readFileSync(join(repoRoot, testId)), 'blake3').integrity_digest;
+    } catch {
+      digest = `absent:${testId}`;
+    }
+    memo.set(testId, digest);
+    return digest;
+  };
 }
 
 /** The committed mutation-score baseline (the ratchet floor) — repo-relative. */
@@ -779,6 +806,7 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
   const operatorApplicability: MutationFacts['operatorApplicability'][number][] = [];
   const wallBudget = campaignWallBudgetMs();
   const campaignStart = systemClock.now();
+  const coveringTestDigest = makeCoveringTestDigestResolver(repoRoot);
   for (const [index, target] of targets.entries()) {
     // Checked at the per-file boundary (a file's mutants run as a unit); the
     // slack between this budget and the job timeout must absorb one file.
@@ -799,6 +827,7 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
       equivalents,
       budget: MUTATION_BUDGET_PER_FILE,
       cache: mutantCache,
+      coveringTestDigest,
       ...(toolchainDigest !== undefined ? { toolchainDigest } : {}),
     });
     for (const o of fileFacts.outcomes) outcomes.push(o);
@@ -866,6 +895,7 @@ function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: strin
   const targetCensus: McdcFacts['targetCensus'][number][] = [];
   const wallBudget = campaignWallBudgetMs();
   const campaignStart = systemClock.now();
+  const coveringTestDigest = makeCoveringTestDigestResolver(repoRoot);
   for (const [index, target] of targets.entries()) {
     // Same wall-budget + heartbeat contract as the mutation campaign (the two
     // builders mirror each other deliberately — see buildRepoMutationFacts).
@@ -881,6 +911,7 @@ function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: strin
       runner,
       coverage,
       cache: mutantCache,
+      coveringTestDigest,
       ...(toolchainDigest !== undefined ? { toolchainDigest } : {}),
     });
     for (const c of fileFacts.conditions) conditions.push(c);

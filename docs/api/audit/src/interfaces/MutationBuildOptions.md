@@ -44,11 +44,31 @@ The deterministic covering-tests map ((file,line) → sorted test ids).
 
 ***
 
+### coveringTestDigest?
+
+> `readonly` `optional` **coveringTestDigest?**: (`testId`) => `string`
+
+Defined in: [audit/src/mutation-facts-build.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-facts-build.ts#L63)
+
+Per-covering-test CONTENT digest — threaded to the verdict key (PR #194 review; required for a cross-run bank).
+
+#### Parameters
+
+##### testId
+
+`string`
+
+#### Returns
+
+`string`
+
+***
+
 ### equivalents?
 
 > `readonly` `optional` **equivalents?**: [`EquivalentMutantRegistry`](EquivalentMutantRegistry.md)
 
-Defined in: [audit/src/mutation-facts-build.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-facts-build.ts#L68)
+Defined in: [audit/src/mutation-facts-build.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-facts-build.ts#L70)
 
 The injected equivalent-mutant registry (the committed, content-addressed
 `mutation-equivalents.json`). A mutant whose content address it matches is

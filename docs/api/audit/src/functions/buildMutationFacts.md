@@ -8,7 +8,7 @@
 
 > **buildMutationFacts**(`files`, `options`): [`MutationFacts`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts)
 
-Defined in: [audit/src/mutation-facts-build.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-facts-build.ts#L83)
+Defined in: [audit/src/mutation-facts-build.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-facts-build.ts#L85)
 
 Build the [MutationFacts](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts) for a set of target files — generate the
 deterministic mutants per file, evaluate each against the injected runner, and

@@ -6,7 +6,7 @@
 
 # Interface: MutationScore
 
-Defined in: [audit/src/mutation-verdict.ts:385](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L385)
+Defined in: [audit/src/mutation-verdict.ts:405](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L405)
 
 The mutation SCORE summary over a set of verdicts — killed / scored-total + survivors.
 
@@ -16,7 +16,7 @@ The mutation SCORE summary over a set of verdicts — killed / scored-total + su
 
 > `readonly` **equivalent**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L399)
+Defined in: [audit/src/mutation-verdict.ts:419](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L419)
 
 Justified-equivalent mutants (registry-recorded) — excluded from [total](#total).
 
@@ -26,7 +26,7 @@ Justified-equivalent mutants (registry-recorded) — excluded from [total](#tota
 
 > `readonly` **inconclusive**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:401](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L401)
+Defined in: [audit/src/mutation-verdict.ts:421](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L421)
 
 Mutants whose runner refused a trustworthy verdict — counted in [total](#total).
 
@@ -36,7 +36,7 @@ Mutants whose runner refused a trustworthy verdict — counted in [total](#total
 
 > `readonly` **killed**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L393)
+Defined in: [audit/src/mutation-verdict.ts:413](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L413)
 
 Mutants a covering test killed. (Total also counts [inconclusive](#inconclusive).)
 
@@ -46,7 +46,7 @@ Mutants a covering test killed. (Total also counts [inconclusive](#inconclusive)
 
 > `readonly` **noCoverage**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:397](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L397)
+Defined in: [audit/src/mutation-verdict.ts:417](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L417)
 
 Mutants with no covering test at all (untested).
 
@@ -56,7 +56,7 @@ Mutants with no covering test at all (untested).
 
 > `readonly` **score**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:410](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L410)
+Defined in: [audit/src/mutation-verdict.ts:430](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L430)
 
 The kill score in [0, 1] — `killed / total`, where `total` is the NON-EQUIVALENT
 mutant count. A no-coverage mutant counts AGAINST the score (untested); an
@@ -71,7 +71,7 @@ kill-floor compares and the ratchet baseline pins.
 
 > `readonly` **survived**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L395)
+Defined in: [audit/src/mutation-verdict.ts:415](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L415)
 
 Mutants every covering test passed on (coverage divergences).
 
@@ -81,7 +81,7 @@ Mutants every covering test passed on (coverage divergences).
 
 > `readonly` **total**: `number`
 
-Defined in: [audit/src/mutation-verdict.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L391)
+Defined in: [audit/src/mutation-verdict.ts:411](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L411)
 
 The SCORED total — killed + survived + no-coverage (the non-equivalent mutants).
 EXCLUDES `equivalent` mutants (they are not a coverage gap, so they are not part
