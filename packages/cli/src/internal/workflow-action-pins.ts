@@ -107,18 +107,22 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
           );
         }
       } else {
-        // Restore fallbacks are ordered: the FIRST restore-keys prefix must be
+        // Restore fallbacks are REQUIRED and ordered: attempt-qualified
+        // primaries can never exact-match a re-run, so a restore without a
+        // non-empty restore-keys leaves banked work unrecoverable (PR #196
+        // review round 7, confirmed P2) — and the FIRST prefix must be
         // run-scoped, so a re-run resumes this run's own freshly banked work
-        // instead of an older historical bank shadowing it (PR #196 review
-        // round 3, confirmed P2).
+        // instead of an older historical bank shadowing it (round 3).
         const rkIndex = withChildren.find((c) => lines[c]!.body.startsWith('restore-keys:'));
-        if (rkIndex !== undefined) {
-          const first = blockLinesOf(lines, rkIndex)[0]?.body.replace(/^- /u, '');
-          if (first !== undefined && !uncommentedScalar(first).includes('${{ github.run_id }}')) {
-            violations.push(
-              `${job}: restore-keys leads with a historical prefix — a re-run must prefer this run's own bank first`,
-            );
-          }
+        const first = rkIndex === undefined ? undefined : blockLinesOf(lines, rkIndex)[0]?.body.replace(/^- /u, '');
+        if (first === undefined) {
+          violations.push(
+            `${job}: cache restore has no restore-keys fallback — an attempt-qualified primary can never exact-match a re-run, leaving banked work unrecoverable`,
+          );
+        } else if (!uncommentedScalar(first).includes('${{ github.run_id }}')) {
+          violations.push(
+            `${job}: restore-keys leads with a historical prefix — a re-run must prefer this run's own bank first`,
+          );
         }
       }
     }

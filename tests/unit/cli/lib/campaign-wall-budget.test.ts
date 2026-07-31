@@ -255,9 +255,27 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
         v.includes('run_attempt'),
       ),
     ).toBe(true);
+    // A restore with NO restore-keys fallback (or an empty one) — the
+    // attempt-qualified primary can never exact-match a re-run, so banked
+    // work becomes unrecoverable while the contract stays green (PR #196
+    // review round 7, confirmed P2).
+    const missingFallbackRestore = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n${saveOk}`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(missingFallbackRestore, ['exhaustive-mutation']).some((v) =>
+        v.includes('fallback'),
+      ),
+    ).toBe(true);
+    const emptyFallbackRestore = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n${saveOk}`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(emptyFallbackRestore, ['exhaustive-mutation']).some((v) => v.includes('fallback')),
+    ).toBe(true);
     // The full contract satisfied → clean, even with a long step body.
     const good = jobOf(
-      `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n${padding}        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n            bank-\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n${padding}        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,
     );
     expect(scanExhaustiveCachePersistence(good, ['exhaustive-mutation'])).toEqual([]);
     // A missing job is a violation, never a silent pass.
