@@ -78,11 +78,18 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
     }
     // GitHub cache keys are immutable per scope: a re-run attempt saving under
     // a run_id-only key finds it reserved by attempt 1 and banks NOTHING
-    // (PR #195 review, confirmed). Every save key must fold the attempt.
-    for (const save of section.matchAll(
-      /uses: actions\/cache\/save@[0-9a-f]{40}[^\n]*\n(?:[^\n]*\n){0,5}?\s*key: ([^\n]*)/gu,
-    )) {
-      if (!save[1]!.includes('${{ github.run_attempt }}')) {
+    // (PR #195 review, confirmed). Every save key must fold the attempt. The
+    // whole step is parsed — to its next `- ` sibling — and a step with no key
+    // at all is a violation, so a long step body can never fail OPEN
+    // (PR #196 review, confirmed P2).
+    for (const save of section.matchAll(/uses: actions\/cache\/save@[0-9a-f]{40}/gu)) {
+      const rest = section.slice(save.index + save[0].length);
+      const nextStep = rest.search(/\n\s+- \S/u);
+      const step = nextStep === -1 ? rest : rest.slice(0, nextStep);
+      const key = /\n\s+key: ([^\n]*)/u.exec(step);
+      if (key === null) {
+        violations.push(`${job}: cache save step has no key — the attempt-qualification contract is unprovable`);
+      } else if (!key[1]!.includes('${{ github.run_attempt }}')) {
         violations.push(`${job}: cache save key lacks github.run_attempt — a re-run attempt cannot bank its verdicts`);
       }
     }

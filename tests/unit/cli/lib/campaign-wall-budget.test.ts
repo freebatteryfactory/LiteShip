@@ -176,9 +176,26 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
     expect(
       scanExhaustiveCachePersistence(runIdOnlyKey, ['exhaustive-mutation']).some((v) => v.includes('run_attempt')),
     ).toBe(true);
-    // The full contract satisfied → clean.
+    // A LONG save step — comments and settings pushing key: past any fixed
+    // line window must not smuggle an attempt-less key past the scanner
+    // (PR #196 review, confirmed P2: the bounded window failed OPEN).
+    const padding = '        # a\n        # b\n        # c\n        # d\n        # e\n        # f\n';
+    const longAttemptless = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n${padding}        with:\n          path: x\n          enableCrossOsArchive: false\n          key: bank-\${{ github.run_id }}\n`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(longAttemptless, ['exhaustive-mutation']).some((v) => v.includes('run_attempt')),
+    ).toBe(true);
+    // A save step with NO key at all — fail closed, never an unprovable pass.
+    const keylessSave = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n        with:\n          path: x\n`,
+    );
+    expect(scanExhaustiveCachePersistence(keylessSave, ['exhaustive-mutation']).some((v) => v.includes('no key'))).toBe(
+      true,
+    );
+    // The full contract satisfied → clean, even with a long step body.
     const good = jobOf(
-      `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,
+      `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n${padding}        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,
     );
     expect(scanExhaustiveCachePersistence(good, ['exhaustive-mutation'])).toEqual([]);
     // A missing job is a violation, never a silent pass.
