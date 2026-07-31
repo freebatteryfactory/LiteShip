@@ -227,6 +227,22 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
       `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-shard0-\${{ github.run_id }}-\n            bank-fold-\n${saveOk}`,
     );
     expect(scanExhaustiveCachePersistence(runScopedFirstRestore, ['exhaustive-mutation'])).toEqual([]);
+    // An INLINE comment carrying the attempt — YAML excludes \` #...\` from the
+    // effective plain scalar, so the real key stays run-id-only and a re-run
+    // still banks nothing (PR #196 review round 4, confirmed P2).
+    const commentedAttempt = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }} # \${{ github.run_attempt }}\n`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(commentedAttempt, ['exhaustive-mutation']).some((v) => v.includes('run_attempt')),
+    ).toBe(true);
+    // The same trick must not make a historical restore prefix look run-scoped.
+    const commentedRunScope = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-fold- # \${{ github.run_id }}\n${saveOk}`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(commentedRunScope, ['exhaustive-mutation']).some((v) => v.includes('historical')),
+    ).toBe(true);
     // The full contract satisfied → clean, even with a long step body.
     const good = jobOf(
       `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n${padding}        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,
@@ -299,6 +315,10 @@ describe('campaign wall budgets absorb a cold probe and leave post-step margin (
     );
     // Sized inside both bounds → clean.
     expect(scanCampaignWallBudget(jobOf(150, floor), ['exhaustive-mutation'])).toEqual([]);
+    // A benign INLINE comment on an active knob is tolerated — stripping
+    // comments must not overshoot into false reds (PR #196 review round 4).
+    const commentedKnobValue = `\n  exhaustive-mutation:\n    timeout-minutes: 150 # twice-measured\n    steps:\n      - run: check gates\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}' # the cold-probe floor\n  next-job:\n    a: b\n`;
+    expect(scanCampaignWallBudget(commentedKnobValue, ['exhaustive-mutation'])).toEqual([]);
   });
 });
 

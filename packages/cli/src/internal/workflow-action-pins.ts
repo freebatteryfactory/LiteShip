@@ -94,7 +94,7 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
         const key = withChildren.map((c) => lines[c]!.body).find((body) => body.startsWith('key: '));
         if (key === undefined) {
           violations.push(`${job}: cache save step has no with.key — the attempt-qualification contract is unprovable`);
-        } else if (!key.includes('${{ github.run_attempt }}')) {
+        } else if (!uncommentedScalar(key).includes('${{ github.run_attempt }}')) {
           violations.push(
             `${job}: cache save key lacks github.run_attempt — a re-run attempt cannot bank its verdicts`,
           );
@@ -107,7 +107,7 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
         const rkIndex = withChildren.find((c) => lines[c]!.body.startsWith('restore-keys:'));
         if (rkIndex !== undefined) {
           const first = blockLinesOf(lines, rkIndex)[0]?.body.replace(/^- /u, '');
-          if (first !== undefined && !first.includes('${{ github.run_id }}')) {
+          if (first !== undefined && !uncommentedScalar(first).includes('${{ github.run_id }}')) {
             violations.push(
               `${job}: restore-keys leads with a historical prefix — a re-run must prefer this run's own bank first`,
             );
@@ -123,6 +123,19 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
 interface ActiveLine {
   readonly indent: number;
   readonly body: string;
+}
+
+/**
+ * A YAML line with any inline plain-scalar comment removed — the runner
+ * excludes ` #...` from the effective value, so comment text must never
+ * satisfy a key or knob contract (PR #196 review round 4, confirmed P2: an
+ * attempt token inside a trailing comment passed the immutable-key check
+ * while the real key stayed run-id-only). Stripping inside a quoted scalar
+ * would only fail CLOSED — a legitimate value reads as non-compliant.
+ */
+function uncommentedScalar(body: string): string {
+  const cut = body.indexOf(' #');
+  return (cut === -1 ? body : body.slice(0, cut)).trim();
 }
 
 function activeLinesOf(text: string): readonly ActiveLine[] {
@@ -198,7 +211,7 @@ export function scanCampaignWallBudget(text: string, jobs: readonly string[]): r
     const lines = activeLinesOf(section);
     const jobChildren = childIndicesOf(lines, 0).map((c) => lines[c]!);
     const timeout = jobChildren
-      .map((line) => /^timeout-minutes: (\d+)$/u.exec(line.body))
+      .map((line) => /^timeout-minutes: (\d+)$/u.exec(uncommentedScalar(line.body)))
       .find((match) => match !== null);
     const budget = campaignStepBudgetOf(lines);
     if (timeout === undefined || timeout === null || budget === null) {
@@ -237,7 +250,7 @@ function campaignStepBudgetOf(lines: readonly ActiveLine[]): string | null {
     const envIndex = childIndicesOf(lines, stepIndex).find((c) => lines[c]!.body === 'env:');
     if (envIndex === undefined) continue;
     for (const envChild of childIndicesOf(lines, envIndex)) {
-      const value = /^LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '(\d+)'$/u.exec(lines[envChild]!.body);
+      const value = /^LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '(\d+)'$/u.exec(uncommentedScalar(lines[envChild]!.body));
       if (value !== null) return value[1]!;
     }
   }
