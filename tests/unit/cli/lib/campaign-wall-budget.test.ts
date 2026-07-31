@@ -202,6 +202,31 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
     expect(
       scanExhaustiveCachePersistence(envKeyDecoy, ['exhaustive-mutation']).some((v) => v.includes('run_attempt')),
     ).toBe(true);
+    // A decoy key INSIDE a block scalar — `path: |` content is nested text,
+    // not a with: input; only a DIRECT child key: names the immutable save
+    // key (PR #196 review round 3, confirmed P2).
+    const pathScalarDecoy = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n        with:\n          path: |\n            .liteship/cache\n            key: decoy-\${{ github.run_attempt }}\n          key: bank-\${{ github.run_id }}\n`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(pathScalarDecoy, ['exhaustive-mutation']).some((v) => v.includes('run_attempt')),
+    ).toBe(true);
+    // Restore fallbacks that try a HISTORICAL prefix first — a re-run would
+    // resume an older bank instead of this run's own freshly banked work
+    // (PR #196 review round 3, confirmed P2).
+    const saveOk = `      - uses: actions/cache/save@${sha} # v4\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`;
+    const historicalFirstRestore = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-fold-\n            bank-shard0-\${{ github.run_id }}-\n${saveOk}`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(historicalFirstRestore, ['exhaustive-mutation']).some((v) =>
+        v.includes('historical'),
+      ),
+    ).toBe(true);
+    const runScopedFirstRestore = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-shard0-\${{ github.run_id }}-\n            bank-fold-\n${saveOk}`,
+    );
+    expect(scanExhaustiveCachePersistence(runScopedFirstRestore, ['exhaustive-mutation'])).toEqual([]);
     // The full contract satisfied → clean, even with a long step body.
     const good = jobOf(
       `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n${padding}        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,
@@ -228,7 +253,7 @@ describe('campaign wall budgets absorb a cold probe and leave post-step margin (
   it('the scanner REDS every sizing regression class (below floor, above ceiling, missing knobs)', () => {
     const floor = CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS;
     const jobOf = (timeoutMinutes: number, budgetMs?: number): string =>
-      `\n  exhaustive-mutation:\n    timeout-minutes: ${timeoutMinutes}\n    steps:\n      - run: x\n        env:\n${
+      `\n  exhaustive-mutation:\n    timeout-minutes: ${timeoutMinutes}\n    steps:\n      - run: check gates\n        env:\n${
         budgetMs === undefined ? '' : `          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${budgetMs}'\n`
       }  next-job:\n    a: b\n`;
     // Below the floor: a cold probe eats the whole budget, the census folds
@@ -251,12 +276,25 @@ describe('campaign wall budgets absorb a cold probe and leave post-step margin (
     // COMMENTED-OUT knobs are missing knobs — GitHub applies neither, and the
     // leftover text must not satisfy the contract (PR #196 review round 2,
     // confirmed P2).
-    const commentedBudget = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: x\n        env:\n          # LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n  next-job:\n    a: b\n`;
+    const commentedBudget = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: check gates\n        env:\n          # LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n  next-job:\n    a: b\n`;
     expect(scanCampaignWallBudget(commentedBudget, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
       true,
     );
-    const commentedTimeout = `\n  exhaustive-mutation:\n    # timeout-minutes: 150\n    steps:\n      - run: x\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n  next-job:\n    a: b\n`;
+    const commentedTimeout = `\n  exhaustive-mutation:\n    # timeout-minutes: 150\n    steps:\n      - run: check gates\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n  next-job:\n    a: b\n`;
     expect(scanCampaignWallBudget(commentedTimeout, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
+      true,
+    );
+    // A STEP-LEVEL timeout-minutes must not shadow the job-level backstop —
+    // GitHub kills the JOB at its own timeout regardless of step budgets
+    // (PR #196 review round 3, confirmed P2).
+    const stepTimeoutShadow = `\n  exhaustive-mutation:\n    steps:\n      - run: check gates\n        timeout-minutes: 150\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n    timeout-minutes: 100\n  next-job:\n    a: b\n`;
+    expect(scanCampaignWallBudget(stepTimeoutShadow, ['exhaustive-mutation']).some((v) => v.includes('backstop'))).toBe(
+      true,
+    );
+    // An env on an UNRELATED step never reaches the campaign process
+    // (PR #196 review round 3, confirmed P2).
+    const unrelatedEnvBudget = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: echo warmup\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n      - run: check gates\n  next-job:\n    a: b\n`;
+    expect(scanCampaignWallBudget(unrelatedEnvBudget, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
       true,
     );
     // Sized inside both bounds → clean.
