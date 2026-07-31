@@ -235,7 +235,7 @@ export function scanCampaignWallBudget(text: string, jobs: readonly string[]): r
     const timeout = jobChildren
       .map((line) => /^timeout-minutes: (\d+)$/u.exec(uncommentedScalar(line.body)))
       .find((match) => match !== null);
-    const budget = campaignStepBudgetOf(lines);
+    const budget = campaignStepBudgetOf(lines, job.includes('mcdc') ? '--mcdc' : '--mutate');
     if (timeout === undefined || timeout === null || budget === null) {
       violations.push(
         `${job}: job-level timeout-minutes or the campaign step's LITESHIP_CAMPAIGN_WALL_BUDGET_MS missing — the budget contract is unenforceable`,
@@ -294,20 +294,25 @@ function stepRunCommandOf(lines: readonly ActiveLine[], stepIndex: number): stri
   const bullet = lines[stepIndex]!.body.replace(/^- /u, '');
   if (bullet.startsWith('run:')) {
     const value = bullet.slice(4).trim();
+    // A bullet-inline `- run: |` scalar ends at the step's FIELD indent
+    // (bullet indent + 2) — sibling fields and their block scalars are not
+    // command text (PR #196 review round 9, confirmed P2: an if: | block
+    // mentioning the invocation leaked into the command).
     return /^[|>]/u.test(value) || value === ''
-      ? blockLinesOf(lines, stepIndex)
-          .map((line) => line.body)
-          .join('\n')
+      ? scalarLinesUnder(lines, stepIndex, lines[stepIndex]!.indent + 2)
       : value;
   }
   const runIndex = childIndicesOf(lines, stepIndex).find((c) => lines[c]!.body.startsWith('run:'));
   if (runIndex === undefined) return '';
   const value = lines[runIndex]!.body.slice(4).trim();
-  return /^[|>]/u.test(value) || value === ''
-    ? blockLinesOf(lines, runIndex)
-        .map((line) => line.body)
-        .join('\n')
-    : value;
+  return /^[|>]/u.test(value) || value === '' ? scalarLinesUnder(lines, runIndex, lines[runIndex]!.indent) : value;
+}
+
+/** Block-scalar content after lines[index]: every following line strictly deeper than boundaryIndent. */
+function scalarLinesUnder(lines: readonly ActiveLine[], index: number, boundaryIndent: number): string {
+  const content: string[] = [];
+  for (let i = index + 1; i < lines.length && lines[i]!.indent > boundaryIndent; i++) content.push(lines[i]!.body);
+  return content.join('\n');
 }
 
 /**
@@ -316,15 +321,17 @@ function stepRunCommandOf(lines: readonly ActiveLine[], stepIndex: number): stri
  * An env on any other step never reaches the campaign process, so it must
  * not satisfy the contract (PR #196 review rounds 3 and 5, confirmed P2s).
  */
-function campaignStepBudgetOf(lines: readonly ActiveLine[]): string | null {
+function campaignStepBudgetOf(lines: readonly ActiveLine[], modeFlag: string): string | null {
   for (const stepIndex of stepIndicesOf(lines)) {
     // An INVOCATION, not a mention: only a command line that STARTS with the
     // literal gates invocation qualifies — `echo check gates`, a name, or an
     // argument to another tool never does (PR #196 review round 8, confirmed
-    // P2).
+    // P2). And it must carry the JOB'S OWN mode flag as an argument token —
+    // a budgeted lean gates step must not stand in for the exhaustive one
+    // (round 9, confirmed P2).
     const invokes = stepRunCommandOf(lines, stepIndex)
       .split('\n')
-      .some((line) => line.startsWith(CAMPAIGN_GATES_INVOCATION));
+      .some((line) => line.startsWith(CAMPAIGN_GATES_INVOCATION) && line.split(/\s+/u).includes(modeFlag));
     if (!invokes) continue;
     const envIndex = childIndicesOf(lines, stepIndex).find((c) => lines[c]!.body === 'env:');
     if (envIndex === undefined) continue;
