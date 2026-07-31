@@ -77,11 +77,18 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
       violations.push(`${job}: combined actions/cache present — its post-if: success() save skips red runs`);
     }
     const lines = activeLinesOf(section);
-    for (let i = 0; i < lines.length; i++) {
-      const isSave = /^- uses: actions\/cache\/save@[0-9a-f]{40}/u.test(lines[i]!.body);
-      const isRestore = /^- uses: actions\/cache\/restore@[0-9a-f]{40}/u.test(lines[i]!.body);
+    for (const step of stepIndicesOf(lines)) {
+      // The step's uses FIELD decides its role — live steps are written as
+      // `- name:` bullets with uses: on a child line, and a bullet-spelling
+      // detector skipped every one of them (PR #196 review round 5,
+      // confirmed P2: the per-key validation went vacuous while the coarse
+      // presence checks stayed green).
+      const uses = stepFieldOf(lines, step, 'uses: ');
+      if (uses === null) continue;
+      const isSave = /^actions\/cache\/save@[0-9a-f]{40}/u.test(uses);
+      const isRestore = /^actions\/cache\/restore@[0-9a-f]{40}/u.test(uses);
       if (!isSave && !isRestore) continue;
-      const withIndex = childIndicesOf(lines, i).find((c) => lines[c]!.body === 'with:');
+      const withIndex = childIndicesOf(lines, step).find((c) => lines[c]!.body === 'with:');
       const withChildren = withIndex === undefined ? [] : childIndicesOf(lines, withIndex);
       if (isSave) {
         // GitHub cache keys are immutable per scope: a re-run attempt saving
@@ -235,18 +242,62 @@ export function scanCampaignWallBudget(text: string, jobs: readonly string[]): r
   return violations;
 }
 
+/** Indices of the step bullets under the job's direct-child `steps:` mapping (lines[0] is the job key). */
+function stepIndicesOf(lines: readonly ActiveLine[]): readonly number[] {
+  const stepsIndex = childIndicesOf(lines, 0).find((c) => lines[c]!.body === 'steps:');
+  return stepsIndex === undefined ? [] : childIndicesOf(lines, stepsIndex);
+}
+
+/**
+ * A step's direct-child field value for a `field: ` prefix — read from the
+ * bullet line itself (`- uses: x`) or a direct-child line (`uses: x` under a
+ * `- name:` bullet). Never from nested blocks, so a decoy in a block scalar
+ * or sub-mapping cannot impersonate the field.
+ */
+function stepFieldOf(lines: readonly ActiveLine[], stepIndex: number, prefix: string): string | null {
+  const candidates = [
+    lines[stepIndex]!.body.replace(/^- /u, ''),
+    ...childIndicesOf(lines, stepIndex).map((c) => lines[c]!.body),
+  ];
+  const field = candidates.find((body) => body.startsWith(prefix));
+  return field === undefined ? null : field.slice(prefix.length);
+}
+
+/**
+ * The step's run COMMAND: an inline scalar's value, or the joined content of
+ * its `run: |` block. A step is only the campaign step when this command
+ * invokes the gates — a step merely named after the campaign, or echoing its
+ * name, never qualifies (PR #196 review round 5, confirmed P2).
+ */
+function stepRunCommandOf(lines: readonly ActiveLine[], stepIndex: number): string {
+  const bullet = lines[stepIndex]!.body.replace(/^- /u, '');
+  if (bullet.startsWith('run:')) {
+    const value = bullet.slice(4).trim();
+    return /^[|>]/u.test(value) || value === ''
+      ? blockLinesOf(lines, stepIndex)
+          .map((line) => line.body)
+          .join('\n')
+      : value;
+  }
+  const runIndex = childIndicesOf(lines, stepIndex).find((c) => lines[c]!.body.startsWith('run:'));
+  if (runIndex === undefined) return '';
+  const value = lines[runIndex]!.body.slice(4).trim();
+  return /^[|>]/u.test(value) || value === ''
+    ? blockLinesOf(lines, runIndex)
+        .map((line) => line.body)
+        .join('\n')
+    : value;
+}
+
 /**
  * The wall-budget env value declared on the CAMPAIGN step — the step whose
- * body invokes `check gates` — or null when no such step declares it. An env
- * on any other step never reaches the campaign process, so it must not
- * satisfy the contract (PR #196 review round 3, confirmed P2).
+ * run command invokes `check gates` — or null when no such step declares it.
+ * An env on any other step never reaches the campaign process, so it must
+ * not satisfy the contract (PR #196 review rounds 3 and 5, confirmed P2s).
  */
 function campaignStepBudgetOf(lines: readonly ActiveLine[]): string | null {
-  const stepsIndex = childIndicesOf(lines, 0).find((c) => lines[c]!.body === 'steps:');
-  if (stepsIndex === undefined) return null;
-  for (const stepIndex of childIndicesOf(lines, stepsIndex)) {
-    const stepBlock = [lines[stepIndex]!, ...blockLinesOf(lines, stepIndex)];
-    if (!stepBlock.some((line) => line.body.includes('check gates'))) continue;
+  for (const stepIndex of stepIndicesOf(lines)) {
+    if (!stepRunCommandOf(lines, stepIndex).includes('check gates')) continue;
     const envIndex = childIndicesOf(lines, stepIndex).find((c) => lines[c]!.body === 'env:');
     if (envIndex === undefined) continue;
     for (const envChild of childIndicesOf(lines, envIndex)) {

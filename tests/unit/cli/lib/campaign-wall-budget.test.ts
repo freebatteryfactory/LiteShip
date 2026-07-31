@@ -243,6 +243,18 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
     expect(
       scanExhaustiveCachePersistence(commentedRunScope, ['exhaustive-mutation']).some((v) => v.includes('historical')),
     ).toBe(true);
+    // A NAMED save step — the live ci.yml writes every save as \`- name:\`
+    // with uses: on a child line; the key contract must bind by the step's
+    // direct-child uses FIELD, not the bullet spelling (PR #196 review
+    // round 5, confirmed P2: bullet-only detection skipped every live save).
+    const namedAttemptlessSave = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n      - name: Save the bank\n        uses: actions/cache/save@${sha} # v4\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}\n`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(namedAttemptlessSave, ['exhaustive-mutation']).some((v) =>
+        v.includes('run_attempt'),
+      ),
+    ).toBe(true);
     // The full contract satisfied → clean, even with a long step body.
     const good = jobOf(
       `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n${padding}        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,
@@ -319,6 +331,17 @@ describe('campaign wall budgets absorb a cold probe and leave post-step margin (
     // comments must not overshoot into false reds (PR #196 review round 4).
     const commentedKnobValue = `\n  exhaustive-mutation:\n    timeout-minutes: 150 # twice-measured\n    steps:\n      - run: check gates\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}' # the cold-probe floor\n  next-job:\n    a: b\n`;
     expect(scanCampaignWallBudget(commentedKnobValue, ['exhaustive-mutation'])).toEqual([]);
+    // The campaign step is identified by its RUN command — a step merely
+    // NAMED after the campaign must not satisfy the contract while the real
+    // gates step goes unprotected (PR #196 review round 5, confirmed P2).
+    const namedDecoyStep = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - name: pretend to check gates\n        run: echo warmup\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n      - name: the real campaign\n        run: |\n          pnpm exec tsx bin.ts check gates --ir --mutate\n  next-job:\n    a: b\n`;
+    expect(scanCampaignWallBudget(namedDecoyStep, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
+      true,
+    );
+    // And a named campaign step whose run: | block invokes the gates IS the
+    // campaign step — its env satisfies the contract.
+    const namedCampaignStep = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - name: the real campaign\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n        run: |\n          pnpm exec tsx bin.ts check gates --ir --mutate\n  next-job:\n    a: b\n`;
+    expect(scanCampaignWallBudget(namedCampaignStep, ['exhaustive-mutation'])).toEqual([]);
   });
 });
 
