@@ -290,9 +290,11 @@ describe('campaign wall budgets absorb a cold probe and leave post-step margin (
       scanCampaignWallBudget(jobOf(350, floor - 1), ['exhaustive-mutation']).some((v) => v.includes('cold probe')),
     ).toBe(true);
     // Above the ceiling: GitHub's backstop kill lands before the budget fold
-    // and skips the always() save post-step.
+    // and skips the always() save post-step. The ceiling reserves the
+    // post-step margin PLUS a twice-measured in-flight target, because the
+    // budget is only checked at target boundaries (PR #196 review round 6).
     const timeoutMinutes = 100;
-    const ceiling = timeoutMinutes * 60_000 - CAMPAIGN_POST_STEP_MARGIN_MS;
+    const ceiling = timeoutMinutes * 60_000 - CAMPAIGN_POST_STEP_MARGIN_MS - 2 * CAMPAIGN_TARGET_EVAL_MS;
     expect(
       scanCampaignWallBudget(jobOf(timeoutMinutes, ceiling + 1), ['exhaustive-mutation']).some((v) =>
         v.includes('backstop'),

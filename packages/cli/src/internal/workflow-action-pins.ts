@@ -233,9 +233,15 @@ export function scanCampaignWallBudget(text: string, jobs: readonly string[]): r
         `${job}: wall budget ${budgetMs}ms cannot absorb a cold probe plus two targets — a cold run folds everything inconclusive and banks nothing`,
       );
     }
-    if (budgetMs + CAMPAIGN_POST_STEP_MARGIN_MS > Number(timeout[1]) * 60_000) {
+    // The budget is checked at the per-target BOUNDARY, so a target that
+    // starts just under the budget runs to completion — the ceiling must
+    // reserve a twice-measured in-flight allowance on top of the post-step
+    // margin, or an ordinary ~9.5-minute target started at budget-1ms hands
+    // the kill to GitHub's backstop before the always() save (PR #196
+    // review round 6, confirmed P2).
+    if (budgetMs + 2 * CAMPAIGN_TARGET_EVAL_MS + CAMPAIGN_POST_STEP_MARGIN_MS > Number(timeout[1]) * 60_000) {
       violations.push(
-        `${job}: wall budget ${budgetMs}ms leaves no post-step margin under timeout-minutes ${timeout[1]} — the backstop kill skips the always() save`,
+        `${job}: wall budget ${budgetMs}ms leaves no in-flight-target and post-step margin under timeout-minutes ${timeout[1]} — the backstop kill skips the always() save`,
       );
     }
   }
