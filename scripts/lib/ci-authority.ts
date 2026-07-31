@@ -2,10 +2,13 @@
 
 import type { DeliveryCiEvent } from './ci-evidence-selection.js';
 
+// The FOLD jobs carry the exhaustive authority — matrix shards are builders
+// whose red is EXPECTED while the verdict bank converges, and `jobNameMatches`
+// would match a bare `exhaustive-mutation` id against every shard.
 const EXHAUSTIVE = [
   'exhaustive-analysis',
-  'exhaustive-mutation',
-  'exhaustive-mcdc',
+  'exhaustive-mutation-fold',
+  'exhaustive-mcdc-fold',
   'semantic-assurance-admission',
 ] as const;
 

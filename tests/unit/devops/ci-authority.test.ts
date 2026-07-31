@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { requiredAuthorityJobs } from '../../../scripts/lib/ci-authority.js';
+import { jobNameMatches } from '../../../scripts/lib/ci-evidence-selection.js';
 
 const README = readFileSync(resolve(import.meta.dirname, '../../..', 'README.md'), 'utf8');
 const SUPPORT_MATRIX = README.slice(README.indexOf('## Support matrix'), README.indexOf('## Documentation'));
@@ -95,11 +96,38 @@ describe('CI authority requirements', () => {
     expect(tag).toEqual(
       expect.arrayContaining([
         'exhaustive-analysis',
-        'exhaustive-mutation',
-        'exhaustive-mcdc',
+        'exhaustive-mutation-fold',
+        'exhaustive-mcdc-fold',
         'semantic-assurance-admission',
       ]),
     );
+  });
+
+  it('no exhaustive authority id ever matches a matrix shard job (PR #195 review, confirmed P1)', () => {
+    // Shards are builders whose red is EXPECTED while the verdict bank
+    // converges — the fold jobs re-earn the full census and carry the sole
+    // authority. A required id that jobNameMatches `exhaustive-mutation (3)`
+    // rejects delivery evidence on every convergence run even when both
+    // folds succeed.
+    const events = [
+      { event: 'schedule', ref: 'refs/heads/main' },
+      { event: 'workflow_dispatch', ref: 'refs/heads/main' },
+      { event: 'workflow_call', ref: 'refs/tags/v0.19.0' },
+    ] as const;
+    for (const { event, ref } of events) {
+      const required = requiredAuthorityJobs({ event, ref, browserAffected: false, rustWasmAffected: false });
+      expect(required).toContain('exhaustive-mutation-fold');
+      expect(required).toContain('exhaustive-mcdc-fold');
+      for (const shard of [0, 1, 2, 3, 4, 5]) {
+        for (const mode of ['mutation', 'mcdc']) {
+          const shardJob = `exhaustive-${mode} (${shard})`;
+          expect(
+            required.some((id) => jobNameMatches(shardJob, id)),
+            `${event}: authority id matches convergence shard ${shardJob}`,
+          ).toBe(false);
+        }
+      }
+    }
   });
 
   it('keeps the public support matrix aligned with event-specific authority jobs', () => {

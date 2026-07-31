@@ -1096,13 +1096,18 @@ jobs:
           node-version: 22
           cache: pnpm
       # RESTORE/SAVE split, never the combined action (PR #194 review,
-      # confirmed P1: its post-if success() save skips red runs). The fold-
-      # prefix restore hands every shard yesterday's complete merged bank.
+      # confirmed P1: its post-if success() save skips red runs).
+      # Restore-keys lead with the SAME-RUN fold (the broadest same-run
+      # bank — a re-run resumes every shard's attempt-1 verdicts), then
+      # the same-run shard slice (interrupted-fold recovery), then each
+      # historical counterpart in the same order.
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mutation-shard${{ matrix.shard }}-${{ github.run_id }}
+          key: exhaustive-verdicts-mutation-shard${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            exhaustive-verdicts-mutation-fold-${{ github.run_id }}-
+            exhaustive-verdicts-mutation-shard${{ matrix.shard }}-${{ github.run_id }}-
             exhaustive-verdicts-mutation-fold-
             exhaustive-verdicts-mutation-shard${{ matrix.shard }}-
       - run: pnpm install --frozen-lockfile
@@ -1122,7 +1127,7 @@ jobs:
         if: always()
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mutation-shard${{ matrix.shard }}-${{ github.run_id }}
+          key: exhaustive-verdicts-mutation-shard${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
@@ -1139,7 +1144,7 @@ jobs:
     # fails HONESTLY until the bank converges.
     if: ${{ !cancelled() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 180
     needs:
       - exhaustive-mutation
     steps:
@@ -1158,38 +1163,53 @@ jobs:
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mutation-fold-${{ github.run_id }}
+          key: exhaustive-verdicts-mutation-fold-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            exhaustive-verdicts-mutation-fold-${{ github.run_id }}-
             exhaustive-verdicts-mutation-fold-
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mutation-shard0-${{ github.run_id }}
+          key: exhaustive-verdicts-mutation-shard0-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            exhaustive-verdicts-mutation-shard0-${{ github.run_id }}-
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mutation-shard1-${{ github.run_id }}
+          key: exhaustive-verdicts-mutation-shard1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            exhaustive-verdicts-mutation-shard1-${{ github.run_id }}-
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mutation-shard2-${{ github.run_id }}
+          key: exhaustive-verdicts-mutation-shard2-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            exhaustive-verdicts-mutation-shard2-${{ github.run_id }}-
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mutation-shard3-${{ github.run_id }}
+          key: exhaustive-verdicts-mutation-shard3-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            exhaustive-verdicts-mutation-shard3-${{ github.run_id }}-
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mutation-shard4-${{ github.run_id }}
+          key: exhaustive-verdicts-mutation-shard4-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            exhaustive-verdicts-mutation-shard4-${{ github.run_id }}-
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mutation-shard5-${{ github.run_id }}
+          key: exhaustive-verdicts-mutation-shard5-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            exhaustive-verdicts-mutation-shard5-${{ github.run_id }}-
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
       - name: Fold the full mutation census from the merged bank
         env:
-          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '6000000'
+          # Absorbs a cold 85-minute probe (run 30606178745) plus targets;
+          # scanCampaignWallBudget pins the floor and the backstop margin.
+          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '7800000'
         run: |
           mkdir -p reports/exhaustive
           set -o pipefail
@@ -1199,7 +1219,7 @@ jobs:
         if: always()
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mutation-fold-${{ github.run_id }}
+          key: exhaustive-verdicts-mutation-fold-${{ github.run_id }}-${{ github.run_attempt }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
@@ -1240,13 +1260,18 @@ jobs:
           node-version: 22
           cache: pnpm
       # RESTORE/SAVE split, never the combined action (PR #194 review,
-      # confirmed P1: its post-if success() save skips red runs). The fold-
-      # prefix restore hands every shard yesterday's complete merged bank.
+      # confirmed P1: its post-if success() save skips red runs).
+      # Restore-keys lead with the SAME-RUN fold (the broadest same-run
+      # bank — a re-run resumes every shard's attempt-1 verdicts), then
+      # the same-run shard slice (interrupted-fold recovery), then each
+      # historical counterpart in the same order.
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mcdc-shard${{ matrix.shard }}-${{ github.run_id }}
+          key: exhaustive-verdicts-mcdc-shard${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            exhaustive-verdicts-mcdc-fold-${{ github.run_id }}-
+            exhaustive-verdicts-mcdc-shard${{ matrix.shard }}-${{ github.run_id }}-
             exhaustive-verdicts-mcdc-fold-
             exhaustive-verdicts-mcdc-shard${{ matrix.shard }}-
       - run: pnpm install --frozen-lockfile
@@ -1266,7 +1291,7 @@ jobs:
         if: always()
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mcdc-shard${{ matrix.shard }}-${{ github.run_id }}
+          key: exhaustive-verdicts-mcdc-shard${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
@@ -1283,7 +1308,7 @@ jobs:
     # fails HONESTLY until the bank converges.
     if: ${{ !cancelled() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 180
     needs:
       - exhaustive-mcdc
     steps:
@@ -1302,38 +1327,53 @@ jobs:
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mcdc-fold-${{ github.run_id }}
+          key: exhaustive-verdicts-mcdc-fold-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            exhaustive-verdicts-mcdc-fold-${{ github.run_id }}-
             exhaustive-verdicts-mcdc-fold-
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mcdc-shard0-${{ github.run_id }}
+          key: exhaustive-verdicts-mcdc-shard0-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            exhaustive-verdicts-mcdc-shard0-${{ github.run_id }}-
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mcdc-shard1-${{ github.run_id }}
+          key: exhaustive-verdicts-mcdc-shard1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            exhaustive-verdicts-mcdc-shard1-${{ github.run_id }}-
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mcdc-shard2-${{ github.run_id }}
+          key: exhaustive-verdicts-mcdc-shard2-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            exhaustive-verdicts-mcdc-shard2-${{ github.run_id }}-
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mcdc-shard3-${{ github.run_id }}
+          key: exhaustive-verdicts-mcdc-shard3-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            exhaustive-verdicts-mcdc-shard3-${{ github.run_id }}-
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mcdc-shard4-${{ github.run_id }}
+          key: exhaustive-verdicts-mcdc-shard4-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            exhaustive-verdicts-mcdc-shard4-${{ github.run_id }}-
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mcdc-shard5-${{ github.run_id }}
+          key: exhaustive-verdicts-mcdc-shard5-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            exhaustive-verdicts-mcdc-shard5-${{ github.run_id }}-
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
       - name: Fold the full mcdc census from the merged bank
         env:
-          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '6000000'
+          # Absorbs a cold 85-minute probe (run 30606178745) plus targets;
+          # scanCampaignWallBudget pins the floor and the backstop margin.
+          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '7800000'
         run: |
           mkdir -p reports/exhaustive
           set -o pipefail
@@ -1343,7 +1383,7 @@ jobs:
         if: always()
         with:
           path: .liteship/cache
-          key: exhaustive-verdicts-mcdc-fold-${{ github.run_id }}
+          key: exhaustive-verdicts-mcdc-fold-${{ github.run_id }}-${{ github.run_attempt }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
