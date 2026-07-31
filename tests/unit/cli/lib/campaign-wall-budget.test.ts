@@ -31,7 +31,13 @@ import {
   CAMPAIGN_WALL_BUDGET_REASON,
   CAMPAIGN_SHARD_FOREIGN_REASON,
 } from '../../../../packages/cli/src/internal/repo-ir-gauntlet.js';
-import { scanExhaustiveCachePersistence } from '../../../../packages/cli/src/internal/workflow-action-pins.js';
+import {
+  CAMPAIGN_COLD_PROBE_MS,
+  CAMPAIGN_POST_STEP_MARGIN_MS,
+  CAMPAIGN_TARGET_EVAL_MS,
+  scanCampaignWallBudget,
+  scanExhaustiveCachePersistence,
+} from '../../../../packages/cli/src/internal/workflow-action-pins.js';
 // Relative endpoint imports, deliberately not the package specifiers: these
 // laws are the integration cover for the campaign's two composition edges
 // (repo-ir-gauntlet → canonical/index, → core/index), and the composition
@@ -162,13 +168,62 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
     expect(
       scanExhaustiveCachePersistence(conditionalSave, ['exhaustive-mutation']).some((v) => v.includes('always')),
     ).toBe(true);
+    // A run_id-only save key — attempt 2 of a re-run finds the key reserved
+    // by attempt 1, warns, and banks NOTHING (PR #195 review, confirmed).
+    const runIdOnlyKey = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}\n`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(runIdOnlyKey, ['exhaustive-mutation']).some((v) => v.includes('run_attempt')),
+    ).toBe(true);
     // The full contract satisfied → clean.
     const good = jobOf(
-      `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n`,
+      `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,
     );
     expect(scanExhaustiveCachePersistence(good, ['exhaustive-mutation'])).toEqual([]);
     // A missing job is a violation, never a silent pass.
     expect(scanExhaustiveCachePersistence('\n  other:\n    a: b\n', ['exhaustive-mutation'])).not.toEqual([]);
+  });
+});
+
+describe('campaign wall budgets absorb a cold probe and leave post-step margin (PR #195 review, confirmed)', () => {
+  it('the live ci.yml sizes every campaign budget between the cold-probe floor and the backstop ceiling', () => {
+    const ci = readFileSync(resolve(import.meta.dirname, '../../../..', '.github', 'workflows', 'ci.yml'), 'utf8');
+    expect(
+      scanCampaignWallBudget(ci, [
+        'exhaustive-mutation',
+        'exhaustive-mutation-fold',
+        'exhaustive-mcdc',
+        'exhaustive-mcdc-fold',
+      ]),
+    ).toEqual([]);
+  });
+
+  it('the scanner REDS every sizing regression class (below floor, above ceiling, missing knobs)', () => {
+    const floor = CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS;
+    const jobOf = (timeoutMinutes: number, budgetMs?: number): string =>
+      `\n  exhaustive-mutation:\n    timeout-minutes: ${timeoutMinutes}\n    steps:\n      - run: x\n        env:\n${
+        budgetMs === undefined ? '' : `          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${budgetMs}'\n`
+      }  next-job:\n    a: b\n`;
+    // Below the floor: a cold probe eats the whole budget, the census folds
+    // inconclusive at index 0, and the run mints nothing to bank.
+    expect(
+      scanCampaignWallBudget(jobOf(350, floor - 1), ['exhaustive-mutation']).some((v) => v.includes('cold probe')),
+    ).toBe(true);
+    // Above the ceiling: GitHub's backstop kill lands before the budget fold
+    // and skips the always() save post-step.
+    const timeoutMinutes = 100;
+    const ceiling = timeoutMinutes * 60_000 - CAMPAIGN_POST_STEP_MARGIN_MS;
+    expect(
+      scanCampaignWallBudget(jobOf(timeoutMinutes, ceiling + 1), ['exhaustive-mutation']).some((v) =>
+        v.includes('backstop'),
+      ),
+    ).toBe(true);
+    // A missing budget knob is a violation, never a silent pass.
+    expect(scanCampaignWallBudget(jobOf(350), ['exhaustive-mutation'])).not.toEqual([]);
+    expect(scanCampaignWallBudget('\n  other:\n    a: b\n', ['exhaustive-mutation'])).not.toEqual([]);
+    // Sized inside both bounds → clean.
+    expect(scanCampaignWallBudget(jobOf(150, floor), ['exhaustive-mutation'])).toEqual([]);
   });
 });
 

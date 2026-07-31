@@ -62,14 +62,11 @@ export function scanWorkflowActionPins(text: string): readonly WorkflowActionPin
 export function scanExhaustiveCachePersistence(text: string, jobs: readonly string[]): readonly string[] {
   const violations: string[] = [];
   for (const job of jobs) {
-    const start = text.indexOf(`\n  ${job}:`);
-    if (start === -1) {
+    const section = campaignJobSection(text, job);
+    if (section === null) {
       violations.push(`${job}: job not found`);
       continue;
     }
-    // The job section ends at the next top-level job key (two-space indent).
-    const next = text.slice(start + 1).search(/\n {2}[a-z][a-z-]*:\n/u);
-    const section = next === -1 ? text.slice(start) : text.slice(start, start + 1 + next);
     if (!/uses: actions\/cache\/restore@[0-9a-f]{40}/u.test(section)) {
       violations.push(`${job}: no actions/cache/restore step — the verdict bank is never restored`);
     }
@@ -78,6 +75,70 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
     }
     if (/uses: actions\/cache@[0-9a-f]/u.test(section)) {
       violations.push(`${job}: combined actions/cache present — its post-if: success() save skips red runs`);
+    }
+    // GitHub cache keys are immutable per scope: a re-run attempt saving under
+    // a run_id-only key finds it reserved by attempt 1 and banks NOTHING
+    // (PR #195 review, confirmed). Every save key must fold the attempt.
+    for (const save of section.matchAll(
+      /uses: actions\/cache\/save@[0-9a-f]{40}[^\n]*\n(?:[^\n]*\n){0,5}?\s*key: ([^\n]*)/gu,
+    )) {
+      if (!save[1]!.includes('${{ github.run_attempt }}')) {
+        violations.push(`${job}: cache save key lacks github.run_attempt — a re-run attempt cannot bank its verdicts`);
+      }
+    }
+  }
+  return violations;
+}
+
+/** The job section of a workflow, from its key to the next top-level job key (two-space indent). */
+function campaignJobSection(text: string, job: string): string | null {
+  const start = text.indexOf(`\n  ${job}:`);
+  if (start === -1) return null;
+  const next = text.slice(start + 1).search(/\n {2}[a-z][a-z-]*:\n/u);
+  return next === -1 ? text.slice(start) : text.slice(start, start + 1 + next);
+}
+
+/** An 85-minute cold seam-coverage probe phase, measured in run 30606178745 (first heartbeat 07:04 vs step start 05:39). */
+export const CAMPAIGN_COLD_PROBE_MS = 5_100_000;
+/** ~9.5 minutes per census target, measured across 37 targets in run 30606178745. */
+export const CAMPAIGN_TARGET_EVAL_MS = 570_000;
+/** Setup before the gates run plus save/upload after it — both outside the wall-budget clock but inside timeout-minutes. */
+export const CAMPAIGN_POST_STEP_MARGIN_MS = 900_000;
+
+/**
+ * The campaign wall-budget sizing contract (PR #195 review, confirmed): the
+ * budget clock anchors at the top of the facts builders — BEFORE the probe
+ * phase — so a budget smaller than a cold probe plus two targets folds the
+ * whole census inconclusive at index 0 and mints nothing. And a budget too
+ * close to timeout-minutes hands the kill to GitHub's backstop, which skips
+ * the always() save/upload post-steps the banking design depends on.
+ */
+export function scanCampaignWallBudget(text: string, jobs: readonly string[]): readonly string[] {
+  const violations: string[] = [];
+  for (const job of jobs) {
+    const section = campaignJobSection(text, job);
+    if (section === null) {
+      violations.push(`${job}: job not found`);
+      continue;
+    }
+    const timeout = /timeout-minutes: (\d+)\n/u.exec(section);
+    const budget = /LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '(\d+)'/u.exec(section);
+    if (timeout === null || budget === null) {
+      violations.push(
+        `${job}: timeout-minutes or LITESHIP_CAMPAIGN_WALL_BUDGET_MS missing — the budget contract is unenforceable`,
+      );
+      continue;
+    }
+    const budgetMs = Number(budget[1]);
+    if (budgetMs < CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS) {
+      violations.push(
+        `${job}: wall budget ${budgetMs}ms cannot absorb a cold probe plus two targets — a cold run folds everything inconclusive and banks nothing`,
+      );
+    }
+    if (budgetMs + CAMPAIGN_POST_STEP_MARGIN_MS > Number(timeout[1]) * 60_000) {
+      violations.push(
+        `${job}: wall budget ${budgetMs}ms leaves no post-step margin under timeout-minutes ${timeout[1]} — the backstop kill skips the always() save`,
+      );
     }
   }
   return violations;
