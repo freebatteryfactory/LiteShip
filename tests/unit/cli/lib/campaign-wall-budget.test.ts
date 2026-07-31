@@ -223,10 +223,25 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
         v.includes('historical'),
       ),
     ).toBe(true);
+    // The compliant chain: same-run entries first (broadest bank leading),
+    // then each historical fallback AFTER its same-run counterpart.
     const runScopedFirstRestore = jobOf(
-      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n            bank-fold-\n${saveOk}`,
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-fold-\${{ github.run_id }}-\n            bank-\${{ github.run_id }}-\n            bank-fold-\n${saveOk}`,
     );
     expect(scanExhaustiveCachePersistence(runScopedFirstRestore, ['exhaustive-mutation'])).toEqual([]);
+    // A historical fallback WITHOUT its same-run counterpart earlier — a
+    // re-run reaches for an older bank of a namespace whose same-run bank it
+    // never tried, resuming stale work (PR #196 review round 12, confirmed
+    // P2: attempt 2 picked the partial attempt-1 shard slice over the
+    // completed attempt-1 merged fold).
+    const historicalWithoutCounterpart = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n            bank-fold-\n${saveOk}`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(historicalWithoutCounterpart, ['exhaustive-mutation']).some((v) =>
+        v.includes('counterpart'),
+      ),
+    ).toBe(true);
     // A run-scoped fallback in a FOREIGN namespace — it can never prefix-match
     // this restore's own bank, so a re-run still recovers nothing (PR #196
     // review round 8, confirmed P2).
@@ -406,6 +421,13 @@ describe('campaign wall budgets absorb a cold probe and leave post-step margin (
     // P2).
     const echoDecoyStep = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: echo check gates\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n  next-job:\n    a: b\n`;
     expect(scanCampaignWallBudget(echoDecoyStep, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
+      true,
+    );
+    // A LOOK-ALIKE command sharing the invocation's byte prefix — 'check
+    // gates-extra' is a different command; the invocation must end at a token
+    // boundary (PR #196 review round 12, confirmed P2).
+    const prefixDecoyStep = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates-extra --mutate\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n  next-job:\n    a: b\n`;
+    expect(scanCampaignWallBudget(prefixDecoyStep, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
       true,
     );
     // A budgeted LEAN gates step must not stand in for the exhaustive one —

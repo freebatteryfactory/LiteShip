@@ -1097,14 +1097,16 @@ jobs:
           cache: pnpm
       # RESTORE/SAVE split, never the combined action (PR #194 review,
       # confirmed P1: its post-if success() save skips red runs).
-      # Restore-keys lead with the SAME-RUN shard prefix (a re-run resumes
-      # attempt 1's bank, which contains the fold bank it started from),
-      # then fall back to yesterday's complete merged fold bank.
+      # Restore-keys lead with the SAME-RUN fold (the broadest same-run
+      # bank — a re-run resumes every shard's attempt-1 verdicts), then
+      # the same-run shard slice (interrupted-fold recovery), then each
+      # historical counterpart in the same order.
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
           key: exhaustive-verdicts-mutation-shard${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            exhaustive-verdicts-mutation-fold-${{ github.run_id }}-
             exhaustive-verdicts-mutation-shard${{ matrix.shard }}-${{ github.run_id }}-
             exhaustive-verdicts-mutation-fold-
             exhaustive-verdicts-mutation-shard${{ matrix.shard }}-
@@ -1259,14 +1261,16 @@ jobs:
           cache: pnpm
       # RESTORE/SAVE split, never the combined action (PR #194 review,
       # confirmed P1: its post-if success() save skips red runs).
-      # Restore-keys lead with the SAME-RUN shard prefix (a re-run resumes
-      # attempt 1's bank, which contains the fold bank it started from),
-      # then fall back to yesterday's complete merged fold bank.
+      # Restore-keys lead with the SAME-RUN fold (the broadest same-run
+      # bank — a re-run resumes every shard's attempt-1 verdicts), then
+      # the same-run shard slice (interrupted-fold recovery), then each
+      # historical counterpart in the same order.
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .liteship/cache
           key: exhaustive-verdicts-mcdc-shard${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            exhaustive-verdicts-mcdc-fold-${{ github.run_id }}-
             exhaustive-verdicts-mcdc-shard${{ matrix.shard }}-${{ github.run_id }}-
             exhaustive-verdicts-mcdc-fold-
             exhaustive-verdicts-mcdc-shard${{ matrix.shard }}-

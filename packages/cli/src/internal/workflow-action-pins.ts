@@ -78,7 +78,7 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
     }
     const lines = activeLinesOf(section);
     const saves: Array<{ readonly key: string; readonly path: string | null }> = [];
-    const restores: Array<{ readonly prefix: string; readonly path: string | null }> = [];
+    const restores: Array<{ readonly prefixes: readonly string[]; readonly path: string | null }> = [];
     for (const step of stepIndicesOf(lines)) {
       // The step's uses FIELD decides its role — live steps are written as
       // `- name:` bullets with uses: on a child line, and a bullet-spelling
@@ -118,32 +118,53 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
           saves.push({ key: uncommentedScalar(key).slice(5), path: withPathOf(lines, withChildren) });
         }
       } else {
-        // Restore fallbacks are REQUIRED and ordered: attempt-qualified
-        // primaries can never exact-match a re-run, so a restore without a
-        // non-empty restore-keys leaves banked work unrecoverable (PR #196
-        // review round 7, confirmed P2) — and the FIRST prefix must be
-        // run-scoped, so a re-run resumes this run's own freshly banked work
-        // instead of an older historical bank shadowing it (round 3).
+        // Restore fallbacks are REQUIRED and ordered (rounds 3, 7, 8, 12):
+        // attempt-qualified primaries can never exact-match a re-run, so a
+        // restore without a non-empty restore-keys leaves banked work
+        // unrecoverable; the FIRST entry must be run-scoped; every
+        // HISTORICAL entry must come after its own same-run counterpart (a
+        // re-run must never reach for an older bank of a namespace whose
+        // same-run bank it never tried — attempt 2 picking the partial
+        // attempt-1 shard slice over the completed attempt-1 merged fold);
+        // and SOME run-scoped entry must prefix the restore's own primary,
+        // or the same-run self-recovery it claims cannot happen.
         const rkIndex = withChildren.find((c) => lines[c]!.body.startsWith('restore-keys:'));
-        const first = rkIndex === undefined ? undefined : blockLinesOf(lines, rkIndex)[0]?.body.replace(/^- /u, '');
+        const entries =
+          rkIndex === undefined
+            ? []
+            : blockLinesOf(lines, rkIndex).map((line) => uncommentedScalar(line.body.replace(/^- /u, '')));
         const primary = withChildren.map((c) => lines[c]!.body).find((body) => body.startsWith('key: '));
-        if (first === undefined) {
+        const primaryKey = primary === undefined ? null : uncommentedScalar(primary).slice(5);
+        if (entries.length === 0) {
           violations.push(
             `${job}: cache restore has no restore-keys fallback — an attempt-qualified primary can never exact-match a re-run, leaving banked work unrecoverable`,
           );
-        } else if (!uncommentedScalar(first).includes('${{ github.run_id }}')) {
+        } else if (!entries[0]!.includes('${{ github.run_id }}')) {
           violations.push(
             `${job}: restore-keys leads with a historical prefix — a re-run must prefer this run's own bank first`,
           );
-        } else if (primary === undefined || !uncommentedScalar(primary).slice(5).startsWith(uncommentedScalar(first))) {
-          // A run-scoped fallback in a FOREIGN namespace prefix-matches
-          // nothing this restore ever saved — the same-run recovery it claims
-          // to provide cannot happen (PR #196 review round 8, confirmed P2).
+        } else if (
+          entries.some(
+            (entry, index) =>
+              !entry.includes('${{ github.run_id }}') &&
+              !entries.slice(0, index).includes(`${entry}\${{ github.run_id }}-`),
+          )
+        ) {
           violations.push(
-            `${job}: restore-keys first prefix is outside its own key namespace — the same-run fallback can never recover this restore's bank`,
+            `${job}: a historical fallback precedes its same-run counterpart — this run's own bank of that namespace must be tried first`,
+          );
+        } else if (
+          primaryKey === null ||
+          !entries.some((entry) => entry.includes('${{ github.run_id }}') && primaryKey.startsWith(entry))
+        ) {
+          violations.push(
+            `${job}: no run-scoped restore-keys entry is inside its own key namespace — the same-run fallback can never recover this restore's bank`,
           );
         } else {
-          restores.push({ prefix: uncommentedScalar(first), path: withPathOf(lines, withChildren) });
+          restores.push({
+            prefixes: entries.filter((entry) => entry.includes('${{ github.run_id }}')),
+            path: withPathOf(lines, withChildren),
+          });
         }
       }
     }
@@ -155,7 +176,9 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
     // matching key over a different path still restores nothing (round 11,
     // confirmed P2).
     for (const saved of saves) {
-      const namespaceMatches = restores.filter((restore) => saved.key.startsWith(restore.prefix));
+      const namespaceMatches = restores.filter((restore) =>
+        restore.prefixes.some((prefix) => saved.key.startsWith(prefix)),
+      );
       if (namespaceMatches.length === 0) {
         violations.push(
           `${job}: a saved bank namespace is never restored — no restore-keys first prefix recovers what this job saves`,
@@ -371,9 +394,15 @@ function campaignStepBudgetOf(lines: readonly ActiveLine[], modeFlag: string): s
     // P2). And it must carry the JOB'S OWN mode flag as an argument token —
     // a budgeted lean gates step must not stand in for the exhaustive one
     // (round 9, confirmed P2).
+    // The invocation ends at a TOKEN BOUNDARY — `check gates-extra` is a
+    // different command (round 12, confirmed P2).
     const invokes = stepRunCommandOf(lines, stepIndex)
       .split('\n')
-      .some((line) => line.startsWith(CAMPAIGN_GATES_INVOCATION) && line.split(/\s+/u).includes(modeFlag));
+      .some(
+        (line) =>
+          (line === CAMPAIGN_GATES_INVOCATION || line.startsWith(`${CAMPAIGN_GATES_INVOCATION} `)) &&
+          line.split(/\s+/u).includes(modeFlag),
+      );
     if (!invokes) continue;
     const envIndex = childIndicesOf(lines, stepIndex).find((c) => lines[c]!.body === 'env:');
     if (envIndex === undefined) continue;
