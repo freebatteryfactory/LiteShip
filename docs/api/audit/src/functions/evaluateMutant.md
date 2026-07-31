@@ -8,7 +8,7 @@
 
 > **evaluateMutant**\<`M`\>(`mutant`, `options`): [`MutantVerdict`](../type-aliases/MutantVerdict.md)\<`M`\>
 
-Defined in: [audit/src/mutation-verdict.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L282)
+Defined in: [audit/src/mutation-verdict.ts:302](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L302)
 
 Evaluate ONE mutant to its kill/survive/no-coverage verdict — the second oracle's
 answer. Pure w.r.t. the injected runner + coverage:

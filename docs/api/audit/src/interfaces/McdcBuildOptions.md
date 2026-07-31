@@ -32,6 +32,26 @@ The deterministic covering-tests map ((file,line) → sorted test ids).
 
 ***
 
+### coveringTestDigest?
+
+> `readonly` `optional` **coveringTestDigest?**: (`testId`) => `string`
+
+Defined in: [audit/src/mcdc-facts-build.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mcdc-facts-build.ts#L58)
+
+Per-covering-test CONTENT digest — threaded to the verdict key (PR #194 review; required for a cross-run bank).
+
+#### Parameters
+
+##### testId
+
+`string`
+
+#### Returns
+
+`string`
+
+***
+
 ### runner
 
 > `readonly` **runner**: [`MutantTestRunner`](../type-aliases/MutantTestRunner.md)

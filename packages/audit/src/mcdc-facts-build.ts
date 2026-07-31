@@ -54,6 +54,8 @@ export interface McdcBuildOptions {
   readonly cache?: MutantVerdictCache;
   /** The toolchain digest the verdict cache keys against (required iff `cache`). */
   readonly toolchainDigest?: string;
+  /** Per-covering-test CONTENT digest — threaded to the verdict key (PR #194 review; required for a cross-run bank). */
+  readonly coveringTestDigest?: (testId: string) => string;
 }
 
 /** Parse a target file's source into a `ts.SourceFile` for the engine. */
@@ -147,6 +149,7 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
         originalSource: target.text,
         ...(options.cache !== undefined ? { cache: options.cache } : {}),
         ...(options.toolchainDigest !== undefined ? { toolchainDigest: options.toolchainDigest } : {}),
+        ...(options.coveringTestDigest !== undefined ? { coveringTestDigest: options.coveringTestDigest } : {}),
       });
       const tag = pinVerdict(verdict._tag, mutant);
       // The refusal reason survives the fold (PR #192 review, round 4): the tag

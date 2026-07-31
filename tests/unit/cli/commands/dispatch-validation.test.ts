@@ -7,6 +7,16 @@
  */
 import { describe, it, expect } from 'vitest';
 import { run } from '../../../../packages/cli/src/dispatch.js';
+import { DOCTOR_PROBE_TIMEOUT_MS } from '../../../../packages/cli/src/commands/doctor/probe-support.js';
+import { scaledTimeout } from '../../../../vitest.shared.js';
+
+// These suites run the REAL doctor against the live workspace, so the budget
+// DERIVES from the per-probe constant: one hung probe legitimately consumes
+// DOCTOR_PROBE_TIMEOUT_MS before doctor moves on, and the 20s raise pushed
+// that worst case past vitest's 10s default (runs 30571535144 + 30603462356
+// measured the kill; doctor.test.ts was cured first and this is the sibling
+// sweep). 2x covers one slow probe plus the remaining fast ones.
+const DOCTOR_SUITE_TIMEOUT = { timeout: scaledTimeout(2 * DOCTOR_PROBE_TIMEOUT_MS) };
 
 interface CaptureResult {
   exit: number;
@@ -45,7 +55,7 @@ const lastStderrReceipt = (stderr: string): { command: string; code: string; err
   return JSON.parse(lines[lines.length - 1]!) as { command: string; code: string; error: string };
 };
 
-describe('dispatch — closed-set flag validation', () => {
+describe('dispatch — closed-set flag validation', DOCTOR_SUITE_TIMEOUT, () => {
   it('doctor --target with a typo fails instead of silently running the default profile', async () => {
     const r = await capture(() => run(['doctor', '--target', 'cloudfare']));
     expect(r.exit).toBe(1);
@@ -95,7 +105,7 @@ describe('dispatch — closed-set flag validation', () => {
   });
 });
 
-describe('dispatch — missing positionals emit a usage line (no blank-path forwarding)', () => {
+describe('dispatch — missing positionals emit a usage line (no blank-path forwarding)', DOCTOR_SUITE_TIMEOUT, () => {
   it.each(['compile', 'dev', 'verify', 'render'] as const)('scene %s without a path', async (sub) => {
     const r = await capture(() => run(['scene', sub]));
     expect(r.exit).toBe(1);

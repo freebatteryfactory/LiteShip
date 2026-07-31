@@ -8,6 +8,16 @@ import { join } from 'node:path';
 import { doctor } from '../../../../packages/cli/src/commands/doctor.js';
 import * as spawnLib from '../../../../packages/cli/src/internal/spawn.js';
 import { captureCli } from '../../../integration/cli/capture.js';
+import { DOCTOR_PROBE_TIMEOUT_MS } from '../../../../packages/cli/src/commands/doctor/probe-support.js';
+import { scaledTimeout } from '../../../../vitest.shared.js';
+
+// These suites run the REAL doctor against the live workspace, so the budget
+// DERIVES from the per-probe constant: one hung probe legitimately consumes
+// DOCTOR_PROBE_TIMEOUT_MS before doctor moves on, and the 20s raise pushed
+// that worst case past vitest's 10s default (runs 30571535144 + 30603462356
+// measured the kill; doctor.test.ts was cured first and this is the sibling
+// sweep). 2x covers one slow probe plus the remaining fast ones.
+const DOCTOR_SUITE_TIMEOUT = { timeout: scaledTimeout(2 * DOCTOR_PROBE_TIMEOUT_MS) };
 
 function writeCloudflareSandbox(base: string, extra?: { wrangler?: boolean; astroConfig?: boolean }): void {
   writeFileSync(
@@ -55,7 +65,7 @@ export default { output: 'server', adapter: cloudflare() };`,
   }
 }
 
-describe('doctor --target cloudflare', () => {
+describe('doctor --target cloudflare', DOCTOR_SUITE_TIMEOUT, () => {
   it('records target in the receipt and runs cloudflare probes only', async () => {
     const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-cf-'));
     try {

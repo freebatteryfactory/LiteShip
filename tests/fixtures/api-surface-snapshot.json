@@ -502,7 +502,7 @@
         {
           "name": "mutantVerdictKey",
           "kind": "function",
-          "signature": "(3)"
+          "signature": "(4)"
         },
         {
           "name": "nodeText",

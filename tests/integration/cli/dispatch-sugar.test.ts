@@ -6,8 +6,18 @@
 import { describe, it, expect } from 'vitest';
 import { run } from '@liteship/cli';
 import { captureCli } from './capture.js';
+import { DOCTOR_PROBE_TIMEOUT_MS } from '../../../packages/cli/src/commands/doctor/probe-support.js';
+import { scaledTimeout } from '../../../vitest.shared.js';
 
-describe('liteship dispatch — dev-experience verbs', () => {
+// These suites run the REAL doctor against the live workspace, so the budget
+// DERIVES from the per-probe constant: one hung probe legitimately consumes
+// DOCTOR_PROBE_TIMEOUT_MS before doctor moves on, and the 20s raise pushed
+// that worst case past vitest's 10s default (runs 30571535144 + 30603462356
+// measured the kill; doctor.test.ts was cured first and this is the sibling
+// sweep). 2x covers one slow probe plus the remaining fast ones.
+const DOCTOR_SUITE_TIMEOUT = { timeout: scaledTimeout(2 * DOCTOR_PROBE_TIMEOUT_MS) };
+
+describe('liteship dispatch — dev-experience verbs', DOCTOR_SUITE_TIMEOUT, () => {
   it('`liteship help` prints usage and exits 0', async () => {
     const { exit, stdout } = await captureCli(() => run(['help']));
     expect(exit).toBe(0);
@@ -140,7 +150,7 @@ describe('liteship dispatch — dev-experience verbs', () => {
  * scene dev, mcp) are intentionally skipped — their dispatch arms have to
  * stay uncovered or be exercised via dedicated smoke tests instead.
  */
-describe('liteship dispatch — verb-routing coverage', () => {
+describe('liteship dispatch — verb-routing coverage', DOCTOR_SUITE_TIMEOUT, () => {
   it('`liteship scene compile <bad-path>` routes to sceneCompile, which emits a scene.compile error receipt', async () => {
     // Use a deliberately-bad absolute path so sceneCompile hits its
     // `existsSync` guard at scene-compile.ts:40 and emits a clean
