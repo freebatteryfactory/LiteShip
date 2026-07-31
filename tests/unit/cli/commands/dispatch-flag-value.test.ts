@@ -17,6 +17,16 @@ import fc from 'fast-check';
 const doctorMock = vi.fn(async () => 0);
 
 import { run as runDispatch } from '../../../../packages/cli/src/dispatch.js';
+import { DOCTOR_PROBE_TIMEOUT_MS } from '../../../../packages/cli/src/commands/doctor/probe-support.js';
+import { scaledTimeout } from '../../../../vitest.shared.js';
+
+// These suites run the REAL doctor against the live workspace, so the budget
+// DERIVES from the per-probe constant: one hung probe legitimately consumes
+// DOCTOR_PROBE_TIMEOUT_MS before doctor moves on, and the 20s raise pushed
+// that worst case past vitest's 10s default (runs 30571535144 + 30603462356
+// measured the kill; doctor.test.ts was cured first and this is the sibling
+// sweep). 2x covers one slow probe plus the remaining fast ones.
+const DOCTOR_SUITE_TIMEOUT = { timeout: scaledTimeout(2 * DOCTOR_PROBE_TIMEOUT_MS) };
 
 /** Dispatch with the `doctor` command scripted so no real probe run happens. */
 const run = (argv: readonly string[]): Promise<number> => runDispatch(argv, { doctor: doctorMock });
@@ -50,7 +60,7 @@ const lastStderrReceipt = (stderr: string): { command: string; error: string } =
   return JSON.parse(lines[lines.length - 1]!) as { command: string; error: string };
 };
 
-describe('dispatch — a value-taking flag never swallows the next flag (F-PROTO-4)', () => {
+describe('dispatch — a value-taking flag never swallows the next flag (F-PROTO-4)', DOCTOR_SUITE_TIMEOUT, () => {
   beforeEach(() => doctorMock.mockClear());
 
   it('doctor --deployed --fix refuses with usage (does NOT probe the literal "--fix")', async () => {

@@ -18,6 +18,16 @@ import { resolve, join } from 'node:path';
 import * as spawnLib from '../../../../../packages/cli/src/internal/spawn.js';
 import { doctor } from '../../../../../packages/cli/src/commands/doctor/doctor.js';
 import { captureCli } from '../../../../integration/cli/capture.js';
+import { DOCTOR_PROBE_TIMEOUT_MS } from '../../../../../packages/cli/src/commands/doctor/probe-support.js';
+import { scaledTimeout } from '../../../../../vitest.shared.js';
+
+// These suites run the REAL doctor against the live workspace, so the budget
+// DERIVES from the per-probe constant: one hung probe legitimately consumes
+// DOCTOR_PROBE_TIMEOUT_MS before doctor moves on, and the 20s raise pushed
+// that worst case past vitest's 10s default (runs 30571535144 + 30603462356
+// measured the kill; doctor.test.ts was cured first and this is the sibling
+// sweep). 2x covers one slow probe plus the remaining fast ones.
+const DOCTOR_SUITE_TIMEOUT = { timeout: scaledTimeout(2 * DOCTOR_PROBE_TIMEOUT_MS) };
 
 const tmps: string[] = [];
 function mkTmp(): string {
@@ -47,7 +57,7 @@ function writeCautionWorkspace(dir: string): void {
   }
 }
 
-describe('doctor/doctor — orchestration', () => {
+describe('doctor/doctor — orchestration', DOCTOR_SUITE_TIMEOUT, () => {
   it('pretty + caution appends the zsh-paste-trap advisory to stderr (covers the caution arm)', async () => {
     const dir = mkTmp();
     writeCautionWorkspace(dir);
