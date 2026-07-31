@@ -86,15 +86,35 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
       const rest = section.slice(save.index + save[0].length);
       const nextStep = rest.search(/\n\s+- \S/u);
       const step = nextStep === -1 ? rest : rest.slice(0, nextStep);
-      const key = /\n\s+key: ([^\n]*)/u.exec(step);
+      const key = withKeyOf(step);
       if (key === null) {
-        violations.push(`${job}: cache save step has no key — the attempt-qualification contract is unprovable`);
-      } else if (!key[1]!.includes('${{ github.run_attempt }}')) {
+        violations.push(`${job}: cache save step has no with.key — the attempt-qualification contract is unprovable`);
+      } else if (!key.includes('${{ github.run_attempt }}')) {
         violations.push(`${job}: cache save key lacks github.run_attempt — a re-run attempt cannot bank its verdicts`);
       }
     }
   }
   return violations;
+}
+
+/**
+ * The `key:` input of a step's `with:` block, or null when absent. Only
+ * with.key names the immutable cache key — a `key:` under `env:` or any other
+ * mapping is an unrelated field and must not satisfy the contract (PR #196
+ * review round 2, confirmed P2: the first-key-anywhere match let an env.key
+ * decoy shield an attempt-less cache input).
+ */
+function withKeyOf(step: string): string | null {
+  const withBlock = /\n( *)with:\s*\n/u.exec(step);
+  if (withBlock === null) return null;
+  const withIndent = withBlock[1]!.length;
+  for (const line of step.slice(withBlock.index + withBlock[0].length).split('\n')) {
+    if (line.trim().length === 0) continue;
+    if (/^ */u.exec(line)![0].length <= withIndent) break;
+    const field = /^ +key: ([^\n]*)$/u.exec(line);
+    if (field !== null) return field[1]!;
+  }
+  return null;
 }
 
 /** The job section of a workflow, from its key to the next top-level job key (two-space indent). */
@@ -128,8 +148,12 @@ export function scanCampaignWallBudget(text: string, jobs: readonly string[]): r
       violations.push(`${job}: job not found`);
       continue;
     }
-    const timeout = /timeout-minutes: (\d+)\n/u.exec(section);
-    const budget = /LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '(\d+)'/u.exec(section);
+    // Anchored to line start with only whitespace before the field: a
+    // commented-out knob is a MISSING knob — GitHub applies neither, and the
+    // leftover text must not satisfy the contract (PR #196 review round 2,
+    // confirmed P2).
+    const timeout = /\n *timeout-minutes: (\d+)[ \t]*(?:#[^\n]*)?(?=\n|$)/u.exec(section);
+    const budget = /\n *LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '(\d+)'[ \t]*(?:#[^\n]*)?(?=\n|$)/u.exec(section);
     if (timeout === null || budget === null) {
       violations.push(
         `${job}: timeout-minutes or LITESHIP_CAMPAIGN_WALL_BUDGET_MS missing — the budget contract is unenforceable`,

@@ -190,9 +190,18 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
     const keylessSave = jobOf(
       `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n        with:\n          path: x\n`,
     );
-    expect(scanExhaustiveCachePersistence(keylessSave, ['exhaustive-mutation']).some((v) => v.includes('no key'))).toBe(
-      true,
+    expect(
+      scanExhaustiveCachePersistence(keylessSave, ['exhaustive-mutation']).some((v) => v.includes('no with.key')),
+    ).toBe(true);
+    // A decoy key OUTSIDE with: — an env.key carrying the attempt must not
+    // shield an attempt-less cache input; only with.key names the immutable
+    // save key (PR #196 review round 2, confirmed P2).
+    const envKeyDecoy = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n        env:\n          key: decoy-\${{ github.run_attempt }}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}\n`,
     );
+    expect(
+      scanExhaustiveCachePersistence(envKeyDecoy, ['exhaustive-mutation']).some((v) => v.includes('run_attempt')),
+    ).toBe(true);
     // The full contract satisfied → clean, even with a long step body.
     const good = jobOf(
       `      - uses: actions/cache/restore@${sha} # v4\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n${padding}        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,
@@ -239,6 +248,17 @@ describe('campaign wall budgets absorb a cold probe and leave post-step margin (
     // A missing budget knob is a violation, never a silent pass.
     expect(scanCampaignWallBudget(jobOf(350), ['exhaustive-mutation'])).not.toEqual([]);
     expect(scanCampaignWallBudget('\n  other:\n    a: b\n', ['exhaustive-mutation'])).not.toEqual([]);
+    // COMMENTED-OUT knobs are missing knobs — GitHub applies neither, and the
+    // leftover text must not satisfy the contract (PR #196 review round 2,
+    // confirmed P2).
+    const commentedBudget = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: x\n        env:\n          # LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n  next-job:\n    a: b\n`;
+    expect(scanCampaignWallBudget(commentedBudget, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
+      true,
+    );
+    const commentedTimeout = `\n  exhaustive-mutation:\n    # timeout-minutes: 150\n    steps:\n      - run: x\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n  next-job:\n    a: b\n`;
+    expect(scanCampaignWallBudget(commentedTimeout, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
+      true,
+    );
     // Sized inside both bounds → clean.
     expect(scanCampaignWallBudget(jobOf(150, floor), ['exhaustive-mutation'])).toEqual([]);
   });
