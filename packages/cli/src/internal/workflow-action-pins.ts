@@ -11,6 +11,10 @@ const IMMUTABLE_REF = /^[0-9a-f]{40}$/i;
 /** Reviewed action repositories admitted by LiteShip's workflow trust policy. */
 export const TRUSTED_ACTION_SOURCES: ReadonlySet<string> = new Set([
   'actions/attest-build-provenance',
+  // The verdict-bank persistence for the exhaustive campaigns (run
+  // 30579292227: the census exceeds one job; `.liteship/cache` must survive
+  // between nightlies). GitHub-first-party, SHA-pinned like every entry here.
+  'actions/cache',
   'actions/checkout',
   'actions/download-artifact',
   'actions/setup-node',

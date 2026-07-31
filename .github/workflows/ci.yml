@@ -1073,6 +1073,10 @@ jobs:
   exhaustive-mutation:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    # Backstop ABOVE the in-process wall budget below: run 30579292227 hit
+    # GitHub's implicit 6h ceiling, which CANCELS the job and skips post steps
+    # (the verdict cache would never save). The campaign self-limits first.
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -1083,9 +1087,27 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      # The persisted per-mutant verdict cache — the convergence keystone: the
+      # census (893 mutants + 8,420 MC/DC pins, one vitest boot each) exceeds
+      # any single job, so each nightly banks its verdicts (content+toolchain
+      # addressed — a stale entry can never serve a changed file or toolchain)
+      # and the next resumes. Fresh key per run + prefix restore = the newest
+      # bank always wins; the post-step save runs because the wall budget
+      # exits the job NORMALLY instead of being ceiling-killed.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .liteship/cache
+          key: exhaustive-verdicts-mutation-${{ github.run_id }}
+          restore-keys: |
+            exhaustive-verdicts-mutation-
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
       - name: Run isolated trust-spine mutation authority
+        env:
+          # 4h45m of verdict minting; the 350-minute job backstop leaves ~65
+          # minutes of slack for install/build, one in-flight file, and the
+          # receipt/artifact/cache post-steps.
+          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '17100000'
         run: |
           mkdir -p reports/exhaustive
           set -o pipefail
@@ -1107,6 +1129,9 @@ jobs:
   exhaustive-mcdc:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    # Same wall-budget/backstop/cache contract as exhaustive-mutation (see the
+    # comments there); the 8,420-pin MC/DC census converges over nightlies.
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -1117,9 +1142,17 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .liteship/cache
+          key: exhaustive-verdicts-mcdc-${{ github.run_id }}
+          restore-keys: |
+            exhaustive-verdicts-mcdc-
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
       - name: Run isolated trust-spine MC/DC authority
+        env:
+          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '17100000'
         run: |
           mkdir -p reports/exhaustive
           set -o pipefail

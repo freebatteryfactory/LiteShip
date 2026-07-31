@@ -38,6 +38,7 @@ import { liteshipDevopsProfile } from './liteship-audit-profile.js';
 import { INVARIANTS, matchesInvariantExemption, type CheckInvariantEntry } from '@liteship/command/invariants';
 import { buildCheckGovernanceFacts, currentEnvFingerprint } from '@liteship/command/host';
 import { InvariantViolationError } from '@liteship/error';
+import { systemClock } from '@liteship/core';
 import {
   buildMutationFacts,
   buildMcdcFacts,
@@ -429,7 +430,14 @@ export async function runGauntletWithRepoIR(
   // per-file catalogue and the cannon is aimed at the trust spine only.
   if (cacheOpts.withMutate === true) {
     gateSet.push(mutationDivergenceGate);
-    mutationFacts = buildRepoMutationFacts(repoRoot, ir, cache.toolchainDigest);
+    // The mutant-verdict cache stays armed even under --no-cache (which disarms
+    // only the gate-FOLD cache): the campaign digest is minted directly so the
+    // exhaustive lane banks verdicts across runs — see campaignToolchainDigest.
+    mutationFacts = buildRepoMutationFacts(
+      repoRoot,
+      ir,
+      cache.toolchainDigest ?? campaignToolchainDigest(repoRoot, cacheOpts),
+    );
     writeSemanticAssuranceReceipt(
       repoRoot,
       buildSemanticAssuranceReceipt({
@@ -454,7 +462,8 @@ export async function runGauntletWithRepoIR(
   // spine only.
   if (cacheOpts.withMcdc === true) {
     gateSet.push(mcdcCoverageGate);
-    mcdcFacts = buildRepoMcdcFacts(repoRoot, ir, cache.toolchainDigest);
+    // Same campaign-digest fallback as the --mutate site above.
+    mcdcFacts = buildRepoMcdcFacts(repoRoot, ir, cache.toolchainDigest ?? campaignToolchainDigest(repoRoot, cacheOpts));
     writeSemanticAssuranceReceipt(
       repoRoot,
       buildSemanticAssuranceReceipt({
@@ -665,6 +674,53 @@ export async function runGauntletWithRepoIR(
  */
 const MUTATION_BUDGET_PER_FILE = 12;
 
+/**
+ * The campaign WALL BUDGET (env `LITESHIP_CAMPAIGN_WALL_BUDGET_MS`) — run
+ * 30579292227: both exhaustive campaigns were KILLED at GitHub's 6-hour job
+ * ceiling with empty logs and no receipt. The census (893 operator-mutants +
+ * 8,420 MC/DC pins, one vitest boot each) cannot finish inside one job, and a
+ * ceiling kill also skips post steps — so a persisted verdict cache would
+ * never save and no progress could ever bank. The budget makes the campaign
+ * stop MINTING verdicts once elapsed wall time crosses it: remaining targets
+ * fold to `inconclusive` (the resume reason below — never cached, receipts
+ * fail honestly) and the process exits NORMALLY, so the CI cache post-step
+ * banks every verdict minted this run and the next campaign resumes where
+ * this one stopped, converging over successive nightlies. Unset → unbudgeted
+ * (a local run keeps full single-sitting authority); malformed → loud throw,
+ * never a silently unbudgeted run.
+ */
+export function campaignWallBudgetMs(): number | null {
+  const raw = process.env['LITESHIP_CAMPAIGN_WALL_BUDGET_MS'];
+  if (raw === undefined || raw.trim() === '') return null;
+  const trimmed = raw.trim();
+  const parsed = /^\d+$/u.test(trimmed) ? Number(trimmed) : Number.NaN;
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw InvariantViolationError(
+      'campaignWallBudgetMs',
+      `LITESHIP_CAMPAIGN_WALL_BUDGET_MS must be a positive integer of milliseconds, got ${JSON.stringify(raw)}`,
+    );
+  }
+  return parsed;
+}
+
+/**
+ * The reason every budget-exhausted target's outcomes carry — names WHAT
+ * happened and HOW it resolves, so the gate finding and the receipt point the
+ * reader at the resume mechanism instead of a phantom infra fault.
+ */
+export const CAMPAIGN_WALL_BUDGET_REASON =
+  'campaign wall-clock budget exhausted before this target was evaluated — every verdict minted this run is cached; the next campaign run resumes here';
+
+/**
+ * The runner a budget-exhausted target gets: it refuses every evaluation with
+ * the resume reason. `evaluateMutant` folds the throw to `inconclusive`
+ * (uncacheable by the existing law), so exhaustion can never mint or cache a
+ * fabricated verdict.
+ */
+export function wallBudgetExhaustedRunner(): never {
+  throw new Error(CAMPAIGN_WALL_BUDGET_REASON);
+}
+
 /** The committed mutation-score baseline (the ratchet floor) — repo-relative. */
 const MUTATION_SCORE_BASELINE = 'benchmarks/mutation-score.json';
 
@@ -721,9 +777,21 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
   const outcomes: MutationFacts['outcomes'][number][] = [];
   const targetCensus: MutationFacts['targetCensus'][number][] = [];
   const operatorApplicability: MutationFacts['operatorApplicability'][number][] = [];
-  for (const target of targets) {
+  const wallBudget = campaignWallBudgetMs();
+  const campaignStart = systemClock.now();
+  for (const [index, target] of targets.entries()) {
+    // Checked at the per-file boundary (a file's mutants run as a unit); the
+    // slack between this budget and the job timeout must absorb one file.
+    const exhausted = wallBudget !== null && systemClock.now() - campaignStart >= wallBudget;
+    // Heartbeat on stderr — the receipt owns stdout; a multi-hour campaign
+    // with NO stream was indistinguishable from a hang (run 30579292227).
+    process.stderr.write(
+      `[mutation ${index + 1}/${targets.length}] ${target.file}${exhausted ? ' — wall budget exhausted, folding inconclusive' : ''}\n`,
+    );
     // One runner per seam file — it backs up / mutates / restores exactly that file.
-    const runner = makeVitestMutationRunner(repoRoot, { targetFile: target.file });
+    const runner = exhausted
+      ? wallBudgetExhaustedRunner
+      : makeVitestMutationRunner(repoRoot, { targetFile: target.file });
     const fileFacts = buildMutationFacts([target], {
       runner,
       coverage,
@@ -796,9 +864,19 @@ function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: strin
 
   const conditions: McdcFacts['conditions'][number][] = [];
   const targetCensus: McdcFacts['targetCensus'][number][] = [];
-  for (const target of targets) {
+  const wallBudget = campaignWallBudgetMs();
+  const campaignStart = systemClock.now();
+  for (const [index, target] of targets.entries()) {
+    // Same wall-budget + heartbeat contract as the mutation campaign (the two
+    // builders mirror each other deliberately — see buildRepoMutationFacts).
+    const exhausted = wallBudget !== null && systemClock.now() - campaignStart >= wallBudget;
+    process.stderr.write(
+      `[mcdc ${index + 1}/${targets.length}] ${target.file}${exhausted ? ' — wall budget exhausted, folding inconclusive' : ''}\n`,
+    );
     // One runner per seam file — it backs up / pins / restores exactly that file.
-    const runner = makeVitestMutationRunner(repoRoot, { targetFile: target.file });
+    const runner = exhausted
+      ? wallBudgetExhaustedRunner
+      : makeVitestMutationRunner(repoRoot, { targetFile: target.file });
     const fileFacts = buildMcdcFacts([target], {
       runner,
       coverage,
@@ -1062,6 +1140,21 @@ export interface RepoIRGauntletCacheOptions {
  * case an empty options object disarms caching entirely (a full run). The cache is
  * thus defeatable, exactly like the idempotency `force` bypass.
  */
+/**
+ * The CAMPAIGN toolchain digest — the same mode-namespaced digest
+ * {@link resolveVerdictCache} mints, computable even under `--no-cache`.
+ * `--no-cache` disarms the GATE-FOLD cache (refold every gate fresh); the
+ * PER-MUTANT verdict cache is a different layer — a verdict for identical
+ * source bytes under an identical toolchain digest is deterministic ground
+ * truth, and the exhaustive lane DEPENDS on banking it across runs (the
+ * census exceeds any single job — run 30579292227). A cold campaign remains
+ * available by clearing `.liteship/cache/mutation`.
+ */
+export function campaignToolchainDigest(repoRoot: string, opts: RepoIRGauntletCacheOptions): string {
+  void repoRoot;
+  return gauntletToolchainDigest(verdictCacheEnv(opts));
+}
+
 function resolveVerdictCache(repoRoot: string, opts: RepoIRGauntletCacheOptions): LitelaunchCacheOptions {
   if (opts.noCache === true) return {};
   // The IR-build MODE is part of the cache key: --symbols changes the IR's facts
@@ -1069,7 +1162,19 @@ function resolveVerdictCache(repoRoot: string, opts: RepoIRGauntletCacheOptions)
   // digest, so it must namespace the key — otherwise a symbols-off verdict could be
   // served to a symbols-on run (a stale-serve LIE). Folding it into `env` (which the
   // engine's gateVerdictKey already incorporates) is the minimal sound fix.
-  const env = {
+  const env = verdictCacheEnv(opts);
+  return {
+    cache: makeFsVerdictCache(opts.cacheCwd ?? repoRoot),
+    // The anti-lie keystone: a gate-logic edit rebuilds the gauntlet dist → a new
+    // toolchain digest → every cached verdict invalidated. Computed once per run.
+    toolchainDigest: gauntletToolchainDigest(env),
+    env,
+  };
+}
+
+/** The mode-namespaced cache ENV — extracted so {@link campaignToolchainDigest} shares it. */
+function verdictCacheEnv(opts: RepoIRGauntletCacheOptions): Record<string, string> {
+  return {
     ...currentEnvFingerprint(),
     ...(opts.withSymbolReferences === true ? { irMode: 'symbols' } : {}),
     // The supply-chain MODE changes BOTH the gate set (supplyChainGate composed on)
@@ -1122,12 +1227,5 @@ function resolveVerdictCache(repoRoot: string, opts: RepoIRGauntletCacheOptions)
     // key — else a spine-relation verdict could be served to a non-spine-relation run (the
     // same stale-serve LIE the --symbols namespacing fixes).
     ...(opts.withSpineRelation === true ? { spineRelationMode: 'spine-relation' } : {}),
-  };
-  return {
-    cache: makeFsVerdictCache(opts.cacheCwd ?? repoRoot),
-    // The anti-lie keystone: a gate-logic edit rebuilds the gauntlet dist → a new
-    // toolchain digest → every cached verdict invalidated. Computed once per run.
-    toolchainDigest: gauntletToolchainDigest(env),
-    env,
   };
 }
