@@ -284,6 +284,27 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
     expect(
       scanExhaustiveCachePersistence(emptyFallbackRestore, ['exhaustive-mutation']).some((v) => v.includes('fallback')),
     ).toBe(true);
+    // An attempt-ONLY save key — run_attempt restarts at 1 every workflow
+    // run, so without github.run_id a later run collides with the first
+    // run's immutable key and banks nothing (PR #196 review round 10,
+    // confirmed P2).
+    const attemptOnlyKey = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_attempt }}\n`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(attemptOnlyKey, ['exhaustive-mutation']).some((v) => v.includes('run_id')),
+    ).toBe(true);
+    // A SAVED namespace no restore recovers — restoring wrong-* while saving
+    // bank-* passes every per-step check, yet no re-run ever restores the
+    // bank this job saves (PR #196 review round 10, confirmed P2).
+    const unrestoredSaveNamespace = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: wrong-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            wrong-\${{ github.run_id }}-\n${saveOk}`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(unrestoredSaveNamespace, ['exhaustive-mutation']).some((v) =>
+        v.includes('never restored'),
+      ),
+    ).toBe(true);
     // The full contract satisfied → clean, even with a long step body.
     const good = jobOf(
       `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n            bank-\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n${padding}        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,

@@ -77,6 +77,8 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
       violations.push(`${job}: combined actions/cache present — its post-if: success() save skips red runs`);
     }
     const lines = activeLinesOf(section);
+    const saveKeys: string[] = [];
+    const restoreFirstPrefixes: string[] = [];
     for (const step of stepIndicesOf(lines)) {
       // The step's uses FIELD decides its role — live steps are written as
       // `- name:` bullets with uses: on a child line, and a bullet-spelling
@@ -105,6 +107,15 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
           violations.push(
             `${job}: cache save key lacks github.run_attempt — a re-run attempt cannot bank its verdicts`,
           );
+        } else if (!uncommentedScalar(key).includes('${{ github.run_id }}')) {
+          // run_attempt restarts at 1 for every workflow run — without the
+          // run id, a later run collides with the first run's immutable key
+          // and banks nothing (PR #196 review round 10, confirmed P2).
+          violations.push(
+            `${job}: cache save key lacks github.run_id — a later run collides with the first run's reserved key`,
+          );
+        } else {
+          saveKeys.push(uncommentedScalar(key).slice(5));
         }
       } else {
         // Restore fallbacks are REQUIRED and ordered: attempt-qualified
@@ -131,7 +142,20 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
           violations.push(
             `${job}: restore-keys first prefix is outside its own key namespace — the same-run fallback can never recover this restore's bank`,
           );
+        } else {
+          restoreFirstPrefixes.push(uncommentedScalar(first));
         }
+      }
+    }
+    // Every saved namespace must be one some restore RECOVERS: a job that
+    // saves bank-* while only restoring wrong-* passes every per-step check
+    // yet no re-run ever restores the bank it banks (PR #196 review round
+    // 10, confirmed P2).
+    for (const saved of saveKeys) {
+      if (!restoreFirstPrefixes.some((prefix) => saved.startsWith(prefix))) {
+        violations.push(
+          `${job}: a saved bank namespace is never restored — no restore-keys first prefix recovers what this job saves`,
+        );
       }
     }
   }
