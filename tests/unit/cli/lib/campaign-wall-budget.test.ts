@@ -320,6 +320,16 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
         v.includes('never restored'),
       ),
     ).toBe(true);
+    // A DECOY always() save shielding a success()-gated bank save — the
+    // always() contract binds to EACH save step, not to the job at large
+    // (PR #196 review round 13, confirmed P2: the coarse job-wide regex was
+    // satisfied by any single always() save).
+    const decoyAlwaysSave = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n${saveOk}      - uses: actions/cache/save@${sha} # v4\n        if: success()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(decoyAlwaysSave, ['exhaustive-mutation']).some((v) => v.includes('always')),
+    ).toBe(true);
     // A matching namespace over DIFFERENT paths — actions/cache versions the
     // archive by its path list, so the restore can never recover the save's
     // archive despite the key text matching (PR #196 review round 11,

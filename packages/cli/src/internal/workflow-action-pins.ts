@@ -93,6 +93,16 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
       const withIndex = childIndicesOf(lines, step).find((c) => lines[c]!.body === 'with:');
       const withChildren = withIndex === undefined ? [] : childIndicesOf(lines, withIndex);
       if (isSave) {
+        // The always() condition binds to EACH save step — a decoy always()
+        // save elsewhere in the job must not shield a success()-gated bank
+        // save (PR #196 review round 13, confirmed P2: the job-wide regex
+        // was satisfied by any single always() save).
+        const condition = stepFieldOf(lines, step, 'if: ');
+        if (condition === null || uncommentedScalar(condition) !== 'always()') {
+          violations.push(
+            `${job}: cache save step is not gated if: always() — a red campaign never banks this step's verdicts`,
+          );
+        }
         // GitHub cache keys are immutable per scope: a re-run attempt saving
         // under a run_id-only key finds it reserved by attempt 1 and banks
         // NOTHING (PR #195 review, confirmed). Only a DIRECT child key: of
