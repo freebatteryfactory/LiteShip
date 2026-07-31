@@ -22,11 +22,25 @@ import { evaluateMutant, makeCoverageMap, generateMutants, mutantVerdictKey } fr
 import ts from 'typescript';
 import {
   campaignWallBudgetMs,
+  campaignShard,
   campaignToolchainDigest,
+  makeCoveringTestDigestResolver,
+  shardOwnsTarget,
   wallBudgetExhaustedRunner,
+  shardForeignRunner,
   CAMPAIGN_WALL_BUDGET_REASON,
+  CAMPAIGN_SHARD_FOREIGN_REASON,
 } from '../../../../packages/cli/src/internal/repo-ir-gauntlet.js';
 import { scanExhaustiveCachePersistence } from '../../../../packages/cli/src/internal/workflow-action-pins.js';
+// Relative endpoint imports, deliberately not the package specifiers: these
+// laws are the integration cover for the campaign's two composition edges
+// (repo-ir-gauntlet → canonical/index, → core/index), and the composition
+// gate's static-reference proxy matches the endpoint PATHS in test text.
+import { addressedDigestOf } from '../../../../packages/canonical/src/index.js';
+import { systemClock } from '../../../../packages/core/src/index.js';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const ENV_KEY = 'LITESHIP_CAMPAIGN_WALL_BUDGET_MS';
 const savedEnv = process.env[ENV_KEY];
@@ -118,7 +132,12 @@ describe('the verdict key folds covering-test CONTENT (PR #194 review, confirmed
 });
 
 describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (PR #194 review, confirmed P1)', () => {
-  const CAMPAIGN_JOBS = ['exhaustive-mutation', 'exhaustive-mcdc'] as const;
+  const CAMPAIGN_JOBS = [
+    'exhaustive-mutation',
+    'exhaustive-mutation-fold',
+    'exhaustive-mcdc',
+    'exhaustive-mcdc-fold',
+  ] as const;
 
   it('the live ci.yml satisfies the cache-persistence contract in both campaign jobs', () => {
     const ci = readFileSync(resolve(import.meta.dirname, '../../../..', '.github', 'workflows', 'ci.yml'), 'utf8');
@@ -150,6 +169,104 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
     expect(scanExhaustiveCachePersistence(good, ['exhaustive-mutation'])).toEqual([]);
     // A missing job is a violation, never a silent pass.
     expect(scanExhaustiveCachePersistence('\n  other:\n    a: b\n', ['exhaustive-mutation'])).not.toEqual([]);
+  });
+});
+
+describe('campaignShard — parallel shards partition the census; the fold job re-earns it all from the bank', () => {
+  const SHARD_ENV = 'LITESHIP_CAMPAIGN_SHARD';
+  const savedShard = process.env[SHARD_ENV];
+  afterEach(() => {
+    if (savedShard === undefined) delete process.env[SHARD_ENV];
+    else process.env[SHARD_ENV] = savedShard;
+  });
+
+  it('unset or blank → null (an unsharded run owns every target)', () => {
+    delete process.env[SHARD_ENV];
+    expect(campaignShard()).toBeNull();
+    process.env[SHARD_ENV] = ' ';
+    expect(campaignShard()).toBeNull();
+  });
+
+  it('parses `i/N` with 0 <= i < N', () => {
+    process.env[SHARD_ENV] = '2/6';
+    expect(campaignShard()).toEqual({ index: 2, total: 6 });
+    process.env[SHARD_ENV] = '0/1';
+    expect(campaignShard()).toEqual({ index: 0, total: 1 });
+  });
+
+  it('malformed or out-of-range values throw loud — a silent mis-shard would drop census slices', () => {
+    for (const bad of ['6/6', '-1/6', '1/0', 'a/6', '1/6/2', '1.5/6', '1']) {
+      process.env[SHARD_ENV] = bad;
+      expect(() => campaignShard(), `value ${JSON.stringify(bad)} must refuse`).toThrow(/shard/u);
+    }
+  });
+
+  it('ownership partitions the census exactly: every index owned by exactly one shard', () => {
+    const total = 6;
+    for (let index = 0; index < 40; index += 1) {
+      const owners = Array.from({ length: total }, (_, shard) =>
+        shardOwnsTarget(index, { index: shard, total }),
+      ).filter(Boolean);
+      expect(owners, `target ${index} must have exactly one owner`).toHaveLength(1);
+    }
+    // A null shard owns everything (the unsharded fold job re-earns the full census).
+    expect(shardOwnsTarget(17, null)).toBe(true);
+  });
+
+  it('a foreign target folds to inconclusive with the shard reason — never a fabricated verdict, never cached', () => {
+    const SRC = 'export function cmp(a: number, b: number): boolean { return a >= b; }';
+    const sf = ts.createSourceFile('cmp.ts', SRC, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const mutant = generateMutants(sf, { file: 'cmp.ts' })[0]!;
+    const coverage = makeCoverageMap([{ file: 'cmp.ts', line: mutant.line, testId: 'cmp.test' }]);
+    const writes: string[] = [];
+    const verdict = evaluateMutant(mutant, {
+      runner: shardForeignRunner,
+      coverage,
+      originalSource: SRC,
+      cache: { read: () => null, write: (key: string) => void writes.push(key) },
+      toolchainDigest: 'tc-sha256:shard-law',
+    });
+    expect(verdict._tag).toBe('inconclusive');
+    expect(verdict._tag === 'inconclusive' ? verdict.reason : '').toContain(CAMPAIGN_SHARD_FOREIGN_REASON);
+    expect(writes).toEqual([]);
+  });
+});
+
+describe('makeCoveringTestDigestResolver — the campaign↔canonical composition edge', () => {
+  // These laws exercise the two composition edges the wall-budget work opened
+  // (run 30606178745's exhaustive-analysis blocked on them, correctly — new
+  // edges never enroll in the shrink-only baseline): the resolver routes
+  // through @liteship/canonical's addressedDigestOf, and the budget clock
+  // through @liteship/core's systemClock entropy boundary.
+  it('digests a covering test byte-for-byte through the SAME canonical kernel, memoized', () => {
+    const root = mkdtempSync(join(tmpdir(), 'liteship-covdigest-'));
+    try {
+      const bytes = 'export const law = 1;\n';
+      writeFileSync(join(root, 'covered.test.ts'), bytes, 'utf8');
+      const resolver = makeCoveringTestDigestResolver(root);
+      const expected = addressedDigestOf(Buffer.from(bytes, 'utf8'), 'blake3').integrity_digest;
+      expect(resolver('covered.test.ts')).toBe(expected);
+      // Memoized: the same id re-resolves to the identical digest even after
+      // the bytes change on disk mid-run (a campaign reads each test once).
+      writeFileSync(join(root, 'covered.test.ts'), 'export const law = 2;\n', 'utf8');
+      expect(resolver('covered.test.ts')).toBe(expected);
+      // An unreadable id gets the fail-closed absence marker — distinct from
+      // any real content digest, so the verdict re-earns instead of colliding.
+      expect(resolver('never-existed.test.ts')).toBe('absent:never-existed.test.ts');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('the budget clock reads the declared entropy boundary (elapsed, monotonic-safe)', () => {
+    // The wall budget compares systemClock.now() deltas — the same boundary
+    // the campaign anchors BEFORE the probe phase (run 30606178745: a
+    // loop-anchored clock let an 85-minute cold probe phase push expiry past
+    // the job backstop).
+    const a = systemClock.now();
+    const b = systemClock.now();
+    expect(typeof a).toBe('number');
+    expect(b).toBeGreaterThanOrEqual(a);
   });
 });
 

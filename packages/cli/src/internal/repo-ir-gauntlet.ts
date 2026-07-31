@@ -724,6 +724,50 @@ export function wallBudgetExhaustedRunner(): never {
 }
 
 /**
+ * The campaign SHARD (env `LITESHIP_CAMPAIGN_SHARD`, `i/N`): the measured
+ * census pace (run 30606178745: ~9.5 min/target, 110 targets ≈ 17+ hours
+ * serial) exceeds any single job even with the wall budget — the budget only
+ * makes the crawl exit politely. N matrix shards each OWN `index % N` of the
+ * census (foreign targets fold to inconclusive — the same refusal machinery
+ * the wall budget uses) and bank their verdicts; the unsharded FOLD job then
+ * restores every shard's bank and re-earns the FULL census from cache hits in
+ * minutes, minting the one receipt with real authority. Unset → the run owns
+ * everything; malformed/out-of-range → loud throw (a silent mis-shard would
+ * drop census slices).
+ */
+export function campaignShard(): { readonly index: number; readonly total: number } | null {
+  const raw = process.env['LITESHIP_CAMPAIGN_SHARD'];
+  if (raw === undefined || raw.trim() === '') return null;
+  const match = /^(\d+)\/(\d+)$/u.exec(raw.trim());
+  const index = match === null ? Number.NaN : Number(match[1]);
+  const total = match === null ? Number.NaN : Number(match[2]);
+  if (!Number.isSafeInteger(index) || !Number.isSafeInteger(total) || total < 1 || index < 0 || index >= total) {
+    throw InvariantViolationError(
+      'campaignShard',
+      `LITESHIP_CAMPAIGN_SHARD must be \`i/N\` with 0 <= i < N (a shard of the campaign census), got ${JSON.stringify(raw)}`,
+    );
+  }
+  return { index, total };
+}
+
+/** Does this shard own the census target at `index`? A null shard owns everything. */
+export function shardOwnsTarget(
+  index: number,
+  shard: { readonly index: number; readonly total: number } | null,
+): boolean {
+  return shard === null || index % shard.total === shard.index;
+}
+
+/** The reason a foreign target's outcomes carry — names the mechanism, points at the fold job. */
+export const CAMPAIGN_SHARD_FOREIGN_REASON =
+  'target owned by another campaign shard — its owner banks the verdict this run; the unsharded fold job re-earns the full census from the merged bank';
+
+/** The refusing runner a foreign target gets (sibling of {@link wallBudgetExhaustedRunner}). */
+export function shardForeignRunner(): never {
+  throw HostCapabilityError('campaign-shard', CAMPAIGN_SHARD_FOREIGN_REASON);
+}
+
+/**
  * A memoized per-covering-test CONTENT digest — folded into every persisted
  * verdict key (PR #194 review, confirmed P1): without it, weakening an
  * assertion in an existing covering test changes neither the mutated source
@@ -732,7 +776,7 @@ export function wallBudgetExhaustedRunner(): never {
  * unreadable test id digests to a distinct absence marker (fail-closed: it
  * can never collide with real content, so the verdict re-earns).
  */
-function makeCoveringTestDigestResolver(repoRoot: string): (testId: string) => string {
+export function makeCoveringTestDigestResolver(repoRoot: string): (testId: string) => string {
   const memo = new Map<string, string>();
   return (testId: string): string => {
     const hit = memo.get(testId);
@@ -772,6 +816,13 @@ const MUTATION_EQUIVALENTS = 'benchmarks/mutation-equivalents.json';
  * just the survivor surfacing).
  */
 function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: string | undefined): MutationFacts {
+  // The wall clock anchors HERE — before target selection and the seam-coverage
+  // probe phase, not at the evaluation loop (run 30606178745: a COLD probe
+  // phase consumed 85 minutes before the first heartbeat, pushing a loop-
+  // anchored budget expiry PAST the 350-minute job backstop — the budget was
+  // armed but could never fire, and the backstop cancel took the job instead).
+  const campaignStart = systemClock.now();
+
   const targetResult = assuranceTargets(ir, repoRoot);
   const censusErrors = targetCensusErrors(targetResult);
   if (censusErrors.length > 0) {
@@ -805,21 +856,24 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
   const targetCensus: MutationFacts['targetCensus'][number][] = [];
   const operatorApplicability: MutationFacts['operatorApplicability'][number][] = [];
   const wallBudget = campaignWallBudgetMs();
-  const campaignStart = systemClock.now();
+  const shard = campaignShard();
   const coveringTestDigest = makeCoveringTestDigestResolver(repoRoot);
   for (const [index, target] of targets.entries()) {
     // Checked at the per-file boundary (a file's mutants run as a unit); the
     // slack between this budget and the job timeout must absorb one file.
     const exhausted = wallBudget !== null && systemClock.now() - campaignStart >= wallBudget;
+    const foreign = !shardOwnsTarget(index, shard);
     // Heartbeat on stderr — the receipt owns stdout; a multi-hour campaign
     // with NO stream was indistinguishable from a hang (run 30579292227).
     process.stderr.write(
-      `[mutation ${index + 1}/${targets.length}] ${target.file}${exhausted ? ' — wall budget exhausted, folding inconclusive' : ''}\n`,
+      `[mutation ${index + 1}/${targets.length}] ${target.file}${exhausted ? ' — wall budget exhausted, folding inconclusive' : foreign ? ' — foreign shard, folding inconclusive' : ''}\n`,
     );
     // One runner per seam file — it backs up / mutates / restores exactly that file.
     const runner = exhausted
       ? wallBudgetExhaustedRunner
-      : makeVitestMutationRunner(repoRoot, { targetFile: target.file });
+      : foreign
+        ? shardForeignRunner
+        : makeVitestMutationRunner(repoRoot, { targetFile: target.file });
     const fileFacts = buildMutationFacts([target], {
       runner,
       coverage,
@@ -871,6 +925,13 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
  * deterministic over the seam bytes + the runner verdicts.
  */
 function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: string | undefined): McdcFacts {
+  // The wall clock anchors HERE — before target selection and the seam-coverage
+  // probe phase, not at the evaluation loop (run 30606178745: a COLD probe
+  // phase consumed 85 minutes before the first heartbeat, pushing a loop-
+  // anchored budget expiry PAST the 350-minute job backstop — the budget was
+  // armed but could never fire, and the backstop cancel took the job instead).
+  const campaignStart = systemClock.now();
+
   const targetResult = assuranceTargets(ir, repoRoot);
   const censusErrors = targetCensusErrors(targetResult);
   if (censusErrors.length > 0) {
@@ -894,19 +955,22 @@ function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: strin
   const conditions: McdcFacts['conditions'][number][] = [];
   const targetCensus: McdcFacts['targetCensus'][number][] = [];
   const wallBudget = campaignWallBudgetMs();
-  const campaignStart = systemClock.now();
+  const shard = campaignShard();
   const coveringTestDigest = makeCoveringTestDigestResolver(repoRoot);
   for (const [index, target] of targets.entries()) {
-    // Same wall-budget + heartbeat contract as the mutation campaign (the two
-    // builders mirror each other deliberately — see buildRepoMutationFacts).
+    // Same wall-budget + shard + heartbeat contract as the mutation campaign
+    // (the two builders mirror each other deliberately).
     const exhausted = wallBudget !== null && systemClock.now() - campaignStart >= wallBudget;
+    const foreign = !shardOwnsTarget(index, shard);
     process.stderr.write(
-      `[mcdc ${index + 1}/${targets.length}] ${target.file}${exhausted ? ' — wall budget exhausted, folding inconclusive' : ''}\n`,
+      `[mcdc ${index + 1}/${targets.length}] ${target.file}${exhausted ? ' — wall budget exhausted, folding inconclusive' : foreign ? ' — foreign shard, folding inconclusive' : ''}\n`,
     );
     // One runner per seam file — it backs up / pins / restores exactly that file.
     const runner = exhausted
       ? wallBudgetExhaustedRunner
-      : makeVitestMutationRunner(repoRoot, { targetFile: target.file });
+      : foreign
+        ? shardForeignRunner
+        : makeVitestMutationRunner(repoRoot, { targetFile: target.file });
     const fileFacts = buildMcdcFacts([target], {
       runner,
       coverage,
