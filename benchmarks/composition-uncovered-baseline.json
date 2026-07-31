@@ -163,7 +163,6 @@
     "packages/cli/src/commands/doctor/probes-workers-date.ts -> packages/cli/src/commands/doctor/manifest.ts via manifest",
     "packages/cli/src/commands/doctor/probes-workers-date.ts -> packages/cli/src/commands/doctor/types.ts via types",
     "packages/cli/src/commands/doctor/probes-workspace.ts -> packages/cli/src/commands/doctor/manifest.ts via manifest",
-    "packages/cli/src/commands/doctor/probes-workspace.ts -> packages/cli/src/commands/doctor/probe-support.ts via probe-support",
     "packages/cli/src/commands/doctor/probes-workspace.ts -> packages/cli/src/internal/project-package-manager.ts via project-package-manager",
     "packages/cli/src/commands/doctor/probes-workspace.ts -> packages/cli/src/internal/spawn.ts via spawn",
     "packages/cli/src/commands/doctor/summary.ts -> packages/cli/src/internal/ansi.ts via ansi",
