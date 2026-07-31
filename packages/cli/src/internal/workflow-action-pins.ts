@@ -115,6 +115,7 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
         // instead of an older historical bank shadowing it (round 3).
         const rkIndex = withChildren.find((c) => lines[c]!.body.startsWith('restore-keys:'));
         const first = rkIndex === undefined ? undefined : blockLinesOf(lines, rkIndex)[0]?.body.replace(/^- /u, '');
+        const primary = withChildren.map((c) => lines[c]!.body).find((body) => body.startsWith('key: '));
         if (first === undefined) {
           violations.push(
             `${job}: cache restore has no restore-keys fallback — an attempt-qualified primary can never exact-match a re-run, leaving banked work unrecoverable`,
@@ -122,6 +123,13 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
         } else if (!uncommentedScalar(first).includes('${{ github.run_id }}')) {
           violations.push(
             `${job}: restore-keys leads with a historical prefix — a re-run must prefer this run's own bank first`,
+          );
+        } else if (primary === undefined || !uncommentedScalar(primary).slice(5).startsWith(uncommentedScalar(first))) {
+          // A run-scoped fallback in a FOREIGN namespace prefix-matches
+          // nothing this restore ever saved — the same-run recovery it claims
+          // to provide cannot happen (PR #196 review round 8, confirmed P2).
+          violations.push(
+            `${job}: restore-keys first prefix is outside its own key namespace — the same-run fallback can never recover this restore's bank`,
           );
         }
       }
@@ -190,6 +198,9 @@ function campaignJobSection(text: string, job: string): string | null {
   const next = text.slice(start + 1).search(/\n {2}[a-z][a-z-]*:\n/u);
   return next === -1 ? text.slice(start) : text.slice(start, start + 1 + next);
 }
+
+/** The literal campaign invocation — the one command whose step owns the wall-budget env. */
+export const CAMPAIGN_GATES_INVOCATION = 'pnpm exec tsx packages/cli/src/bin.ts check gates';
 
 /** An 85-minute cold seam-coverage probe phase, measured in run 30606178745 (first heartbeat 07:04 vs step start 05:39). */
 export const CAMPAIGN_COLD_PROBE_MS = 5_100_000;
@@ -307,7 +318,14 @@ function stepRunCommandOf(lines: readonly ActiveLine[], stepIndex: number): stri
  */
 function campaignStepBudgetOf(lines: readonly ActiveLine[]): string | null {
   for (const stepIndex of stepIndicesOf(lines)) {
-    if (!stepRunCommandOf(lines, stepIndex).includes('check gates')) continue;
+    // An INVOCATION, not a mention: only a command line that STARTS with the
+    // literal gates invocation qualifies — `echo check gates`, a name, or an
+    // argument to another tool never does (PR #196 review round 8, confirmed
+    // P2).
+    const invokes = stepRunCommandOf(lines, stepIndex)
+      .split('\n')
+      .some((line) => line.startsWith(CAMPAIGN_GATES_INVOCATION));
+    if (!invokes) continue;
     const envIndex = childIndicesOf(lines, stepIndex).find((c) => lines[c]!.body === 'env:');
     if (envIndex === undefined) continue;
     for (const envChild of childIndicesOf(lines, envIndex)) {

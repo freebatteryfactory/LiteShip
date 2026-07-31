@@ -224,9 +224,20 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
       ),
     ).toBe(true);
     const runScopedFirstRestore = jobOf(
-      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-shard0-\${{ github.run_id }}-\n            bank-fold-\n${saveOk}`,
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n            bank-fold-\n${saveOk}`,
     );
     expect(scanExhaustiveCachePersistence(runScopedFirstRestore, ['exhaustive-mutation'])).toEqual([]);
+    // A run-scoped fallback in a FOREIGN namespace — it can never prefix-match
+    // this restore's own bank, so a re-run still recovers nothing (PR #196
+    // review round 8, confirmed P2).
+    const foreignNamespaceFallback = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            unrelated-\${{ github.run_id }}-\n            bank-fold-\n${saveOk}`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(foreignNamespaceFallback, ['exhaustive-mutation']).some((v) =>
+        v.includes('namespace'),
+      ),
+    ).toBe(true);
     // An INLINE comment carrying the attempt — YAML excludes \` #...\` from the
     // effective plain scalar, so the real key stays run-id-only and a re-run
     // still banks nothing (PR #196 review round 4, confirmed P2).
@@ -299,7 +310,7 @@ describe('campaign wall budgets absorb a cold probe and leave post-step margin (
   it('the scanner REDS every sizing regression class (below floor, above ceiling, missing knobs)', () => {
     const floor = CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS;
     const jobOf = (timeoutMinutes: number, budgetMs?: number): string =>
-      `\n  exhaustive-mutation:\n    timeout-minutes: ${timeoutMinutes}\n    steps:\n      - run: check gates\n        env:\n${
+      `\n  exhaustive-mutation:\n    timeout-minutes: ${timeoutMinutes}\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir\n        env:\n${
         budgetMs === undefined ? '' : `          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${budgetMs}'\n`
       }  next-job:\n    a: b\n`;
     // Below the floor: a cold probe eats the whole budget, the census folds
@@ -324,24 +335,24 @@ describe('campaign wall budgets absorb a cold probe and leave post-step margin (
     // COMMENTED-OUT knobs are missing knobs — GitHub applies neither, and the
     // leftover text must not satisfy the contract (PR #196 review round 2,
     // confirmed P2).
-    const commentedBudget = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: check gates\n        env:\n          # LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n  next-job:\n    a: b\n`;
+    const commentedBudget = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir\n        env:\n          # LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n  next-job:\n    a: b\n`;
     expect(scanCampaignWallBudget(commentedBudget, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
       true,
     );
-    const commentedTimeout = `\n  exhaustive-mutation:\n    # timeout-minutes: 150\n    steps:\n      - run: check gates\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n  next-job:\n    a: b\n`;
+    const commentedTimeout = `\n  exhaustive-mutation:\n    # timeout-minutes: 150\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n  next-job:\n    a: b\n`;
     expect(scanCampaignWallBudget(commentedTimeout, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
       true,
     );
     // A STEP-LEVEL timeout-minutes must not shadow the job-level backstop —
     // GitHub kills the JOB at its own timeout regardless of step budgets
     // (PR #196 review round 3, confirmed P2).
-    const stepTimeoutShadow = `\n  exhaustive-mutation:\n    steps:\n      - run: check gates\n        timeout-minutes: 150\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n    timeout-minutes: 100\n  next-job:\n    a: b\n`;
+    const stepTimeoutShadow = `\n  exhaustive-mutation:\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir\n        timeout-minutes: 150\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n    timeout-minutes: 100\n  next-job:\n    a: b\n`;
     expect(scanCampaignWallBudget(stepTimeoutShadow, ['exhaustive-mutation']).some((v) => v.includes('backstop'))).toBe(
       true,
     );
     // An env on an UNRELATED step never reaches the campaign process
     // (PR #196 review round 3, confirmed P2).
-    const unrelatedEnvBudget = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: echo warmup\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n      - run: check gates\n  next-job:\n    a: b\n`;
+    const unrelatedEnvBudget = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: echo warmup\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir\n  next-job:\n    a: b\n`;
     expect(scanCampaignWallBudget(unrelatedEnvBudget, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
       true,
     );
@@ -349,18 +360,26 @@ describe('campaign wall budgets absorb a cold probe and leave post-step margin (
     expect(scanCampaignWallBudget(jobOf(150, floor), ['exhaustive-mutation'])).toEqual([]);
     // A benign INLINE comment on an active knob is tolerated — stripping
     // comments must not overshoot into false reds (PR #196 review round 4).
-    const commentedKnobValue = `\n  exhaustive-mutation:\n    timeout-minutes: 150 # twice-measured\n    steps:\n      - run: check gates\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}' # the cold-probe floor\n  next-job:\n    a: b\n`;
+    const commentedKnobValue = `\n  exhaustive-mutation:\n    timeout-minutes: 150 # twice-measured\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}' # the cold-probe floor\n  next-job:\n    a: b\n`;
     expect(scanCampaignWallBudget(commentedKnobValue, ['exhaustive-mutation'])).toEqual([]);
     // The campaign step is identified by its RUN command — a step merely
     // NAMED after the campaign must not satisfy the contract while the real
     // gates step goes unprotected (PR #196 review round 5, confirmed P2).
-    const namedDecoyStep = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - name: pretend to check gates\n        run: echo warmup\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n      - name: the real campaign\n        run: |\n          pnpm exec tsx bin.ts check gates --ir --mutate\n  next-job:\n    a: b\n`;
+    const namedDecoyStep = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - name: pretend to check gates\n        run: echo warmup\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n      - name: the real campaign\n        run: |\n          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n  next-job:\n    a: b\n`;
     expect(scanCampaignWallBudget(namedDecoyStep, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
+      true,
+    );
+    // An ECHO decoy — command text mentioning the gates is not an
+    // INVOCATION; only a line that starts with the literal gates command
+    // qualifies a step as the campaign (PR #196 review round 8, confirmed
+    // P2).
+    const echoDecoyStep = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: echo check gates\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir\n  next-job:\n    a: b\n`;
+    expect(scanCampaignWallBudget(echoDecoyStep, ['exhaustive-mutation']).some((v) => v.includes('missing'))).toBe(
       true,
     );
     // And a named campaign step whose run: | block invokes the gates IS the
     // campaign step — its env satisfies the contract.
-    const namedCampaignStep = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - name: the real campaign\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n        run: |\n          pnpm exec tsx bin.ts check gates --ir --mutate\n  next-job:\n    a: b\n`;
+    const namedCampaignStep = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - name: the real campaign\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n        run: |\n          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n  next-job:\n    a: b\n`;
     expect(scanCampaignWallBudget(namedCampaignStep, ['exhaustive-mutation'])).toEqual([]);
   });
 });
