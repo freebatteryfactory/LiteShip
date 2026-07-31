@@ -305,6 +305,16 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
         v.includes('never restored'),
       ),
     ).toBe(true);
+    // A matching namespace over DIFFERENT paths — actions/cache versions the
+    // archive by its path list, so the restore can never recover the save's
+    // archive despite the key text matching (PR #196 review round 11,
+    // confirmed P2).
+    const pathMismatchedPair = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n        with:\n          path: y\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(pathMismatchedPair, ['exhaustive-mutation']).some((v) => v.includes('path')),
+    ).toBe(true);
     // The full contract satisfied → clean, even with a long step body.
     const good = jobOf(
       `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n            bank-\n      - uses: actions/cache/save@${sha} # v4\n        if: always()\n${padding}        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,

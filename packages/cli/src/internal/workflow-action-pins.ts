@@ -77,8 +77,8 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
       violations.push(`${job}: combined actions/cache present — its post-if: success() save skips red runs`);
     }
     const lines = activeLinesOf(section);
-    const saveKeys: string[] = [];
-    const restoreFirstPrefixes: string[] = [];
+    const saves: Array<{ readonly key: string; readonly path: string | null }> = [];
+    const restores: Array<{ readonly prefix: string; readonly path: string | null }> = [];
     for (const step of stepIndicesOf(lines)) {
       // The step's uses FIELD decides its role — live steps are written as
       // `- name:` bullets with uses: on a child line, and a bullet-spelling
@@ -115,7 +115,7 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
             `${job}: cache save key lacks github.run_id — a later run collides with the first run's reserved key`,
           );
         } else {
-          saveKeys.push(uncommentedScalar(key).slice(5));
+          saves.push({ key: uncommentedScalar(key).slice(5), path: withPathOf(lines, withChildren) });
         }
       } else {
         // Restore fallbacks are REQUIRED and ordered: attempt-qualified
@@ -143,18 +143,28 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
             `${job}: restore-keys first prefix is outside its own key namespace — the same-run fallback can never recover this restore's bank`,
           );
         } else {
-          restoreFirstPrefixes.push(uncommentedScalar(first));
+          restores.push({ prefix: uncommentedScalar(first), path: withPathOf(lines, withChildren) });
         }
       }
     }
     // Every saved namespace must be one some restore RECOVERS: a job that
     // saves bank-* while only restoring wrong-* passes every per-step check
     // yet no re-run ever restores the bank it banks (PR #196 review round
-    // 10, confirmed P2).
-    for (const saved of saveKeys) {
-      if (!restoreFirstPrefixes.some((prefix) => saved.startsWith(prefix))) {
+    // 10, confirmed P2). And the pair must share its with.path —
+    // actions/cache folds the path list into the archive VERSION, so a
+    // matching key over a different path still restores nothing (round 11,
+    // confirmed P2).
+    for (const saved of saves) {
+      const namespaceMatches = restores.filter((restore) => saved.key.startsWith(restore.prefix));
+      if (namespaceMatches.length === 0) {
         violations.push(
           `${job}: a saved bank namespace is never restored — no restore-keys first prefix recovers what this job saves`,
+        );
+      } else if (
+        !namespaceMatches.some((restore) => restore.path !== null && saved.path !== null && restore.path === saved.path)
+      ) {
+        violations.push(
+          `${job}: a saved bank's path has no matching restore — actions/cache versions the archive by path, so the pair can never exchange it`,
         );
       }
     }
@@ -330,6 +340,14 @@ function stepRunCommandOf(lines: readonly ActiveLine[], stepIndex: number): stri
   if (runIndex === undefined) return '';
   const value = lines[runIndex]!.body.slice(4).trim();
   return /^[|>]/u.test(value) || value === '' ? scalarLinesUnder(lines, runIndex, lines[runIndex]!.indent) : value;
+}
+
+/** The with.path value of a cache step — inline scalar or joined block-scalar content; null when absent. */
+function withPathOf(lines: readonly ActiveLine[], withChildren: readonly number[]): string | null {
+  const index = withChildren.find((c) => lines[c]!.body.startsWith('path:'));
+  if (index === undefined) return null;
+  const value = uncommentedScalar(lines[index]!.body.slice(5).trim());
+  return /^[|>]/u.test(value) || value === '' ? scalarLinesUnder(lines, index, lines[index]!.indent) : value;
 }
 
 /** Block-scalar content after lines[index]: every following line strictly deeper than boundaryIndent. */
