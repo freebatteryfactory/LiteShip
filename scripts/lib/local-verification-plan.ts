@@ -70,8 +70,23 @@ const DOCS_INPUT_PATTERNS: readonly RegExp[] = Object.freeze([
  * registry they project. Editing any of these without running the parity
  * proof is how yml/registry drift reaches CI (the pr-affected reds of
  * 2026-07-25 were exactly this: a workflow edit whose parity assertions first
- * ran on the runner). Staged changes here append the parity test as a step.
+ * ran on the runner). Staged changes here append the complete contract suite.
  */
+const CI_CONTRACT_TEST_PATHS: readonly string[] = Object.freeze([
+  'tests/fuzz/cold-ci-authority-parsers-fuzz.test.ts',
+  'tests/property/cold-checkout-authorities.prop.test.ts',
+  'tests/property/workflow-output-contract.prop.test.ts',
+  'tests/property/workflow-scanner-grammar.prop.test.ts',
+  'tests/regression/cold-checkout-ci-incidents.test.ts',
+  'tests/unit/cli/lib/campaign-wall-budget.test.ts',
+  'tests/unit/cli/workflow-action-pins.test.ts',
+  'tests/unit/devops/affected-result-artifacts.test.ts',
+  'tests/unit/devops/parallel-ci-artifacts.test.ts',
+  'tests/unit/devops/release-promotion.test.ts',
+  'tests/unit/meta/ci-registry-parity.test.ts',
+  'tests/unit/meta/workflow-output-delimiter.test.ts',
+]);
+
 const CI_CONTRACT_INPUT_PATTERNS: readonly RegExp[] = Object.freeze([
   /^\.github\/workflows\//u,
   // CI projections deliberately compose repository scripts. Selecting the
@@ -79,14 +94,14 @@ const CI_CONTRACT_INPUT_PATTERNS: readonly RegExp[] = Object.freeze([
   // extracted helper merely because a hand-maintained filename list drifted.
   /^scripts\//u,
   /^packages\/command\/src\/checks\//u,
-  /^tests\/unit\/meta\/ci-registry-parity\.test\.ts$/u,
+  /^packages\/cli\/src\/internal\/workflow-action-pins\.ts$/u,
 ]);
 
-const CI_PARITY_STEP: LocalVerificationStep = Object.freeze({
+const CI_CONTRACT_STEP: LocalVerificationStep = Object.freeze({
   checkId: null,
-  label: 'ci-registry-parity',
-  argv: Object.freeze(['exec', 'vitest', 'run', 'tests/unit/meta/ci-registry-parity.test.ts']),
-  remedy: 'reconcile .github/workflows with the registry projection (the parity test names the drifted block)',
+  label: 'ci-contract',
+  argv: Object.freeze(['exec', 'vitest', 'run', ...CI_CONTRACT_TEST_PATHS]),
+  remedy: 'reconcile the workflow readers, registry projection, and contract laws named by the failing test',
 });
 
 function normalizeRepoPath(path: string): string {
@@ -102,7 +117,10 @@ export function isTypeDocProofInput(path: string): boolean {
 /** Whether a changed path can drift the CI contract (workflows vs registry projection). */
 export function isCiContractInput(path: string): boolean {
   const normalized = normalizeRepoPath(path);
-  return CI_CONTRACT_INPUT_PATTERNS.some((pattern) => pattern.test(normalized));
+  return (
+    CI_CONTRACT_TEST_PATHS.includes(normalized) ||
+    CI_CONTRACT_INPUT_PATTERNS.some((pattern) => pattern.test(normalized))
+  );
 }
 
 /** Build the exact fail-fast local plan without executing any command. */
@@ -114,7 +132,7 @@ export function buildLocalVerificationPlan(input: {
   const docsAffected = !input.staged || (input.changedPaths ?? []).some(isTypeDocProofInput);
   const ciContractAffected = input.staged && (input.changedPaths ?? []).some(isCiContractInput);
   const steps: LocalVerificationStep[] = [...quickSteps, INVARIANTS_STEP];
-  if (ciContractAffected) steps.push(CI_PARITY_STEP);
+  if (ciContractAffected) steps.push(CI_CONTRACT_STEP);
   if (docsAffected) steps.push(DOCS_STEP);
   return Object.freeze({
     schema: 'liteship/local-verification-plan@1',

@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { CHECK_REGISTRY } from '@liteship/command';
+import { globSync } from 'fast-glob';
 import {
   buildLocalVerificationPlan,
   isCiContractInput,
@@ -91,20 +94,39 @@ describe('local verification plan', () => {
     'scripts/affected-plan.ts',
     'scripts/lib/new-ci-helper.ts',
     'packages/command/src/checks/registry.ts',
+    'packages/cli/src/internal/workflow-action-pins.ts',
+    'tests/property/workflow-scanner-grammar.prop.test.ts',
+    'tests/unit/cli/lib/campaign-wall-budget.test.ts',
     'tests/unit/meta/ci-registry-parity.test.ts',
   ])('classifies %s as a CI contract input', (path) => {
     expect(isCiContractInput(path)).toBe(true);
   });
 
-  test('staged CI-contract changes append the parity proof; unrelated changes do not', () => {
+  test('staged CI-contract changes append the contract proof; unrelated changes do not', () => {
     const touched = buildLocalVerificationPlan({ staged: true, changedPaths: ['.github/workflows/ci.yml'] });
     const untouched = buildLocalVerificationPlan({ staged: true, changedPaths: ['README.md'] });
-    expect(touched.steps.some((step) => step.label === 'ci-registry-parity')).toBe(true);
-    expect(untouched.steps.some((step) => step.label === 'ci-registry-parity')).toBe(false);
+    expect(touched.steps.some((step) => step.label === 'ci-contract')).toBe(true);
+    expect(untouched.steps.some((step) => step.label === 'ci-contract')).toBe(false);
     // Workspace mode leaves parity to the full vitest authority it already runs under.
-    expect(
-      buildLocalVerificationPlan({ staged: false }).steps.some((step) => step.label === 'ci-registry-parity'),
-    ).toBe(false);
+    expect(buildLocalVerificationPlan({ staged: false }).steps.some((step) => step.label === 'ci-contract')).toBe(
+      false,
+    );
+  });
+
+  test('every workflow-contract law is enrolled in the staged ci.yml plan', () => {
+    const repoRoot = resolve(import.meta.dirname, '../../..');
+    const importers = globSync('tests/**/*.test.ts', { cwd: repoRoot })
+      .filter((path) => {
+        const text = readFileSync(resolve(repoRoot, path), 'utf8');
+        return /from\s+['"][^'"]*(?:workflow-action-pins|workflow-output-contract)\.js['"]/u.test(text);
+      })
+      .sort();
+    expect(importers.length).toBeGreaterThanOrEqual(3);
+
+    const argv = buildLocalVerificationPlan({ staged: true, changedPaths: ['.github/workflows/ci.yml'] }).steps.flatMap(
+      (step) => step.argv,
+    );
+    expect(importers.filter((path) => !argv.includes(path))).toEqual([]);
   });
 
   test('is exactly the blocking repository quick projection and cannot silently omit a new blocker', () => {
