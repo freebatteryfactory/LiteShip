@@ -32,6 +32,7 @@ import {
   detectEarlyReturnBeforeExpectAST,
   detectDiagnosticEmissionsAST,
   codeOnlyAST,
+  scanCssIdentitySurface,
   type FactOracle,
 } from '@liteship/audit';
 import { liteshipDevopsProfile } from './liteship-audit-profile.js';
@@ -269,6 +270,42 @@ export const liteshipRegexOracle: FactOracle = ({ file, text }): readonly Fact[]
 };
 
 /**
+ * The parser-backed CSS-identity surface oracle. Anchor receipts make the
+ * scanner's subject visible in the existing open RepoIR fact channel; violation
+ * facts preserve the scanner's exact path/line/expression evidence for a
+ * downstream fold without inventing a parallel finding registry here.
+ */
+export const cssIdentitySurfaceOracle: FactOracle = ({ file, text }): readonly Fact[] => {
+  const result = scanCssIdentitySurface([{ path: file, text }]);
+  const facts: Fact[] = [];
+  if (result.anchoredCount > 0) {
+    facts.push({
+      file,
+      line: 1,
+      property: 'css-identity-anchor-count',
+      value: result.anchoredCount,
+      oracleId: 'css-identity-surface',
+      coverageClass: 'file-proxy-only',
+    });
+  }
+  for (const violation of result.findings) {
+    facts.push({
+      file,
+      line: violation.line,
+      property: 'css-identity-unescaped',
+      value: {
+        column: violation.column,
+        reason: violation.reason,
+        expression: violation.expression,
+      },
+      oracleId: 'css-identity-surface',
+      coverageClass: 'file-proxy-only',
+    });
+  }
+  return facts;
+};
+
+/**
  * Build the repo-IR for the repo at `repoRoot` (the LiteShip reference profile
  * repointed there) WITH the host-injected LiteShip `invariant-regex` oracle. Pure
  * + deterministic — the same source bytes yield an identical IR (the B2 cache
@@ -293,7 +330,7 @@ export function buildRepoIRForRepo(repoRoot: string, withSymbolReferences = fals
     benchmarkDistributions = registry.distributions;
   }
   return buildRepoIR(withRepoRoot(liteshipDevopsProfile, repoRoot), {
-    extraFactOracles: [liteshipRegexOracle],
+    extraFactOracles: [liteshipRegexOracle, cssIdentitySurfaceOracle],
     withSymbolReferences,
     typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
     ...(benchmarkDistributions !== undefined ? { benchmarkDistributions } : {}),

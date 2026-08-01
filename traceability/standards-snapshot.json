@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:4535eb2c",
+  "address": "fnv1a:8f24f719",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -547,6 +547,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "packages/audit/src/consumer.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/css-identity-surface.ts",
       "level": "L1"
     },
     {

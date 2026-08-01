@@ -14,6 +14,9 @@
  *    distinct policy-EXCLUDE marker (the exclude-vs-miss seam) for a sanctioned file —
  *    referencing the canonical `INVARIANTS` source of truth, never a fork. It is
  *    PURE + DETERMINISTIC (a property over arbitrary text).
+ *  - THE CSS-IDENTITY ORACLE: `cssIdentitySurfaceOracle` projects the public
+ *    parser-backed scanner's anchor census and violations onto the existing
+ *    RepoIR fact channel.
  *
  *  - THE IR BUILD: `buildRepoIRForRepo` materializes a real `RepoIR` over a tiny but
  *    REAL `@liteship/`-scoped fixture, carrying BOTH the audit AST oracle's facts AND the
@@ -63,6 +66,7 @@ import {
 } from '@liteship/gauntlet';
 import {
   liteshipRegexOracle,
+  cssIdentitySurfaceOracle,
   buildRepoIRForRepo,
   runGauntletWithRepoIR as runGauntletWithRepoIRRaw,
   DEFAULT_EXPORT_CHECK_EXCLUDED,
@@ -130,6 +134,16 @@ const HEAVY = scaledTimeout(120_000);
 /** Invoke the host oracle the way `buildRepoIR` does, over an in-memory file. */
 function runOracle(file: FileId, text: string): readonly Fact[] {
   return liteshipRegexOracle({ file, text, packageName: '@liteship/example', sourceFile: undefined });
+}
+
+/** Invoke the CSS-identity oracle over one in-memory package source file. */
+function runCssIdentityOracle(text: string): readonly Fact[] {
+  return cssIdentitySurfaceOracle({
+    file: 'packages/example/src/identity.ts' as FileId,
+    text,
+    packageName: '@liteship/example',
+    sourceFile: undefined,
+  });
 }
 
 /** The per-line property facts emitted under a given oracle property (the regex fired). */
@@ -228,6 +242,34 @@ describe('liteshipRegexOracle — the host-injected invariant-regex oracle', () 
     const file = 'packages/core/src/many.ts' as FileId;
     const text = 'var a = 1;\nconst b = 2;\nvar c = 3;\nvar d = 4;\n';
     expect(propertyFacts(runOracle(file, text), 'var-declaration')).toHaveLength(3);
+  });
+});
+
+describe('cssIdentitySurfaceOracle — parser-backed facts on the existing RepoIR channel', () => {
+  it('emits a nonblocking anchor census receipt for a safe selector', () => {
+    const facts = runCssIdentityOracle('const selector = `[data-liteship-boundary="${escapeCssString(name)}"]`;');
+    expect(facts).toEqual([
+      expect.objectContaining({
+        property: 'css-identity-anchor-count',
+        value: 1,
+        oracleId: 'css-identity-surface',
+        coverageClass: 'file-proxy-only',
+      }),
+    ]);
+  });
+
+  it('emits an exact violation fact for an unescaped identity', () => {
+    const facts = runCssIdentityOracle('const selector = `[data-liteship-boundary="${model.name}"]`;');
+    expect(facts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          property: 'css-identity-unescaped',
+          value: expect.objectContaining({ reason: 'unescaped-interpolation', expression: 'model.name' }),
+          oracleId: 'css-identity-surface',
+          coverageClass: 'file-proxy-only',
+        }),
+      ]),
+    );
   });
 });
 
