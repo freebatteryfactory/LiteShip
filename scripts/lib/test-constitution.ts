@@ -4,7 +4,8 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import ts from 'typescript';
 
-export type TestDebtKind = 'ambient-clock' | 'real-timer' | 'source-byte-oracle' | 'unanchored-text-slice';
+export type TestDebtKind =
+  'ambient-clock' | 'ambient-entropy-spy' | 'real-timer' | 'source-byte-oracle' | 'unanchored-text-slice';
 
 export interface TestDebtFinding {
   readonly file: string;
@@ -294,6 +295,51 @@ function unanchoredTextSlices(ast: ts.SourceFile): readonly ts.CallExpression[] 
   return findings;
 }
 
+function literalText(node: ts.Expression | undefined, expected: string): boolean {
+  return node !== undefined && ts.isStringLiteralLike(node) && node.text === expected;
+}
+
+/**
+ * THE CLASS RULE — ANCHOR: a test replaces or assigns the global Math.random
+ * entropy source. ALLOWLIST: none. Tests must inject `seededRng` from
+ * @liteship/core instead; the ratchet stops the next ambient spy without
+ * blessing the inherited sites.
+ */
+function ambientEntropySpies(ast: ts.SourceFile): readonly ts.Node[] {
+  const findings: ts.Node[] = [];
+  const visit = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
+      const receiver = node.expression.expression;
+      const method = node.expression.name.text;
+      if (
+        ts.isIdentifier(receiver) &&
+        receiver.text === 'vi' &&
+        ((method === 'spyOn' &&
+          node.arguments[0] !== undefined &&
+          ts.isIdentifier(node.arguments[0]) &&
+          node.arguments[0].text === 'Math' &&
+          literalText(node.arguments[1], 'random')) ||
+          (method === 'stubGlobal' && literalText(node.arguments[0], 'Math')))
+      ) {
+        findings.push(node);
+      }
+    }
+    if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      ts.isPropertyAccessExpression(node.left) &&
+      ts.isIdentifier(node.left.expression) &&
+      node.left.expression.text === 'Math' &&
+      node.left.name.text === 'random'
+    ) {
+      findings.push(node);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  return findings;
+}
+
 /** Scan deterministic test lanes while ignoring comments and string literals. */
 export function scanTestConstitution(cwd: string): readonly TestDebtFinding[] {
   const findings: TestDebtFinding[] = [];
@@ -323,6 +369,7 @@ export function scanTestConstitution(cwd: string): readonly TestDebtFinding[] {
       visit(ast);
       for (const oracle of sourceTextOracles(ast)) add('source-byte-oracle', oracle);
       for (const slice of unanchoredTextSlices(ast)) add('unanchored-text-slice', slice);
+      for (const spy of ambientEntropySpies(ast)) add('ambient-entropy-spy', spy);
     }
   }
   return findings.sort(

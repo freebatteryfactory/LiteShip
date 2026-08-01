@@ -10,6 +10,9 @@
     "tests/component/render-worker.test.ts": {
       "ambient-clock": 1
     },
+    "tests/component/sse-client.test.ts": {
+      "ambient-entropy-spy": 2
+    },
     "tests/component/zap-debounce-throttle.test.ts": {
       "real-timer": 1
     },
@@ -34,6 +37,9 @@
     "tests/support/repo-truths.ts": {
       "source-byte-oracle": 2
     },
+    "tests/unit/astro/astro-directive-branches.test.ts": {
+      "ambient-entropy-spy": 7
+    },
     "tests/unit/astro/astro-directives.test.ts": {
       "real-timer": 8
     },
@@ -47,7 +53,11 @@
       "real-timer": 1
     },
     "tests/unit/astro/stream-llm-lifecycle.test.ts": {
+      "ambient-entropy-spy": 2,
       "real-timer": 1
+    },
+    "tests/unit/astro/stream-recovery.test.ts": {
+      "ambient-entropy-spy": 4
     },
     "tests/unit/audit/b5-normalize-repo-path.test.ts": {
       "source-byte-oracle": 1

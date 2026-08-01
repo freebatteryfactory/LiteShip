@@ -101,6 +101,23 @@ describe('test constitution', () => {
     });
   });
 
+  describe('ambient-entropy-spy', () => {
+    it('flags vi.spyOn(Math, "random")', () => {
+      const root = fixture(`vi.spyOn(Math, 'random').mockReturnValue(0.5);`);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('ambient-entropy-spy');
+    });
+
+    it('flags vi.stubGlobal("Math", ...)', () => {
+      const root = fixture(`vi.stubGlobal('Math', { ...Math, random: () => 0.5 });`);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('ambient-entropy-spy');
+    });
+
+    it('does not flag seededRng usage', () => {
+      const root = fixture(`const random = seededRng(0x5eed); expect(random()).toBeGreaterThanOrEqual(0);`);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('ambient-entropy-spy');
+    });
+  });
+
   it('follows raw-text aliases and reader helpers into brittle string operations', () => {
     const root = fixture(`
       const read = (path: string) => readFileSync(path, 'utf8');
