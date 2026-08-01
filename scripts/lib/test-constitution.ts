@@ -553,11 +553,16 @@ function scanFixtureText(text: string, initial: FixtureDelimiterState): FixtureD
   return state;
 }
 
-function replacementMap(
+interface ReplacementOperation {
+  readonly replacement: string;
+  readonly target: string;
+}
+
+function replacementOperations(
   node: ts.Expression,
   literals: ReadonlyMap<string, string>,
   initializers: ReadonlyMap<string, ts.Expression>,
-): ReadonlyMap<string, string> | undefined {
+): readonly ReplacementOperation[] | undefined {
   if (
     !ts.isCallExpression(node) ||
     !ts.isPropertyAccessExpression(node.expression) ||
@@ -568,8 +573,8 @@ function replacementMap(
   const target = literalValue(node.arguments[0]!, literals);
   const replacement = literalValue(node.arguments[1]!, literals);
   if (target === undefined || replacement === undefined) return undefined;
-  const prior = replacementMap(node.expression.expression, literals, initializers) ?? new Map<string, string>();
-  return new Map([...prior, [target, replacement]]);
+  const prior = replacementOperations(node.expression.expression, literals, initializers) ?? [];
+  return [...prior, { target, replacement }];
 }
 
 function sanitizedForDelimiter(
@@ -579,11 +584,16 @@ function sanitizedForDelimiter(
   initializers: ReadonlyMap<string, ts.Expression>,
 ): boolean {
   if (literalValue(node, literals) !== undefined) return true;
-  const replacements = replacementMap(node, literals, initializers);
-  if (replacements === undefined) return false;
+  const operations = replacementOperations(node, literals, initializers);
+  if (operations === undefined) return false;
   const safelyReplaces = (delimiter: string): boolean => {
-    const replacement = replacements.get(delimiter);
-    return replacement !== undefined && !replacement.includes(delimiter);
+    const removalIndex = operations.findIndex(
+      ({ target, replacement }) => target === delimiter && !replacement.includes(delimiter),
+    );
+    return (
+      removalIndex !== -1 &&
+      operations.slice(removalIndex + 1).every(({ replacement }) => !replacement.includes(delimiter))
+    );
   };
   if (state === 'block-comment') return safelyReplaces('*/');
   if (state === 'html-comment') return safelyReplaces('-->');
@@ -648,7 +658,7 @@ function regexpAlphabet(node: ts.Expression): ReadonlySet<string> | undefined {
         const current = body[bodyIndex]!;
         if (current === '\\') {
           const escaped = body[++bodyIndex];
-          if (escaped === undefined || escaped === 's' || escaped === 'S' || escaped === 'p' || escaped === 'P') {
+          if (escaped === undefined || (/[A-Za-z0-9]/u.test(escaped) && escaped !== 'd' && escaped !== 'w')) {
             return undefined;
           }
           if (escaped === 'd') for (const digit of '0123456789') alphabet.add(digit);

@@ -212,6 +212,19 @@ describe('test constitution', () => {
       expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('generated-payload-delimiter');
     });
 
+    it('does not admit a sanitizer whose later replacement restores the closer', () => {
+      const root = fixture(
+        [
+          "const unsafePayload = fc.string().map((payload) => payload.replaceAll('*/', 'safe').replaceAll('safe', '*/'));",
+          'fc.assert(fc.property(unsafePayload, (payload) => {',
+          '  const source = `/* ${payload} */`;',
+          '  expect(source).toContain(payload);',
+          '}));',
+        ].join('\n'),
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('generated-payload-delimiter');
+    });
+
     it('admits a finite generator domain when no value can close the delimiter', () => {
       const root = fixture(
         [
@@ -222,6 +235,18 @@ describe('test constitution', () => {
         ].join('\n'),
       );
       expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('generated-payload-delimiter');
+    });
+
+    it('fails closed on a stringMatching hex escape that can generate a line break', () => {
+      const root = fixture(
+        [
+          'fc.assert(fc.property(fc.stringMatching(/^[\\x0a]*$/), (payload) => {',
+          '  const source = `// ${payload}\\nconst value = true;`;',
+          '  expect(source).toContain(payload);',
+          '}));',
+        ].join('\n'),
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('generated-payload-delimiter');
     });
   });
 
