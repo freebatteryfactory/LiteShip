@@ -429,6 +429,23 @@ function subjectIsInvoked(subject: BenchSubject, reachability: Reachability): bo
   return reachability.calls.has(subject.binding.replace(/\s+/gu, ''));
 }
 
+function constructedSubjectCategory(subject: BenchSubject, terminal: string): string {
+  for (const prefix of ['create', 'define']) {
+    if (terminal.startsWith(prefix) && terminal.length > prefix.length) {
+      return terminal.slice(prefix.length);
+    }
+  }
+  const symbolParts = subject.symbol.replace(/\(\)/gu, '').split('.');
+  return terminal === 'create' || terminal === 'define' ? normalizedTerminal(symbolParts.at(-2) ?? '') : '';
+}
+
+/**
+ * THE CLASS RULE: every invoked create/define subject inside a measured callback
+ * is construction. The allowlist admits only an exact constructor-symbol claim,
+ * or an explicit `construct`/`construction` claim naming the derived subject
+ * category. Merely naming the category beside compute/compose/tick/render is not
+ * construction evidence and remains a finding.
+ */
 function isUnclaimedConstruction(
   distribution: QualifiedBenchDistribution,
   subject: BenchSubject,
@@ -438,7 +455,12 @@ function isUnclaimedConstruction(
   const constructor = terminal === 'create' || terminal.startsWith('create') || terminal.startsWith('define');
   if (!constructor || !subjectIsInvoked(subject, reachability)) return false;
   const claimedOperation = distribution.name.replace(/[^A-Za-z0-9]/gu, '').toLowerCase();
-  return !claimedOperation.includes(terminal);
+  if (claimedOperation.includes(terminal)) return false;
+  const explicitlyClaimsConstruction = /(?:^|[^A-Za-z0-9])construct(?:ion)?(?:$|[^A-Za-z0-9])/iu.test(
+    distribution.name,
+  );
+  const category = constructedSubjectCategory(subject, terminal);
+  return !(explicitlyClaimsConstruction && category.length > 0 && claimedOperation.includes(category));
 }
 
 /** Qualify one distribution against source bytes supplied by the repository host. */
