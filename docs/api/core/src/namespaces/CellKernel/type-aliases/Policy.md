@@ -8,7 +8,7 @@
 
 > **Policy**\<`T`\> = [`EmissionPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts)\<`T`\>
 
-Defined in: [core/src/reactive/cell-kernel.ts:496](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts#L496)
+Defined in: [core/src/reactive/cell-kernel.ts:498](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts#L498)
 
 The emission policy (dedup axis) — see the module-level [EmissionPolicy](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts).
 

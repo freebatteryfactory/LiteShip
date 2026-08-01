@@ -226,6 +226,8 @@ function createCore<T>() {
     // simply restored so ONE faulty listener cannot corrupt the channel.
     try {
       for (let i = 0; i < limit; i++) {
+        // Unsubscribed registrations stay structurally retained during dispatch, but a reentrant
+        // close truncates the table; the guard keeps a snapshotted index safe in both cases.
         const registration = registrations[i];
         if (registration !== undefined && registration.active) registration.sink.next(value);
       }

@@ -6,7 +6,7 @@
 
 # Interface: CssIdentitySource
 
-Defined in: audit/src/css-identity-surface.ts:21
+Defined in: [audit/src/css-identity-surface.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/css-identity-surface.ts#L21)
 
 One source file presented to the CSS-identity scanner.
 
@@ -16,7 +16,7 @@ One source file presented to the CSS-identity scanner.
 
 > `readonly` **path**: `string`
 
-Defined in: audit/src/css-identity-surface.ts:22
+Defined in: [audit/src/css-identity-surface.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/css-identity-surface.ts#L22)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: audit/src/css-identity-surface.ts:22
 
 > `readonly` **text**: `string`
 
-Defined in: audit/src/css-identity-surface.ts:23
+Defined in: [audit/src/css-identity-surface.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/css-identity-surface.ts#L23)

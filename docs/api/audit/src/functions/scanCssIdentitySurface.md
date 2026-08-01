@@ -8,7 +8,7 @@
 
 > **scanCssIdentitySurface**(`files`): [`CssIdentityScanResult`](../interfaces/CssIdentityScanResult.md)
 
-Defined in: audit/src/css-identity-surface.ts:182
+Defined in: [audit/src/css-identity-surface.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/css-identity-surface.ts#L182)
 
 Scan template literals whose static text opens a boundary-identity selector.
 

@@ -6,7 +6,7 @@
 
 # Interface: CssIdentityFinding
 
-Defined in: audit/src/css-identity-surface.ts:27
+Defined in: [audit/src/css-identity-surface.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/css-identity-surface.ts#L27)
 
 One interpolation the scanner could not prove safe.
 
@@ -16,7 +16,7 @@ One interpolation the scanner could not prove safe.
 
 > `readonly` **column**: `number`
 
-Defined in: audit/src/css-identity-surface.ts:30
+Defined in: [audit/src/css-identity-surface.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/css-identity-surface.ts#L30)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: audit/src/css-identity-surface.ts:30
 
 > `readonly` **expression**: `string`
 
-Defined in: audit/src/css-identity-surface.ts:32
+Defined in: [audit/src/css-identity-surface.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/css-identity-surface.ts#L32)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: audit/src/css-identity-surface.ts:32
 
 > `readonly` **line**: `number`
 
-Defined in: audit/src/css-identity-surface.ts:29
+Defined in: [audit/src/css-identity-surface.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/css-identity-surface.ts#L29)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: audit/src/css-identity-surface.ts:29
 
 > `readonly` **path**: `string`
 
-Defined in: audit/src/css-identity-surface.ts:28
+Defined in: [audit/src/css-identity-surface.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/css-identity-surface.ts#L28)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: audit/src/css-identity-surface.ts:28
 
 > `readonly` **reason**: `"unescaped-interpolation"` \| `"unclosed-quoted-identity"`
 
-Defined in: audit/src/css-identity-surface.ts:31
+Defined in: [audit/src/css-identity-surface.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/css-identity-surface.ts#L31)
