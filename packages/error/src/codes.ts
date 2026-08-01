@@ -1134,6 +1134,11 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'The configured SSE receive buffer reached capacity and the selected overflow policy began dropping or coalescing messages.',
     'Increase the buffer, consume messages faster, or select an overflow policy appropriate for the stream semantics.',
   ),
+  'web/stream/sse-state-buffer-saturated': web(
+    'SSE stateChanges buffer saturated',
+    'A stateChanges iterator stopped draining and reached its bounded transition capacity; the oldest retained transition was dropped.',
+    'Consume stateChanges continuously or cancel the iterator when state transition history is no longer needed.',
+  ),
   'web/security/trusted-html-downgraded': web(
     'Trusted HTML policy was downgraded',
     'The caller requested trusted-html without explicitly enabling allowTrustedHtml, so LiteShip used sanitized-html instead.',

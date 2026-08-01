@@ -13,8 +13,8 @@
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SSE } from '@liteship/web';
-import type { SSEConfig } from '@liteship/web';
-import { Millis } from '@liteship/core';
+import type { SSEConfig, SSEState } from '@liteship/web';
+import { Diagnostics, Millis, SSE_BUFFER_SIZE } from '@liteship/core';
 import { MockEventSource } from '../helpers/mock-event-source.js';
 
 // ---------------------------------------------------------------------------
@@ -30,6 +30,7 @@ beforeEach(() => {
 
 afterEach(() => {
   restoreES();
+  Diagnostics.reset();
   vi.useRealTimers();
 });
 
@@ -375,6 +376,50 @@ describe('SSE stateChanges', () => {
     } finally {
       vi.useFakeTimers();
     }
+  });
+
+  test('an unconsumed stateChanges iterator stays bounded across reconnect churn', async () => {
+    const client = SSE.create({ ...baseConfig, onMessage: () => undefined });
+    const iterator = client.stateChanges[Symbol.asyncIterator]();
+    const reconnectCycles = Math.ceil((SSE_BUFFER_SIZE * 3) / 2);
+    const emitted: SSEState[] = [];
+
+    for (let index = 0; index < reconnectCycles; index += 1) {
+      MockEventSource.instances.at(-1)!.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
+      emitted.push('connected');
+      client.reconnect();
+      emitted.push('connecting');
+    }
+    await client.dispose();
+    emitted.push('disconnected');
+
+    const retained: SSEState[] = [];
+    for (;;) {
+      const result = await iterator.next();
+      if (result.done) break;
+      retained.push(result.value);
+    }
+    expect(retained.length).toBeLessThanOrEqual(SSE_BUFFER_SIZE);
+    expect(retained).toEqual(emitted.slice(-SSE_BUFFER_SIZE));
+  });
+
+  test('stateChanges saturation emits its registered diagnostic exactly once', async () => {
+    Diagnostics.reset();
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+    const client = SSE.create({ ...baseConfig, onMessage: () => undefined });
+    const iterator = client.stateChanges[Symbol.asyncIterator]();
+    const reconnectCycles = Math.ceil((SSE_BUFFER_SIZE * 3) / 2);
+
+    for (let index = 0; index < reconnectCycles; index += 1) {
+      MockEventSource.instances.at(-1)!.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
+      client.reconnect();
+    }
+
+    expect(events.filter((event) => event.code === 'web/stream/sse-state-buffer-saturated')).toHaveLength(1);
+    await iterator.return!();
+    await client.dispose();
+    Diagnostics.reset();
   });
 });
 
