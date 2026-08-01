@@ -627,6 +627,83 @@ describe('a conditional cache step cannot discharge a persistence contract', () 
   });
 });
 
+describe('a legal respelling of a compliant workflow is not a violation', () => {
+  const sha = 'a'.repeat(40);
+  const floor = CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS;
+
+  it('extra whitespace inside expressions still satisfies the run-attempt and run-id contracts', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n        if: \${{  always()  }}\n        with:\n          path: x\n          key: bank-\${{  github.run_id  }}-\${{  github.run_attempt  }}\n          restore-keys: |\n            bank-\${{  github.run_id  }}-\n      - uses: actions/cache/save@${sha}\n        if: always()\n        with:\n          path: x\n          key: bank-\${{  github.run_id  }}-\${{  github.run_attempt  }}\n`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).toEqual([]);
+  });
+
+  it('a save-step expression spelling of always with extra whitespace is admitted', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n      - uses: actions/cache/save@${sha}\n        if: \${{  always()  }}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).toEqual([]);
+  });
+
+  it('a quoted timeout-minutes and an unquoted budget both parse', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: '150'\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: ${floor}\n`;
+    expect(scanCampaignWallBudget(workflow, ['exhaustive-mutation'])).toEqual([]);
+  });
+
+  it('a job-level env declaration satisfies the campaign budget contract', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: 150\n    env:\n      LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n`;
+    expect(scanCampaignWallBudget(workflow, ['exhaustive-mutation'])).toEqual([]);
+  });
+
+  it('a single inline restore-keys scalar is one fallback entry', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: bank-\${{ github.run_id }}-\n      - uses: actions/cache/save@${sha}\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).toEqual([]);
+  });
+
+  it('a restore-keys block scalar with strip chomping remains a block', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |-\n            bank-\${{ github.run_id }}-\n      - uses: actions/cache/save@${sha}\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).toEqual([]);
+  });
+
+  it('present non-integer timeout and budget values are not mislabeled as absent', () => {
+    const badTimeout = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: later\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`;
+    expect(scanCampaignWallBudget(badTimeout, ['exhaustive-mutation'])).toContain(
+      'exhaustive-mutation: job-level timeout-minutes is present but is not an integer',
+    );
+
+    const badBudget = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: later\n`;
+    expect(
+      scanCampaignWallBudget(badBudget, ['exhaustive-mutation']).some((violation) =>
+        violation.includes('declares a non-integer LITESHIP_CAMPAIGN_WALL_BUDGET_MS'),
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('legal-spelling normalization does not open a hole', () => {
+  const floor = CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS;
+
+  it('a commented-out expression cannot satisfy the cache key contract', () => {
+    const sha = 'a'.repeat(40);
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n      - uses: actions/cache/save@${sha}\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }} # \${{  github.run_attempt  }}\n`;
+    expect(
+      scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation']).some((violation) =>
+        violation.includes('lacks github.run_attempt'),
+      ),
+    ).toBe(true);
+  });
+
+  it('an env on an unrelated step cannot satisfy the campaign budget contract', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: echo warmup\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n`;
+    expect(
+      scanCampaignWallBudget(workflow, ['exhaustive-mutation']).some((violation) => violation.includes('missing')),
+    ).toBe(true);
+  });
+
+  it('if success() cannot satisfy the always-running campaign contract', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n        if: success()\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`;
+    expect(
+      scanCampaignWallBudget(workflow, ['exhaustive-mutation']).some((violation) => violation.includes('conditional')),
+    ).toBe(true);
+  });
+});
+
 describe('campaignShard — parallel shards partition the census; the fold job re-earns it all from the bank', () => {
   const SHARD_ENV = 'LITESHIP_CAMPAIGN_SHARD';
   const savedShard = process.env[SHARD_ENV];

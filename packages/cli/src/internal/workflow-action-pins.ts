@@ -119,18 +119,11 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
       violations.push(`${job}: job not found`);
       continue;
     }
-    if (!/uses: actions\/cache\/restore@[0-9a-f]{40}/u.test(section)) {
-      violations.push(`${job}: no actions/cache/restore step — the verdict bank is never restored`);
-    }
-    if (!/uses: actions\/cache\/save@[0-9a-f]{40}[^\n]*\n\s+if: always\(\)/u.test(section)) {
-      violations.push(`${job}: no always() actions/cache/save step — a red campaign never banks its verdicts`);
-    }
-    if (/uses: actions\/cache@[0-9a-f]/u.test(section)) {
-      violations.push(`${job}: combined actions/cache present — its post-if: success() save skips red runs`);
-    }
     const lines = activeLinesOf(section);
     const saves: Array<{ readonly key: string; readonly path: string | null }> = [];
     const restores: Array<{ readonly prefixes: readonly string[]; readonly path: string | null }> = [];
+    let sawSave = false;
+    let sawRestore = false;
     for (const step of stepIndicesOf(lines)) {
       // The step's uses FIELD decides its role — live steps are written as
       // `- name:` bullets with uses: on a child line, and a bullet-spelling
@@ -141,7 +134,12 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
       if (uses === null) continue;
       const isSave = /^actions\/cache\/save@[0-9a-f]{40}/u.test(uses);
       const isRestore = /^actions\/cache\/restore@[0-9a-f]{40}/u.test(uses);
+      if (/^actions\/cache@[0-9a-f]{40}/u.test(uses)) {
+        violations.push(`${job}: combined actions/cache present — its post-if: success() save skips red runs`);
+      }
       if (!isSave && !isRestore) continue;
+      sawSave ||= isSave;
+      sawRestore ||= isRestore;
       const withIndex = childIndicesOf(lines, step).find((c) => lines[c]!.body === 'with:');
       const withChildren = withIndex === undefined ? [] : childIndicesOf(lines, withIndex);
       if (isSave) {
@@ -150,7 +148,7 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
         // save (PR #196 review round 13, confirmed P2: the job-wide regex
         // was satisfied by any single always() save).
         const condition = stepFieldOf(lines, step, 'if: ');
-        if (condition === null || uncommentedScalar(condition) !== 'always()') {
+        if (condition === null || !stepConditionIsUnconditional(condition)) {
           violations.push(
             `${job}: cache save step is not gated if: always() — a red campaign never banks this step's verdicts`,
           );
@@ -165,11 +163,11 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
         const key = withChildren.map((c) => lines[c]!.body).find((body) => body.startsWith('key: '));
         if (key === undefined) {
           violations.push(`${job}: cache save step has no with.key — the attempt-qualification contract is unprovable`);
-        } else if (!uncommentedScalar(key).includes('${{ github.run_attempt }}')) {
+        } else if (!normalizeExpressions(uncommentedScalar(key)).includes('${{ github.run_attempt }}')) {
           violations.push(
             `${job}: cache save key lacks github.run_attempt — a re-run attempt cannot bank its verdicts`,
           );
-        } else if (!uncommentedScalar(key).includes('${{ github.run_id }}')) {
+        } else if (!normalizeExpressions(uncommentedScalar(key)).includes('${{ github.run_id }}')) {
           // run_attempt restarts at 1 for every workflow run — without the
           // run id, a later run collides with the first run's immutable key
           // and banks nothing (PR #196 review round 10, confirmed P2).
@@ -177,7 +175,10 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
             `${job}: cache save key lacks github.run_id — a later run collides with the first run's reserved key`,
           );
         } else {
-          saves.push({ key: uncommentedScalar(key).slice(5), path: withPathOf(lines, withChildren) });
+          saves.push({
+            key: normalizeExpressions(uncommentedScalar(key)).slice(5),
+            path: withPathOf(lines, withChildren),
+          });
         }
       } else {
         if (!stepConditionIsUnconditional(stepFieldOf(lines, step, 'if: '))) {
@@ -195,12 +196,18 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
         // and SOME run-scoped entry must prefix the restore's own primary,
         // or the same-run self-recovery it claims cannot happen.
         const rkIndex = withChildren.find((c) => lines[c]!.body.startsWith('restore-keys:'));
+        const restoreKeysValue =
+          rkIndex === undefined ? '' : uncommentedScalar(lines[rkIndex]!.body.slice('restore-keys:'.length).trim());
         const entries =
           rkIndex === undefined
             ? []
-            : blockLinesOf(lines, rkIndex).map((line) => uncommentedScalar(line.body.replace(/^- /u, '')));
+            : restoreKeysValue !== '' && !/^[|>][-+]?$/u.test(restoreKeysValue)
+              ? [normalizeExpressions(unquoteScalar(restoreKeysValue))]
+              : blockLinesOf(lines, rkIndex).map((line) =>
+                  normalizeExpressions(uncommentedScalar(line.body.replace(/^- /u, ''))),
+                );
         const primary = withChildren.map((c) => lines[c]!.body).find((body) => body.startsWith('key: '));
-        const primaryKey = primary === undefined ? null : uncommentedScalar(primary).slice(5);
+        const primaryKey = primary === undefined ? null : normalizeExpressions(uncommentedScalar(primary)).slice(5);
         if (entries.length === 0) {
           violations.push(
             `${job}: cache restore has no restore-keys fallback — an attempt-qualified primary can never exact-match a re-run, leaving banked work unrecoverable`,
@@ -233,6 +240,12 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
           });
         }
       }
+    }
+    if (!sawRestore) {
+      violations.push(`${job}: no actions/cache/restore step — the verdict bank is never restored`);
+    }
+    if (!sawSave) {
+      violations.push(`${job}: no always() actions/cache/save step — a red campaign never banks its verdicts`);
     }
     // Every saved namespace must be one some restore RECOVERS: a job that
     // saves bank-* while only restoring wrong-* passes every per-step check
@@ -292,6 +305,14 @@ function unquoteScalar(body: string): string {
     return value.slice(1, -1);
   }
   return value;
+}
+
+/** Collapse legal whitespace variations inside GitHub expression delimiters. */
+function normalizeExpressions(value: string): string {
+  return value.replace(/\$\{\{\s*(.*?)\s*\}\}/gu, (_whole, expression: string) => {
+    const normalized = expression.trim().replace(/\s+/gu, ' ');
+    return `\${{ ${normalized} }}`;
+  });
 }
 
 function activeLinesOf(text: string, lineOffset = 0): readonly ActiveLine[] {
@@ -501,14 +522,22 @@ export function scanCampaignWallBudget(text: string, jobs: readonly string[]): r
     // accepted a knob the runner never honors).
     const lines = activeLinesOf(section);
     const jobChildren = childIndicesOf(lines, 0).map((c) => lines[c]!);
-    const timeout = jobChildren
-      .map((line) => /^timeout-minutes: (\d+)$/u.exec(uncommentedScalar(line.body)))
+    const timeoutBody = jobChildren
+      .map((line) => /^timeout-minutes:\s*(.*)$/u.exec(uncommentedScalar(line.body)))
       .find((match) => match !== null);
+    const timeoutValue = timeoutBody === undefined ? null : unquoteScalar(timeoutBody[1]!);
+    const timeout = timeoutValue !== null && /^\d+$/u.test(timeoutValue) ? timeoutValue : null;
     const budgets = campaignStepBudgets(lines, job.includes('mcdc') ? '--mcdc' : '--mutate');
-    if (timeout === undefined || timeout === null || budgets.length === 0) {
-      violations.push(
-        `${job}: job-level timeout-minutes or the campaign step's LITESHIP_CAMPAIGN_WALL_BUDGET_MS missing — the budget contract is unenforceable`,
-      );
+    if (timeoutBody === undefined) {
+      violations.push(`${job}: job-level timeout-minutes is missing — the budget contract is unenforceable`);
+      continue;
+    }
+    if (timeout === null) {
+      violations.push(`${job}: job-level timeout-minutes is present but is not an integer`);
+      continue;
+    }
+    if (budgets.length === 0) {
+      violations.push(`${job}: no qualifying campaign step invokes the gates — the budget contract has no subject`);
       continue;
     }
     for (const budget of budgets) {
@@ -518,7 +547,11 @@ export function scanCampaignWallBudget(text: string, jobs: readonly string[]): r
         );
       }
       if (budget.value === null) {
-        violations.push(`${job}: campaign step at line ${budget.line} is missing LITESHIP_CAMPAIGN_WALL_BUDGET_MS`);
+        violations.push(
+          budget.declared
+            ? `${job}: campaign step at line ${budget.line} declares a non-integer LITESHIP_CAMPAIGN_WALL_BUDGET_MS`
+            : `${job}: campaign step at line ${budget.line} is missing LITESHIP_CAMPAIGN_WALL_BUDGET_MS`,
+        );
         continue;
       }
       const budgetMs = Number(budget.value);
@@ -533,9 +566,9 @@ export function scanCampaignWallBudget(text: string, jobs: readonly string[]): r
       // margin, or an ordinary ~9.5-minute target started at budget-1ms hands
       // the kill to GitHub's backstop before the always() save (PR #196
       // review round 6, confirmed P2).
-      if (budgetMs + 2 * CAMPAIGN_TARGET_EVAL_MS + CAMPAIGN_POST_STEP_MARGIN_MS > Number(timeout[1]) * 60_000) {
+      if (budgetMs + 2 * CAMPAIGN_TARGET_EVAL_MS + CAMPAIGN_POST_STEP_MARGIN_MS > Number(timeout) * 60_000) {
         violations.push(
-          `${job}: wall budget ${budgetMs}ms leaves no in-flight-target and post-step margin under timeout-minutes ${timeout[1]} — the backstop kill skips the always() save`,
+          `${job}: wall budget ${budgetMs}ms leaves no in-flight-target and post-step margin under timeout-minutes ${timeout} — the backstop kill skips the always() save`,
         );
       }
     }
@@ -674,18 +707,23 @@ function scalarLinesUnder(lines: readonly ActiveLine[], index: number, boundaryI
  */
 interface CampaignStepBudget {
   readonly value: string | null;
+  readonly declared: boolean;
   readonly line: number;
   readonly unconditional: boolean;
 }
 
 function stepConditionIsUnconditional(condition: string | null): boolean {
   if (condition === null) return true;
-  const value = uncommentedScalar(condition);
+  const value = normalizeExpressions(uncommentedScalar(condition));
   return value === 'always()' || value === '${{ always() }}';
 }
 
 function campaignStepBudgets(lines: readonly ActiveLine[], modeFlag: string): readonly CampaignStepBudget[] {
   const budgets: CampaignStepBudget[] = [];
+  // GitHub inherits job env into every step. Workflow-level env deliberately
+  // remains outside this reader's admitted grammar.
+  const jobEnvIndex = childIndicesOf(lines, 0).find((child) => lines[child]!.body === 'env:');
+  const jobBudget = campaignBudgetFieldOf(lines, jobEnvIndex);
   for (const stepIndex of stepIndicesOf(lines)) {
     // An INVOCATION, not a mention: only a command line that STARTS with the
     // literal gates invocation qualifies — `echo check gates`, a name, or an
@@ -703,21 +741,32 @@ function campaignStepBudgets(lines: readonly ActiveLine[], modeFlag: string): re
           line.split(/\s+/u).includes(modeFlag),
       );
     if (!invokes) continue;
-    let value: string | null = null;
     const envIndex = childIndicesOf(lines, stepIndex).find((c) => lines[c]!.body === 'env:');
-    if (envIndex !== undefined) {
-      for (const envChild of childIndicesOf(lines, envIndex)) {
-        const match = /^LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '(\d+)'$/u.exec(uncommentedScalar(lines[envChild]!.body));
-        if (match !== null) value = match[1]!;
-      }
-    }
+    const stepBudget = campaignBudgetFieldOf(lines, envIndex);
+    const selectedBudget = stepBudget.declared ? stepBudget : jobBudget;
     budgets.push({
-      value,
+      value: selectedBudget.value,
+      declared: selectedBudget.declared,
       line: lines[stepIndex]!.line,
       unconditional: stepConditionIsUnconditional(stepFieldOf(lines, stepIndex, 'if: ')),
     });
   }
   return budgets;
+}
+
+interface CampaignBudgetField {
+  readonly declared: boolean;
+  readonly value: string | null;
+}
+
+function campaignBudgetFieldOf(lines: readonly ActiveLine[], envIndex: number | undefined): CampaignBudgetField {
+  if (envIndex === undefined) return { declared: false, value: null };
+  const body = childIndicesOf(lines, envIndex)
+    .map((child) => lines[child]!.body)
+    .find((line) => line.startsWith('LITESHIP_CAMPAIGN_WALL_BUDGET_MS:'));
+  if (body === undefined) return { declared: false, value: null };
+  const value = unquoteScalar(body.slice('LITESHIP_CAMPAIGN_WALL_BUDGET_MS:'.length));
+  return { declared: true, value: /^\d+$/u.test(value) ? value : null };
 }
 
 /** A checkout step is safe only when it explicitly declines credential persistence. */
