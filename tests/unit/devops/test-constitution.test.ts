@@ -118,6 +118,113 @@ describe('test constitution', () => {
     });
   });
 
+  describe('generated-payload-delimiter', () => {
+    it('flags an fc.string() payload interpolated inside a block comment', () => {
+      const root = fixture(
+        [
+          'fc.assert(fc.property(fc.string(), (payload) => {',
+          '  const source = `/* ${payload} */`;',
+          '  expect(source).toContain(payload);',
+          '}));',
+        ].join('\n'),
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('generated-payload-delimiter');
+    });
+
+    it('flags a generator payload interpolated inside an HTML comment', () => {
+      const root = fixture(
+        [
+          'fc.assert(fc.property(fc.string(), (payload) => {',
+          '  const source = `<!-- ${payload} -->`;',
+          '  expect(source).toContain(payload);',
+          '}));',
+        ].join('\n'),
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('generated-payload-delimiter');
+    });
+
+    it('flags a generator payload interpolated inside a line comment', () => {
+      const root = fixture(
+        [
+          'fc.assert(fc.property(fc.string(), (payload) => {',
+          '  const source = `// ${payload}\\nconst value = true;`;',
+          '  expect(source).toContain(payload);',
+          '}));',
+        ].join('\n'),
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('generated-payload-delimiter');
+    });
+
+    it('flags a generator payload interpolated inside a raw nested template', () => {
+      const root = fixture(
+        [
+          'fc.assert(fc.property(fc.string(), (payload) => {',
+          '  const source = `const nested = \\`${payload}\\`;`;',
+          '  expect(source).toContain(payload);',
+          '}));',
+        ].join('\n'),
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('generated-payload-delimiter');
+    });
+
+    it('does not flag a literal interpolated into a comment', () => {
+      const root = fixture(
+        "const literal = 'fixed'; const source = `/* ${literal} */`; expect(source).toContain(literal);",
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('generated-payload-delimiter');
+    });
+
+    it('does not let a same-named literal in another scope sanitize a generated payload', () => {
+      const root = fixture(
+        [
+          "const payload = 'fixed';",
+          'fc.assert(fc.property(fc.string(), (payload) => {',
+          '  const source = `/* ${payload} */`;',
+          '  expect(source).toContain(payload);',
+          '}));',
+        ].join('\n'),
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('generated-payload-delimiter');
+    });
+
+    it('does not flag a generator payload interpolated into a plain string', () => {
+      const root = fixture(
+        [
+          'fc.assert(fc.property(fc.string(), (payload) => {',
+          '  const source = `prefix ${payload} suffix`;',
+          '  expect(source).toContain(payload);',
+          '}));',
+        ].join('\n'),
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('generated-payload-delimiter');
+    });
+
+    it('admits a payload whose arbitrary removes the active closing delimiter', () => {
+      const root = fixture(
+        [
+          "const safePayload = fc.string().map((payload) => payload.replaceAll('*/', '* /'));",
+          'fc.assert(fc.property(safePayload, (payload) => {',
+          '  const source = `/* ${payload} */`;',
+          '  expect(source).toContain(payload);',
+          '}));',
+        ].join('\n'),
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('generated-payload-delimiter');
+    });
+
+    it('admits a finite generator domain when no value can close the delimiter', () => {
+      const root = fixture(
+        [
+          "fc.assert(fc.property(fc.constantFrom('alpha', 'beta'), (payload) => {",
+          '  const source = `// ${payload}\\nconst value = true;`;',
+          '  expect(source).toContain(payload);',
+          '}));',
+        ].join('\n'),
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('generated-payload-delimiter');
+    });
+  });
+
   it('follows raw-text aliases and reader helpers into brittle string operations', () => {
     const root = fixture(`
       const read = (path: string) => readFileSync(path, 'utf8');
