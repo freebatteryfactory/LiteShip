@@ -23,18 +23,84 @@ export const defaultOverflowPolicy: OverflowPolicy = 'coalesce-by-id';
 
 /**
  * Read one attribute's value from the FIRST start tag of a serialized HTML patch.
- * Tokenizes actual `name="value"` (or single-quoted) attribute pairs — keyed on the
- * canonical {@link SEMANTIC_ID_ATTR} — so a literal that merely LOOKS like the
- * attribute inside text content or another attribute's value can NOT produce a
- * false coalesce key. Both quote styles are valid HTML and are handled.
+ * Tokenizes actual quoted or unquoted attribute pairs — keyed on the canonical
+ * {@link SEMANTIC_ID_ATTR} — so a literal that merely LOOKS like the attribute
+ * inside text content or another attribute's value can NOT produce a false
+ * coalesce key. A `>` closes the tag only outside quotes; malformed input fails
+ * closed to `null` rather than inventing an address.
  */
 const firstStartTagAttr = (html: string, attr: string): string | null => {
-  const tag = /<[a-zA-Z][^>]*>/.exec(html)?.[0];
-  if (tag === undefined) return null;
-  const attrPattern = /([a-zA-Z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
-  let m: RegExpExecArray | null;
-  while ((m = attrPattern.exec(tag)) !== null) {
-    if (m[1] === attr) return m[2] ?? m[3] ?? null;
+  let start = -1;
+  for (let index = 0; index + 1 < html.length; index += 1) {
+    if (html.charCodeAt(index) === 60 && /[A-Za-z]/u.test(html[index + 1]!)) {
+      start = index;
+      break;
+    }
+  }
+  if (start === -1) return null;
+
+  let quote: 'single' | 'double' | null = null;
+  let end = -1;
+  for (let index = start + 1; index < html.length; index += 1) {
+    const code = html.charCodeAt(index);
+    if (quote === null) {
+      if (code === 34) quote = 'double';
+      else if (code === 39) quote = 'single';
+      else if (code === 62) {
+        end = index;
+        break;
+      }
+    } else if ((quote === 'double' && code === 34) || (quote === 'single' && code === 39)) {
+      quote = null;
+    }
+  }
+  if (end === -1 || quote !== null) return null;
+
+  const isSpace = (code: number): boolean => code === 9 || code === 10 || code === 12 || code === 13 || code === 32;
+  const isNameStart = (char: string): boolean => /[A-Za-z_:]/u.test(char);
+  const isNamePart = (char: string): boolean => /[\w:.-]/u.test(char);
+
+  let cursor = start + 2;
+  while (cursor < end && /[A-Za-z0-9:-]/u.test(html[cursor]!)) cursor += 1;
+
+  while (cursor < end) {
+    while (cursor < end && isSpace(html.charCodeAt(cursor))) cursor += 1;
+    if (cursor >= end || (html[cursor] === '/' && cursor + 1 === end)) return null;
+    if (!isNameStart(html[cursor]!)) return null;
+
+    const nameStart = cursor;
+    cursor += 1;
+    while (cursor < end && isNamePart(html[cursor]!)) cursor += 1;
+    const name = html.slice(nameStart, cursor);
+    while (cursor < end && isSpace(html.charCodeAt(cursor))) cursor += 1;
+    if (html[cursor] !== '=') {
+      if (name === attr) return null;
+      continue;
+    }
+
+    cursor += 1;
+    while (cursor < end && isSpace(html.charCodeAt(cursor))) cursor += 1;
+    if (cursor >= end) return null;
+
+    const delimiter = html[cursor];
+    let value: string;
+    if (delimiter === '"' || delimiter === "'") {
+      const valueStart = cursor + 1;
+      const valueEnd = html.indexOf(delimiter, valueStart);
+      if (valueEnd === -1 || valueEnd > end) return null;
+      value = html.slice(valueStart, valueEnd);
+      cursor = valueEnd + 1;
+    } else {
+      const valueStart = cursor;
+      while (cursor < end && !isSpace(html.charCodeAt(cursor))) {
+        if (/['"<=`]/u.test(html[cursor]!)) return null;
+        cursor += 1;
+      }
+      if (cursor === valueStart) return null;
+      value = html.slice(valueStart, cursor);
+    }
+
+    if (name === attr) return value;
   }
   return null;
 };

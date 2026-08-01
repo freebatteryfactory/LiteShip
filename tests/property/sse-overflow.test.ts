@@ -52,6 +52,20 @@ const stepArb: fc.Arbitrary<Step> = fc.oneof(
 const toMessage = (step: Step): SSEMessage =>
   step.kind === 'token' ? tokenMessage(step.n) : patchMessage(step.id, step.version);
 
+const safeAttributeAtomArb = fc
+  .array(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'), {
+    minLength: 1,
+    maxLength: 20,
+  })
+  .map((characters) => characters.join(''));
+
+const safeQuotedTextArb = fc
+  .array(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 _-'), {
+    minLength: 0,
+    maxLength: 20,
+  })
+  .map((characters) => characters.join(''));
+
 // ---------------------------------------------------------------------------
 // Pure invariants over applyOverflow
 // ---------------------------------------------------------------------------
@@ -94,6 +108,61 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
     expect(extractCoalesceKey(decoy)).toBeNull();
     const real: SSEMessage = { type: 'patch', data: `<div data-liteship-id="hero">x</div>` };
     expect(extractCoalesceKey(real)).not.toBeNull();
+  });
+
+  describe('the coalesce key is quote-aware', () => {
+    test('a quoted > inside an attribute value keeps the key', () => {
+      fc.assert(
+        fc.property(
+          safeAttributeAtomArb,
+          safeQuotedTextArb,
+          safeQuotedTextArb,
+          fc.constantFrom('single' as const, 'double' as const),
+          (id, prefix, suffix, quoteStyle) => {
+            const quote = quoteStyle === 'single' ? "'" : '"';
+            const message: SSEMessage = {
+              type: 'patch',
+              data: `<div title=${quote}${prefix}>${suffix}${quote} data-liteship-id="${id}">content</div>`,
+            };
+            expect(extractCoalesceKey(message)).toBe(`patch:${id}`);
+          },
+        ),
+        { seed: 0x55e20041, numRuns: 160 },
+      );
+    });
+
+    test('an unquoted attribute value is still keyed', () => {
+      fc.assert(
+        fc.property(safeAttributeAtomArb, (id) => {
+          const message: SSEMessage = {
+            type: 'patch',
+            data: `<div data-liteship-id=${id}>content</div>`,
+          };
+          expect(extractCoalesceKey(message)).toBe(`patch:${id}`);
+        }),
+        { seed: 0x55e20042, numRuns: 160 },
+      );
+    });
+
+    test('a malformed start tag yields no key, never a wrong key', () => {
+      fc.assert(
+        fc.property(
+          safeAttributeAtomArb,
+          safeQuotedTextArb,
+          fc.constantFrom('single' as const, 'double' as const),
+          (id, prefix, quoteStyle) => {
+            const quote = quoteStyle === 'single' ? "'" : '"';
+            const otherQuote = quoteStyle === 'single' ? '"' : "'";
+            const message: SSEMessage = {
+              type: 'patch',
+              data: `<div title=${quote}${prefix} data-liteship-id=${otherQuote}${id}${otherQuote}>content</div>`,
+            };
+            expect(extractCoalesceKey(message)).toBeNull();
+          },
+        ),
+        { seed: 0x55e20043, numRuns: 160 },
+      );
+    });
   });
 
   test('a saturated all-ordered buffer rejects an incoming keyed patch (never sheds an ordered message)', () => {
