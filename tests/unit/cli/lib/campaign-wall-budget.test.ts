@@ -411,6 +411,14 @@ describe('unreadable YAML is a violation, never a skipped line', () => {
   it('the public reader refuses duplicate top-level job ids instead of overwriting one', () => {
     expect(() => workflowJobSections('jobs:\n  x:\n    runs-on: a\n  x:\n    runs-on: b\n')).toThrow(/duplicate/u);
   });
+
+  it('a later top-level mapping cannot contribute an impersonating job', () => {
+    const sections = workflowJobSections(
+      'jobs:\n  harmless:\n    runs-on: ubuntu-latest\nconcurrency:\n  exhaustive-mutation:\n    steps:\n      - run: echo decoy\n',
+    );
+    expect([...sections.keys()]).toEqual(['harmless']);
+    expect(sections.get('harmless')).not.toContain('concurrency:');
+  });
 });
 
 describe('campaign wall budgets absorb a cold probe and leave post-step margin (PR #195 review, confirmed)', () => {

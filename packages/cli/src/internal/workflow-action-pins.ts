@@ -321,8 +321,16 @@ export function workflowJobSections(text: string): ReadonlyMap<string, string> {
   if (jobsIndex === -1) {
     throw ValidationError('workflow.jobs', 'workflow must declare a top-level jobs: mapping');
   }
-  const headers: Array<{ readonly name: string; readonly line: number }> = [];
+  let jobsEnd = lines.length;
   for (let index = jobsIndex + 1; index < lines.length; index++) {
+    const body = lines[index]!.trim();
+    if (body !== '' && !body.startsWith('#') && /^\S/u.test(lines[index]!)) {
+      jobsEnd = index;
+      break;
+    }
+  }
+  const headers: Array<{ readonly name: string; readonly line: number }> = [];
+  for (let index = jobsIndex + 1; index < jobsEnd; index++) {
     // A trailing comment is inert YAML and therefore part of the admitted
     // block-mapping spelling, not a reason to lose the next-job boundary.
     const match = /^ {2}([A-Za-z0-9_-]+):(?:\s+#.*)?\s*$/u.exec(lines[index]!);
@@ -331,7 +339,7 @@ export function workflowJobSections(text: string): ReadonlyMap<string, string> {
   const sections = new Map<string, string>();
   for (let index = 0; index < headers.length; index++) {
     const header = headers[index]!;
-    const end = headers[index + 1]?.line ?? lines.length;
+    const end = headers[index + 1]?.line ?? jobsEnd;
     if (sections.has(header.name)) {
       throw ValidationError('workflow.jobs', `workflow declares duplicate top-level job id "${header.name}"`);
     }
