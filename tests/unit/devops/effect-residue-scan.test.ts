@@ -110,6 +110,7 @@ describe('effect residue — full-scope scan', () => {
       // collapsed second pass can see it.
       writeFileSync(join(fragments, 'main.ts'), "const mod = await import(\n  // lazy\n  'effect',\n);\n");
       writeFileSync(join(fragments, 'package.json'), JSON.stringify({ dependencies: { effect: '^3.0.0' } }));
+      writeFileSync(join(fixture, 'pnpm-workspace.yaml'), "packages:\n  - 'packages/*'\n");
       const planted = scanEffectResidue(fixture, new Set());
       expect(planted.findings).toEqual([
         {
@@ -125,6 +126,23 @@ describe('effect residue — full-scope scan', () => {
           detail: 'dependencies.effect',
         },
       ]);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it('an absent pnpm-workspace.yaml is a finding, not an omitted authority', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'liteship-effect-residue-no-workspace-'));
+    try {
+      mkdirSync(join(fixture, 'packages', 'subject'), { recursive: true });
+      writeFileSync(join(fixture, 'packages', 'subject', 'package.json'), JSON.stringify({ name: 'subject' }));
+
+      expect(scanEffectResidue(fixture, new Set()).findings).toContainEqual({
+        file: 'pnpm-workspace.yaml',
+        line: 0,
+        kind: 'manifest-dependency',
+        detail: 'required workspace dependency authority is absent (fail-closed)',
+      });
     } finally {
       rmSync(fixture, { recursive: true, force: true });
     }

@@ -167,4 +167,58 @@ describe('host preparation budgets (scar for CI run 30382383876)', () => {
     const unbounded = workflow.replace('    timeout-minutes: 30\n', '');
     expect(() => hostPreparationConsumers(unbounded)).toThrow(/prep-user.*timeout-minutes/u);
   });
+
+  describe('the host-preparation ceiling is read at the job level', () => {
+    it('a step-level timeout-minutes does not satisfy the job-level ceiling', () => {
+      const workflow = [
+        'jobs:',
+        '  prep-user:',
+        '    steps:',
+        '      - run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg',
+        '        timeout-minutes: 30',
+      ].join('\n');
+
+      expect(() => hostPreparationConsumers(workflow)).toThrow(/prep-user.*timeout-minutes/u);
+    });
+
+    it('comments and echo commands do not enroll a job', () => {
+      const workflow = [
+        'jobs:',
+        '  real-user:',
+        '    timeout-minutes: 30',
+        '    steps:',
+        '      - run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg',
+        '  decoy:',
+        '    timeout-minutes: 10',
+        '    steps:',
+        '      # prepare-ci-test-host is documented here',
+        '      - run: echo prepare-ci-test-host',
+      ].join('\n');
+
+      expect(hostPreparationConsumers(workflow)).toEqual([{ job: 'real-user', timeoutMinutes: 30 }]);
+    });
+
+    it('zero consumers is a refusal, not an empty authority', () => {
+      const workflow = ['jobs:', '  bystander:', '    timeout-minutes: 10', '    steps:', '      - run: echo hi'].join(
+        '\n',
+      );
+
+      expect(() => hostPreparationConsumers(workflow)).toThrow(/no workflow job invokes.*prepare-ci-test-host/u);
+    });
+
+    it('unreadable or duplicate workflow YAML is refused before it can classify consumers', () => {
+      const flow = ['jobs:', '  prep-user:', '    steps: [{ run: prepare-ci-test-host }]'].join('\n');
+      const duplicate = [
+        'jobs:',
+        '  prep-user:',
+        '    timeout-minutes: 30',
+        '    timeout-minutes: 40',
+        '    steps:',
+        '      - run: pnpm exec tsx scripts/prepare-ci-test-host.ts',
+      ].join('\n');
+
+      expect(() => hostPreparationConsumers(flow)).toThrow(/unreadable workflow YAML/u);
+      expect(() => hostPreparationConsumers(duplicate)).toThrow(/duplicate key timeout-minutes/u);
+    });
+  });
 });

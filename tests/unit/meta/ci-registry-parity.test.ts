@@ -84,7 +84,6 @@ describe('workflow reader implementations remain a bounded migration set', () =>
 
   it('derives exactly the remaining independent readers until they consume workflowJobSections', () => {
     expect(independentWorkflowReaderSites(productionSources)).toEqual([
-      'scripts/lib/ci-test-host-contract.ts',
       'scripts/lib/prebuild-closure-contract.ts',
       'scripts/lib/release-promotion-contract.ts',
       'scripts/lib/workflow-output-contract.ts',

@@ -1,6 +1,6 @@
 /** Fast-lane scanner for immutable third-party GitHub Action references. */
 
-import { ValidationError } from '@liteship/error';
+import { ValidationError } from '../../../error/src/index.js';
 
 export interface WorkflowActionPinViolation {
   readonly line: number;
@@ -275,7 +275,7 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
 }
 
 /** A comment-free, blank-free view of a YAML fragment: indentation plus trimmed body per line. */
-interface ActiveLine {
+export interface ActiveLine {
   readonly indent: number;
   readonly body: string;
   readonly line: number;
@@ -320,7 +320,7 @@ function normalizeExpressions(value: string): string {
   });
 }
 
-function activeLinesOf(text: string, lineOffset = 0): readonly ActiveLine[] {
+export function activeLinesOf(text: string, lineOffset = 0): readonly ActiveLine[] {
   const lines: ActiveLine[] = [];
   for (const [index, source] of text.split('\n').entries()) {
     const raw = source.replace(/\r$/u, '');
@@ -344,7 +344,7 @@ function blockLinesOf(lines: readonly ActiveLine[], index: number): readonly Act
  * level inside its block. Deeper lines are nested mappings or block-scalar
  * content and never satisfy a direct-child contract.
  */
-function childIndicesOf(lines: readonly ActiveLine[], index: number): readonly number[] {
+export function childIndicesOf(lines: readonly ActiveLine[], index: number): readonly number[] {
   const parent = lines[index]!.indent;
   let end = index + 1;
   while (end < lines.length && lines[end]!.indent > parent) end++;
@@ -582,7 +582,7 @@ export function scanCampaignWallBudget(text: string, jobs: readonly string[]): r
 }
 
 /** Indices of the step bullets under the job's direct-child `steps:` mapping (lines[0] is the job key). */
-function stepIndicesOf(lines: readonly ActiveLine[]): readonly number[] {
+export function stepIndicesOf(lines: readonly ActiveLine[]): readonly number[] {
   const stepsIndex = childIndicesOf(lines, 0).find((c) => mappingKeyIs(lines[c]!.body, 'steps'));
   return stepsIndex === undefined ? [] : childIndicesOf(lines, stepsIndex);
 }
@@ -671,7 +671,7 @@ function stepFieldOf(lines: readonly ActiveLine[], stepIndex: number, prefix: st
  * invokes the gates — a step merely named after the campaign, or echoing its
  * name, never qualifies (PR #196 review round 5, confirmed P2).
  */
-function stepRunCommandOf(lines: readonly ActiveLine[], stepIndex: number): string {
+export function stepRunCommandOf(lines: readonly ActiveLine[], stepIndex: number): string {
   const bullet = lines[stepIndex]!.body.replace(/^- /u, '');
   if (bullet.startsWith('run:')) {
     const value = bullet.slice(4).trim();

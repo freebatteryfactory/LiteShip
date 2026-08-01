@@ -305,6 +305,13 @@ export function scanEffectResidue(root: string, allowlist: ReadonlySet<string>):
     for (const detail of classifyEffectResidueWorkspaceYaml(readFileSync(workspaceYaml, 'utf8'))) {
       findings.push({ file: 'pnpm-workspace.yaml', line: 0, kind: 'manifest-dependency', detail });
     }
+  } else {
+    findings.push({
+      file: 'pnpm-workspace.yaml',
+      line: 0,
+      kind: 'manifest-dependency',
+      detail: 'required workspace dependency authority is absent (fail-closed)',
+    });
   }
 
   return { findings, swept };
