@@ -77,23 +77,23 @@ export const TRUSTED_ACTION_SOURCES: ReadonlySet<string> = new Set([
 
 /** Local reusable workflows are source-bound by the checkout; external actions require a SHA. */
 export function scanWorkflowActionPins(text: string): readonly WorkflowActionPinViolation[] {
-  const violations: WorkflowActionPinViolation[] = yamlShapeViolations(text).map((violation) => ({
+  const unreadable = yamlShapeViolations(text).map((violation) => ({
     line: violation.line,
     content: violation.content,
-    reason: 'unreadable-yaml',
+    reason: 'unreadable-yaml' as const,
   }));
-  for (const [index, raw] of text.split(/\r?\n/).entries()) {
-    const match = /^\s*(?:-\s*)?uses:\s*(?:"([^"]+)"|'([^']+)'|([^\s#]+))(?:\s+#.*)?$/u.exec(raw);
-    if (!match) continue;
-    const reference = match[1] ?? match[2] ?? match[3]!;
+  if (unreadable.length > 0) return unreadable;
+  const violations: WorkflowActionPinViolation[] = [];
+  for (const field of workflowUseEntries(text)) {
+    const reference = unquoteScalar(field.value);
     if (reference.startsWith('./')) continue;
     const at = reference.lastIndexOf('@');
     const source = at >= 0 ? reference.slice(0, at) : reference;
     const revision = at >= 0 ? reference.slice(at + 1) : '';
     if (!IMMUTABLE_REF.test(revision)) {
-      violations.push({ line: index + 1, content: raw.trim(), reason: 'missing-immutable-revision' });
+      violations.push({ line: field.line, content: field.content, reason: 'missing-immutable-revision' });
     } else if (!TRUSTED_ACTION_SOURCES.has(source)) {
-      violations.push({ line: index + 1, content: raw.trim(), reason: 'untrusted-source' });
+      violations.push({ line: field.line, content: field.content, reason: 'untrusted-source' });
     }
   }
   return violations;
@@ -261,6 +261,8 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
 interface ActiveLine {
   readonly indent: number;
   readonly body: string;
+  readonly line: number;
+  readonly content: string;
 }
 
 /**
@@ -276,12 +278,25 @@ function uncommentedScalar(body: string): string {
   return (cut === -1 ? body : body.slice(0, cut)).trim();
 }
 
-function activeLinesOf(text: string): readonly ActiveLine[] {
+/** A scalar with surrounding quotes removed after its inline comment is stripped. */
+function unquoteScalar(body: string): string {
+  const value = uncommentedScalar(body);
+  if (
+    value.length >= 2 &&
+    ((value.startsWith("'") && value.endsWith("'")) || (value.startsWith('"') && value.endsWith('"')))
+  ) {
+    return value.slice(1, -1);
+  }
+  return value;
+}
+
+function activeLinesOf(text: string, lineOffset = 0): readonly ActiveLine[] {
   const lines: ActiveLine[] = [];
-  for (const raw of text.split('\n')) {
+  for (const [index, source] of text.split('\n').entries()) {
+    const raw = source.replace(/\r$/u, '');
     const body = raw.trim();
     if (body.length === 0 || body.startsWith('#')) continue;
-    lines.push({ indent: /^ */u.exec(raw)![0].length, body });
+    lines.push({ indent: /^ */u.exec(raw)![0].length, body, line: lineOffset + index + 1, content: body });
   }
   return lines;
 }
@@ -316,6 +331,15 @@ function childIndicesOf(lines: readonly ActiveLine[], index: number): readonly n
  * as an empty workflow.
  */
 export function workflowJobSections(text: string): ReadonlyMap<string, string> {
+  return new Map([...workflowJobSectionRecords(text)].map(([name, record]) => [name, record.text] as const));
+}
+
+interface WorkflowJobSectionRecord {
+  readonly text: string;
+  readonly lineOffset: number;
+}
+
+function workflowJobSectionRecords(text: string): ReadonlyMap<string, WorkflowJobSectionRecord> {
   const lines = text.split('\n').map((line) => line.replace(/\r$/u, ''));
   const jobsIndex = lines.indexOf('jobs:');
   if (jobsIndex === -1) {
@@ -336,14 +360,14 @@ export function workflowJobSections(text: string): ReadonlyMap<string, string> {
     const match = /^ {2}([A-Za-z0-9_-]+):(?:\s+#.*)?\s*$/u.exec(lines[index]!);
     if (match !== null) headers.push({ name: match[1]!, line: index });
   }
-  const sections = new Map<string, string>();
+  const sections = new Map<string, WorkflowJobSectionRecord>();
   for (let index = 0; index < headers.length; index++) {
     const header = headers[index]!;
     const end = headers[index + 1]?.line ?? jobsEnd;
     if (sections.has(header.name)) {
       throw ValidationError('workflow.jobs', `workflow declares duplicate top-level job id "${header.name}"`);
     }
-    sections.set(header.name, lines.slice(header.line, end).join('\n'));
+    sections.set(header.name, { text: lines.slice(header.line, end).join('\n'), lineOffset: header.line });
   }
   return sections;
 }
@@ -510,6 +534,74 @@ function stepIndicesOf(lines: readonly ActiveLine[]): readonly number[] {
   return stepsIndex === undefined ? [] : childIndicesOf(lines, stepsIndex);
 }
 
+interface WorkflowUseEntry {
+  readonly line: number;
+  readonly content: string;
+  readonly value: string;
+  readonly lines?: readonly ActiveLine[];
+  readonly stepIndex?: number;
+}
+
+function fieldEntryOf(
+  lines: readonly ActiveLine[],
+  ownerIndex: number,
+  prefix: string,
+): { readonly line: ActiveLine; readonly value: string } | null {
+  const owner = lines[ownerIndex]!;
+  const candidates = [
+    { line: owner, body: owner.body.replace(/^- /u, '') },
+    ...childIndicesOf(lines, ownerIndex).map((index) => ({ line: lines[index]!, body: lines[index]!.body })),
+  ];
+  const field = candidates.find((candidate) => candidate.body.startsWith(prefix));
+  return field === undefined ? null : { line: field.line, value: field.body.slice(prefix.length) };
+}
+
+function workflowUseEntries(text: string): readonly WorkflowUseEntry[] {
+  const sourceLines = text.split('\n').map((line) => line.replace(/\r$/u, ''));
+  const entries: WorkflowUseEntry[] = [];
+  if (sourceLines.includes('jobs:')) {
+    for (const section of workflowJobSectionRecords(text).values()) {
+      const lines = activeLinesOf(section.text, section.lineOffset);
+      const jobUse = fieldEntryOf(lines, 0, 'uses: ');
+      if (jobUse !== null) {
+        entries.push({ line: jobUse.line.line, content: jobUse.line.content, value: jobUse.value });
+      }
+      for (const stepIndex of stepIndicesOf(lines)) {
+        const use = fieldEntryOf(lines, stepIndex, 'uses: ');
+        if (use !== null) {
+          entries.push({
+            line: use.line.line,
+            content: use.line.content,
+            value: use.value,
+            lines,
+            stepIndex,
+          });
+        }
+      }
+    }
+    return entries;
+  }
+  const hasStepsRoot = sourceLines.some((line) => line.trim() === 'steps:' && /^steps:/u.test(line));
+  const prefix = hasStepsRoot ? 'synthetic:\n' : 'synthetic:\n  steps:\n';
+  const indentation = hasStepsRoot ? '  ' : '    ';
+  const lineOffset = hasStepsRoot ? -1 : -2;
+  const section = `${prefix}${sourceLines.map((line) => `${indentation}${line}`).join('\n')}`;
+  const lines = activeLinesOf(section, lineOffset);
+  for (const stepIndex of stepIndicesOf(lines)) {
+    const use = fieldEntryOf(lines, stepIndex, 'uses: ');
+    if (use !== null) {
+      entries.push({
+        line: use.line.line,
+        content: use.line.content,
+        value: use.value,
+        lines,
+        stepIndex,
+      });
+    }
+  }
+  return entries;
+}
+
 /**
  * A step's direct-child field value for a `field: ` prefix — read from the
  * bullet line itself (`- uses: x`) or a direct-child line (`uses: x` under a
@@ -517,12 +609,7 @@ function stepIndicesOf(lines: readonly ActiveLine[]): readonly number[] {
  * or sub-mapping cannot impersonate the field.
  */
 function stepFieldOf(lines: readonly ActiveLine[], stepIndex: number, prefix: string): string | null {
-  const candidates = [
-    lines[stepIndex]!.body.replace(/^- /u, ''),
-    ...childIndicesOf(lines, stepIndex).map((c) => lines[c]!.body),
-  ];
-  const field = candidates.find((body) => body.startsWith(prefix));
-  return field === undefined ? null : field.slice(prefix.length);
+  return fieldEntryOf(lines, stepIndex, prefix)?.value ?? null;
 }
 
 /**
@@ -600,27 +687,27 @@ function campaignStepBudgetOf(lines: readonly ActiveLine[], modeFlag: string): s
 
 /** A checkout step is safe only when it explicitly declines credential persistence. */
 export function scanWorkflowCheckoutCredentials(text: string): readonly WorkflowActionPinViolation[] {
-  const lines = text.split(/\r?\n/u);
-  const violations: WorkflowActionPinViolation[] = yamlShapeViolations(text).map((violation) => ({
+  const unreadable = yamlShapeViolations(text).map((violation) => ({
     line: violation.line,
     content: violation.content,
-    reason: 'unreadable-yaml',
+    reason: 'unreadable-yaml' as const,
   }));
-  for (let index = 0; index < lines.length; index++) {
-    const raw = lines[index]!;
-    const match = /^(\s*)(?:-\s*)?uses:\s*(?:["'])?actions\/checkout@[0-9a-f]{40}(?:["'])?(?:\s+#.*)?$/iu.exec(raw);
-    if (match === null) continue;
-    const indent = match[1]!.length;
+  if (unreadable.length > 0) return unreadable;
+  const violations: WorkflowActionPinViolation[] = [];
+  for (const use of workflowUseEntries(text)) {
+    if (!/^actions\/checkout@[0-9a-f]{40}$/iu.test(unquoteScalar(use.value))) continue;
     let safe = false;
-    for (let cursor = index + 1; cursor < lines.length; cursor++) {
-      const candidate = lines[cursor]!;
-      if (candidate.trim().length === 0) continue;
-      const candidateIndent = /^\s*/u.exec(candidate)![0].length;
-      if (candidateIndent <= indent) break;
-      if (/^\s*persist-credentials:\s*false\s*(?:#.*)?$/u.test(candidate)) safe = true;
+    if (use.lines !== undefined && use.stepIndex !== undefined) {
+      const withIndex = childIndicesOf(use.lines, use.stepIndex).find((index) => use.lines![index]!.body === 'with:');
+      if (withIndex !== undefined) {
+        const persisted = childIndicesOf(use.lines, withIndex)
+          .map((index) => use.lines![index]!.body)
+          .find((body) => body.startsWith('persist-credentials:'));
+        safe = persisted !== undefined && uncommentedScalar(persisted.slice('persist-credentials:'.length)) === 'false';
+      }
     }
     if (!safe) {
-      violations.push({ line: index + 1, content: raw.trim(), reason: 'credentials-persisted' });
+      violations.push({ line: use.line, content: use.content, reason: 'credentials-persisted' });
     }
   }
   return violations;

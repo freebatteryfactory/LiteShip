@@ -90,3 +90,75 @@ jobs:
     ).toHaveLength(1);
   });
 });
+
+describe('uses: is read as a step field in every spelling', () => {
+  const workflowOf = (steps: string): string => `jobs:\n  scan:\n    runs-on: ubuntu-latest\n    steps:\n${steps}`;
+
+  it('a name-bulleted step with a child uses field is scanned', () => {
+    const violations = scanWorkflowActionPins(workflowOf('      - name: surprise\n        uses: owner/action@main\n'));
+    expect(violations.map((entry) => entry.reason)).toContain('missing-immutable-revision');
+  });
+
+  it('a quoted uses value is scanned', () => {
+    const violations = scanWorkflowActionPins(workflowOf('      - uses: "owner/action@main"\n'));
+    expect(violations.map((entry) => entry.reason)).toContain('missing-immutable-revision');
+  });
+
+  it('a flow-collection step is refused as unreadable, never skipped', () => {
+    expect(scanWorkflowActionPins(workflowOf('      - { uses: owner/evil@main }\n'))).toEqual([
+      expect.objectContaining({ reason: 'unreadable-yaml' }),
+    ]);
+  });
+
+  it('a ref containing # without preceding whitespace is scanned, not skipped', () => {
+    const violations = scanWorkflowActionPins(workflowOf('      - uses: owner/action@main#comment-less-ref\n'));
+    expect(violations.map((entry) => entry.reason)).toContain('missing-immutable-revision');
+  });
+
+  it('line provenance comes from the jobs mapping, not an identical block-scalar decoy', () => {
+    const workflow =
+      'decoy: |\n  scan:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: owner/action@main\njobs:\n  scan:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: owner/action@main\n';
+    expect(scanWorkflowActionPins(workflow)).toEqual([
+      expect.objectContaining({ line: 10, reason: 'missing-immutable-revision' }),
+    ]);
+  });
+});
+
+describe('checkout credentials are read at the with level', () => {
+  const sha = 'a'.repeat(40);
+  const workflowOf = (steps: string): string => `jobs:\n  scan:\n    runs-on: ubuntu-latest\n    steps:\n${steps}`;
+
+  it('a name-bulleted checkout is scanned', () => {
+    expect(
+      scanWorkflowCheckoutCredentials(
+        workflowOf(
+          `      - name: checkout\n        uses: actions/checkout@${sha}\n        with:\n          persist-credentials: false\n`,
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  it('persist-credentials false nested below with does not satisfy the contract', () => {
+    expect(
+      scanWorkflowCheckoutCredentials(
+        workflowOf(
+          `      - uses: actions/checkout@${sha}\n        with:\n          options:\n            persist-credentials: false\n`,
+        ),
+      ),
+    ).toEqual([expect.objectContaining({ reason: 'credentials-persisted' })]);
+  });
+
+  it('a fragment uses the same direct-child credential rule as a complete workflow', () => {
+    expect(
+      scanWorkflowCheckoutCredentials(
+        `steps:\n  - uses: actions/checkout@${sha}\n    with:\n      options:\n        persist-credentials: false\n`,
+      ),
+    ).toEqual([expect.objectContaining({ reason: 'credentials-persisted' })]);
+  });
+
+  it('a flow-collection checkout step is refused as unreadable', () => {
+    expect(scanWorkflowCheckoutCredentials(workflowOf(`      - { uses: actions/checkout@${sha} }\n`))).toEqual([
+      expect.objectContaining({ reason: 'unreadable-yaml' }),
+    ]);
+  });
+});
