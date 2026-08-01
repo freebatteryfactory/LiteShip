@@ -61,4 +61,33 @@ export async function render(html: string): Promise<void> {
     expect(writeFlows.some((f) => f.sink.callee === 'document.writeln' && f.source.callee === 'fetch')).toBe(true);
     expect(writeFlows.every((f) => f.sanitizedBy === null)).toBe(true);
   });
+
+  it('preserves receiver-qualified GraphPatch.apply and globalThis.Function sinks', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'app-root', private: true, type: 'module' }),
+      'packages/app/package.json': JSON.stringify({
+        name: '@app/site',
+        version: '0.0.0',
+        exports: { '.': { development: './src/page.ts' } },
+      }),
+      'packages/app/src/page.ts': `
+export async function applyRemotePatch(): Promise<void> {
+  const response = await fetch('/patch');
+  const body = await response.text();
+  GraphPatch.apply(body);
+  globalThis.Function(body);
+}
+`,
+    });
+
+    const profile = resolveDevopsProfile({
+      repoRoot: root,
+      internalPackagePrefix: '@app/',
+      packageTopology: { '@app/site': { allowedInternalImports: [], kind: 'app' } },
+    });
+    const facts = buildRepoIRTaint(LITESHIP_TAINT_REGISTRY, { profile, interproceduralDepth: 0 });
+
+    expect(facts.flows.some((flow) => flow.sink.callee === 'GraphPatch.apply')).toBe(true);
+    expect(facts.flows.some((flow) => flow.sink.callee === 'globalThis.Function')).toBe(true);
+  });
 });

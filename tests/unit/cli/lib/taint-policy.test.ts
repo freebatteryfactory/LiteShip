@@ -23,8 +23,12 @@
  * @module
  */
 
-import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import fg from 'fast-glob';
 import fc from 'fast-check';
+import ts from 'typescript';
+import { describe, it, expect } from 'vitest';
 import { LITESHIP_TAINT_REGISTRY } from '../../../../packages/cli/src/internal/taint-policy.js';
 
 const { sources, sinks, sanitizers, assignmentSinkNames, memberSinks, notes } = LITESHIP_TAINT_REGISTRY;
@@ -68,17 +72,13 @@ describe('LITESHIP_TAINT_REGISTRY — the named visual-compiler seams', () => {
   });
 
   it('SINKS: the GPU-shader compile + code-exec + AI-apply seams are dangerous', () => {
-    for (const sink of [
-      'shaderSource',
-      'compileShader',
-      'createShaderModule',
-      'eval',
-      'Function',
-      'applyValidatedPatch',
-      'apply',
-    ]) {
+    for (const sink of ['shaderSource', 'compileShader', 'createShaderModule', 'eval', 'applyValidatedPatch']) {
       expect(sinks!.has(sink)).toBe(true);
     }
+    expect(memberSinks!.has('globalThis.Function')).toBe(true);
+    expect(memberSinks!.has('GraphPatch.apply')).toBe(true);
+    expect(sinks!.has('Function')).toBe(false);
+    expect(sinks!.has('apply')).toBe(false);
   });
 
   it('ASSIGNMENT SINKS: innerHTML / outerHTML are the DOM-injection assignment seams', () => {
@@ -116,6 +116,50 @@ describe('LITESHIP_TAINT_REGISTRY — the deliberate exclusions (a host-policy t
   it('process.env is OUT of the call-classified scope (a documented limit, not a source)', () => {
     expect(sources!.has('process.env')).toBe(false);
     expect(sources!.has('env')).toBe(false);
+  });
+});
+
+describe('bare call sinks do not collide with ordinary workspace member methods', () => {
+  it('every bare sink name is absent from non-sink .name(...) member calls in packages/*/src', () => {
+    const repoRoot = resolve(import.meta.dirname, '../../../..');
+    const packageSources = fg.sync('packages/*/src/**/*.ts', { cwd: repoRoot, absolute: true });
+    expect(packageSources.length).toBeGreaterThan(0);
+
+    // These receiver-qualified calls are the actual dangerous seams intentionally
+    // modeled by the current bare-name oracle. Everything else is a collision: a
+    // bare-name sink over an open method namespace would condemn an ordinary user
+    // method merely because it has the same spelling.
+    const intendedMemberSinks = new Set([
+      'AICast.applyValidatedPatch',
+      'GraphPatch.apply',
+      'device.createShaderModule',
+      'gl.compileShader',
+      'gl.shaderSource',
+    ]);
+    const collisions: string[] = [];
+
+    for (const absolutePath of packageSources) {
+      const sourceText = readFileSync(absolutePath, 'utf8');
+      const sourceFile = ts.createSourceFile(absolutePath, sourceText, ts.ScriptTarget.Latest, true);
+      const visit = (node: ts.Node): void => {
+        if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
+          const receiver = node.expression.expression;
+          const memberName = node.expression.name.text;
+          if (ts.isIdentifier(receiver) && sinks!.has(memberName)) {
+            const qualified = `${receiver.text}.${memberName}`;
+            if (!intendedMemberSinks.has(qualified)) {
+              const line = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
+              const relativePath = absolutePath.slice(repoRoot.length + 1).replaceAll('\\', '/');
+              collisions.push(`${relativePath}:${line}: bare sink ${memberName} collides with ${qualified}`);
+            }
+          }
+        }
+        ts.forEachChild(node, visit);
+      };
+      visit(sourceFile);
+    }
+
+    expect(collisions).toEqual([]);
   });
 });
 

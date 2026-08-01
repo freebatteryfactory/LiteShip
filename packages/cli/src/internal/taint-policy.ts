@@ -25,9 +25,9 @@
  * SINKS — the dangerous operations:
  *   • `shaderSource` / `compileShader` — WebGL2 GLSL compilation (an injection sink).
  *   • `createShaderModule` — WebGPU WGSL compilation (an injection sink).
- *   • `eval` / `Function` — code execution.
- *   • `applyValidatedPatch` / `apply` — the AI-cast graph-apply into the LIVE
- *     runtime (the untrusted-apply seam — a GraphPatch reaching the live graph).
+ *   • `eval` — bare code execution; `globalThis.Function` is receiver-qualified.
+ *   • `applyValidatedPatch` / `GraphPatch.apply` — the AI-cast graph-apply into
+ *     the LIVE runtime (the untrusted-apply seam).
  *   • `insertAdjacentHTML` — a DOM HTML-injection call sink (callee-name matched).
  *   • `document.write` / `document.writeln` — DOM HTML-injection MEMBER sinks
  *     (receiver-qualified `identifier.write` only; bare `write` is deliberately
@@ -85,12 +85,10 @@ const LITESHIP_TAINT_SINKS: readonly string[] = [
   'createShaderModule',
   // Code execution.
   'eval',
-  'Function',
   // DOM HTML injection via method call (sibling to assignment sinks below).
   'insertAdjacentHTML',
   // The AI-cast graph-apply into the LIVE runtime (the untrusted-apply seam).
   'applyValidatedPatch',
-  'apply',
   // Process exec (the Node/CLI side — a dynamic command is a flow). DELIBERATELY
   // only the `*Sync` forms: bare `exec` / `spawn` collide by NAME with `RegExp.exec`
   // and similar member methods (the published src has dozens of `<re>.exec(...)`
@@ -104,10 +102,20 @@ const LITESHIP_TAINT_SINKS: readonly string[] = [
 ];
 
 /**
- * Qualified member-call sinks — `document.write` / `document.writeln` only;
- * bare `write` would false-positive on `stream.write` / `stdout.write`.
+ * Qualified member-call sinks.
+ *
+ * THE CLASS RULE: the ANCHOR is a dangerous method on its exact owning receiver.
+ * The ALLOWLIST is this closed set of receiver/member pairs. Bare method names
+ * over the open workspace method namespace are forbidden because ordinary user
+ * methods such as `binding.apply(...)` collide by spelling. `eval` deliberately
+ * remains bare because bare `eval(value)` is dangerous independent of a receiver.
  */
-const LITESHIP_TAINT_MEMBER_SINKS: readonly string[] = ['document.write', 'document.writeln'];
+const LITESHIP_TAINT_MEMBER_SINKS: readonly string[] = [
+  'document.write',
+  'document.writeln',
+  'globalThis.Function',
+  'GraphPatch.apply',
+];
 
 /**
  * Assignment-TARGET property names that are SINKS when assigned a tainted value —
@@ -156,9 +164,9 @@ const LITESHIP_TAINT_NOTES: Readonly<Record<string, string>> = {
   compileShader: 'WebGL2 GLSL shader compilation — a shader-injection sink',
   createShaderModule: 'WebGPU WGSL shader compilation — a shader-injection sink',
   eval: 'dynamic code execution',
-  Function: 'dynamic code execution (the Function constructor)',
+  'globalThis.Function': 'dynamic code execution (the receiver-qualified Function constructor)',
   applyValidatedPatch: 'the AI-cast graph-apply into the LIVE runtime — an untrusted-apply sink',
-  apply: 'a graph-patch apply into the live document graph',
+  'GraphPatch.apply': 'a graph-patch apply into the live document graph',
   execSync: 'a child-process exec — a command-injection sink',
   spawnSync: 'a child-process spawn — a command-injection sink',
   innerHTML: 'a DOM innerHTML assignment — an HTML-injection sink',
