@@ -64,16 +64,69 @@ function isCommentLine(line: string): boolean {
 }
 
 /**
+ * Remove inline comments without changing string contents. The effect-residue
+ * classifier's string-context blindness is owner-rebutted and intentional:
+ * residue-shaped text inside a string still reds. This helper closes only the
+ * orthogonal `import(/* decoy *\/ 'effect')` evasion.
+ */
+function stripCommentsPreservingStrings(source: string): string {
+  const output = [...source];
+  let quote: "'" | '"' | '`' | null = null;
+  let escaped = false;
+  let lineComment = false;
+  let blockComment = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index]!;
+    const next = source[index + 1];
+    if (lineComment) {
+      if (char === '\n' || char === '\r') lineComment = false;
+      else output[index] = ' ';
+      continue;
+    }
+    if (blockComment) {
+      output[index] = char === '\n' || char === '\r' ? char : ' ';
+      if (char === '*' && next === '/') {
+        output[index + 1] = ' ';
+        index += 1;
+        blockComment = false;
+      }
+      continue;
+    }
+    if (quote !== null) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === quote) quote = null;
+      continue;
+    }
+    if (char === "'" || char === '"' || char === '`') {
+      quote = char;
+    } else if (char === '/' && next === '/') {
+      output[index] = ' ';
+      output[index + 1] = ' ';
+      index += 1;
+      lineComment = true;
+    } else if (char === '/' && next === '*') {
+      output[index] = ' ';
+      output[index + 1] = ' ';
+      index += 1;
+      blockComment = true;
+    }
+  }
+  return output.join('');
+}
+
+/**
  * Classify one SOURCE line. Pure; comment lines never classify (prose about the
  * shed is history, not residue).
  */
 export function classifyEffectResidueLine(line: string): readonly EffectResidueKind[] {
   if (isCommentLine(line)) return [];
+  const active = stripCommentsPreservingStrings(line);
   const kinds: EffectResidueKind[] = [];
-  if (STATIC_IMPORT.test(line)) kinds.push('static-import');
-  if (DYNAMIC_IMPORT.test(line)) kinds.push('dynamic-import');
-  if (REQUIRE_CALL.test(line)) kinds.push('require');
-  if (CALL_SITE.test(line)) kinds.push('call-site');
+  if (STATIC_IMPORT.test(active)) kinds.push('static-import');
+  if (DYNAMIC_IMPORT.test(active)) kinds.push('dynamic-import');
+  if (REQUIRE_CALL.test(active)) kinds.push('require');
+  if (CALL_SITE.test(active)) kinds.push('call-site');
   return kinds;
 }
 
@@ -266,10 +319,14 @@ export function scanEffectResidue(root: string, allowlist: ReadonlySet<string>):
     const file = toPosix(relative(root, absolute));
     if (allowlist.has(file)) continue;
     swept.push(file);
-    const lines = readFileSync(absolute, 'utf8').split(/\r?\n/);
+    const source = readFileSync(absolute, 'utf8');
+    const lines = source.split(/\r?\n/);
+    // Comment state belongs to the whole file. Splitting first lets a block
+    // comment hide a residue payload on its closing line (`*/ 'effect')`).
+    const activeLines = stripCommentsPreservingStrings(source).split(/\r?\n/);
     let found = false;
-    for (let index = 0; index < lines.length; index += 1) {
-      for (const kind of classifyEffectResidueLine(lines[index]!)) {
+    for (let index = 0; index < activeLines.length; index += 1) {
+      for (const kind of classifyEffectResidueLine(activeLines[index]!)) {
         findings.push({ file, line: index + 1, kind, detail: lines[index]!.trim().slice(0, 120) });
         found = true;
       }
@@ -280,10 +337,7 @@ export function scanEffectResidue(root: string, allowlist: ReadonlySet<string>):
     // review, confirmed). Only when the per-line pass saw nothing: any single
     // finding already reds the zero-findings law, so per-file dedup is sound.
     if (!found) {
-      const collapsed = lines
-        .filter((line) => !isCommentLine(line))
-        .join(' ')
-        .replace(/\s+/g, ' ');
+      const collapsed = activeLines.join(' ').replace(/\s+/g, ' ');
       for (const kind of classifyEffectResidueLine(collapsed)) {
         findings.push({ file, line: 0, kind, detail: 'construct spans line boundaries (collapsed-source match)' });
       }
