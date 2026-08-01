@@ -1,4 +1,6 @@
-//! Batch boundary evaluation via binary search.
+//! Batch boundary evaluation via a deliberate reverse linear scan.
+//! Scanning from the end preserves duplicate-threshold semantics: the highest
+//! matching threshold index wins.
 //!
 //! Given sorted thresholds and a set of values, produces the index of the
 //! matching state for each value. Zero allocation — writes to static buffer.
