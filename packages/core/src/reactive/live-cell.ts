@@ -143,6 +143,7 @@ function makeCore<K extends CellKind, T>(kind: K, initial: T, nodeId: string, cl
 function serializedCommit<T>(run: (op: (current: T) => T) => void): (op: (current: T) => T) => void {
   let committing = false;
   const queue: Array<(current: T) => T> = [];
+  let queueHead = 0;
   return (op: (current: T) => T): void => {
     if (committing) {
       queue.push(op);
@@ -151,15 +152,17 @@ function serializedCommit<T>(run: (op: (current: T) => T) => void): (op: (curren
     committing = true;
     try {
       run(op);
-      // The queue holds operation closures (always truthy), so `shift()!` only
-      // narrows away the empty-array `undefined` the `queue.length > 0` guard has
-      // already excluded — there is no in-band sentinel to confuse with a real entry.
-      while (queue.length > 0) {
-        run(queue.shift()!);
+      // A head cursor keeps every dequeue O(1). The dynamic length admits
+      // operations appended reentrantly by the operation currently being run.
+      while (queueHead < queue.length) {
+        const queued = queue[queueHead];
+        queueHead += 1;
+        if (queued !== undefined) run(queued);
       }
     } finally {
       committing = false;
       queue.length = 0;
+      queueHead = 0;
     }
   };
 }

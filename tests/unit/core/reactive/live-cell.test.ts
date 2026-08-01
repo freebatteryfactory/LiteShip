@@ -246,6 +246,34 @@ describe('LiveCell', () => {
     expect(cell.envelope().meta.version).toBe(4); // init(0) → set(1) → +1 → +1
   });
 
+  test('S2.3b: draining reentrant commits never removes from the array front', () => {
+    const cell = createLiveCell('state', 0);
+    let fired = false;
+    cell.subscribe((value) => {
+      if (value === 1 && !fired) {
+        fired = true;
+        cell.update((current) => current + 1);
+        cell.update((current) => current + 1);
+        cell.update((current) => current + 1);
+      }
+    });
+
+    const originalShift = Array.prototype.shift;
+    let shiftCalls = 0;
+    Array.prototype.shift = function <T>(this: T[]): T | undefined {
+      shiftCalls += 1;
+      return originalShift.call(this) as T | undefined;
+    };
+    try {
+      cell.set(1);
+    } finally {
+      Array.prototype.shift = originalShift;
+    }
+
+    expect(cell.read()).toBe(4);
+    expect(shiftCalls).toBe(0);
+  });
+
   test('S2.3b: two subscribers each issuing one reentrant update(+1) compose across the drain (3, not 2)', () => {
     // The cross-subscriber interleaving: both value subscribers observe 1 and each
     // enqueue ONE `(n) => n + 1`. Eager pre-drain evaluation would have both read 1

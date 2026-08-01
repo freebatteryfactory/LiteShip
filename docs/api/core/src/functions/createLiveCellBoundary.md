@@ -8,7 +8,7 @@
 
 > **createLiveCellBoundary**\<`I`, `S`\>(`boundary`, `initial`, `clock?`): `LiveCellShape`\<`"boundary"`, `number`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)
 
-Defined in: [core/src/reactive/live-cell.ts:215](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/live-cell.ts#L215)
+Defined in: [core/src/reactive/live-cell.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/live-cell.ts#L218)
 
 Create a boundary-kind LiveCell that automatically publishes crossings when the
 numeric value transitions between boundary states. The live cell IS its own

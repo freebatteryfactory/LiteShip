@@ -8,7 +8,7 @@
 
 > **LiveCell**\<`K`, `T`\> = `LiveCellShape`\<`K`, `T`\>
 
-Defined in: [core/src/reactive/live-cell.ts:290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/live-cell.ts#L290)
+Defined in: [core/src/reactive/live-cell.ts:293](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/live-cell.ts#L293)
 
 Public structural type for `LiveCell` — the bridge between the [Cell](Cell.md)
 reactive graph and the wire protocol. A `LiveCell` wraps a `Cell` with a typed

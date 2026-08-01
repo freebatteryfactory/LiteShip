@@ -8,7 +8,7 @@
 
 > **Fanout**\<`T`\> = [`CellFanout`](../../../interfaces/CellFanout.md)\<`T`\>
 
-Defined in: [core/src/reactive/cell-kernel.ts:485](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts#L485)
+Defined in: [core/src/reactive/cell-kernel.ts:490](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts#L490)
 
 Live no-replay fan-out kernel — see [CellFanout](../../../interfaces/CellFanout.md).
 
