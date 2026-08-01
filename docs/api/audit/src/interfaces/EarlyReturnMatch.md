@@ -6,7 +6,7 @@
 
 # Interface: EarlyReturnMatch
 
-Defined in: [audit/src/skip-detect-ast.ts:1297](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L1297)
+Defined in: [audit/src/skip-detect-ast.ts:1289](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L1289)
 
 One early `return;` in a test callback before the first `expect(...)`.
 
@@ -16,7 +16,7 @@ One early `return;` in a test callback before the first `expect(...)`.
 
 > `readonly` **line**: `number`
 
-Defined in: [audit/src/skip-detect-ast.ts:1298](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L1298)
+Defined in: [audit/src/skip-detect-ast.ts:1290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L1290)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [audit/src/skip-detect-ast.ts:1298](https://github.com/freebatteryfa
 
 > `readonly` **token**: `string`
 
-Defined in: [audit/src/skip-detect-ast.ts:1299](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L1299)
+Defined in: [audit/src/skip-detect-ast.ts:1291](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L1291)

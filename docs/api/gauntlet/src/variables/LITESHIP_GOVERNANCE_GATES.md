@@ -8,6 +8,6 @@
 
 > `const` **LITESHIP\_GOVERNANCE\_GATES**: readonly [`Gate`](../interfaces/Gate.md)[]
 
-Defined in: [gauntlet/src/runner.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L103)
+Defined in: [gauntlet/src/runner.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L104)
 
 The fact-hosted check-governance gates.

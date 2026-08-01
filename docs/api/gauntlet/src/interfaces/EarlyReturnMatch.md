@@ -6,7 +6,7 @@
 
 # Interface: EarlyReturnMatch
 
-Defined in: [gauntlet/src/gates/early-return-detect.ts:10](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/early-return-detect.ts#L10)
+Defined in: [gauntlet/src/gates/early-return-detect.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/early-return-detect.ts#L19)
 
 One test control-flow path that exits before an assertion.
 
@@ -16,7 +16,7 @@ One test control-flow path that exits before an assertion.
 
 > `readonly` **line**: `number`
 
-Defined in: [gauntlet/src/gates/early-return-detect.ts:11](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/early-return-detect.ts#L11)
+Defined in: [gauntlet/src/gates/early-return-detect.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/early-return-detect.ts#L20)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [gauntlet/src/gates/early-return-detect.ts:11](https://github.com/fr
 
 > `readonly` **token**: `string`
 
-Defined in: [gauntlet/src/gates/early-return-detect.ts:12](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/early-return-detect.ts#L12)
+Defined in: [gauntlet/src/gates/early-return-detect.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/early-return-detect.ts#L21)

@@ -6,6 +6,15 @@
 
 import { codeOnly } from './code-only.js';
 
+/**
+ * THE CLASS RULE — ANCHOR: the closed runner vocabulary. ALLOWLIST: roots that
+ * declare an individual test are eligible for early-return findings; roots that
+ * declare a suite are capability-grouping scopes and are not. Skip detection
+ * deliberately consumes the union, because a skipped suite is still a skip.
+ */
+export const TEST_ROOTS: ReadonlySet<string> = new Set(['it', 'test', 'fit', 'specify', 'fspecify']);
+export const SUITE_ROOTS: ReadonlySet<string> = new Set(['describe', 'suite', 'bench', 'fdescribe']);
+
 /** One test control-flow path that exits before an assertion. */
 export interface EarlyReturnMatch {
   readonly line: number;
@@ -13,7 +22,7 @@ export interface EarlyReturnMatch {
 }
 
 const BARE_RETURN = /\breturn(?:\s+[A-Za-z_$][\w$]*)?\s*;/;
-const TEST_RUNNER_START = /(^|[^\w$.])(?:it|test)\s*\(/;
+const TEST_RUNNER_START = new RegExp(`(^|[^\\w$.])(?:${[...TEST_ROOTS].join('|')})\\s*\\(`, 'u');
 const CONTROL_FLOW_HEADS = new Set(['if', 'for', 'while', 'switch', 'catch', 'with']);
 
 function startsNestedFunction(line: string): boolean {

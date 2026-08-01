@@ -57,6 +57,7 @@ import { noBareThrowIRGate } from './gates/no-bare-throw-ir.js';
 import { noDefaultExportDivergenceGate } from './gates/no-default-export-divergence.js';
 import { noVarDivergenceGate } from './gates/no-var-divergence.js';
 import { noRequireDivergenceGate } from './gates/no-require-divergence.js';
+import { earlyReturnDivergenceGate } from './gates/early-return-divergence.js';
 import { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
 import { crdtLawsGate } from './gates/crdt-laws.js';
 import { performanceContractsGate } from './gates/performance-contracts.js';
@@ -200,6 +201,7 @@ export const LITESHIP_IR_ONLY_GATES: readonly Gate[] = [
   noDefaultExportDivergenceGate,
   noVarDivergenceGate,
   noRequireDivergenceGate,
+  earlyReturnDivergenceGate,
   symbolOrphanDivergenceGate,
   crdtLawsGate,
   // The avionics-tier (Slice C) performance-contracts gate — a LEAN, deterministic

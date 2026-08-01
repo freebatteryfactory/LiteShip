@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:7606605e",
+  "address": "fnv1a:bfcd74fd",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -3046,6 +3046,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/early-return-divergence.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "packages/gauntlet/src/gates/facade-export-budget.ts",
       "level": "L3"
     },
@@ -4951,6 +4956,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/types/istanbul.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/typescript-toolchain-qualification.ts",
       "level": "L1"
     },
@@ -5676,6 +5686,15 @@
     {
       "_tag": "gate",
       "ruleId": "gauntlet/diagnostic-code-registered",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/early-return-divergence",
       "set": "LITESHIP_IR_GATES",
       "level": "L2",
       "redFixtureCount": 1,

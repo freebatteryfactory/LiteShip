@@ -231,6 +231,10 @@
           "kind": "const"
         },
         {
+          "name": "SUITE_ROOTS",
+          "kind": "const"
+        },
+        {
           "name": "SYMBOL_ORPHAN_PROPERTY",
           "kind": "const"
         },
@@ -240,6 +244,10 @@
         },
         {
           "name": "TAINT_ORACLE_ID",
+          "kind": "const"
+        },
+        {
+          "name": "TEST_ROOTS",
           "kind": "const"
         },
         {
@@ -2766,7 +2774,15 @@
           "kind": "const"
         },
         {
+          "name": "SUITE_ROOTS",
+          "kind": "const"
+        },
+        {
           "name": "SURVIVOR_SEVERITY_BY_LEVEL",
+          "kind": "const"
+        },
+        {
+          "name": "TEST_ROOTS",
           "kind": "const"
         },
         {
@@ -2955,6 +2971,11 @@
           "name": "diffStandardsSurface",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "earlyReturnDivergenceGate",
+          "kind": "namespace",
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "earnedAuthority",

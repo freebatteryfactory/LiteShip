@@ -395,6 +395,11 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'The AST (file-proxy) and invariant-regex (text-only) oracles disagree on require-call at a (file, line) — the regex fired on a comment/string the AST ignores. Reports, never decides.',
     'Resolve the oracle divergence — the engine reports, you decide.',
   ),
+  'gauntlet/early-return-divergence': gauntlet(
+    'Oracle divergence on early-return-before-expect',
+    'The parser-backed and lean token oracles disagree on an early return before expect in an individual test callback. Reports, never decides.',
+    'Resolve the early-return oracle divergence and preserve the parser-backed individual-test semantics.',
+  ),
   'gauntlet/symbol-orphan-divergence': gauntlet(
     'Orphan-evidence divergence on an exported symbol',
     'The symbol-evidenced LanguageService oracle and the IR file-proxy refs graph disagree on whether an exported symbol is referenced across files (the file-proxy credits a name-only match the checker resolves as an orphan, or misses a re-export the checker resolves). Reports, never decides.',

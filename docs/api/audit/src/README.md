@@ -127,9 +127,11 @@ package — it stays repo-local and composes these passes.
 - [DEVOPS\_PROFILE\_KEYS](variables/DEVOPS_PROFILE_KEYS.md)
 - [LANGUAGE\_SERVICE\_ORACLE\_ID](variables/LANGUAGE_SERVICE_ORACLE_ID.md)
 - [MUTATION\_OPERATORS](variables/MUTATION_OPERATORS.md)
+- [SUITE\_ROOTS](variables/SUITE_ROOTS.md)
 - [SYMBOL\_ORPHAN\_PROPERTY](variables/SYMBOL_ORPHAN_PROPERTY.md)
 - [SYMBOL\_REFERENCE\_COUNT\_PROPERTY](variables/SYMBOL_REFERENCE_COUNT_PROPERTY.md)
 - [TAINT\_ORACLE\_ID](variables/TAINT_ORACLE_ID.md)
+- [TEST\_ROOTS](variables/TEST_ROOTS.md)
 
 ## Functions
 

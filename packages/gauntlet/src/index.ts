@@ -368,7 +368,12 @@ export { noSkippedTestGate } from './gates/no-skipped-test.js';
 export { noPlaceholderGate } from './gates/no-placeholder.js';
 export { noUnregisteredTodoGate } from './gates/no-unregistered-todo.js';
 export { noEarlyReturnTestGate } from './gates/no-early-return-test.js';
-export { detectEarlyReturnBeforeExpect, type EarlyReturnMatch } from './gates/early-return-detect.js';
+export {
+  detectEarlyReturnBeforeExpect,
+  TEST_ROOTS,
+  SUITE_ROOTS,
+  type EarlyReturnMatch,
+} from './gates/early-return-detect.js';
 
 // The skip-form detector + the enumerated sanctioned-skip allowlist — exported so the
 // standards-surface extractor can fold the allowlist into the content-addressed snapshot
@@ -406,6 +411,7 @@ export { type OracleDivergenceSpec, makeOracleDivergenceGate } from './gates/mak
 export { noDefaultExportDivergenceGate } from './gates/no-default-export-divergence.js';
 export { noVarDivergenceGate } from './gates/no-var-divergence.js';
 export { noRequireDivergenceGate } from './gates/no-require-divergence.js';
+export { earlyReturnDivergenceGate } from './gates/early-return-divergence.js';
 export { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
 export { activeModeledSurfaceReaderGate, decideActiveSurfaceReaders } from './gates/active-modeled-surface-reader.js';
 export { featureEdgeConnectivityGate, decideFeatureEdgeConnectivity } from './gates/feature-edge-connectivity.js';
