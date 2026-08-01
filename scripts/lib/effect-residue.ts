@@ -22,6 +22,7 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { getEnvironmentConfig } from '../../packages/vite/src/environments.js';
 
 export type EffectResidueKind = 'static-import' | 'dynamic-import' | 'require' | 'call-site' | 'manifest-dependency';
 
@@ -55,7 +56,12 @@ const CALL_SITE = /\bEffect\.[A-Za-z_$][\w$]*\s*\(/;
 
 const MANIFEST_DEP_FIELDS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const;
 
-const SOURCE_EXTENSIONS = ['.ts', '.tsx', '.mts', '.cts', '.js', '.mjs', '.cjs', '.astro'];
+const EFFECT_RESIDUE_SUPPLEMENTAL_EXTENSIONS = ['.mts', '.cts', '.mjs', '.cjs', '.astro'] as const;
+
+/** Browser-host sources plus residue-specific module and component forms. */
+export const EFFECT_RESIDUE_SOURCE_EXTENSIONS: readonly string[] = [
+  ...new Set([...getEnvironmentConfig('browser').resolve.extensions, ...EFFECT_RESIDUE_SUPPLEMENTAL_EXTENSIONS]),
+];
 const SKIPPED_DIRS = new Set(['node_modules', 'dist', '.astro', 'coverage']);
 
 function isCommentLine(line: string): boolean {
@@ -272,7 +278,9 @@ function walkSources(dir: string, out: string[]): void {
       if (!SKIPPED_DIRS.has(entry.name)) walkSources(join(dir, entry.name), out);
       continue;
     }
-    if (SOURCE_EXTENSIONS.some((extension) => entry.name.endsWith(extension))) out.push(join(dir, entry.name));
+    if (EFFECT_RESIDUE_SOURCE_EXTENSIONS.some((extension) => entry.name.endsWith(extension))) {
+      out.push(join(dir, entry.name));
+    }
   }
 }
 

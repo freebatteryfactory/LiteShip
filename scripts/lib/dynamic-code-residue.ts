@@ -1,12 +1,11 @@
 /**
- * Dynamic-code residue law for shipped non-TypeScript runtime sources.
+ * Dynamic-code residue law for shipped sources outside the root lint scope.
  *
  * The blocking ESLint authority enforces `no-eval` / `no-new-func` /
- * `no-implied-eval` over the TypeScript trees only — its globs are
- * `**​/*.ts`, so a published `.astro`, `.js`, `.mjs`, or `.cjs` source under
- * `packages/<pkg>/src` is executable code the linter never inspects. This engine
- * is the equivalent authority for those files: a line classifier plus a
- * repository sweep, consumed by the unit law that pins both package source
+ * `no-implied-eval` over the root lint command's package-source globs. This
+ * engine derives the remaining browser extensions from Vite's host authority,
+ * adds runtime-specific module/component forms, and scans those files with a
+ * line classifier plus repository sweep. The unit laws pin both package source
  * trees and manifest-published runtime files to zero findings.
  *
  * @module
@@ -15,6 +14,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { ValidationError } from '../../packages/error/src/index.js';
+import { getEnvironmentConfig } from '../../packages/vite/src/environments.js';
 
 export type DynamicCodeKind = 'EVAL_CALL' | 'FUNCTION_CONSTRUCTOR' | 'STRING_TIMER' | 'DYNAMIC_IMPORT';
 
@@ -336,7 +336,7 @@ export function classifyDynamicCodeLine(line: string): DynamicCodeKind | null {
   return classifyDynamicCodeSource(line)[0] ?? null;
 }
 
-const SHIPPED_EXTENSIONS = ['.astro', '.js', '.mjs', '.cjs'];
+const DYNAMIC_CODE_SUPPLEMENTAL_EXTENSIONS = ['.mjs', '.cjs', '.astro'] as const;
 
 interface PackageManifest {
   readonly files?: unknown;
@@ -348,8 +348,44 @@ function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function runtimeSource(path: string): boolean {
-  return SHIPPED_EXTENSIONS.some((extension) => path.endsWith(extension));
+/**
+ * Package-source extensions the root lint command proves it owns.
+ *
+ * THE CLASS RULE: the ANCHOR is every quoted `packages/.../src/...` glob in
+ * the root `lint` script; the ALLOWLIST is its terminal extension. Missing or
+ * malformed authority delegates nothing, so the dynamic scanner widens rather
+ * than silently dropping a source class.
+ */
+export function lintOwnedPackageSourceExtensions(repoRoot: string): readonly string[] {
+  const manifestPath = join(repoRoot, 'package.json');
+  if (!existsSync(manifestPath)) return [];
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    if (!isRecord(parsed) || !isRecord(parsed['scripts']) || typeof parsed['scripts']['lint'] !== 'string') return [];
+    const extensions = new Set<string>();
+    for (const match of parsed['scripts']['lint'].matchAll(/"(packages\/[^" ]+\/src\/[^" ]+)"/gu)) {
+      const extension = match[1]?.match(/(\.[A-Za-z0-9]+)$/u)?.[1];
+      if (extension !== undefined) extensions.add(extension);
+    }
+    return [...extensions].sort();
+  } catch {
+    return [];
+  }
+}
+
+/** Browser-host extensions not delegated to lint, plus shipped runtime forms. */
+export function dynamicCodeSourceExtensions(repoRoot: string): readonly string[] {
+  const lintOwned = new Set(lintOwnedPackageSourceExtensions(repoRoot));
+  return [
+    ...new Set([
+      ...getEnvironmentConfig('browser').resolve.extensions.filter((extension) => !lintOwned.has(extension)),
+      ...DYNAMIC_CODE_SUPPLEMENTAL_EXTENSIONS,
+    ]),
+  ];
+}
+
+function runtimeSource(path: string, extensions: readonly string[]): boolean {
+  return extensions.some((extension) => path.endsWith(extension));
 }
 
 function authoredPackageFiles(dir: string, files: string[]): void {
@@ -431,7 +467,7 @@ function binTargets(value: unknown, authority: string): readonly string[] {
 }
 
 /**
- * Every authored non-TypeScript runtime path a package publishes, derived from
+ * Every authored non-lint-owned runtime path a package publishes, derived from
  * the union of its `files`, recursively nested `exports`, and `bin` targets.
  *
  * THE CLASS RULE: the ANCHOR is every package manifest under `packages/`; the
@@ -441,6 +477,7 @@ function binTargets(value: unknown, authority: string): readonly string[] {
  * build state cannot change the census.
  */
 export function publishedRuntimeRoots(repoRoot: string): readonly string[] {
+  const sourceExtensions = dynamicCodeSourceExtensions(repoRoot);
   const packagesDir = join(repoRoot, 'packages');
   const published = new Set<string>();
   for (const packageName of readdirSync(packagesDir).sort()) {
@@ -490,7 +527,7 @@ export function publishedRuntimeRoots(repoRoot: string): readonly string[] {
           const withinPackage = relative(packageDir, file).replaceAll('\\', '/');
           if (
             (matcher.test(withinPackage) || (directoryEntry && withinPackage.startsWith(`${directoryPrefix}/`))) &&
-            runtimeSource(file)
+            runtimeSource(file, sourceExtensions)
           ) {
             published.add(file);
           }
@@ -505,7 +542,7 @@ export function publishedRuntimeRoots(repoRoot: string): readonly string[] {
       const absolute = normalizedManifestTarget(packageDir, target, packageName);
       const withinPackage = relative(packageDir, absolute).replaceAll('\\', '/');
       if (withinPackage === 'dist' || withinPackage.startsWith('dist/')) continue;
-      if (runtimeSource(absolute)) {
+      if (runtimeSource(absolute, sourceExtensions)) {
         if (!existsSync(absolute) || !statSync(absolute).isFile()) {
           throw ValidationError(
             'publishedRuntimeRoots',
@@ -519,28 +556,29 @@ export function publishedRuntimeRoots(repoRoot: string): readonly string[] {
   return [...published].sort();
 }
 
-function collectShipped(dir: string, files: string[]): void {
+function collectShipped(dir: string, files: string[], extensions: readonly string[]): void {
   for (const name of readdirSync(dir).sort()) {
     if (name === 'node_modules') continue;
     const path = join(dir, name);
-    if (statSync(path).isDirectory()) collectShipped(path, files);
-    else if (SHIPPED_EXTENSIONS.some((ext) => name.endsWith(ext))) files.push(path);
+    if (statSync(path).isDirectory()) collectShipped(path, files, extensions);
+    else if (extensions.some((ext) => name.endsWith(ext))) files.push(path);
   }
 }
 
 /**
  * Sweep every package source tree plus every manifest-published authored
- * non-TypeScript runtime source for dynamic-code forms. Returns findings plus
+ * non-lint-owned runtime source for dynamic-code forms. Returns findings plus
  * the swept inventory so the consuming law can prove it saw the real population.
  */
 export function scanShippedDynamicCode(repoRoot: string): DynamicCodeScan {
+  const sourceExtensions = dynamicCodeSourceExtensions(repoRoot);
   const files = new Set<string>(publishedRuntimeRoots(repoRoot));
   const packagesDir = join(repoRoot, 'packages');
   for (const pkg of readdirSync(packagesDir).sort()) {
     const src = join(packagesDir, pkg, 'src');
     if (existsSync(src)) {
       const sourceFiles: string[] = [];
-      collectShipped(src, sourceFiles);
+      collectShipped(src, sourceFiles, sourceExtensions);
       for (const file of sourceFiles) files.add(file);
     }
   }
