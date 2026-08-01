@@ -560,7 +560,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     vi.useRealTimers();
   });
 
-  test('replay with dropped signals still applies HTML patches when snapshot fetch fails', async () => {
+  test('replay with dropped signals does not apply HTML patches when snapshot fetch fails', async () => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
 
