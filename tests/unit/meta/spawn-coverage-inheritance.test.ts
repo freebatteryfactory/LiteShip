@@ -13,7 +13,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnArgv } from '../../../scripts/lib/spawn.js';
-import { spawnArgvCaptureWithEnv } from '../../../packages/command/src/host/launcher.js';
+import { spawnArgvCaptureWithEnv, spawnArgvVisible } from '../../../packages/command/src/host/launcher.js';
 
 describe('spawn coverage inheritance', () => {
   it('children inherit NODE_V8_COVERAGE from parent', async () => {
@@ -77,5 +77,30 @@ describe('spawn coverage inheritance', () => {
       delete process.env.NODE_V8_COVERAGE;
       rmSync(covDir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('shard spawn env reaches the child', () => {
+  it('an envAdditions entry round-trips into the child process environment', async () => {
+    const result = await spawnArgvVisible(
+      'node',
+      ['-e', 'process.exit(process.env.LITESHIP_SPAWN_PROBE === "shard-env-7331" ? 0 : 1)'],
+      {
+        envAdditions: { LITESHIP_SPAWN_PROBE: 'shard-env-7331' },
+      },
+    );
+    expect(result.exitCode).toBe(0);
+  });
+
+  it('additions are the sole channel beyond the ordinarily inherited environment', async () => {
+    delete process.env.LITESHIP_SPAWN_PROBE;
+    const result = await spawnArgvVisible(
+      'node',
+      ['-e', 'process.exit(process.env.LITESHIP_SPAWN_PROBE === undefined ? 0 : 1)'],
+      // Commit 0.3 makes scripts part of typecheck:scripts, after which an
+      // `env:` spelling at the shard caller is also a compile-time error.
+      { cwd: process.cwd() },
+    );
+    expect(result.exitCode).toBe(0);
   });
 });

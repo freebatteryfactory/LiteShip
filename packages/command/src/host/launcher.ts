@@ -105,7 +105,7 @@ export function spawnArgvVisibleWithEnv(
 export function spawnArgvVisible(
   command: string,
   args: readonly string[],
-  opts: { readonly cwd?: string } = {},
+  opts: { readonly cwd?: string; readonly envAdditions?: Readonly<Record<string, string>> } = {},
 ): Promise<SpawnResult> {
   return spawnArgvVisibleWithEnv(command, args, opts);
 }
