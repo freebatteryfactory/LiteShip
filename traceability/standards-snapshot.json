@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:bfcd74fd",
+  "address": "fnv1a:56e1d82c",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -1267,6 +1267,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "packages/cli/src/internal/host-detect.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/jsonc.ts",
       "level": "L1"
     },
     {

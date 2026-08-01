@@ -8,7 +8,7 @@
 
 > **collectBoundaryManifest**(`projectRoot`, `options?`): `Promise`\<`Readonly`\<`Record`\<`string`, `BoundaryManifestEntry`\>\>\>
 
-Defined in: vite/dist/boundary-manifest.d.ts:104
+Defined in: vite/dist/boundary-manifest.d.ts:105
 
 Derive the `BoundaryManifest` for a project.
 

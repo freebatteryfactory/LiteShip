@@ -295,6 +295,46 @@ describe('collectBoundaryManifest', () => {
     expect(events.some((event) => event.code === 'wgsl-cast-value-malformed:junk')).toBe(true);
   });
 
+  test('@wgsl refuses integer vector constructors instead of silently laying them out as f32', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    writeModule(
+      srcDir,
+      'styles.css',
+      `
+@quantize viewport {
+  compact {
+    @wgsl {
+      position: vec2i(1, 2);
+      flags: vec2u(3, 4);
+      uv: vec2f(0.25, 0.5);
+    }
+  }
+}
+`,
+    );
+
+    const { manifest, events } = await captureDiagnosticsAsync(async ({ events: captured }) => ({
+      manifest: await collectBoundaryManifest(root),
+      events: [...captured],
+    }));
+
+    const wgsl = manifest['viewport']!.outputs.find((output) => output.wgsl)!.wgsl!;
+    expect(wgsl.bindingValues).not.toHaveProperty('position');
+    expect(wgsl.bindingValues).not.toHaveProperty('flags');
+    expect(wgsl.bindingValues['uv']).toEqual([0.25, 0.5]);
+    expect(wgsl.declarations).toContain('uv: vec2f');
+    expect(wgsl.declarations).not.toContain('position: vec2f');
+    expect(wgsl.declarations).not.toContain('flags: vec2f');
+    const positionEvent = events.find((event) => event.code === 'wgsl-cast-value-malformed:position');
+    const flagsEvent = events.find((event) => event.code === 'wgsl-cast-value-malformed:flags');
+    expect(positionEvent?.message).toContain('vec2i');
+    expect(positionEvent?.message).toContain('i32');
+    expect(flagsEvent?.message).toContain('vec2u');
+    expect(flagsEvent?.message).toContain('u32');
+  });
+
   test('@wgsl blocks parse scalar and vec2/vec3/vec4 values into manifest stateBindings', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');

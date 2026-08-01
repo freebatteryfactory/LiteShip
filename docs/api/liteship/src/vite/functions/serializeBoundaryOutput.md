@@ -8,7 +8,7 @@
 
 > **serializeBoundaryOutput**(`output`): `string`
 
-Defined in: vite/dist/boundary-manifest.d.ts:77
+Defined in: vite/dist/boundary-manifest.d.ts:78
 
 Serialize one deduplicated boundary output into the bytes emitted as a static
 CSS asset. Theme `:root` CSS is deliberately absent: themes are a

@@ -8,7 +8,7 @@
 
 > **serializeBoundaryOutput**(`output`): `string`
 
-Defined in: [vite/src/boundary-manifest.ts:558](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts#L558)
+Defined in: [vite/src/boundary-manifest.ts:587](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts#L587)
 
 Serialize one deduplicated boundary output into the bytes emitted as a static
 CSS asset. Theme `:root` CSS is deliberately absent: themes are a
