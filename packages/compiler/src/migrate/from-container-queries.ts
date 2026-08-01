@@ -227,7 +227,16 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
     }
 
     const braceIdx = blanked.indexOf('{', CONTAINER_MARKER.lastIndex);
-    if (braceIdx === -1) break;
+    if (braceIdx === -1) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.malformedInput,
+          'Malformed @container at-rule: the prelude has no declaration block.',
+          { path: ['@container'], severity: 'error' },
+        ),
+      );
+      break;
+    }
 
     const preludeView = cssCommentParsingView(normalized.slice(CONTAINER_MARKER.lastIndex, braceIdx));
     const rawPrelude = preludeView.raw.trim();

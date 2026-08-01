@@ -775,7 +775,17 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       // Prelude runs to the next `{` or `;` at this level.
       let k = j;
       while (k < len && blanked[k] !== '{' && blanked[k] !== ';') k++;
-      if (k >= len) break;
+      if (k >= len) {
+        const atRule = `@${name}`;
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.malformedInput,
+            `Malformed ${atRule} at-rule: the prelude has no statement terminator or declaration block.`,
+            { path: [atRule], severity: 'error' },
+          ),
+        );
+        break;
+      }
 
       if (blanked[k] === ';') {
         // Statement at-rule (`@charset`, `@import`, `@namespace`, statement
