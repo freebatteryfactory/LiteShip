@@ -36,7 +36,11 @@ import {
 } from '@liteship/command';
 import { spawnArgvCapture } from '@liteship/command/host';
 import { emit, type WallClockTimestamp } from '../receipts.js';
-import { scanWorkflowActionPins, scanWorkflowCheckoutCredentials } from '../internal/workflow-action-pins.js';
+import {
+  scanWorkflowActionPins,
+  scanWorkflowCheckoutCredentials,
+  scanWorkflowExpressionInjection,
+} from '../internal/workflow-action-pins.js';
 
 /** Receipt emitted by `liteship check-invariants`. */
 export interface CheckInvariantsReceipt extends CheckInvariantsPayload {
@@ -259,7 +263,11 @@ export async function runCheckInvariantsScan(
   })) {
     const rel = normalizeRepoPath(relative(root, file));
     const workflow = readFileSync(file, 'utf8');
-    for (const violation of [...scanWorkflowActionPins(workflow), ...scanWorkflowCheckoutCredentials(workflow)]) {
+    for (const violation of [
+      ...scanWorkflowActionPins(workflow),
+      ...scanWorkflowCheckoutCredentials(workflow),
+      ...scanWorkflowExpressionInjection(workflow),
+    ]) {
       actionPinViolations.push({ file: rel, line: violation.line, content: violation.content });
     }
   }
@@ -267,7 +275,7 @@ export async function runCheckInvariantsScan(
     groups.push({
       name: 'IMMUTABLE_WORKFLOW_ACTIONS',
       message:
-        'Use only reviewed third-party GitHub Actions pinned to immutable commit SHAs and disable checkout credential persistence.',
+        'Use only reviewed third-party GitHub Actions pinned to immutable commit SHAs, disable checkout credential persistence, and keep attacker-controlled expressions out of run commands.',
       violations: actionPinViolations,
     });
   }

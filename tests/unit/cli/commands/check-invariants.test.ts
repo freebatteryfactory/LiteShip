@@ -217,7 +217,7 @@ describe('liteship check invariants — adapter projection (scan via injected ca
     write('.gitattributes', '* text=auto eol=lf\n');
     write(
       '.github/workflows/unsafe.yml',
-      `steps:\n  - uses: actions/checkout@${'a'.repeat(40)}\n    with:\n      fetch-depth: 0\n`,
+      `jobs:\n  unsafe:\n    steps:\n      - uses: actions/checkout@${'a'.repeat(40)}\n        with:\n          fetch-depth: 0\n`,
     );
     const { exit, stdout } = await captureCli(() =>
       checkInvariants({ cwd: root, pretty: false }, { spawn: spawnMock }),
@@ -228,6 +228,33 @@ describe('liteship check invariants — adapter projection (scan via injected ca
       expect.objectContaining({
         name: 'IMMUTABLE_WORKFLOW_ACTIONS',
         violations: [expect.objectContaining({ file: '.github/workflows/unsafe.yml' })],
+      }),
+    );
+  });
+
+  it('the production invariant fold rejects an attacker-controlled run expression', async () => {
+    write('.gitattributes', '* text=auto eol=lf\n');
+    write(
+      '.github/workflows/unsafe-expression.yml',
+      [
+        'jobs:',
+        '  unsafe:',
+        '    steps:',
+        `      - uses: actions/checkout@${'a'.repeat(40)}`,
+        '        with:',
+        '          persist-credentials: false',
+        '      - run: echo "${{ github.event.pull_request.title }}"',
+      ].join('\n'),
+    );
+    const { exit, stdout } = await captureCli(() =>
+      checkInvariants({ cwd: root, pretty: false }, { spawn: spawnMock }),
+    );
+    expect(exit).toBe(1);
+    const groups = lastReceipt(stdout)['groups'] as { name: string; violations: { file: string }[] }[];
+    expect(groups).toContainEqual(
+      expect.objectContaining({
+        name: 'IMMUTABLE_WORKFLOW_ACTIONS',
+        violations: [expect.objectContaining({ file: '.github/workflows/unsafe-expression.yml' })],
       }),
     );
   });

@@ -5,7 +5,12 @@ import { ValidationError } from '../../../error/src/index.js';
 export interface WorkflowActionPinViolation {
   readonly line: number;
   readonly content: string;
-  readonly reason: 'missing-immutable-revision' | 'untrusted-source' | 'credentials-persisted' | 'unreadable-yaml';
+  readonly reason:
+    | 'missing-immutable-revision'
+    | 'untrusted-source'
+    | 'credentials-persisted'
+    | 'unreadable-yaml'
+    | 'expression-in-run';
 }
 
 interface YamlShapeViolation {
@@ -97,6 +102,182 @@ export function scanWorkflowActionPins(text: string): readonly WorkflowActionPin
     }
   }
   return violations;
+}
+
+/**
+ * THE CLASS RULE — expressions interpolated into a shell command.
+ *
+ * ANCHOR: every `${{ }}` expression in every step's `run:` field. ALLOWLIST:
+ * only contexts whose roots are not attacker-controlled: inputs, exact step or
+ * need outputs, matrix, secrets, env, and vars. GitHub event data is an open
+ * grammar (`github.event.*`, `github.head_ref`, and future siblings), so a
+ * denylist loses by construction. An unclosed or unclassifiable expression is
+ * a violation, never a skipped command.
+ */
+export function scanWorkflowExpressionInjection(text: string): readonly WorkflowActionPinViolation[] {
+  const unreadable = yamlShapeViolations(text).map((violation) => ({
+    line: violation.line,
+    content: violation.content,
+    reason: 'unreadable-yaml' as const,
+  }));
+  if (unreadable.length > 0) return unreadable;
+
+  const violations: WorkflowActionPinViolation[] = [];
+  for (const section of workflowJobSectionRecords(text).values()) {
+    const lines = activeLinesOf(section.text, section.lineOffset);
+    for (const stepIndex of stepIndicesOf(lines)) {
+      const command = stepRunCommandOf(lines, stepIndex);
+      if (!command.includes('${{')) continue;
+      if (!commandExpressionsAreAdmissible(command)) {
+        const step = lines[stepIndex]!;
+        violations.push({ line: step.line, content: step.content, reason: 'expression-in-run' });
+      }
+    }
+  }
+  return violations;
+}
+
+function commandExpressionsAreAdmissible(command: string): boolean {
+  let cursor = 0;
+  while (cursor < command.length) {
+    const start = command.indexOf('${{', cursor);
+    if (start === -1) return true;
+    const end = command.indexOf('}}', start + 3);
+    if (end === -1) return false;
+    const references = expressionReferencePaths(command.slice(start + 3, end));
+    if (references === null || references.length === 0 || references.some((path) => !admissibleExpressionPath(path))) {
+      return false;
+    }
+    cursor = end + 2;
+  }
+  return true;
+}
+
+/** Dotted identifier paths outside quoted literals; null means unclassifiable syntax. */
+function expressionReferencePaths(expression: string): readonly (readonly string[])[] | null {
+  const admittedFunctions = new Set(['fromJSON']);
+  const paths: string[][] = [];
+  let quote: "'" | '"' | null = null;
+  let escaped = false;
+  let parenthesisDepth = 0;
+  let expectOperand = true;
+  let pendingFunctionCall = false;
+  for (let index = 0; index < expression.length;) {
+    const character = expression[index]!;
+    if (quote !== null) {
+      if (escaped) escaped = false;
+      else if (character === '\\') escaped = true;
+      else if (character === quote) {
+        quote = null;
+        expectOperand = false;
+      }
+      index += 1;
+      continue;
+    }
+    if (character === "'" || character === '"') {
+      if (!expectOperand) return null;
+      quote = character;
+      index += 1;
+      continue;
+    }
+    if (/\s/u.test(character)) {
+      index += 1;
+      continue;
+    }
+    if (character === '.') {
+      if (expectOperand || expression[index - 1] !== ')' || !/[A-Za-z_]/u.test(expression[index + 1] ?? '')) {
+        return null;
+      }
+      index += 1;
+      continue;
+    }
+    const binaryOperator = /^(?:&&|\|\||==|!=|<=|>=)/u.exec(expression.slice(index));
+    if (binaryOperator !== null) {
+      if (expectOperand) return null;
+      expectOperand = true;
+      index += binaryOperator[0].length;
+      continue;
+    }
+    if (character === '!') {
+      if (!expectOperand) return null;
+      index += 1;
+      continue;
+    }
+    if (character === '<' || character === '>') {
+      if (expectOperand) return null;
+      expectOperand = true;
+      index += 1;
+      continue;
+    }
+    if (/[0-9]/u.test(character)) {
+      if (!expectOperand) return null;
+      const number = /^[0-9]+(?:\.[0-9]+)?/u.exec(expression.slice(index));
+      if (number === null) return null;
+      expectOperand = false;
+      index += number[0].length;
+      continue;
+    }
+    if (character === '(') {
+      if (!pendingFunctionCall || !expectOperand) return null;
+      pendingFunctionCall = false;
+      parenthesisDepth += 1;
+      index += 1;
+      continue;
+    }
+    if (character === ')') {
+      if (parenthesisDepth === 0 || expectOperand || pendingFunctionCall) return null;
+      parenthesisDepth -= 1;
+      expectOperand = false;
+      index += 1;
+      continue;
+    }
+    if (character === ',') {
+      if (parenthesisDepth === 0 || expectOperand) return null;
+      expectOperand = true;
+      index += 1;
+      continue;
+    }
+    if (!/[A-Za-z_]/u.test(character)) {
+      return null;
+    }
+    const isCallResultProperty = expression[index - 1] === '.';
+    const segments: string[] = [];
+    let end = index + 1;
+    while (end < expression.length && /[A-Za-z0-9_-]/u.test(expression[end]!)) end += 1;
+    segments.push(expression.slice(index, end));
+    while (expression[end] === '.') {
+      const segmentStart = end + 1;
+      if (!/[A-Za-z_]/u.test(expression[segmentStart] ?? '')) return null;
+      end = segmentStart + 1;
+      while (end < expression.length && /[A-Za-z0-9_-]/u.test(expression[end]!)) end += 1;
+      segments.push(expression.slice(segmentStart, end));
+    }
+    let next = end;
+    while (/\s/u.test(expression[next] ?? '')) next += 1;
+    if (!isCallResultProperty) {
+      if (!expectOperand) return null;
+      if (segments.length === 1 && expression[next] !== '(' && !['true', 'false', 'null'].includes(segments[0]!)) {
+        return null;
+      }
+      if (segments.length === 1 && expression[next] === '(') {
+        if (!admittedFunctions.has(segments[0]!)) return null;
+        pendingFunctionCall = true;
+      } else {
+        expectOperand = false;
+        if (segments.length > 1) paths.push(segments);
+      }
+    } else if (expectOperand) {
+      return null;
+    }
+    index = end;
+  }
+  return quote === null && parenthesisDepth === 0 && !pendingFunctionCall && !expectOperand ? paths : null;
+}
+
+function admissibleExpressionPath(path: readonly string[]): boolean {
+  const root = path[0];
+  if (root === 'steps' || root === 'needs') return path.length >= 4 && path[2] === 'outputs';
+  return path.length >= 2 && ['inputs', 'matrix', 'secrets', 'env', 'vars'].includes(root ?? '');
 }
 
 /**

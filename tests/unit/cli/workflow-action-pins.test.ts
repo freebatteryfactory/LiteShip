@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   scanWorkflowActionPins,
   scanWorkflowCheckoutCredentials,
+  scanWorkflowExpressionInjection,
   TRUSTED_ACTION_SOURCES,
 } from '../../../packages/cli/src/internal/workflow-action-pins.js';
 
@@ -88,6 +89,155 @@ jobs:
         `steps:\n  - uses: actions/checkout@${'a'.repeat(40)}\n    with:\n      persist-credentials: true\n`,
       ),
     ).toHaveLength(1);
+  });
+});
+
+describe('expressions in run commands', () => {
+  it('the live workflows carry no unallowlisted expression root', () => {
+    for (const workflow of WORKFLOWS) {
+      expect(scanWorkflowExpressionInjection(workflow.text), workflow.name).toEqual([]);
+    }
+  });
+
+  it('a github.event pull-request title interpolated into run is a violation', () => {
+    const workflow = [
+      'jobs:',
+      '  unsafe:',
+      '    steps:',
+      '      - run: echo "${{ github.event.pull_request.title }}"',
+    ].join('\n');
+
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
+  });
+
+  it('a github.head_ref in a run block scalar is a violation', () => {
+    const workflow = [
+      'jobs:',
+      '  unsafe:',
+      '    steps:',
+      '      - run: |',
+      '          echo "${{ github.head_ref }}"',
+    ].join('\n');
+
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
+  });
+
+  it('needs, steps, matrix, inputs, secrets, env, and vars roots are admitted', () => {
+    const workflow = [
+      'jobs:',
+      '  safe:',
+      '    steps:',
+      '      - run: |',
+      '          echo "${{ fromJSON(needs.plan.outputs.matrix).shard }}"',
+      '          echo "${{ steps.version.outputs.version }}"',
+      '          echo "${{ matrix.browser }}"',
+      '          echo "${{ inputs.dry-run }}"',
+      '          echo "${{ secrets.TOKEN }}"',
+      '          echo "${{ env.MODE }}"',
+      '          echo "${{ vars.CHANNEL }}"',
+    ].join('\n');
+
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([]);
+  });
+
+  it('an unclosed expression is a violation, not a skipped command', () => {
+    const workflow = ['jobs:', '  unsafe:', '    steps:', '      - run: echo "${{ inputs.value"'].join('\n');
+
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
+  });
+
+  it('an unknown function cannot launder an otherwise allowed path', () => {
+    const workflow = ['jobs:', '  unsafe:', '    steps:', '      - run: echo "${{ evil(inputs.value) }}"'].join('\n');
+
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
+  });
+
+  it('stray punctuation and unbalanced parentheses are refused', () => {
+    const stray = ['jobs:', '  unsafe:', '    steps:', '      - run: echo "${{ inputs.value @@@ }}"'].join('\n');
+    const unbalanced = [
+      'jobs:',
+      '  unsafe:',
+      '    steps:',
+      '      - run: echo "${{ fromJSON(inputs.value) )) }}"',
+    ].join('\n');
+
+    expect(scanWorkflowExpressionInjection(stray)).toEqual([expect.objectContaining({ reason: 'expression-in-run' })]);
+    expect(scanWorkflowExpressionInjection(unbalanced)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
+  });
+
+  it('one allowed reference cannot hide a github reference in the same expression', () => {
+    const workflow = [
+      'jobs:',
+      '  unsafe:',
+      '    steps:',
+      '      - run: echo "${{ fromJSON(inputs.value, github.event.pull_request.title) }}"',
+    ].join('\n');
+
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
+  });
+
+  it('the closed logical and comparison grammar composes allowed roots', () => {
+    const workflow = [
+      'jobs:',
+      '  safe:',
+      '    steps:',
+      '      - run: echo "${{ inputs.value || env.DEFAULT }}"',
+      '      - run: echo "${{ matrix.shard >= 0 && inputs.enabled != false }}"',
+    ].join('\n');
+
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([]);
+  });
+
+  it('a leading dot is unsupported syntax, not a safe path', () => {
+    const workflow = ['jobs:', '  unsafe:', '    steps:', '      - run: echo "${{ .inputs.value }}"'].join('\n');
+
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
+  });
+
+  it('missing and consecutive operators are unparseable', () => {
+    const missing = ['jobs:', '  unsafe:', '    steps:', '      - run: echo "${{ inputs.value env.DEFAULT }}"'].join(
+      '\n',
+    );
+    const consecutive = [
+      'jobs:',
+      '  unsafe:',
+      '    steps:',
+      '      - run: echo "${{ inputs.value || || env.DEFAULT }}"',
+    ].join('\n');
+
+    expect(scanWorkflowExpressionInjection(missing)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
+    expect(scanWorkflowExpressionInjection(consecutive)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
+  });
+
+  it('an expression in a non-run field is outside this scanner', () => {
+    const workflow = [
+      'jobs:',
+      '  safe:',
+      '    steps:',
+      '      - name: ${{ github.event.pull_request.title }}',
+      '        if: ${{ github.head_ref }}',
+      '        run: echo safe',
+    ].join('\n');
+
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([]);
   });
 });
 
