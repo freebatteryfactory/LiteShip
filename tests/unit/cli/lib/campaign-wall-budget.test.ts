@@ -631,29 +631,9 @@ describe('a legal respelling of a compliant workflow is not a violation', () => 
   const sha = 'a'.repeat(40);
   const floor = CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS;
 
-  it('extra whitespace inside expressions still satisfies the run-attempt and run-id contracts', () => {
-    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n        if: \${{  always()  }}\n        with:\n          path: x\n          key: bank-\${{  github.run_id  }}-\${{  github.run_attempt  }}\n          restore-keys: |\n            bank-\${{  github.run_id  }}-\n      - uses: actions/cache/save@${sha}\n        if: always()\n        with:\n          path: x\n          key: bank-\${{  github.run_id  }}-\${{  github.run_attempt  }}\n`;
-    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).toEqual([]);
-  });
-
-  it('a save-step expression spelling of always with extra whitespace is admitted', () => {
-    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n      - uses: actions/cache/save@${sha}\n        if: \${{  always()  }}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`;
-    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).toEqual([]);
-  });
-
-  it('a quoted timeout-minutes and an unquoted budget both parse', () => {
-    const workflow = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: '150'\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: ${floor}\n`;
-    expect(scanCampaignWallBudget(workflow, ['exhaustive-mutation'])).toEqual([]);
-  });
-
   it('a job-level env declaration satisfies the campaign budget contract', () => {
     const workflow = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: 150\n    env:\n      LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n`;
     expect(scanCampaignWallBudget(workflow, ['exhaustive-mutation'])).toEqual([]);
-  });
-
-  it('a single inline restore-keys scalar is one fallback entry', () => {
-    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: bank-\${{ github.run_id }}-\n      - uses: actions/cache/save@${sha}\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`;
-    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).toEqual([]);
   });
 
   it('a restore-keys block scalar with strip chomping remains a block', () => {

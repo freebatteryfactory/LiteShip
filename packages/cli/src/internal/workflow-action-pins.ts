@@ -140,7 +140,7 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
       if (!isSave && !isRestore) continue;
       sawSave ||= isSave;
       sawRestore ||= isRestore;
-      const withIndex = childIndicesOf(lines, step).find((c) => lines[c]!.body === 'with:');
+      const withIndex = childIndicesOf(lines, step).find((c) => mappingKeyIs(lines[c]!.body, 'with'));
       const withChildren = withIndex === undefined ? [] : childIndicesOf(lines, withIndex);
       if (isSave) {
         // The always() condition binds to EACH save step — a decoy always()
@@ -293,6 +293,11 @@ interface ActiveLine {
 function uncommentedScalar(body: string): string {
   const cut = body.indexOf(' #');
   return (cut === -1 ? body : body.slice(0, cut)).trim();
+}
+
+/** A block-mapping key stays the same key when followed by an inert YAML comment. */
+function mappingKeyIs(body: string, key: string): boolean {
+  return uncommentedScalar(body) === `${key}:`;
 }
 
 /** A scalar with surrounding quotes removed after its inline comment is stripped. */
@@ -578,7 +583,7 @@ export function scanCampaignWallBudget(text: string, jobs: readonly string[]): r
 
 /** Indices of the step bullets under the job's direct-child `steps:` mapping (lines[0] is the job key). */
 function stepIndicesOf(lines: readonly ActiveLine[]): readonly number[] {
-  const stepsIndex = childIndicesOf(lines, 0).find((c) => lines[c]!.body === 'steps:');
+  const stepsIndex = childIndicesOf(lines, 0).find((c) => mappingKeyIs(lines[c]!.body, 'steps'));
   return stepsIndex === undefined ? [] : childIndicesOf(lines, stepsIndex);
 }
 
@@ -722,7 +727,7 @@ function campaignStepBudgets(lines: readonly ActiveLine[], modeFlag: string): re
   const budgets: CampaignStepBudget[] = [];
   // GitHub inherits job env into every step. Workflow-level env deliberately
   // remains outside this reader's admitted grammar.
-  const jobEnvIndex = childIndicesOf(lines, 0).find((child) => lines[child]!.body === 'env:');
+  const jobEnvIndex = childIndicesOf(lines, 0).find((child) => mappingKeyIs(lines[child]!.body, 'env'));
   const jobBudget = campaignBudgetFieldOf(lines, jobEnvIndex);
   for (const stepIndex of stepIndicesOf(lines)) {
     // An INVOCATION, not a mention: only a command line that STARTS with the
@@ -741,7 +746,7 @@ function campaignStepBudgets(lines: readonly ActiveLine[], modeFlag: string): re
           line.split(/\s+/u).includes(modeFlag),
       );
     if (!invokes) continue;
-    const envIndex = childIndicesOf(lines, stepIndex).find((c) => lines[c]!.body === 'env:');
+    const envIndex = childIndicesOf(lines, stepIndex).find((c) => mappingKeyIs(lines[c]!.body, 'env'));
     const stepBudget = campaignBudgetFieldOf(lines, envIndex);
     const selectedBudget = stepBudget.declared ? stepBudget : jobBudget;
     budgets.push({
@@ -782,7 +787,9 @@ export function scanWorkflowCheckoutCredentials(text: string): readonly Workflow
     if (!/^actions\/checkout@[0-9a-f]{40}$/iu.test(unquoteScalar(use.value))) continue;
     let safe = false;
     if (use.lines !== undefined && use.stepIndex !== undefined) {
-      const withIndex = childIndicesOf(use.lines, use.stepIndex).find((index) => use.lines![index]!.body === 'with:');
+      const withIndex = childIndicesOf(use.lines, use.stepIndex).find((index) =>
+        mappingKeyIs(use.lines![index]!.body, 'with'),
+      );
       if (withIndex !== undefined) {
         const persisted = childIndicesOf(use.lines, withIndex)
           .map((index) => use.lines![index]!.body)
