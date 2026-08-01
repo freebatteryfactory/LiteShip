@@ -66,6 +66,32 @@ describe('test constitution', () => {
       expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('unanchored-text-slice');
     });
 
+    it('does not mistake arithmetic involving -1 for a sentinel guard', () => {
+      const root = fixture(`
+        const source = 'before START subject END after';
+        const start = source.indexOf('START');
+        const end = source.indexOf('END');
+        const bogus = start + -1;
+        expect(end).toBeGreaterThanOrEqual(0);
+        const subject = source.slice(start, end);
+        expect([bogus, subject]).toHaveLength(2);
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('unanchored-text-slice');
+    });
+
+    it('does not let a guard after the slice excuse an unanchored oracle', () => {
+      const root = fixture(`
+        const source = 'before START subject END after';
+        const start = source.indexOf('START');
+        const end = source.indexOf('END');
+        const subject = source.slice(start, end);
+        expect(start).toBeGreaterThanOrEqual(0);
+        expect(end).toBeGreaterThanOrEqual(0);
+        expect(subject).toContain('subject');
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('unanchored-text-slice');
+    });
+
     it('does not flag a slice with literal bounds', () => {
       const root = fixture(`
         const source = 'subject';

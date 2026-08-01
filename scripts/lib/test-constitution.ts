@@ -215,13 +215,26 @@ function indexBinding(scope: ts.Node, name: string): ts.CallExpression | undefin
   return found;
 }
 
-function identifierHasIndexGuard(scope: ts.Node, name: string): boolean {
+const SENTINEL_COMPARISON_OPERATORS = new Set<ts.SyntaxKind>([
+  ts.SyntaxKind.EqualsEqualsToken,
+  ts.SyntaxKind.EqualsEqualsEqualsToken,
+  ts.SyntaxKind.ExclamationEqualsToken,
+  ts.SyntaxKind.ExclamationEqualsEqualsToken,
+  ts.SyntaxKind.GreaterThanToken,
+  ts.SyntaxKind.GreaterThanEqualsToken,
+  ts.SyntaxKind.LessThanToken,
+  ts.SyntaxKind.LessThanEqualsToken,
+]);
+
+function identifierHasIndexGuard(scope: ts.Node, name: string, beforePosition: number): boolean {
   let guarded = false;
   const isNamedIdentifier = (node: ts.Node): boolean => ts.isIdentifier(node) && node.text === name;
   const visit = (node: ts.Node): void => {
     if (guarded) return;
     if (
       ts.isBinaryExpression(node) &&
+      node.getStart() < beforePosition &&
+      SENTINEL_COMPARISON_OPERATORS.has(node.operatorToken.kind) &&
       ((isNamedIdentifier(node.left) && isMinusOne(node.right)) ||
         (isMinusOne(node.left) && isNamedIdentifier(node.right)))
     ) {
@@ -230,6 +243,7 @@ function identifierHasIndexGuard(scope: ts.Node, name: string): boolean {
     }
     if (
       ts.isCallExpression(node) &&
+      node.getStart() < beforePosition &&
       ts.isPropertyAccessExpression(node.expression) &&
       (node.expression.name.text === 'toBeGreaterThan' || node.expression.name.text === 'toBeGreaterThanOrEqual') &&
       ts.isCallExpression(node.expression.expression) &&
@@ -269,7 +283,7 @@ function unanchoredTextSlices(ast: ts.SourceFile): readonly ts.CallExpression[] 
         return (
           ts.isIdentifier(argument) &&
           indexBinding(scope, argument.text) !== undefined &&
-          !identifierHasIndexGuard(scope, argument.text)
+          !identifierHasIndexGuard(scope, argument.text, node.getStart())
         );
       });
       if (unguarded) findings.push(node);
