@@ -64,6 +64,18 @@ const JOB_BLOCKS = workflowJobSections(CI_YML);
 const ALL_RUN_COMMANDS = new Set(runCommandsIn(CI_YML));
 const PLAN = buildCiPlan();
 
+function assertReceiptProjectionComplete(
+  registryIds: ReadonlySet<string>,
+  receipts: readonly { readonly checkId: string }[],
+): void {
+  const receiptedIds = new Set(receipts.map((receipt) => receipt.checkId));
+  const missing = [...registryIds].filter((checkId) => !receiptedIds.has(checkId));
+  if (missing.length > 0) throw new TypeError(`registry checks missing execution receipts: ${missing.join(', ')}`);
+  const stale = [...receiptedIds].filter((checkId) => !registryIds.has(checkId));
+  if (stale.length > 0)
+    throw new TypeError(`execution receipts reference unknown registry checks: ${stale.join(', ')}`);
+}
+
 describe('workflow reader implementations remain a bounded migration set', () => {
   const productionSources = fg.sync(['packages/*/src/**/*.ts', 'scripts/**/*.ts'], { cwd: ROOT }).map((path) => ({
     path,
@@ -202,13 +214,34 @@ describe('blocking release checks have one real CI owner', () => {
 });
 
 describe('execution-qualified CI receipts', () => {
+  const projectedRegistry = CHECK_REGISTRY.filter(
+    (check) => check.profiles.includes(PLAN.sourceProfile) && check.platforms.includes(PLAN.platform),
+  );
+
+  it('a synthetic registry check with no receipt is rejected', () => {
+    const registryIds = new Set([...projectedRegistry.map((check) => check.id), 'check/synthetic-unreceipted']);
+    expect(() => assertReceiptProjectionComplete(registryIds, PLAN.executionReceipts)).toThrow(
+      /check\/synthetic-unreceipted/u,
+    );
+  });
+
+  it('a synthetic receipt for an unknown registry check is rejected', () => {
+    const registryIds = new Set(projectedRegistry.map((check) => check.id));
+    const receipts = [...PLAN.executionReceipts, { checkId: 'check/synthetic-stale-receipt' }];
+    expect(() => assertReceiptProjectionComplete(registryIds, receipts)).toThrow(/check\/synthetic-stale-receipt/u);
+  });
+
   it('projects every check to a named job and records the complete composed coverage authority', () => {
-    const registryIds = new Set(CHECK_REGISTRY.map((check) => check.id));
-    for (const receipt of PLAN.executionReceipts) {
-      expect(registryIds.has(receipt.checkId), receipt.id).toBe(true);
-      expect(JOB_BLOCKS.has(receipt.job), receipt.id).toBe(true);
-      if (!receipt.id.startsWith('specialized/')) {
-        expect(JOB_BLOCKS.get(receipt.job), receipt.id).toContain(receipt.command);
+    const registryIds = new Set(projectedRegistry.map((check) => check.id));
+    expect(() => assertReceiptProjectionComplete(registryIds, PLAN.executionReceipts)).not.toThrow();
+    for (const check of projectedRegistry) {
+      const receipts = PLAN.executionReceipts.filter((receipt) => receipt.checkId === check.id);
+      expect(receipts.length, `${check.id} must project to at least one execution receipt`).toBeGreaterThan(0);
+      for (const receipt of receipts) {
+        expect(JOB_BLOCKS.has(receipt.job), receipt.id).toBe(true);
+        if (!receipt.id.startsWith('specialized/')) {
+          expect(JOB_BLOCKS.get(receipt.job), receipt.id).toContain(receipt.command);
+        }
       }
     }
     expect(() => assertCoverageAuthorityReceipts(PLAN.executionReceipts, PLAN.shardCount)).not.toThrow();
