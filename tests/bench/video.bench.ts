@@ -80,25 +80,28 @@ bench.add('FixedStepScheduler -- 1000 steps @ 60fps', () => {
   }
 });
 
+const frameSchedule = createFrameSchedule({ fps: 60, durationMs: Millis(5000) });
 bench.add('FrameSchedule -- enumerate 300 deterministic coordinates @ 60fps', () => {
-  const schedule = createFrameSchedule({ fps: 60, durationMs: Millis(5000) });
   let checksum = 0;
-  for (const frame of schedule) checksum += frame.frame + frame.timestamp + frame.progress;
+  for (let index = 0; index < frameSchedule.totalFrames; index++) {
+    const frame = frameSchedule.at(index);
+    checksum += frame.frame + frame.timestamp + frame.progress;
+  }
   if (!Number.isFinite(checksum)) throw new Error('FrameSchedule produced a non-finite coordinate.');
 });
 
+const renderer30Config = { fps: 30, width: 1920, height: 1080, durationMs: Millis(1000) } as const;
+const renderer30 = createVideoRenderer(renderer30Config, Compositor.create());
 bench.add('VideoRenderer -- 30 frames @ 30fps', async () => {
-  const compositor = Compositor.create();
-  const renderer = createVideoRenderer({ fps: 30, width: 1920, height: 1080, durationMs: Millis(1000) }, compositor);
-  for await (const _ of renderer.frames()) {
+  for await (const _ of renderer30.frames()) {
     /* consume */
   }
 });
 
+const renderer300Config = { fps: 60, width: 1920, height: 1080, durationMs: Millis(5000) } as const;
+const renderer300 = createVideoRenderer(renderer300Config, Compositor.create());
 bench.add('VideoRenderer -- 300 frames @ 60fps', async () => {
-  const compositor = Compositor.create();
-  const renderer = createVideoRenderer({ fps: 60, width: 1920, height: 1080, durationMs: Millis(5000) }, compositor);
-  for await (const _ of renderer.frames()) {
+  for await (const _ of renderer300.frames()) {
     /* consume */
   }
 });
@@ -187,10 +190,10 @@ bench.add('Compositor.compute() -- hot loop with 3-quantizer blend tree (100 cal
   }
 });
 
+const emptyVideoCompositor = Compositor.create();
 bench.add('Compositor.compute() -- hot loop (100 calls)', () => {
-  const c = Compositor.create();
   for (let i = 0; i < 100; i++) {
-    c.compute();
+    emptyVideoCompositor.compute();
   }
 });
 
