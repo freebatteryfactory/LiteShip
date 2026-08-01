@@ -1972,6 +1972,18 @@
           "kind": "interface"
         },
         {
+          "name": "CssIdentityFinding",
+          "kind": "interface"
+        },
+        {
+          "name": "CssIdentityScanResult",
+          "kind": "interface"
+        },
+        {
+          "name": "CssIdentitySource",
+          "kind": "interface"
+        },
+        {
           "name": "DevopsProfile",
           "kind": "interface"
         },
