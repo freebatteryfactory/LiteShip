@@ -531,7 +531,7 @@ export type {
   GraphStore,
   AppliedGraphVerification,
 } from './graph/index.js';
-export { createGraphMutationClient } from './graph/index.js';
+export { createGraphMutationClient, GRAPH_MUTATION_DEFAULT_TIMEOUT_MS } from './graph/index.js';
 export type { GraphMutationClient, GraphMutationClientOptions, GraphMutationOps } from './graph/index.js';
 // HTTP QUERY read-leg (#119) — transport-agnostic graph read + conditional etag.
 export {

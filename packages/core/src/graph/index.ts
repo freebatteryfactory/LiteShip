@@ -56,7 +56,7 @@ export type {
   AppliedGraphVerification,
 } from './graph-mutation.js';
 
-export { createGraphMutationClient } from './graph-mutation-client.js';
+export { createGraphMutationClient, GRAPH_MUTATION_DEFAULT_TIMEOUT_MS } from './graph-mutation-client.js';
 
 export type { GraphMutationClient, GraphMutationClientOptions, GraphMutationOps } from './graph-mutation-client.js';
 

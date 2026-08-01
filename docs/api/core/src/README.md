@@ -369,6 +369,7 @@ on the explicit `@liteship/core/ecs` advanced subpath.
 - [EVALUATE\_THRESHOLDS\_SOURCE](variables/EVALUATE_THRESHOLDS_SOURCE.md)
 - [fallbackKernels](variables/fallbackKernels.md)
 - [GenFrame](variables/GenFrame.md)
+- [GRAPH\_MUTATION\_DEFAULT\_TIMEOUT\_MS](variables/GRAPH_MUTATION_DEFAULT_TIMEOUT_MS.md)
 - [GRAPH\_QUERY\_FALLBACK\_HEADER](variables/GRAPH_QUERY_FALLBACK_HEADER.md)
 - [GraphPatch](variables/GraphPatch.md)
 - [graphPatchIdentityCapsule](variables/graphPatchIdentityCapsule.md)

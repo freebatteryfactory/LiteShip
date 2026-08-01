@@ -65,6 +65,7 @@ the projection-key vocabulary. Curated named re-exports only — no behavior her
 
 - [DAG](variables/DAG.md)
 - [DocumentGraphNodeSchema](variables/DocumentGraphNodeSchema.md)
+- [GRAPH\_MUTATION\_DEFAULT\_TIMEOUT\_MS](variables/GRAPH_MUTATION_DEFAULT_TIMEOUT_MS.md)
 - [GRAPH\_QUERY\_FALLBACK\_HEADER](variables/GRAPH_QUERY_FALLBACK_HEADER.md)
 - [GraphPatch](variables/GraphPatch.md)
 - [PROJECTION\_KEYS\_SOURCE](variables/PROJECTION_KEYS_SOURCE.md)

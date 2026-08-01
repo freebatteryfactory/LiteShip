@@ -1350,6 +1350,10 @@
           "signature": "cubicBezier:function,ease:function,easeIn:function,easeInCubic:function,easeInOut:function,easeInOutCubic:function,easeOut:function,easeOutBack:function,easeOutBounce:function,easeOutCubic:function,easeOutElastic:function,easeOutExpo:function,easingToLinearCSS:function,linear:function,spring:function,springNaturalDuration:function,springToLinearCSS:function"
         },
         {
+          "name": "GRAPH_MUTATION_DEFAULT_TIMEOUT_MS",
+          "kind": "const"
+        },
+        {
           "name": "GRAPH_QUERY_FALLBACK_HEADER",
           "kind": "const"
         },

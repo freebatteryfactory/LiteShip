@@ -6,7 +6,7 @@
 
 # Interface: GraphMutationClientOptions
 
-Defined in: core/dist/graph/graph-mutation-client.d.ts:17
+Defined in: core/dist/graph/graph-mutation-client.d.ts:22
 
 Configuration for [createGraphMutationClient](../functions/createGraphMutationClient.md) — endpoint, initial base, and stale-recovery policy.
 
@@ -16,7 +16,7 @@ Configuration for [createGraphMutationClient](../functions/createGraphMutationCl
 
 > `readonly` **base**: [`DocumentGraph`](DocumentGraph.md)
 
-Defined in: core/dist/graph/graph-mutation-client.d.ts:21
+Defined in: core/dist/graph/graph-mutation-client.d.ts:26
 
 The initial client-side base graph (e.g. decoded from an initial GET or inlined SSR data).
 
@@ -26,7 +26,7 @@ The initial client-side base graph (e.g. decoded from an initial GET or inlined 
 
 > `readonly` `optional` **fetchImpl?**: \{(`input`, `init?`): `Promise`\<`Response`\>; (`input`, `init?`): `Promise`\<`Response`\>; \}
 
-Defined in: core/dist/graph/graph-mutation-client.d.ts:23
+Defined in: core/dist/graph/graph-mutation-client.d.ts:28
 
 Injectable fetch for tests / non-browser hosts. Defaults to global fetch.
 
@@ -76,7 +76,7 @@ Injectable fetch for tests / non-browser hosts. Defaults to global fetch.
 
 > `readonly` `optional` **maxStaleRetries?**: `number`
 
-Defined in: core/dist/graph/graph-mutation-client.d.ts:31
+Defined in: core/dist/graph/graph-mutation-client.d.ts:36
 
 Bounded stale-base retries. Default: 1 when `refreshBase` is provided, else 0.
 
@@ -86,7 +86,7 @@ Bounded stale-base retries. Default: 1 when `refreshBase` is provided, else 0.
 
 > `readonly` `optional` **refreshBase?**: () => `Promise`\<[`DocumentGraph`](DocumentGraph.md)\>
 
-Defined in: core/dist/graph/graph-mutation-client.d.ts:29
+Defined in: core/dist/graph/graph-mutation-client.d.ts:34
 
 Host-owned base reloader (e.g. GET the host's graph endpoint and decode). When present,
 a `staleBase` refusal triggers reload + re-propose up to `maxStaleRetries` times.
@@ -102,12 +102,13 @@ LiteShip does not dictate the read endpoint's shape — the host owns it.
 
 > `readonly` `optional` **timeoutMs?**: `number`
 
-Defined in: core/dist/graph/graph-mutation-client.d.ts:38
+Defined in: core/dist/graph/graph-mutation-client.d.ts:44
 
 Abort a submit's request after this many milliseconds, settling it to the channel's
-`{ status: 'error' }` shape. Without it, a hung request holds the SERIALIZED submit
-queue for as long as the runtime's own fetch deadline (minutes in some browsers) —
-every queued submit on this client waits behind it. Default: no client-side timeout.
+`{ status: 'error' }` shape. A finite non-negative value overrides
+[GRAPH\_MUTATION\_DEFAULT\_TIMEOUT\_MS](../variables/GRAPH_MUTATION_DEFAULT_TIMEOUT_MS.md); `undefined`, non-finite, and negative
+values use that finite default. An unbounded request is deliberately not expressible:
+it would hold every later submit in this client's serialized queue.
 
 ***
 
@@ -115,6 +116,6 @@ every queued submit on this client waits behind it. Default: no client-side time
 
 > `readonly` **url**: `string`
 
-Defined in: core/dist/graph/graph-mutation-client.d.ts:19
+Defined in: core/dist/graph/graph-mutation-client.d.ts:24
 
 The mutation endpoint `sendGraphMutation` POSTs to.

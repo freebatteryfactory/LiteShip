@@ -15,6 +15,12 @@ import type { DocumentGraph } from './document-graph.js';
 import { GraphPatch, type PatchOp } from './graph-patch.js';
 import { sendGraphMutation, type GraphMutationResponse } from './graph-mutation.js';
 
+/**
+ * Conservative client-side ceiling for one mutation request. This is an
+ * explicit finite safety default, not a measurement-derived performance claim.
+ */
+export const GRAPH_MUTATION_DEFAULT_TIMEOUT_MS = 30_000;
+
 /** Configuration for {@link createGraphMutationClient} — endpoint, initial base, and stale-recovery policy. */
 export interface GraphMutationClientOptions {
   /** The mutation endpoint `sendGraphMutation` POSTs to. */
@@ -33,16 +39,16 @@ export interface GraphMutationClientOptions {
   readonly maxStaleRetries?: number;
   /**
    * Abort a submit's request after this many milliseconds, settling it to the channel's
-   * `{ status: 'error' }` shape. Without it, a hung request holds the SERIALIZED submit
-   * queue for as long as the runtime's own fetch deadline (minutes in some browsers) —
-   * every queued submit on this client waits behind it. Default: no client-side timeout.
+   * `{ status: 'error' }` shape. A finite non-negative value overrides
+   * {@link GRAPH_MUTATION_DEFAULT_TIMEOUT_MS}; `undefined`, non-finite, and negative
+   * values use that finite default. An unbounded request is deliberately not expressible:
+   * it would hold every later submit in this client's serialized queue.
    */
   readonly timeoutMs?: number;
 }
 
 /** Wrap a fetch with an AbortController deadline; the abort reason names the timeout. */
-const withTimeout = (impl: typeof fetch, timeoutMs: number | undefined): typeof fetch => {
-  if (timeoutMs === undefined) return impl;
+const withTimeout = (impl: typeof fetch, timeoutMs: number): typeof fetch => {
   return async (input, init) => {
     const controller = new AbortController();
     const timer = setTimeout(
@@ -96,7 +102,11 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
  */
 export function createGraphMutationClient(options: GraphMutationClientOptions): GraphMutationClient {
   let currentBase = options.base;
-  const fetchImpl = withTimeout(options.fetchImpl ?? fetch, options.timeoutMs);
+  const timeoutMs =
+    options.timeoutMs !== undefined && Number.isFinite(options.timeoutMs) && options.timeoutMs >= 0
+      ? options.timeoutMs
+      : GRAPH_MUTATION_DEFAULT_TIMEOUT_MS;
+  const fetchImpl = withTimeout(options.fetchImpl ?? fetch, timeoutMs);
   const maxStaleRetries = options.maxStaleRetries ?? (options.refreshBase ? 1 : 0);
   let queue: Promise<void> = Promise.resolve();
 
