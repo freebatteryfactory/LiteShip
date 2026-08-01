@@ -299,6 +299,7 @@ export function buildRuntimeSeamsReport(
       ? Number(startupRealityFacts.startupReality.browser.worker.summary.totalStartupMs.median)
       : null;
   const benchWorkerStartupSplit = benchFacts.bench.workerStartupSplit;
+  const currentWorkerSharedOverheadPct = benchWorkerStartupSplit?.shared.overheadPct ?? null;
   const seamAbsoluteMeanNs = benchWorkerStartupSplit?.seam.absoluteMeanNs ?? 0;
   const workerSeamToBrowserStartupMedianPct =
     browserWorkerStartupMedianMs === null || browserWorkerStartupMedianMs <= 0
@@ -415,12 +416,12 @@ export function buildRuntimeSeamsReport(
         supportMeanNs: benchWorkerStartupSplit?.shared.supportMeanNs ?? 0,
         parityMeanNs: benchWorkerStartupSplit?.shared.parityMeanNs ?? 0,
         residualMeanNs: benchWorkerStartupSplit?.shared.residualMeanNs ?? 0,
-        overheadPct: benchWorkerStartupSplit?.shared.overheadPct ?? null,
+        overheadPct: currentWorkerSharedOverheadPct,
         previousOverheadPct: previousWorkerSharedOverheadPct,
         deltaOverheadPct:
-          benchWorkerStartupSplit?.shared.overheadPct === null || previousWorkerSharedOverheadPct === null
+          currentWorkerSharedOverheadPct === null || previousWorkerSharedOverheadPct === null
             ? null
-            : Number((benchWorkerStartupSplit.shared.overheadPct - previousWorkerSharedOverheadPct).toFixed(2)),
+            : Number((currentWorkerSharedOverheadPct - previousWorkerSharedOverheadPct).toFixed(2)),
         thresholdPct: benchWorkerStartupSplit?.shared.thresholdPct ?? 25,
         conclusion:
           benchWorkerStartupSplit?.shared.conclusion ??

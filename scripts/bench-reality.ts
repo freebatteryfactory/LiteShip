@@ -279,6 +279,9 @@ async function buildBrowserBenchBundle(): Promise<string> {
   });
 
   const output = Array.isArray(result) ? result[0] : result;
+  if (output === undefined || !('output' in output)) {
+    throw new Error('Unable to build startup reality browser output.');
+  }
   const chunk = output.output.find(
     (entry): entry is (typeof output.output)[number] & { readonly type: 'chunk'; readonly code: string } =>
       entry.type === 'chunk',

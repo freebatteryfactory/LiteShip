@@ -136,6 +136,7 @@ const scanFiles = (patterns: string[], matcher: RegExp, excludeSanctioned = fals
     const lines = readFileSync(file, 'utf8').split('\n');
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+      if (line === undefined) continue;
       // Skip JSDoc continuation lines (lines starting with optional whitespace + `*`)
       if (/^\s*\*/.test(line)) continue;
       // Skip import/export lines that legitimately use `as` for aliasing
@@ -307,7 +308,7 @@ const checks: Check[] = [
       //   reuse the session, inflating per-replicate overhead spread (~70%+) even
       //   when median overhead stays near parity; flex still enforces
       //   llmRuntimeSteadySignals (exceedance rate + P99 tail) separately.
-      const acceptedNoisyPairs = new Set(ACCEPTED_BENCH_STABILITY_NOISY_LABELS);
+      const acceptedNoisyPairs: ReadonlySet<string> = new Set(ACCEPTED_BENCH_STABILITY_NOISY_LABELS);
       let runtimeSeamsCover = 'runtime-seams=not-available';
       let runtimeSeamsOk = true;
       if (existsSync('reports/runtime-seams.json')) {

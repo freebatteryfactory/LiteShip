@@ -47,7 +47,7 @@ function isPublicTopLevelStatement(statement: ts.Statement): boolean {
 }
 
 function bodyCanBeErased(node: ts.Node): node is ts.FunctionLikeDeclaration & { readonly body: ts.Block } {
-  if (!ts.isFunctionLike(node) || node.body === undefined || !ts.isBlock(node.body)) return false;
+  if (!ts.isFunctionLike(node) || !('body' in node) || node.body === undefined || !ts.isBlock(node.body)) return false;
   return (
     ts.isConstructorDeclaration(node) ||
     ts.isSetAccessorDeclaration(node) ||

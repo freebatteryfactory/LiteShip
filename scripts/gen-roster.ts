@@ -111,7 +111,7 @@ export interface CliFragmentProjection {
 const ROOT_MANIFEST = JSON.parse(readFileSync(resolve(REPO_ROOT, 'package.json'), 'utf8')) as CatalogManifest;
 const FLEET_VERSION = ROOT_MANIFEST.version;
 if (FLEET_VERSION === undefined) throw new Error('root package.json must declare the matched LiteShip fleet version');
-const FLEET_PACKAGES = new Set(PACKAGE_CATALOG.map((record) => record.name));
+const FLEET_PACKAGES: ReadonlySet<string> = new Set(PACKAGE_CATALOG.map((record) => record.name));
 
 /**
  * Render one publishable CLI fragment from its authored template/example owner.
@@ -715,7 +715,7 @@ export function validatePackageCatalog(
       drift.push({ copy: 'PACKAGE_CATALOG', detail: `${label} has a missing order` });
       return;
     }
-    const actual = (orders as readonly number[]).toSorted((left, right) => left - right);
+    const actual = [...(orders as readonly number[])].sort((left: number, right: number) => left - right);
     const expected = Array.from({ length: actual.length }, (_value, index) => index);
     if (!arrayEqual(actual.map(String), expected.map(String))) {
       drift.push({ copy: 'PACKAGE_CATALOG', detail: `${label} orders must be unique and contiguous from zero` });

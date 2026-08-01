@@ -15,8 +15,8 @@ import {
   summarizeWorkerStartupAudit,
   summarizeWorkerStartupSplit,
   type ReplicateResult,
-} from './bench/directive-suite.ts';
-import { lookupCachedReplicates } from './bench/replicate-cache.ts';
+} from './bench/directive-suite.js';
+import { lookupCachedReplicates } from './bench/replicate-cache.js';
 
 interface BenchTaskSummary {
   readonly name: string;

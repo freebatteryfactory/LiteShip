@@ -77,7 +77,8 @@ export async function emitDocsBundle(opts: {
   }
 
   const version =
-    opts.version ?? JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8') as { version: string }).version;
+    opts.version ??
+    (JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')) as { readonly version: string }).version;
   const bundleId = computeBundleId(entries);
   const manifest: DocsBundleManifest = {
     version,

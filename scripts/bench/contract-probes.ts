@@ -36,8 +36,8 @@ import { defineComponentCatalog, renderHash, validateGeneratedUITree, type Gener
 import { computeWaveform, detectBeats, detectOnsets, walkRiff } from '@liteship/assets';
 import { defineGate, finding, memoryContext, runGates, type Gate } from '@liteship/gauntlet';
 import type { SSEMessage } from '@liteship/web';
-import { parseMessage } from '../../packages/web/src/stream/sse-pure.ts';
-import type { ComplexityProbe } from './contracts.ts';
+import { parseMessage } from '../../packages/web/src/stream/sse-pure.js';
+import type { ComplexityProbe } from './contracts.js';
 
 /** A fixed 3-threshold boundary the batch probe evaluates many values against. */
 const PROBE_BOUNDARY = defineBoundary({

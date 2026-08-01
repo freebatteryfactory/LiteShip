@@ -1,8 +1,8 @@
 /** Live pnpm registry audit with an always-written raw JSON receipt. @module */
 
 import { mkdir, writeFile } from 'node:fs/promises';
-import { spawnArgvCaptureWithEnv } from '../packages/command/src/host/launcher.ts';
-import { blockingAuditFindings, parsePnpmAuditReceipt } from './lib/security-audit-contract.ts';
+import { spawnArgvCaptureWithEnv } from '../packages/command/src/host/launcher.js';
+import { blockingAuditFindings, parsePnpmAuditReceipt } from './lib/security-audit-contract.js';
 
 const reportPath = 'reports/pnpm-audit.json';
 const stderrPath = 'reports/pnpm-audit.stderr.txt';

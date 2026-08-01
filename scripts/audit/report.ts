@@ -297,7 +297,7 @@ function supportingFindings(
     findings.push({
       id: `support/${name}/${artifact.status}`,
       section: 'support',
-      rule: `artifact-${artifact.status}`,
+      rule: `artifact-${artifact.status}` as AuditFinding['rule'],
       severity: artifact.status === 'failed' ? 'error' : 'warning',
       title: `${name} artifact ${artifact.status}`,
       summary: artifact.summary,
@@ -316,7 +316,7 @@ function supportingFindings(
       findings.push({
         id: `support/runtime-hotspot/${hotspot.file}`,
         section: 'support',
-        rule: 'runtime-seam-hotspot',
+        rule: 'runtime-seam-hotspot' as AuditFinding['rule'],
         severity: 'info',
         title: 'Runtime seam branch hotspot',
         summary: `${hotspot.file} is still a top branch hotspot at ${hotspot.branchPct.toFixed(2)}% coverage.`,
@@ -332,7 +332,7 @@ function supportingFindings(
       findings.push({
         id: `support/runtime-paired-truth/${paired.id}`,
         section: 'support',
-        rule: 'runtime-seam-paired-truth',
+        rule: 'runtime-seam-paired-truth' as AuditFinding['rule'],
         severity: 'warning',
         title: 'Runtime paired-truth status',
         summary:
@@ -353,7 +353,7 @@ function supportingFindings(
       findings.push({
         id: `support/runtime-transport/${diagnostic.label}`,
         section: 'support',
-        rule: 'runtime-seam-transport-note',
+        rule: 'runtime-seam-transport-note' as AuditFinding['rule'],
         severity: 'info',
         title: 'Runtime seam transport note',
         summary:

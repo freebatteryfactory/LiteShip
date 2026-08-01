@@ -87,7 +87,7 @@ export const DEFAULT_ANALYZABLE_ARTIFACTS = ['src/**/*.ts', 'src/**/*.tsx', '!sr
  */
 const pkg = <const Record extends PackageCatalogInput>(
   record: Record,
-): Record & { readonly audit: PackageCatalogRecord['audit'] } => ({
+): Record & PackageCatalogRecord & { readonly audit: PackageCatalogRecord['audit'] } => ({
   ...record,
   audit: {
     ...record.audit,

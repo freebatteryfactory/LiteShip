@@ -58,9 +58,9 @@ import {
   measureComplexityCurve,
   parseBenchmarkEvidenceArtifact,
   readDistributionRegistry,
-} from './bench/contracts.ts';
-import { COMPLEXITY_PROBES } from './bench/contract-probes.ts';
-import { projectBenchmarkOwnerCoverage, verifyDeclaredDistributions } from './bench/contract-coverage.ts';
+} from './bench/contracts.js';
+import { COMPLEXITY_PROBES } from './bench/contract-probes.js';
+import { projectBenchmarkOwnerCoverage, verifyDeclaredDistributions } from './bench/contract-coverage.js';
 
 export const BENCHMARK_OWNER_COVERAGE_ARTIFACT_PATH = 'benchmarks/benchmark-owner-coverage.json';
 
@@ -74,6 +74,7 @@ export interface MeasuredComplexityIssue {
     | 'insufficient-size-sweep'
     | 'invalid-size-sweep'
     | 'under-replicated'
+    | 'under-timed-batch'
     | 'low-r2'
     | 'unstable-variance';
   readonly detail: string;

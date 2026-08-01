@@ -388,7 +388,7 @@ async function probeBinding(
   const arbitraryDerivable = arb !== undefined;
 
   const handlersPresent =
-    kind === 'pureTransform' || kind === 'sceneComposition'
+    kind === 'pureTransform'
       ? typeof cap.run === 'function'
       : typeof cap.step === 'function' && cap.initialState !== undefined;
 
@@ -403,12 +403,7 @@ async function probeBinding(
   // test (the template stays on its honest self-reporting branch) — the
   // input schema under-specifies the handler's true domain.
   let preconditionMismatch: string | undefined;
-  if (
-    arb !== undefined &&
-    handlersPresent &&
-    (kind === 'pureTransform' || kind === 'sceneComposition') &&
-    typeof cap.run === 'function'
-  ) {
+  if (arb !== undefined && handlersPresent && kind === 'pureTransform' && typeof cap.run === 'function') {
     const run = cap.run;
     try {
       // Fixed seed → the probe samples (and therefore the realOnly /
