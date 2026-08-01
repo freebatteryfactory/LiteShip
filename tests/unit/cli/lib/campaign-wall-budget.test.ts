@@ -537,6 +537,96 @@ describe('campaign wall budgets absorb a cold probe and leave post-step margin (
   });
 });
 
+describe('the budget contract is universal over campaign steps, not existential', () => {
+  const floor = CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS;
+  const campaign = (env: string, condition = ''): string =>
+    `      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n${condition}        env:\n${env}`;
+  const workflow = (steps: string): string =>
+    `jobs:\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n${steps}`;
+
+  it('a second campaign step with no budget is a violation', () => {
+    const steps = `${campaign(`          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`)}${campaign('')}`;
+    expect(
+      scanCampaignWallBudget(workflow(steps), ['exhaustive-mutation']).some((violation) =>
+        violation.includes('missing LITESHIP_CAMPAIGN_WALL_BUDGET_MS'),
+      ),
+    ).toBe(true);
+  });
+
+  it('a second campaign step with an out-of-bounds budget is a violation', () => {
+    const steps = `${campaign(`          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`)}${campaign(
+      "          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '1'\n",
+    )}`;
+    expect(
+      scanCampaignWallBudget(workflow(steps), ['exhaustive-mutation']).some((violation) =>
+        violation.includes('cannot absorb a cold probe'),
+      ),
+    ).toBe(true);
+  });
+
+  it('a campaign step gated if false cannot discharge the contract', () => {
+    const steps = campaign(`          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`, '        if: false\n');
+    expect(
+      scanCampaignWallBudget(workflow(steps), ['exhaustive-mutation']).some((violation) =>
+        violation.includes('conditional'),
+      ),
+    ).toBe(true);
+  });
+
+  it.each([
+    ['an absent if', ''],
+    ['if always()', '        if: always()\n'],
+    ['if expression always()', '        if: ${{ always() }}\n'],
+  ])('%s discharges the campaign budget contract', (_name, condition) => {
+    const steps = campaign(`          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`, condition);
+    expect(scanCampaignWallBudget(workflow(steps), ['exhaustive-mutation'])).toEqual([]);
+  });
+
+  it('duplicate job-level timeout-minutes is refused through the shared YAML classifier', () => {
+    const subject = workflow(campaign(`          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`)).replace(
+      '    timeout-minutes: 150\n',
+      '    timeout-minutes: 150\n    timeout-minutes: 151\n',
+    );
+    expect(
+      scanCampaignWallBudget(subject, ['exhaustive-mutation']).some((violation) =>
+        violation.includes('duplicate key timeout-minutes'),
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('a conditional cache step cannot discharge a persistence contract', () => {
+  const sha = 'a'.repeat(40);
+  const save = `      - uses: actions/cache/save@${sha}\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`;
+
+  it('a restore step gated on success is a violation', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n        if: success()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n${save}`;
+    expect(
+      scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation']).some((violation) =>
+        violation.includes('conditional'),
+      ),
+    ).toBe(true);
+  });
+
+  it.each([
+    ['an absent if', ''],
+    ['if always()', '        if: always()\n'],
+    ['if expression always()', '        if: ${{ always() }}\n'],
+  ])('%s discharges the restore contract', (_name, condition) => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n${condition}        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n${save}`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).toEqual([]);
+  });
+
+  it('duplicate with.key children are refused through the shared YAML classifier', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          key: bank-decoy\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n${save}`;
+    expect(
+      scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation']).some((violation) =>
+        violation.includes('duplicate key key'),
+      ),
+    ).toBe(true);
+  });
+});
+
 describe('campaignShard — parallel shards partition the census; the fold job re-earns it all from the bank', () => {
   const SHARD_ENV = 'LITESHIP_CAMPAIGN_SHARD';
   const savedShard = process.env[SHARD_ENV];

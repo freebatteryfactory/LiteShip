@@ -180,6 +180,10 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
           saves.push({ key: uncommentedScalar(key).slice(5), path: withPathOf(lines, withChildren) });
         }
       } else {
+        if (!stepConditionIsUnconditional(stepFieldOf(lines, step, 'if: '))) {
+          violations.push(`${job}: conditional cache restore step cannot discharge the persistence contract`);
+          continue;
+        }
         // Restore fallbacks are REQUIRED and ordered (rounds 3, 7, 8, 12):
         // attempt-qualified primaries can never exact-match a re-run, so a
         // restore without a non-empty restore-keys leaves banked work
@@ -500,29 +504,40 @@ export function scanCampaignWallBudget(text: string, jobs: readonly string[]): r
     const timeout = jobChildren
       .map((line) => /^timeout-minutes: (\d+)$/u.exec(uncommentedScalar(line.body)))
       .find((match) => match !== null);
-    const budget = campaignStepBudgetOf(lines, job.includes('mcdc') ? '--mcdc' : '--mutate');
-    if (timeout === undefined || timeout === null || budget === null) {
+    const budgets = campaignStepBudgets(lines, job.includes('mcdc') ? '--mcdc' : '--mutate');
+    if (timeout === undefined || timeout === null || budgets.length === 0) {
       violations.push(
         `${job}: job-level timeout-minutes or the campaign step's LITESHIP_CAMPAIGN_WALL_BUDGET_MS missing — the budget contract is unenforceable`,
       );
       continue;
     }
-    const budgetMs = Number(budget);
-    if (budgetMs < CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS) {
-      violations.push(
-        `${job}: wall budget ${budgetMs}ms cannot absorb a cold probe plus two targets — a cold run folds everything inconclusive and banks nothing`,
-      );
-    }
-    // The budget is checked at the per-target BOUNDARY, so a target that
-    // starts just under the budget runs to completion — the ceiling must
-    // reserve a twice-measured in-flight allowance on top of the post-step
-    // margin, or an ordinary ~9.5-minute target started at budget-1ms hands
-    // the kill to GitHub's backstop before the always() save (PR #196
-    // review round 6, confirmed P2).
-    if (budgetMs + 2 * CAMPAIGN_TARGET_EVAL_MS + CAMPAIGN_POST_STEP_MARGIN_MS > Number(timeout[1]) * 60_000) {
-      violations.push(
-        `${job}: wall budget ${budgetMs}ms leaves no in-flight-target and post-step margin under timeout-minutes ${timeout[1]} — the backstop kill skips the always() save`,
-      );
+    for (const budget of budgets) {
+      if (!budget.unconditional) {
+        violations.push(
+          `${job}: campaign step at line ${budget.line} is conditional and cannot discharge the budget contract`,
+        );
+      }
+      if (budget.value === null) {
+        violations.push(`${job}: campaign step at line ${budget.line} is missing LITESHIP_CAMPAIGN_WALL_BUDGET_MS`);
+        continue;
+      }
+      const budgetMs = Number(budget.value);
+      if (budgetMs < CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS) {
+        violations.push(
+          `${job}: wall budget ${budgetMs}ms cannot absorb a cold probe plus two targets — a cold run folds everything inconclusive and banks nothing`,
+        );
+      }
+      // The budget is checked at the per-target BOUNDARY, so a target that
+      // starts just under the budget runs to completion — the ceiling must
+      // reserve a twice-measured in-flight allowance on top of the post-step
+      // margin, or an ordinary ~9.5-minute target started at budget-1ms hands
+      // the kill to GitHub's backstop before the always() save (PR #196
+      // review round 6, confirmed P2).
+      if (budgetMs + 2 * CAMPAIGN_TARGET_EVAL_MS + CAMPAIGN_POST_STEP_MARGIN_MS > Number(timeout[1]) * 60_000) {
+        violations.push(
+          `${job}: wall budget ${budgetMs}ms leaves no in-flight-target and post-step margin under timeout-minutes ${timeout[1]} — the backstop kill skips the always() save`,
+        );
+      }
     }
   }
   return violations;
@@ -657,7 +672,20 @@ function scalarLinesUnder(lines: readonly ActiveLine[], index: number, boundaryI
  * An env on any other step never reaches the campaign process, so it must
  * not satisfy the contract (PR #196 review rounds 3 and 5, confirmed P2s).
  */
-function campaignStepBudgetOf(lines: readonly ActiveLine[], modeFlag: string): string | null {
+interface CampaignStepBudget {
+  readonly value: string | null;
+  readonly line: number;
+  readonly unconditional: boolean;
+}
+
+function stepConditionIsUnconditional(condition: string | null): boolean {
+  if (condition === null) return true;
+  const value = uncommentedScalar(condition);
+  return value === 'always()' || value === '${{ always() }}';
+}
+
+function campaignStepBudgets(lines: readonly ActiveLine[], modeFlag: string): readonly CampaignStepBudget[] {
+  const budgets: CampaignStepBudget[] = [];
   for (const stepIndex of stepIndicesOf(lines)) {
     // An INVOCATION, not a mention: only a command line that STARTS with the
     // literal gates invocation qualifies — `echo check gates`, a name, or an
@@ -675,14 +703,21 @@ function campaignStepBudgetOf(lines: readonly ActiveLine[], modeFlag: string): s
           line.split(/\s+/u).includes(modeFlag),
       );
     if (!invokes) continue;
+    let value: string | null = null;
     const envIndex = childIndicesOf(lines, stepIndex).find((c) => lines[c]!.body === 'env:');
-    if (envIndex === undefined) continue;
-    for (const envChild of childIndicesOf(lines, envIndex)) {
-      const value = /^LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '(\d+)'$/u.exec(uncommentedScalar(lines[envChild]!.body));
-      if (value !== null) return value[1]!;
+    if (envIndex !== undefined) {
+      for (const envChild of childIndicesOf(lines, envIndex)) {
+        const match = /^LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '(\d+)'$/u.exec(uncommentedScalar(lines[envChild]!.body));
+        if (match !== null) value = match[1]!;
+      }
     }
+    budgets.push({
+      value,
+      line: lines[stepIndex]!.line,
+      unconditional: stepConditionIsUnconditional(stepFieldOf(lines, stepIndex, 'if: ')),
+    });
   }
-  return null;
+  return budgets;
 }
 
 /** A checkout step is safe only when it explicitly declines credential persistence. */
