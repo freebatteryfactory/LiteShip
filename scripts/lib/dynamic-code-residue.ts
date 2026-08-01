@@ -16,7 +16,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { ValidationError } from '../../packages/error/src/index.js';
 
-export type DynamicCodeKind = 'EVAL_CALL' | 'FUNCTION_CONSTRUCTOR' | 'STRING_TIMER';
+export type DynamicCodeKind = 'EVAL_CALL' | 'FUNCTION_CONSTRUCTOR' | 'STRING_TIMER' | 'DYNAMIC_IMPORT';
 
 export interface DynamicCodeFinding {
   readonly file: string;
@@ -30,22 +30,310 @@ export interface DynamicCodeScan {
   readonly swept: readonly string[];
 }
 
-const EVAL_CALL = /(?<![.\w$])eval\s*\(/u;
-const FUNCTION_CONSTRUCTOR = /\bnew\s+Function\s*\(|(?<![.\w$])Function\s*\(/u;
-const STRING_TIMER = /(?<![.\w$])set(?:Timeout|Interval|Immediate)\s*\(\s*['"`]/u;
+const DYNAMIC_TOKEN = /\b(?:eval|Function)\b/gu;
+const GLOBAL_RECEIVER = new Set(['globalThis', 'window', 'self']);
+const STRING_TIMER_CALLEE = /\bset(?:Timeout|Interval|Immediate)\s*\(/gu;
+const DYNAMIC_IMPORT_CALLEE = /\bimport\s*\(/gu;
+const COMPUTED_MEMBER = /\b([A-Za-z_$][\w$]*)\s*(?:\?\.)?\s*\[/gu;
+const DANGEROUS_IMPORT_SCHEME = /^(?:data|blob|javascript):/iu;
+const SAFE_CONST_DYNAMIC_BINDING =
+  /\bconst\s+(eval|Function)\s*=\s*(?:(?:async\s+)?function\b|(?:async\s*)?\([^)]*\)\s*=>|(?:async\s+)?[A-Za-z_$][\w$]*\s*=>)/gu;
+const SAFE_DECLARED_DYNAMIC_BINDING = /\b(?:function|class)\s+(eval|Function)\b/gu;
+const SAFE_RECEIVER_BINDING =
+  /\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*(?:\{|(?:async\s+)?function\b|(?:async\s*)?\([^)]*\)\s*=>|(?:async\s+)?[A-Za-z_$][\w$]*\s*=>)/gu;
+
+interface StringScalar {
+  readonly value: string;
+  readonly escaped: boolean;
+  readonly closed: boolean;
+  readonly interpolated: boolean;
+}
+
+interface ProvenBinding {
+  readonly name: string;
+  readonly scope: string;
+}
+
+/** Replace comments with spaces while preserving source offsets and string contents. */
+function stripCommentsPreservingStrings(source: string): string {
+  const output = [...source];
+  let quote: "'" | '"' | '`' | null = null;
+  let lineComment = false;
+  let blockComment = false;
+  let escaped = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index]!;
+    const next = source[index + 1];
+    if (lineComment) {
+      if (char === '\n' || char === '\r') lineComment = false;
+      else output[index] = ' ';
+      continue;
+    }
+    if (blockComment) {
+      output[index] = char === '\n' || char === '\r' ? char : ' ';
+      if (char === '*' && next === '/') {
+        output[index + 1] = ' ';
+        index += 1;
+        blockComment = false;
+      }
+      continue;
+    }
+    if (quote !== null) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === quote) quote = null;
+      continue;
+    }
+    if (char === "'" || char === '"' || char === '`') {
+      quote = char;
+    } else if (char === '/' && next === '/') {
+      output[index] = ' ';
+      output[index + 1] = ' ';
+      index += 1;
+      lineComment = true;
+    } else if (char === '/' && next === '*') {
+      output[index] = ' ';
+      output[index + 1] = ' ';
+      index += 1;
+      blockComment = true;
+    }
+  }
+  return output.join('');
+}
+
+/** Mask string contents while preserving source offsets for token classification. */
+function maskStrings(source: string): string {
+  const output = [...source];
+  let quote: "'" | '"' | '`' | null = null;
+  let escaped = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index]!;
+    if (quote !== null) {
+      output[index] = char === '\n' || char === '\r' ? char : ' ';
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === quote) quote = null;
+    } else if (char === "'" || char === '"' || char === '`') {
+      output[index] = ' ';
+      quote = char;
+    }
+  }
+  return output.join('');
+}
+
+/** Extract executable `${...}` bodies; ordinary template text remains a string. */
+function templateExpressionBodies(source: string): readonly string[] {
+  const bodies: string[] = [];
+  let outerQuote: "'" | '"' | null = null;
+  let outerEscaped = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const outerChar = source[index]!;
+    if (outerQuote !== null) {
+      if (outerEscaped) outerEscaped = false;
+      else if (outerChar === '\\') outerEscaped = true;
+      else if (outerChar === outerQuote) outerQuote = null;
+      continue;
+    }
+    if (outerChar === "'" || outerChar === '"') {
+      outerQuote = outerChar;
+      continue;
+    }
+    if (source[index] !== '`') continue;
+    for (index += 1; index < source.length; index += 1) {
+      const char = source[index]!;
+      if (char === '\\') {
+        index += 1;
+        continue;
+      }
+      if (char === '`') break;
+      if (char !== '$' || source[index + 1] !== '{') continue;
+      const start = index + 2;
+      let depth = 1;
+      let quote: "'" | '"' | null = null;
+      let escaped = false;
+      let cursor = start;
+      for (; cursor < source.length; cursor += 1) {
+        const expressionChar = source[cursor]!;
+        if (quote !== null) {
+          if (escaped) escaped = false;
+          else if (expressionChar === '\\') escaped = true;
+          else if (expressionChar === quote) quote = null;
+          continue;
+        }
+        if (expressionChar === "'" || expressionChar === '"') {
+          quote = expressionChar;
+        } else if (expressionChar === '{') {
+          depth += 1;
+        } else if (expressionChar === '}') {
+          depth -= 1;
+          if (depth === 0) break;
+        }
+      }
+      bodies.push(source.slice(start, cursor));
+      index = cursor;
+    }
+  }
+  return bodies;
+}
+
+function scopeKeys(source: string): readonly string[] {
+  const keys: string[] = [];
+  const stack: number[] = [];
+  let nextScope = 1;
+  for (let index = 0; index < source.length; index += 1) {
+    if (source[index] === '}') stack.pop();
+    keys[index] = `/${stack.join('/')}/`;
+    if (source[index] === '{') {
+      stack.push(nextScope);
+      nextScope += 1;
+    }
+  }
+  return keys;
+}
+
+function collectProvenBindings(masked: string, scopes: readonly string[], pattern: RegExp): readonly ProvenBinding[] {
+  const bindings: ProvenBinding[] = [];
+  for (const match of masked.matchAll(pattern)) {
+    bindings.push({ name: match[1]!, scope: scopes[match.index] ?? '/' });
+  }
+  return bindings;
+}
+
+function bindingVisible(bindings: readonly ProvenBinding[], name: string, scope: string): boolean {
+  // Same-scope proof is deliberately conservative: an inner block may shadow
+  // an otherwise-safe outer name with an unclassifiable alias. Admitting only
+  // exact scope identity can false-red a nested use, but cannot false-green a
+  // shadowed global dynamic-code capability.
+  return bindings.some((binding) => binding.name === name && scope === binding.scope);
+}
+
+function stringScalarAt(source: string, offset: number): StringScalar | null {
+  let index = offset;
+  while (/\s/u.test(source[index] ?? '')) index += 1;
+  const quote = source[index];
+  if (quote !== "'" && quote !== '"' && quote !== '`') return null;
+  let value = '';
+  let escaped = false;
+  for (index += 1; index < source.length; index += 1) {
+    const char = source[index]!;
+    if (char === '\\') {
+      escaped = true;
+      index += 1;
+      if (index < source.length) value += source[index]!;
+      continue;
+    }
+    if (char === quote) return { value, escaped, closed: true, interpolated: quote === '`' && value.includes('${') };
+    value += char;
+  }
+  return { value, escaped, closed: false, interpolated: quote === '`' && value.includes('${') };
+}
+
+function immediateMemberReceiver(masked: string, tokenOffset: number): string | null {
+  const match = masked.slice(0, tokenOffset).match(/([A-Za-z_$][\w$]*)\s*(?:\.|\?\.)\s*$/u);
+  return match?.[1] ?? null;
+}
+
+function previousNonWhitespace(source: string, offset: number): string {
+  for (let index = offset - 1; index >= 0; index -= 1) {
+    if (!/\s/u.test(source[index]!)) return source[index]!;
+  }
+  return '';
+}
+
+function nextNonWhitespace(source: string, offset: number): string {
+  for (let index = offset; index < source.length; index += 1) {
+    if (!/\s/u.test(source[index]!)) return source[index]!;
+  }
+  return '';
+}
+
+function typeOnlyToken(masked: string, tokenOffset: number): boolean {
+  if (previousNonWhitespace(masked, tokenOffset) === ':') return true;
+  return /\bas\s*$/u.test(masked.slice(0, tokenOffset));
+}
 
 /**
- * Classify one source line. Comment-shaped lines are exempt so prose about
- * the rules cannot red the gate; everything else that spells a dynamic-code
- * evaluation form is a finding.
+ * Classify dynamic-code residue in one logical source fragment.
+ *
+ * THE CLASS RULE: the ANCHOR is every `eval` / `Function` token in a callee or
+ * reference position. The ALLOWLIST is only a comment/string, a proven local
+ * binding, a type position, or a property on a receiver proven not to be a
+ * global object. The old denylist lost six callee spellings at once; callee
+ * syntax is an open grammar, so anything this classifier cannot prove safe is
+ * residue. Dangerous `data:`, `blob:`, and `javascript:` imports follow the
+ * same fail-closed rule for escaped or unterminated specifiers.
+ */
+export function classifyDynamicCodeSource(source: string): readonly DynamicCodeKind[] {
+  const commentStripped = stripCommentsPreservingStrings(source);
+  const masked = maskStrings(commentStripped);
+  const kinds = new Set<DynamicCodeKind>();
+  const scopes = scopeKeys(masked);
+  const localBindings = [
+    ...collectProvenBindings(masked, scopes, SAFE_CONST_DYNAMIC_BINDING),
+    ...collectProvenBindings(masked, scopes, SAFE_DECLARED_DYNAMIC_BINDING),
+  ];
+  const safeReceivers = collectProvenBindings(masked, scopes, SAFE_RECEIVER_BINDING);
+
+  for (const expression of templateExpressionBodies(commentStripped)) {
+    for (const kind of classifyDynamicCodeSource(expression)) kinds.add(kind);
+  }
+
+  for (const match of masked.matchAll(DYNAMIC_TOKEN)) {
+    const token = match[0]!;
+    const offset = match.index;
+    const scope = scopes[offset] ?? '/';
+    const receiver = immediateMemberReceiver(masked, offset);
+    if (receiver !== null && !GLOBAL_RECEIVER.has(receiver) && bindingVisible(safeReceivers, receiver, scope)) continue;
+    if (receiver === null) {
+      if (bindingVisible(localBindings, token, scope)) continue;
+      if (typeOnlyToken(masked, offset)) continue;
+      if (nextNonWhitespace(masked, offset + token.length) === ':') continue;
+    }
+    kinds.add(token === 'eval' ? 'EVAL_CALL' : 'FUNCTION_CONSTRUCTOR');
+  }
+
+  for (const match of masked.matchAll(COMPUTED_MEMBER)) {
+    const receiver = match[1]!;
+    const scope = scopes[match.index] ?? '/';
+    const scalar = stringScalarAt(commentStripped, match.index + match[0].length);
+    if (scalar === null) continue;
+    const receiverIsSafe =
+      !GLOBAL_RECEIVER.has(receiver) &&
+      bindingVisible(safeReceivers, receiver, scope) &&
+      scalar.closed &&
+      !scalar.escaped &&
+      !scalar.interpolated;
+    if (receiverIsSafe) continue;
+    if (!scalar.closed || scalar.escaped || scalar.interpolated || scalar.value === 'eval') kinds.add('EVAL_CALL');
+    if (!scalar.closed || scalar.escaped || scalar.interpolated || scalar.value === 'Function') {
+      kinds.add('FUNCTION_CONSTRUCTOR');
+    }
+  }
+
+  for (const match of masked.matchAll(DYNAMIC_IMPORT_CALLEE)) {
+    const scalar = stringScalarAt(commentStripped, match.index + match[0].length);
+    if (
+      scalar !== null &&
+      (!scalar.closed || scalar.escaped || scalar.interpolated || DANGEROUS_IMPORT_SCHEME.test(scalar.value))
+    ) {
+      kinds.add('DYNAMIC_IMPORT');
+    }
+  }
+
+  for (const match of masked.matchAll(STRING_TIMER_CALLEE)) {
+    if (stringScalarAt(commentStripped, match.index + match[0].length) !== null) kinds.add('STRING_TIMER');
+  }
+
+  return [...kinds];
+}
+
+/**
+ * Compatibility classifier for callers that need the first residue kind on a
+ * physical line. The repository sweep consumes the complete source classifier.
  */
 export function classifyDynamicCodeLine(line: string): DynamicCodeKind | null {
-  const trimmed = line.trim();
-  if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return null;
-  if (EVAL_CALL.test(line)) return 'EVAL_CALL';
-  if (FUNCTION_CONSTRUCTOR.test(line)) return 'FUNCTION_CONSTRUCTOR';
-  if (STRING_TIMER.test(line)) return 'STRING_TIMER';
-  return null;
+  if (line.trimStart().startsWith('*')) return null;
+  return classifyDynamicCodeSource(line)[0] ?? null;
 }
 
 const SHIPPED_EXTENSIONS = ['.astro', '.js', '.mjs', '.cjs'];
@@ -261,10 +549,33 @@ export function scanShippedDynamicCode(repoRoot: string): DynamicCodeScan {
   for (const file of [...files].sort()) {
     const rel = relative(repoRoot, file).replace(/\\/g, '/');
     swept.push(rel);
-    const lines = readFileSync(file, 'utf8').split('\n');
-    for (let index = 0; index < lines.length; index += 1) {
-      const kind = classifyDynamicCodeLine(lines[index]!);
-      if (kind !== null) findings.push({ file: rel, line: index + 1, kind, text: lines[index]!.trim() });
+    const source = readFileSync(file, 'utf8');
+    const lines = source.split('\n');
+    // Strip over the WHOLE file before splitting. A JSDoc interior line starts
+    // with `*`, but a real continuation expression may too; only lexical
+    // comment state can distinguish them without opening an evasion.
+    const activeLines = stripCommentsPreservingStrings(source).split('\n');
+    let found = false;
+    for (let index = 0; index < activeLines.length; index += 1) {
+      for (const kind of classifyDynamicCodeSource(activeLines[index]!)) {
+        findings.push({ file: rel, line: index + 1, kind, text: lines[index]!.trim() });
+        found = true;
+      }
+    }
+    // Mirror effect-residue's second pass: strip comment text, then collapse
+    // whitespace so split callees, computed properties, and import specifiers
+    // cannot evade a classifier that otherwise sees physical lines. A prior
+    // finding already blocks the zero-finding law, so per-file dedup is sound.
+    if (!found) {
+      const collapsed = activeLines.join(' ').replace(/\s+/gu, ' ');
+      for (const kind of classifyDynamicCodeSource(collapsed)) {
+        findings.push({
+          file: rel,
+          line: 0,
+          kind,
+          text: 'construct spans line boundaries (collapsed-source match)',
+        });
+      }
     }
   }
   return { findings, swept };

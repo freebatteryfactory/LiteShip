@@ -28,6 +28,14 @@ const RUNTIME_EXTENSIONS = ['.astro', '.js', '.mjs', '.cjs'] as const;
 // Floor observed when the manifest-derived sweep first enrolled the authored
 // published runtime surface. This is a shrink alarm, never a target or ceiling.
 const PUBLISHED_RUNTIME_SWEEP_FLOOR = 34;
+const EVASIONS = [
+  { name: 'global receiver eval', source: 'globalThis.eval(x)' },
+  { name: 'computed global receiver eval', source: 'window["eval"](x)' },
+  { name: 'indirect eval', source: '(0, eval)(x)' },
+  { name: 'aliased eval reference', source: 'const e = eval; e(x)' },
+  { name: 'global receiver Function', source: 'globalThis.Function("x")' },
+  { name: 'data URL dynamic import', source: 'import("data:text/javascript,export default 1")' },
+] as const;
 
 function runtimeSource(path: string): boolean {
   return RUNTIME_EXTENSIONS.some((extension) => path.endsWith(extension));
@@ -97,6 +105,95 @@ function independentlyPublishedRuntimeSources(repoRoot: string): readonly string
 }
 
 describe('dynamic code in shipped non-TypeScript sources', () => {
+  describe('the dynamic-code classifier sees every callee spelling', () => {
+    it.each(EVASIONS)('$name is residue', ({ source }) => {
+      expect(classifyDynamicCodeLine(source)).not.toBeNull();
+    });
+
+    it.each(['data:', 'blob:', 'javascript:'] as const)('%s dynamic imports are residue', (scheme) => {
+      expect(classifyDynamicCodeLine(`import("${scheme}payload")`)).toBe('DYNAMIC_IMPORT');
+    });
+
+    it('a template-composed import specifier is refused when its scheme cannot be classified', () => {
+      expect(classifyDynamicCodeLine('import(`da${piece}ta:payload`)')).toBe('DYNAMIC_IMPORT');
+      expect(classifyDynamicCodeLine('import(`https://safe.example/module.js`)')).toBeNull();
+    });
+
+    it('an interleaved comment cannot hide a global eval reference', () => {
+      expect(classifyDynamicCodeLine('globalThis /* decoy */ . eval(input)')).toBe('EVAL_CALL');
+    });
+
+    it('strings, comments, distinct local bindings, and unrelated properties are admitted', () => {
+      expect(classifyDynamicCodeLine('const text = "eval(input) and Function(body)";')).toBeNull();
+      expect(classifyDynamicCodeLine('const text = `eval(input)`;')).toBeNull();
+      expect(classifyDynamicCodeLine('const text = "`${eval(input)}`";')).toBeNull();
+      expect(classifyDynamicCodeLine('const value = 1; // eval(input)')).toBeNull();
+      expect(classifyDynamicCodeLine('const eval = (source) => localParser(source); eval(input);')).toBeNull();
+      expect(classifyDynamicCodeLine('const Function = (body) => body; Function(input);')).toBeNull();
+      expect(classifyDynamicCodeLine('const parser = { eval: (value) => value }; parser.eval(input);')).toBeNull();
+      expect(classifyDynamicCodeLine('const parser = { eval: (value) => value }; parser["eval"](input);')).toBeNull();
+    });
+
+    it('scope leaks and aliases of a global dynamic-code capability are findings', () => {
+      expect(classifyDynamicCodeLine('{ const eval = (value) => value; } eval(input);')).toBe('EVAL_CALL');
+      expect(classifyDynamicCodeLine('const eval = globalThis.eval; eval(input);')).toBe('EVAL_CALL');
+      expect(classifyDynamicCodeLine('const parser = globalThis; parser.eval(input);')).toBe('EVAL_CALL');
+      expect(classifyDynamicCodeLine('unknownParser["eval"](input);')).toBe('EVAL_CALL');
+      expect(classifyDynamicCodeLine('const eval = (x) => x; { const eval = alias; eval(x); }')).toBe('EVAL_CALL');
+      expect(
+        classifyDynamicCodeLine('const parser = { eval: (x) => x }; { const parser = globalThis; parser.eval(x); }'),
+      ).toBe('EVAL_CALL');
+    });
+
+    it('template text is inert but template interpolation executes', () => {
+      expect(classifyDynamicCodeLine('const text = `eval(input)`;')).toBeNull();
+      expect(classifyDynamicCodeLine('const text = `${eval(input)}`;')).toBe('EVAL_CALL');
+    });
+
+    it('a multiline computed eval and dangerous import are found by the collapsed source pass', () => {
+      const fixture = mkdtempSync(join(tmpdir(), 'liteship-dynamic-multiline-'));
+      try {
+        const packageDir = join(fixture, 'packages', 'evil');
+        const src = join(packageDir, 'src');
+        mkdirSync(src, { recursive: true });
+        writeFileSync(join(packageDir, 'package.json'), JSON.stringify({ name: 'evil', files: ['src'] }));
+        writeFileSync(
+          join(src, 'main.mjs'),
+          'const mod = import(\n  // lazy\n  "blob:payload"\n);\nwindow[\n  "eval"\n](mod);\n',
+        );
+        const findings = scanShippedDynamicCode(fixture).findings;
+        expect(findings.map((finding) => finding.kind).sort()).toEqual(['DYNAMIC_IMPORT', 'EVAL_CALL']);
+        expect(findings.every((finding) => finding.line === 0)).toBe(true);
+      } finally {
+        rmSync(fixture, { recursive: true, force: true });
+      }
+    });
+
+    it('a multiplication continuation beginning with * is code, not a JSDoc exemption', () => {
+      const fixture = mkdtempSync(join(tmpdir(), 'liteship-dynamic-star-'));
+      try {
+        const packageDir = join(fixture, 'packages', 'evil');
+        const src = join(packageDir, 'src');
+        mkdirSync(src, { recursive: true });
+        writeFileSync(join(packageDir, 'package.json'), JSON.stringify({ name: 'evil', files: ['src'] }));
+        writeFileSync(
+          join(src, 'main.mjs'),
+          '/**\n * eval(input) is prose here\n */\nconst value = 2\n  * eval(input);\n',
+        );
+        expect(scanShippedDynamicCode(fixture).findings).toEqual([
+          {
+            file: 'packages/evil/src/main.mjs',
+            line: 5,
+            kind: 'EVAL_CALL',
+            text: '* eval(input);',
+          },
+        ]);
+      } finally {
+        rmSync(fixture, { recursive: true, force: true });
+      }
+    });
+  });
+
   it("sweeps every non-TypeScript runtime source independently admitted by package manifests' files fields", () => {
     const scan = scanShippedDynamicCode(ROOT);
     const published = independentlyPublishedRuntimeSources(ROOT);
