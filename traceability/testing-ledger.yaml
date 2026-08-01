@@ -239,7 +239,7 @@ traces:
   # ── Assurance (diagnostic-code closure) — exact types + independent source backstop ─
   - id: INV-DIAGNOSTIC-CODE-CLOSED
     tests:
-      - 'tests/property/web-diagnostic-authority.prop.test.ts::is an exact 17-code relation between live registered emitters and the canonical registry'
+      - 'tests/property/web-diagnostic-authority.prop.test.ts::is an exact 18-code relation between live registered emitters and the canonical registry'
       - 'tests/property/web-diagnostic-authority.prop.test.ts::keeps the real parser-backed package corpus clean in both directions'
       - 'tests/property/web-diagnostic-authority.prop.test.ts::resolves literal, no-substitution-template, and local-constant codes without counting prose'
       - 'tests/property/web-diagnostic-authority.prop.test.ts::reds unknown registered identities and bare Web emitters'
