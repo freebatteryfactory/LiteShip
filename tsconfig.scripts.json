@@ -8,5 +8,10 @@
     "noEmit": true,
     "types": ["node"]
   },
+  // The inherited exclude names "scripts", and exclude FILTERS include — so
+  // without an own exclude this project resolved ZERO files and
+  // `pnpm run typecheck:scripts` passed vacuously for its whole life.
+  // Pinned by tests/unit/meta/typecheck-config-population.test.ts.
+  "exclude": ["node_modules", "**/dist/**"],
   "include": ["scripts/**/*.ts"]
 }
