@@ -6,7 +6,7 @@
 
 # Interface: ViewTransitionCompileResult
 
-Defined in: [compiler/src/view-transition-compile.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L61)
+Defined in: [compiler/src/view-transition-compile.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L62)
 
 CSS artifacts emitted by [compileViewTransition](../functions/compileViewTransition.md).
 
@@ -16,7 +16,7 @@ CSS artifacts emitted by [compileViewTransition](../functions/compileViewTransit
 
 > `readonly` **atRule**: `string`
 
-Defined in: [compiler/src/view-transition-compile.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L69)
+Defined in: [compiler/src/view-transition-compile.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L70)
 
 `@view-transition { navigation: auto; }` for MPA; empty for the SPA default.
 
@@ -26,7 +26,7 @@ Defined in: [compiler/src/view-transition-compile.ts:69](https://github.com/free
 
 > `readonly` **nameAssignment**: `string`
 
-Defined in: [compiler/src/view-transition-compile.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L65)
+Defined in: [compiler/src/view-transition-compile.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L66)
 
 `<selector> { view-transition-name: <ident>; }`.
 
@@ -36,7 +36,7 @@ Defined in: [compiler/src/view-transition-compile.ts:65](https://github.com/free
 
 > `readonly` **pseudoStyles**: `string`
 
-Defined in: [compiler/src/view-transition-compile.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L67)
+Defined in: [compiler/src/view-transition-compile.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L68)
 
 `::view-transition-old(<name>)` + `::view-transition-new(<name>)` cross-fade rules.
 
@@ -46,7 +46,7 @@ Defined in: [compiler/src/view-transition-compile.ts:67](https://github.com/free
 
 > `readonly` **raw**: `string`
 
-Defined in: [compiler/src/view-transition-compile.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L71)
+Defined in: [compiler/src/view-transition-compile.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L72)
 
 Full concatenated sheet (non-empty sections joined by a blank line).
 
@@ -56,6 +56,6 @@ Full concatenated sheet (non-empty sections joined by a blank line).
 
 > `readonly` **viewTransitionName**: `string`
 
-Defined in: [compiler/src/view-transition-compile.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L63)
+Defined in: [compiler/src/view-transition-compile.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L64)
 
-The sanitized custom-ident used as the `view-transition-name`.
+The readable, content-address-suffixed custom-ident used as the `view-transition-name`.

@@ -6,7 +6,7 @@
 
 # Interface: MotionSupportMetadata
 
-Defined in: [compiler/src/motion.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L55)
+Defined in: [compiler/src/motion.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L56)
 
 Generated support metadata for the CSS motion tiers emitted by the compiler.
 
@@ -16,7 +16,7 @@ Generated support metadata for the CSS motion tiers emitted by the compiler.
 
 > `readonly` **keyframes**: \{ `fidelity`: `"faithful"`; \} \| \{ `fidelity`: `"runtime-floor-required"`; `reason`: `"mixed-easing-overlap"`; \}
 
-Defined in: [compiler/src/motion.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L56)
+Defined in: [compiler/src/motion.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L57)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [compiler/src/motion.ts:56](https://github.com/freebatteryfactory/Li
 
 > `readonly` **transitionFallback**: [`MotionTransitionFallbackSupport`](MotionTransitionFallbackSupport.md)
 
-Defined in: [compiler/src/motion.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L59)
+Defined in: [compiler/src/motion.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L60)

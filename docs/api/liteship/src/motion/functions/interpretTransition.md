@@ -8,7 +8,7 @@
 
 > **interpretTransition**(`graph`, `transitionId`): [`LoweredMotionPlan`](../interfaces/LoweredMotionPlan.md)
 
-Defined in: core/dist/motion/interpret-transition.d.ts:151
+Defined in: core/dist/motion/interpret-transition.d.ts:153
 
 Interpret a `TransitionNode` into CSS + runtime motion plans.
 

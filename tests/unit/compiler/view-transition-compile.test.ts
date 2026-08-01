@@ -10,6 +10,7 @@
  * Transitions simply navigates/paints instantly, and the emitted CSS is inert.
  */
 
+import fc from 'fast-check';
 import { describe, test, expect } from 'vitest';
 import { Easing, DEFAULT_MOTION_SPRING } from '@liteship/core';
 import {
@@ -21,9 +22,9 @@ describe('compileViewTransition — view-transition-name per boundary', () => {
   test('assigns a sanitized custom-ident to the boundary selector', () => {
     const result = compileViewTransition({ boundary: 'hero', durationMs: 420, easing: 'ease' });
 
-    expect(result.viewTransitionName).toBe('liteship-vt-hero');
+    expect(result.viewTransitionName).toBe('liteship-vt-hero-4df23359');
     expect(result.nameAssignment).toContain('[data-liteship-boundary="hero"]');
-    expect(result.nameAssignment).toContain('view-transition-name: liteship-vt-hero;');
+    expect(result.nameAssignment).toContain(`view-transition-name: ${result.viewTransitionName};`);
   });
 
   test('escapes special characters in the DEFAULT attribute-selector value (no broken CSS)', () => {
@@ -33,7 +34,7 @@ describe('compileViewTransition — view-transition-name per boundary', () => {
     // … NOT the raw form that terminates the string early and drops the assignment.
     expect(result.nameAssignment).not.toContain('[data-liteship-boundary="hero"card"]');
     // The name remains a valid custom-ident (the quote collapsed to a hyphen).
-    expect(result.viewTransitionName).toBe('liteship-vt-hero-card');
+    expect(result.viewTransitionName).toBe('liteship-vt-hero-card-c291f931');
   });
 
   test('honors an explicit selector for the name assignment', () => {
@@ -45,14 +46,21 @@ describe('compileViewTransition — view-transition-name per boundary', () => {
     });
 
     expect(result.nameAssignment).toContain('.gallery > figure {');
-    expect(result.nameAssignment).toContain('view-transition-name: liteship-vt-card;');
+    expect(result.nameAssignment).toContain(`view-transition-name: ${result.viewTransitionName};`);
+  });
+
+  test('preserves an explicit authored selector as complete trusted CSS syntax', () => {
+    const selector = '.gallery:is([data-label="a>b"]) > figure:nth-child(2)';
+    const result = compileViewTransition({ boundary: 'card', selector, durationMs: 300, easing: 'ease' });
+
+    expect(result.nameAssignment.startsWith(`${selector} {\n`)).toBe(true);
   });
 
   test('sanitizes a boundary with whitespace/special chars into a valid custom-ident', () => {
     const result = compileViewTransition({ boundary: 'Hero Card #2', durationMs: 200, easing: 'ease' });
 
     // Only [A-Za-z0-9_-] survive; runs collapse to a single hyphen; no leading/trailing hyphen.
-    expect(result.viewTransitionName).toBe('liteship-vt-Hero-Card-2');
+    expect(result.viewTransitionName).toMatch(/^liteship-vt-Hero-Card-2-[0-9a-f]{8}$/u);
     expect(result.viewTransitionName).toMatch(/^liteship-vt-[A-Za-z0-9_-]+$/);
     expect(result.viewTransitionName).not.toMatch(/-$/);
   });
@@ -60,7 +68,23 @@ describe('compileViewTransition — view-transition-name per boundary', () => {
   test('collapses a long hostile invalid run in one pass', () => {
     const boundary = `hero${' #!'.repeat(20_000)}card`;
     const result = compileViewTransition({ boundary, durationMs: 200, easing: 'ease' });
-    expect(result.viewTransitionName).toBe('liteship-vt-hero-card');
+    expect(result.viewTransitionName).toMatch(/^liteship-vt-hero-card-[0-9a-f]{8}$/u);
+  });
+
+  test('distinct hostile boundary names remain injective after slugging', () => {
+    const hostileName = fc
+      .array(fc.constantFrom('a', 'b', ' ', '-', '/', '!', '"', '}'), { minLength: 0, maxLength: 16 })
+      .map((characters) => characters.join(''));
+
+    fc.assert(
+      fc.property(fc.uniqueArray(hostileName, { minLength: 2, maxLength: 24 }), (boundaries) => {
+        const names = boundaries.map(
+          (boundary) => compileViewTransition({ boundary, durationMs: 200, easing: 'ease' }).viewTransitionName,
+        );
+        expect(new Set(names).size).toBe(boundaries.length);
+      }),
+      { seed: 0xc551d026, numRuns: 180 },
+    );
   });
 });
 
@@ -72,8 +96,8 @@ describe('compileViewTransition — ::view-transition pseudo styles reuse the co
 
     const result = compileViewTransition({ boundary: 'hero', durationMs: 420, easing: springEasing });
 
-    expect(result.pseudoStyles).toContain('::view-transition-old(liteship-vt-hero)');
-    expect(result.pseudoStyles).toContain('::view-transition-new(liteship-vt-hero)');
+    expect(result.pseudoStyles).toContain(`::view-transition-old(${result.viewTransitionName})`);
+    expect(result.pseudoStyles).toContain(`::view-transition-new(${result.viewTransitionName})`);
     // Reuse, not recompute: the identical linear() list appears in the pseudo rules.
     const occurrences = result.pseudoStyles.split(springEasing).length - 1;
     expect(occurrences).toBeGreaterThanOrEqual(1);

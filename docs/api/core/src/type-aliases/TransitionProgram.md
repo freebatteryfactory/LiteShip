@@ -8,7 +8,7 @@
 
 > **TransitionProgram** = \{ `delayMs?`: `number`; `kind`: `"step"`; `transitionId`: [`ContentAddress`](ContentAddress.md); \} \| \{ `children`: readonly `TransitionProgram`[]; `kind`: `"seq"`; \} \| \{ `children`: readonly `TransitionProgram`[]; `kind`: `"par"`; \} \| \{ `branches`: readonly [`TransitionBranch`](../interfaces/TransitionBranch.md)[]; `kind`: `"choice"`; `otherwise?`: `TransitionProgram`; \}
 
-Defined in: [core/src/motion/transition-program.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L76)
+Defined in: [core/src/motion/transition-program.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L77)
 
 The composition tree over `TransitionNode`s.
 

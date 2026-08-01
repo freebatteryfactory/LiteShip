@@ -6,7 +6,7 @@
 
 # Interface: LoweredMotionPlan
 
-Defined in: core/dist/motion/interpret-transition.d.ts:137
+Defined in: core/dist/motion/interpret-transition.d.ts:139
 
 Lowered motion intent — CSS projection + runtime floor + diagnostics.
 
@@ -16,7 +16,7 @@ Lowered motion intent — CSS projection + runtime floor + diagnostics.
 
 > `readonly` `optional` **css?**: [`CssMotionPlan`](CssMotionPlan.md)
 
-Defined in: core/dist/motion/interpret-transition.d.ts:141
+Defined in: core/dist/motion/interpret-transition.d.ts:143
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:141
 
 > `readonly` **diagnostics**: readonly `MotionDiagnosticPayload`[]
 
-Defined in: core/dist/motion/interpret-transition.d.ts:143
+Defined in: core/dist/motion/interpret-transition.d.ts:145
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:143
 
 > `readonly` **graphId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: core/dist/motion/interpret-transition.d.ts:138
+Defined in: core/dist/motion/interpret-transition.d.ts:140
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:138
 
 > `readonly` `optional` **runtime?**: [`RuntimeWritePlan`](RuntimeWritePlan.md)
 
-Defined in: core/dist/motion/interpret-transition.d.ts:142
+Defined in: core/dist/motion/interpret-transition.d.ts:144
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:142
 
 > `readonly` **signals**: readonly [`SignalInput`](../../schema/type-aliases/SignalInput.md)[]
 
-Defined in: core/dist/motion/interpret-transition.d.ts:140
+Defined in: core/dist/motion/interpret-transition.d.ts:142
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: core/dist/motion/interpret-transition.d.ts:140
 
 > `readonly` **target**: `string`
 
-Defined in: core/dist/motion/interpret-transition.d.ts:139
+Defined in: core/dist/motion/interpret-transition.d.ts:141

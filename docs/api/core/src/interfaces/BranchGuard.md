@@ -6,7 +6,7 @@
 
 # Interface: BranchGuard
 
-Defined in: [core/src/motion/transition-program.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L88)
+Defined in: [core/src/motion/transition-program.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L89)
 
 The auditable record of which `choice` arm a window came from.
 
@@ -16,7 +16,7 @@ The auditable record of which `choice` arm a window came from.
 
 > `readonly` **branchId**: `string`
 
-Defined in: [core/src/motion/transition-program.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L91)
+Defined in: [core/src/motion/transition-program.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L92)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/motion/transition-program.ts:91](https://github.com/freeba
 
 > `readonly` **source**: `string`
 
-Defined in: [core/src/motion/transition-program.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L89)
+Defined in: [core/src/motion/transition-program.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L90)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/motion/transition-program.ts:89](https://github.com/freeba
 
 > `readonly` `optional` **when?**: [`BranchCondition`](../type-aliases/BranchCondition.md)
 
-Defined in: [core/src/motion/transition-program.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L90)
+Defined in: [core/src/motion/transition-program.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L91)

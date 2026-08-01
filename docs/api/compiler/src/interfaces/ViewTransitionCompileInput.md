@@ -6,7 +6,7 @@
 
 # Interface: ViewTransitionCompileInput
 
-Defined in: [compiler/src/view-transition-compile.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L32)
+Defined in: [compiler/src/view-transition-compile.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L33)
 
 Input to [compileViewTransition](../functions/compileViewTransition.md).
 
@@ -16,7 +16,7 @@ Input to [compileViewTransition](../functions/compileViewTransition.md).
 
 > `readonly` **boundary**: `string`
 
-Defined in: [compiler/src/view-transition-compile.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L34)
+Defined in: [compiler/src/view-transition-compile.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L35)
 
 The boundary/target name (e.g. `'hero'`) — seeds the `view-transition-name` ident.
 
@@ -26,7 +26,7 @@ The boundary/target name (e.g. `'hero'`) — seeds the `view-transition-name` id
 
 > `readonly` `optional` **delayMs?**: `number`
 
-Defined in: [compiler/src/view-transition-compile.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L57)
+Defined in: [compiler/src/view-transition-compile.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L58)
 
 Optional stagger / entry delay (ms) applied as `animation-delay` on the pseudos.
 
@@ -36,7 +36,7 @@ Optional stagger / entry delay (ms) applied as `animation-delay` on the pseudos.
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [compiler/src/view-transition-compile.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L42)
+Defined in: [compiler/src/view-transition-compile.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L43)
 
 Cross-fade duration (ms) for the old/new pseudo-element animations.
 
@@ -46,7 +46,7 @@ Cross-fade duration (ms) for the old/new pseudo-element animations.
 
 > `readonly` **easing**: `string`
 
-Defined in: [compiler/src/view-transition-compile.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L49)
+Defined in: [compiler/src/view-transition-compile.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L50)
 
 The ALREADY-COMPILED CSS timing-function string to REUSE (e.g. `'ease'`,
 `'linear'`, or a spring `'linear(0.0000, …)'`). This is the identical string the
@@ -59,7 +59,7 @@ boundary's motion compiled to — the pseudo cross-fade reads one curve with it
 
 > `readonly` `optional` **mpaNavigation?**: `boolean`
 
-Defined in: [compiler/src/view-transition-compile.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L55)
+Defined in: [compiler/src/view-transition-compile.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L56)
 
 Emit the build-time `@view-transition { navigation: auto }` at-rule for MPA
 documents (cross-document view transitions). Omit / `false` for SPA, where the
@@ -71,7 +71,7 @@ router invokes `document.startViewTransition` and no at-rule is needed.
 
 > `readonly` `optional` **selector?**: `string`
 
-Defined in: [compiler/src/view-transition-compile.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L40)
+Defined in: [compiler/src/view-transition-compile.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L41)
 
 The element selector the name is assigned to. Defaults to the boundary's data
 attribute selector (`[data-liteship-boundary="<boundary>"]`) — the same hook

@@ -6,7 +6,7 @@
 
 # Interface: RuntimeWritePlan
 
-Defined in: [core/src/motion/interpret-transition.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L130)
+Defined in: [core/src/motion/interpret-transition.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L133)
 
 Runtime leaf-write plan — the permanent floor when native CSS is unavailable.
 
@@ -16,7 +16,7 @@ Runtime leaf-write plan — the permanent floor when native CSS is unavailable.
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [core/src/motion/interpret-transition.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L132)
+Defined in: [core/src/motion/interpret-transition.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L135)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/motion/interpret-transition.ts:132](https://github.com/fre
 
 > `readonly` **easing**: [`RuntimeEasing`](RuntimeEasing.md)
 
-Defined in: [core/src/motion/interpret-transition.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L142)
+Defined in: [core/src/motion/interpret-transition.ts:145](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L145)
 
 The easing descriptor the JS floor samples (`sampleRuntimeEasing`). Self-describing
 so the floor never depends on a driver to hand it a curve — and read from the
@@ -37,7 +37,7 @@ SAME authored source (`TransitionNode.easing`) the native CSS path compiles into
 
 > `readonly` **fromState**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [core/src/motion/interpret-transition.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L134)
+Defined in: [core/src/motion/interpret-transition.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L137)
 
 ***
 
@@ -45,7 +45,7 @@ Defined in: [core/src/motion/interpret-transition.ts:134](https://github.com/fre
 
 > `readonly` **properties**: readonly [`RuntimeWriteProperty`](RuntimeWriteProperty.md)[]
 
-Defined in: [core/src/motion/interpret-transition.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L131)
+Defined in: [core/src/motion/interpret-transition.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L134)
 
 ***
 
@@ -53,7 +53,7 @@ Defined in: [core/src/motion/interpret-transition.ts:131](https://github.com/fre
 
 > `readonly` **routing**: [`EdgeType`](../type-aliases/EdgeType.md)
 
-Defined in: [core/src/motion/interpret-transition.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L133)
+Defined in: [core/src/motion/interpret-transition.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L136)
 
 ***
 
@@ -61,7 +61,7 @@ Defined in: [core/src/motion/interpret-transition.ts:133](https://github.com/fre
 
 > `readonly` **toState**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [core/src/motion/interpret-transition.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L135)
+Defined in: [core/src/motion/interpret-transition.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L138)
 
 ***
 
@@ -69,7 +69,7 @@ Defined in: [core/src/motion/interpret-transition.ts:135](https://github.com/fre
 
 > `readonly` `optional` **windows?**: readonly [`RuntimeWriteWindow`](RuntimeWriteWindow.md)[]
 
-Defined in: [core/src/motion/interpret-transition.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L150)
+Defined in: [core/src/motion/interpret-transition.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L153)
 
 Per-window sub-samplers for a composed [TransitionProgram](../type-aliases/TransitionProgram.md) (from
 `interpretProgram`). Present ⇒ the floor scrubs each window at its own local

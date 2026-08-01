@@ -8,7 +8,7 @@
 
 > **sampleProgramUniforms**(`plan`, `t`): [`ProgramUniforms`](../interfaces/ProgramUniforms.md)
 
-Defined in: [core/src/motion/transition-program.ts:725](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L725)
+Defined in: [core/src/motion/transition-program.ts:727](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L727)
 
 Project a `sampleProgram` sample into the `liteship:uniform-update` payload — the ONE
 uniform-building path shared by the `client:motion` floor (`writeContinuousMap`, which

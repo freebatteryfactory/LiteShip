@@ -58,4 +58,4 @@ Full concatenated sheet (non-empty sections joined by a blank line).
 
 Defined in: compiler/dist/view-transition-compile.d.ts:59
 
-The sanitized custom-ident used as the `view-transition-name`.
+The readable, content-address-suffixed custom-ident used as the `view-transition-name`.

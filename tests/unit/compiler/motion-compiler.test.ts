@@ -38,7 +38,7 @@ function graph(nodes: DocumentGraphNode[], edges: DocumentGraphEdge[] = []): Doc
   >);
 }
 
-function revealCssPlan(): CssMotionPlan {
+function revealCssPlan(target = 'hero'): CssMotionPlan {
   const signal = sealNode({
     _tag: 'DocGraphSignalNode',
     _version: 1,
@@ -54,7 +54,7 @@ function revealCssPlan(): CssMotionPlan {
     family: 'component',
     id: '',
     meta: META,
-    name: 'hero',
+    name: target,
     thresholds: [0, 1],
     states: ['before', 'after'],
   } as unknown as ComponentNode);
@@ -224,7 +224,8 @@ describe('MotionCompiler', () => {
     const heroPlan = revealCssPlan();
     const footerPlan = {
       ...heroPlan,
-      selector: '[data-liteship-boundary="footer"]',
+      target: 'footer',
+      selector: '.authored-footer-motion-target',
     };
 
     const hero = MotionCompiler.compile({ plan: heroPlan });
@@ -233,6 +234,29 @@ describe('MotionCompiler', () => {
     expect(hero.keyframes).toContain('@keyframes liteship-motion-hero-before-after');
     expect(footer.keyframes).toContain('@keyframes liteship-motion-footer-before-after');
     expect(hero.keyframes).not.toContain('@keyframes liteship-motion-footer-before-after');
+  });
+
+  test('a hostile boundary name cannot escape its selector or terminate the keyframes prelude', () => {
+    const boundary = 'a"b}';
+    const plan = revealCssPlan(boundary);
+    const result = MotionCompiler.compile({ plan });
+    const keyframeIdent = result.keyframes.match(/^@keyframes\s+([^\s{]+)\s+\{/u)?.[1];
+
+    expect(plan.target).toBe(boundary);
+    expect(plan.selector).toBe('[data-liteship-boundary="a\\"b}"]');
+    expect(keyframeIdent).toMatch(/^liteship-motion-[A-Za-z0-9_-]+$/u);
+    expect(keyframeIdent).not.toContain('}');
+    expect(result.keyframes.match(/\{/gu)).toHaveLength(3);
+    expect(result.keyframes.match(/\}/gu)).toHaveLength(3);
+  });
+
+  test('a motion plan with no structured target identity is refused, not recovered from its selector', () => {
+    const malformed = { ...revealCssPlan() };
+    Reflect.deleteProperty(malformed, 'target');
+
+    expect(() => MotionCompiler.compile({ plan: malformed })).toThrow(
+      /cssIdentFor: identity parts must be a non-empty string array/u,
+    );
   });
 });
 

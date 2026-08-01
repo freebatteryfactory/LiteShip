@@ -16,7 +16,7 @@ CSS projection plan — keyframes / transition keyed on discrete state.
 
 > `readonly` **durationMs**: `number`
 
-Defined in: core/dist/motion/interpret-transition.d.ts:81
+Defined in: core/dist/motion/interpret-transition.d.ts:83
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:81
 
 > `readonly` **fromState**: [`StateName`](../../schema/type-aliases/StateName.md)
 
-Defined in: core/dist/motion/interpret-transition.d.ts:78
+Defined in: core/dist/motion/interpret-transition.d.ts:80
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:78
 
 > `readonly` **keyframes**: readonly [`CssKeyframeStep`](CssKeyframeStep.md)[]
 
-Defined in: core/dist/motion/interpret-transition.d.ts:83
+Defined in: core/dist/motion/interpret-transition.d.ts:85
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:83
 
 > `readonly` **nativeTimeline**: [`NativeTimelineEligibility`](../type-aliases/NativeTimelineEligibility.md)
 
-Defined in: core/dist/motion/interpret-transition.d.ts:92
+Defined in: core/dist/motion/interpret-transition.d.ts:94
 
 Whether this plan may own a native `animation-timeline`. `interpretTransition` always
 mints the eligible verdict (a single transition is uniform by construction);
@@ -54,7 +54,7 @@ reads this to decide whether to emit the native ownership block.
 
 > `readonly` **properties**: readonly [`MotionPropertyTween`](MotionPropertyTween.md)[]
 
-Defined in: core/dist/motion/interpret-transition.d.ts:80
+Defined in: core/dist/motion/interpret-transition.d.ts:82
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:80
 
 > `readonly` **routing**: `EdgeType`
 
-Defined in: core/dist/motion/interpret-transition.d.ts:82
+Defined in: core/dist/motion/interpret-transition.d.ts:84
 
 ***
 
@@ -70,7 +70,17 @@ Defined in: core/dist/motion/interpret-transition.d.ts:82
 
 > `readonly` **selector**: `string`
 
-Defined in: core/dist/motion/interpret-transition.d.ts:77
+Defined in: core/dist/motion/interpret-transition.d.ts:79
+
+***
+
+### target
+
+> `readonly` **target**: `string`
+
+Defined in: core/dist/motion/interpret-transition.d.ts:78
+
+Original authored boundary identity; selectors are projections, never identity storage.
 
 ***
 
@@ -78,7 +88,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:77
 
 > `readonly` **toState**: [`StateName`](../../schema/type-aliases/StateName.md)
 
-Defined in: core/dist/motion/interpret-transition.d.ts:79
+Defined in: core/dist/motion/interpret-transition.d.ts:81
 
 ***
 
@@ -86,4 +96,4 @@ Defined in: core/dist/motion/interpret-transition.d.ts:79
 
 > `readonly` **transitionProperty**: `string`
 
-Defined in: core/dist/motion/interpret-transition.d.ts:84
+Defined in: core/dist/motion/interpret-transition.d.ts:86

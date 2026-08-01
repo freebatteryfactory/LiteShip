@@ -6,7 +6,7 @@
 
 # Interface: RuntimeWritePlan
 
-Defined in: core/dist/motion/interpret-transition.d.ts:114
+Defined in: core/dist/motion/interpret-transition.d.ts:116
 
 Runtime leaf-write plan — the permanent floor when native CSS is unavailable.
 
@@ -16,7 +16,7 @@ Runtime leaf-write plan — the permanent floor when native CSS is unavailable.
 
 > `readonly` **durationMs**: `number`
 
-Defined in: core/dist/motion/interpret-transition.d.ts:116
+Defined in: core/dist/motion/interpret-transition.d.ts:118
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:116
 
 > `readonly` **easing**: [`RuntimeEasing`](RuntimeEasing.md)
 
-Defined in: core/dist/motion/interpret-transition.d.ts:126
+Defined in: core/dist/motion/interpret-transition.d.ts:128
 
 The easing descriptor the JS floor samples (`sampleRuntimeEasing`). Self-describing
 so the floor never depends on a driver to hand it a curve — and read from the
@@ -37,7 +37,7 @@ SAME authored source (`TransitionNode.easing`) the native CSS path compiles into
 
 > `readonly` **fromState**: [`StateName`](../../schema/type-aliases/StateName.md)
 
-Defined in: core/dist/motion/interpret-transition.d.ts:118
+Defined in: core/dist/motion/interpret-transition.d.ts:120
 
 ***
 
@@ -45,7 +45,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:118
 
 > `readonly` **properties**: readonly [`RuntimeWriteProperty`](RuntimeWriteProperty.md)[]
 
-Defined in: core/dist/motion/interpret-transition.d.ts:115
+Defined in: core/dist/motion/interpret-transition.d.ts:117
 
 ***
 
@@ -53,7 +53,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:115
 
 > `readonly` **routing**: `EdgeType`
 
-Defined in: core/dist/motion/interpret-transition.d.ts:117
+Defined in: core/dist/motion/interpret-transition.d.ts:119
 
 ***
 
@@ -61,7 +61,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:117
 
 > `readonly` **toState**: [`StateName`](../../schema/type-aliases/StateName.md)
 
-Defined in: core/dist/motion/interpret-transition.d.ts:119
+Defined in: core/dist/motion/interpret-transition.d.ts:121
 
 ***
 
@@ -69,7 +69,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:119
 
 > `readonly` `optional` **windows?**: readonly [`RuntimeWriteWindow`](RuntimeWriteWindow.md)[]
 
-Defined in: core/dist/motion/interpret-transition.d.ts:134
+Defined in: core/dist/motion/interpret-transition.d.ts:136
 
 Per-window sub-samplers for a composed [TransitionProgram](../type-aliases/TransitionProgram.md) (from
 `interpretProgram`). Present ⇒ the floor scrubs each window at its own local

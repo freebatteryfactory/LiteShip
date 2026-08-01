@@ -6,7 +6,7 @@
 
 # Interface: RuntimeWriteProperty
 
-Defined in: core/dist/motion/interpret-transition.d.ts:95
+Defined in: core/dist/motion/interpret-transition.d.ts:97
 
 One runtime leaf-write descriptor (typed CSS custom property floor).
 
@@ -16,7 +16,7 @@ One runtime leaf-write descriptor (typed CSS custom property floor).
 
 > `readonly` **cssVar**: `string`
 
-Defined in: core/dist/motion/interpret-transition.d.ts:96
+Defined in: core/dist/motion/interpret-transition.d.ts:98
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:96
 
 > `readonly` **from**: [`TypedValue`](../type-aliases/TypedValue.md)
 
-Defined in: core/dist/motion/interpret-transition.d.ts:97
+Defined in: core/dist/motion/interpret-transition.d.ts:99
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: core/dist/motion/interpret-transition.d.ts:97
 
 > `readonly` **to**: [`TypedValue`](../type-aliases/TypedValue.md)
 
-Defined in: core/dist/motion/interpret-transition.d.ts:98
+Defined in: core/dist/motion/interpret-transition.d.ts:100

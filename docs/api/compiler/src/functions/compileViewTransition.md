@@ -8,7 +8,7 @@
 
 > **compileViewTransition**(`input`): [`ViewTransitionCompileResult`](../interfaces/ViewTransitionCompileResult.md)
 
-Defined in: [compiler/src/view-transition-compile.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L111)
+Defined in: [compiler/src/view-transition-compile.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/view-transition-compile.ts#L89)
 
 Compile the build-time View-Transition CSS for a single boundary. Pure and
 deterministic — identical input yields byte-identical output.

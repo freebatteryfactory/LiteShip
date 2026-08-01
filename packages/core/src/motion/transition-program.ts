@@ -44,6 +44,7 @@ import {
   type RuntimeWritePlan,
   type RuntimeWriteWindow,
 } from './interpret-transition.js';
+import { escapeCssString } from './css-identity.js';
 
 /**
  * A predicate over a named signal's live value that selects a `choice` branch.
@@ -585,7 +586,7 @@ export function interpretProgram(
   const unionCss = [...cssByProp.values()];
 
   const signals = [...new Set(result.windows.flatMap((w) => w.step.signals))];
-  const selector = `[data-liteship-boundary="${first.step.target}"]`;
+  const selector = `[data-liteship-boundary="${escapeCssString(first.step.target)}"]`;
 
   // Native-timeline eligibility is the LOWERER's call: a composed program whose overlapping
   // windows disagree on easing (`par` of differently-eased children, #148) is denied native
@@ -597,6 +598,7 @@ export function interpretProgram(
     : { eligible: true };
 
   const css: CssMotionPlan = Object.freeze({
+    target: first.step.target,
     selector,
     fromState: first.step.fromState,
     toState: last.step.toState,

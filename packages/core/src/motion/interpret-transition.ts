@@ -25,6 +25,7 @@ import type {
 import type { DiagnosticPayload } from '../evidence/diagnostics.js';
 import type { EdgeType } from '../authoring/plan.js';
 import type { RuntimeEasing } from './easing.js';
+import { escapeCssString } from './css-identity.js';
 import { formatTypedValue, parseTypedBinding, type TypedValue } from './interpolate.js';
 
 /** A returned motion-lowering diagnostic whose public identity is registry-enrolled. */
@@ -87,6 +88,8 @@ const eligibleNativeTimeline: NativeTimelineEligibility = { eligible: true };
 
 /** CSS projection plan — keyframes / transition keyed on discrete state. */
 export interface CssMotionPlan {
+  /** Original authored boundary identity; selectors are projections, never identity storage. */
+  readonly target: string;
   readonly selector: string;
   readonly fromState: StateName;
   readonly toState: StateName;
@@ -335,10 +338,11 @@ export function interpretTransition(graph: DocumentGraph, transitionId: ContentA
   const routing = transition.routing;
   const properties = diffBindings(fromPose.bindings, toPose.bindings);
   const keyframes = twoFrameKeyframes(properties);
-  const selector = `[data-liteship-boundary="${component.name}"]`;
+  const selector = `[data-liteship-boundary="${escapeCssString(component.name)}"]`;
   const transitionProperty = properties.map((p) => p.property).join(', ');
 
   const css: CssMotionPlan = Object.freeze({
+    target: component.name,
     selector,
     fromState: fromPose.state,
     toState: toPose.state,

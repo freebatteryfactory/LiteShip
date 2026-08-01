@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:56e1d82c",
+  "address": "fnv1a:4535eb2c",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -2437,6 +2437,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "packages/core/src/motion/clamp.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/css-identity.ts",
       "level": "L1"
     },
     {

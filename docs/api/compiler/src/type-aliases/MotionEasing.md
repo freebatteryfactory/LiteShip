@@ -8,6 +8,6 @@
 
 > **MotionEasing** = `"linear"` \| `"ease"` \| `"spring"`
 
-Defined in: [compiler/src/motion.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L29)
+Defined in: [compiler/src/motion.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L30)
 
 Easing mode for emitted CSS timing functions.

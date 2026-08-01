@@ -52,8 +52,7 @@ export function appendReducedMotionGuard(css: MotionCompileResult, plan: CssMoti
  * source (cross-target parity). Absent unless the plan actually tweens a translate axis.
  */
 export function appendTranslateConsumer(css: MotionCompileResult, plan: CssMotionPlan): MotionCompileResult {
-  const target = plan.selector.match(/data-liteship-boundary="([^"]+)"/)?.[1];
-  if (target === undefined) return css;
+  const target = plan.target;
 
   const hasTranslateAxis = plan.properties.some(
     (prop) => prop.property.startsWith(`--liteship-${target}-`) && /-[xyz]$/.test(prop.property),

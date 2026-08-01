@@ -17,6 +17,7 @@ import {
   type RuntimeEasing,
   type TypedValue,
 } from '@liteship/core';
+import { cssIdentFor } from '@liteship/core/motion';
 
 /** Spring physics config — mirrors `Easing.spring` input. */
 export interface MotionSpringConfig {
@@ -101,8 +102,7 @@ function syntaxForTypedValue(value: TypedValue): string | null {
 }
 
 function keyframeName(plan: CssMotionPlan): string {
-  const target = plan.selector.match(/data-liteship-boundary="([^"]+)"/)?.[1] ?? 'motion';
-  return `liteship-motion-${target}-${plan.fromState}-${plan.toState}`;
+  return cssIdentFor('liteship-motion-', [plan.target, plan.fromState, plan.toState], { fallback: 'motion' });
 }
 
 function emitPropertyRegistrations(properties: readonly MotionPropertyTween[]): string {

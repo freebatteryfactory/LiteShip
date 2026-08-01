@@ -100,7 +100,7 @@ describe('dispatch()', () => {
     const input = { boundary: 'hero', durationMs: 420, easing: 'ease' } as const;
     const result = dispatch({ _tag: 'ViewTransitionCompiler', input });
     expect(result).toEqual({ target: 'view-transition', result: compileViewTransition(input) });
-    expect(result.result.raw).toContain('view-transition-name: liteship-vt-hero');
+    expect(result.result.raw).toMatch(/view-transition-name: liteship-vt-hero-[0-9a-f]{8}/u);
   });
 });
 
