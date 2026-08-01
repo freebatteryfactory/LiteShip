@@ -225,6 +225,19 @@ describe('test constitution', () => {
       expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('generated-payload-delimiter');
     });
 
+    it('does not admit later replacements that reconstruct a multi-character closer', () => {
+      const root = fixture(
+        [
+          "const unsafePayload = fc.string().map((payload) => payload.replaceAll('*/', 'AB').replaceAll('A', '*').replaceAll('B', '/'));",
+          'fc.assert(fc.property(unsafePayload, (payload) => {',
+          '  const source = `/* ${payload} */`;',
+          '  expect(source).toContain(payload);',
+          '}));',
+        ].join('\n'),
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('generated-payload-delimiter');
+    });
+
     it('admits a finite generator domain when no value can close the delimiter', () => {
       const root = fixture(
         [

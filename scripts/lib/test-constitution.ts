@@ -590,10 +590,14 @@ function sanitizedForDelimiter(
     const removalIndex = operations.findIndex(
       ({ target, replacement }) => target === delimiter && !replacement.includes(delimiter),
     );
-    return (
-      removalIndex !== -1 &&
-      operations.slice(removalIndex + 1).every(({ replacement }) => !replacement.includes(delimiter))
-    );
+    if (removalIndex === -1) return false;
+    // A later replacement can reconstruct a multi-character closer one piece
+    // at a time even when no individual replacement contains the whole closer.
+    // Prove those safe only when the exact-closer removal is the final operation.
+    // For a one-character closer, checking every later replacement string is
+    // complete: no later operation can introduce that character from nowhere.
+    if (delimiter.length > 1) return removalIndex === operations.length - 1;
+    return operations.slice(removalIndex + 1).every(({ replacement }) => !replacement.includes(delimiter));
   };
   if (state === 'block-comment') return safelyReplaces('*/');
   if (state === 'html-comment') return safelyReplaces('-->');
