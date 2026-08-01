@@ -8,7 +8,7 @@
 
 > `const` **DAG**: `object`
 
-Defined in: [core/src/graph/dag.ts:672](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/dag.ts#L672)
+Defined in: [core/src/graph/dag.ts:678](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/dag.ts#L678)
 
 DAG namespace -- receipt DAG merge and canonical linearization.
 
@@ -446,8 +446,14 @@ const result = DAG.merge(localDag, remoteEnvelopes);
 
 > **pruneToBound**: (`dag`, `maxNodes`) => [`ReceiptDAG`](../interfaces/ReceiptDAG.md)
 
-Prune a DAG to at most `maxNodes` envelopes, retaining the most recent tail of
-the canonical linear order. Used by long-lived LLM sessions to cap memory shape.
+Prune a DAG toward `maxNodes` envelopes without discarding a live head.
+
+The bound is a target, not permission to erase a branch: every current head
+is retained first, then the newest non-head envelopes fill the remaining
+capacity up to `max(maxNodes, headCount)`. The retained receipts are replayed
+through [fromReceipts](#fromreceipts), so the result equals a fresh reload and a
+subsequently re-ingested missing parent can reconnect its retained children.
+A bound below one is invalid and throws [ValidationError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts).
 
 #### Parameters
 

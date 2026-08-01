@@ -8,6 +8,6 @@
 
 > **Node** = [`DAGNode`](../../../interfaces/DAGNode.md)
 
-Defined in: core/dist/graph/dag.d.ts:311
+Defined in: core/dist/graph/dag.d.ts:317
 
 Alias for [DAGNode](../../../interfaces/DAGNode.md).

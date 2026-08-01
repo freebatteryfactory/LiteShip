@@ -8,7 +8,7 @@
 
 > **Checkpoint** = `object`
 
-Defined in: core/dist/graph/dag.d.ts:319
+Defined in: core/dist/graph/dag.d.ts:325
 
 The genesis-shaped checkpoint attestation a compaction emits out-of-band.
 
@@ -18,7 +18,7 @@ The genesis-shaped checkpoint attestation a compaction emits out-of-band.
 
 > `readonly` **dropped**: readonly `string`[]
 
-Defined in: core/dist/graph/dag.d.ts:321
+Defined in: core/dist/graph/dag.d.ts:327
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: core/dist/graph/dag.d.ts:321
 
 > `readonly` **envelope**: [`ReceiptEnvelope`](../../../../evidence/interfaces/ReceiptEnvelope.md)
 
-Defined in: core/dist/graph/dag.d.ts:320
+Defined in: core/dist/graph/dag.d.ts:326
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: core/dist/graph/dag.d.ts:320
 
 > `readonly` **watermark**: `string`
 
-Defined in: core/dist/graph/dag.d.ts:322
+Defined in: core/dist/graph/dag.d.ts:328

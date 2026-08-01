@@ -8,6 +8,6 @@
 
 > **CompactResult** = [`CheckpointResult`](../../../interfaces/CheckpointResult.md)
 
-Defined in: core/dist/graph/dag.d.ts:325
+Defined in: core/dist/graph/dag.d.ts:331
 
 Alias for [CheckpointResult](../../../interfaces/CheckpointResult.md).

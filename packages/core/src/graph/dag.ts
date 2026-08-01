@@ -6,7 +6,7 @@
  * @module
  */
 
-import { InvariantViolationError } from '@liteship/error';
+import { InvariantViolationError, ValidationError } from '@liteship/error';
 import { compare as hlcCompare, HLC } from '../clock/hlc.js';
 import { TypedRef } from '../evidence/typed-ref.js';
 import type { ReceiptEnvelope } from '../evidence/receipt.js';
@@ -311,26 +311,32 @@ export const linearizeFrom = (dag: ReceiptDAG, afterHash: string): ReadonlyArray
 export const DEFAULT_MAX_DAG_NODES = 10_000;
 
 /**
- * Prune a DAG to at most `maxNodes` envelopes, retaining the most recent tail of
- * the canonical linear order. Used by long-lived LLM sessions to cap memory shape.
+ * Prune a DAG toward `maxNodes` envelopes without discarding a live head.
+ *
+ * The bound is a target, not permission to erase a branch: every current head
+ * is retained first, then the newest non-head envelopes fill the remaining
+ * capacity up to `max(maxNodes, headCount)`. The retained receipts are replayed
+ * through {@link fromReceipts}, so the result equals a fresh reload and a
+ * subsequently re-ingested missing parent can reconnect its retained children.
+ * A bound below one is invalid and throws {@link ValidationError}.
  */
 export const pruneToBound = (dag: ReceiptDAG, maxNodes: number = DEFAULT_MAX_DAG_NODES): ReceiptDAG => {
-  if (maxNodes < 1) return empty();
+  if (maxNodes < 1) {
+    throw ValidationError('DAG.pruneToBound', `maxNodes must be at least 1; received ${maxNodes}`);
+  }
   const count = size(dag);
   if (count <= maxNodes) return dag;
+
   const ordered = linearize(dag);
-  const keptHashes = new Set(ordered.slice(ordered.length - maxNodes).map((envelope) => envelope.hash));
-  const newNodes = new Map<string, DAGNode>();
-  for (const hash of keptHashes) {
-    const node = dag.nodes.get(hash);
-    if (node === undefined) continue;
-    const parents = node.parents.filter((parent) => keptHashes.has(parent));
-    const children = node.children.filter((child) => keptHashes.has(child));
-    newNodes.set(hash, { ...node, parents, children });
+  const keptHashes = new Set(dag.heads.filter((hash) => dag.nodes.has(hash)));
+  const targetSize = Math.max(maxNodes, keptHashes.size);
+
+  for (let index = ordered.length - 1; index >= 0 && keptHashes.size < targetSize; index -= 1) {
+    keptHashes.add(ordered[index]!.hash);
   }
-  const heads = [...newNodes.entries()].filter(([, node]) => node.children.length === 0).map(([hash]) => hash);
-  const genesis = dag.genesis !== null && keptHashes.has(dag.genesis) ? dag.genesis : null;
-  return { nodes: newNodes, heads, genesis };
+
+  if (keptHashes.size === count) return dag;
+  return fromReceipts(ordered.filter((envelope) => keptHashes.has(envelope.hash)));
 };
 
 /**

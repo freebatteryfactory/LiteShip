@@ -8,6 +8,6 @@
 
 > **Graph** = [`ReceiptDAG`](../../../interfaces/ReceiptDAG.md)
 
-Defined in: core/dist/graph/dag.d.ts:313
+Defined in: core/dist/graph/dag.d.ts:319
 
 Alias for [ReceiptDAG](../../../interfaces/ReceiptDAG.md).

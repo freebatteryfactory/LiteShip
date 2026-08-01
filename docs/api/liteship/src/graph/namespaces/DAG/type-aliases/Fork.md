@@ -8,6 +8,6 @@
 
 > **Fork** = [`ForkViolation`](../../../interfaces/ForkViolation.md)
 
-Defined in: core/dist/graph/dag.d.ts:317
+Defined in: core/dist/graph/dag.d.ts:323
 
 Alias for [ForkViolation](../../../interfaces/ForkViolation.md).

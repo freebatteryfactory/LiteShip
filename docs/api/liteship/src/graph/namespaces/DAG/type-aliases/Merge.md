@@ -8,6 +8,6 @@
 
 > **Merge** = [`MergeResult`](../../../interfaces/MergeResult.md)
 
-Defined in: core/dist/graph/dag.d.ts:315
+Defined in: core/dist/graph/dag.d.ts:321
 
 Alias for [MergeResult](../../../interfaces/MergeResult.md).

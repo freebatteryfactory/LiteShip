@@ -146,6 +146,24 @@
       ]
     },
     {
+      "name": "DAG.pruneToBound() -- 256 receipts to 64",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 256,
+      "shape": "receipt-dag-nodes",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": {
+            "kind": "module",
+            "specifier": "@liteship/core"
+          },
+          "symbol": "DAG.pruneToBound",
+          "binding": "DAG.pruneToBound"
+        }
+      ]
+    },
+    {
       "name": "ECS World tick -- 100 entities, 1 system",
       "file": "tests/bench/core.bench.ts",
       "inputSize": 100,

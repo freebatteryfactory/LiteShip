@@ -11,6 +11,9 @@ import {
   defineToken,
   defineConfig,
   createBlendTree,
+  DAG,
+  HLC,
+  Receipt,
   schema,
 } from '@liteship/core';
 import {
@@ -127,6 +130,21 @@ bench.add('BlendTree.compute() -- 4 nodes', () => {
 const emptyCompositor = Compositor.create();
 bench.add('Compositor.compute() -- empty', () => {
   emptyCompositor.compute();
+});
+
+// Receipt construction and hashing are fixture setup; only the pruning replay
+// is timed. The subject models a long-lived session retaining its newest quarter.
+const dagEntries = await Receipt.buildChain(
+  Array.from({ length: 256 }, (_, index) => ({
+    kind: 'op',
+    subject: { type: 'effect' as const, id: 'bench-dag' },
+    payload: { schema_hash: 'sha256:bench', content_hash: `sha256:${index}` },
+    timestamp: HLC.increment(HLC.create('bench-dag-node'), 1_000 + index),
+  })),
+);
+const dag256 = DAG.fromReceipts(dagEntries);
+bench.add('DAG.pruneToBound() -- 256 receipts to 64', () => {
+  DAG.pruneToBound(dag256, 64);
 });
 
 // ECS World tick -- setup extracted so only tick() is measured per iteration

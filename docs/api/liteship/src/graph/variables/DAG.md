@@ -8,7 +8,7 @@
 
 > `const` **DAG**: `object`
 
-Defined in: core/dist/graph/dag.d.ts:289
+Defined in: core/dist/graph/dag.d.ts:295
 
 DAG namespace -- receipt DAG merge and canonical linearization.
 
