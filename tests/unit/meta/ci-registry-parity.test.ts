@@ -18,9 +18,8 @@
  *       command was rewritten, parametrized, or interpolated by the projection).
  *
  * js-yaml is NOT resolvable in the vitest runtime (it is only a transitive store
- * entry, never hoisted to root), so — like the sibling devops ci.yml tests
- * (`gauntlet-ci-invocation`, `parallel-ci-artifacts`) — this parses the workflow
- * with a small indentation-aware reader rather than a YAML dependency.
+ * entry, never hoisted to root), so the dependency-free structural reader lives
+ * in production code and workflow-contract tests consume that one implementation.
  *
  * @module
  */
@@ -28,8 +27,13 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import fg from 'fast-glob';
 import { CHECK_REGISTRY } from '@liteship/command';
 import { gauntletPhases, gauntletPhaseProfiles } from '../../../packages/cli/src/gauntlet-phases.js';
+import {
+  independentWorkflowReaderSites,
+  workflowJobSections,
+} from '../../../packages/cli/src/internal/workflow-action-pins.js';
 import {
   assertBlockingReleasePartition,
   assertCoverageAuthorityReceipts,
@@ -42,28 +46,6 @@ const CI_YML = readFileSync(resolve(ROOT, '.github/workflows/ci.yml'), 'utf8');
 const FIXTURE = JSON.parse(readFileSync(resolve(ROOT, 'tests/fixtures/ci-parallel-lane-commands.json'), 'utf8')) as {
   lanes: Record<string, string[]>;
 };
-
-// ── ci.yml structural reader (dependency-free) ──────────────────────────────
-
-/** Split the workflow into `jobName -> block text` for every top-level job under `jobs:`. */
-function parseJobBlocks(yml: string): Map<string, string> {
-  const lines = yml.split('\n').map((line) => line.replace(/\r$/, ''));
-  const jobsIndex = lines.indexOf('jobs:');
-  expect(jobsIndex, 'ci.yml must have a top-level `jobs:` key').toBeGreaterThanOrEqual(0);
-  const headers: Array<{ name: string; line: number }> = [];
-  for (let i = jobsIndex + 1; i < lines.length; i++) {
-    // A job header is a 2-space-indented `name:` with nothing after the colon.
-    const match = /^ {2}([A-Za-z0-9_-]+):\s*$/.exec(lines[i]!);
-    if (match) headers.push({ name: match[1]!, line: i });
-  }
-  const blocks = new Map<string, string>();
-  for (let h = 0; h < headers.length; h++) {
-    const start = headers[h]!.line;
-    const end = h + 1 < headers.length ? headers[h + 1]!.line : lines.length;
-    blocks.set(headers[h]!.name, lines.slice(start, end).join('\n'));
-  }
-  return blocks;
-}
 
 /** Every single-line `run:` / `- run:` command value in a block (multi-line `|` / `>-` blocks skipped). */
 function runCommandsIn(text: string): string[] {
@@ -78,9 +60,41 @@ function runCommandsIn(text: string): string[] {
   return out;
 }
 
-const JOB_BLOCKS = parseJobBlocks(CI_YML);
+const JOB_BLOCKS = workflowJobSections(CI_YML);
 const ALL_RUN_COMMANDS = new Set(runCommandsIn(CI_YML));
 const PLAN = buildCiPlan();
+
+describe('workflow reader implementations remain a bounded migration set', () => {
+  const productionSources = fg.sync(['packages/*/src/**/*.ts', 'scripts/**/*.ts'], { cwd: ROOT }).map((path) => ({
+    path,
+    text: readFileSync(resolve(ROOT, path), 'utf8'),
+  }));
+
+  it('derives exactly the remaining independent readers until they consume workflowJobSections', () => {
+    expect(independentWorkflowReaderSites(productionSources)).toEqual([
+      'scripts/lib/ci-test-host-contract.ts',
+      'scripts/lib/prebuild-closure-contract.ts',
+      'scripts/lib/release-promotion-contract.ts',
+      'scripts/lib/workflow-output-contract.ts',
+    ]);
+  });
+
+  it('a newly-added structural reader grows the census instead of passing silently', () => {
+    const synthetic = {
+      path: 'scripts/lib/new-workflow-reader.ts',
+      text: 'export function newReader(line: string) { return line.match(/^ {2}([A-Za-z0-9_-]+):\\s*$/); }',
+    };
+    expect(independentWorkflowReaderSites([...productionSources, synthetic])).toContain(synthetic.path);
+  });
+
+  it('mentioning the shared reader cannot hide an additional local reader', () => {
+    const synthetic = {
+      path: 'scripts/lib/half-migrated-reader.ts',
+      text: "import { workflowJobSections } from './shared.js'; export function oldReader(line: string) { return line.match(/^ {2}([A-Za-z0-9_-]+):\\s*$/); }",
+    };
+    expect(independentWorkflowReaderSites([synthetic])).toEqual([synthetic.path]);
+  });
+});
 
 // ── registry / gauntlet-phase projection tables ─────────────────────────────
 

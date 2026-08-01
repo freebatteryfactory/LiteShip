@@ -37,6 +37,8 @@ import {
   CAMPAIGN_TARGET_EVAL_MS,
   scanCampaignWallBudget,
   scanExhaustiveCachePersistence,
+  unreadableYamlViolations,
+  workflowJobSections,
 } from '../../../../packages/cli/src/internal/workflow-action-pins.js';
 // Relative endpoint imports, deliberately not the package specifiers: these
 // laws are the integration cover for the campaign's two composition edges
@@ -347,6 +349,67 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
     expect(scanExhaustiveCachePersistence(good, ['exhaustive-mutation'])).toEqual([]);
     // A missing job is a violation, never a silent pass.
     expect(scanExhaustiveCachePersistence('\n  other:\n    a: b\n', ['exhaustive-mutation'])).not.toEqual([]);
+  });
+});
+
+describe('the job boundary is a structural reader, not a lowercase-only regex', () => {
+  const sha = 'a'.repeat(40);
+  const save = `      - uses: actions/cache/save@${sha}\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`;
+  const compliantNext = `      - uses: actions/cache/restore@${sha}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n${save}`;
+
+  it.each(['next_job2', 'NextJob2'])('a job id containing %s bounds the section', (boundary) => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n  ${boundary}:\n    steps:\n${compliantNext}`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).not.toEqual([]);
+  });
+
+  it('a trailing comment on a job header still bounds the section', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n  next-job: # notes\n    steps:\n${compliantNext}`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).not.toEqual([]);
+  });
+
+  it('CRLF input bounds the section identically to LF', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n  next_job2:\n    steps:\n${compliantNext}`;
+    expect(scanExhaustiveCachePersistence(workflow.replaceAll('\n', '\r\n'), ['exhaustive-mutation'])).toEqual(
+      scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation']),
+    );
+  });
+
+  it('a job id that prefixes a later id resolves only its own section', () => {
+    const workflow = `jobs:\n  exhaustive-mcdc-fold:\n    steps:\n${compliantNext}  exhaustive-mcdc:\n    steps:\n`;
+    const sections = workflowJobSections(workflow);
+    expect(sections.get('exhaustive-mcdc')).not.toContain('exhaustive-mcdc-fold');
+  });
+
+  it('a campaign job with no cache steps is a violation even when the next job is compliant', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n  next_job2:\n    steps:\n${compliantNext}`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).not.toEqual([]);
+  });
+});
+
+describe('unreadable YAML is a violation, never a skipped line', () => {
+  it.each([
+    ['flow collection', 'jobs:\n  x:\n    steps:\n      - { uses: actions/checkout@abc }\n'],
+    ['alias', 'jobs:\n  x:\n    steps:\n      - *shared\n'],
+    ['merge key', 'jobs:\n  x:\n    <<: *defaults\n'],
+    ['tab indentation', 'jobs:\n  x:\n\tsteps:\n'],
+  ])('%s is refused', (_name, workflow) => {
+    expect(unreadableYamlViolations(workflow)).not.toEqual([]);
+  });
+
+  it('a duplicate key at one level is refused', () => {
+    expect(unreadableYamlViolations('jobs:\n  x:\n    timeout-minutes: 1\n    timeout-minutes: 2\n')).not.toEqual([]);
+  });
+
+  it('a bullet field and a child field with the same key are refused', () => {
+    expect(
+      unreadableYamlViolations(
+        'jobs:\n  x:\n    steps:\n      - uses: actions/checkout@abc\n        uses: actions/setup-node@abc\n',
+      ),
+    ).not.toEqual([]);
+  });
+
+  it('the public reader refuses duplicate top-level job ids instead of overwriting one', () => {
+    expect(() => workflowJobSections('jobs:\n  x:\n    runs-on: a\n  x:\n    runs-on: b\n')).toThrow(/duplicate/u);
   });
 });
 

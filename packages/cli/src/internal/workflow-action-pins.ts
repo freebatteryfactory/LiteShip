@@ -1,9 +1,55 @@
 /** Fast-lane scanner for immutable third-party GitHub Action references. */
 
+import { ValidationError } from '@liteship/error';
+
 export interface WorkflowActionPinViolation {
   readonly line: number;
   readonly content: string;
-  readonly reason: 'missing-immutable-revision' | 'untrusted-source' | 'credentials-persisted';
+  readonly reason: 'missing-immutable-revision' | 'untrusted-source' | 'credentials-persisted' | 'unreadable-yaml';
+}
+
+interface YamlShapeViolation {
+  readonly line: number;
+  readonly content: string;
+  readonly message: string;
+}
+
+export interface WorkflowReaderSource {
+  readonly path: string;
+  readonly text: string;
+}
+
+/**
+ * Locate dependency-free workflow readers that still parse structure instead
+ * of consuming {@link workflowJobSections}. This is a migration census: its
+ * grammar recognizes the extant job-header, dynamic job-marker, and artifact
+ * step-walk shapes. Only the module that owns the shared implementation is
+ * exempt from its own header grammar; merely importing or mentioning the
+ * shared symbol cannot hide an additional reader.
+ */
+export function independentWorkflowReaderSites(files: readonly WorkflowReaderSource[]): readonly string[] {
+  const sites: string[] = [];
+  for (const file of files) {
+    const subject = withoutFunctionThroughNextDoc(
+      withoutFunctionThroughNextDoc(file.text, 'export function independentWorkflowReaderSites'),
+      'export function workflowJobSections',
+    );
+    const readsJobHeader = subject.includes('^ {2}([A-Za-z0-9_-]+):');
+    const slicesDynamicJobMarker = subject.includes('.indexOf(`  ${');
+    const walksArtifactSteps =
+      subject.includes('function scanDeliveryEvidenceDownloads') && subject.includes('text.split(/\\r?\\n/u)');
+    if (readsJobHeader || slicesDynamicJobMarker || walksArtifactSteps) {
+      sites.push(file.path.replaceAll('\\', '/'));
+    }
+  }
+  return sites.sort();
+}
+
+function withoutFunctionThroughNextDoc(text: string, declaration: string): string {
+  const start = text.indexOf(declaration);
+  if (start === -1) return text;
+  const nextDoc = text.indexOf('\n/**', start + declaration.length);
+  return nextDoc === -1 ? text.slice(0, start) : `${text.slice(0, start)}${text.slice(nextDoc)}`;
 }
 
 const IMMUTABLE_REF = /^[0-9a-f]{40}$/i;
@@ -31,7 +77,11 @@ export const TRUSTED_ACTION_SOURCES: ReadonlySet<string> = new Set([
 
 /** Local reusable workflows are source-bound by the checkout; external actions require a SHA. */
 export function scanWorkflowActionPins(text: string): readonly WorkflowActionPinViolation[] {
-  const violations: WorkflowActionPinViolation[] = [];
+  const violations: WorkflowActionPinViolation[] = yamlShapeViolations(text).map((violation) => ({
+    line: violation.line,
+    content: violation.content,
+    reason: 'unreadable-yaml',
+  }));
   for (const [index, raw] of text.split(/\r?\n/).entries()) {
     const match = /^\s*(?:-\s*)?uses:\s*(?:"([^"]+)"|'([^']+)'|([^\s#]+))(?:\s+#.*)?$/u.exec(raw);
     if (!match) continue;
@@ -60,9 +110,11 @@ export function scanWorkflowActionPins(text: string): readonly WorkflowActionPin
  * `actions/cache` use. Returns one violation string per broken job.
  */
 export function scanExhaustiveCachePersistence(text: string, jobs: readonly string[]): readonly string[] {
-  const violations: string[] = [];
+  const violations: string[] = [...unreadableYamlViolations(text)];
+  if (violations.length > 0) return violations;
+  const sections = workflowSectionsForScan(text);
   for (const job of jobs) {
-    const section = campaignJobSection(text, job);
+    const section = campaignJobSection(sections, job);
     if (section === null) {
       violations.push(`${job}: job not found`);
       continue;
@@ -258,12 +310,124 @@ function childIndicesOf(lines: readonly ActiveLine[], index: number): readonly n
   return children;
 }
 
+/**
+ * One top-level job's text, keyed by exact job id, for every job under
+ * `jobs:`. Missing structural authority is refused rather than interpreted
+ * as an empty workflow.
+ */
+export function workflowJobSections(text: string): ReadonlyMap<string, string> {
+  const lines = text.split('\n').map((line) => line.replace(/\r$/u, ''));
+  const jobsIndex = lines.indexOf('jobs:');
+  if (jobsIndex === -1) {
+    throw ValidationError('workflow.jobs', 'workflow must declare a top-level jobs: mapping');
+  }
+  const headers: Array<{ readonly name: string; readonly line: number }> = [];
+  for (let index = jobsIndex + 1; index < lines.length; index++) {
+    // A trailing comment is inert YAML and therefore part of the admitted
+    // block-mapping spelling, not a reason to lose the next-job boundary.
+    const match = /^ {2}([A-Za-z0-9_-]+):(?:\s+#.*)?\s*$/u.exec(lines[index]!);
+    if (match !== null) headers.push({ name: match[1]!, line: index });
+  }
+  const sections = new Map<string, string>();
+  for (let index = 0; index < headers.length; index++) {
+    const header = headers[index]!;
+    const end = headers[index + 1]?.line ?? lines.length;
+    if (sections.has(header.name)) {
+      throw ValidationError('workflow.jobs', `workflow declares duplicate top-level job id "${header.name}"`);
+    }
+    sections.set(header.name, lines.slice(header.line, end).join('\n'));
+  }
+  return sections;
+}
+
+/**
+ * THE CLASS RULE — workflow YAML reader completeness.
+ *
+ * ANCHOR: every active line visited by this dependency-free block-mapping
+ * reader. ALLOWLIST: ordinary block mappings, block sequences, and block
+ * scalars. Flow collections, aliases, merge keys, tab indentation, malformed
+ * carriage returns, and duplicate sibling keys are outside that closed
+ * grammar. An unclassified spelling is a violation; it is never skipped.
+ */
+export function unreadableYamlViolations(text: string): readonly string[] {
+  return yamlShapeViolations(text).map(
+    (violation) => `workflow line ${violation.line}: ${violation.message}: ${violation.content}`,
+  );
+}
+
+function yamlShapeViolations(text: string): readonly YamlShapeViolation[] {
+  const violations: YamlShapeViolation[] = [];
+  const lines = text.split('\n');
+  const siblingKeys = new Map<string, Map<string, number>>();
+  const parents: Array<{ readonly indent: number; readonly identity: string }> = [];
+  let scalarIndent: number | null = null;
+  for (let index = 0; index < lines.length; index++) {
+    const original = lines[index]!;
+    const raw = original.replace(/\r$/u, '');
+    const line = index + 1;
+    if (/\r/u.test(raw)) {
+      violations.push({ line, content: raw.trim(), message: 'carriage return is not part of a CRLF line ending' });
+    }
+    if (/^\s*\t/u.test(raw) || /^ *\t/u.test(raw)) {
+      violations.push({ line, content: raw.trim(), message: 'tab indentation is unreadable' });
+    }
+    const body = raw.trim();
+    if (body === '' || body.startsWith('#')) continue;
+    const indent = /^ */u.exec(raw)![0].length;
+    if (scalarIndent !== null) {
+      if (indent > scalarIndent) continue;
+      scalarIndent = null;
+    }
+    while (parents.length > 0 && parents.at(-1)!.indent >= indent) parents.pop();
+    const sequenceItem = /^-\s+/u.test(body);
+    if (sequenceItem) parents.push({ indent, identity: `item:${line}` });
+    const value = body.replace(/^-\s+/u, '');
+    if (
+      (sequenceItem && /^[{[]/u.test(value)) ||
+      /^(?:uses|run|if|with|env|steps|timeout-minutes|key|path|restore-keys):\s*[{[]/u.test(value)
+    ) {
+      violations.push({ line, content: body, message: 'flow collection is outside the structural reader grammar' });
+    }
+    if (/^(?:[A-Za-z0-9_-]+:\s*)?\*[A-Za-z0-9_-]+(?:\s+#.*)?$/u.test(value)) {
+      violations.push({ line, content: body, message: 'YAML aliases are outside the structural reader grammar' });
+    }
+    if (/^<<:/u.test(value)) {
+      violations.push({ line, content: body, message: 'YAML merge keys are outside the structural reader grammar' });
+    }
+    const keyMatch = /^([A-Za-z0-9_-]+):/u.exec(value);
+    if (keyMatch !== null) {
+      const parent = parents.map((entry) => entry.identity).join('/');
+      const byKey = siblingKeys.get(parent) ?? new Map<string, number>();
+      const key = keyMatch[1]!;
+      const first = byKey.get(key);
+      if (first !== undefined) {
+        violations.push({
+          line,
+          content: body,
+          message: `duplicate key ${key} at one level (first declared on line ${first})`,
+        });
+      } else {
+        byKey.set(key, line);
+        siblingKeys.set(parent, byKey);
+      }
+      if (!sequenceItem) parents.push({ indent, identity: `${line}:${key}` });
+    }
+    if (/^.*:\s*[|>][-+]?\s*(?:#.*)?$/u.test(value)) scalarIndent = indent;
+  }
+  return violations;
+}
+
+function workflowSectionsForScan(text: string): ReadonlyMap<string, string> {
+  if (text.split(/\r?\n/u).includes('jobs:')) return workflowJobSections(text);
+  // Several focused scanner laws deliberately pass a job fragment instead
+  // of a complete workflow. Give those fragments the same structural reader
+  // by supplying only the absent authority wrapper.
+  return workflowJobSections(`jobs:\n${text.replace(/^\r?\n/u, '')}`);
+}
+
 /** The job section of a workflow, from its key to the next top-level job key (two-space indent). */
-function campaignJobSection(text: string, job: string): string | null {
-  const start = text.indexOf(`\n  ${job}:`);
-  if (start === -1) return null;
-  const next = text.slice(start + 1).search(/\n {2}[a-z][a-z-]*:\n/u);
-  return next === -1 ? text.slice(start) : text.slice(start, start + 1 + next);
+function campaignJobSection(sections: ReadonlyMap<string, string>, job: string): string | null {
+  return sections.get(job) ?? null;
 }
 
 /** The literal campaign invocation — the one command whose step owns the wall-budget env. */
@@ -285,9 +449,11 @@ export const CAMPAIGN_POST_STEP_MARGIN_MS = 900_000;
  * the always() save/upload post-steps the banking design depends on.
  */
 export function scanCampaignWallBudget(text: string, jobs: readonly string[]): readonly string[] {
-  const violations: string[] = [];
+  const violations: string[] = [...unreadableYamlViolations(text)];
+  if (violations.length > 0) return violations;
+  const sections = workflowSectionsForScan(text);
   for (const job of jobs) {
-    const section = campaignJobSection(text, job);
+    const section = campaignJobSection(sections, job);
     if (section === null) {
       violations.push(`${job}: job not found`);
       continue;
@@ -427,7 +593,11 @@ function campaignStepBudgetOf(lines: readonly ActiveLine[], modeFlag: string): s
 /** A checkout step is safe only when it explicitly declines credential persistence. */
 export function scanWorkflowCheckoutCredentials(text: string): readonly WorkflowActionPinViolation[] {
   const lines = text.split(/\r?\n/u);
-  const violations: WorkflowActionPinViolation[] = [];
+  const violations: WorkflowActionPinViolation[] = yamlShapeViolations(text).map((violation) => ({
+    line: violation.line,
+    content: violation.content,
+    reason: 'unreadable-yaml',
+  }));
   for (let index = 0; index < lines.length; index++) {
     const raw = lines[index]!;
     const match = /^(\s*)(?:-\s*)?uses:\s*(?:["'])?actions\/checkout@[0-9a-f]{40}(?:["'])?(?:\s+#.*)?$/iu.exec(raw);
