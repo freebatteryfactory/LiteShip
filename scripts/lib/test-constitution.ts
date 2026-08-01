@@ -4,7 +4,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import ts from 'typescript';
 
-export type TestDebtKind = 'ambient-clock' | 'real-timer' | 'source-byte-oracle';
+export type TestDebtKind = 'ambient-clock' | 'real-timer' | 'source-byte-oracle' | 'unanchored-text-slice';
 
 export interface TestDebtFinding {
   readonly file: string;
@@ -168,6 +168,118 @@ function sourceTextOracles(ast: ts.SourceFile): readonly ts.CallExpression[] {
   return findings;
 }
 
+function isIndexSearch(node: ts.Expression): node is ts.CallExpression {
+  return (
+    ts.isCallExpression(node) &&
+    ts.isPropertyAccessExpression(node.expression) &&
+    (node.expression.name.text === 'indexOf' || node.expression.name.text === 'search')
+  );
+}
+
+function isMinusOne(node: ts.Expression): boolean {
+  return (
+    ts.isPrefixUnaryExpression(node) &&
+    node.operator === ts.SyntaxKind.MinusToken &&
+    ts.isNumericLiteral(node.operand) &&
+    node.operand.text === '1'
+  );
+}
+
+function containingFunctionOrFile(node: ts.Node, ast: ts.SourceFile): ts.Node {
+  let current = node.parent;
+  while (current !== undefined) {
+    if (ts.isFunctionLike(current)) return current;
+    current = current.parent;
+  }
+  return ast;
+}
+
+function indexBinding(scope: ts.Node, name: string): ts.CallExpression | undefined {
+  let found: ts.CallExpression | undefined;
+  const visit = (node: ts.Node): void => {
+    if (found !== undefined) return;
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === name &&
+      node.initializer !== undefined &&
+      isIndexSearch(node.initializer)
+    ) {
+      found = node.initializer;
+      return;
+    }
+    if (node !== scope && ts.isFunctionLike(node)) return;
+    ts.forEachChild(node, visit);
+  };
+  visit(scope);
+  return found;
+}
+
+function identifierHasIndexGuard(scope: ts.Node, name: string): boolean {
+  let guarded = false;
+  const isNamedIdentifier = (node: ts.Node): boolean => ts.isIdentifier(node) && node.text === name;
+  const visit = (node: ts.Node): void => {
+    if (guarded) return;
+    if (
+      ts.isBinaryExpression(node) &&
+      ((isNamedIdentifier(node.left) && isMinusOne(node.right)) ||
+        (isMinusOne(node.left) && isNamedIdentifier(node.right)))
+    ) {
+      guarded = true;
+      return;
+    }
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      (node.expression.name.text === 'toBeGreaterThan' || node.expression.name.text === 'toBeGreaterThanOrEqual') &&
+      ts.isCallExpression(node.expression.expression) &&
+      identifierCall(node.expression.expression, 'expect') &&
+      node.expression.expression.arguments[0] !== undefined &&
+      isNamedIdentifier(node.expression.expression.arguments[0])
+    ) {
+      guarded = true;
+      return;
+    }
+    if (node !== scope && ts.isFunctionLike(node)) return;
+    ts.forEachChild(node, visit);
+  };
+  visit(scope);
+  return guarded;
+}
+
+/**
+ * THE CLASS RULE — ANCHOR: slice/substring bounds drawn directly from indexOf
+ * or search, including simple variable aliases. ALLOWLIST: only a variable
+ * whose containing function proves the sentinel impossible with a -1 check or
+ * a non-negative expectation. Direct search expressions and every
+ * unclassified alias fail closed as debt: an absent anchor must never widen a
+ * test oracle to unrelated text.
+ */
+function unanchoredTextSlices(ast: ts.SourceFile): readonly ts.CallExpression[] {
+  const findings: ts.CallExpression[] = [];
+  const visit = (node: ts.Node): void => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      (node.expression.name.text === 'slice' || node.expression.name.text === 'substring')
+    ) {
+      const scope = containingFunctionOrFile(node, ast);
+      const unguarded = node.arguments.some((argument) => {
+        if (isIndexSearch(argument)) return true;
+        return (
+          ts.isIdentifier(argument) &&
+          indexBinding(scope, argument.text) !== undefined &&
+          !identifierHasIndexGuard(scope, argument.text)
+        );
+      });
+      if (unguarded) findings.push(node);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  return findings;
+}
+
 /** Scan deterministic test lanes while ignoring comments and string literals. */
 export function scanTestConstitution(cwd: string): readonly TestDebtFinding[] {
   const findings: TestDebtFinding[] = [];
@@ -196,6 +308,7 @@ export function scanTestConstitution(cwd: string): readonly TestDebtFinding[] {
       };
       visit(ast);
       for (const oracle of sourceTextOracles(ast)) add('source-byte-oracle', oracle);
+      for (const slice of unanchoredTextSlices(ast)) add('unanchored-text-slice', slice);
     }
   }
   return findings.sort(

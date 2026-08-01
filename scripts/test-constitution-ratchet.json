@@ -28,6 +28,9 @@
     "tests/property/schema-strictness.prop.test.ts": {
       "source-byte-oracle": 1
     },
+    "tests/support/beginner-surface.ts": {
+      "unanchored-text-slice": 2
+    },
     "tests/support/repo-truths.ts": {
       "source-byte-oracle": 2
     },
@@ -73,8 +76,17 @@
     "tests/unit/cli/lib/repo-ir-gauntlet.test.ts": {
       "source-byte-oracle": 1
     },
+    "tests/unit/command/catalog.test.ts": {
+      "unanchored-text-slice": 1
+    },
     "tests/unit/compiler/compiler-branch-coverage.test.ts": {
       "ambient-clock": 2
+    },
+    "tests/unit/compiler/migrate/from-media-queries.test.ts": {
+      "unanchored-text-slice": 2
+    },
+    "tests/unit/compiler/motion-compiler.test.ts": {
+      "unanchored-text-slice": 1
     },
     "tests/unit/core/authoring/ai-cast.test.ts": {
       "source-byte-oracle": 1
@@ -94,6 +106,12 @@
     "tests/unit/core/motion/reveal.test.ts": {
       "source-byte-oracle": 2
     },
+    "tests/unit/core/motion/scroll-timeline.test.ts": {
+      "unanchored-text-slice": 1
+    },
+    "tests/unit/core/motion/stagger.test.ts": {
+      "unanchored-text-slice": 1
+    },
     "tests/unit/core/reactive/live-cell.test.ts": {
       "ambient-clock": 2
     },
@@ -104,7 +122,8 @@
       "source-byte-oracle": 10
     },
     "tests/unit/core/simulation-determinism-substrate.test.ts": {
-      "source-byte-oracle": 4
+      "source-byte-oracle": 4,
+      "unanchored-text-slice": 1
     },
     "tests/unit/core/simulation-dst-meta-proof.test.ts": {
       "ambient-clock": 1
@@ -122,8 +141,12 @@
     "tests/unit/detect/detect-runtime.test.ts": {
       "real-timer": 4
     },
+    "tests/unit/detect/head-probe-drift.test.ts": {
+      "unanchored-text-slice": 2
+    },
     "tests/unit/devops/audience-vocabulary.test.ts": {
-      "source-byte-oracle": 1
+      "source-byte-oracle": 1,
+      "unanchored-text-slice": 1
     },
     "tests/unit/devops/audit-command.test.ts": {
       "source-byte-oracle": 1
@@ -132,7 +155,8 @@
       "source-byte-oracle": 1
     },
     "tests/unit/devops/audit-defaults.test.ts": {
-      "source-byte-oracle": 2
+      "source-byte-oracle": 2,
+      "unanchored-text-slice": 2
     },
     "tests/unit/devops/audit-profile-seam.test.ts": {
       "source-byte-oracle": 3
@@ -144,7 +168,8 @@
       "source-byte-oracle": 1
     },
     "tests/unit/devops/ci-authority.test.ts": {
-      "source-byte-oracle": 2
+      "source-byte-oracle": 2,
+      "unanchored-text-slice": 1
     },
     "tests/unit/devops/ci-plan-prebuild-closure.test.ts": {
       "source-byte-oracle": 3
@@ -171,7 +196,8 @@
       "source-byte-oracle": 9
     },
     "tests/unit/devops/parallel-ci-artifacts.test.ts": {
-      "source-byte-oracle": 21
+      "source-byte-oracle": 21,
+      "unanchored-text-slice": 7
     },
     "tests/unit/devops/pre-commit-hook.test.ts": {
       "source-byte-oracle": 11
@@ -188,11 +214,23 @@
     "tests/unit/devops/release-roster.test.ts": {
       "source-byte-oracle": 1
     },
+    "tests/unit/gauntlet/effective-level-scoping.test.ts": {
+      "unanchored-text-slice": 1
+    },
     "tests/unit/gauntlet/no-skipped-test-scope.test.ts": {
       "source-byte-oracle": 1
     },
+    "tests/unit/gauntlet/scope-and-waivers.test.ts": {
+      "unanchored-text-slice": 1
+    },
+    "tests/unit/gauntlet/verdict-cache.test.ts": {
+      "unanchored-text-slice": 1
+    },
     "tests/unit/lib/spawn.test.ts": {
       "real-timer": 2
+    },
+    "tests/unit/liteship/facade-failure-proof-binding.test.ts": {
+      "unanchored-text-slice": 1
     },
     "tests/unit/meta/a1-seam-integrity.test.ts": {
       "source-byte-oracle": 4

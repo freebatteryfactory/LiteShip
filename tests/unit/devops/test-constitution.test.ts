@@ -43,6 +43,38 @@ describe('test constitution', () => {
     ]);
   });
 
+  describe('unanchored-text-slice', () => {
+    it('flags a slice between two unguarded indexOf anchors', () => {
+      const root = fixture(`
+        const source = 'before START subject END after';
+        const subject = source.slice(source.indexOf('START'), source.indexOf('END'));
+        expect(subject).toContain('subject');
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('unanchored-text-slice');
+    });
+
+    it('does not flag a slice whose variable anchors are -1-guarded', () => {
+      const root = fixture(`
+        const source = 'before START subject END after';
+        const start = source.indexOf('START');
+        const end = source.indexOf('END');
+        expect(start).toBeGreaterThanOrEqual(0);
+        if (end === -1) throw new Error('missing END');
+        const subject = source.slice(start, end);
+        expect(subject).toContain('subject');
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('unanchored-text-slice');
+    });
+
+    it('does not flag a slice with literal bounds', () => {
+      const root = fixture(`
+        const source = 'subject';
+        expect(source.substring(0, 4)).toBe('subj');
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('unanchored-text-slice');
+    });
+  });
+
   it('follows raw-text aliases and reader helpers into brittle string operations', () => {
     const root = fixture(`
       const read = (path: string) => readFileSync(path, 'utf8');
