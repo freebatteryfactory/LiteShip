@@ -6,7 +6,7 @@
 
 # Interface: BenchmarkSubjectFacts
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L90)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L91)
 
 Parser-backed benchmark reachability facts produced by a repository host.
 
@@ -16,7 +16,7 @@ Parser-backed benchmark reachability facts produced by a repository host.
 
 > `readonly` **distributions**: readonly [`BenchmarkSubjectFact`](BenchmarkSubjectFact.md)[]
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L92)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L93)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [gauntlet/src/gates/bench-subjects.ts:92](https://github.com/freebat
 
 > `readonly` **schemaVersion**: `1`
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L91)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L92)

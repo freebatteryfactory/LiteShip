@@ -429,6 +429,18 @@ function subjectIsInvoked(subject: BenchSubject, reachability: Reachability): bo
   return reachability.calls.has(subject.binding.replace(/\s+/gu, ''));
 }
 
+function isUnclaimedConstruction(
+  distribution: QualifiedBenchDistribution,
+  subject: BenchSubject,
+  reachability: Reachability,
+): boolean {
+  const terminal = normalizedTerminal(subject.symbol);
+  const constructor = terminal === 'create' || terminal.startsWith('create') || terminal.startsWith('define');
+  if (!constructor || !subjectIsInvoked(subject, reachability)) return false;
+  const claimedOperation = distribution.name.replace(/[^A-Za-z0-9]/gu, '').toLowerCase();
+  return !claimedOperation.includes(terminal);
+}
+
 /** Qualify one distribution against source bytes supplied by the repository host. */
 export function qualifyBenchDistribution(
   distribution: QualifiedBenchDistribution,
@@ -544,6 +556,16 @@ export function qualifyBenchDistribution(
         file: executionFile,
         subject,
         detail: `measured execution for "${distribution.name}" never invokes ${subject.binding}`,
+      });
+      continue;
+    }
+    if (execution.kind === 'callback' && isUnclaimedConstruction(distribution, subject, reachability)) {
+      issues.push({
+        kind: 'subject-construction-in-measured-body',
+        name: distribution.name,
+        file: executionFile,
+        subject,
+        detail: `measured callback for "${distribution.name}" constructs ${subject.binding}; construct the subject before timing the claimed operation`,
       });
       continue;
     }

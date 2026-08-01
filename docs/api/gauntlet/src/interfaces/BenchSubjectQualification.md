@@ -6,7 +6,7 @@
 
 # Interface: BenchSubjectQualification
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L75)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L76)
 
 Reachability proof and issues for one benchmark distribution.
 
@@ -16,7 +16,7 @@ Reachability proof and issues for one benchmark distribution.
 
 > `readonly` **issues**: readonly [`BenchSubjectIssue`](BenchSubjectIssue.md)[]
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L76)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L77)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [gauntlet/src/gates/bench-subjects.ts:76](https://github.com/freebat
 
 > `readonly` **qualifyingSutSubjects**: readonly [`BenchSubject`](BenchSubject.md)[]
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L79)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L80)
 
 Reachable module/file/WASM SUTs qualify; baselines and intrinsics never do.
 
@@ -34,4 +34,4 @@ Reachable module/file/WASM SUTs qualify; baselines and intrinsics never do.
 
 > `readonly` **reachableSubjects**: readonly [`BenchSubject`](BenchSubject.md)[]
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L77)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L78)

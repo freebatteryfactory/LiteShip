@@ -258,6 +258,81 @@ describe('THE HEADLINE LAW — a bench is invalid unless its distribution is dec
     expect(findings.some((finding) => finding.title.includes('uninvoked-subject'))).toBe(true);
   });
 
+  it('FLAGS compute benchmarks that construct their subjects inside timed callbacks', () => {
+    const distributions = JSON.stringify({
+      schemaVersion: 2,
+      distributions: [
+        {
+          name: 'BlendTree.compute() -- 4 nodes',
+          file: 'tests/bench/core.bench.ts',
+          inputSize: 4,
+          shape: 'blend-nodes',
+          replicates: 1,
+          subjects: [
+            {
+              role: 'sut',
+              origin: { kind: 'module', specifier: '@liteship/core' },
+              symbol: 'createBlendTree',
+              binding: 'createBlendTree',
+            },
+            {
+              role: 'sut',
+              origin: { kind: 'module', specifier: '@liteship/core' },
+              symbol: 'createBlendTree().compute',
+              binding: 'tree.compute',
+            },
+          ],
+        },
+        {
+          name: 'Compositor.compute() -- empty',
+          file: 'tests/bench/core.bench.ts',
+          inputSize: 1,
+          shape: 'single-call',
+          replicates: 1,
+          subjects: [
+            {
+              role: 'sut',
+              origin: { kind: 'module', specifier: '@liteship/core' },
+              symbol: 'Compositor.create',
+              binding: 'Compositor.create',
+            },
+            {
+              role: 'sut',
+              origin: { kind: 'module', specifier: '@liteship/core' },
+              symbol: 'Compositor.create().compute',
+              binding: 'compositor.compute',
+            },
+          ],
+        },
+      ],
+    });
+    const source = [
+      "import { Bench } from 'tinybench';",
+      "import { Compositor, createBlendTree } from '@liteship/core';",
+      'const bench = new Bench();',
+      "bench.add('BlendTree.compute() -- 4 nodes', () => {",
+      '  const tree = createBlendTree<{ x: number }>();',
+      '  tree.compute();',
+      '});',
+      "bench.add('Compositor.compute() -- empty', () => {",
+      '  const compositor = Compositor.create();',
+      '  compositor.compute();',
+      '});',
+    ].join('\n');
+
+    const findings = performanceContractsGate.run(
+      memoryContext({
+        'benchmarks/distributions.json': distributions,
+        'tests/bench/core.bench.ts': source,
+        'benchmarks/complexity-map.json': HEALTHY_MAP,
+      }),
+    );
+
+    expect(findings.filter((finding) => finding.title.includes('subject-construction-in-measured-body'))).toHaveLength(
+      2,
+    );
+  });
+
   it('FLAGS a missing subject declaration instead of granting evidence from the bench name', () => {
     const findings = performanceContractsGate.run(
       memoryContext({

@@ -60,7 +60,8 @@ export type BenchSubjectIssueKind =
   | 'missing-collector'
   | 'missing-result-key'
   | 'wrong-origin'
-  | 'uninvoked-subject';
+  | 'uninvoked-subject'
+  | 'subject-construction-in-measured-body';
 
 /** One failed benchmark-subject reachability obligation. */
 export interface BenchSubjectIssue {

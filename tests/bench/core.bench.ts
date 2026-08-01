@@ -115,18 +115,18 @@ bench.add('defineToken() + FNV-1a', () => {
   });
 });
 
+const blendTree4 = createBlendTree<{ x: number; y: number }>();
+blendTree4.add('a', { x: 0, y: 0 }, 1);
+blendTree4.add('b', { x: 100, y: 100 }, 1);
+blendTree4.add('c', { x: 50, y: 50 }, 0.5);
+blendTree4.add('d', { x: 75, y: 25 }, 0.5);
 bench.add('BlendTree.compute() -- 4 nodes', () => {
-  const tree = createBlendTree<{ x: number; y: number }>();
-  tree.add('a', { x: 0, y: 0 }, 1);
-  tree.add('b', { x: 100, y: 100 }, 1);
-  tree.add('c', { x: 50, y: 50 }, 0.5);
-  tree.add('d', { x: 75, y: 25 }, 0.5);
-  tree.compute();
+  blendTree4.compute();
 });
 
+const emptyCompositor = Compositor.create();
 bench.add('Compositor.compute() -- empty', () => {
-  const compositor = Compositor.create();
-  compositor.compute();
+  emptyCompositor.compute();
 });
 
 // ECS World tick -- setup extracted so only tick() is measured per iteration

@@ -122,26 +122,8 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "createBlendTree",
-          "binding": "createBlendTree"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
-          "symbol": "createBlendTree().add",
-          "binding": "tree.add"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
           "symbol": "createBlendTree().compute",
-          "binding": "tree.compute"
+          "binding": "blendTree4.compute"
         }
       ]
     },
@@ -158,17 +140,8 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Compositor.create",
-          "binding": "Compositor.create"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
           "symbol": "Compositor.create().compute",
-          "binding": "compositor.compute"
+          "binding": "emptyCompositor.compute"
         }
       ]
     },
