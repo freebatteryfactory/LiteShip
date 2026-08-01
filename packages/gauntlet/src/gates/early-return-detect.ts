@@ -13,6 +13,7 @@ import { codeOnly } from './code-only.js';
  * deliberately consumes the union, because a skipped suite is still a skip.
  */
 export const TEST_ROOTS: ReadonlySet<string> = new Set(['it', 'test', 'fit', 'specify', 'fspecify']);
+/** Runner roots that declare grouping suites rather than individual test obligations. */
 export const SUITE_ROOTS: ReadonlySet<string> = new Set(['describe', 'suite', 'bench', 'fdescribe']);
 
 /** One test control-flow path that exits before an assertion. */

@@ -8,4 +8,6 @@
 
 > `const` **SUITE\_ROOTS**: `ReadonlySet`\<`string`\>
 
-Defined in: [gauntlet/src/gates/early-return-detect.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/early-return-detect.ts#L16)
+Defined in: [gauntlet/src/gates/early-return-detect.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/early-return-detect.ts#L17)
+
+Runner roots that declare grouping suites rather than individual test obligations.
