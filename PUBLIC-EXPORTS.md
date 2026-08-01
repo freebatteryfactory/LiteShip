@@ -2,7 +2,7 @@
 
 Generated from the typed 25-package catalog and the TypeScript export graph. The `liteship` root is the paved road; package and facade subpaths are advanced modules. `public-exports:check` proves every named binding is export-reachable and has a source declaration owner, consumer import spelling, TSDoc purpose, failure policy, invariant, replacement status, and named package proof. The binding total is not a claim that every structural type has a concrete runtime inhabitant: executable allocation/read proof is exhaustive only for paved-road root values; advanced type inhabitation remains an explicit owner contract. Use `liteship explain <symbol>` for the symbol-level answer.
 
-Bindings: **4150** across **87** public specifiers.
+Bindings: **4156** across **87** public specifiers.
 
 | Specifier | Surface | Audience | Stability | Bindings | Declaration owners | Invariant |
 | --- | --- | --- | --- | ---: | ---: | --- |
@@ -31,7 +31,7 @@ Bindings: **4150** across **87** public specifiers.
 | `@liteship/astro/middleware-entry` | advanced-module | host-integrator | stable | 1 | 1 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/astro/runtime` | advanced-module | host-integrator | stable | 84 | 20 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/astro/runtime/inspector-toolbar-app` | advanced-module | host-integrator | stable | 1 | 1 | `INV-PUBLIC-SURFACE-INHABITED` |
-| `@liteship/audit` | advanced-module | operator | stable | 186 | 32 | `INV-PUBLIC-SURFACE-INHABITED` |
+| `@liteship/audit` | advanced-module | operator | stable | 190 | 33 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/canonical` | advanced-module | package-author | stable | 14 | 7 | `INV-CANONICAL-BYTES` |
 | `@liteship/cli` | advanced-module | operator | stable | 1 | 1 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/cloudflare` | advanced-module | host-integrator | stable | 10 | 3 | `INV-PUBLIC-SURFACE-INHABITED` |
@@ -53,7 +53,7 @@ Bindings: **4150** across **87** public specifiers.
 | `@liteship/core/graph` | advanced-module | package-author | stable | 68 | 10 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/harness` | advanced-module | package-author | stable | 23 | 10 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/media` | advanced-module | package-author | stable | 39 | 9 | `INV-PUBLIC-SURFACE-INHABITED` |
-| `@liteship/core/motion` | advanced-module | package-author | stable | 87 | 13 | `INV-PUBLIC-SURFACE-INHABITED` |
+| `@liteship/core/motion` | advanced-module | package-author | stable | 89 | 14 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/reactive` | advanced-module | package-author | stable | 62 | 17 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/schema` | advanced-module | package-author | stable | 77 | 13 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/simulation` | advanced-module | package-author | stable | 27 | 6 | `INV-PUBLIC-SURFACE-INHABITED` |
