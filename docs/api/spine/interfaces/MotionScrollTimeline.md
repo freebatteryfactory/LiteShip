@@ -6,7 +6,7 @@
 
 # Interface: MotionScrollTimeline
 
-Defined in: [\_spine/compiler.d.ts:369](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L369)
+Defined in: [\_spine/compiler.d.ts:371](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L371)
 
 Scroll-timeline axis and range projected into CSS.
 
@@ -16,7 +16,7 @@ Scroll-timeline axis and range projected into CSS.
 
 > `readonly` `optional` **axis?**: `"block"` \| `"inline"` \| `"x"` \| `"y"`
 
-Defined in: [\_spine/compiler.d.ts:370](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L370)
+Defined in: [\_spine/compiler.d.ts:372](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L372)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/compiler.d.ts:370](https://github.com/freebatteryfactory/Li
 
 > `readonly` **range**: readonly \[`string`, `string`\]
 
-Defined in: [\_spine/compiler.d.ts:371](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L371)
+Defined in: [\_spine/compiler.d.ts:373](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L373)

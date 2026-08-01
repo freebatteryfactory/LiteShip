@@ -6,7 +6,7 @@
 
 # Interface: MotionSupportMetadata
 
-Defined in: [\_spine/compiler.d.ts:384](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L384)
+Defined in: [\_spine/compiler.d.ts:386](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L386)
 
 Generated support metadata for the CSS motion tiers emitted by the compiler.
 
@@ -16,7 +16,7 @@ Generated support metadata for the CSS motion tiers emitted by the compiler.
 
 > `readonly` **keyframes**: \{ `fidelity`: `"faithful"`; \} \| \{ `fidelity`: `"runtime-floor-required"`; `reason`: `"mixed-easing-overlap"`; \}
 
-Defined in: [\_spine/compiler.d.ts:385](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L385)
+Defined in: [\_spine/compiler.d.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L387)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/compiler.d.ts:385](https://github.com/freebatteryfactory/Li
 
 > `readonly` **transitionFallback**: [`MotionTransitionFallbackSupport`](MotionTransitionFallbackSupport.md)
 
-Defined in: [\_spine/compiler.d.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L388)
+Defined in: [\_spine/compiler.d.ts:390](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L390)

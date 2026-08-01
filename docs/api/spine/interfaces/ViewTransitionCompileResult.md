@@ -6,7 +6,7 @@
 
 # Interface: ViewTransitionCompileResult
 
-Defined in: [\_spine/compiler.d.ts:423](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L423)
+Defined in: [\_spine/compiler.d.ts:425](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L425)
 
 CSS fragments emitted by view-transition compilation.
 
@@ -16,7 +16,7 @@ CSS fragments emitted by view-transition compilation.
 
 > `readonly` **atRule**: `string`
 
-Defined in: [\_spine/compiler.d.ts:427](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L427)
+Defined in: [\_spine/compiler.d.ts:429](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L429)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:427](https://github.com/freebatteryfactory/Li
 
 > `readonly` **nameAssignment**: `string`
 
-Defined in: [\_spine/compiler.d.ts:425](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L425)
+Defined in: [\_spine/compiler.d.ts:427](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L427)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/compiler.d.ts:425](https://github.com/freebatteryfactory/Li
 
 > `readonly` **pseudoStyles**: `string`
 
-Defined in: [\_spine/compiler.d.ts:426](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L426)
+Defined in: [\_spine/compiler.d.ts:428](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L428)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/compiler.d.ts:426](https://github.com/freebatteryfactory/Li
 
 > `readonly` **raw**: `string`
 
-Defined in: [\_spine/compiler.d.ts:428](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L428)
+Defined in: [\_spine/compiler.d.ts:430](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L430)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [\_spine/compiler.d.ts:428](https://github.com/freebatteryfactory/Li
 
 > `readonly` **viewTransitionName**: `string`
 
-Defined in: [\_spine/compiler.d.ts:424](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L424)
+Defined in: [\_spine/compiler.d.ts:426](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L426)

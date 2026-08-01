@@ -6,7 +6,7 @@
 
 # Interface: MotionViewTimeline
 
-Defined in: [\_spine/compiler.d.ts:364](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L364)
+Defined in: [\_spine/compiler.d.ts:366](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L366)
 
 View-timeline range projected into CSS.
 
@@ -16,4 +16,4 @@ View-timeline range projected into CSS.
 
 > `readonly` **range**: readonly \[`string`, `string`\]
 
-Defined in: [\_spine/compiler.d.ts:365](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L365)
+Defined in: [\_spine/compiler.d.ts:367](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L367)

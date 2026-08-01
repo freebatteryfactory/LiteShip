@@ -6,7 +6,7 @@
 
 # Interface: MotionSpringConfig
 
-Defined in: [\_spine/compiler.d.ts:354](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L354)
+Defined in: [\_spine/compiler.d.ts:356](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L356)
 
 Spring parameters accepted by motion compilation.
 
@@ -16,7 +16,7 @@ Spring parameters accepted by motion compilation.
 
 > `readonly` `optional` **damping?**: `number`
 
-Defined in: [\_spine/compiler.d.ts:356](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L356)
+Defined in: [\_spine/compiler.d.ts:358](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L358)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:356](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **mass?**: `number`
 
-Defined in: [\_spine/compiler.d.ts:357](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L357)
+Defined in: [\_spine/compiler.d.ts:359](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L359)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/compiler.d.ts:357](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **stiffness?**: `number`
 
-Defined in: [\_spine/compiler.d.ts:355](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L355)
+Defined in: [\_spine/compiler.d.ts:357](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L357)
