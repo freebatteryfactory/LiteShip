@@ -206,8 +206,7 @@
       "source-byte-oracle": 9
     },
     "tests/unit/devops/parallel-ci-artifacts.test.ts": {
-      "source-byte-oracle": 21,
-      "unanchored-text-slice": 7
+      "source-byte-oracle": 21
     },
     "tests/unit/devops/pre-commit-hook.test.ts": {
       "source-byte-oracle": 11
