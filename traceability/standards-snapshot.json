@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:86bccf91",
+  "address": "fnv1a:c2c113b1",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4596,6 +4596,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/lib/derived-artifacts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/lib/devcontainer-pins.ts",
       "level": "L1"
     },
@@ -4852,6 +4857,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/refresh-bench-snapshot.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/regen.ts",
       "level": "L1"
     },
     {

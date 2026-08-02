@@ -82,6 +82,7 @@
     "capsule:verify": "pnpm exec tsx packages/cli/src/bin.ts capsule gate",
     "check": "pnpm exec tsx packages/cli/src/bin.ts check",
     "preflight": "pnpm exec tsx scripts/preflight.ts",
+    "regen": "pnpm exec tsx scripts/regen.ts",
     "resources:plan": "pnpm exec tsx scripts/local-resources.ts",
     "check:gates": "pnpm exec tsx packages/cli/src/bin.ts check gates",
     "test:e2e": "pnpm exec tsx scripts/test-e2e.ts",

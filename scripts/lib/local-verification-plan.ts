@@ -1,6 +1,7 @@
 /** Pure local-verification plan used by both humans and agents. @module */
 
 import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
+import { preflightEnforcerPaths } from './derived-artifacts.js';
 
 export interface LocalVerificationStep {
   /** Null only for the existing gauntlet executor phase that has no registry check. */
@@ -104,6 +105,20 @@ const CI_CONTRACT_STEP: LocalVerificationStep = Object.freeze({
   remedy: 'reconcile the workflow readers, registry projection, and contract laws named by the failing test',
 });
 
+/**
+ * The drift authorities for every committed derivable artifact the fast lane
+ * owns — derived from the registry, never restated, so adding an artifact
+ * cannot leave the pre-push lane behind. CI enforces these; before this step
+ * existed, preflight did not, and a green local gate shipped drift that
+ * failed nine CI jobs.
+ */
+const PROJECTIONS_STEP: LocalVerificationStep = Object.freeze({
+  checkId: null,
+  label: 'projections',
+  argv: Object.freeze(['exec', 'vitest', 'run', ...preflightEnforcerPaths()]),
+  remedy: "run 'pnpm run regen' and commit the regenerated projections",
+});
+
 function normalizeRepoPath(path: string): string {
   return path.replaceAll('\\', '/').replace(/^\.\//u, '');
 }
@@ -131,7 +146,7 @@ export function buildLocalVerificationPlan(input: {
   const quickSteps = projectRepositoryQuickSteps();
   const docsAffected = !input.staged || (input.changedPaths ?? []).some(isTypeDocProofInput);
   const ciContractAffected = input.staged && (input.changedPaths ?? []).some(isCiContractInput);
-  const steps: LocalVerificationStep[] = [...quickSteps, INVARIANTS_STEP];
+  const steps: LocalVerificationStep[] = [...quickSteps, INVARIANTS_STEP, PROJECTIONS_STEP];
   if (ciContractAffected) steps.push(CI_CONTRACT_STEP);
   if (docsAffected) steps.push(DOCS_STEP);
   return Object.freeze({

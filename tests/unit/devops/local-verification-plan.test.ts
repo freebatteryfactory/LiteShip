@@ -48,6 +48,7 @@ describe('local verification plan', () => {
       'assurance-density',
       'test-constitution',
       'check-invariants',
+      'projections',
       'docs:check',
     ]);
   });
@@ -84,6 +85,7 @@ describe('local verification plan', () => {
       ['run', 'assurance:gate'],
       ['run', 'test:constitution'],
       ['exec', 'tsx'],
+      ['exec', 'vitest'],
       ['run', 'docs:check:local'],
     ]);
   });
