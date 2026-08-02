@@ -383,10 +383,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ATTACH: ${{ inputs.dry-run != 'true' && github.ref_type == 'tag' }}
           VERSION: ${{ steps.ver.outputs.version }}
+          DRY_RUN: ${{ inputs.dry-run }}
         run: |
           set -euo pipefail
           DRY_RUN_FLAG=""
-          if [ "${{ inputs.dry-run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             DRY_RUN_FLAG="--dry-run"
           fi
           UPLOADED_LIST=$(mktemp)

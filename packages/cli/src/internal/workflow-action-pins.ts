@@ -125,11 +125,12 @@ export function scanWorkflowActionPins(text: string): readonly WorkflowActionPin
  * THE CLASS RULE — expressions interpolated into a shell command.
  *
  * ANCHOR: every `${{ }}` expression in every step's `run:` field. ALLOWLIST:
- * only contexts whose roots are not attacker-controlled: inputs, exact step or
- * need outputs, matrix, secrets, env, and vars. GitHub event data is an open
- * grammar (`github.event.*`, `github.head_ref`, and future siblings), so a
- * denylist loses by construction. An unclosed or unclassifiable expression is
- * a violation, never a skipped command.
+ * only contexts whose roots are not attacker-controlled: exact step or need
+ * outputs, matrix, secrets, env, and vars. `inputs` is NOT admitted —
+ * workflow_call inputs are caller data, so they ride env: indirection.
+ * GitHub event data is an open grammar (`github.event.*`, `github.head_ref`,
+ * and future siblings), so a denylist loses by construction. An unclosed or
+ * unclassifiable expression is a violation, never a skipped command.
  */
 export function scanWorkflowExpressionInjection(text: string): readonly WorkflowActionPinViolation[] {
   const unreadable = yamlShapeViolations(text).map((violation) => ({
@@ -294,7 +295,10 @@ function expressionReferencePaths(expression: string): readonly (readonly string
 function admissibleExpressionPath(path: readonly string[]): boolean {
   const root = path[0];
   if (root === 'steps' || root === 'needs') return path.length >= 4 && path[2] === 'outputs';
-  return path.length >= 2 && ['inputs', 'matrix', 'secrets', 'env', 'vars'].includes(root ?? '');
+  // `inputs` is deliberately absent: workflow_call inputs are caller data
+  // (a caller can pipe event text straight through), and GitHub substitutes
+  // the value before shell parsing. Caller data rides env: indirection.
+  return path.length >= 2 && ['matrix', 'secrets', 'env', 'vars'].includes(root ?? '');
 }
 
 /**

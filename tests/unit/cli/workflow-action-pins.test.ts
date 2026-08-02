@@ -158,7 +158,7 @@ describe('expressions in run commands', () => {
     ]);
   });
 
-  it('needs, steps, matrix, inputs, secrets, env, and vars roots are admitted', () => {
+  it('needs, steps, matrix, secrets, env, and vars roots are admitted', () => {
     const workflow = [
       'jobs:',
       '  safe:',
@@ -167,13 +167,31 @@ describe('expressions in run commands', () => {
       '          echo "${{ fromJSON(needs.plan.outputs.matrix).shard }}"',
       '          echo "${{ steps.version.outputs.version }}"',
       '          echo "${{ matrix.browser }}"',
-      '          echo "${{ inputs.dry-run }}"',
       '          echo "${{ secrets.TOKEN }}"',
       '          echo "${{ env.MODE }}"',
       '          echo "${{ vars.CHANNEL }}"',
     ].join('\n');
 
     expect(scanWorkflowExpressionInjection(workflow)).toEqual([]);
+  });
+
+  it('inputs.* interpolated into run is a violation — caller data rides env indirection (Codex review, confirmed P1)', () => {
+    // workflow_call inputs are caller-controlled: a caller can pipe event
+    // data (a PR title, a branch name) into the callee, and GitHub
+    // substitutes the value before shell parsing. The admissible pattern is
+    // env: indirection, never direct interpolation.
+    const direct = ['jobs:', '  unsafe:', '    steps:', '      - run: echo "${{ inputs.value }}"'].join('\n');
+    expect(scanWorkflowExpressionInjection(direct)).toEqual([expect.objectContaining({ reason: 'expression-in-run' })]);
+
+    const indirected = [
+      'jobs:',
+      '  safe:',
+      '    steps:',
+      '      - env:',
+      '          VALUE: ${{ inputs.value }}',
+      '        run: echo "$VALUE"',
+    ].join('\n');
+    expect(scanWorkflowExpressionInjection(indirected)).toEqual([]);
   });
 
   it('an unclosed expression is a violation, not a skipped command', () => {
@@ -225,8 +243,8 @@ describe('expressions in run commands', () => {
       'jobs:',
       '  safe:',
       '    steps:',
-      '      - run: echo "${{ inputs.value || env.DEFAULT }}"',
-      '      - run: echo "${{ matrix.shard >= 0 && inputs.enabled != false }}"',
+      '      - run: echo "${{ vars.VALUE || env.DEFAULT }}"',
+      '      - run: echo "${{ matrix.shard >= 0 && env.ENABLED != false }}"',
     ].join('\n');
 
     expect(scanWorkflowExpressionInjection(workflow)).toEqual([]);
