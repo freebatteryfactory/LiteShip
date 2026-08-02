@@ -112,6 +112,38 @@ describe('expressions in run commands', () => {
     ]);
   });
 
+  it('a quoted run: key cannot smuggle an expression past the reader (Codex review, confirmed P1)', () => {
+    const workflow = [
+      'jobs:',
+      '  unsafe:',
+      '    steps:',
+      '      - "run": echo "${{ github.event.pull_request.title }}"',
+    ].join('\n');
+
+    // The structural reader only recognizes the unquoted spelling, so the
+    // quoted key MUST be declared unreadable — a silent [] here is the
+    // fail-open the shape allowlist exists to prevent.
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([expect.objectContaining({ reason: 'unreadable-yaml' })]);
+  });
+
+  it('a single-quoted mapping key in a plain mapping position is unreadable too', () => {
+    const workflow = ['jobs:', '  unsafe:', "    'runs-on': ubuntu-latest", '    steps:', '      - run: echo ok'].join(
+      '\n',
+    );
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([expect.objectContaining({ reason: 'unreadable-yaml' })]);
+  });
+
+  it('a quote that merely begins a scalar VALUE stays legal', () => {
+    const workflow = [
+      'jobs:',
+      '  safe:',
+      '    steps:',
+      '      - run: echo ok',
+      '        name: "quoted name value"',
+    ].join('\n');
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([]);
+  });
+
   it('a github.head_ref in a run block scalar is a violation', () => {
     const workflow = [
       'jobs:',

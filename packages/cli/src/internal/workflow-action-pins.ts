@@ -664,6 +664,18 @@ function yamlShapeViolations(text: string): readonly YamlShapeViolation[] {
     if (/^<<:/u.test(value)) {
       violations.push({ line, content: body, message: 'YAML merge keys are outside the structural reader grammar' });
     }
+    // A quoted mapping key is valid YAML the structural readers cannot see:
+    // stepRunCommandOf and the field walkers recognize only the unquoted
+    // spelling, so admitting the quoted one would let `- "run": …` carry an
+    // expression past every scanner. Fail closed instead (Codex review on
+    // PR #197, confirmed P1).
+    if (/^(?:"[^"]*"|'[^']*')\s*:(?:\s|$)/u.test(value)) {
+      violations.push({
+        line,
+        content: body,
+        message: 'quoted mapping keys are outside the structural reader grammar',
+      });
+    }
     const keyMatch = /^([A-Za-z0-9_-]+):/u.exec(value);
     if (keyMatch !== null) {
       const parent = parents.map((entry) => entry.identity).join('/');
