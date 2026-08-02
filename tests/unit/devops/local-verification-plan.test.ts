@@ -103,6 +103,12 @@ describe('local verification plan', () => {
     ]);
   });
 
+  test('runs command-backed ratchet authorities as commands, never as fake Vitest paths', () => {
+    const plan = buildLocalVerificationPlan({ staged: false });
+    expect(plan.steps.find((step) => step.label === 'test-constitution')?.argv).toEqual(['run', 'test:constitution']);
+    expect(plan.steps.find((step) => step.label === 'projections')?.argv).not.toContain('test:constitution');
+  });
+
   test.each([
     '.github/workflows/ci.yml',
     'scripts/ci-plan.ts',

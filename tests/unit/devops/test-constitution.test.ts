@@ -13,11 +13,11 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-function fixture(source: string): string {
+function fixture(source: string, lane = 'unit'): string {
   const root = mkdtempSync(join(tmpdir(), 'liteship-test-constitution-'));
   roots.push(root);
-  mkdirSync(join(root, 'tests', 'unit'), { recursive: true });
-  writeFileSync(join(root, 'tests', 'unit', 'probe.test.ts'), source);
+  mkdirSync(join(root, 'tests', lane), { recursive: true });
+  writeFileSync(join(root, 'tests', lane, 'probe.test.ts'), source);
   return root;
 }
 
@@ -115,6 +115,57 @@ describe('test constitution', () => {
     it('does not flag seededRng usage', () => {
       const root = fixture(`const random = seededRng(0x5eed); expect(random()).toBeGreaterThanOrEqual(0);`);
       expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('ambient-entropy-spy');
+    });
+  });
+
+  describe('unseeded-property', () => {
+    it('flags an fc.assert property with no options', () => {
+      const root = fixture(`fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)));`);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('unseeded-property');
+    });
+
+    it('flags an fc.assert property that pins only numRuns', () => {
+      const root = fixture(`
+        fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), { numRuns: 40 });
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('unseeded-property');
+    });
+
+    it('flags an fc.assert property that pins only seed', () => {
+      const root = fixture(`
+        fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), { seed: 0x5eed });
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('unseeded-property');
+    });
+
+    it('flags an unseeded handwritten fuzz property', () => {
+      const root = fixture(
+        `fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), { numRuns: 40 });`,
+        'fuzz',
+      );
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toEqual(['unseeded-property']);
+    });
+
+    it('fails closed when a spread can override the pinned options', () => {
+      const root = fixture(`
+        const options = { seed: 7 };
+        fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), {
+          seed: 0x5eed,
+          numRuns: 40,
+          ...options,
+        });
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('unseeded-property');
+    });
+
+    it('admits an fc.assert property that pins both seed and numRuns', () => {
+      const root = fixture(`
+        fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), {
+          seed: 0x5eed,
+          numRuns: 40,
+        });
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('unseeded-property');
     });
   });
 

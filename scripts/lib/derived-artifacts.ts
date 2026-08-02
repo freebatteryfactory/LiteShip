@@ -115,6 +115,15 @@ export const DERIVED_ARTIFACTS: readonly DerivedArtifact[] = Object.freeze([
     inPreflight: true,
   }),
   Object.freeze({
+    id: 'test-constitution-ratchet',
+    kind: 'ratchet' as const,
+    paths: Object.freeze(['scripts/test-constitution-ratchet.json']),
+    regen: Object.freeze(['exec', 'tsx', 'scripts/test-constitution.ts', '--write-baseline']),
+    regenEnv: Object.freeze({}),
+    enforcedBy: 'test:constitution',
+    inPreflight: true,
+  }),
+  Object.freeze({
     id: 'typedoc-input-fingerprint',
     kind: 'ratchet' as const,
     // The cheap staleness signal for the API docs. It lives OUTSIDE docs/api
@@ -182,7 +191,12 @@ export function selectDerivedArtifacts(argv: readonly string[]): readonly Derive
   return argv.includes('--all') ? DERIVED_ARTIFACTS : preflightEnforcedArtifacts();
 }
 
-/** The distinct enforcer test paths the pre-push lane must run. */
+/** The distinct test paths or package-script authorities the pre-push lane must run. */
 export function preflightEnforcerPaths(): readonly string[] {
   return [...new Set(preflightEnforcedArtifacts().map((artifact) => artifact.enforcedBy))].sort();
+}
+
+/** Fast-lane drift authorities that can share the consolidated Vitest process. */
+export function preflightVitestEnforcerPaths(): readonly string[] {
+  return preflightEnforcerPaths().filter((enforcer) => enforcer.endsWith('.ts'));
 }

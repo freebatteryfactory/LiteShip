@@ -10,6 +10,7 @@ export type TestDebtKind =
   | 'generated-payload-delimiter'
   | 'real-timer'
   | 'source-byte-oracle'
+  | 'unseeded-property'
   | 'unanchored-text-slice';
 
 export interface TestDebtFinding {
@@ -31,6 +32,7 @@ export interface TestConstitutionRegression {
 }
 
 const DETERMINISTIC_ROOTS = ['tests/unit', 'tests/property', 'tests/component', 'tests/regression', 'tests/support'];
+const FUZZ_ROOTS = ['tests/fuzz'];
 
 function normalize(path: string): string {
   return path.split(sep).join('/');
@@ -840,6 +842,43 @@ function generatedPayloadDelimiters(ast: ts.SourceFile): readonly ts.Expression[
   return findings;
 }
 
+function staticPropertyName(node: ts.ObjectLiteralElementLike): string | undefined {
+  if (ts.isShorthandPropertyAssignment(node)) return node.name.text;
+  if (!ts.isPropertyAssignment(node) || node.name === undefined) return undefined;
+  if (ts.isIdentifier(node.name) || ts.isStringLiteralLike(node.name) || ts.isNumericLiteral(node.name)) {
+    return node.name.text;
+  }
+  return undefined;
+}
+
+/**
+ * THE CLASS RULE — ANCHOR: every fast-check assertion in a handwritten
+ * deterministic or fuzz suite. ALLOWLIST: an explicit options object with one
+ * statically named `seed` and one statically named `numRuns`, and no spread or
+ * duplicate option that could override either. Anything less is unseeded debt:
+ * a failure that cannot be replayed with the same campaign is not evidence.
+ */
+function unseededProperties(ast: ts.SourceFile): readonly ts.CallExpression[] {
+  const findings: ts.CallExpression[] = [];
+  const visit = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && propertyCall(node, 'fc', 'assert')) {
+      const options = node.arguments[1];
+      if (options === undefined || !ts.isObjectLiteralExpression(options)) {
+        findings.push(node);
+      } else {
+        const names = options.properties.map(staticPropertyName);
+        const seedCount = names.filter((name) => name === 'seed').length;
+        const runCount = names.filter((name) => name === 'numRuns').length;
+        const hasDynamicOption = names.some((name) => name === undefined);
+        if (seedCount !== 1 || runCount !== 1 || hasDynamicOption) findings.push(node);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  return findings;
+}
+
 /** Scan deterministic test lanes while ignoring comments and string literals. */
 export function scanTestConstitution(cwd: string): readonly TestDebtFinding[] {
   const findings: TestDebtFinding[] = [];
@@ -871,6 +910,21 @@ export function scanTestConstitution(cwd: string): readonly TestDebtFinding[] {
       for (const slice of unanchoredTextSlices(ast)) add('unanchored-text-slice', slice);
       for (const spy of ambientEntropySpies(ast)) add('ambient-entropy-spy', spy);
       for (const payload of generatedPayloadDelimiters(ast)) add('generated-payload-delimiter', payload);
+      for (const property of unseededProperties(ast)) add('unseeded-property', property);
+    }
+  }
+  for (const relativeRoot of FUZZ_ROOTS) {
+    for (const absolute of filesUnder(join(cwd, relativeRoot))) {
+      const file = normalize(relative(cwd, absolute));
+      const source = readFileSync(absolute, 'utf8');
+      const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+      for (const property of unseededProperties(ast)) {
+        findings.push({
+          file,
+          kind: 'unseeded-property',
+          line: ast.getLineAndCharacterOfPosition(property.getStart(ast)).line + 1,
+        });
+      }
     }
   }
   return findings.sort(

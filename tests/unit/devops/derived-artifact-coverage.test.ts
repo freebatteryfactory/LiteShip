@@ -32,6 +32,15 @@ describe('committed derivable artifacts are declared and covered', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+  it('registers the test-constitution ratchet with its live drift authority', () => {
+    expect(DERIVED_ARTIFACTS.find((artifact) => artifact.id === 'test-constitution-ratchet')).toMatchObject({
+      kind: 'ratchet',
+      paths: ['scripts/test-constitution-ratchet.json'],
+      enforcedBy: 'test:constitution',
+      inPreflight: true,
+    });
+  });
+
   it.each(DERIVED_ARTIFACTS.map((artifact) => [artifact.id, artifact] as const))(
     '%s declares real paths, a regen command, and a drift authority',
     (_id, artifact) => {

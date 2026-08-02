@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import fg from 'fast-glob';
 import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
 import { ValidationError } from '../../packages/error/src/index.js';
-import { preflightEnforcerPaths } from './derived-artifacts.js';
+import { preflightVitestEnforcerPaths } from './derived-artifacts.js';
 
 export interface LocalVerificationStep {
   /** Null only for the existing gauntlet executor phase that has no registry check. */
@@ -431,7 +431,7 @@ const CI_CONTRACT_STEP: LocalVerificationStep = Object.freeze({
 const PROJECTIONS_STEP: LocalVerificationStep = Object.freeze({
   checkId: null,
   label: 'projections',
-  argv: Object.freeze(['exec', 'vitest', 'run', ...preflightEnforcerPaths()]),
+  argv: Object.freeze(['exec', 'vitest', 'run', ...preflightVitestEnforcerPaths()]),
   remedy: "run 'pnpm run regen' and commit the regenerated projections",
 });
 
