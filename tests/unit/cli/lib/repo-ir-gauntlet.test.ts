@@ -247,7 +247,12 @@ describe('liteshipRegexOracle — the host-injected invariant-regex oracle', () 
 
 describe('cssIdentitySurfaceOracle — parser-backed facts on the existing RepoIR channel', () => {
   it('emits a nonblocking anchor census receipt for a safe selector', () => {
-    const facts = runCssIdentityOracle('const selector = `[data-liteship-boundary="${escapeCssString(name)}"]`;');
+    // The escape must be imported from an approved module — a bare identifier
+    // of the same name is no longer proof (Codex review round 2 on PR #197).
+    const facts = runCssIdentityOracle(
+      "import { escapeCssString } from '@liteship/core/motion';\n" +
+        'const selector = `[data-liteship-boundary="${escapeCssString(name)}"]`;',
+    );
     expect(facts).toEqual([
       expect.objectContaining({
         property: 'css-identity-anchor-count',

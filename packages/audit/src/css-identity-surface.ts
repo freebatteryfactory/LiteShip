@@ -66,11 +66,83 @@ function unwrap(expression: ts.Expression): ts.Expression {
   return current;
 }
 
-function isEscapeCall(expression: ts.Expression): boolean {
+/**
+ * The files that DECLARE an approved escape, and the barrels/specifiers that
+ * re-export one. A call is admitted only when its callee RESOLVES here —
+ * checking the callee's spelling alone admits any binding that happens to
+ * carry the name, including a package-local `const escapeCssString = (v) => v`
+ * (Codex review round 2 on PR #197, confirmed P2).
+ */
+const APPROVED_ESCAPE_MODULES: ReadonlySet<string> = new Set([
+  'packages/core/src/motion/css-identity.ts',
+  'packages/core/src/motion/index.ts',
+  'packages/compiler/src/css-string.ts',
+]);
+
+/** Package specifiers whose named `escapeCssString` is one of the approved declarations. */
+const APPROVED_ESCAPE_SPECIFIERS: ReadonlySet<string> = new Set(['@liteship/core/motion']);
+
+const ESCAPE_EXPORT_NAME = 'escapeCssString';
+
+/** Resolve a relative specifier against the importing file, as a repo-relative `.ts` path. */
+function resolveRelative(fromPath: string, specifier: string): string {
+  const segments = fromPath.split('/').slice(0, -1);
+  for (const part of specifier.split('/')) {
+    if (part === '.' || part === '') continue;
+    if (part === '..') segments.pop();
+    else segments.push(part);
+  }
+  return segments.join('/').replace(/\.[cm]?js$/u, '.ts');
+}
+
+/**
+ * The local names in this file that provably denote an approved escape: the
+ * bindings imported from an approved module (alias included), plus the export
+ * an approved module declares for itself. A local declaration of the same name
+ * REMOVES it — a shadow is never a proof.
+ */
+function approvedEscapeNames(sourceFile: ts.SourceFile, path: string): ReadonlySet<string> {
+  const approved = new Set<string>();
+  if (APPROVED_ESCAPE_MODULES.has(path)) approved.add(ESCAPE_EXPORT_NAME);
+
+  const locallyDeclared = new Set<string>();
+  const visit = (node: ts.Node): void => {
+    if (ts.isImportDeclaration(node) && ts.isStringLiteralLike(node.moduleSpecifier)) {
+      const specifier = node.moduleSpecifier.text;
+      const target = specifier.startsWith('.') ? resolveRelative(path, specifier) : specifier;
+      const moduleApproved = APPROVED_ESCAPE_MODULES.has(target) || APPROVED_ESCAPE_SPECIFIERS.has(target);
+      const bindings = node.importClause?.namedBindings;
+      if (moduleApproved && bindings !== undefined && ts.isNamedImports(bindings)) {
+        for (const element of bindings.elements) {
+          const imported = element.propertyName?.text ?? element.name.text;
+          if (imported === ESCAPE_EXPORT_NAME) approved.add(element.name.text);
+        }
+      }
+    }
+    if (
+      (ts.isVariableDeclaration(node) || ts.isFunctionDeclaration(node)) &&
+      node.name !== undefined &&
+      ts.isIdentifier(node.name)
+    ) {
+      locallyDeclared.add(node.name.text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+
+  // An approved module declares its own escape; every OTHER local declaration
+  // of an approved name is a shadow and revokes the proof.
+  for (const name of locallyDeclared) {
+    if (!APPROVED_ESCAPE_MODULES.has(path)) approved.delete(name);
+  }
+  return approved;
+}
+
+function isEscapeCall(expression: ts.Expression, approvedNames: ReadonlySet<string>): boolean {
   const current = unwrap(expression);
   if (!ts.isCallExpression(current)) return false;
   const callee = unwrap(current.expression);
-  return ts.isIdentifier(callee) && callee.text === 'escapeCssString';
+  return ts.isIdentifier(callee) && approvedNames.has(callee.text);
 }
 
 function scopeOf(node: ts.Node): Scope {
@@ -103,13 +175,18 @@ function collectConstBindings(sourceFile: ts.SourceFile): ScopeBindings {
   return mutable;
 }
 
-function isProvablyEscaped(expression: ts.Expression, scope: Scope, bindingsByScope: ScopeBindings): boolean {
+function isProvablyEscaped(
+  expression: ts.Expression,
+  scope: Scope,
+  bindingsByScope: ScopeBindings,
+  approvedNames: ReadonlySet<string>,
+): boolean {
   const current = unwrap(expression);
-  if (isEscapeCall(current)) return true;
+  if (isEscapeCall(current, approvedNames)) return true;
   if (!ts.isIdentifier(current)) return false;
   const declaration = bindingsByScope.get(scope)?.get(current.text);
   return declaration !== undefined && declaration !== null && declaration.initializer !== undefined
-    ? isEscapeCall(declaration.initializer)
+    ? isEscapeCall(declaration.initializer, approvedNames)
     : false;
 }
 
@@ -154,6 +231,7 @@ function scanAnchor(
   chunkIndex: number,
   anchorOffset: number,
   bindingsByScope: ScopeBindings,
+  approvedNames: ReadonlySet<string>,
 ): readonly CssIdentityFinding[] {
   const findings: CssIdentityFinding[] = [];
   const identityStart = anchorOffset + BOUNDARY_SELECTOR_ANCHOR.length;
@@ -163,7 +241,7 @@ function scanAnchor(
   let closed = false;
   for (let expressionIndex = chunkIndex; expressionIndex < parts.expressions.length; expressionIndex += 1) {
     const expression = parts.expressions[expressionIndex]!;
-    if (!isProvablyEscaped(expression, scope, bindingsByScope)) {
+    if (!isProvablyEscaped(expression, scope, bindingsByScope, approvedNames)) {
       findings.push(finding(source, sourceFile, expression, 'unescaped-interpolation', expression.getText(sourceFile)));
     }
     if (unescapedQuoteIndex(parts.chunks[expressionIndex + 1] ?? '') !== -1) {
@@ -188,6 +266,7 @@ export function scanCssIdentitySurface(files: readonly CssIdentitySource[]): Css
     if (!PACKAGE_SOURCE_PATH.test(path)) continue;
     const sourceFile = ts.createSourceFile(path, source.text, ts.ScriptTarget.Latest, true, scriptKindFor(path));
     const bindingsByScope = collectConstBindings(sourceFile);
+    const approvedNames = approvedEscapeNames(sourceFile, path);
 
     const visit = (node: ts.Node): void => {
       if (ts.isTemplateExpression(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
@@ -200,7 +279,9 @@ export function scanCssIdentitySurface(files: readonly CssIdentitySource[]): Css
             const anchorOffset = chunk.indexOf(BOUNDARY_SELECTOR_ANCHOR, from);
             if (anchorOffset === -1) break;
             isAnchored = true;
-            findings.push(...scanAnchor(source, sourceFile, node, parts, chunkIndex, anchorOffset, bindingsByScope));
+            findings.push(
+              ...scanAnchor(source, sourceFile, node, parts, chunkIndex, anchorOffset, bindingsByScope, approvedNames),
+            );
             from = anchorOffset + BOUNDARY_SELECTOR_ANCHOR.length;
           }
         }
