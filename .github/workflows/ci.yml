@@ -392,6 +392,7 @@ jobs:
           # Projection of rust-toolchain.toml; check/devcontainer-pins rejects drift.
           toolchain: 1.85.1
           targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - name: Prepare ffmpeg render capability
         run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg
@@ -526,6 +527,7 @@ jobs:
           # Projection of rust-toolchain.toml; check/devcontainer-pins rejects drift.
           toolchain: 1.85.1
           targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - name: Prepare ffmpeg render capability
         run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg
@@ -906,6 +908,7 @@ jobs:
           # Projection of rust-toolchain.toml; check/devcontainer-pins rejects drift.
           toolchain: 1.85.1
           targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
       - run: cargo test
         working-directory: crates/liteship-compute
         env:

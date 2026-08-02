@@ -24,7 +24,8 @@ ENV RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo PATH=/usr/local/ca
 RUN RUST_TOOLCHAIN="$(sed -n 's/^channel = "\([^"]*\)"/\1/p' /opt/liteship/rust-toolchain.toml)" \
  && test -n "$RUST_TOOLCHAIN" \
  && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
- | sh -s -- -y --profile minimal --default-toolchain "$RUST_TOOLCHAIN" --target wasm32-unknown-unknown \
+ | sh -s -- -y --profile minimal --default-toolchain "$RUST_TOOLCHAIN" \
+     --target wasm32-unknown-unknown --component rustfmt --component clippy \
  && chmod -R a+w "$RUSTUP_HOME" "$CARGO_HOME"
 
 # Playwright browsers + system deps are installed by .devcontainer/post-create.sh

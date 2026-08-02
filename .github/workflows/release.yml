@@ -138,6 +138,7 @@ jobs:
         with:
           toolchain: 1.85.1
           targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
       - run: pnpm run build:wasm
       - name: Pack the immutable release fleet once
         run: pnpm exec tsx scripts/build-release-artifacts.ts release-artifacts/tarballs
