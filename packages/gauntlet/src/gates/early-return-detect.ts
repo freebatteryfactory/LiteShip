@@ -12,9 +12,9 @@ import { codeOnly } from './code-only.js';
  * declare a suite are capability-grouping scopes and are not. Skip detection
  * deliberately consumes the union, because a skipped suite is still a skip.
  */
-export const TEST_ROOTS: ReadonlySet<string> = new Set(['it', 'test', 'fit', 'specify', 'fspecify']);
-/** Runner roots that declare grouping suites rather than individual test obligations. */
-export const SUITE_ROOTS: ReadonlySet<string> = new Set(['describe', 'suite', 'bench', 'fdescribe']);
+export const TEST_ROOTS: ReadonlySet<string> = new Set(['it', 'test', 'fit', 'specify', 'fspecify', 'bench']);
+/** Runner roots that declare grouping suites rather than individual obligations. Vitest's `bench` is NOT here: it registers an individual benchmark callback, so a premise-guard return inside it is a vacuity finding, not a suite-level capability guard (Codex review on PR #197, confirmed P2). */
+export const SUITE_ROOTS: ReadonlySet<string> = new Set(['describe', 'suite', 'fdescribe']);
 
 /** One test control-flow path that exits before an assertion. */
 export interface EarlyReturnMatch {

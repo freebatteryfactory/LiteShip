@@ -47,6 +47,16 @@ describe('suite-root callbacks', () => {
     expect(detectEarlyReturnBeforeExpect(source).map(({ line }) => line)).toEqual([2]);
   });
 
+  it('bench registers an individual callback, so its early return is a finding in both oracles (Codex review, confirmed P2)', () => {
+    // Vitest's bench(...) is an individual benchmark registration, not a
+    // grouping suite: a premise guard like `if (!supported) return;` makes
+    // the benchmark vacuous exactly as it would a test. Classifying bench
+    // as a suite root silently exempted such bodies.
+    const source = "bench('gpu', () => {\n  if (!supported) return;\n  expect(work()).toBeDefined();\n});\n";
+    expect(detectEarlyReturnBeforeExpectAST(source).map(({ line }) => line)).toEqual([2]);
+    expect(detectEarlyReturnBeforeExpect(source).map(({ line }) => line)).toEqual([2]);
+  });
+
   it(
     'the AST and lean oracles agree on every corpus file',
     () => {
