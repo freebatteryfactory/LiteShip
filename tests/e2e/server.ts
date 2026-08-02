@@ -56,6 +56,9 @@ async function buildBundle(entry: string): Promise<string> {
   });
 
   const output = Array.isArray(result) ? result[0] : result;
+  if (output === undefined || !('output' in output)) {
+    throw new Error('Unable to build E2E browser output.');
+  }
   const chunks = output.output.filter((o: { type: string }) => o.type === 'chunk');
   // This server serves ONE file per entry. If a fixture's import graph pulls in a
   // dynamic import(), Vite code-splits into sibling chunks this server never serves;

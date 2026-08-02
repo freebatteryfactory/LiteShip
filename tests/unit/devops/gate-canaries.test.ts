@@ -41,11 +41,12 @@
  */
 import { describe, it, expect, afterAll } from 'vitest';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { resolve, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import fg from 'fast-glob';
 import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 import { scaledTimeout, nodeTestInclude } from '../../../vitest.shared.js';
+import playwrightE2EConfig from '../../e2e/playwright.config.js';
 import {
   rootTsconfigReferenceDirs,
   packageTsconfigInputs,
@@ -486,6 +487,61 @@ describe('(a8) runtime helper modules are owned and type-admitted before executi
       fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
     );
     expect(runtimeHelperSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeHelperSources);
+  });
+});
+
+describe('(a9) Playwright E2E sources are type-admitted before execution', () => {
+  const declaredMatches = Array.isArray(playwrightE2EConfig.testMatch)
+    ? playwrightE2EConfig.testMatch
+    : [playwrightE2EConfig.testMatch];
+  const testMatchGlobs = declaredMatches.filter((match): match is string => typeof match === 'string');
+  const testDir = resolve(REPO, 'tests/e2e', playwrightE2EConfig.testDir ?? '.');
+  const testDirRelative = relative(REPO, testDir).replaceAll('\\', '/');
+  const runtimeEntrypoints = fg
+    .sync(testMatchGlobs, { cwd: testDir })
+    .map((path) => `${testDirRelative}/${path.replaceAll('\\', '/')}`)
+    .sort();
+  const authoredSources = fg
+    .sync('tests/e2e/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/e2e/'));
+
+  it('derives every canonical E2E entrypoint from Playwright testDir and testMatch', () => {
+    expect(
+      testMatchGlobs.length,
+      'the E2E canary cannot classify a non-string Playwright testMatch; extend the enumerator before changing it',
+    ).toBe(declaredMatches.length);
+    expect(runtimeEntrypoints.length, 'the Playwright E2E entrypoint corpus fell below its committed floor').toBe(3);
+    const admitted = new Set(admittedSources);
+    const missing = runtimeEntrypoints.filter((path) => !admitted.has(path));
+    expect(
+      runtimeEntrypoints.filter((path) => admitted.has(path)),
+      `the tests typecheck project admits ${runtimeEntrypoints.length - missing.length}/${runtimeEntrypoints.length} Playwright entrypoints; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeEntrypoints);
+  });
+
+  it('directly admits every authored E2E source through one future-proof tree root', () => {
+    expect(authoredSources.length, 'the tracked E2E TypeScript corpus fell below its committed floor').toBe(9);
+    const admitted = new Set(admittedSources);
+    const missing = authoredSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${authoredSources.length} E2E sources; missing:\n${missing.join('\n')}`,
+    ).toEqual(authoredSources);
+    expect(
+      includeEntries.some((entry) => entry.startsWith('tests/e2e/') && entry.includes('*') && entry.endsWith('.ts')),
+      'E2E admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with E2E admission removed exposes the complete source tree', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/e2e/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(authoredSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(authoredSources);
   });
 });
 
