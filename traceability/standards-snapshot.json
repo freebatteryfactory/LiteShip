@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:c2c113b1",
+  "address": "fnv1a:ac69f552",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4757,6 +4757,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/lib/test-constitution.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/tracked-subject-census.ts",
       "level": "L1"
     },
     {
