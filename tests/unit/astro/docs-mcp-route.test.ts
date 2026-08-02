@@ -1,6 +1,6 @@
 import { describe, expect, test, vi, afterEach } from 'vitest';
 import { docsMcpRoute, loadDocsMcpBundle } from '../../../packages/astro/src/docs-mcp-route.js';
-import { emitDocsBundle } from '../../../scripts/docs-bundle.ts';
+import { emitDocsBundle, runDocsBundleWorkflow } from '../../../scripts/docs-bundle.ts';
 import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -40,6 +40,36 @@ describe('docsMcpRoute (#113)', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+
+  test('default bundle workflow builds the canonical API docs before emitting', async () => {
+    const events: string[] = [];
+    const manifest = {
+      version: 'test',
+      generatedAt: '2026-08-02T00:00:00.000Z',
+      entries: [],
+      bundleId: '0'.repeat(64),
+    };
+    const runDocsBuild = vi.fn(async () => {
+      events.push('build');
+      return { exitCode: 0 };
+    });
+    const emitBundle = vi.fn(async () => {
+      events.push('emit');
+      return manifest;
+    });
+
+    await expect(runDocsBundleWorkflow({ outDir: 'synthetic' }, { runDocsBuild, emitBundle })).resolves.toBe(manifest);
+    expect(events).toEqual(['build', 'emit']);
+  });
+
+  test('default bundle workflow fails closed when the canonical API-doc build fails', async () => {
+    const emitBundle = vi.fn();
+
+    await expect(
+      runDocsBundleWorkflow({ outDir: 'synthetic' }, { runDocsBuild: async () => ({ exitCode: 23 }), emitBundle }),
+    ).rejects.toThrow(/canonical docs build failed with exit code 23/u);
+    expect(emitBundle).not.toHaveBeenCalled();
   });
 
   test('list/search/get round-trip over a sealed bundle', async () => {
