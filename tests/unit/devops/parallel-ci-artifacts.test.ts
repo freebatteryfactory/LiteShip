@@ -60,7 +60,12 @@ describe('parallel setup artifact ships dist + capsule manifest', () => {
   });
 
   it('shard coverage upload preserves node-shard-<n> directory layout', () => {
-    expect(ci).toContain('ci-artifacts/coverage/node-shard-${{ matrix.shard }}');
+    // The shard number is STAGED into env: and expanded by the shell — the
+    // run position admits no `${{ }}` interpolation for any root (Codex
+    // review round 2 on PR #197). Both halves are pinned so the layout
+    // cannot drift and the staging cannot silently disappear.
+    expect(ci).toContain('SHARD: ${{ matrix.shard }}');
+    expect(ci).toContain('ci-artifacts/coverage/node-shard-$SHARD');
     expect(ci).toContain('path: ci-artifacts/coverage');
   });
 

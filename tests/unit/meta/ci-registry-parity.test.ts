@@ -188,8 +188,14 @@ describe('blocking release checks have one real CI owner', () => {
 
       const jobBlock = JOB_BLOCKS.get(specialized.job);
       expect(jobBlock, `ci.yml has no specialized owner job "${specialized.job}"`).toBeDefined();
+      // The projection is STAGED into the step's env: mapping and executed
+      // through shell expansion — never interpolated into the run command's
+      // text, which the expression-injection law forbids for every root
+      // (Codex review round 2 on PR #197). Both halves are pinned: the
+      // staging carries the projection, and the run command consumes it.
       const projectedInvocation = '${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.' + key + '.command }}';
-      expect(runCommandsIn(jobBlock!)).toContain(projectedInvocation);
+      expect(jobBlock).toContain(`PROJECTED_COMMAND: ${projectedInvocation}`);
+      expect(runCommandsIn(jobBlock!)).toContain('bash -c "$PROJECTED_COMMAND"');
       expect(jobBlock).not.toContain(specialized.command);
     },
   );

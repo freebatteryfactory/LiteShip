@@ -93,7 +93,7 @@ jobs:
 });
 
 describe('expressions in run commands', () => {
-  it('the live workflows carry no unallowlisted expression root', () => {
+  it('the live workflows interpolate no expression into any run command', () => {
     for (const workflow of WORKFLOWS) {
       expect(scanWorkflowExpressionInjection(workflow.text), workflow.name).toEqual([]);
     }
@@ -158,40 +158,56 @@ describe('expressions in run commands', () => {
     ]);
   });
 
-  it('needs, steps, matrix, secrets, env, and vars roots are admitted', () => {
-    const workflow = [
-      'jobs:',
-      '  safe:',
-      '    steps:',
-      '      - run: |',
-      '          echo "${{ fromJSON(needs.plan.outputs.matrix).shard }}"',
-      '          echo "${{ steps.version.outputs.version }}"',
-      '          echo "${{ matrix.browser }}"',
-      '          echo "${{ secrets.TOKEN }}"',
-      '          echo "${{ env.MODE }}"',
-      '          echo "${{ vars.CHANNEL }}"',
-    ].join('\n');
-
-    expect(scanWorkflowExpressionInjection(workflow)).toEqual([]);
+  // THE POSITIONAL LAW (Codex review round 2 on PR #197, confirmed P1): no
+  // context root is provably safe to splice into shell command text, because
+  // provenance is not a property of the root token. `env.TITLE` can be staged
+  // from `github.event.pull_request.title`; `matrix.*` can be derived from
+  // `fromJSON(inputs.*)`; a `steps.*.outputs.*` value can be whatever an
+  // earlier step echoed. Admitting roots is a denylist wearing an allowlist's
+  // clothes — each removal invites the next neighbour. The allowlist for the
+  // RUN position is therefore EMPTY: stage the value into `env:` (which
+  // GitHub evaluates as an expression, never as command text) and let the
+  // shell expand it as data.
+  it.each([
+    ['env staged from event data', 'echo "${{ env.TITLE }}"'],
+    ['matrix derived from inputs', 'echo "${{ matrix.browser }}"'],
+    ['a step output of unproven provenance', 'echo "${{ steps.version.outputs.version }}"'],
+    ['a need output of unproven provenance', 'echo "${{ fromJSON(needs.plan.outputs.matrix).shard }}"'],
+    ['a repository secret', 'echo "${{ secrets.TOKEN }}"'],
+    ['a repository variable', 'echo "${{ vars.CHANNEL }}"'],
+    ['a caller-supplied input', 'echo "${{ inputs.value }}"'],
+  ])('%s cannot be interpolated into a run command', (_name, command) => {
+    const workflow = ['jobs:', '  unsafe:', '    steps:', `      - run: ${command}`].join('\n');
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
   });
 
-  it('inputs.* interpolated into run is a violation — caller data rides env indirection (Codex review, confirmed P1)', () => {
-    // workflow_call inputs are caller-controlled: a caller can pipe event
-    // data (a PR title, a branch name) into the callee, and GitHub
-    // substitutes the value before shell parsing. The admissible pattern is
-    // env: indirection, never direct interpolation.
-    const direct = ['jobs:', '  unsafe:', '    steps:', '      - run: echo "${{ inputs.value }}"'].join('\n');
-    expect(scanWorkflowExpressionInjection(direct)).toEqual([expect.objectContaining({ reason: 'expression-in-run' })]);
+  it('the laundering hop Codex named is refused at the run position, not at the staging position', () => {
+    // Staging IS the sanctioned pattern, so the env: mapping value stays
+    // legal even when it names event data — GitHub evaluates it as an
+    // expression. The violation is re-interpolating it into command TEXT.
+    const laundered = [
+      'jobs:',
+      '  unsafe:',
+      '    steps:',
+      '      - env:',
+      '          TITLE: ${{ github.event.pull_request.title }}',
+      '        run: echo "${{ env.TITLE }}"',
+    ].join('\n');
+    expect(scanWorkflowExpressionInjection(laundered)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
 
-    const indirected = [
+    const staged = [
       'jobs:',
       '  safe:',
       '    steps:',
       '      - env:',
-      '          VALUE: ${{ inputs.value }}',
-      '        run: echo "$VALUE"',
+      '          TITLE: ${{ github.event.pull_request.title }}',
+      '        run: echo "$TITLE"',
     ].join('\n');
-    expect(scanWorkflowExpressionInjection(indirected)).toEqual([]);
+    expect(scanWorkflowExpressionInjection(staged)).toEqual([]);
   });
 
   it('an unclosed expression is a violation, not a skipped command', () => {
@@ -238,16 +254,22 @@ describe('expressions in run commands', () => {
     ]);
   });
 
-  it('the closed logical and comparison grammar composes allowed roots', () => {
+  it('a composed expression is refused like any other — composition cannot launder the run position', () => {
+    // This arm previously proved the closed logical/comparison grammar
+    // ADMITTED composed roots. The allowlist is now empty, so composition is
+    // exactly as refused as a bare reference; both spellings stay covered.
     const workflow = [
       'jobs:',
-      '  safe:',
+      '  unsafe:',
       '    steps:',
       '      - run: echo "${{ vars.VALUE || env.DEFAULT }}"',
       '      - run: echo "${{ matrix.shard >= 0 && env.ENABLED != false }}"',
     ].join('\n');
 
-    expect(scanWorkflowExpressionInjection(workflow)).toEqual([]);
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
   });
 
   it('a leading dot is unsupported syntax, not a safe path', () => {

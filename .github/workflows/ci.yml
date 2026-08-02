@@ -43,7 +43,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Run registry-projected format check
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.format.command }}
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.format.command }}
+        run: bash -c "$PROJECTED_COMMAND"
 
   # Registry-projected CI plan. The parallel merge gate is the RELEASE gauntlet fanned
   # out, so scripts/ci-plan.ts (a PURE projection of @liteship/command's CHECK_REGISTRY —
@@ -399,7 +401,9 @@ jobs:
           git config user.name "github-actions[bot]"
       - run: pnpm run build && pnpm run capsule:compile
       - name: Run registry-projected environment doctor
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.doctor.command }}
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.doctor.command }}
+        run: bash -c "$PROJECTED_COMMAND"
       - name: Mint gauntlet run context for parallel fan-out
         run: pnpm exec tsx scripts/mint-gauntlet-context.ts
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -478,15 +482,17 @@ jobs:
           LITESHIP_SHARD_TOTAL: 4
       - name: Stage shard coverage for artifact upload
         if: always()
+        env:
+          SHARD: ${{ matrix.shard }}
         run: |
           set -euo pipefail
-          mkdir -p "ci-artifacts/coverage/node-shard-${{ matrix.shard }}"
-          if [ -d "coverage/node-shard-${{ matrix.shard }}" ]; then
-            cp -r "coverage/node-shard-${{ matrix.shard }}/." "ci-artifacts/coverage/node-shard-${{ matrix.shard }}/"
+          mkdir -p "ci-artifacts/coverage/node-shard-$SHARD"
+          if [ -d "coverage/node-shard-$SHARD" ]; then
+            cp -r "coverage/node-shard-$SHARD/." "ci-artifacts/coverage/node-shard-$SHARD/"
           fi
-          if [ -d "coverage/subprocess-raw-shard/${{ matrix.shard }}" ]; then
-            mkdir -p "ci-artifacts/coverage/subprocess-raw-shard/${{ matrix.shard }}"
-            cp -r "coverage/subprocess-raw-shard/${{ matrix.shard }}/." "ci-artifacts/coverage/subprocess-raw-shard/${{ matrix.shard }}/"
+          if [ -d "coverage/subprocess-raw-shard/$SHARD" ]; then
+            mkdir -p "ci-artifacts/coverage/subprocess-raw-shard/$SHARD"
+            cp -r "coverage/subprocess-raw-shard/$SHARD/." "ci-artifacts/coverage/subprocess-raw-shard/$SHARD/"
           fi
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
@@ -532,7 +538,9 @@ jobs:
         env:
           CI: true
       - name: Run registry-projected allocation gate
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.benchAlloc.command }}
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.benchAlloc.command }}
+        run: bash -c "$PROJECTED_COMMAND"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
@@ -666,13 +674,15 @@ jobs:
           name: dist-packages
           path: .
       - name: Run registry-projected consumer journeys
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.journey.command }}
+        run: bash -c "$PROJECTED_COMMAND"
         env:
           CI: true
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.journey.command }}
       - name: Run registry-projected hermetic closure
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.hermetic.command }}
+        run: bash -c "$PROJECTED_COMMAND"
         env:
           CI: true
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.hermetic.command }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
@@ -805,7 +815,9 @@ jobs:
         env:
           CI: true
       - name: Run registry-projected DevX policy check
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.devx.command }}
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.devx.command }}
+        run: bash -c "$PROJECTED_COMMAND"
       - name: Confirm lane matches the registry-projected plan
         env:
           PLANNED_PROFILE: ${{ fromJSON(needs.plan.outputs.matrix).lanes.final.profile }}
@@ -850,7 +862,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
-      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - env:
+          BROWSER: ${{ matrix.browser }}
+        run: pnpm exec playwright install --with-deps "$BROWSER"
       - run: pnpm exec vitest run --config vitest.browser.config.ts
         env:
           CI: true
@@ -1118,10 +1132,11 @@ jobs:
           # inside it, so exhaustion here signals an anomaly, not the plan.
           LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '17100000'
           LITESHIP_CAMPAIGN_SHARD: '${{ matrix.shard }}/6'
+          SHARD: ${{ matrix.shard }}
         run: |
           mkdir -p reports/exhaustive
           set -o pipefail
-          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --mutate 2>&1 | tee reports/exhaustive/mutation-shard${{ matrix.shard }}.log
+          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --mutate 2>&1 | tee "reports/exhaustive/mutation-shard$SHARD.log"
       - name: Save the mutation verdict bank (even when gates exit red)
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         if: always()
@@ -1282,10 +1297,11 @@ jobs:
           # inside it, so exhaustion here signals an anomaly, not the plan.
           LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '17100000'
           LITESHIP_CAMPAIGN_SHARD: '${{ matrix.shard }}/6'
+          SHARD: ${{ matrix.shard }}
         run: |
           mkdir -p reports/exhaustive
           set -o pipefail
-          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --mcdc 2>&1 | tee reports/exhaustive/mcdc-shard${{ matrix.shard }}.log
+          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --mcdc 2>&1 | tee "reports/exhaustive/mcdc-shard$SHARD.log"
       - name: Save the mcdc verdict bank (even when gates exit red)
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         if: always()
@@ -1456,7 +1472,9 @@ jobs:
       - name: Prove governed security minimums
         run: pnpm run security:minimum
       - name: Query the live advisory registry
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.securityAudit.command }}
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.securityAudit.command }}
+        run: bash -c "$PROJECTED_COMMAND"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         continue-on-error: true

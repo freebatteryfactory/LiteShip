@@ -125,12 +125,20 @@ export function scanWorkflowActionPins(text: string): readonly WorkflowActionPin
  * THE CLASS RULE — expressions interpolated into a shell command.
  *
  * ANCHOR: every `${{ }}` expression in every step's `run:` field. ALLOWLIST:
- * only contexts whose roots are not attacker-controlled: exact step or need
- * outputs, matrix, secrets, env, and vars. `inputs` is NOT admitted —
- * workflow_call inputs are caller data, so they ride env: indirection.
- * GitHub event data is an open grammar (`github.event.*`, `github.head_ref`,
- * and future siblings), so a denylist loses by construction. An unclosed or
- * unclassifiable expression is a violation, never a skipped command.
+ * EMPTY. GitHub substitutes an expression into the command TEXT before the
+ * shell parses it, so the value becomes syntax rather than data — and no
+ * context root proves the value is safe, because provenance is not a property
+ * of the root token. `env.TITLE` can be staged from
+ * `github.event.pull_request.title`; `matrix.*` can be derived from
+ * `fromJSON(inputs.*)`; `steps.*.outputs.*` carries whatever an earlier step
+ * echoed. Admitting roots is a denylist wearing an allowlist's clothes: each
+ * removal only invites the next neighbour (this rule shed `github.*`, then
+ * `inputs`, then the rest — the sequence is the proof).
+ *
+ * THE SANCTIONED PATTERN: stage the value into the step's `env:` mapping,
+ * which GitHub evaluates as an expression and never as command text, then let
+ * the shell expand it as data (`"$VAR"`). Staging positions — `env:`, `if:`,
+ * `with:` — are unaffected; only the run command's text is governed here.
  */
 export function scanWorkflowExpressionInjection(text: string): readonly WorkflowActionPinViolation[] {
   const unreadable = yamlShapeViolations(text).map((violation) => ({
@@ -145,160 +153,16 @@ export function scanWorkflowExpressionInjection(text: string): readonly Workflow
     const lines = activeLinesOf(section.text, section.lineOffset);
     for (const stepIndex of stepIndicesOf(lines)) {
       const command = stepRunCommandOf(lines, stepIndex);
-      if (!command.includes('${{')) continue;
-      if (!commandExpressionsAreAdmissible(command)) {
+      // The allowlist is empty, so the presence of an opening delimiter is the
+      // whole test: an unclosed `${{` is as much a violation as a closed one,
+      // and no path parsing can admit anything.
+      if (command.includes('${{')) {
         const step = lines[stepIndex]!;
         violations.push({ line: step.line, content: step.content, reason: 'expression-in-run' });
       }
     }
   }
   return violations;
-}
-
-function commandExpressionsAreAdmissible(command: string): boolean {
-  let cursor = 0;
-  while (cursor < command.length) {
-    const start = command.indexOf('${{', cursor);
-    if (start === -1) return true;
-    const end = command.indexOf('}}', start + 3);
-    if (end === -1) return false;
-    const references = expressionReferencePaths(command.slice(start + 3, end));
-    if (references === null || references.length === 0 || references.some((path) => !admissibleExpressionPath(path))) {
-      return false;
-    }
-    cursor = end + 2;
-  }
-  return true;
-}
-
-/** Dotted identifier paths outside quoted literals; null means unclassifiable syntax. */
-function expressionReferencePaths(expression: string): readonly (readonly string[])[] | null {
-  const admittedFunctions = new Set(['fromJSON']);
-  const paths: string[][] = [];
-  let quote: "'" | '"' | null = null;
-  let escaped = false;
-  let parenthesisDepth = 0;
-  let expectOperand = true;
-  let pendingFunctionCall = false;
-  for (let index = 0; index < expression.length;) {
-    const character = expression[index]!;
-    if (quote !== null) {
-      if (escaped) escaped = false;
-      else if (character === '\\') escaped = true;
-      else if (character === quote) {
-        quote = null;
-        expectOperand = false;
-      }
-      index += 1;
-      continue;
-    }
-    if (character === "'" || character === '"') {
-      if (!expectOperand) return null;
-      quote = character;
-      index += 1;
-      continue;
-    }
-    if (/\s/u.test(character)) {
-      index += 1;
-      continue;
-    }
-    if (character === '.') {
-      if (expectOperand || expression[index - 1] !== ')' || !/[A-Za-z_]/u.test(expression[index + 1] ?? '')) {
-        return null;
-      }
-      index += 1;
-      continue;
-    }
-    const binaryOperator = /^(?:&&|\|\||==|!=|<=|>=)/u.exec(expression.slice(index));
-    if (binaryOperator !== null) {
-      if (expectOperand) return null;
-      expectOperand = true;
-      index += binaryOperator[0].length;
-      continue;
-    }
-    if (character === '!') {
-      if (!expectOperand) return null;
-      index += 1;
-      continue;
-    }
-    if (character === '<' || character === '>') {
-      if (expectOperand) return null;
-      expectOperand = true;
-      index += 1;
-      continue;
-    }
-    if (/[0-9]/u.test(character)) {
-      if (!expectOperand) return null;
-      const number = /^[0-9]+(?:\.[0-9]+)?/u.exec(expression.slice(index));
-      if (number === null) return null;
-      expectOperand = false;
-      index += number[0].length;
-      continue;
-    }
-    if (character === '(') {
-      if (!pendingFunctionCall || !expectOperand) return null;
-      pendingFunctionCall = false;
-      parenthesisDepth += 1;
-      index += 1;
-      continue;
-    }
-    if (character === ')') {
-      if (parenthesisDepth === 0 || expectOperand || pendingFunctionCall) return null;
-      parenthesisDepth -= 1;
-      expectOperand = false;
-      index += 1;
-      continue;
-    }
-    if (character === ',') {
-      if (parenthesisDepth === 0 || expectOperand) return null;
-      expectOperand = true;
-      index += 1;
-      continue;
-    }
-    if (!/[A-Za-z_]/u.test(character)) {
-      return null;
-    }
-    const isCallResultProperty = expression[index - 1] === '.';
-    const segments: string[] = [];
-    let end = index + 1;
-    while (end < expression.length && /[A-Za-z0-9_-]/u.test(expression[end]!)) end += 1;
-    segments.push(expression.slice(index, end));
-    while (expression[end] === '.') {
-      const segmentStart = end + 1;
-      if (!/[A-Za-z_]/u.test(expression[segmentStart] ?? '')) return null;
-      end = segmentStart + 1;
-      while (end < expression.length && /[A-Za-z0-9_-]/u.test(expression[end]!)) end += 1;
-      segments.push(expression.slice(segmentStart, end));
-    }
-    let next = end;
-    while (/\s/u.test(expression[next] ?? '')) next += 1;
-    if (!isCallResultProperty) {
-      if (!expectOperand) return null;
-      if (segments.length === 1 && expression[next] !== '(' && !['true', 'false', 'null'].includes(segments[0]!)) {
-        return null;
-      }
-      if (segments.length === 1 && expression[next] === '(') {
-        if (!admittedFunctions.has(segments[0]!)) return null;
-        pendingFunctionCall = true;
-      } else {
-        expectOperand = false;
-        if (segments.length > 1) paths.push(segments);
-      }
-    } else if (expectOperand) {
-      return null;
-    }
-    index = end;
-  }
-  return quote === null && parenthesisDepth === 0 && !pendingFunctionCall && !expectOperand ? paths : null;
-}
-
-function admissibleExpressionPath(path: readonly string[]): boolean {
-  const root = path[0];
-  if (root === 'steps' || root === 'needs') return path.length >= 4 && path[2] === 'outputs';
-  // `inputs` is deliberately absent: workflow_call inputs are caller data
-  // (a caller can pipe event text straight through), and GitHub substitutes
-  // the value before shell parsing. Caller data rides env: indirection.
-  return path.length >= 2 && ['matrix', 'secrets', 'env', 'vars'].includes(root ?? '');
 }
 
 /**
