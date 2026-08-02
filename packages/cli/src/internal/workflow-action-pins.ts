@@ -567,9 +567,19 @@ interface WorkflowJobSectionRecord {
   readonly lineOffset: number;
 }
 
+// The line index of the top-level `jobs:` mapping key, or -1. A trailing
+// comment is inert exactly as on every other mapping key; an indented
+// `jobs:` belongs to some other mapping and never confers authority.
+// (Line comments, not TSDoc: this helper lives inside the reader-census
+// self-exemption span, which runs from workflowJobSections through the
+// next doc comment.)
+function topLevelJobsIndex(lines: readonly string[]): number {
+  return lines.findIndex((line) => !/^\s/u.test(line) && mappingKeyIs(line, 'jobs'));
+}
+
 function workflowJobSectionRecords(text: string): ReadonlyMap<string, WorkflowJobSectionRecord> {
   const lines = text.split('\n').map((line) => line.replace(/\r$/u, ''));
-  const jobsIndex = lines.indexOf('jobs:');
+  const jobsIndex = topLevelJobsIndex(lines);
   if (jobsIndex === -1) {
     throw workflowValidationError('workflow.jobs', 'workflow must declare a top-level jobs: mapping');
   }
@@ -678,7 +688,7 @@ function yamlShapeViolations(text: string): readonly YamlShapeViolation[] {
 }
 
 function workflowSectionsForScan(text: string): ReadonlyMap<string, string> {
-  if (text.split(/\r?\n/u).includes('jobs:')) return workflowJobSections(text);
+  if (topLevelJobsIndex(text.split(/\r?\n/u)) !== -1) return workflowJobSections(text);
   // Several focused scanner laws deliberately pass a job fragment instead
   // of a complete workflow. Give those fragments the same structural reader
   // by supplying only the absent authority wrapper.
@@ -810,7 +820,7 @@ function fieldEntryOf(
 function workflowUseEntries(text: string): readonly WorkflowUseEntry[] {
   const sourceLines = text.split('\n').map((line) => line.replace(/\r$/u, ''));
   const entries: WorkflowUseEntry[] = [];
-  if (sourceLines.includes('jobs:')) {
+  if (topLevelJobsIndex(sourceLines) !== -1) {
     for (const section of workflowJobSectionRecords(text).values()) {
       const lines = activeLinesOf(section.text, section.lineOffset);
       const jobUse = fieldEntryOf(lines, 0, 'uses: ');

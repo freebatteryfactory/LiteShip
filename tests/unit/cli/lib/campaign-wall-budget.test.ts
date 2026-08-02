@@ -419,6 +419,17 @@ describe('unreadable YAML is a violation, never a skipped line', () => {
     expect([...sections.keys()]).toEqual(['harmless']);
     expect(sections.get('harmless')).not.toContain('concurrency:');
   });
+
+  it('a trailing comment on the jobs: line is inert, exactly as on every other mapping key (Codex review, confirmed P2)', () => {
+    const sections = workflowJobSections('jobs: # CI jobs\n  x:\n    runs-on: ubuntu-latest\n');
+    expect([...sections.keys()]).toEqual(['x']);
+  });
+
+  it('a key that merely begins with jobs, an indented jobs:, and a jobs-in-comment all stay refused', () => {
+    expect(() => workflowJobSections('jobs2:\n  x:\n    runs-on: a\n')).toThrow(/top-level jobs/u);
+    expect(() => workflowJobSections('outer:\n  jobs:\n    x:\n      runs-on: a\n')).toThrow(/top-level jobs/u);
+    expect(() => workflowJobSections('# jobs:\nother:\n  x: 1\n')).toThrow(/top-level jobs/u);
+  });
 });
 
 describe('campaign wall budgets absorb a cold probe and leave post-step margin (PR #195 review, confirmed)', () => {
