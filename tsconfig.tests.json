@@ -19,6 +19,11 @@
   // surface stays scoped to the contracts under assertion.
   "include": [
     "tests/property/**/*.test.ts",
+    "tests/fuzz/**/*.test.ts",
+    // The runtime fuzz tier reaches coverage-report scripts through the
+    // security-boundary corpus. Admit the repository-owned minimal Istanbul
+    // declarations so those transitive script contracts stay strict.
+    "scripts/types/istanbul.d.ts",
     "packages/cloudflare/src/cloudflare-workers.d.ts",
     "tests/unit/track-id.test.ts",
     "tests/unit/spawn-quoting-drift.test.ts",
@@ -107,7 +112,6 @@
     // all consume the public @liteship/genui contracts. Typecheck the packet so
     // fixture or catalog drift fails before the runtime campaigns execute.
     "tests/support/genui-fixtures.ts",
-    "tests/fuzz/genui-tree-fuzz.test.ts",
     "tests/unit/genui/validation-fault-simulation.test.ts",
     "tests/unit/genui/validation-mcdc.test.ts",
     "tests/bench/genui.bench.ts",
@@ -115,7 +119,6 @@
     // parser fuzzing, fault simulation/injection, MC/DC, independent sharp
     // differential, and benchmark subject all consume the public asset API.
     "tests/support/wav-fixtures.ts",
-    "tests/fuzz/assets-binary-fuzz.test.ts",
     "tests/unit/assets/analysis/projection-execution.test.ts",
     "tests/unit/assets/binary-fault-simulation.test.ts",
     "tests/unit/assets/binary-mcdc.test.ts",

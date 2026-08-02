@@ -215,6 +215,45 @@ describe('(a2) property evidence is type-admitted before execution', () => {
   );
 });
 
+describe('(a3) fuzz evidence is type-admitted before execution', () => {
+  const runtimeFuzzSuites = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/fuzz/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedFuzzRoots = tsconfigTestsRootFiles().filter(
+    (path) => path.startsWith('tests/fuzz/') && path.endsWith('.test.ts'),
+  );
+
+  it('the tests typecheck project admits every fuzz suite, including future files', () => {
+    expect(runtimeFuzzSuites.length, 'the fuzz-test corpus fell below its committed floor').toBeGreaterThanOrEqual(9);
+    const admitted = new Set(admittedFuzzRoots);
+    const missing = runtimeFuzzSuites.filter((path) => !admitted.has(path));
+    expect(
+      admittedFuzzRoots,
+      `the tests typecheck project admits ${admittedFuzzRoots.length}/${runtimeFuzzSuites.length} runtime fuzz suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeFuzzSuites);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/fuzz/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      'fuzz admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+    expect(includeEntries, 'the fuzz tier transitively imports the repository Istanbul runtime').toContain(
+      'scripts/types/istanbul.d.ts',
+    );
+  });
+
+  it('a counterfeit config with the fuzz admission removed exposes the complete missing corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/fuzz/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeFuzzSuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeFuzzSuites);
+  });
+});
+
 // --------------------------------------------------------------------------
 // (b) Coverage floors — the real gates cover a broad, non-trivial surface.
 // --------------------------------------------------------------------------
