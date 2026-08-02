@@ -42,6 +42,9 @@
     // Playwright owns the complete E2E source tree: entrypoints, configuration,
     // server, and browser fixture modules must typecheck as one runtime unit.
     "tests/e2e/**/*.ts",
+    // Browser Vitest owns both its test entrypoints and config-imported command
+    // modules. Admit the complete runtime tree as one typed unit.
+    "tests/browser/**/*.ts",
     // The runtime fuzz tier reaches coverage-report scripts through the
     // security-boundary corpus. Admit the repository-owned minimal Istanbul
     // declarations so those transitive script contracts stay strict.

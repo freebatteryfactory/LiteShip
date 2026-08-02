@@ -105,7 +105,6 @@ describe('browser web runtime coverage', () => {
   test('creates audio processors and video capture pipelines in the browser lane', async () => {
     const posted: string[] = [];
     let disconnected = false;
-    const addModule = vi.fn(async () => {});
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:audio-processor');
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
     vi.stubGlobal(
@@ -130,16 +129,14 @@ describe('browser web runtime coverage', () => {
     );
 
     const bridge = AVBridge.make({ sampleRate: 48_000, fps: 60, buffer: new ArrayBuffer(24) as never });
-    const processor = await createAudioProcessor(
-      {
-        audioWorklet: { addModule },
-      } as AudioContext,
-      bridge,
-    );
+    const audioContext = new AudioContext();
+    const addModule = vi.spyOn(audioContext.audioWorklet, 'addModule').mockResolvedValue(undefined);
+    const processor = await createAudioProcessor(audioContext, bridge);
 
     processor.start();
     processor.stop();
     await processor.dispose();
+    await audioContext.close();
 
     expect(addModule).toHaveBeenCalledWith('blob:audio-processor');
     expect(createObjectURL).toHaveBeenCalledOnce();
@@ -175,12 +172,20 @@ describe('browser web runtime coverage', () => {
         yield {
           frame: 0,
           timestamp: 0,
-          state: { discrete: {}, blend: {}, outputs: { css: { '--liteship-bg': 'black' }, glsl: {}, aria: {} } },
+          state: {
+            discrete: {},
+            blend: {},
+            outputs: { css: { '--liteship-bg': 'black' }, glsl: {}, wgsl: {}, aria: {} },
+          },
         };
         yield {
           frame: 1,
           timestamp: 33,
-          state: { discrete: {}, blend: {}, outputs: { css: { '--liteship-bg': 'white' }, glsl: {}, aria: {} } },
+          state: {
+            discrete: {},
+            blend: {},
+            outputs: { css: { '--liteship-bg': 'white' }, glsl: {}, wgsl: {}, aria: {} },
+          },
         };
       },
     };
@@ -195,7 +200,7 @@ describe('browser web runtime coverage', () => {
             return canvas;
           })();
     renderToCanvas(
-      { discrete: {}, blend: {}, outputs: { css: { '--liteship-bg': 'black' }, glsl: {}, aria: {} } },
+      { discrete: {}, blend: {}, outputs: { css: { '--liteship-bg': 'black' }, glsl: {}, wgsl: {}, aria: {} } },
       offscreen,
       renderFn,
     );

@@ -4,6 +4,7 @@ import adaptiveDirective from '../../packages/astro/src/client-directives/adapti
 import workerDirective from '../../packages/astro/src/client-directives/worker.js';
 import wasmDirective from '../../packages/astro/src/client-directives/wasm.js';
 import gpuDirective from '../../packages/astro/src/client-directives/gpu.js';
+import { customEventListener } from '../helpers/custom-event-listener.js';
 import { createStubRegistry } from '../helpers/define-property-stub.js';
 
 const noop = () => Promise.resolve();
@@ -34,14 +35,16 @@ describe('browser astro directive coverage', () => {
   });
 
   test('adaptive directive handles resize hysteresis, reinit, and dispose in the browser lane', async () => {
-    let resizeCallback: ResizeObserverCallback | null = null;
+    const resizeCallbacks: ResizeObserverCallback[] = [];
+    const resizeObservers: ResizeObserver[] = [];
     const disconnect = vi.fn();
     vi.stubGlobal('innerWidth', 760);
     vi.stubGlobal(
       'ResizeObserver',
       class {
         constructor(callback: ResizeObserverCallback) {
-          resizeCallback = callback;
+          resizeCallbacks.push(callback);
+          resizeObservers.push(this);
         }
         observe() {}
         disconnect() {
@@ -59,7 +62,12 @@ describe('browser astro directive coverage', () => {
     expect(el.getAttribute('data-liteship-state')).toBe('compact');
 
     vi.stubGlobal('innerWidth', 790);
-    resizeCallback?.([] as never, {} as never);
+    const resizeCallback = resizeCallbacks[0];
+    const resizeObserver = resizeObservers[0];
+    if (resizeCallback === undefined || resizeObserver === undefined) {
+      expect.fail('adaptive directive did not register its ResizeObserver callback');
+    }
+    resizeCallback([], resizeObserver);
     expect(el.getAttribute('data-liteship-state')).toBe('expanded');
 
     el.setAttribute(
@@ -195,7 +203,12 @@ describe('browser astro directive coverage', () => {
     await Promise.resolve();
 
     expect(workers).toHaveLength(1);
-    expect(workers[0]?.listeners.message.length).toBeGreaterThanOrEqual(1);
+    const worker = workers[0];
+    const messageListeners = worker?.listeners.message;
+    if (messageListeners === undefined) {
+      expect.fail('worker directive did not retain its message listeners');
+    }
+    expect(messageListeners.length).toBeGreaterThanOrEqual(1);
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     expect(revokeObjectURL).not.toHaveBeenCalled();
   });
@@ -209,8 +222,10 @@ describe('browser astro directive coverage', () => {
     const loadSpy = vi.spyOn(WASMDispatch, 'load').mockResolvedValue(WASMDispatch.kernels());
 
     const readyEvents: unknown[] = [];
-    document.addEventListener('liteship:wasm-ready', ((event: CustomEvent) =>
-      readyEvents.push(event.detail)) as EventListener);
+    document.addEventListener(
+      'liteship:wasm-ready',
+      customEventListener((event) => readyEvents.push(event.detail)),
+    );
 
     wasmDirective(noop, {}, wasmElement);
     await Promise.resolve();

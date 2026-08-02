@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { Diagnostics } from '@liteship/core';
 import { SlotRegistry } from '../../packages/web/src/slot/registry.js';
+import { customEventListener } from '../helpers/custom-event-listener.js';
 import { captureDiagnostics } from '../helpers/diagnostics.js';
 
 describe('browser SlotRegistry with real MutationObserver', () => {
@@ -83,7 +84,10 @@ describe('browser SlotRegistry with real MutationObserver', () => {
     root.appendChild(el);
 
     const events: unknown[] = [];
-    el.addEventListener('liteship:slot-mounted', ((e: CustomEvent) => events.push(e.detail)) as EventListener);
+    el.addEventListener(
+      'liteship:slot-mounted',
+      customEventListener((event) => events.push(event.detail)),
+    );
 
     registry.register({
       path: '/test' as never,
@@ -101,7 +105,10 @@ describe('browser SlotRegistry with real MutationObserver', () => {
     root.appendChild(el);
 
     const events: unknown[] = [];
-    document.addEventListener('liteship:slot-unmounted', ((e: CustomEvent) => events.push(e.detail)) as EventListener);
+    document.addEventListener(
+      'liteship:slot-unmounted',
+      customEventListener((event) => events.push(event.detail)),
+    );
 
     registry.register({
       path: '/removable' as never,

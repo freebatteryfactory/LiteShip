@@ -46,6 +46,7 @@ import { tmpdir } from 'node:os';
 import fg from 'fast-glob';
 import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 import { scaledTimeout, nodeTestInclude } from '../../../vitest.shared.js';
+import browserVitestConfig from '../../../vitest.browser.config.js';
 import playwrightE2EConfig from '../../e2e/playwright.config.js';
 import {
   rootTsconfigReferenceDirs,
@@ -436,10 +437,15 @@ describe('(a7) runtime support modules are type-admitted before execution', () =
 });
 
 describe('(a8) runtime helper modules are owned and type-admitted before execution', () => {
-  const runtimeEntrypoints = fg
+  const nodeRuntimeEntrypoints = fg
     .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
     .map((path) => path.replaceAll('\\', '/'))
     .sort();
+  const browserRuntimeEntrypoints = fg
+    .sync(browserVitestConfig.test?.include ?? [], { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const runtimeEntrypoints = [...nodeRuntimeEntrypoints, ...browserRuntimeEntrypoints];
   const runtimeHelperSources = tsconfigTestsResolvedFiles(runtimeEntrypoints).filter((path) =>
     path.startsWith('tests/helpers/'),
   );
@@ -451,9 +457,11 @@ describe('(a8) runtime helper modules are owned and type-admitted before executi
   const admittedHelperRoots = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/helpers/'));
 
   it('every authored helper has a live runtime owner', () => {
-    expect(runtimeEntrypoints.length, 'the Node runtime suite fell below its committed floor').toBeGreaterThanOrEqual(
-      1_000,
-    );
+    expect(
+      nodeRuntimeEntrypoints.length,
+      'the Node runtime suite fell below its committed floor',
+    ).toBeGreaterThanOrEqual(1_000);
+    expect(browserRuntimeEntrypoints.length, 'the browser runtime suite changed').toBe(14);
     expect(
       runtimeHelperSources.length,
       'the runtime helper corpus fell below its committed floor',
@@ -462,7 +470,7 @@ describe('(a8) runtime helper modules are owned and type-admitted before executi
     const unowned = authoredHelperSources.filter((path) => !runtimeOwned.has(path));
     expect(
       authoredHelperSources,
-      `tests/helpers contains modules with no importer in the canonical Node runtime graph:\n${unowned.join('\n')}`,
+      `tests/helpers contains modules with no importer in the canonical test runtime graphs:\n${unowned.join('\n')}`,
     ).toEqual(runtimeHelperSources);
   });
 
@@ -542,6 +550,52 @@ describe('(a9) Playwright E2E sources are type-admitted before execution', () =>
       fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
     );
     expect(authoredSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(authoredSources);
+  });
+});
+
+describe('(a10) browser runtime sources are type-admitted before execution', () => {
+  const runtimeEntrypoints = fg
+    .sync(browserVitestConfig.test?.include ?? [], { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const configOwnedSources = tsconfigTestsResolvedFiles(['vitest.browser.config.ts']).filter((path) =>
+    path.startsWith('tests/browser/commands/'),
+  );
+  const runtimeSources = [...runtimeEntrypoints, ...configOwnedSources].sort();
+  const authoredSources = fg
+    .sync('tests/browser/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/browser/'));
+
+  it('derives the complete browser source tree from Vitest and its config module graph', () => {
+    expect(runtimeEntrypoints.length, 'the browser test entrypoint corpus fell below its committed floor').toBe(14);
+    expect(configOwnedSources.length, 'the browser config-owned command corpus changed').toBe(1);
+    expect(runtimeSources, 'tests/browser contains a source with no browser runtime owner').toEqual(authoredSources);
+  });
+
+  it('directly admits every runtime-owned browser source through one future-proof tree root', () => {
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} browser sources; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/browser/') && entry.includes('*') && entry.endsWith('.ts'),
+      ),
+      'browser admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with browser admission removed exposes the complete runtime-owned tree', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/browser/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
   });
 });
 
