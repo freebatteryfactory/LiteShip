@@ -42,6 +42,17 @@ const EVASIONS = [
   { name: 'identifier-keyed global member', source: "const key = 'eval'; globalThis[key](payload)" },
   { name: 'concatenation-keyed global member', source: 'window["ev" + "al"](payload)' },
   { name: 'computed-key global member', source: 'self[KEYS.eval](payload)' },
+  // Codex review round 4 on PR #197, confirmed P1: the SAME null-scalar
+  // fail-open as the computed-member arms, in the sibling call site of the
+  // same function. A non-literal specifier can resolve at runtime to the
+  // very data:/blob:/javascript: URL this gate blocks when written out.
+  { name: 'identifier dynamic-import specifier', source: 'const s = payload; import(s)' },
+  { name: 'concatenated dynamic-import specifier', source: 'import("data:" + payload)' },
+  { name: 'member dynamic-import specifier', source: 'import(config.entry)' },
+  // A pathToFileURL-shaped specifier whose binding does NOT resolve to
+  // node:url proves nothing — the callee-contract clearance is only as good
+  // as the referent (the R9 lesson, applied here before it was reported).
+  { name: 'shadowed pathToFileURL specifier', source: 'const pathToFileURL = (v) => v; import(pathToFileURL(x).href)' },
 ] as const;
 
 function runtimeSource(path: string): boolean {

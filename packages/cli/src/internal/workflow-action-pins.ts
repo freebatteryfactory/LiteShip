@@ -538,10 +538,22 @@ function yamlShapeViolations(text: string): readonly YamlShapeViolation[] {
     const sequenceItem = /^-\s+/u.test(body);
     if (sequenceItem) parents.push({ indent, identity: `item:${line}` });
     const value = body.replace(/^-\s+/u, '');
-    if (
-      (sequenceItem && /^[{[]/u.test(value)) ||
-      /^(?:uses|run|if|with|env|steps|timeout-minutes|key|path|restore-keys):\s*[{[]/u.test(value)
-    ) {
+    // A flow MAPPING can hide the very keys the structural reader must see
+    // (`uses`, `run`, `with`), so it is refused after ANY key — keyed on the
+    // shape, never on a subset of key names. A fixed key list let
+    // `build: { uses: ... }` past the shape allowlist while the section
+    // reader could not see it either, so both scanners returned clean for
+    // the whole job (Codex review round 4 on PR #197, confirmed P1).
+    //
+    // A flow SEQUENCE OF PLAIN SCALARS (`branches: [main]`,
+    // `shard: [1, 2, 3, 4]`) hides no structure and is idiomatic Actions
+    // YAML — the live workflows prove it must stay legal. A sequence that
+    // CONTAINS a mapping (`steps: [{ run: … }]`) hides structure again and
+    // is refused with the mappings.
+    const flowMapping = /^[{]/u.test(value) || /^[A-Za-z0-9_-]+:\s*[{]/u.test(value);
+    const flowSequence = /^\[/u.test(value) || /^[A-Za-z0-9_-]+:\s*\[/u.test(value);
+    const sequenceHidesMapping = flowSequence && /[{:]/u.test(value.slice(value.indexOf('[') + 1));
+    if ((sequenceItem && /^[{[]/u.test(value)) || flowMapping || sequenceHidesMapping) {
       violations.push({ line, content: body, message: 'flow collection is outside the structural reader grammar' });
     }
     if (/^(?:[A-Za-z0-9_-]+:\s*)?\*[A-Za-z0-9_-]+(?:\s+#.*)?$/u.test(value)) {

@@ -35,6 +35,22 @@ const GLOBAL_RECEIVER = new Set(['globalThis', 'window', 'self']);
 const STRING_TIMER_CALLEE = /\bset(?:Timeout|Interval|Immediate)\s*\(/gu;
 const DYNAMIC_IMPORT_CALLEE = /\bimport\s*\(/gu;
 const COMPUTED_MEMBER = /\b([A-Za-z_$][\w$]*)\s*(?:\?\.)?\s*\[/gu;
+
+/**
+ * `pathToFileURL(x).href` is the ONE non-literal import specifier the
+ * classifier can clear, and it clears on the CALLEE'S CONTRACT rather than on
+ * the argument: `node:url`'s `pathToFileURL` always yields a `file:` URL, so
+ * the result can never carry a scheme {@link DANGEROUS_IMPORT_SCHEME} blocks.
+ */
+const FILE_URL_SPECIFIER = /^\s*pathToFileURL\s*\(/u;
+
+/** The binding must RESOLVE to `node:url` — a local shadow proves nothing. */
+const FILE_URL_BUILDER_IMPORT =
+  /(?:import\s*\{[^}]*\bpathToFileURL\b[^}]*\}\s*from\s*['"]node:url['"]|require\s*\(\s*['"]node:url['"]\s*\))/u;
+
+function importsFileUrlBuilder(source: string): boolean {
+  return FILE_URL_BUILDER_IMPORT.test(source);
+}
 const DANGEROUS_IMPORT_SCHEME = /^(?:data|blob|javascript):/iu;
 const SAFE_CONST_DYNAMIC_BINDING =
   /\bconst\s+(eval|Function)\s*=\s*(?:(?:async\s+)?function\b|(?:async\s*)?\([^)]*\)\s*=>|(?:async\s+)?[A-Za-z_$][\w$]*\s*=>)/gu;
@@ -273,7 +289,7 @@ function typeOnlyToken(masked: string, tokenOffset: number): boolean {
  * residue. Dangerous `data:`, `blob:`, and `javascript:` imports follow the
  * same fail-closed rule for escaped or unterminated specifiers.
  */
-export function classifyDynamicCodeSource(source: string): readonly DynamicCodeKind[] {
+export function classifyDynamicCodeSource(source: string, fileContext: string = source): readonly DynamicCodeKind[] {
   const commentStripped = stripCommentsPreservingStrings(source);
   const masked = maskStrings(commentStripped);
   const kinds = new Set<DynamicCodeKind>();
@@ -339,12 +355,35 @@ export function classifyDynamicCodeSource(source: string): readonly DynamicCodeK
     }
   }
 
+  // The import proof is a FILE-level fact: a per-line pass sees the call
+  // without the `import { pathToFileURL } from 'node:url'` that licenses it,
+  // so the driver threads the whole file in as context.
+  const fileUrlProven = importsFileUrlBuilder(fileContext);
   for (const match of masked.matchAll(DYNAMIC_IMPORT_CALLEE)) {
-    const scalar = stringScalarAt(commentStripped, match.index + match[0].length);
-    if (
-      scalar !== null &&
-      (!scalar.closed || scalar.escaped || scalar.interpolated || DANGEROUS_IMPORT_SCHEME.test(scalar.value))
-    ) {
+    const argumentOffset = match.index + match[0].length;
+    // The call must CLOSE in the text under analysis. A line pass sees
+    // `const mod = import(` truncated at the newline; the collapsed
+    // whole-source pass owns that shape. An unclosed fragment is deferred to
+    // a named pass that does decide it, never cleared here.
+    if (commentStripped.indexOf(')', argumentOffset) === -1) continue;
+    const scalar = stringScalarAt(commentStripped, argumentOffset);
+    // ALLOWLIST: a complete, unescaped, uninterpolated literal whose scheme
+    // is readable and safe — or a `pathToFileURL(...).href` specifier, whose
+    // callee CONTRACT guarantees a `file:` URL and therefore can never carry
+    // a blocked scheme. Anything else the classifier cannot READ
+    // (`import(s)`, `import("data:" + x)`, `import(config.entry)`) can
+    // resolve at runtime to the very data:/blob:/javascript: URL this gate
+    // blocks when written literally, so it is residue. This is the same
+    // null-scalar fail-open as the computed-member pass above; it survived
+    // that fix because only the named site was swept (Codex review round 4
+    // on PR #197, confirmed P1).
+    if (scalar !== null) {
+      if (!scalar.closed || scalar.escaped || scalar.interpolated || DANGEROUS_IMPORT_SCHEME.test(scalar.value)) {
+        kinds.add('DYNAMIC_IMPORT');
+      }
+      continue;
+    }
+    if (!(fileUrlProven && FILE_URL_SPECIFIER.test(commentStripped.slice(argumentOffset)))) {
       kinds.add('DYNAMIC_IMPORT');
     }
   }
@@ -624,7 +663,7 @@ export function scanShippedDynamicCode(repoRoot: string): DynamicCodeScan {
     const activeLines = stripCommentsPreservingStrings(source).split('\n');
     let found = false;
     for (let index = 0; index < activeLines.length; index += 1) {
-      for (const kind of classifyDynamicCodeSource(activeLines[index]!)) {
+      for (const kind of classifyDynamicCodeSource(activeLines[index]!, source)) {
         findings.push({ file: rel, line: index + 1, kind, text: lines[index]!.trim() });
         found = true;
       }

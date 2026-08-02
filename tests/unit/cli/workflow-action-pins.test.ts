@@ -190,6 +190,50 @@ describe('expressions in run commands', () => {
     expect([...workflowJobSections(workflow).keys()]).toEqual(['only']);
   });
 
+  // Codex review round 4 on PR #197, confirmed P1: the flow-collection
+  // refusal enumerated a fixed key list, so `build: { uses: ... }` was
+  // admitted by the shape allowlist AND unrecognizable to the section
+  // reader — both scanners returned clean for the whole job. The refusal
+  // must key on the GRAMMAR (any mapping key followed by a flow collection),
+  // never on a subset of key names.
+  it.each([
+    ['a job-level reusable-workflow call', 'jobs:\n  build: { uses: owner/repo/.github/workflows/ci.yml@main }'],
+    ['an arbitrary unlisted key', 'jobs:\n  a:\n    strategy: { matrix: { os: [linux] } }'],
+    ['a flow sequence hiding a mapping', 'jobs:\n  a:\n    steps: [{ run: echo }]'],
+    ['a flow mapping under an unlisted key', 'jobs:\n  a:\n    container: { image: node }'],
+  ])('%s is refused as outside the structural reader grammar', (_name, workflow) => {
+    expect(unreadableYamlViolations(workflow).join('\n')).toMatch(/flow collection/u);
+    // Fail-closed end to end: the scanners must report unreadable-yaml
+    // rather than a clean result they cannot justify.
+    expect(scanWorkflowActionPins(workflow)).toEqual([expect.objectContaining({ reason: 'unreadable-yaml' })]);
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([expect.objectContaining({ reason: 'unreadable-yaml' })]);
+  });
+
+  it('a plain scalar that merely CONTAINS a brace stays legal', () => {
+    const workflow = ['jobs:', '  safe:', '    steps:', '      - run: echo "a{b}c"', '        name: not [a] list'].join(
+      '\n',
+    );
+    expect(unreadableYamlViolations(workflow)).toEqual([]);
+  });
+
+  it('a flow sequence of plain scalars stays legal — it hides no structure', () => {
+    // The live workflows depend on this: `branches: [main]`,
+    // `shard: [1, 2, 3, 4]`, `browser: [chromium, firefox, webkit]`.
+    const workflow = [
+      'on:',
+      '  push:',
+      '    branches: [main]',
+      'jobs:',
+      '  a:',
+      '    strategy:',
+      '      matrix:',
+      '        shard: [1, 2, 3, 4]',
+      '    steps:',
+      '      - run: echo ok',
+    ].join('\n');
+    expect(unreadableYamlViolations(workflow)).toEqual([]);
+  });
+
   it('a bullet whose field spacing exceeds one space keeps its sibling fields out of the command', () => {
     // `-   run: |` puts the step's fields at bullet indent + 4, not + 2. The
     // scalar boundary must be derived from the bullet's own prefix or an
