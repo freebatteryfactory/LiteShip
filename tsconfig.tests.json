@@ -35,6 +35,10 @@
     // the canonical Node suite. Admit the whole tree so a future helper cannot
     // execute without first satisfying the tests project's type contracts.
     "tests/support/**/*.ts",
+    // Runtime helpers are shared executable proof infrastructure. Admit the
+    // whole owned tree so a future helper cannot execute without first
+    // satisfying the tests project's type contracts.
+    "tests/helpers/**/*.ts",
     // The runtime fuzz tier reaches coverage-report scripts through the
     // security-boundary corpus. Admit the repository-owned minimal Istanbul
     // declarations so those transitive script contracts stay strict.
@@ -80,10 +84,6 @@
     "tests/bench/allocation.bench.ts",
     "tests/bench/allocation-curves.bench.ts",
     "tests/unit/meta/allocation-contracts.test.ts",
-    "tests/helpers/mock-event-source.ts",
-    "tests/helpers/mock-worker.ts",
-    "tests/helpers/mock-dom.ts",
-    "tests/helpers/mock-browser.ts",
     "tests/unit/core/reactive-capture.test.ts",
     "tests/unit/core/reactive-model.test.ts",
     // Wave 5 generated-UI assurance: shared valid/invalid generators, the

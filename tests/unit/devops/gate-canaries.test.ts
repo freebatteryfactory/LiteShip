@@ -434,6 +434,61 @@ describe('(a7) runtime support modules are type-admitted before execution', () =
   });
 });
 
+describe('(a8) runtime helper modules are owned and type-admitted before execution', () => {
+  const runtimeEntrypoints = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const runtimeHelperSources = tsconfigTestsResolvedFiles(runtimeEntrypoints).filter((path) =>
+    path.startsWith('tests/helpers/'),
+  );
+  const authoredHelperSources = fg
+    .sync('tests/helpers/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedHelperRoots = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/helpers/'));
+
+  it('every authored helper has a live runtime owner', () => {
+    expect(runtimeEntrypoints.length, 'the Node runtime suite fell below its committed floor').toBeGreaterThanOrEqual(
+      1_000,
+    );
+    expect(
+      runtimeHelperSources.length,
+      'the runtime helper corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(13);
+    const runtimeOwned = new Set(runtimeHelperSources);
+    const unowned = authoredHelperSources.filter((path) => !runtimeOwned.has(path));
+    expect(
+      authoredHelperSources,
+      `tests/helpers contains modules with no importer in the canonical Node runtime graph:\n${unowned.join('\n')}`,
+    ).toEqual(runtimeHelperSources);
+  });
+
+  it('every runtime-owned helper is directly type-admitted', () => {
+    const admitted = new Set(admittedHelperRoots);
+    const missing = runtimeHelperSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedHelperRoots,
+      `the tests typecheck project admits ${admittedHelperRoots.length}/${runtimeHelperSources.length} runtime helper modules; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeHelperSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/helpers/') && entry.includes('*') && entry.endsWith('.ts'),
+      ),
+      'helper admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with helper admission removed exposes the complete runtime-owned corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/helpers/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeHelperSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeHelperSources);
+  });
+});
+
 // --------------------------------------------------------------------------
 // (b) Coverage floors — the real gates cover a broad, non-trivial surface.
 // --------------------------------------------------------------------------
