@@ -20,6 +20,11 @@
   "include": [
     "tests/property/**/*.test.ts",
     "tests/fuzz/**/*.test.ts",
+    // Consumer journeys and runtime setup helpers are executable proof source,
+    // even though they are not `*.test.ts` entrypoints. Admit each whole tier so
+    // a future source cannot execute under check/journey or check/test untyped.
+    "tests/journey/**/*.ts",
+    "tests/setup/**/*.ts",
     // The runtime fuzz tier reaches coverage-report scripts through the
     // security-boundary corpus. Admit the repository-owned minimal Istanbul
     // declarations so those transitive script contracts stay strict.

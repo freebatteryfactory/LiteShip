@@ -254,6 +254,60 @@ describe('(a3) fuzz evidence is type-admitted before execution', () => {
   });
 });
 
+describe('(a4) journey and setup runtime sources are type-admitted before execution', () => {
+  // `check/journey` owns the complete journey tree, while `check/test` executes
+  // every setup source either as Vitest setup or through a runtime test import.
+  // These are source tiers rather than `*.test.ts` entrypoints, so derive their
+  // authored populations directly instead of pretending `nodeTestInclude` owns them.
+  const runtimeJourneySources = fg
+    .sync('tests/journey/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const runtimeSetupSources = fg
+    .sync('tests/setup/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const runtimeSources = [...runtimeJourneySources, ...runtimeSetupSources].sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter(
+    (path) => path.startsWith('tests/journey/') || path.startsWith('tests/setup/'),
+  );
+
+  it('the tests typecheck project admits every journey and setup source, including future files', () => {
+    expect(
+      runtimeJourneySources.length,
+      'the journey source corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(9);
+    expect(runtimeSetupSources.length, 'the setup source corpus fell below its committed floor').toBeGreaterThanOrEqual(
+      2,
+    );
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} runtime journey/setup sources; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    for (const tier of ['journey', 'setup']) {
+      expect(
+        includeEntries.some(
+          (entry) => entry.startsWith(`tests/${tier}/`) && entry.includes('*') && entry.endsWith('.ts'),
+        ),
+        `${tier} admission must be future-proof rather than an authored filename roster`,
+      ).toBe(true);
+    }
+  });
+
+  it('a counterfeit config with journey and setup admission removed exposes the complete missing corpus', () => {
+    const counterfeitEntries = includeEntries.filter(
+      (entry) => !entry.startsWith('tests/journey/') && !entry.startsWith('tests/setup/'),
+    );
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
 // --------------------------------------------------------------------------
 // (b) Coverage floors — the real gates cover a broad, non-trivial surface.
 // --------------------------------------------------------------------------
