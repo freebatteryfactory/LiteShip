@@ -83,6 +83,7 @@ const CI_CONTRACT_TEST_PATHS: readonly string[] = Object.freeze([
   'tests/unit/cli/lib/campaign-wall-budget.test.ts',
   'tests/unit/cli/workflow-action-pins.test.ts',
   'tests/unit/devops/affected-result-artifacts.test.ts',
+  'tests/unit/devops/ci-authority.test.ts',
   'tests/unit/devops/parallel-ci-artifacts.test.ts',
   'tests/unit/devops/release-promotion.test.ts',
   'tests/unit/meta/ci-registry-parity.test.ts',

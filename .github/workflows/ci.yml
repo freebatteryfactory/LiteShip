@@ -1519,6 +1519,7 @@ jobs:
           FORMAT: ${{ needs.format.result }}
           PR_AFFECTED: ${{ needs.pr-affected.result }}
           PR_BROWSER: ${{ needs.pr-browser-affected.result }}
+          BROWSER_REQUIRED: ${{ needs.plan.outputs.affected-browser-required }}
           PR_WINDOWS: ${{ needs.pr-windows-affected.result }}
           PR_EVIDENCE: ${{ needs.pr-affected-evidence.result }}
           SERIAL: ${{ needs.truth-linux.result }}
@@ -1546,7 +1547,11 @@ jobs:
             test "$PR_AFFECTED" = "success"
             test "$PR_WINDOWS" = "success"
             test "$PR_EVIDENCE" = "success"
-            test "$PR_BROWSER" = "success" -o "$PR_BROWSER" = "skipped"
+            if [ "$BROWSER_REQUIRED" = "true" ]; then
+              test "$PR_BROWSER" = "success"
+            else
+              test "$PR_BROWSER" = "skipped"
+            fi
             test "$PARALLEL" = "success"
             test "$BROWSER" = "success"
             test "$WINDOWS" = "success"
@@ -1584,6 +1589,7 @@ jobs:
       - pr-affected
       - pr-browser-affected
       - pr-windows-affected
+      - pr-affected-evidence
       - truth-linux
       - truth-linux-parallel
       - browser-e2e
@@ -1597,6 +1603,7 @@ jobs:
       - exhaustive-mutation-fold
       - exhaustive-mcdc
       - exhaustive-mcdc-fold
+      - semantic-assurance-admission
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
