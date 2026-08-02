@@ -1,6 +1,23 @@
 /** Fast-lane scanner for immutable third-party GitHub Action references. */
 
-import { ValidationError } from '../../../error/src/index.js';
+/**
+ * Locally-built tagged `ValidationError` (structurally conformant to the
+ * `@liteship/error` contract, which is a shape, not a base class). It stays
+ * local because this module must load on a cold checkout — the host-preparation
+ * contract imports it before any workspace dist exists, so a value-import of
+ * `@liteship/error` resolves into dist and is exactly the cold-start failure
+ * the prebuild-dist-free gate forbids — while a relative reach into
+ * `../../../error/src` is the cross-package escape that the shipped-dist
+ * smoke and the package-import-boundaries law forbid. Same pattern as
+ * `packages/command/src/checks/registry.ts`.
+ */
+const workflowValidationError = (module: string, detail: string): Error =>
+  Object.assign(Error(`${module}: ${detail}`), {
+    name: 'ValidationError',
+    _tag: 'ValidationError' as const,
+    module,
+    detail,
+  });
 
 export interface WorkflowActionPinViolation {
   readonly line: number;
@@ -554,7 +571,7 @@ function workflowJobSectionRecords(text: string): ReadonlyMap<string, WorkflowJo
   const lines = text.split('\n').map((line) => line.replace(/\r$/u, ''));
   const jobsIndex = lines.indexOf('jobs:');
   if (jobsIndex === -1) {
-    throw ValidationError('workflow.jobs', 'workflow must declare a top-level jobs: mapping');
+    throw workflowValidationError('workflow.jobs', 'workflow must declare a top-level jobs: mapping');
   }
   let jobsEnd = lines.length;
   for (let index = jobsIndex + 1; index < lines.length; index++) {
@@ -576,7 +593,7 @@ function workflowJobSectionRecords(text: string): ReadonlyMap<string, WorkflowJo
     const header = headers[index]!;
     const end = headers[index + 1]?.line ?? jobsEnd;
     if (sections.has(header.name)) {
-      throw ValidationError('workflow.jobs', `workflow declares duplicate top-level job id "${header.name}"`);
+      throw workflowValidationError('workflow.jobs', `workflow declares duplicate top-level job id "${header.name}"`);
     }
     sections.set(header.name, { text: lines.slice(header.line, end).join('\n'), lineOffset: header.line });
   }
