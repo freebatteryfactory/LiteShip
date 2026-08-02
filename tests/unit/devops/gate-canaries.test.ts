@@ -308,6 +308,42 @@ describe('(a4) journey and setup runtime sources are type-admitted before execut
   });
 });
 
+describe('(a5) smoke evidence is type-admitted before execution', () => {
+  const runtimeSmokeSuites = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/smoke/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSmokeRoots = tsconfigTestsRootFiles().filter(
+    (path) => path.startsWith('tests/smoke/') && path.endsWith('.test.ts'),
+  );
+
+  it('the tests typecheck project admits every runtime smoke suite, including future files', () => {
+    expect(runtimeSmokeSuites.length, 'the smoke-test corpus fell below its committed floor').toBeGreaterThanOrEqual(7);
+    const admitted = new Set(admittedSmokeRoots);
+    const missing = runtimeSmokeSuites.filter((path) => !admitted.has(path));
+    expect(
+      admittedSmokeRoots,
+      `the tests typecheck project admits ${admittedSmokeRoots.length}/${runtimeSmokeSuites.length} runtime smoke suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSmokeSuites);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/smoke/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      'smoke admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with smoke admission removed exposes the complete missing corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/smoke/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSmokeSuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSmokeSuites);
+  });
+});
+
 // --------------------------------------------------------------------------
 // (b) Coverage floors — the real gates cover a broad, non-trivial surface.
 // --------------------------------------------------------------------------

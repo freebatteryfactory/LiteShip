@@ -61,7 +61,7 @@ describe('core smoke', () => {
   });
 
   test('Plan.make creates plan', () => {
-    const plan = Plan.make();
+    const plan = Plan.make('smoke-plan');
     expect(plan).toBeDefined();
   });
 
