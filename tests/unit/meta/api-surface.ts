@@ -3,11 +3,12 @@
  *
  * Turns the hand-maintained `api-health.test.ts` registry — a footgun that must
  * be remembered on every export change — into a GENERATED, deterministic
- * serialization of each published `@liteship/*` main barrel's public surface. A
+ * format-1 serialization of each policy package's MAIN barrel surface. A
  * committed snapshot (`tests/fixtures/api-surface-snapshot.json`) is the
- * reviewable ground truth; the gate REGENERATES the live surface and DIFFS it,
- * so an accidental public-API change is impossible to miss and a deliberate one
- * is a reviewed snapshot edit.
+ * reviewable ground truth; the gate REGENERATES those roots and DIFFS them. The
+ * export-map census below separately classifies every package/subpath key so the
+ * broader denominator cannot disappear while the committed fixture remains on
+ * its root-only format.
  *
  * KIND classification is RUNTIME-derived (the same `import * as` approach
  * api-health uses), not a TypeScript AST parse: a barrel's exported VALUES carry
@@ -48,6 +49,87 @@ export interface ApiSurfaceSnapshot {
   /** Snapshot format version — bumped if the descriptor schema itself changes (distinct from package versions). */
   readonly snapshotFormat: 1;
   readonly packages: Readonly<Record<string, PackageSurface>>;
+}
+
+/** One exhaustive class in the published package export-map census. */
+export type ExportMapSurfaceClass = 'runtime' | 'host-component' | 'types-only' | 'denied';
+
+/** The manifest and catalog-owned inputs needed to classify one package's export map. */
+export interface ExportMapPackageInput {
+  readonly packageName: string;
+  readonly runtimeSurface: 'module' | 'types-only';
+  readonly exports: Readonly<Record<string, unknown>>;
+}
+
+/** One export-map key, classified without losing its package/subpath identity. */
+export interface ClassifiedExportMapEntry {
+  readonly packageName: string;
+  readonly subpath: string;
+  readonly surfaceClass: ExportMapSurfaceClass;
+  readonly target?: string;
+}
+
+interface SelectedExportTarget {
+  readonly condition: 'string' | 'import' | 'default' | 'types';
+  readonly target: string;
+}
+
+function selectedExportTarget(packageName: string, subpath: string, value: unknown): SelectedExportTarget {
+  if (typeof value === 'string') {
+    if (value.length === 0) throw new Error(`${packageName}:${subpath}: export target must not be empty`);
+    return { condition: 'string', target: value };
+  }
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error(`${packageName}:${subpath}: unclassified export target ${JSON.stringify(value)}`);
+  }
+
+  const conditions = value as Readonly<Record<string, unknown>>;
+  for (const condition of ['import', 'default', 'types'] as const) {
+    if (!Object.hasOwn(conditions, condition)) continue;
+    const target = conditions[condition];
+    if (typeof target !== 'string' || target.length === 0) {
+      throw new Error(`${packageName}:${subpath}: ${condition} export target must be a non-empty string`);
+    }
+    return { condition, target };
+  }
+  throw new Error(`${packageName}:${subpath}: unclassified export target ${JSON.stringify(value)}`);
+}
+
+/**
+ * Classify every raw package `exports` key exactly once. Unknown condition
+ * shapes and duplicate package/subpath identities fail closed rather than
+ * shrinking the census.
+ */
+export function classifyExportMapEntries(
+  packages: readonly ExportMapPackageInput[],
+): readonly ClassifiedExportMapEntry[] {
+  const entries: ClassifiedExportMapEntry[] = [];
+  const seen = new Set<string>();
+  for (const pkg of packages) {
+    for (const [subpath, value] of Object.entries(pkg.exports)) {
+      if (subpath !== '.' && !subpath.startsWith('./')) {
+        throw new Error(`${pkg.packageName}:${subpath}: export-map key must be "." or start with "./"`);
+      }
+      const identity = `${pkg.packageName}:${subpath}`;
+      if (seen.has(identity)) throw new Error(`duplicate export-map identity ${identity}`);
+      seen.add(identity);
+
+      if (value === null) {
+        entries.push(Object.freeze({ packageName: pkg.packageName, subpath, surfaceClass: 'denied' }));
+        continue;
+      }
+
+      const selected = selectedExportTarget(pkg.packageName, subpath, value);
+      const surfaceClass: ExportMapSurfaceClass =
+        pkg.runtimeSurface === 'types-only' || selected.condition === 'types'
+          ? 'types-only'
+          : selected.target.endsWith('.astro')
+            ? 'host-component'
+            : 'runtime';
+      entries.push(Object.freeze({ packageName: pkg.packageName, subpath, surfaceClass, target: selected.target }));
+    }
+  }
+  return Object.freeze(entries);
 }
 
 /** Is this exported value a constructor (a function whose `prototype` has its own members)? */

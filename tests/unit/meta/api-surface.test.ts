@@ -1,12 +1,12 @@
 /**
  * API-surface SNAPSHOT + SEMVER gates (Slice C, the avionics tier).
  *
- * Three locks on the public surface, all derived from a GENERATED, committed
- * snapshot (`tests/fixtures/api-surface-snapshot.json`) — no hand-maintained
- * registry to forget:
+ * Four locks on the public surface. The first three read the generated,
+ * committed format-1 root snapshot (`tests/fixtures/api-surface-snapshot.json`);
+ * the fourth closes the complete package export-map denominator:
  *
- *  1. DRIFT — regenerate the live surface of every public `@liteship/*` barrel + diff
- *     it against the committed snapshot. Any added/removed/signature-changed
+ *  1. DRIFT — regenerate every policy package's live root barrel + diff it
+ *     against the committed snapshot. Any added/removed/signature-changed
  *     export FAILS with a precise message, so an accidental public-API change is
  *     impossible to miss and a deliberate one is a reviewed snapshot edit
  *     (`LITESHIP_UPDATE_API_SNAPSHOT=1` regenerates the committed file).
@@ -21,6 +21,10 @@
  *     which packages are public + the bump rule are repo-local, host-injectable
  *     CONTRACTS, never baked into a shipped package.
  *
+ *  4. CENSUS — classify every raw package `exports` key exactly once as runtime,
+ *     host-component, types-only, or denied. Unknown shapes fail closed rather
+ *     than being omitted from the denominator.
+ *
  * @module
  */
 
@@ -30,6 +34,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { scaledTimeout } from '../../../vitest.shared.js';
 import {
+  classifyExportMapEntries,
   generatePackageSurface,
   serializeSnapshot,
   diffPackageSurface,
@@ -37,6 +42,7 @@ import {
   classifyBump,
   bumpSatisfies,
   type ApiSurfaceSnapshot,
+  type ExportMapPackageInput,
   type PackageSurface,
   type SurfaceDiff,
 } from './api-surface.js';
@@ -45,6 +51,7 @@ import {
   isBreakingClass,
   type ApiSurfacePolicy,
 } from '../../fixtures/api-surface-policy.js';
+import { PACKAGE_CATALOG } from '../../../scripts/package-catalog.js';
 
 const SNAPSHOT_PATH = fileURLToPath(new URL('../../fixtures/api-surface-snapshot.json', import.meta.url));
 const PACKAGES_DIR = fileURLToPath(new URL('../../../packages', import.meta.url));
@@ -86,8 +93,8 @@ const runtimePackageByName = (): Readonly<Record<string, WorkspaceRuntimePackage
 };
 
 /**
- * Import every public package barrel + read its version from disk, building the
- * LIVE surface snapshot.
+ * Import every policy package's root barrel + read its version from disk,
+ * building the format-1 LIVE surface snapshot.
  */
 async function computeLiveSnapshot(policy: ApiSurfacePolicy): Promise<ApiSurfaceSnapshot> {
   const runtimePackages = runtimePackageByName();
@@ -107,7 +114,7 @@ async function computeLiveSnapshot(policy: ApiSurfacePolicy): Promise<ApiSurface
 }
 
 /**
- * Memoize the live snapshot: importing 22 barrels is the only slow step, and
+ * Memoize the live snapshot: importing the policy roots is the only slow step, and
  * both the drift gate and the semver gate need the same surface. Computed once
  * per run so neither test pays the import cost twice.
  */
@@ -120,9 +127,140 @@ const buildLiveSnapshot = (policy: ApiSurfacePolicy): Promise<ApiSurfaceSnapshot
 const readCommittedSnapshot = (): ApiSurfaceSnapshot =>
   JSON.parse(readFileSync(SNAPSHOT_PATH, 'utf8')) as ApiSurfaceSnapshot;
 
+function liveExportMapPackages(): readonly ExportMapPackageInput[] {
+  return PACKAGE_CATALOG.map((record) => {
+    const manifestPath = resolve(PACKAGES_DIR, record.dir.slice('packages/'.length), 'package.json');
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { readonly exports?: unknown };
+    if (typeof manifest.exports !== 'object' || manifest.exports === null || Array.isArray(manifest.exports)) {
+      throw new Error(`${record.name}: package.json exports must be a subpath map`);
+    }
+    return {
+      packageName: record.name,
+      runtimeSurface: record.runtimeSurface,
+      exports: manifest.exports as Readonly<Record<string, unknown>>,
+    };
+  });
+}
+
+describe('published export-map census (W1.6 packet 1)', () => {
+  test('classifies synthetic runtime, host-component, types-only, and denied routes without omission', () => {
+    const entries = classifyExportMapEntries([
+      {
+        packageName: '@acme/example',
+        runtimeSurface: 'module',
+        exports: {
+          '.': { types: './dist/index.d.ts', import: './dist/index.js' },
+          './Widget': './src/Widget.astro',
+          './virtual': { types: './virtual.d.ts' },
+          './internal': null,
+        },
+      },
+    ]);
+
+    expect(entries).toEqual([
+      {
+        packageName: '@acme/example',
+        subpath: '.',
+        surfaceClass: 'runtime',
+        target: './dist/index.js',
+      },
+      {
+        packageName: '@acme/example',
+        subpath: './Widget',
+        surfaceClass: 'host-component',
+        target: './src/Widget.astro',
+      },
+      {
+        packageName: '@acme/example',
+        subpath: './virtual',
+        surfaceClass: 'types-only',
+        target: './virtual.d.ts',
+      },
+      {
+        packageName: '@acme/example',
+        subpath: './internal',
+        surfaceClass: 'denied',
+      },
+    ]);
+  });
+
+  test('the 25-package live export map closes exactly across all 88 keys', () => {
+    const packages = liveExportMapPackages();
+    const entries = classifyExportMapEntries(packages);
+    const expectedIdentities = packages
+      .flatMap((pkg) => Object.keys(pkg.exports).map((subpath) => `${pkg.packageName}:${subpath}`))
+      .sort();
+    const classifiedIdentities = entries.map((entry) => `${entry.packageName}:${entry.subpath}`).sort();
+    const counts = Object.fromEntries(
+      (['runtime', 'host-component', 'types-only', 'denied'] as const).map((surfaceClass) => [
+        surfaceClass,
+        entries.filter((entry) => entry.surfaceClass === surfaceClass).length,
+      ]),
+    );
+
+    expect(entries).toHaveLength(88);
+    expect(new Set(classifiedIdentities).size).toBe(entries.length);
+    expect(classifiedIdentities).toEqual(expectedIdentities);
+    expect(counts).toEqual({ runtime: 78, 'host-component': 2, 'types-only': 7, denied: 1 });
+    expect(Object.values(counts).reduce((sum, count) => sum + count, 0)).toBe(entries.length);
+  });
+
+  test('special routes retain their manifest-owned identity and classification', () => {
+    const entries = classifyExportMapEntries(liveExportMapPackages());
+    const byIdentity = new Map(entries.map((entry) => [`${entry.packageName}:${entry.subpath}`, entry]));
+
+    expect(byIdentity.get('@liteship/cloudflare:./cache-provider')).toEqual({
+      packageName: '@liteship/cloudflare',
+      subpath: './cache-provider',
+      surfaceClass: 'runtime',
+      target: './cache-provider.mjs',
+    });
+    expect(byIdentity.get('@liteship/astro:./Adaptive')).toMatchObject({
+      surfaceClass: 'host-component',
+      target: './src/Adaptive.astro',
+    });
+    expect(byIdentity.get('@liteship/astro:./Adaptive.astro')).toMatchObject({
+      surfaceClass: 'host-component',
+      target: './src/Adaptive.astro',
+    });
+    expect(byIdentity.get('@liteship/vite:./virtual')).toMatchObject({
+      surfaceClass: 'types-only',
+      target: './virtual.d.ts',
+    });
+    expect(byIdentity.get('@liteship/core:./validated-output')).toEqual({
+      packageName: '@liteship/core',
+      subpath: './validated-output',
+      surfaceClass: 'denied',
+    });
+
+    const spine = entries.filter((entry) => entry.packageName === '@liteship/_spine');
+    expect(spine).toHaveLength(6);
+    expect(spine.every((entry) => entry.surfaceClass === 'types-only')).toBe(true);
+  });
+
+  test('unknown condition shapes and duplicate package identities fail closed', () => {
+    expect(() =>
+      classifyExportMapEntries([
+        {
+          packageName: '@acme/unknown',
+          runtimeSurface: 'module',
+          exports: { '.': { browser: './browser.js' } },
+        },
+      ]),
+    ).toThrow(/unclassified export target/u);
+
+    const duplicate: ExportMapPackageInput = {
+      packageName: '@acme/duplicate',
+      runtimeSurface: 'module',
+      exports: { '.': './index.js' },
+    };
+    expect(() => classifyExportMapEntries([duplicate, duplicate])).toThrow(/duplicate export-map identity/u);
+  });
+});
+
 describe('API-surface snapshot gate (drift)', () => {
   test(
-    'the committed snapshot matches the live public surface (regenerate intentionally with LITESHIP_UPDATE_API_SNAPSHOT=1)',
+    'the committed snapshot matches the live public root surface (regenerate intentionally with LITESHIP_UPDATE_API_SNAPSHOT=1)',
     { timeout: scaledTimeout(60_000) },
     async () => {
       const live = await buildLiveSnapshot(LITESHIP_API_SURFACE_POLICY);
