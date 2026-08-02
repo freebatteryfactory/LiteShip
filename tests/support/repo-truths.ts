@@ -270,13 +270,7 @@ export function tsconfigTestsIncludeEntries(): readonly string[] {
   return readJsonc<TsconfigInputs>(resolve(REPO_ROOT, 'tsconfig.tests.json')).include ?? [];
 }
 
-/**
- * The explicit root files selected by `tsconfig.tests.json` after TypeScript
- * expands its authored `files` / `include` inputs. This is deliberately the
- * parsed config's `fileNames`, not a Program's transitive source-file closure:
- * an imported test helper cannot counterfeit direct admission by the project.
- */
-export function tsconfigTestsRootFiles(): readonly string[] {
+function parsedTestsConfig(): ts.ParsedCommandLine {
   const configPath = resolve(REPO_ROOT, 'tsconfig.tests.json');
   const read = ts.readConfigFile(configPath, ts.sys.readFile);
   if (read.error !== undefined) {
@@ -286,7 +280,37 @@ export function tsconfigTestsRootFiles(): readonly string[] {
   if (parsed.errors.length > 0) {
     throw new Error(`cannot parse ${configPath}: TS${parsed.errors[0]!.code}`);
   }
+  return parsed;
+}
+
+/**
+ * The explicit root files selected by `tsconfig.tests.json` after TypeScript
+ * expands its authored `files` / `include` inputs. This is deliberately the
+ * parsed config's `fileNames`, not a Program's transitive source-file closure:
+ * an imported test helper cannot counterfeit direct admission by the project.
+ */
+export function tsconfigTestsRootFiles(): readonly string[] {
+  const parsed = parsedTestsConfig();
   return parsed.fileNames.map((file) => relative(REPO_ROOT, file).replaceAll('\\', '/')).sort();
+}
+
+/**
+ * The TypeScript-resolved module closure reachable from explicit test runtime
+ * entrypoints, under the tests project's real path aliases and compiler rules.
+ * This is the structural owner for "runtime support": a directory member is
+ * evidence only when an executing suite actually reaches it.
+ */
+export function tsconfigTestsResolvedFiles(rootFiles: readonly string[]): readonly string[] {
+  const parsed = parsedTestsConfig();
+  const program = ts.createProgram({
+    rootNames: rootFiles.map((file) => resolve(REPO_ROOT, file)),
+    options: parsed.options,
+  });
+  return program
+    .getSourceFiles()
+    .map((source) => relative(REPO_ROOT, source.fileName).replaceAll('\\', '/'))
+    .filter((file) => file !== '' && !file.startsWith('../'))
+    .sort();
 }
 
 /** The concrete (non-glob) `include` entries of `tsconfig.tests.json`. */

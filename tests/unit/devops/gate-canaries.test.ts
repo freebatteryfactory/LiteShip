@@ -51,6 +51,7 @@ import {
   packageTsconfigInputs,
   tsconfigTestsIncludeEntries,
   tsconfigTestsIncludeFiles,
+  tsconfigTestsResolvedFiles,
   tsconfigTestsRootFiles,
   apiSurfaceSnapshot,
   lintGlobs,
@@ -380,6 +381,56 @@ describe('(a6) regression evidence is type-admitted before execution', () => {
       fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
     );
     expect(runtimeRegressionSuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeRegressionSuites);
+  });
+});
+
+describe('(a7) runtime support modules are type-admitted before execution', () => {
+  const runtimeEntrypoints = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const runtimeSupportSources = tsconfigTestsResolvedFiles(runtimeEntrypoints).filter((path) =>
+    path.startsWith('tests/support/'),
+  );
+  const authoredSupportSources = fg
+    .sync('tests/support/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSupportRoots = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/support/'));
+
+  it('every authored support module has a live runtime owner and is directly type-admitted', () => {
+    expect(runtimeEntrypoints.length, 'the Node runtime suite fell below its committed floor').toBeGreaterThanOrEqual(
+      1_000,
+    );
+    expect(
+      runtimeSupportSources.length,
+      'the runtime support corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(23);
+    expect(
+      runtimeSupportSources,
+      'tests/support contains a module with no importer in the canonical Node runtime graph',
+    ).toEqual(authoredSupportSources);
+    const admitted = new Set(admittedSupportRoots);
+    const missing = runtimeSupportSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSupportRoots,
+      `the tests typecheck project admits ${admittedSupportRoots.length}/${runtimeSupportSources.length} runtime support modules; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSupportSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/support/') && entry.includes('*') && entry.endsWith('.ts'),
+      ),
+      'support admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with support admission removed exposes the complete runtime-owned corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/support/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSupportSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSupportSources);
   });
 });
 

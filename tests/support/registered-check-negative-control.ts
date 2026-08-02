@@ -3,12 +3,19 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { expect, it } from 'vitest';
-import { CHECK_REGISTRY, type CheckPlan, type PlannedCheck } from '@liteship/command';
+import { CHECK_REGISTRY, type CheckPlan, type CheckPlatform, type PlannedCheck } from '@liteship/command';
 import { createCheckPlanRunner } from '../../packages/cli/src/commands/check.js';
 import { canonicalPhysicalPath } from '../../packages/cli/src/internal/physical-path.js';
 import { scaledTimeout } from '../../vitest.shared.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..');
+
+function runtimeCheckPlatform(): CheckPlatform {
+  if (process.platform === 'linux' || process.platform === 'darwin' || process.platform === 'win32') {
+    return process.platform;
+  }
+  return expect.fail(`registered check proofs do not support platform ${process.platform}`);
+}
 
 function quote(value: string): string {
   return `"${value.replaceAll('"', '\\"')}"`;
@@ -233,7 +240,7 @@ function proveRegisteredCheckFalsifies(fault: RegisteredCheckFault): void {
     writeManifest(root, fault.command, authorityScript);
     const plan: CheckPlan = {
       profile: 'release',
-      platform: process.platform,
+      platform: runtimeCheckPlatform(),
       context: 'repository',
       checks: [check],
       estimatedMs: check.timeoutMs,
