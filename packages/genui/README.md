@@ -49,7 +49,7 @@ This package never renders model HTML and never trusts model-controlled keys —
 
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/genui/src/) — generated from source
+- [Public API roster](https://github.com/freebatteryfactory/LiteShip/blob/main/PUBLIC-EXPORTS.md) — reviewed surface; run `pnpm run docs:build` in a source checkout for TypeDoc
 
 ---
 

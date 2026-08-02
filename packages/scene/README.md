@@ -53,7 +53,7 @@ This is **additive** to `TransitionSystem`, not a merge. `TransitionSystem`'s ty
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
 - [Reference scene](https://github.com/freebatteryfactory/LiteShip/blob/main/examples/scenes/intro.ts) — a full music-video intro: envelopes, transitions, beat sync
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/scene/src/) — generated from source
+- [Public API roster](https://github.com/freebatteryfactory/LiteShip/blob/main/PUBLIC-EXPORTS.md) — reviewed surface; run `pnpm run docs:build` in a source checkout for TypeDoc
 
 ---
 

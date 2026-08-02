@@ -245,7 +245,7 @@ The worked, runnable version is [`examples/06-mutation-roundtrip`](./examples/06
 - [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md): signals → boundaries → named states → outputs, the theory-first frame
 - [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md): how Astro hosts the runtime, directives, and the escalation path
 - [HOSTING.md](./HOSTING.md): host-application first-hour checklist (CSP, Trusted Types, common failure modes)
-- [docs/api/](./docs/api): generated API reference for every package (e.g. `Boundary.evaluate` for evaluating a boundary against sample values outside the DOM)
+- [PUBLIC-EXPORTS.md](./PUBLIC-EXPORTS.md): reviewed public-surface roster; run `pnpm run docs:build` in a source checkout for the generated API reference (including `Boundary.evaluate`)
 
 ## Migrating existing sources
 

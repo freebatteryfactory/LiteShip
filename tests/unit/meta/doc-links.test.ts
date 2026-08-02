@@ -9,54 +9,50 @@
  * hand-authored prose to a real file, so a move that orphans a link reds here instead
  * of on the deployed site.
  *
- * Scope: hand-authored prose only — root `*.md`, `docs/**` (minus generated TypeDoc
- * under `docs/api`), each package's published `README.md`, and the examples ladder
+ * Scope: TRACKED hand-authored prose only — root `*.md`, authored `docs/**`,
+ * each package's published `README.md`, and the examples ladder
  * (`examples/README.md` + each example's `README.md`, now load-bearing navigation).
  * External `http(s)` and pure `#anchor` links are out of scope (no network /
  * heading-slug fragility).
  */
 import { describe, test, expect } from 'vitest';
-import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
-import { resolve, dirname, join, relative } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve, dirname, relative } from 'node:path';
+import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 
 const REPO = process.cwd();
 
-const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', '.astro', 'docs/api']);
-
-function walkMarkdown(dir: string, out: string[]): void {
-  for (const entry of readdirSync(dir)) {
-    const abs = join(dir, entry);
-    const rel = relative(REPO, abs).replace(/\\/g, '/');
-    if (SKIP_DIRS.has(entry) || SKIP_DIRS.has(rel)) continue;
-    const stat = statSync(abs);
-    if (stat.isDirectory()) walkMarkdown(abs, out);
-    else if (entry.endsWith('.md')) out.push(abs);
-  }
+async function trackedPaths(repoRoot: string): Promise<readonly string[]> {
+  const result = await spawnArgvCapture('git', ['ls-files', '-z'], {
+    cwd: repoRoot,
+    captureBytes: 4 * 1024 * 1024,
+  });
+  if (result.exitCode !== 0) throw new Error(`git ls-files failed: ${result.stderr}`);
+  return result.stdout.split('\0').filter((path) => path !== '');
 }
 
-/** Root docs + docs/** (minus docs/api) + every package README + the examples ladder. */
-function collectDocs(): string[] {
-  const out: string[] = [];
-  for (const entry of readdirSync(REPO)) {
-    if (entry.endsWith('.md')) out.push(join(REPO, entry));
-  }
-  walkMarkdown(join(REPO, 'docs'), out);
-  for (const pkg of readdirSync(join(REPO, 'packages'))) {
-    const readme = join(REPO, 'packages', pkg, 'README.md');
-    if (existsSync(readme)) out.push(readme);
-  }
-  const examplesRoot = join(REPO, 'examples');
-  const examplesIndex = join(examplesRoot, 'README.md');
-  if (existsSync(examplesIndex)) out.push(examplesIndex);
-  for (const example of readdirSync(examplesRoot)) {
-    const readme = join(examplesRoot, example, 'README.md');
-    if (existsSync(readme)) out.push(readme);
-  }
-  return out;
+/** Whether a tracked Markdown file belongs to the published prose surface. */
+export function isHandAuthoredProsePath(path: string): boolean {
+  if (!path.endsWith('.md')) return false;
+  if (!path.includes('/')) return true;
+  if (path.startsWith('docs/')) return true;
+  if (/^packages\/[^/]+\/README\.md$/u.test(path)) return true;
+  return path === 'examples/README.md' || /^examples\/[^/]+\/README\.md$/u.test(path);
+}
+
+/** Git is the publication authority; ignored build artifacts cannot mask a missing target. */
+export function repoPathIsTracked(path: string, paths: readonly string[]): boolean {
+  const normalized = path.replaceAll('\\', '/').replace(/^\.\//u, '').replace(/\/$/u, '');
+  if (normalized === '' || normalized.startsWith('../')) return false;
+  return paths.some((tracked) => tracked === normalized || tracked.startsWith(`${normalized}/`));
+}
+
+function collectDocs(paths: readonly string[]): readonly string[] {
+  return paths.filter(isHandAuthoredProsePath).map((path) => resolve(REPO, path));
 }
 
 const LINK = /\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
-const BLOB = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/blob\/main\/(.+)$/;
+const GITHUB_REPOSITORY_LINK = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/(?:blob|tree)\/main\/(.+)$/;
 const INLINE_REPOSITORY_PATH = /`((?:packages|scripts|tests|docs|examples|crates|\.github)\/[^`\s,)]+)/g;
 const CURRENT_AUTHORITY_DOCS = [
   'AGENTS.md',
@@ -76,18 +72,23 @@ const CURRENT_AUTHORITY_DOCS = [
 ] as const;
 
 describe('doc link integrity', () => {
-  test('every relative markdown link (and blob/main link) resolves to a real file', () => {
+  test('every relative markdown link (and repository main link) resolves to a tracked file', async () => {
+    const paths = await trackedPaths(REPO);
+    const docs = collectDocs(paths);
+    expect(docs.length).toBeGreaterThanOrEqual(40);
     const broken: string[] = [];
-    for (const file of collectDocs()) {
+    for (const file of docs) {
       const src = readFileSync(file, 'utf8');
       for (const match of src.matchAll(LINK)) {
         const raw = match[1]!;
         const target = raw.split('#')[0]!.trim();
         if (target === '') continue; // pure #anchor — in-page, out of scope
-        const blob = BLOB.exec(raw);
-        if (!blob && /^(https?:|mailto:|tel:)/.test(target)) continue; // external
-        const abs = blob ? resolve(REPO, blob[1]!.split('#')[0]!) : resolve(dirname(file), target);
-        if (!existsSync(abs)) {
+        const repositoryLink = GITHUB_REPOSITORY_LINK.exec(raw);
+        if (!repositoryLink && /^(https?:|mailto:|tel:)/.test(target)) continue; // external
+        const repoRelative = repositoryLink
+          ? repositoryLink[1]!.split('#')[0]!
+          : relative(REPO, resolve(dirname(file), target)).replaceAll('\\', '/');
+        if (!repoPathIsTracked(repoRelative, paths)) {
           broken.push(`${relative(REPO, file).replace(/\\/g, '/')} → ${raw}`);
         }
       }
@@ -95,7 +96,8 @@ describe('doc link integrity', () => {
     expect(broken, `broken doc links (${broken.length}):\n${broken.join('\n')}`).toEqual([]);
   });
 
-  test('current-authority inline repository paths resolve to live files', () => {
+  test('current-authority inline repository paths resolve to live files', async () => {
+    const paths = await trackedPaths(REPO);
     const broken: string[] = [];
     for (const rel of CURRENT_AUTHORITY_DOCS) {
       const source = readFileSync(resolve(REPO, rel), 'utf8');
@@ -103,9 +105,23 @@ describe('doc link integrity', () => {
         const raw = match[1]!;
         if (/[{*<>…]/.test(raw)) continue;
         const target = raw.replace(/:\d+(?:-\d+)?$/, '').replace(/[.;:]$/, '');
-        if (!existsSync(resolve(REPO, target))) broken.push(`${rel} → ${raw}`);
+        const generatedLocally = existsSync(resolve(REPO, target));
+        const isTypeDocProjection = target === 'docs/api' || target.startsWith('docs/api/');
+        if ((!repoPathIsTracked(target, paths) && !generatedLocally) || isTypeDocProjection) {
+          broken.push(`${rel} → ${raw}`);
+        }
       }
     }
     expect(broken, `stale inline repository paths (${broken.length}):\n${broken.join('\n')}`).toEqual([]);
+  });
+
+  test('the prose census and target authority ignore local TypeDoc output', () => {
+    const synthetic = ['README.md', 'docs/guide.md', 'docs/api/core/index.md', 'packages/core/README.md'];
+    expect(synthetic.filter(isHandAuthoredProsePath)).toEqual(synthetic);
+    expect(repoPathIsTracked('docs/api', synthetic)).toBe(true);
+
+    const published = synthetic.filter((path) => path !== 'docs/api/core/index.md');
+    expect(repoPathIsTracked('docs/api', published)).toBe(false);
+    expect(published.filter(isHandAuthoredProsePath)).toHaveLength(3);
   });
 });

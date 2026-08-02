@@ -37,7 +37,7 @@ A value import (`import { MotionTier } from '@liteship/_spine'`) reaches the pac
 - [Architecture index](https://github.com/freebatteryfactory/LiteShip/blob/main/ARCHITECTURE.md) — how the layers reference each other
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [Exact symbol index](./SYMBOLS.md) — generated from the declaration leaves admitted by the root barrel
-- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/@liteship/_spine/) — generated from source
+- [Public API roster](https://github.com/freebatteryfactory/LiteShip/blob/main/PUBLIC-EXPORTS.md) — reviewed surface; run `pnpm run docs:build` in a source checkout for TypeDoc
 
 ---
 

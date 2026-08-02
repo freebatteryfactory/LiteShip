@@ -73,7 +73,7 @@ Importing the root `.` never evaluates a host integration: `liteship/astro` and 
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
 - [Authoring model](https://github.com/freebatteryfactory/LiteShip/blob/main/AUTHORING-MODEL.md) — how definitions compose into surfaces
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/) — generated from source
+- [Public API roster](https://github.com/freebatteryfactory/LiteShip/blob/main/PUBLIC-EXPORTS.md) — reviewed surface; run `pnpm run docs:build` in a source checkout for TypeDoc
 
 ---
 

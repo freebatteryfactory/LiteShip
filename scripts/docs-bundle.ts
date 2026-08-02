@@ -11,6 +11,7 @@ import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'no
 import { join } from 'node:path';
 import { normalizeRepoPath } from '@liteship/core';
 import { walkFiles } from '@liteship/core/fs-walk';
+import { ValidationError } from '@liteship/error';
 import { computeBundleId } from '../packages/astro/src/docs-bundle-id.js';
 
 const REPO_ROOT = join(import.meta.dirname, '..');
@@ -44,7 +45,9 @@ async function sha256File(abs: string): Promise<{ sha256: string; bytes: number 
 }
 
 function collectFiles(root: string, relBase: string, out: string[]): void {
-  if (!existsSync(root)) return;
+  if (!existsSync(root)) {
+    throw ValidationError('docs-bundle', `declared source ${normalizeRepoPath(relBase)} is missing`);
+  }
   const st = statSync(root);
   if (st.isFile()) {
     out.push(relBase);

@@ -104,7 +104,7 @@ Single source: `packages/web/src/wire/stream-attributes.ts`. Read through `strea
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
 - [Hosting guide](https://github.com/freebatteryfactory/LiteShip/blob/main/HOSTING.md) — CSP rules for SSE and LLM endpoints
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/web/src/) — generated from source
+- [Public API roster](https://github.com/freebatteryfactory/LiteShip/blob/main/PUBLIC-EXPORTS.md) — reviewed surface; run `pnpm run docs:build` in a source checkout for TypeDoc
 
 ---
 

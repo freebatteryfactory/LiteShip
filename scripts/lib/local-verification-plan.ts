@@ -55,7 +55,7 @@ const DOCS_STEP: LocalVerificationStep = Object.freeze({
   checkId: 'check/docs',
   label: 'docs:check',
   argv: Object.freeze(['run', 'docs:check:local']),
-  remedy: "run 'pnpm run docs:build' and commit docs/api/ if the public API projection changed",
+  remedy: "run 'pnpm run docs:build'; commit only the traceability fingerprint if it changed",
 });
 
 const DOCS_INPUT_PATTERNS: readonly RegExp[] = Object.freeze([

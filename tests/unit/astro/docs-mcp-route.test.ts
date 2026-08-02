@@ -31,6 +31,17 @@ describe('docsMcpRoute (#113)', () => {
     vi.restoreAllMocks();
   });
 
+  test('bundle emission refuses a missing declared source instead of omitting it', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-docs-bundle-missing-'));
+    try {
+      await expect(emitDocsBundle({ outDir: dir, sources: ['docs/not-built'], version: 'test' })).rejects.toThrow(
+        /declared source docs\/not-built is missing/u,
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test('list/search/get round-trip over a sealed bundle', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'liteship-docs-bundle-'));
     await emitDocsBundle({ outDir: dir, sources: ['GLOSSARY.md'], version: 'test' });

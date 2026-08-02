@@ -101,7 +101,7 @@ Renders and analyses are cached by a hash of their inputs; pass `--force` to re-
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
 - [Architecture](https://github.com/freebatteryfactory/LiteShip/blob/main/ARCHITECTURE.md)
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/cli/src/) — generated from source
+- [Public API roster](https://github.com/freebatteryfactory/LiteShip/blob/main/PUBLIC-EXPORTS.md) — reviewed surface; run `pnpm run docs:build` in a source checkout for TypeDoc
 
 ---
 

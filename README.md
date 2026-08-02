@@ -175,7 +175,7 @@ The doc set is deliberately small — the file tree and the generated projection
 - [GLOSSARY.md](./GLOSSARY.md): LiteShip / `@liteship/*` naming and prose register
 - [HOSTING.md](./HOSTING.md) · [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md) · [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md): deployment and the Astro mental/runtime models
 - [CONTRIBUTING.md](./CONTRIBUTING.md) · [SECURITY.md](./SECURITY.md) · [RELEASING.md](./RELEASING.md): dev environment, security posture, release process
-- [docs/api](./docs/api): the generated API reference · [CHANGELOG.md](./CHANGELOG.md): release history
+- [PUBLIC-EXPORTS.md](./PUBLIC-EXPORTS.md): the reviewed public-surface roster; run `pnpm run docs:build` in a source checkout for the generated TypeDoc reference · [CHANGELOG.md](./CHANGELOG.md): release history
 
 ## Security posture (summary)
 

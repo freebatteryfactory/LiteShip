@@ -102,8 +102,8 @@ reports/**/*.tmp
 docs/superpowers/
 docs/sixsigma/
 
-# TypeDoc HTML output — the committed API reference is the markdown in docs/api/;
-# the HTML build (docs/api-html/) is a heavy, regenerable artifact, never committed.
+# TypeDoc output is a heavy, regenerable build artifact; only its input
+# fingerprint under traceability/ is committed (W8.5).
 docs/api-html/
 
 # Stale tsc emit artifacts in scripts/ (tsconfig.scripts.json sets noEmit;
