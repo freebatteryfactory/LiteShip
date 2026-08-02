@@ -36,6 +36,7 @@ package — it stays repo-local and composes these passes.
 - [ConsumerDiscovery](interfaces/ConsumerDiscovery.md)
 - [CoverageMap](interfaces/CoverageMap.md)
 - [CssIdentityFinding](interfaces/CssIdentityFinding.md)
+- [CssIdentityScanOptions](interfaces/CssIdentityScanOptions.md)
 - [CssIdentityScanResult](interfaces/CssIdentityScanResult.md)
 - [CssIdentitySource](interfaces/CssIdentitySource.md)
 - [DevopsProfile](interfaces/DevopsProfile.md)

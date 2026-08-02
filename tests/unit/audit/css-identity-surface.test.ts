@@ -13,8 +13,11 @@ function source(text: string, path = 'packages/example/src/example.ts'): CssIden
   return { path, text };
 }
 
+/** The host-injected policy the CLI oracle supplies; the engine names no project package. */
+const SCAN_OPTIONS = { approvedEscapeSpecifiers: ['@liteship/core/motion'] } as const;
+
 function scan(text: string) {
-  return scanCssIdentitySurface([source(text)]);
+  return scanCssIdentitySurface([source(text)], SCAN_OPTIONS);
 }
 
 function liveSources(): readonly CssIdentitySource[] {
@@ -25,7 +28,7 @@ function liveSources(): readonly CssIdentitySource[] {
 
 describe('CSS identity interpolation must be escaped', () => {
   it('the live packages/*/src corpus has no unescaped boundary interpolation', () => {
-    const result = scanCssIdentitySurface(liveSources());
+    const result = scanCssIdentitySurface(liveSources(), SCAN_OPTIONS);
     expect(result.findings).toEqual([]);
   });
 
@@ -55,13 +58,16 @@ describe('CSS identity interpolation must be escaped', () => {
   });
 
   it('the approved module itself may call the escape it declares', () => {
-    const result = scanCssIdentitySurface([
-      source(
-        'export function escapeCssString(value: string): string {\n  return value;\n}\n' +
-          'const selector = `[data-liteship-boundary="${escapeCssString(name)}"]`;',
-        'packages/core/src/motion/css-identity.ts',
-      ),
-    ]);
+    const result = scanCssIdentitySurface(
+      [
+        source(
+          'export function escapeCssString(value: string): string {\n  return value;\n}\n' +
+            'const selector = `[data-liteship-boundary="${escapeCssString(name)}"]`;',
+          'packages/core/src/motion/css-identity.ts',
+        ),
+      ],
+      SCAN_OPTIONS,
+    );
     expect(result.anchoredCount).toBe(1);
     expect(result.findings).toEqual([]);
   });
@@ -114,7 +120,7 @@ describe('CSS identity interpolation must be escaped', () => {
   });
 
   it('the live scan sees the named post-2.6 non-vacuity floor', () => {
-    const result = scanCssIdentitySurface(liveSources());
+    const result = scanCssIdentitySurface(liveSources(), SCAN_OPTIONS);
     expect(result.anchoredCount).toBeGreaterThanOrEqual(POST_2_6_CSS_IDENTITY_ANCHOR_FLOOR);
   });
 
@@ -137,7 +143,7 @@ describe('CSS identity interpolation must be escaped', () => {
           }
         : file,
     );
-    const result = scanCssIdentitySurface(mutated);
+    const result = scanCssIdentitySurface(mutated, SCAN_OPTIONS);
     expect(result.findings.map((entry) => entry.path)).toEqual([target]);
     expect(result.findings[0]).toMatchObject({ reason: 'unescaped-interpolation' });
   });

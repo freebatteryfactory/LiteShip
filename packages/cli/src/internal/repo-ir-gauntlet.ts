@@ -275,8 +275,17 @@ export const liteshipRegexOracle: FactOracle = ({ file, text }): readonly Fact[]
  * facts preserve the scanner's exact path/line/expression evidence for a
  * downstream fold without inventing a parallel finding registry here.
  */
+/**
+ * LiteShip's approved CSS-identity escape re-export. The audit engine stays
+ * lean and never names a project package, so this policy is injected here by
+ * the host (the profile-boundary law owns that separation).
+ */
+const APPROVED_CSS_ESCAPE_SPECIFIERS = ['@liteship/core/motion'] as const;
+
 export const cssIdentitySurfaceOracle: FactOracle = ({ file, text }): readonly Fact[] => {
-  const result = scanCssIdentitySurface([{ path: file, text }]);
+  const result = scanCssIdentitySurface([{ path: file, text }], {
+    approvedEscapeSpecifiers: APPROVED_CSS_ESCAPE_SPECIFIERS,
+  });
   const facts: Fact[] = [];
   if (result.anchoredCount > 0) {
     facts.push({

@@ -79,10 +79,17 @@ const APPROVED_ESCAPE_MODULES: ReadonlySet<string> = new Set([
   'packages/compiler/src/css-string.ts',
 ]);
 
-/** Package specifiers whose named `escapeCssString` is one of the approved declarations. */
-const APPROVED_ESCAPE_SPECIFIERS: ReadonlySet<string> = new Set(['@liteship/core/motion']);
-
 const ESCAPE_EXPORT_NAME = 'escapeCssString';
+
+/** Host-injected policy: the engine stays lean and never names a project package. */
+export interface CssIdentityScanOptions {
+  /**
+   * Package specifiers whose named `escapeCssString` re-exports an approved
+   * declaration. Repo-relative definer paths are the engine's own anchor
+   * domain; PACKAGE specifiers are project policy, so the host supplies them.
+   */
+  readonly approvedEscapeSpecifiers?: readonly string[];
+}
 
 /** Resolve a relative specifier against the importing file, as a repo-relative `.ts` path. */
 function resolveRelative(fromPath: string, specifier: string): string {
@@ -101,7 +108,11 @@ function resolveRelative(fromPath: string, specifier: string): string {
  * an approved module declares for itself. A local declaration of the same name
  * REMOVES it — a shadow is never a proof.
  */
-function approvedEscapeNames(sourceFile: ts.SourceFile, path: string): ReadonlySet<string> {
+function approvedEscapeNames(
+  sourceFile: ts.SourceFile,
+  path: string,
+  approvedSpecifiers: ReadonlySet<string>,
+): ReadonlySet<string> {
   const approved = new Set<string>();
   if (APPROVED_ESCAPE_MODULES.has(path)) approved.add(ESCAPE_EXPORT_NAME);
 
@@ -110,7 +121,7 @@ function approvedEscapeNames(sourceFile: ts.SourceFile, path: string): ReadonlyS
     if (ts.isImportDeclaration(node) && ts.isStringLiteralLike(node.moduleSpecifier)) {
       const specifier = node.moduleSpecifier.text;
       const target = specifier.startsWith('.') ? resolveRelative(path, specifier) : specifier;
-      const moduleApproved = APPROVED_ESCAPE_MODULES.has(target) || APPROVED_ESCAPE_SPECIFIERS.has(target);
+      const moduleApproved = APPROVED_ESCAPE_MODULES.has(target) || approvedSpecifiers.has(target);
       const bindings = node.importClause?.namedBindings;
       if (moduleApproved && bindings !== undefined && ts.isNamedImports(bindings)) {
         for (const element of bindings.elements) {
@@ -257,8 +268,12 @@ function scanAnchor(
 }
 
 /** Scan template literals whose static text opens a boundary-identity selector. */
-export function scanCssIdentitySurface(files: readonly CssIdentitySource[]): CssIdentityScanResult {
+export function scanCssIdentitySurface(
+  files: readonly CssIdentitySource[],
+  options: CssIdentityScanOptions = {},
+): CssIdentityScanResult {
   const findings: CssIdentityFinding[] = [];
+  const approvedSpecifiers = new Set(options.approvedEscapeSpecifiers ?? []);
   let anchoredCount = 0;
 
   for (const source of files) {
@@ -266,7 +281,7 @@ export function scanCssIdentitySurface(files: readonly CssIdentitySource[]): Css
     if (!PACKAGE_SOURCE_PATH.test(path)) continue;
     const sourceFile = ts.createSourceFile(path, source.text, ts.ScriptTarget.Latest, true, scriptKindFor(path));
     const bindingsByScope = collectConstBindings(sourceFile);
-    const approvedNames = approvedEscapeNames(sourceFile, path);
+    const approvedNames = approvedEscapeNames(sourceFile, path, approvedSpecifiers);
 
     const visit = (node: ts.Node): void => {
       if (ts.isTemplateExpression(node) || ts.isNoSubstitutionTemplateLiteral(node)) {

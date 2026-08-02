@@ -459,12 +459,30 @@ function workflowJobSectionRecords(text: string): ReadonlyMap<string, WorkflowJo
       break;
     }
   }
-  const headers: Array<{ readonly name: string; readonly line: number }> = [];
+  // The direct children of `jobs:` sit at the SHALLOWEST indentation inside
+  // its block — derived, never assumed. The shape allowlist admits any
+  // consistent block-mapping indentation, so hardcoding two spaces made a
+  // four-space workflow yield an empty section map and every scanner return
+  // no findings: a total fail-open on valid YAML (Codex review round 3 on
+  // PR #197, confirmed P1). Block-scalar content can never be shallower than
+  // the job header that ultimately contains it, so the minimum is the job
+  // level.
+  let childIndent = Number.POSITIVE_INFINITY;
   for (let index = jobsIndex + 1; index < jobsEnd; index++) {
+    const body = lines[index]!.trim();
+    if (body === '' || body.startsWith('#')) continue;
+    childIndent = Math.min(childIndent, /^ */u.exec(lines[index]!)![0].length);
+  }
+
+  const headers: Array<{ readonly name: string; readonly line: number }> = [];
+  if (Number.isFinite(childIndent) && childIndent > 0) {
     // A trailing comment is inert YAML and therefore part of the admitted
     // block-mapping spelling, not a reason to lose the next-job boundary.
-    const match = /^ {2}([A-Za-z0-9_-]+):(?:\s+#.*)?\s*$/u.exec(lines[index]!);
-    if (match !== null) headers.push({ name: match[1]!, line: index });
+    const header = new RegExp(`^ {${childIndent}}([A-Za-z0-9_-]+):(?:\\s+#.*)?\\s*$`, 'u');
+    for (let index = jobsIndex + 1; index < jobsEnd; index++) {
+      const match = header.exec(lines[index]!);
+      if (match !== null) headers.push({ name: match[1]!, line: index });
+    }
   }
   const sections = new Map<string, WorkflowJobSectionRecord>();
   for (let index = 0; index < headers.length; index++) {
@@ -575,7 +593,7 @@ function workflowSectionsForScan(text: string): ReadonlyMap<string, string> {
   return workflowJobSections(`jobs:\n${text.replace(/^\r?\n/u, '')}`);
 }
 
-/** The job section of a workflow, from its key to the next top-level job key (two-space indent). */
+/** The job section of a workflow, from its key to the next job key at the derived job indent. */
 function campaignJobSection(sections: ReadonlyMap<string, string>, job: string): string | null {
   return sections.get(job) ?? null;
 }

@@ -6,6 +6,8 @@ import {
   scanWorkflowCheckoutCredentials,
   scanWorkflowExpressionInjection,
   TRUSTED_ACTION_SOURCES,
+  unreadableYamlViolations,
+  workflowJobSections,
 } from '../../../packages/cli/src/internal/workflow-action-pins.js';
 
 const ROOT = resolve(import.meta.dirname, '../../..');
@@ -140,6 +142,66 @@ describe('expressions in run commands', () => {
       '    steps:',
       '      - run: echo ok',
       '        name: "quoted name value"',
+    ].join('\n');
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([]);
+  });
+
+  // Codex review round 3 on PR #197, confirmed P1: the job-header reader
+  // hardcoded a two-space indent while the shape allowlist admits any
+  // consistent block-mapping indentation. A four-space workflow therefore
+  // produced an EMPTY section map and every scanner returned [] — a total
+  // fail-open on valid YAML, not a missed edge case.
+  it.each([
+    ['four-space', 4],
+    ['three-space', 3],
+    ['eight-space', 8],
+    ['two-space (regression)', 2],
+  ])('%s job indentation is read structurally, so injection still reds', (_name, width) => {
+    const pad = (depth: number): string => ' '.repeat(width * depth);
+    const workflow = [
+      'jobs:',
+      `${pad(1)}evil:`,
+      `${pad(2)}steps:`,
+      `${pad(3)}- run: echo "\${{ github.event.pull_request.title }}"`,
+    ].join('\n');
+    expect(unreadableYamlViolations(workflow)).toEqual([]);
+    expect([...workflowJobSections(workflow).keys()]).toEqual(['evil']);
+    expect(scanWorkflowExpressionInjection(workflow)).toEqual([
+      expect.objectContaining({ reason: 'expression-in-run' }),
+    ]);
+  });
+
+  it('a four-space workflow still enforces action pinning (the sibling scanner fails open the same way)', () => {
+    const workflow = ['jobs:', '    evil:', '        steps:', '            - uses: owner/action@main'].join('\n');
+    expect(scanWorkflowActionPins(workflow)).toEqual([
+      expect.objectContaining({ reason: 'missing-immutable-revision' }),
+    ]);
+  });
+
+  it('a nested mapping key deeper than the job level is never promoted to a job', () => {
+    const workflow = [
+      'jobs:',
+      '    only:',
+      '        env:',
+      '            other: value',
+      '        steps:',
+      '            - run: echo ok',
+    ].join('\n');
+    expect([...workflowJobSections(workflow).keys()]).toEqual(['only']);
+  });
+
+  it('a bullet whose field spacing exceeds one space keeps its sibling fields out of the command', () => {
+    // `-   run: |` puts the step's fields at bullet indent + 4, not + 2. The
+    // scalar boundary must be derived from the bullet's own prefix or an
+    // `if: |` sibling leaks back into the command text (the round-9 defect).
+    const workflow = [
+      'jobs:',
+      '  safe:',
+      '    steps:',
+      '      -   run: |',
+      '            echo ok',
+      '          if: |',
+      '            contains(github.event.head_commit.message, "x")',
     ].join('\n');
     expect(scanWorkflowExpressionInjection(workflow)).toEqual([]);
   });
