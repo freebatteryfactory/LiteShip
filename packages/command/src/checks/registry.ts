@@ -55,7 +55,7 @@ const TYPEDOC_FAST_INPUTS = [
   'packages/*/package.json',
   'scripts/docs-input-fingerprint.ts',
   'scripts/lib/typedoc-input-fingerprint.ts',
-  'docs/api/.typedoc-input-fingerprint.json',
+  'traceability/typedoc-input-fingerprint.json',
 ] as const;
 
 /** Fields shared by repository rows before the repository context is projected. */
@@ -374,14 +374,15 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     claim: 'The committed API docs match the current public TSDoc surface.',
     owner: 'scripts/docs-check.ts',
     command: 'pnpm run docs:check',
-    inputs: [SRC_GLOB, 'typedoc.json', 'docs/api/**'],
+    inputs: [SRC_GLOB, 'typedoc.json', 'traceability/typedoc-input-fingerprint.json'],
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 240_000,
     cache: 'none',
     authority: 'blocking',
     negativeControl: 'tests/unit/devops/typedoc-input-fingerprint.test.ts',
-    remediation: "run 'pnpm run docs:build' and commit docs/api/ if you touched a public TSDoc surface.",
+    remediation:
+      "run 'pnpm run docs:build' if you touched a public TSDoc surface (docs/api is a build artifact, not committed).",
   },
   {
     id: 'check/assurance-density',

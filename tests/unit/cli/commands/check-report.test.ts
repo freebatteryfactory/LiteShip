@@ -577,7 +577,7 @@ describe('check profile cache and diagnostic execution', () => {
     },
     {
       checkId: 'check/docs-fast',
-      inputPath: 'docs/api/.typedoc-input-fingerprint.json',
+      inputPath: 'traceability/typedoc-input-fingerprint.json',
       inputClass: 'generated receipt',
     },
   ])(

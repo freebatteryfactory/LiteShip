@@ -106,6 +106,20 @@ export const DERIVED_ARTIFACTS: readonly DerivedArtifact[] = Object.freeze([
     inPreflight: true,
   }),
   Object.freeze({
+    id: 'typedoc-input-fingerprint',
+    kind: 'ratchet' as const,
+    // The cheap staleness signal for the API docs. It lives OUTSIDE docs/api
+    // because that tree is a build artifact (W8.5) — 3,556 files that were a
+    // pure function of source and bought only review noise. The fingerprint
+    // is what a committed copy was actually providing, at one file instead of
+    // three and a half thousand.
+    paths: Object.freeze(['traceability/typedoc-input-fingerprint.json']),
+    regen: Object.freeze(['run', 'docs:build']),
+    regenEnv: Object.freeze({}),
+    enforcedBy: 'tests/unit/devops/typedoc-input-fingerprint.test.ts',
+    inPreflight: true,
+  }),
+  Object.freeze({
     id: 'composition-baseline',
     kind: 'ratchet' as const,
     paths: Object.freeze(['benchmarks/composition-uncovered-baseline.json']),

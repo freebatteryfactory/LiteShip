@@ -101,6 +101,11 @@ export const SCRIPT_EXEMPTIONS: readonly ScriptExemption[] = [
     script: 'preflight',
     reason: 'Fast-lane aggregate wrapper; its members (format/lint:structural/lint/typecheck/docs) are registered.',
   },
+  {
+    script: 'regen',
+    reason:
+      'Regeneration workflow: rewrites every committed derivable artifact (mutates files). The ASSERTIONS are the per-artifact drift authorities the preflight projections step runs.',
+  },
   { script: 'fix', reason: 'Fix workflow: runs format + eslint --fix (mutates files).' },
   { script: 'format', reason: 'Format workflow: prettier --write (mutates files); check/format is the assertion.' },
 

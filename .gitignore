@@ -122,3 +122,4 @@ tests/.liteship-verify-fresh-*/
 
 # Experimental sharded TypeDoc workspace (#136) — never commit
 .typedoc-shards/
+docs/api/

@@ -71,9 +71,9 @@ describe('TypeDoc input fingerprint', () => {
 
       expect(() => assertTypeDocInputFingerprint(root)).toThrow(/missing .*typedoc-input-fingerprint/);
 
-      mkdirSync(resolve(root, 'docs', 'api'), { recursive: true });
+      mkdirSync(resolve(root, 'traceability'), { recursive: true });
       writeFileSync(
-        resolve(root, 'docs', 'api', '.typedoc-input-fingerprint.json'),
+        resolve(root, 'traceability', 'typedoc-input-fingerprint.json'),
         '{"schemaVersion":1,"algorithm":"sha256","digest":"sha256:stale","inputCount":0}\n',
       );
       expect(() => assertTypeDocInputFingerprint(root)).toThrow(/is stale/);
@@ -97,7 +97,7 @@ describe('TypeDoc input fingerprint', () => {
       writeFileSync(resolve(root, 'packages', 'demo', 'src', 'index.ts'), '/** Public. */\nexport const value = 1;\n');
 
       const original = buildTypeDocInputFingerprint(root);
-      mkdirSync(resolve(root, 'docs', 'api'), { recursive: true });
+      mkdirSync(resolve(root, 'traceability'), { recursive: true });
       writeTypeDocInputFingerprint(root);
       expect(() => assertTypeDocInputFingerprint(root)).not.toThrow();
       writeFileSync(resolve(root, 'tsdoc.json'), '{"tagDefinitions":[{"tagName":"@example"}]}\n');
