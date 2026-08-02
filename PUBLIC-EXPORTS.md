@@ -2,7 +2,7 @@
 
 Generated from the typed 25-package catalog and the TypeScript export graph. The `liteship` root is the paved road; package and facade subpaths are advanced modules. `public-exports:check` proves every named binding is export-reachable and has a source declaration owner, consumer import spelling, TSDoc purpose, failure policy, invariant, replacement status, and named package proof. The binding total is not a claim that every structural type has a concrete runtime inhabitant: executable allocation/read proof is exhaustive only for paved-road root values; advanced type inhabitation remains an explicit owner contract. Use `liteship explain <symbol>` for the symbol-level answer.
 
-Bindings: **4156** across **87** public specifiers.
+Bindings: **4157** across **87** public specifiers.
 
 | Specifier | Surface | Audience | Stability | Bindings | Declaration owners | Invariant |
 | --- | --- | --- | --- | ---: | ---: | --- |
@@ -61,7 +61,7 @@ Bindings: **4156** across **87** public specifiers.
 | `@liteship/detect` | advanced-module | host-integrator | stable | 45 | 7 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/edge` | advanced-module | host-integrator | stable | 42 | 7 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/error` | advanced-module | package-author | stable | 35 | 4 | `INV-DIAGNOSTIC-CODE-CLOSED` |
-| `@liteship/gauntlet` | advanced-module | operator | stable | 345 | 80 | `INV-PUBLIC-SURFACE-INHABITED` |
+| `@liteship/gauntlet` | advanced-module | operator | stable | 346 | 81 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/genui` | advanced-module | package-author | experimental | 17 | 8 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/mcp-server` | advanced-module | operator | experimental | 97 | 18 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/quantizer` | advanced-module | package-author | stable | 22 | 6 | `INV-ADAPTIVE-RECEIPT-EQUIVALENCE` |

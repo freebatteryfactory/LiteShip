@@ -224,6 +224,7 @@ change underneath them.
 - [COVERAGE\_CLASSES](variables/COVERAGE_CLASSES.md)
 - [COVERAGE\_EVIDENCE\_STRENGTH](variables/COVERAGE_EVIDENCE_STRENGTH.md)
 - [crdtLawsGate](variables/crdtLawsGate.md)
+- [cssIdentityUnescapedGate](variables/cssIdentityUnescapedGate.md)
 - [declaredFixProtocolGate](variables/declaredFixProtocolGate.md)
 - [DEFAULT\_GAUNTLET\_GLOBS](variables/DEFAULT_GAUNTLET_GLOBS.md)
 - [diagnosticCodeRegisteredGate](variables/diagnosticCodeRegisteredGate.md)

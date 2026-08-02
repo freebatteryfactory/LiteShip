@@ -8,6 +8,6 @@
 
 > `const` **LITESHIP\_TEXT\_GATES**: readonly [`Gate`](../interfaces/Gate.md)[]
 
-Defined in: [gauntlet/src/runner.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L93)
+Defined in: [gauntlet/src/runner.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L94)
 
 The dependency-free source scanners in the lean composition.

@@ -8,7 +8,7 @@
 
 > **litelaunchGauntlet**(`repoRoot`, `now`, `globs?`, `ir?`, `skipDetector?`, `earlyReturnDetector?`, `codeOnly?`, `checkGovernance?`): [`GauntletResult`](../interfaces/GauntletResult.md)
 
-Defined in: [gauntlet/src/runner.ts:534](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L534)
+Defined in: [gauntlet/src/runner.ts:539](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L539)
 
 The PRODUCTION gauntlet run — the live composition the dogfood path calls.
 

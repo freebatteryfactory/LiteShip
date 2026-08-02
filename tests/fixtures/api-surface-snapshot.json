@@ -2912,6 +2912,11 @@
           "signature": "access:const,describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
+          "name": "cssIdentityUnescapedGate",
+          "kind": "namespace",
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
           "name": "decideActiveSurfaceReaders",
           "kind": "function",
           "signature": "(1)"

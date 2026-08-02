@@ -437,6 +437,12 @@ export {
 } from './facts/check-governance-facts.js';
 export { crdtLawsGate } from './gates/crdt-laws.js';
 
+// The BLOCKING consumer of the CSS-identity surface oracle (Codex review on
+// PR #197, confirmed P1) — folds the host-emitted `css-identity-unescaped`
+// facts into error findings. Rides LITESHIP_IR_ONLY_GATES: the facts exist
+// only when the CLI host builds the IR with `cssIdentitySurfaceOracle`.
+export { cssIdentityUnescapedGate } from './gates/css-identity-unescaped.js';
+
 // The DIAGNOSTIC-CODE REGISTRY guard — statically scans packages/gauntlet/src for every
 // emitted `gauntlet/…` ruleId and the check registry for every `check/<slug>` id, and reds
 // on any not enrolled in @liteship/error's DIAGNOSTIC_REGISTRY. A lean source-fold (no IR,

@@ -610,6 +610,11 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'A gauntlet gate emits a `ruleId` (or the check registry declares a `check/<slug>` id) that has no entry in the DIAGNOSTIC_REGISTRY. Every emitted diagnostic code must be enrolled so it can be explained by `explainDiagnostic`.',
     'Enroll the emitted code in packages/error/src/codes.ts DIAGNOSTIC_REGISTRY with a title, explanation, and remediation.',
   ),
+  'gauntlet/css-identity-unescaped': gauntlet(
+    'Unescaped interpolation into an anchored CSS identity',
+    'The CSS-identity surface oracle found a template interpolation that reaches anchored CSS syntax without the core escape. A caller-influenced name (a component name, a token id) then lands in generated CSS unescaped — the injectivity the identity kernel guarantees is broken at the boundary.',
+    'Route the interpolated identity fragment through the core CSS-identity escape (packages/core/src/motion/css-identity.ts); caller-owned complete selectors stay caller-owned.',
+  ),
   'gauntlet/feature-edge-connectivity': gauntlet(
     'Feature-edge connectivity is incomplete',
     'A complete catalog/checker-backed feature-edge census found an endpoint consumer without a corresponding producer, or could not prove its subject coverage.',

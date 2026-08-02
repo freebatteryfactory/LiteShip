@@ -8,7 +8,7 @@
 
 > **replaceGate**(`set`, `replacement`): readonly [`Gate`](../interfaces/Gate.md)[]
 
-Defined in: [gauntlet/src/runner.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L162)
+Defined in: [gauntlet/src/runner.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L163)
 
 Replace exactly one gate id without changing the composition's order.
 

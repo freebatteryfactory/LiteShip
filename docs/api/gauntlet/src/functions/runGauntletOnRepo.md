@@ -8,7 +8,7 @@
 
 > **runGauntletOnRepo**(`gates`, `opts`, `runOpts?`): [`GauntletResult`](../interfaces/GauntletResult.md)
 
-Defined in: [gauntlet/src/runner.ts:413](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L413)
+Defined in: [gauntlet/src/runner.ts:418](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L418)
 
 Run `gates` over the real repo at `opts.repoRoot`, scoped to `opts.globs`.
 Equivalent to `runGates(gates, nodeContext(opts.repoRoot, opts.globs), runOpts)`

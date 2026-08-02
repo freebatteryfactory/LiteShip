@@ -60,6 +60,7 @@ import { noRequireDivergenceGate } from './gates/no-require-divergence.js';
 import { earlyReturnDivergenceGate } from './gates/early-return-divergence.js';
 import { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
 import { crdtLawsGate } from './gates/crdt-laws.js';
+import { cssIdentityUnescapedGate } from './gates/css-identity-unescaped.js';
 import { performanceContractsGate } from './gates/performance-contracts.js';
 import { perfClaimBenchGate } from './gates/perf-claim-bench.js';
 import { claimPropertyGate } from './gates/claim-property.js';
@@ -204,6 +205,10 @@ export const LITESHIP_IR_ONLY_GATES: readonly Gate[] = [
   earlyReturnDivergenceGate,
   symbolOrphanDivergenceGate,
   crdtLawsGate,
+  // The BLOCKING consumer of the CSS-identity surface oracle — folds the host's
+  // `css-identity-unescaped` facts into error findings (Codex review on PR #197,
+  // confirmed P1: the facts were produced and consumed by nothing).
+  cssIdentityUnescapedGate,
   // The avionics-tier (Slice C) performance-contracts gate — a LEAN, deterministic
   // fold over the committed `benchmarks/` artifacts (read via context.readFile). It
   // does NOT requireIR, but it belongs in the IR-host set alongside the other Slice

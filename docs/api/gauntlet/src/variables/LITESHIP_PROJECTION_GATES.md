@@ -8,6 +8,6 @@
 
 > `const` **LITESHIP\_PROJECTION\_GATES**: readonly [`Gate`](../interfaces/Gate.md)[]
 
-Defined in: [gauntlet/src/runner.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L118)
+Defined in: [gauntlet/src/runner.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L119)
 
 The source/projection guards that need no repository IR.
