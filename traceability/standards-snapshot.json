@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:ac69f552",
+  "address": "fnv1a:028ba990",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4428,6 +4428,11 @@
       "_tag": "assurance-coverage",
       "file": "scripts/gauntlet.ts",
       "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/gen-cli-fragments.ts",
+      "level": "L1"
     },
     {
       "_tag": "assurance-coverage",

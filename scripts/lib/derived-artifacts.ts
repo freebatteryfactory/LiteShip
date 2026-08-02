@@ -88,6 +88,15 @@ export const DERIVED_ARTIFACTS: readonly DerivedArtifact[] = Object.freeze([
     inPreflight: true,
   }),
   Object.freeze({
+    id: 'cli-fragments',
+    kind: 'projection' as const,
+    paths: Object.freeze(['packages/cli/fragments']),
+    regen: Object.freeze(['exec', 'tsx', 'scripts/gen-cli-fragments.ts', '--write']),
+    regenEnv: Object.freeze({}),
+    enforcedBy: 'tests/unit/devops/cli-fragment-projection.test.ts',
+    inPreflight: true,
+  }),
+  Object.freeze({
     id: 'api-surface-snapshot',
     kind: 'ratchet' as const,
     paths: Object.freeze(['tests/fixtures/api-surface-snapshot.json']),

@@ -36,7 +36,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepack": "pnpm exec tsx ../../scripts/gen-roster.ts --check && pnpm run build"
+    "prepack": "pnpm exec tsx ../../scripts/gen-roster.ts --check && pnpm exec tsx ../../scripts/gen-cli-fragments.ts --check && pnpm run build"
   },
   "dependencies": {
     "@liteship/core": "workspace:*",

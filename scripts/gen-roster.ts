@@ -18,8 +18,8 @@
  * @module
  */
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectExecution, walkAllFiles, walkTrackedFiles } from './audit/shared.js';
 import { DEFAULT_ANALYZABLE_ARTIFACTS, PACKAGE_CATALOG, type PackageCatalogRecord } from './package-catalog.js';
@@ -478,21 +478,6 @@ export function collectCliFragmentProjectionDrift(
   return drift;
 }
 
-function writeCliFragmentProjections(): number {
-  const root = resolve(REPO_ROOT, CLI_FRAGMENT_ROOT);
-  const cliRoot = resolve(REPO_ROOT, 'packages', 'cli');
-  if (!root.startsWith(`${cliRoot}\\`) && !root.startsWith(`${cliRoot}/`)) {
-    throw new Error(`refusing to replace fragment projection outside packages/cli: ${root}`);
-  }
-  rmSync(root, { recursive: true, force: true });
-  for (const projection of cliFragmentProjections()) {
-    const destination = resolve(REPO_ROOT, projection.destination);
-    mkdirSync(dirname(destination), { recursive: true });
-    writeFileSync(destination, renderCliFragmentProjection(projection));
-  }
-  return cliFragmentProjections().length;
-}
-
 /**
  * Reject a second authored scoped-fleet list. Generated marker blocks, package
  * manifests, lock data, API snapshots, and deliberate red fixtures are the
@@ -689,8 +674,6 @@ function write(): number {
   if (collectAssuranceRatchetIdentityDrift(parsedAssuranceRatchet).length > 0) {
     writeIfChanged(ASSURANCE_RATCHET_JSON, renderAssuranceRatchetIdentities(assuranceRatchet));
   }
-  const fragmentCount = writeCliFragmentProjections();
-
   for (const [relativePath, marker, render] of MARKDOWN_PROJECTIONS) {
     const path = resolve(REPO_ROOT, relativePath);
     const source = readFileSync(path, 'utf8');
@@ -714,7 +697,7 @@ function write(): number {
   );
   writeIfChanged(LITESHIP_ROSTER_REL, stamped);
   process.stdout.write(
-    `gen-roster: generated ${renderGeneratedProjections().length + 1 + CODE_PROJECTIONS.length} catalog projections and ${fragmentCount} packaged fragments from ${PACKAGE_CATALOG.length} catalog records.\n`,
+    `gen-roster: generated ${renderGeneratedProjections().length + 1 + CODE_PROJECTIONS.length} catalog projections from ${PACKAGE_CATALOG.length} catalog records.\n`,
   );
   return 0;
 }
