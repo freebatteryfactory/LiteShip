@@ -14,6 +14,21 @@ export interface LocalVerificationStep {
   readonly remedy: string;
 }
 
+/** Registry-owned scheduling metadata exposed by the local plan complement. */
+export interface LocalVerificationCheckSummary {
+  readonly id: (typeof CHECK_REGISTRY)[number]['id'];
+  readonly authority: (typeof CHECK_REGISTRY)[number]['authority'];
+  readonly profiles: (typeof CHECK_REGISTRY)[number]['profiles'];
+  readonly contexts: (typeof CHECK_REGISTRY)[number]['contexts'];
+  readonly timeoutMs: (typeof CHECK_REGISTRY)[number]['timeoutMs'];
+}
+
+/** Exact disjoint partition of the live check registry for one contextual plan. */
+export interface LocalVerificationCheckPartition {
+  readonly selected: readonly LocalVerificationCheckSummary[];
+  readonly excluded: readonly LocalVerificationCheckSummary[];
+}
+
 const INVARIANTS_STEP: LocalVerificationStep = Object.freeze({
   checkId: null,
   label: 'check-invariants',
@@ -22,10 +37,122 @@ const INVARIANTS_STEP: LocalVerificationStep = Object.freeze({
 });
 
 export interface LocalVerificationPlan {
-  readonly schema: 'liteship/local-verification-plan@1';
+  readonly schema: 'liteship/local-verification-plan@2';
   readonly mode: 'workspace' | 'staged';
   readonly docsReason: 'workspace-authority' | 'staged-docs-input' | 'not-affected';
   readonly steps: readonly LocalVerificationStep[];
+  readonly registryChecks: LocalVerificationCheckPartition;
+}
+
+function summarizeRegistryCheck(check: (typeof CHECK_REGISTRY)[number]): LocalVerificationCheckSummary {
+  return Object.freeze({
+    id: check.id,
+    authority: check.authority,
+    profiles: Object.freeze([...check.profiles]),
+    contexts: Object.freeze([...check.contexts]),
+    timeoutMs: check.timeoutMs,
+  });
+}
+
+function haveSameValues<T>(left: readonly T[], right: readonly T[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function assertSummaryMatchesRegistry(
+  summary: LocalVerificationCheckSummary,
+  registered: (typeof CHECK_REGISTRY)[number],
+): void {
+  if (
+    summary.authority !== registered.authority ||
+    summary.timeoutMs !== registered.timeoutMs ||
+    !haveSameValues(summary.profiles, registered.profiles) ||
+    !haveSameValues(summary.contexts, registered.contexts)
+  ) {
+    throw new TypeError(`local verification partition metadata drifted from registry check: ${summary.id}`);
+  }
+}
+
+/**
+ * Refuse any lossy, overlapping, or metadata-drifted registry complement.
+ * Local meta steps are absent from selectedCheckIds because their checkId is null.
+ */
+export function assertLocalVerificationCheckPartition(
+  partition: LocalVerificationCheckPartition,
+  selectedCheckIds: readonly string[],
+): void {
+  const registryById = new Map<string, (typeof CHECK_REGISTRY)[number]>();
+  for (const check of CHECK_REGISTRY) registryById.set(check.id, check);
+  if (registryById.size !== CHECK_REGISTRY.length) {
+    throw new TypeError('local verification partition cannot project duplicate registry check identities');
+  }
+
+  const selectedIdSet = new Set<string>();
+  for (const checkId of selectedCheckIds) {
+    if (selectedIdSet.has(checkId)) {
+      throw new TypeError(`local verification plan selected duplicate registry check: ${checkId}`);
+    }
+    if (!registryById.has(checkId)) {
+      throw new TypeError(`local verification plan selected an unregistered check: ${checkId}`);
+    }
+    selectedIdSet.add(checkId);
+  }
+
+  const seen = new Set<string>();
+  const inspect = (classification: 'selected' | 'excluded', checks: readonly LocalVerificationCheckSummary[]): void => {
+    for (const summary of checks) {
+      if (seen.has(summary.id)) {
+        throw new TypeError(`local verification partition has duplicate partition check: ${summary.id}`);
+      }
+      const registered = registryById.get(summary.id);
+      if (registered === undefined) {
+        throw new TypeError(`local verification partition contains an unregistered check: ${summary.id}`);
+      }
+      const expectedClassification = selectedIdSet.has(summary.id) ? 'selected' : 'excluded';
+      if (classification !== expectedClassification) {
+        throw new TypeError(
+          `local verification partition misclassified ${summary.id}: expected ${expectedClassification}, received ${classification}`,
+        );
+      }
+      assertSummaryMatchesRegistry(summary, registered);
+      seen.add(summary.id);
+    }
+  };
+  inspect('selected', partition.selected);
+  inspect('excluded', partition.excluded);
+
+  const missing = CHECK_REGISTRY.filter((check) => !seen.has(check.id)).map((check) => check.id);
+  if (missing.length > 0) {
+    throw new TypeError(`local verification partition missing registry checks: ${missing.join(', ')}`);
+  }
+}
+
+function buildLocalVerificationCheckPartition(selectedCheckIds: readonly string[]): LocalVerificationCheckPartition {
+  const selectedIdSet = new Set(selectedCheckIds);
+  const selected: LocalVerificationCheckSummary[] = [];
+  const excluded: LocalVerificationCheckSummary[] = [];
+  for (const check of CHECK_REGISTRY) {
+    (selectedIdSet.has(check.id) ? selected : excluded).push(summarizeRegistryCheck(check));
+  }
+  const partition = Object.freeze({
+    selected: Object.freeze(selected),
+    excluded: Object.freeze(excluded),
+  });
+  assertLocalVerificationCheckPartition(partition, selectedCheckIds);
+  return partition;
+}
+
+function formatCheckSummary(check: LocalVerificationCheckSummary): string {
+  return `- ${check.id} authority=${check.authority} profiles=${check.profiles.join(',')} contexts=${check.contexts.join(',')} timeoutMs=${check.timeoutMs}`;
+}
+
+/** Human-readable form of the same exact registry partition carried by JSON output. */
+export function formatLocalVerificationCheckPartition(partition: LocalVerificationCheckPartition): string {
+  return [
+    `registry checks selected (${partition.selected.length})`,
+    ...partition.selected.map(formatCheckSummary),
+    `registry checks excluded (${partition.excluded.length})`,
+    ...partition.excluded.map(formatCheckSummary),
+  ].join('\n');
 }
 
 function argvForRootCheck(execution: (typeof CHECK_REGISTRY)[number]['execution']): readonly string[] {
@@ -205,10 +332,12 @@ export function buildLocalVerificationPlan(input: {
   const steps: LocalVerificationStep[] = [...quickSteps, INVARIANTS_STEP, PROJECTIONS_STEP];
   if (ciContractAffected) steps.push(CI_CONTRACT_STEP);
   if (docsAffected) steps.push(DOCS_STEP);
+  const selectedCheckIds = steps.flatMap((step) => (step.checkId === null ? [] : [step.checkId]));
   return Object.freeze({
-    schema: 'liteship/local-verification-plan@1',
+    schema: 'liteship/local-verification-plan@2',
     mode: input.staged ? 'staged' : 'workspace',
     docsReason: !input.staged ? 'workspace-authority' : docsAffected ? 'staged-docs-input' : 'not-affected',
     steps: Object.freeze(steps),
+    registryChecks: buildLocalVerificationCheckPartition(selectedCheckIds),
   });
 }

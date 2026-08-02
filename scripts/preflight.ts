@@ -27,7 +27,7 @@
 
 import { spawnArgv, spawnArgvCapture } from './lib/spawn.js';
 import { isDirectExecution } from './audit/shared.js';
-import { buildLocalVerificationPlan } from './lib/local-verification-plan.js';
+import { buildLocalVerificationPlan, formatLocalVerificationCheckPartition } from './lib/local-verification-plan.js';
 import {
   formatLocalResourcePlan,
   sampleLocalResources,
@@ -103,6 +103,7 @@ async function main(argv: readonly string[]): Promise<void> {
     else {
       console.log(`preflight plan (${plan.mode}; docs=${plan.docsReason})`);
       console.log(formatLocalResourcePlan(resourcePlan));
+      console.log(formatLocalVerificationCheckPartition(plan.registryChecks));
       for (const step of plan.steps) console.log(`- pnpm ${step.argv.join(' ')}`);
     }
     return;

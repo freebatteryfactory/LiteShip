@@ -5,8 +5,10 @@ import { describe, expect, test } from 'vitest';
 import { CHECK_REGISTRY } from '@liteship/command';
 import {
   WORKFLOW_READER_FAMILIES,
+  assertLocalVerificationCheckPartition,
   buildLocalVerificationPlan,
   discoverWorkflowContractTestPaths,
+  formatLocalVerificationCheckPartition,
   isCiContractInput,
   isTypeDocProofInput,
   projectRepositoryQuickSteps,
@@ -185,5 +187,91 @@ describe('local verification plan', () => {
         .steps.map((step) => step.checkId)
         .filter((checkId): checkId is string => checkId !== null),
     ).toEqual(expected);
+  });
+
+  test('partitions every live registry check exactly once without counting local meta steps', () => {
+    const workspace = buildLocalVerificationPlan({ staged: false });
+    const staged = buildLocalVerificationPlan({ staged: true, changedPaths: ['README.md'] });
+
+    expect(workspace.schema).toBe('liteship/local-verification-plan@2');
+    for (const plan of [workspace, staged]) {
+      const partition = [...plan.registryChecks.selected, ...plan.registryChecks.excluded];
+      expect(partition).toHaveLength(CHECK_REGISTRY.length);
+      expect(new Set(partition.map((check) => check.id)).size).toBe(CHECK_REGISTRY.length);
+      expect(partition.map((check) => check.id).toSorted()).toEqual(CHECK_REGISTRY.map((check) => check.id).toSorted());
+
+      for (const check of partition) {
+        const registered = CHECK_REGISTRY.find((candidate) => candidate.id === check.id);
+        expect(registered).toBeDefined();
+        expect(check).toEqual({
+          id: registered?.id,
+          authority: registered?.authority,
+          profiles: registered?.profiles,
+          contexts: registered?.contexts,
+          timeoutMs: registered?.timeoutMs,
+        });
+      }
+
+      const selectedStepIds = plan.steps.flatMap((step) => (step.checkId === null ? [] : [step.checkId]));
+      expect(plan.registryChecks.selected.map((check) => check.id).toSorted()).toEqual(selectedStepIds.toSorted());
+      expect(partition.some((check) => check.id === 'check-invariants')).toBe(false);
+      expect(partition.some((check) => check.id === 'projections')).toBe(false);
+      expect(partition.some((check) => check.id === 'ci-contract')).toBe(false);
+    }
+
+    expect(workspace.registryChecks.selected.some((check) => check.id === 'check/docs')).toBe(true);
+    expect(staged.registryChecks.excluded.some((check) => check.id === 'check/docs')).toBe(true);
+    expect(staged.registryChecks.excluded.find((check) => check.id === 'check/app-build')?.contexts).toEqual([
+      'application',
+    ]);
+
+    const stagedDocs = buildLocalVerificationPlan({
+      staged: true,
+      changedPaths: ['packages/core/src/index.ts'],
+    });
+    const stagedCi = buildLocalVerificationPlan({ staged: true, changedPaths: ['.github/workflows/ci.yml'] });
+    expect(stagedDocs.registryChecks.selected.some((check) => check.id === 'check/docs')).toBe(true);
+    expect(stagedCi.registryChecks.selected.map((check) => check.id)).toEqual(
+      staged.registryChecks.selected.map((check) => check.id),
+    );
+    expect(stagedCi.steps.some((step) => step.label === 'ci-contract' && step.checkId === null)).toBe(true);
+  });
+
+  test('fails closed when an excluded check vanishes or a selected check is duplicated', () => {
+    const plan = buildLocalVerificationPlan({ staged: false });
+    const selectedIds = plan.steps.flatMap((step) => (step.checkId === null ? [] : [step.checkId]));
+    const firstSelected = plan.registryChecks.selected[0];
+    expect(firstSelected).toBeDefined();
+    if (firstSelected === undefined) throw new TypeError('live local verification plan selected no registry checks');
+
+    expect(() =>
+      assertLocalVerificationCheckPartition(
+        {
+          selected: plan.registryChecks.selected,
+          excluded: plan.registryChecks.excluded.slice(1),
+        },
+        selectedIds,
+      ),
+    ).toThrow(/missing registry checks/u);
+    expect(() =>
+      assertLocalVerificationCheckPartition(
+        {
+          selected: [...plan.registryChecks.selected, firstSelected],
+          excluded: plan.registryChecks.excluded,
+        },
+        selectedIds,
+      ),
+    ).toThrow(/duplicate partition check/u);
+  });
+
+  test('prints every excluded check with its live registry identity and scheduling metadata', () => {
+    const plan = buildLocalVerificationPlan({ staged: true, changedPaths: ['README.md'] });
+    const output = formatLocalVerificationCheckPartition(plan.registryChecks);
+    for (const check of plan.registryChecks.excluded) {
+      expect(output).toContain(
+        `- ${check.id} authority=${check.authority} profiles=${check.profiles.join(',')} contexts=${check.contexts.join(',')} timeoutMs=${check.timeoutMs}`,
+      );
+    }
+    expect(output.match(/^- check\//gmu)).toHaveLength(CHECK_REGISTRY.length);
   });
 });
