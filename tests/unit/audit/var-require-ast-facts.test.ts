@@ -10,8 +10,9 @@
  *
  * DOGFOOD: over a corpus whose ONLY keyword occurrence is inside a doc COMMENT, the
  * host-composed IR carries a regex fact (text-only) where the AST is silent — and
- * the matching divergence gate reports it as an advisory cross-class divergence,
- * the live proof the text-only oracle is imprecise and should be retired.
+ * the matching divergence gate reports it as a cross-class divergence aimed by
+ * the file's effective assurance level, the live proof the text-only oracle is
+ * imprecise and should be retired.
  *
  * @module
  */
@@ -115,12 +116,12 @@ describe('the AST oracle emits var-declaration / require-call facts precisely', 
     const varLines = varFindings.map((f) => f.location?.line).sort((a, b) => (a ?? 0) - (b ?? 0));
     expect(varLines).toEqual([6, 7]);
     for (const f of varFindings) {
-      expect(f.severity).toBe('advisory');
+      expect(f.severity).toBe('warning');
       expect(f.detail).toContain('RETIRE');
     }
     // require( appears on line 3 (real, agreed), line 6 (comment), line 7 (string).
     const reqLines = reqFindings.map((f) => f.location?.line).sort((a, b) => (a ?? 0) - (b ?? 0));
     expect(reqLines).toEqual([6, 7]);
-    for (const f of reqFindings) expect(f.severity).toBe('advisory');
+    for (const f of reqFindings) expect(f.severity).toBe('warning');
   });
 });

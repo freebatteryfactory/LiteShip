@@ -17,8 +17,8 @@
  * files (the NO_VAR exclude trio, the NO_REQUIRE gate-files), proving the host
  * oracle ran each rule live. The default-export property meanwhile carries 9 real
  * AST default-exports, every one a sanctioned policy exclude (the B3.1 ~9→0). The
- * layer now triangulates THREE properties; all findings are advisory (cross-class),
- * never a blocking same-class contradiction.
+ * layer now triangulates THREE properties; any finding is aimed by its file's
+ * effective assurance level rather than being silenced by the cross-class shape.
  *
  * @module
  */
@@ -79,7 +79,7 @@ describe('B3.2 — the LIVE var/require triangulated cross-check over THIS repo'
     expect([...excluded].some((f) => f.includes('check-invariants'))).toBe(true);
   });
 
-  it('noVarDivergenceGate reports the ACTUAL divergence count — ZERO, all advisory (clean repo)', () => {
+  it('noVarDivergenceGate reports the ACTUAL divergence count — ZERO (clean repo)', () => {
     const findings = noVarDivergenceGate.run(gateContext(realIR));
     // ZERO divergences: no real var, no comment-occurrence the AST misses (after the
     // new gate sources avoid the keyword). The substrate is live (markers fired) —
@@ -88,16 +88,13 @@ describe('B3.2 — the LIVE var/require triangulated cross-check over THIS repo'
     // Document the substrate: zero AST + zero regex facts on this clean repo.
     expect(countFacts(realIR.facts, 'var-declaration', 'ts-ast')).toBe(0);
     expect(countFacts(realIR.facts, 'var-declaration', 'invariant-regex')).toBe(0);
-    // Whatever WOULD surface is advisory (cross-class), never a blocking error.
-    for (const f of findings) expect(f.severity).toBe('advisory');
   });
 
-  it('noRequireDivergenceGate reports the ACTUAL divergence count — ZERO, all advisory (clean repo)', () => {
+  it('noRequireDivergenceGate reports the ACTUAL divergence count — ZERO (clean repo)', () => {
     const findings = noRequireDivergenceGate.run(gateContext(realIR));
     expect(findings).toEqual([]);
     expect(countFacts(realIR.facts, 'require-call', 'ts-ast')).toBe(0);
     expect(countFacts(realIR.facts, 'require-call', 'invariant-regex')).toBe(0);
-    for (const f of findings) expect(f.severity).toBe('advisory');
   });
 
   it('is DETERMINISTIC — folding the same IR yields the same divergence set twice', () => {

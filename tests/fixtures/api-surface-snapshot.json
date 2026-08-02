@@ -2899,7 +2899,7 @@
         {
           "name": "coverageClassSeverity",
           "kind": "function",
-          "signature": "(2)"
+          "signature": "(3)"
         },
         {
           "name": "coverageDigestOf",
