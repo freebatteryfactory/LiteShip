@@ -12,7 +12,7 @@ import { planAffectedTests } from '../../../scripts/lib/affected-test-plan.js';
 import type { AssuranceInventory } from '../../../scripts/lib/assurance-inventory.js';
 
 const inventory: AssuranceInventory = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   packages: PACKAGE_CATALOG.map((record) => ({
     name: record.name,
     sourceLoc: 1,
@@ -41,6 +41,10 @@ const inventory: AssuranceInventory = {
     },
     evidenceFiles: [],
   })),
+  evidenceOwnership: {
+    packageFiles: [],
+    repositoryTooling: { owner: 'repository/tooling', authoredEvidenceLoc: 0, generatedEvidenceLoc: 0, files: [] },
+  },
   nodeTestSelection: { entrypoints: [], dependents: [] },
   totals: {
     sourceLoc: 25,

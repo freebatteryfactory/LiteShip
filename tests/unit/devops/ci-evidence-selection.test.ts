@@ -5,7 +5,7 @@ import { planAffectedTests } from '../../../scripts/lib/affected-test-plan.js';
 import { jobNameMatches, selectCheckEvidence } from '../../../scripts/lib/ci-evidence-selection.js';
 
 const INVENTORY: AssuranceInventory = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   packages: PACKAGE_CATALOG.map((record) => ({
     name: record.name,
     sourceLoc: 1,
@@ -34,6 +34,10 @@ const INVENTORY: AssuranceInventory = {
     },
     evidenceFiles: [],
   })),
+  evidenceOwnership: {
+    packageFiles: [],
+    repositoryTooling: { owner: 'repository/tooling', authoredEvidenceLoc: 0, generatedEvidenceLoc: 0, files: [] },
+  },
   nodeTestSelection: { entrypoints: [], dependents: [] },
   totals: {
     sourceLoc: PACKAGE_CATALOG.length,

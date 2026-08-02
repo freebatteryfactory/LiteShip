@@ -1,168 +1,178 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "catalogFingerprint": "sha256:512793039695046b329caee5b00d719bece1cb496b4e05cb54fa9c747d8fde10",
   "uniqueRatioMilli": 1224,
   "packages": [
     {
+      "name": "@liteship/_spine",
       "sourceLoc": 3012,
       "authoredEvidenceLoc": 1555,
       "ratioMilli": 516,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/error",
       "sourceLoc": 592,
       "authoredEvidenceLoc": 4459,
       "ratioMilli": 7532,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/canonical",
       "sourceLoc": 580,
       "authoredEvidenceLoc": 3776,
       "ratioMilli": 6510,
-      "missingEvidence": [
-        "mutation",
-        "mcdc"
-      ]
+      "missingEvidence": ["mutation", "mcdc"]
     },
     {
+      "name": "@liteship/core",
       "sourceLoc": 16839,
       "authoredEvidenceLoc": 41232,
       "ratioMilli": 2448,
-      "missingEvidence": [
-        "mutation",
-        "mcdc"
-      ]
+      "missingEvidence": ["mutation", "mcdc"]
     },
     {
+      "name": "@liteship/genui",
       "sourceLoc": 463,
       "authoredEvidenceLoc": 1261,
       "ratioMilli": 2723,
-      "missingEvidence": [
-        "mutation",
-        "mcdc"
-      ]
+      "missingEvidence": ["mutation", "mcdc"]
     },
     {
+      "name": "@liteship/quantizer",
       "sourceLoc": 616,
       "authoredEvidenceLoc": 1766,
       "ratioMilli": 2866,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/compiler",
       "sourceLoc": 5388,
       "authoredEvidenceLoc": 6938,
       "ratioMilli": 1287,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/web",
       "sourceLoc": 4472,
       "authoredEvidenceLoc": 8322,
       "ratioMilli": 1860,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/detect",
       "sourceLoc": 965,
       "authoredEvidenceLoc": 1912,
       "ratioMilli": 1981,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/edge",
       "sourceLoc": 1142,
       "authoredEvidenceLoc": 1466,
       "ratioMilli": 1283,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/vite",
       "sourceLoc": 2763,
       "authoredEvidenceLoc": 5808,
       "ratioMilli": 2102,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/worker",
       "sourceLoc": 2164,
       "authoredEvidenceLoc": 1512,
       "ratioMilli": 698,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/remotion",
       "sourceLoc": 154,
       "authoredEvidenceLoc": 320,
       "ratioMilli": 2077,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/scene",
       "sourceLoc": 1373,
       "authoredEvidenceLoc": 2740,
       "ratioMilli": 1995,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/astro",
       "sourceLoc": 8306,
       "authoredEvidenceLoc": 15133,
       "ratioMilli": 1821,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/cloudflare",
       "sourceLoc": 563,
       "authoredEvidenceLoc": 1396,
       "ratioMilli": 2479,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/stage",
       "sourceLoc": 542,
       "authoredEvidenceLoc": 923,
       "ratioMilli": 1702,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/assets",
       "sourceLoc": 1230,
       "authoredEvidenceLoc": 1894,
       "ratioMilli": 1539,
-      "missingEvidence": [
-        "mutation",
-        "mcdc"
-      ]
+      "missingEvidence": ["mutation", "mcdc"]
     },
     {
+      "name": "@liteship/gauntlet",
       "sourceLoc": 11711,
       "authoredEvidenceLoc": 8669,
       "ratioMilli": 740,
-      "missingEvidence": [
-        "mutation",
-        "mcdc"
-      ]
+      "missingEvidence": ["mutation", "mcdc"]
     },
     {
+      "name": "@liteship/audit",
       "sourceLoc": 7133,
       "authoredEvidenceLoc": 3944,
       "ratioMilli": 552,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/command",
       "sourceLoc": 7191,
       "authoredEvidenceLoc": 7676,
       "ratioMilli": 1067,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/cli",
       "sourceLoc": 18254,
       "authoredEvidenceLoc": 17078,
       "ratioMilli": 935,
       "missingEvidence": []
     },
     {
+      "name": "@liteship/mcp-server",
       "sourceLoc": 2094,
       "authoredEvidenceLoc": 3006,
       "ratioMilli": 1435,
       "missingEvidence": []
     },
     {
+      "name": "create-liteship",
       "sourceLoc": 304,
       "authoredEvidenceLoc": 388,
       "ratioMilli": 1276,
       "missingEvidence": []
     },
     {
+      "name": "liteship",
       "sourceLoc": 1196,
       "authoredEvidenceLoc": 2006,
       "ratioMilli": 1677,

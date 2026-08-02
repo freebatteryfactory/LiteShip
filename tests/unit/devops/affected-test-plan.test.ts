@@ -35,7 +35,7 @@ function inventory(
   },
 ): AssuranceInventory {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     packages: PACKAGE_CATALOG.map((record) => ({
       name: record.name,
       sourceLoc: 1,
@@ -64,6 +64,10 @@ function inventory(
       },
       evidenceFiles: evidence[record.name] ?? [],
     })),
+    evidenceOwnership: {
+      packageFiles: [],
+      repositoryTooling: { owner: 'repository/tooling', authoredEvidenceLoc: 0, generatedEvidenceLoc: 0, files: [] },
+    },
     nodeTestSelection,
     totals: {
       sourceLoc: 25,

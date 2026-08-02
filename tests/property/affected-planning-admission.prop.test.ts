@@ -14,7 +14,7 @@ const PATHS = [
 ] as const;
 const pathSet = fc.uniqueArray(fc.constantFrom(...PATHS), { minLength: 1, maxLength: PATHS.length });
 const INVENTORY: AssuranceInventory = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   packages: PACKAGE_CATALOG.map((record) => ({
     name: record.name,
     sourceLoc: 1,
@@ -48,6 +48,10 @@ const INVENTORY: AssuranceInventory = {
           ? Array.from({ length: 251 }, (_, index) => `tests/unit/canonical/impact-${index}.test.ts`)
           : [],
   })),
+  evidenceOwnership: {
+    packageFiles: [],
+    repositoryTooling: { owner: 'repository/tooling', authoredEvidenceLoc: 0, generatedEvidenceLoc: 0, files: [] },
+  },
   nodeTestSelection: {
     entrypoints: [
       'tests/browser/adaptive-runtime.browser.test.ts',

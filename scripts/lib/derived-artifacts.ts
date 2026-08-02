@@ -79,6 +79,15 @@ export const DERIVED_ARTIFACTS: readonly DerivedArtifact[] = Object.freeze([
     inPreflight: true,
   }),
   Object.freeze({
+    id: 'assurance-ratchet-identities',
+    kind: 'ratchet' as const,
+    paths: Object.freeze(['scripts/assurance-ratchet.json']),
+    regen: Object.freeze(['exec', 'tsx', 'scripts/gen-roster.ts', '--write']),
+    regenEnv: Object.freeze({}),
+    enforcedBy: 'tests/unit/devops/release-roster.test.ts',
+    inPreflight: true,
+  }),
+  Object.freeze({
     id: 'api-surface-snapshot',
     kind: 'ratchet' as const,
     paths: Object.freeze(['tests/fixtures/api-surface-snapshot.json']),

@@ -61,6 +61,7 @@ export const PUBLISHABLE_UMBRELLAS: readonly string[] = PACKAGE_CATALOG.filter(
 export const PUBLISHABLE_ROSTER: readonly string[] = PACKAGE_CATALOG.map((record) => record.name);
 
 export const PUBLISH_ROSTER_JSON = 'scripts/ci/publish-roster.json';
+export const ASSURANCE_RATCHET_JSON = 'scripts/assurance-ratchet.json';
 export const AUDIT_ROSTER_TS = 'packages/cli/src/internal/audit-package-catalog.generated.ts';
 export const COMMAND_SMOKE_TS = 'packages/command/src/commands/package-smoke-registry.generated.ts';
 export const CLI_METADATA_TS = 'packages/cli/src/internal/package-metadata-catalog.generated.ts';
@@ -100,6 +101,60 @@ export interface CatalogDrift {
 export interface CatalogSource {
   readonly path: string;
   readonly text: string;
+}
+
+/** The identity-bearing portion of the reviewed assurance ratchet. */
+interface AssuranceRatchetIdentityProjection {
+  readonly schemaVersion?: unknown;
+  readonly packages?: unknown;
+}
+
+/**
+ * Project package identities from the catalog while preserving reviewed metrics.
+ * Metrics remain ratchet data; only each row's redundant identity is generated.
+ */
+export function renderAssuranceRatchetIdentities(source: string): string {
+  let value: AssuranceRatchetIdentityProjection;
+  try {
+    value = JSON.parse(source) as AssuranceRatchetIdentityProjection;
+  } catch (cause) {
+    throw new Error(`${ASSURANCE_RATCHET_JSON}: invalid JSON: ${String(cause)}`);
+  }
+  if (value.schemaVersion !== 4 || !Array.isArray(value.packages) || value.packages.length !== PACKAGE_CATALOG.length) {
+    throw new Error(`${ASSURANCE_RATCHET_JSON}: schema-v4 package rows must match PACKAGE_CATALOG`);
+  }
+  const packages = value.packages.map((row, index) => {
+    if (typeof row !== 'object' || row === null || Array.isArray(row)) {
+      throw new Error(`${ASSURANCE_RATCHET_JSON}: package row ${index} must be an object`);
+    }
+    return { ...(row as Record<string, unknown>), name: PACKAGE_CATALOG[index]!.name };
+  });
+  return `${JSON.stringify({ ...value, packages }, null, 2)}\n`;
+}
+
+/** A renamed or reordered ratchet row is catalog drift, never positional authority. */
+export function collectAssuranceRatchetIdentityDrift(value: unknown): readonly CatalogDrift[] {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return [{ copy: ASSURANCE_RATCHET_JSON, detail: 'ratchet must be a schema-v4 object' }];
+  }
+  const candidate = value as AssuranceRatchetIdentityProjection;
+  if (candidate.schemaVersion !== 4 || !Array.isArray(candidate.packages)) {
+    return [{ copy: ASSURANCE_RATCHET_JSON, detail: 'ratchet must carry schema-v4 package rows' }];
+  }
+  const actual = candidate.packages.map((row) =>
+    typeof row === 'object' && row !== null && !Array.isArray(row) && typeof Reflect.get(row, 'name') === 'string'
+      ? (Reflect.get(row, 'name') as string)
+      : '<missing>',
+  );
+  const expected = PACKAGE_CATALOG.map((record) => record.name);
+  return arrayEqual(actual, expected)
+    ? []
+    : [
+        {
+          copy: ASSURANCE_RATCHET_JSON,
+          detail: `package row identities differ from PACKAGE_CATALOG: expected ${expected.join(', ')}; received ${actual.join(', ')}`,
+        },
+      ];
 }
 
 /** One byte-identical CLI fragment projected from its canonical authored owner. */
@@ -458,6 +513,7 @@ export function findAuthoredFleetLists(
     // observation. It is validated against the live packed fleet at admission;
     // it is not an independently authored roster owner.
     ONE_INSTALL_COST_BASELINE_JSON,
+    ASSURANCE_RATCHET_JSON,
     'scripts/ci/publish-roster.json',
     'tests/fixtures/api-surface-snapshot.json',
     'tests/fixtures/type-export-surface.json',
@@ -628,6 +684,11 @@ function writeIfChanged(relativePath: string, expected: string): void {
 
 function write(): number {
   for (const [relativePath, expected] of renderGeneratedProjections()) writeIfChanged(relativePath, expected);
+  const assuranceRatchet = readFileSync(resolve(REPO_ROOT, ASSURANCE_RATCHET_JSON), 'utf8');
+  const parsedAssuranceRatchet = JSON.parse(assuranceRatchet) as unknown;
+  if (collectAssuranceRatchetIdentityDrift(parsedAssuranceRatchet).length > 0) {
+    writeIfChanged(ASSURANCE_RATCHET_JSON, renderAssuranceRatchetIdentities(assuranceRatchet));
+  }
   const fragmentCount = writeCliFragmentProjections();
 
   for (const [relativePath, marker, render] of MARKDOWN_PROJECTIONS) {
@@ -921,6 +982,16 @@ function projectReferenceDrift(): readonly CatalogDrift[] {
   return validateProjectReferenceClosure(PACKAGE_CATALOG, configs, sources);
 }
 
+function assuranceRatchetIdentityDrift(): readonly CatalogDrift[] {
+  const path = resolve(REPO_ROOT, ASSURANCE_RATCHET_JSON);
+  if (!existsSync(path)) return [{ copy: ASSURANCE_RATCHET_JSON, detail: 'missing assurance ratchet' }];
+  try {
+    return collectAssuranceRatchetIdentityDrift(JSON.parse(readFileSync(path, 'utf8')) as unknown);
+  } catch (cause) {
+    return [{ copy: ASSURANCE_RATCHET_JSON, detail: `cannot parse assurance ratchet: ${String(cause)}` }];
+  }
+}
+
 export type ProjectionReader = (relativePath: string) => string | undefined;
 
 function readRepoProjection(relativePath: string): string | undefined {
@@ -966,11 +1037,12 @@ export async function collectRosterDrift(): Promise<readonly CatalogDrift[]> {
   const generatedProjections = renderGeneratedProjections();
   const catalog = catalogDrift();
   const projectReferences = projectReferenceDrift();
+  const assuranceRatchet = assuranceRatchetIdentityDrift();
   const generated = collectGeneratedProjectionDrift(readRepoProjection, generatedProjections);
   const fragments = collectCliFragmentProjectionDrift();
   const trackedSources = await trackedCatalogSources();
   const authoredLists = findAuthoredFleetLists(trackedSources, generatedProjections);
-  const drift = [...catalog, ...projectReferences, ...generated, ...fragments, ...authoredLists];
+  const drift = [...catalog, ...projectReferences, ...assuranceRatchet, ...generated, ...fragments, ...authoredLists];
 
   const publishJob = publishJobText(readReleaseYaml());
   if (publishJob.includes('@liteship/')) {
