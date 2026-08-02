@@ -205,6 +205,37 @@ describe('benchmark subject qualification properties', () => {
     expect(issueKinds(source, { ...distribution([subject]), name })).toContain('subject-construction-in-measured-body');
   });
 
+  it('a distribution name that merely CONTAINS the constructor terminal does not claim it (Codex review, confirmed P2)', () => {
+    // 'dag recreate merge' contains the substring 'create' without ever
+    // claiming a construction benchmark; the claim must match on token
+    // boundaries or setup stays inside the timed callback unchallenged.
+    const name = 'dag recreate merge';
+    const source = ["import { DAG } from '@liteship/core/graph';", `bench.add('${name}', () => DAG.create([]));`].join(
+      '\n',
+    );
+    const subject = moduleSubject({
+      origin: { kind: 'module', specifier: '@liteship/core/graph' },
+      symbol: 'DAG.create',
+      binding: 'DAG.create',
+    });
+    expect(issueKinds(source, { ...distribution([subject]), name })).toContain('subject-construction-in-measured-body');
+  });
+
+  it('an exact constructor-symbol claim on a token boundary still qualifies', () => {
+    const name = 'DAG.create() -- 64 nodes';
+    const source = ["import { DAG } from '@liteship/core/graph';", `bench.add('${name}', () => DAG.create([]));`].join(
+      '\n',
+    );
+    const subject = moduleSubject({
+      origin: { kind: 'module', specifier: '@liteship/core/graph' },
+      symbol: 'DAG.create',
+      binding: 'DAG.create',
+    });
+    expect(issueKinds(source, { ...distribution([subject]), name })).not.toContain(
+      'subject-construction-in-measured-body',
+    );
+  });
+
   it('refuses a same-root/same-terminal subject with a different member chain', () => {
     const source = [
       "import { Factory } from '@liteship/core/authoring';",
