@@ -1,13 +1,17 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { CHECK_REGISTRY } from '@liteship/command';
-import { globSync } from 'fast-glob';
 import {
+  WORKFLOW_READER_FAMILIES,
   buildLocalVerificationPlan,
+  discoverWorkflowContractTestPaths,
   isCiContractInput,
   isTypeDocProofInput,
   projectRepositoryQuickSteps,
+  workflowContractTestPaths,
+  workflowReaderFamiliesCoveredByTestSource,
 } from '../../../scripts/lib/local-verification-plan.js';
 
 describe('local verification plan', () => {
@@ -49,6 +53,7 @@ describe('local verification plan', () => {
       'test-constitution',
       'check-invariants',
       'projections',
+      'ci-contract',
       'docs:check',
     ]);
   });
@@ -86,6 +91,7 @@ describe('local verification plan', () => {
       ['run', 'test:constitution'],
       ['exec', 'tsx'],
       ['exec', 'vitest'],
+      ['exec', 'vitest'],
       ['run', 'docs:check:local'],
     ]);
   });
@@ -109,26 +115,63 @@ describe('local verification plan', () => {
     const untouched = buildLocalVerificationPlan({ staged: true, changedPaths: ['README.md'] });
     expect(touched.steps.some((step) => step.label === 'ci-contract')).toBe(true);
     expect(untouched.steps.some((step) => step.label === 'ci-contract')).toBe(false);
-    // Workspace mode leaves parity to the full vitest authority it already runs under.
-    expect(buildLocalVerificationPlan({ staged: false }).steps.some((step) => step.label === 'ci-contract')).toBe(
-      false,
+    // Workspace authority is fail-closed: it cannot infer that no CI contract
+    // input changed, so it always carries the complete contract proof.
+    expect(buildLocalVerificationPlan({ staged: false }).steps.some((step) => step.label === 'ci-contract')).toBe(true);
+  });
+
+  test('classifies imports from every declared workflow-reader family', () => {
+    const syntheticImports = WORKFLOW_READER_FAMILIES.map((family, index) =>
+      index === 0
+        ? `import '../../../${family.owner.replace(/\.ts$/u, '.js')}';`
+        : `import { law${index} } from '../../../${family.owner.replace(/\.ts$/u, '.js')}';`,
+    ).join('\n');
+    expect(workflowReaderFamiliesCoveredByTestSource(syntheticImports)).toEqual(
+      WORKFLOW_READER_FAMILIES.map((family) => family.id),
     );
+    expect(
+      workflowReaderFamiliesCoveredByTestSource(
+        `// scripts/lib/workflow-output-contract.js\nconst note = 'workflow-action-pins.js';`,
+      ),
+    ).toEqual([]);
+  });
+
+  test('the live discovery fails closed on an empty census or an uncovered declared reader family', () => {
+    const root = mkdtempSync(join(tmpdir(), 'liteship-workflow-law-census-'));
+    try {
+      mkdirSync(join(root, 'tests'), { recursive: true });
+      expect(() => discoverWorkflowContractTestPaths(root)).toThrow(/discovered zero covering tests/u);
+
+      const completeSource = WORKFLOW_READER_FAMILIES.map(
+        (family) => `import '../../../${family.owner.replace(/\.ts$/u, '.js')}';`,
+      ).join('\n');
+      writeFileSync(join(root, 'tests', 'complete.test.ts'), completeSource);
+      expect(discoverWorkflowContractTestPaths(root)).toEqual(['tests/complete.test.ts']);
+
+      const omitted = WORKFLOW_READER_FAMILIES.at(-1);
+      expect(omitted).toBeDefined();
+      writeFileSync(
+        join(root, 'tests', 'complete.test.ts'),
+        WORKFLOW_READER_FAMILIES.slice(0, -1)
+          .map((family) => `import '../../../${family.owner.replace(/\.ts$/u, '.js')}';`)
+          .join('\n'),
+      );
+      expect(() => discoverWorkflowContractTestPaths(root)).toThrow(
+        `no covering test for declared reader families: ${omitted?.id}`,
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   test('every workflow-contract law is enrolled in the staged ci.yml plan', () => {
-    const repoRoot = resolve(import.meta.dirname, '../../..');
-    const importers = globSync('tests/**/*.test.ts', { cwd: repoRoot })
-      .filter((path) => {
-        const text = readFileSync(resolve(repoRoot, path), 'utf8');
-        return /from\s+['"][^'"]*(?:workflow-action-pins|workflow-output-contract)\.js['"]/u.test(text);
-      })
-      .sort();
-    expect(importers.length).toBeGreaterThanOrEqual(3);
+    const contractLaws = workflowContractTestPaths();
+    expect(contractLaws).toHaveLength(20);
 
     const argv = buildLocalVerificationPlan({ staged: true, changedPaths: ['.github/workflows/ci.yml'] }).steps.flatMap(
       (step) => step.argv,
     );
-    expect(importers.filter((path) => !argv.includes(path))).toEqual([]);
+    expect(contractLaws.filter((path) => !argv.includes(path))).toEqual([]);
   });
 
   test('is exactly the blocking repository quick projection and cannot silently omit a new blocker', () => {

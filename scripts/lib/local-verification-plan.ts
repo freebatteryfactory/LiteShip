@@ -1,5 +1,8 @@
-/** Pure local-verification plan used by both humans and agents. @module */
+/** Live-census local-verification plan used by both humans and agents. @module */
 
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import fg from 'fast-glob';
 import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
 import { preflightEnforcerPaths } from './derived-artifacts.js';
 
@@ -66,29 +69,80 @@ const DOCS_INPUT_PATTERNS: readonly RegExp[] = Object.freeze([
   /^docs\/api(?:\/|$)/u,
 ]);
 
+export interface WorkflowReaderFamily {
+  readonly id: string;
+  /** Repository-relative production module that owns the workflow-reading law. */
+  readonly owner: string;
+}
+
+/**
+ * Production owners that interpret workflow bytes or workflow-owned execution
+ * policy. A test importing one of these owners is a CI-contract law. Keeping
+ * the declaration at the reader boundary means new covering suites enroll by
+ * import instead of waiting for another hand-maintained filename addition.
+ */
+export const WORKFLOW_READER_FAMILIES: readonly WorkflowReaderFamily[] = Object.freeze([
+  Object.freeze({ id: 'action-pins', owner: 'packages/cli/src/internal/workflow-action-pins.ts' }),
+  Object.freeze({ id: 'ci-authority', owner: 'scripts/lib/ci-authority.ts' }),
+  Object.freeze({ id: 'ci-test-host', owner: 'scripts/lib/ci-test-host-contract.ts' }),
+  Object.freeze({ id: 'prebuild-closure', owner: 'scripts/lib/prebuild-closure-contract.ts' }),
+  Object.freeze({ id: 'release-promotion', owner: 'scripts/lib/release-promotion-contract.ts' }),
+  Object.freeze({ id: 'supply-chain', owner: 'packages/cli/src/internal/supply-chain.ts' }),
+  Object.freeze({ id: 'workflow-output', owner: 'scripts/lib/workflow-output-contract.ts' }),
+]);
+
+const IMPORT_SPECIFIER = /(?:from\s+|import\s*\(\s*|import\s+)['"]([^'"]+)['"]/gu;
+
+/** Classify the declared workflow-reader families imported by test source. */
+export function workflowReaderFamiliesCoveredByTestSource(source: string): readonly string[] {
+  const specifiers = [...source.matchAll(IMPORT_SPECIFIER)].flatMap((match) =>
+    match[1] === undefined ? [] : [match[1]],
+  );
+  return Object.freeze(
+    WORKFLOW_READER_FAMILIES.filter((family) => {
+      const runtimeOwner = family.owner.replace(/\.ts$/u, '.js');
+      return specifiers.some((specifier) => specifier.endsWith(runtimeOwner));
+    }).map((family) => family.id),
+  );
+}
+
+/** Derive every live law that directly covers a declared workflow reader. */
+export function discoverWorkflowContractTestPaths(repoRoot: string): readonly string[] {
+  const coveredFamilies = new Set<string>();
+  const paths = fg
+    .sync('tests/**/*.test.ts', { cwd: repoRoot, onlyFiles: true })
+    .filter((path) => {
+      const families = workflowReaderFamiliesCoveredByTestSource(readFileSync(resolve(repoRoot, path), 'utf8'));
+      for (const family of families) coveredFamilies.add(family);
+      return families.length > 0;
+    })
+    .sort();
+  if (paths.length === 0) throw new TypeError('workflow-contract law census discovered zero covering tests');
+  const missingFamilies = WORKFLOW_READER_FAMILIES.filter((family) => !coveredFamilies.has(family.id));
+  if (missingFamilies.length > 0) {
+    throw new TypeError(
+      `workflow-contract law census has no covering test for declared reader families: ${missingFamilies
+        .map((family) => family.id)
+        .join(', ')}`,
+    );
+  }
+  return Object.freeze(paths);
+}
+
 /**
  * Inputs to the CI contract: the workflow files, the plan projections, and the
  * registry they project. Editing any of these without running the parity
  * proof is how yml/registry drift reaches CI (the pr-affected reds of
  * 2026-07-25 were exactly this: a workflow edit whose parity assertions first
- * ran on the runner). Staged changes here append the complete contract suite.
+ * ran on the runner). Workspace mode always carries the complete suite; staged
+ * mode appends it only when one of these inputs is affected.
  */
-const CI_CONTRACT_TEST_PATHS: readonly string[] = Object.freeze([
-  'tests/fuzz/cold-ci-authority-parsers-fuzz.test.ts',
-  'tests/property/cold-checkout-authorities.prop.test.ts',
-  'tests/property/workflow-output-contract.prop.test.ts',
-  'tests/property/workflow-grammar-corpus.prop.test.ts',
-  'tests/property/workflow-scanner-grammar.prop.test.ts',
-  'tests/regression/cold-checkout-ci-incidents.test.ts',
-  'tests/unit/cli/lib/campaign-wall-budget.test.ts',
-  'tests/unit/cli/workflow-action-pins.test.ts',
-  'tests/unit/devops/affected-result-artifacts.test.ts',
-  'tests/unit/devops/ci-authority.test.ts',
-  'tests/unit/devops/parallel-ci-artifacts.test.ts',
-  'tests/unit/devops/release-promotion.test.ts',
-  'tests/unit/meta/ci-registry-parity.test.ts',
-  'tests/unit/meta/workflow-output-delimiter.test.ts',
-]);
+const CI_CONTRACT_TEST_PATHS = discoverWorkflowContractTestPaths(resolve(import.meta.dirname, '../..'));
+
+/** The deterministic live CI-contract law census used by the local plan. */
+export function workflowContractTestPaths(): readonly string[] {
+  return CI_CONTRACT_TEST_PATHS;
+}
 
 const CI_CONTRACT_INPUT_PATTERNS: readonly RegExp[] = Object.freeze([
   /^\.github\/workflows\//u,
@@ -147,7 +201,7 @@ export function buildLocalVerificationPlan(input: {
 }): LocalVerificationPlan {
   const quickSteps = projectRepositoryQuickSteps();
   const docsAffected = !input.staged || (input.changedPaths ?? []).some(isTypeDocProofInput);
-  const ciContractAffected = input.staged && (input.changedPaths ?? []).some(isCiContractInput);
+  const ciContractAffected = !input.staged || (input.changedPaths ?? []).some(isCiContractInput);
   const steps: LocalVerificationStep[] = [...quickSteps, INVARIANTS_STEP, PROJECTIONS_STEP];
   if (ciContractAffected) steps.push(CI_CONTRACT_STEP);
   if (docsAffected) steps.push(DOCS_STEP);
