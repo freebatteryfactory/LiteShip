@@ -35,6 +35,13 @@ const EVASIONS = [
   { name: 'aliased eval reference', source: 'const e = eval; e(x)' },
   { name: 'global receiver Function', source: 'globalThis.Function("x")' },
   { name: 'data URL dynamic import', source: 'import("data:text/javascript,export default 1")' },
+  // Codex review on PR #197, confirmed P1: a computed member whose key is not
+  // a string literal was silently skipped, so any indirection past the global
+  // receiver escaped. The key spelling is an open grammar; only a literal the
+  // classifier can read is provably safe.
+  { name: 'identifier-keyed global member', source: "const key = 'eval'; globalThis[key](payload)" },
+  { name: 'concatenation-keyed global member', source: 'window["ev" + "al"](payload)' },
+  { name: 'computed-key global member', source: 'self[KEYS.eval](payload)' },
 ] as const;
 
 function runtimeSource(path: string): boolean {

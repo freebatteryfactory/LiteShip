@@ -47,6 +47,8 @@ interface StringScalar {
   readonly escaped: boolean;
   readonly closed: boolean;
   readonly interpolated: boolean;
+  /** Index just past the literal — lets a caller prove nothing else composes it. */
+  readonly end: number;
 }
 
 interface ProvenBinding {
@@ -222,10 +224,18 @@ function stringScalarAt(source: string, offset: number): StringScalar | null {
       if (index < source.length) value += source[index]!;
       continue;
     }
-    if (char === quote) return { value, escaped, closed: true, interpolated: quote === '`' && value.includes('${') };
+    if (char === quote) {
+      return { value, escaped, closed: true, interpolated: quote === '`' && value.includes('${'), end: index + 1 };
+    }
     value += char;
   }
-  return { value, escaped, closed: false, interpolated: quote === '`' && value.includes('${') };
+  return {
+    value,
+    escaped,
+    closed: false,
+    interpolated: quote === '`' && value.includes('${'),
+    end: source.length,
+  };
 }
 
 function immediateMemberReceiver(masked: string, tokenOffset: number): string | null {
@@ -296,6 +306,25 @@ export function classifyDynamicCodeSource(source: string): readonly DynamicCodeK
     const receiver = match[1]!;
     const scope = scopes[match.index] ?? '/';
     const scalar = stringScalarAt(commentStripped, match.index + match[0].length);
+    // ALLOWLIST: on a global receiver the ONLY provably safe key is a single
+    // complete literal that closes the subscript by itself. Anything else —
+    // an identifier (`globalThis[key]`), a concatenation
+    // (`window["ev" + "al"]`), a computed lookup (`self[KEYS.eval]`) — is an
+    // open grammar the classifier cannot read, so it is residue in both kinds
+    // (Codex review on PR #197, confirmed P1). On a NON-global receiver the
+    // DYNAMIC_TOKEN pass owns the decision, so silence here stays correct.
+    // The subscript must CLOSE in the text under analysis: a line pass sees
+    // `window[` truncated at the newline, and the collapsed whole-source pass
+    // owns that shape. An unclosed fragment is deferred, never cleared.
+    const subscriptCloses = commentStripped.indexOf(']', match.index + match[0].length) !== -1;
+    if (GLOBAL_RECEIVER.has(receiver) && subscriptCloses) {
+      const soleLiteralKey = scalar !== null && scalar.closed && nextNonWhitespace(commentStripped, scalar.end) === ']';
+      if (!soleLiteralKey) {
+        kinds.add('EVAL_CALL');
+        kinds.add('FUNCTION_CONSTRUCTOR');
+        continue;
+      }
+    }
     if (scalar === null) continue;
     const receiverIsSafe =
       !GLOBAL_RECEIVER.has(receiver) &&
