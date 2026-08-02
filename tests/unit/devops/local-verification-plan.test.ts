@@ -4,13 +4,18 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { CHECK_REGISTRY } from '@liteship/command';
 import {
+  PREFLIGHT_T4_DEFAULT_MAX_MS,
   WORKFLOW_READER_FAMILIES,
+  assertLocalVerificationBudgetPolicy,
   assertLocalVerificationCheckPartition,
+  assertLocalVerificationDurationWithinBudget,
   buildLocalVerificationPlan,
   discoverWorkflowContractTestPaths,
+  formatLocalVerificationBudgetPolicy,
   formatLocalVerificationCheckPartition,
   isCiContractInput,
   isTypeDocProofInput,
+  localVerificationBudgetRemainingMs,
   projectRepositoryQuickSteps,
   workflowContractTestPaths,
   workflowReaderFamiliesCoveredByTestSource,
@@ -193,7 +198,7 @@ describe('local verification plan', () => {
     const workspace = buildLocalVerificationPlan({ staged: false });
     const staged = buildLocalVerificationPlan({ staged: true, changedPaths: ['README.md'] });
 
-    expect(workspace.schema).toBe('liteship/local-verification-plan@2');
+    expect(workspace.schema).toBe('liteship/local-verification-plan@3');
     for (const plan of [workspace, staged]) {
       const partition = [...plan.registryChecks.selected, ...plan.registryChecks.excluded];
       expect(partition).toHaveLength(CHECK_REGISTRY.length);
@@ -273,5 +278,72 @@ describe('local verification plan', () => {
       );
     }
     expect(output.match(/^- check\//gmu)).toHaveLength(CHECK_REGISTRY.length);
+  });
+
+  test('derives the executable T4 budget from repeated observed required-lane timings', () => {
+    const plan = buildLocalVerificationPlan({ staged: true, changedPaths: [] });
+
+    expect(PREFLIGHT_T4_DEFAULT_MAX_MS).toBe(5 * 60 * 1_000);
+    expect(plan.budget).toEqual({
+      schema: 'liteship/local-preflight-budget-policy@1',
+      ownerDecision: 'T4-default',
+      scope: 'static-plan',
+      maxDurationMs: PREFLIGHT_T4_DEFAULT_MAX_MS,
+      enforcement: 'hard-timeout-fail-closed',
+      evidence: {
+        kind: 'observed-required-lane',
+        durationsMs: [143_600, 150_700, 141_800, 149_000, 131_900],
+        maxObservedDurationMs: 150_700,
+        headroomMs: PREFLIGHT_T4_DEFAULT_MAX_MS - 150_700,
+      },
+    });
+    expect(() => assertLocalVerificationBudgetPolicy(plan.budget)).not.toThrow();
+    expect(formatLocalVerificationBudgetPolicy(plan.budget)).toContain(`maxDurationMs=${PREFLIGHT_T4_DEFAULT_MAX_MS}`);
+    expect(formatLocalVerificationBudgetPolicy(plan.budget)).toContain('samples=5');
+  });
+
+  test('fails closed at the T4 wall boundary without dropping containment steps', () => {
+    const plan = buildLocalVerificationPlan({ staged: false });
+
+    expect(localVerificationBudgetRemainingMs(plan.budget, plan.budget.maxDurationMs - 1)).toBe(1);
+    expect(() => localVerificationBudgetRemainingMs(plan.budget, plan.budget.maxDurationMs)).toThrow(
+      /T4 budget exhausted/u,
+    );
+    expect(() => assertLocalVerificationDurationWithinBudget(plan.budget, plan.budget.maxDurationMs)).not.toThrow();
+    expect(() => assertLocalVerificationDurationWithinBudget(plan.budget, plan.budget.maxDurationMs + 1)).toThrow(
+      /T4 budget exceeded/u,
+    );
+    expect(plan.steps.map((step) => step.label)).toEqual(
+      expect.arrayContaining(['check-invariants', 'projections', 'ci-contract']),
+    );
+  });
+
+  test('refuses a widened owner default or drifted timing derivation', () => {
+    const policy = buildLocalVerificationPlan({ staged: true, changedPaths: [] }).budget;
+
+    expect(() =>
+      assertLocalVerificationBudgetPolicy({
+        ...policy,
+        maxDurationMs: policy.maxDurationMs + 1,
+      }),
+    ).toThrow(/must equal the owner T4 default/u);
+    expect(() =>
+      assertLocalVerificationBudgetPolicy({
+        ...policy,
+        evidence: { ...policy.evidence, maxObservedDurationMs: policy.evidence.maxObservedDurationMs - 1 },
+      }),
+    ).toThrow(/timing evidence max drifted/u);
+    expect(() =>
+      assertLocalVerificationBudgetPolicy({
+        ...policy,
+        evidence: { ...policy.evidence, durationsMs: [] },
+      }),
+    ).toThrow(/requires observed timing evidence/u);
+    expect(() =>
+      assertLocalVerificationBudgetPolicy({
+        ...policy,
+        evidence: { ...policy.evidence, durationsMs: policy.evidence.durationsMs.slice(1) },
+      }),
+    ).toThrow(/observed required-lane census/u);
   });
 });

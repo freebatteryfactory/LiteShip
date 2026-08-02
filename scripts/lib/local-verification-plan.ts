@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import fg from 'fast-glob';
 import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
+import { ValidationError } from '../../packages/error/src/index.js';
 import { preflightEnforcerPaths } from './derived-artifacts.js';
 
 export interface LocalVerificationStep {
@@ -29,6 +30,137 @@ export interface LocalVerificationCheckPartition {
   readonly excluded: readonly LocalVerificationCheckSummary[];
 }
 
+export const PREFLIGHT_T4_DEFAULT_MAX_MS = 5 * 60 * 1_000;
+
+/** Executable owner policy for the default local static-plan wall budget. */
+export interface LocalVerificationBudgetPolicy {
+  readonly schema: 'liteship/local-preflight-budget-policy@1';
+  readonly ownerDecision: 'T4-default';
+  readonly scope: 'static-plan';
+  readonly maxDurationMs: number;
+  readonly enforcement: 'hard-timeout-fail-closed';
+  readonly evidence: {
+    readonly kind: 'observed-required-lane';
+    readonly durationsMs: readonly number[];
+    readonly maxObservedDurationMs: number;
+    readonly headroomMs: number;
+  };
+}
+
+/**
+ * Initial W1.7 required-lane timing distribution. The first four observations
+ * are the packet 1/2 staged admission + hook replays recorded in the execution
+ * calibration; the fifth is packet 3's clean-head staged replay at bd251cd7.
+ * All retained invariant/projection containment and ran without TypeDoc.
+ */
+const OBSERVED_REQUIRED_LANE_DURATIONS_MS = Object.freeze([143_600, 150_700, 141_800, 149_000, 131_900]);
+
+/** Refuse a widened owner ruling, malformed evidence, or stale derivation. */
+export function assertLocalVerificationBudgetPolicy(policy: LocalVerificationBudgetPolicy): void {
+  if (policy.maxDurationMs !== PREFLIGHT_T4_DEFAULT_MAX_MS) {
+    throw new TypeError(
+      `local preflight maxDurationMs must equal the owner T4 default ${PREFLIGHT_T4_DEFAULT_MAX_MS}, received ${policy.maxDurationMs}`,
+    );
+  }
+  if (
+    policy.schema !== 'liteship/local-preflight-budget-policy@1' ||
+    policy.ownerDecision !== 'T4-default' ||
+    policy.scope !== 'static-plan' ||
+    policy.enforcement !== 'hard-timeout-fail-closed'
+  ) {
+    throw new TypeError('local preflight budget policy identity drifted');
+  }
+  if (
+    policy.evidence.durationsMs.length === 0 ||
+    policy.evidence.durationsMs.some((durationMs) => !Number.isInteger(durationMs) || durationMs <= 0)
+  ) {
+    throw new TypeError('local preflight budget policy requires observed timing evidence');
+  }
+  if (
+    policy.evidence.kind !== 'observed-required-lane' ||
+    !haveSameValues(policy.evidence.durationsMs, OBSERVED_REQUIRED_LANE_DURATIONS_MS)
+  ) {
+    throw new TypeError('local preflight timing evidence drifted from the observed required-lane census');
+  }
+  const maxObservedDurationMs = Math.max(...policy.evidence.durationsMs);
+  if (policy.evidence.maxObservedDurationMs !== maxObservedDurationMs) {
+    throw new TypeError('local preflight timing evidence max drifted from its observed durations');
+  }
+  if (policy.evidence.headroomMs !== policy.maxDurationMs - maxObservedDurationMs) {
+    throw new TypeError('local preflight timing evidence headroom drifted from the T4 default');
+  }
+  if (policy.evidence.headroomMs < 0) {
+    throw new TypeError('local preflight observed required lane exceeds the owner T4 default');
+  }
+}
+
+function deriveLocalVerificationBudgetPolicy(): LocalVerificationBudgetPolicy {
+  const maxObservedDurationMs = Math.max(...OBSERVED_REQUIRED_LANE_DURATIONS_MS);
+  const policy: LocalVerificationBudgetPolicy = Object.freeze({
+    schema: 'liteship/local-preflight-budget-policy@1',
+    ownerDecision: 'T4-default',
+    scope: 'static-plan',
+    maxDurationMs: PREFLIGHT_T4_DEFAULT_MAX_MS,
+    enforcement: 'hard-timeout-fail-closed',
+    evidence: Object.freeze({
+      kind: 'observed-required-lane',
+      durationsMs: OBSERVED_REQUIRED_LANE_DURATIONS_MS,
+      maxObservedDurationMs,
+      headroomMs: PREFLIGHT_T4_DEFAULT_MAX_MS - maxObservedDurationMs,
+    }),
+  });
+  assertLocalVerificationBudgetPolicy(policy);
+  return policy;
+}
+
+const LOCAL_VERIFICATION_BUDGET_POLICY = deriveLocalVerificationBudgetPolicy();
+
+function assertElapsedMilliseconds(elapsedMs: number): void {
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) {
+    throw new TypeError(`local preflight elapsedMs must be finite and non-negative, received ${elapsedMs}`);
+  }
+}
+
+/** Remaining hard child budget; zero remaining is already a red verdict. */
+export function localVerificationBudgetRemainingMs(policy: LocalVerificationBudgetPolicy, elapsedMs: number): number {
+  assertLocalVerificationBudgetPolicy(policy);
+  assertElapsedMilliseconds(elapsedMs);
+  const remainingMs = policy.maxDurationMs - elapsedMs;
+  if (remainingMs <= 0) {
+    throw ValidationError(
+      'localVerificationBudgetRemainingMs',
+      `T4 budget exhausted after ${elapsedMs}ms (maximum ${policy.maxDurationMs}ms); no remaining step may be skipped`,
+    );
+  }
+  return remainingMs;
+}
+
+/** Equal to the ceiling is admitted; any overrun is a fail-closed red. */
+export function assertLocalVerificationDurationWithinBudget(
+  policy: LocalVerificationBudgetPolicy,
+  elapsedMs: number,
+): void {
+  assertLocalVerificationBudgetPolicy(policy);
+  assertElapsedMilliseconds(elapsedMs);
+  if (elapsedMs > policy.maxDurationMs) {
+    throw ValidationError(
+      'assertLocalVerificationDurationWithinBudget',
+      `T4 budget exceeded: ${elapsedMs}ms > ${policy.maxDurationMs}ms; the required lane was not green`,
+    );
+  }
+}
+
+/** Human projection of the same policy carried by plan JSON. */
+export function formatLocalVerificationBudgetPolicy(policy: LocalVerificationBudgetPolicy): string {
+  assertLocalVerificationBudgetPolicy(policy);
+  return (
+    `[preflight-budget] ${policy.ownerDecision} scope=${policy.scope} ` +
+    `maxDurationMs=${policy.maxDurationMs} enforcement=${policy.enforcement}; ` +
+    `samples=${policy.evidence.durationsMs.length} maxObservedDurationMs=${policy.evidence.maxObservedDurationMs} ` +
+    `headroomMs=${policy.evidence.headroomMs}`
+  );
+}
+
 const INVARIANTS_STEP: LocalVerificationStep = Object.freeze({
   checkId: null,
   label: 'check-invariants',
@@ -37,9 +169,10 @@ const INVARIANTS_STEP: LocalVerificationStep = Object.freeze({
 });
 
 export interface LocalVerificationPlan {
-  readonly schema: 'liteship/local-verification-plan@2';
+  readonly schema: 'liteship/local-verification-plan@3';
   readonly mode: 'workspace' | 'staged';
   readonly docsReason: 'workspace-authority' | 'staged-docs-input' | 'not-affected';
+  readonly budget: LocalVerificationBudgetPolicy;
   readonly steps: readonly LocalVerificationStep[];
   readonly registryChecks: LocalVerificationCheckPartition;
 }
@@ -334,9 +467,10 @@ export function buildLocalVerificationPlan(input: {
   if (docsAffected) steps.push(DOCS_STEP);
   const selectedCheckIds = steps.flatMap((step) => (step.checkId === null ? [] : [step.checkId]));
   return Object.freeze({
-    schema: 'liteship/local-verification-plan@2',
+    schema: 'liteship/local-verification-plan@3',
     mode: input.staged ? 'staged' : 'workspace',
     docsReason: !input.staged ? 'workspace-authority' : docsAffected ? 'staged-docs-input' : 'not-affected',
+    budget: LOCAL_VERIFICATION_BUDGET_POLICY,
     steps: Object.freeze(steps),
     registryChecks: buildLocalVerificationCheckPartition(selectedCheckIds),
   });
