@@ -21,7 +21,11 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, resolve } from 'node:path';
-import { classifyDynamicCodeLine, scanShippedDynamicCode } from '../../../scripts/lib/dynamic-code-residue.js';
+import {
+  classifyDynamicCodeLine,
+  classifyDynamicCodeSource,
+  scanShippedDynamicCode,
+} from '../../../scripts/lib/dynamic-code-residue.js';
 
 const ROOT = resolve(import.meta.dirname, '../../..');
 const RUNTIME_EXTENSIONS = ['.astro', '.js', '.mjs', '.cjs'] as const;
@@ -135,6 +139,88 @@ describe('dynamic code in shipped non-TypeScript sources', () => {
     it('a template-composed import specifier is refused when its scheme cannot be classified', () => {
       expect(classifyDynamicCodeLine('import(`da${piece}ta:payload`)')).toBe('DYNAMIC_IMPORT');
       expect(classifyDynamicCodeLine('import(`https://safe.example/module.js`)')).toBeNull();
+    });
+
+    it('refuses a pathToFileURL spelling that shadows the imported node:url binding', () => {
+      const source = [
+        "import { pathToFileURL as real } from 'node:url';",
+        "const pathToFileURL = () => ({ href: 'data:text/javascript,export default 1' });",
+        'import(pathToFileURL().href);',
+      ].join('\n');
+      expect(classifyDynamicCodeSource(source)).toContain('DYNAMIC_IMPORT');
+    });
+
+    it.each([
+      {
+        name: 'direct ESM import',
+        source: "import { pathToFileURL } from 'node:url'; import(pathToFileURL(file).href);",
+      },
+      {
+        name: 'aliased ESM import',
+        source: "import { pathToFileURL as real } from 'node:url'; import(real(file).href);",
+      },
+      {
+        name: 'direct CJS destructuring',
+        source: "const { pathToFileURL } = require('node:url'); import(pathToFileURL(file).href);",
+      },
+      {
+        name: 'aliased CJS destructuring',
+        source: "const { pathToFileURL: real } = require('node:url'); import(real(file).href);",
+      },
+      {
+        name: 'unrelated inner shadow',
+        source: [
+          "import { pathToFileURL } from 'node:url';",
+          "{ const pathToFileURL = () => ({ href: 'data:text/javascript,evil' }); }",
+          'import(pathToFileURL(file).href);',
+        ].join('\n'),
+      },
+    ])('$name file-URL imports are admitted by their resolved binding', ({ source }) => {
+      expect(classifyDynamicCodeSource(source)).not.toContain('DYNAMIC_IMPORT');
+    });
+
+    it.each([
+      {
+        name: 'same-name ESM redeclaration',
+        source: [
+          "import { pathToFileURL } from 'node:url';",
+          "const pathToFileURL = () => ({ href: 'data:text/javascript,evil' });",
+          'import(pathToFileURL().href);',
+        ].join('\n'),
+      },
+      {
+        name: 'relevant inner shadow',
+        source: [
+          "import { pathToFileURL } from 'node:url';",
+          "{ const pathToFileURL = () => ({ href: 'data:text/javascript,evil' }); import(pathToFileURL().href); }",
+        ].join('\n'),
+      },
+      {
+        name: 'unrelated node:url require',
+        source: [
+          "const { fileURLToPath } = require('node:url');",
+          "const pathToFileURL = () => ({ href: 'data:text/javascript,evil' });",
+          'import(pathToFileURL().href);',
+        ].join('\n'),
+      },
+      {
+        name: 'shadowed require',
+        source: [
+          "const require = () => ({ pathToFileURL: () => ({ href: 'data:text/javascript,evil' }) });",
+          "const { pathToFileURL } = require('node:url');",
+          'import(pathToFileURL().href);',
+        ].join('\n'),
+      },
+      {
+        name: 'mutable CJS destructuring',
+        source: [
+          "let { pathToFileURL } = require('node:url');",
+          "pathToFileURL = () => ({ href: 'data:text/javascript,evil' });",
+          'import(pathToFileURL().href);',
+        ].join('\n'),
+      },
+    ])('$name cannot license a file-URL import', ({ source }) => {
+      expect(classifyDynamicCodeSource(source)).toContain('DYNAMIC_IMPORT');
     });
 
     it('an interleaved comment cannot hide a global eval reference', () => {

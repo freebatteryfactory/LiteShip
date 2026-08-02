@@ -13,6 +13,7 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import ts from 'typescript';
 import { ValidationError } from '../../packages/error/src/index.js';
 import { getEnvironmentConfig } from '../../packages/vite/src/environments.js';
 
@@ -42,15 +43,6 @@ const COMPUTED_MEMBER = /\b([A-Za-z_$][\w$]*)\s*(?:\?\.)?\s*\[/gu;
  * the argument: `node:url`'s `pathToFileURL` always yields a `file:` URL, so
  * the result can never carry a scheme {@link DANGEROUS_IMPORT_SCHEME} blocks.
  */
-const FILE_URL_SPECIFIER = /^\s*pathToFileURL\s*\(/u;
-
-/** The binding must RESOLVE to `node:url` — a local shadow proves nothing. */
-const FILE_URL_BUILDER_IMPORT =
-  /(?:import\s*\{[^}]*\bpathToFileURL\b[^}]*\}\s*from\s*['"]node:url['"]|require\s*\(\s*['"]node:url['"]\s*\))/u;
-
-function importsFileUrlBuilder(source: string): boolean {
-  return FILE_URL_BUILDER_IMPORT.test(source);
-}
 const DANGEROUS_IMPORT_SCHEME = /^(?:data|blob|javascript):/iu;
 const SAFE_CONST_DYNAMIC_BINDING =
   /\bconst\s+(eval|Function)\s*=\s*(?:(?:async\s+)?function\b|(?:async\s*)?\([^)]*\)\s*=>|(?:async\s+)?[A-Za-z_$][\w$]*\s*=>)/gu;
@@ -70,6 +62,115 @@ interface StringScalar {
 interface ProvenBinding {
   readonly name: string;
   readonly scope: string;
+}
+
+const FILE_URL_BINDING_FILE = 'dynamic-code-binding.ts';
+
+function nodeUrlModuleSpecifier(node: ts.Node): boolean {
+  return ts.isStringLiteral(node) && node.text === 'node:url';
+}
+
+function importedPathToFileUrl(declaration: ts.Declaration): boolean {
+  if (ts.isImportSpecifier(declaration)) {
+    const importDeclaration = declaration.parent.parent.parent;
+    return (
+      !declaration.isTypeOnly &&
+      !importDeclaration.importClause?.isTypeOnly &&
+      (declaration.propertyName?.text ?? declaration.name.text) === 'pathToFileURL' &&
+      nodeUrlModuleSpecifier(importDeclaration.moduleSpecifier)
+    );
+  }
+  if (!ts.isBindingElement(declaration) || !ts.isObjectBindingPattern(declaration.parent)) return false;
+  const importedName = declaration.propertyName ?? declaration.name;
+  if (!(ts.isIdentifier(importedName) || ts.isStringLiteral(importedName)) || importedName.text !== 'pathToFileURL') {
+    return false;
+  }
+  const variableDeclaration = declaration.parent.parent;
+  if (!ts.isVariableDeclaration(variableDeclaration)) return false;
+  const declarationList = variableDeclaration.parent;
+  if (!ts.isVariableDeclarationList(declarationList) || !(declarationList.flags & ts.NodeFlags.Const)) return false;
+  const initializer = variableDeclaration.initializer;
+  return (
+    initializer !== undefined &&
+    ts.isCallExpression(initializer) &&
+    ts.isIdentifier(initializer.expression) &&
+    initializer.expression.text === 'require' &&
+    initializer.arguments.length === 1 &&
+    nodeUrlModuleSpecifier(initializer.arguments[0]!)
+  );
+}
+
+/**
+ * Prove that one dynamic import's file-URL callee resolves to the actual local
+ * binding imported from `node:url`. Tokens and file-wide import presence are
+ * not authority: the call-site symbol must have exactly one declaration, and
+ * that declaration must be a direct/aliased ESM import or CJS destructuring of
+ * the exported `pathToFileURL` binding. A local shadow or redeclaration therefore
+ * fails closed. A CJS `require` must itself be unbound, so a local decoy cannot
+ * manufacture the same syntax.
+ */
+function fileUrlSpecifierProven(fileContext: string, importOffset: number): boolean {
+  if (importOffset < 0) return false;
+  const options: ts.CompilerOptions = {
+    allowJs: true,
+    module: ts.ModuleKind.ESNext,
+    noLib: true,
+    noResolve: true,
+    target: ts.ScriptTarget.Latest,
+  };
+  const sourceFile = ts.createSourceFile(
+    FILE_URL_BINDING_FILE,
+    fileContext,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  );
+  const host = ts.createCompilerHost(options, true);
+  host.fileExists = (fileName) => fileName === FILE_URL_BINDING_FILE;
+  host.readFile = (fileName) => (fileName === FILE_URL_BINDING_FILE ? fileContext : undefined);
+  host.getSourceFile = (fileName) => (fileName === FILE_URL_BINDING_FILE ? sourceFile : undefined);
+  const program = ts.createProgram([FILE_URL_BINDING_FILE], options, host);
+  const checker = program.getTypeChecker();
+  let importCall: ts.CallExpression | undefined;
+  const findImportCall = (node: ts.Node): void => {
+    if (
+      importCall === undefined &&
+      ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      node.expression.getStart(sourceFile) === importOffset
+    ) {
+      importCall = node;
+      return;
+    }
+    ts.forEachChild(node, findImportCall);
+  };
+  findImportCall(sourceFile);
+  if (importCall === undefined || importCall.arguments.length !== 1) return false;
+  const specifier = importCall.arguments[0]!;
+  if (
+    !ts.isPropertyAccessExpression(specifier) ||
+    specifier.name.text !== 'href' ||
+    !ts.isCallExpression(specifier.expression) ||
+    !ts.isIdentifier(specifier.expression.expression)
+  ) {
+    return false;
+  }
+  const callee = specifier.expression.expression;
+  const symbol = checker.getSymbolAtLocation(callee);
+  if (symbol?.declarations?.length !== 1 || !importedPathToFileUrl(symbol.declarations[0]!)) return false;
+  const declaration = symbol.declarations[0]!;
+  if (ts.isBindingElement(declaration)) {
+    const initializer = declaration.parent.parent.initializer;
+    if (
+      initializer !== undefined &&
+      ts.isCallExpression(initializer) &&
+      ts.isIdentifier(initializer.expression) &&
+      checker.getSymbolAtLocation(initializer.expression) !== undefined
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /** Replace comments with spaces while preserving source offsets and string contents. */
@@ -289,7 +390,11 @@ function typeOnlyToken(masked: string, tokenOffset: number): boolean {
  * residue. Dangerous `data:`, `blob:`, and `javascript:` imports follow the
  * same fail-closed rule for escaped or unterminated specifiers.
  */
-export function classifyDynamicCodeSource(source: string, fileContext: string = source): readonly DynamicCodeKind[] {
+export function classifyDynamicCodeSource(
+  source: string,
+  fileContext: string = source,
+  fileContextOffset: number = source === fileContext ? 0 : -1,
+): readonly DynamicCodeKind[] {
   const commentStripped = stripCommentsPreservingStrings(source);
   const masked = maskStrings(commentStripped);
   const kinds = new Set<DynamicCodeKind>();
@@ -355,10 +460,6 @@ export function classifyDynamicCodeSource(source: string, fileContext: string = 
     }
   }
 
-  // The import proof is a FILE-level fact: a per-line pass sees the call
-  // without the `import { pathToFileURL } from 'node:url'` that licenses it,
-  // so the driver threads the whole file in as context.
-  const fileUrlProven = importsFileUrlBuilder(fileContext);
   for (const match of masked.matchAll(DYNAMIC_IMPORT_CALLEE)) {
     const argumentOffset = match.index + match[0].length;
     // The call must CLOSE in the text under analysis. A line pass sees
@@ -383,7 +484,7 @@ export function classifyDynamicCodeSource(source: string, fileContext: string = 
       }
       continue;
     }
-    if (!(fileUrlProven && FILE_URL_SPECIFIER.test(commentStripped.slice(argumentOffset)))) {
+    if (!fileUrlSpecifierProven(fileContext, fileContextOffset + match.index)) {
       kinds.add('DYNAMIC_IMPORT');
     }
   }
@@ -662,19 +763,24 @@ export function scanShippedDynamicCode(repoRoot: string): DynamicCodeScan {
     // comment state can distinguish them without opening an evasion.
     const activeLines = stripCommentsPreservingStrings(source).split('\n');
     let found = false;
+    let lineOffset = 0;
     for (let index = 0; index < activeLines.length; index += 1) {
-      for (const kind of classifyDynamicCodeSource(activeLines[index]!, source)) {
+      for (const kind of classifyDynamicCodeSource(activeLines[index]!, source, lineOffset)) {
         findings.push({ file: rel, line: index + 1, kind, text: lines[index]!.trim() });
         found = true;
       }
+      lineOffset += lines[index]!.length + 1;
     }
-    // Mirror effect-residue's second pass: strip comment text, then collapse
-    // whitespace so split callees, computed properties, and import specifiers
-    // cannot evade a classifier that otherwise sees physical lines. A prior
-    // finding already blocks the zero-finding law, so per-file dedup is sound.
+    // Mirror effect-residue's second pass over the complete comment-stripped
+    // source so split callees, computed properties, and import specifiers
+    // cannot evade a classifier that otherwise sees physical lines. Preserve
+    // offsets: referent proofs attach an import call to its lexical binding in
+    // this same source. The classifier's grammar is whitespace-tolerant, so no
+    // destructive collapse is needed. A prior finding already blocks the
+    // zero-finding law, so per-file dedup is sound.
     if (!found) {
-      const collapsed = activeLines.join(' ').replace(/\s+/gu, ' ');
-      for (const kind of classifyDynamicCodeSource(collapsed)) {
+      const completeSource = activeLines.join('\n');
+      for (const kind of classifyDynamicCodeSource(completeSource)) {
         findings.push({
           file: rel,
           line: 0,
