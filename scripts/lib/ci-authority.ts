@@ -1,6 +1,9 @@
 /** Event-specific GitHub authority job requirements folded by delivery evidence admission. @module */
 
 import type { DeliveryCiEvent } from './ci-evidence-selection.js';
+import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
+import type { CheckDefinition } from '../../packages/command/src/checks/definition.js';
+import { buildCiPlan, type CiPlanExecutionReceipt } from '../ci-plan.js';
 import {
   activeLinesOf,
   childIndicesOf,
@@ -27,21 +30,147 @@ const EXHAUSTIVE = [
   'semantic-assurance-admission',
 ] as const;
 
-/** Release claims that must be proven before merge and reproduced after merge. */
-const RELEASE_CANDIDATE = [
-  'format',
-  'truth-linux-parallel',
-  'browser-e2e',
-  'windows-smoke',
-  'macos-smoke',
-  'macos-browser',
-  'rust-wasm-parity',
-  'security-audit',
-] as const;
-
 function uniqueSorted(values: readonly string[]): readonly string[] {
   return Object.freeze([...new Set(values)].sort());
 }
+
+interface ReleaseAuthorityClass {
+  readonly name: 'consumer' | 'hermetic' | 'cost' | 'platform' | 'qualification' | 'benchmark-admission';
+  readonly checks: readonly string[];
+}
+
+/**
+ * Closed semantic classes that release authority must retain. These are check
+ * identities, not workflow jobs: the registry owns whether each subject is in
+ * the release profile, while the CI plan owns where the subject executes.
+ * `check/package-smoke` owns one-install-cost evidence as part of its packed
+ * consumer proof, so it is deliberately both a consumer and cost subject.
+ */
+const RELEASE_AUTHORITY_CLASSES: readonly ReleaseAuthorityClass[] = Object.freeze([
+  { name: 'consumer', checks: ['check/package-smoke', 'check/journey'] },
+  { name: 'hermetic', checks: ['check/hermetic'] },
+  { name: 'cost', checks: ['check/package-smoke'] },
+  { name: 'platform', checks: ['check/test', 'check/test-e2e'] },
+  { name: 'qualification', checks: ['check/typescript-toolchain-qualification'] },
+  {
+    name: 'benchmark-admission',
+    checks: [
+      'check/bench-gate',
+      'check/bench-contracts',
+      'check/bench-trend',
+      'check/bench-reality',
+      'check/bench-alloc',
+    ],
+  },
+]);
+
+/** Release-authority classes selected by the registry's release profile. */
+export function releaseAuthorityClassViolations(checks: readonly CheckDefinition[]): readonly string[] {
+  const byId = new Map(checks.map((check) => [check.id, check] as const));
+  const violations: string[] = [];
+  for (const authorityClass of RELEASE_AUTHORITY_CLASSES) {
+    for (const checkId of authorityClass.checks) {
+      const check = byId.get(checkId);
+      if (check === undefined) {
+        violations.push(`release authority class ${authorityClass.name} has no registry subject ${checkId}`);
+        continue;
+      }
+      if (!check.contexts.includes('repository')) {
+        violations.push(`release authority class ${authorityClass.name} is not repository authority: ${checkId}`);
+      }
+      if (!check.profiles.includes('release')) {
+        violations.push(
+          `release authority class ${authorityClass.name} selected away: ${checkId} is not in profile release`,
+        );
+      }
+      if (check.authority !== 'blocking') {
+        violations.push(`release authority class ${authorityClass.name} is not blocking: ${checkId}`);
+      }
+    }
+  }
+  return Object.freeze(violations);
+}
+
+interface ReleaseReproductionRule {
+  readonly job: 'browser-e2e' | 'windows-smoke' | 'macos-smoke' | 'macos-browser';
+  readonly checkId: 'check/test' | 'check/test-e2e';
+  readonly platform?: 'darwin' | 'win32';
+}
+
+/** Cross-platform reproduction jobs qualified by their registry check. */
+const RELEASE_REPRODUCTION_RULES: readonly ReleaseReproductionRule[] = Object.freeze([
+  { job: 'browser-e2e', checkId: 'check/test-e2e' },
+  { job: 'windows-smoke', checkId: 'check/test', platform: 'win32' },
+  { job: 'macos-smoke', checkId: 'check/test', platform: 'darwin' },
+  { job: 'macos-browser', checkId: 'check/test-e2e', platform: 'darwin' },
+]);
+
+/**
+ * Fresh kernel authority with no check-registry subject yet. W1.12 must enroll
+ * the Rust/clippy/wasm qualification lane; until then this explicit complement
+ * is the bounded prerequisite, and W1.13 rejects any unexplained shell-fold job.
+ */
+export const NON_REGISTRY_RELEASE_AUTHORITY_COMPLEMENT = Object.freeze([
+  Object.freeze({
+    job: 'rust-wasm-parity',
+    prerequisite: 'W1.12',
+    reason: 'Rust and wasm32 parity authority has no check-registry subject until the W1.12 Rust lanes land.',
+  }),
+] as const);
+
+function foldedAuthorityJob(job: string): string {
+  return job.startsWith('truth-linux-parallel-') ? 'truth-linux-parallel' : job;
+}
+
+/** Derive the release-candidate job set from registry profile membership and its CI receipts. */
+export function deriveReleaseCandidateAuthorityJobs(
+  checks: readonly CheckDefinition[],
+  receipts: readonly CiPlanExecutionReceipt[],
+): readonly string[] {
+  const classViolations = releaseAuthorityClassViolations(checks);
+  if (classViolations.length > 0) {
+    throw new TypeError(`release authority census failed: ${classViolations.join('; ')}`);
+  }
+
+  const releaseChecks = checks.filter(
+    (check) => check.contexts.includes('repository') && check.profiles.includes('release'),
+  );
+  if (releaseChecks.length === 0) throw new TypeError('release authority census resolved zero release-profile checks');
+
+  const jobs: string[] = [];
+  for (const check of releaseChecks) {
+    const owners = receipts.filter((receipt) => receipt.checkId === check.id);
+    if (owners.length === 0) throw new TypeError(`release check ${check.id} has no CI execution receipt`);
+    jobs.push(...owners.map((receipt) => foldedAuthorityJob(receipt.job)));
+  }
+
+  const byId = new Map(checks.map((check) => [check.id, check] as const));
+  for (const rule of RELEASE_REPRODUCTION_RULES) {
+    const check = byId.get(rule.checkId);
+    if (check === undefined || !check.profiles.includes('release')) {
+      throw new TypeError(`${rule.job} has no release-profile registry subject ${rule.checkId}`);
+    }
+    if (rule.platform !== undefined && !check.platforms.includes(rule.platform)) {
+      throw new TypeError(`${rule.job} requires ${rule.checkId} to support ${rule.platform}`);
+    }
+    jobs.push(rule.job);
+  }
+
+  for (const complement of NON_REGISTRY_RELEASE_AUTHORITY_COMPLEMENT) {
+    if (complement.reason.trim().length === 0 || complement.prerequisite.trim().length === 0) {
+      throw new TypeError(`non-registry release authority ${complement.job} lacks its reason or prerequisite`);
+    }
+    jobs.push(complement.job);
+  }
+  return uniqueSorted(jobs);
+}
+
+/** Release claims that must be proven before merge and reproduced after merge. */
+const RELEASE_CANDIDATE = deriveReleaseCandidateAuthorityJobs(CHECK_REGISTRY, buildCiPlan().executionReceipts);
+/** The same registry-derived candidate through the serial broad-check owner. */
+const BROAD_RELEASE_CANDIDATE = uniqueSorted(
+  RELEASE_CANDIDATE.map((job) => (job === 'truth-linux-parallel' ? 'truth-linux' : job)),
+);
 
 /** Exact workflow job ids whose successful conclusions establish the event's CI authority. */
 export function requiredAuthorityJobs(input: CiAuthorityInput): readonly string[] {
@@ -57,17 +186,7 @@ export function requiredAuthorityJobs(input: CiAuthorityInput): readonly string[
   const exhaustive =
     input.event === 'schedule' || input.event === 'workflow_dispatch' || input.ref.startsWith('refs/tags/v');
   if (input.event === 'schedule' || input.event === 'workflow_dispatch') {
-    return uniqueSorted([
-      'format',
-      'truth-linux',
-      'browser-e2e',
-      'windows-smoke',
-      'macos-smoke',
-      'macos-browser',
-      'rust-wasm-parity',
-      'security-audit',
-      ...(exhaustive ? EXHAUSTIVE : []),
-    ]);
+    return uniqueSorted([...BROAD_RELEASE_CANDIDATE, ...(exhaustive ? EXHAUSTIVE : [])]);
   }
   return uniqueSorted([...RELEASE_CANDIDATE, ...(exhaustive ? EXHAUSTIVE : [])]);
 }

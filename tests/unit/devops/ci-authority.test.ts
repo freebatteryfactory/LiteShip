@@ -4,15 +4,68 @@ import { describe, expect, it } from 'vitest';
 import {
   ciAuthorityWorkflowParityViolations,
   ciSummaryAuthorityParityViolations,
+  deriveReleaseCandidateAuthorityJobs,
+  NON_REGISTRY_RELEASE_AUTHORITY_COMPLEMENT,
+  releaseAuthorityClassViolations,
   requiredAuthorityJobs,
 } from '../../../scripts/lib/ci-authority.js';
 import { jobNameMatches } from '../../../scripts/lib/ci-evidence-selection.js';
+import { buildCiPlan } from '../../../scripts/ci-plan.js';
+import { CHECK_REGISTRY } from '../../../packages/command/src/checks/registry.js';
 
 const README = readFileSync(resolve(import.meta.dirname, '../../..', 'README.md'), 'utf8');
 const SUPPORT_MATRIX = README.slice(README.indexOf('## Support matrix'), README.indexOf('## Documentation'));
 const CI_YML = readFileSync(resolve(import.meta.dirname, '../../..', '.github/workflows/ci.yml'), 'utf8');
 
 describe('CI authority requirements', () => {
+  it('every closed release-authority class remains selected by the registry', () => {
+    expect(releaseAuthorityClassViolations(CHECK_REGISTRY)).toEqual([]);
+  });
+
+  it('refuses a release-authority class selected away by a registry profile edit', () => {
+    const withoutHermeticRelease = CHECK_REGISTRY.map((check) =>
+      check.id === 'check/hermetic'
+        ? { ...check, profiles: check.profiles.filter((profile) => profile !== 'release') }
+        : check,
+    );
+    expect(releaseAuthorityClassViolations(withoutHermeticRelease)).toEqual([
+      'release authority class hermetic selected away: check/hermetic is not in profile release',
+    ]);
+  });
+
+  it('derives the release candidate from registry-owned execution receipts', () => {
+    const plan = buildCiPlan();
+    expect(plan.executionReceipts.length).toBeGreaterThan(0);
+    expect(deriveReleaseCandidateAuthorityJobs(CHECK_REGISTRY, plan.executionReceipts)).toEqual([
+      'browser-e2e',
+      'format',
+      'macos-browser',
+      'macos-smoke',
+      'rust-wasm-parity',
+      'security-audit',
+      'truth-linux-parallel',
+      'windows-smoke',
+    ]);
+  });
+
+  it('refuses a release-profile check without a named CI execution receipt', () => {
+    const plan = buildCiPlan();
+    const withoutHermetic = plan.executionReceipts.filter((receipt) => receipt.checkId !== 'check/hermetic');
+    expect(() => deriveReleaseCandidateAuthorityJobs(CHECK_REGISTRY, withoutHermetic)).toThrow(
+      'release check check/hermetic has no CI execution receipt',
+    );
+  });
+
+  it('bounds the non-registry kernel authority to the W1.12 prerequisite', () => {
+    expect(NON_REGISTRY_RELEASE_AUTHORITY_COMPLEMENT).toEqual([
+      {
+        job: 'rust-wasm-parity',
+        prerequisite: 'W1.12',
+        reason: 'Rust and wasm32 parity authority has no check-registry subject until the W1.12 Rust lanes land.',
+      },
+    ]);
+  });
+
   it('the final shell fold and evidence authority require the same jobs for every event', () => {
     const cases = [
       { event: 'pull_request', ref: 'refs/pull/197/merge', browserAffected: false, rustWasmAffected: false },
