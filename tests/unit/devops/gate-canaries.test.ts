@@ -30,11 +30,12 @@
  *     participates" floor instead proves — deterministically, from source —
  *     that every root reference resolves to a real project whose include feeds
  *     >= 1 file into the build.
- *   - tsconfig.tests.json's `include` is a deliberately curated list of
- *     compile-assertion seams (~two dozen files), not the suite's discovery
- *     surface. The ">100 test files" floor is applied to vitest's real
- *     discovery globs (`nodeTestInclude`); tsconfig.tests.json is separately
- *     guarded for dangling entries (every listed file must exist).
+ *   - tsconfig.tests.json directly admits the runtime property tier plus a
+ *     deliberately curated list of other compile-assertion seams. The ">100
+ *     test files" floor is applied to vitest's real discovery globs
+ *     (`nodeTestInclude`); the property-tier law compares that runtime corpus
+ *     with TypeScript's parsed root files, while concrete curated entries are
+ *     separately guarded for dangling paths.
  *
  * @module
  */
@@ -50,6 +51,7 @@ import {
   packageTsconfigInputs,
   tsconfigTestsIncludeEntries,
   tsconfigTestsIncludeFiles,
+  tsconfigTestsRootFiles,
   apiSurfaceSnapshot,
   lintGlobs,
   typecheckLegs,
@@ -133,23 +135,25 @@ describe('(a) typecheck canary — `tsc --build` detects an injected type error'
 });
 
 describe('(a2) property evidence is type-admitted before execution', () => {
-  const propertySuites = fg
-    .sync(['tests/property/**/*.prop.test.ts'], { cwd: REPO })
+  const runtimePropertySuites = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
     .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/property/'))
     .sort();
   const includeEntries = tsconfigTestsIncludeEntries();
-  const admittedProperties = fg
-    .sync([...includeEntries], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
-    .map((path) => path.replaceAll('\\', '/'))
-    .filter((path) => path.startsWith('tests/property/') && path.endsWith('.prop.test.ts'))
-    .sort();
+  const admittedPropertyRoots = tsconfigTestsRootFiles().filter(
+    (path) => path.startsWith('tests/property/') && path.endsWith('.test.ts'),
+  );
 
   it('the tests typecheck project admits every property suite, including future files', () => {
-    expect(propertySuites.length, 'the property-test corpus must be non-empty').toBeGreaterThan(0);
-    expect(admittedProperties).toEqual(propertySuites);
+    expect(
+      runtimePropertySuites.length,
+      'the property-test corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(143);
+    expect(admittedPropertyRoots).toEqual(runtimePropertySuites);
     expect(
       includeEntries.some(
-        (entry) => entry.startsWith('tests/property/') && entry.includes('*') && entry.endsWith('.prop.test.ts'),
+        (entry) => entry.startsWith('tests/property/') && entry.includes('*') && entry.endsWith('.test.ts'),
       ),
       'property admission must be future-proof rather than an authored filename roster',
     ).toBe(true);
@@ -160,7 +164,7 @@ describe('(a2) property evidence is type-admitted before execution', () => {
     const counterfeitAdmission = new Set(
       fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
     );
-    expect(propertySuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(propertySuites);
+    expect(runtimePropertySuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimePropertySuites);
   });
 
   it(
@@ -191,7 +195,7 @@ describe('(a2) property evidence is type-admitted before execution', () => {
             2,
           )}\n`,
         );
-        writeFileSync(join(suiteDir, 'future-admission.prop.test.ts'), source);
+        writeFileSync(join(suiteDir, 'future-admission.test.ts'), source);
       };
 
       const cleanDir = join(sandboxRoot, 'property-clean');

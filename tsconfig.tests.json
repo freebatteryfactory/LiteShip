@@ -18,7 +18,7 @@
   // production modules DIRECTLY (not package indexes) so the typecheck
   // surface stays scoped to the contracts under assertion.
   "include": [
-    "tests/property/**/*.prop.test.ts",
+    "tests/property/**/*.test.ts",
     "packages/cloudflare/src/cloudflare-workers.d.ts",
     "tests/unit/track-id.test.ts",
     "tests/unit/spawn-quoting-drift.test.ts",

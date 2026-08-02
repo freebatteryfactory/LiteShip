@@ -26,7 +26,7 @@
  */
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import ts from 'typescript';
 
 /** The monorepo root — this file lives at `tests/support/`, so up two. */
@@ -268,6 +268,25 @@ export function packageTsconfigInputs(dir: string): TsconfigInputs | undefined {
 /** Every authored `include` entry of `tsconfig.tests.json` (JSONC-tolerant). */
 export function tsconfigTestsIncludeEntries(): readonly string[] {
   return readJsonc<TsconfigInputs>(resolve(REPO_ROOT, 'tsconfig.tests.json')).include ?? [];
+}
+
+/**
+ * The explicit root files selected by `tsconfig.tests.json` after TypeScript
+ * expands its authored `files` / `include` inputs. This is deliberately the
+ * parsed config's `fileNames`, not a Program's transitive source-file closure:
+ * an imported test helper cannot counterfeit direct admission by the project.
+ */
+export function tsconfigTestsRootFiles(): readonly string[] {
+  const configPath = resolve(REPO_ROOT, 'tsconfig.tests.json');
+  const read = ts.readConfigFile(configPath, ts.sys.readFile);
+  if (read.error !== undefined) {
+    throw new Error(`cannot read ${configPath}: TS${read.error.code}`);
+  }
+  const parsed = ts.parseJsonConfigFileContent(read.config, ts.sys, dirname(configPath), undefined, configPath);
+  if (parsed.errors.length > 0) {
+    throw new Error(`cannot parse ${configPath}: TS${parsed.errors[0]!.code}`);
+  }
+  return parsed.fileNames.map((file) => relative(REPO_ROOT, file).replaceAll('\\', '/')).sort();
 }
 
 /** The concrete (non-glob) `include` entries of `tsconfig.tests.json`. */
