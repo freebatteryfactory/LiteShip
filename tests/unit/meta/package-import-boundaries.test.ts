@@ -39,6 +39,8 @@ interface ImportSite {
   readonly line: number;
 }
 
+type ImportSiteEnumerator = (fileName: string, source: string) => readonly ImportSite[];
+
 export interface BoundaryViolation {
   readonly file: string;
   readonly specifier: string;
@@ -72,17 +74,16 @@ export function importSitesOf(fileName: string, source: string): readonly Import
   return sites;
 }
 
-/** Every boundary violation in one shipped source file. */
-export function boundaryViolationsOf(
+function boundaryViolationsFromSites(
   packagesRoot: string,
   packageName: string,
   relativeFile: string,
-  source: string,
+  sites: readonly ImportSite[],
 ): readonly BoundaryViolation[] {
   const packageRoot = normalizePath(join(packagesRoot, packageName));
   const absoluteFile = join(packagesRoot, relativeFile);
   const violations: BoundaryViolation[] = [];
-  for (const site of importSitesOf(relativeFile, source)) {
+  for (const site of sites) {
     if (site.specifier.startsWith('.')) {
       const resolved = normalizePath(resolve(dirname(absoluteFile), site.specifier));
       if (resolved !== packageRoot && !resolved.startsWith(`${packageRoot}/`)) {
@@ -100,6 +101,16 @@ export function boundaryViolationsOf(
   return violations;
 }
 
+/** Every boundary violation in one shipped source file. */
+export function boundaryViolationsOf(
+  packagesRoot: string,
+  packageName: string,
+  relativeFile: string,
+  source: string,
+): readonly BoundaryViolation[] {
+  return boundaryViolationsFromSites(packagesRoot, packageName, relativeFile, importSitesOf(relativeFile, source));
+}
+
 interface ShippedCorpus {
   /** `<pkg>/src/...` paths keyed by their owning package. */
   readonly filesByPackage: ReadonlyMap<string, readonly string[]>;
@@ -108,7 +119,11 @@ interface ShippedCorpus {
   readonly liteshipSpecifierCount: number;
 }
 
-function scanShippedCorpus(packagesRoot: string, files: readonly string[]): ShippedCorpus {
+function scanShippedCorpus(
+  packagesRoot: string,
+  files: readonly string[],
+  enumerateImportSites: ImportSiteEnumerator = importSitesOf,
+): ShippedCorpus {
   const filesByPackage = new Map<string, string[]>();
   const violations: BoundaryViolation[] = [];
   let relativeSpecifierCount = 0;
@@ -120,11 +135,12 @@ function scanShippedCorpus(packagesRoot: string, files: readonly string[]): Ship
     bucket.push(file);
     filesByPackage.set(packageName, bucket);
     const source = readFileSync(join(packagesRoot, file), 'utf8');
-    for (const site of importSitesOf(file, source)) {
+    const sites = enumerateImportSites(file, source);
+    for (const site of sites) {
       if (site.specifier.startsWith('.')) relativeSpecifierCount += 1;
       else if (site.specifier.startsWith('@liteship/')) liteshipSpecifierCount += 1;
     }
-    violations.push(...boundaryViolationsOf(packagesRoot, packageName, file, source));
+    violations.push(...boundaryViolationsFromSites(packagesRoot, packageName, file, sites));
   }
   return { filesByPackage, violations, relativeSpecifierCount, liteshipSpecifierCount };
 }
@@ -192,6 +208,31 @@ describe('package import boundaries — the detector has teeth', () => {
     expect(found).toEqual([
       { file: 'beta/src/index.ts', specifier: '@liteship/error/src/index.js', line: 1, reason: 'deep-src-specifier' },
     ]);
+  });
+  it('enumerates import sites exactly once per shipped source file', () => {
+    const syntheticRoot = mkdtempSync(join(tmpdir(), 'pkg-import-enumeration-'));
+    const files = ['alpha/src/index.ts', 'beta/src/index.ts'] as const;
+    try {
+      for (const file of files) {
+        const absolute = join(syntheticRoot, file);
+        mkdirSync(dirname(absolute), { recursive: true });
+        writeFileSync(absolute, "import type { Witness } from '@liteship/core';\nexport type Value = Witness;\n");
+      }
+      const enumerationCount = new Map<string, number>();
+      const countingEnumerator: ImportSiteEnumerator = (fileName, source) => {
+        enumerationCount.set(fileName, (enumerationCount.get(fileName) ?? 0) + 1);
+        return importSitesOf(fileName, source);
+      };
+
+      scanShippedCorpus(syntheticRoot, files, countingEnumerator);
+
+      expect(Object.fromEntries(enumerationCount)).toEqual({
+        'alpha/src/index.ts': 1,
+        'beta/src/index.ts': 1,
+      });
+    } finally {
+      rmSync(syntheticRoot, { recursive: true, force: true });
+    }
   });
   it('package-contained relatives, package.json reach, builtins, and third-party specifiers stay legal', () => {
     write(
