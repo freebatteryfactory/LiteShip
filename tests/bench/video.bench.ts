@@ -3,9 +3,8 @@
  */
 
 import { Bench } from 'tinybench';
-// The quantizer seam is fully synchronous: the base contract exposes `stateSync`
-// (the compositor's preferred hot-path accessor) and `evaluate`; the reactive
-// CellKernel `state` lives on ReactiveQuantizer, which this fixture doesn't need.
+// The fixture uses CompositorQuantizer's genuine synchronous arm; reactive
+// state belongs to ReactiveQuantizer and is not fabricated for this benchmark.
 // Compositor.create/add/compute went synchronous in the core-seams wave.
 import {
   Scheduler,
@@ -14,6 +13,8 @@ import {
   Compositor,
   Boundary,
   Millis,
+  StateName,
+  ThresholdValue,
   defineBoundary,
   AddressedDigest,
   CanonicalCbor,
@@ -24,6 +25,7 @@ import {
   type CellMeta,
   type ComponentNode,
   type CompositeState,
+  type CompositorQuantizer,
   type ContentAddress,
   type DocumentGraph,
   type DocumentGraphEdge,
@@ -49,14 +51,14 @@ const widthBoundary = defineBoundary({
   ] as const,
 });
 
-function makeQuantizer(boundary: Boundary) {
-  let currentState = boundary.states[0] as string;
+function makeQuantizer<B extends Boundary>(boundary: B): CompositorQuantizer<B> {
+  let currentState = Boundary.evaluate(boundary, Number.NEGATIVE_INFINITY);
   return {
+    _tag: 'Quantizer',
     boundary,
     stateSync: () => currentState,
-    changes: null as never,
     evaluate(value: number) {
-      currentState = Boundary.evaluate(boundary, value) as string;
+      currentState = Boundary.evaluate(boundary, value);
       return currentState;
     },
   };
@@ -130,8 +132,8 @@ function stageGraph(componentCount: number): DocumentGraph {
       id: '' as ContentAddress,
       meta: stageMeta,
       name,
-      thresholds: [0, 1],
-      states: ['low', 'high'],
+      thresholds: [ThresholdValue(0), ThresholdValue(1)],
+      states: [StateName('low'), StateName('high')],
     });
     const entity = sealNode<EntityNode>({
       _tag: 'DocGraphEntityNode',
@@ -160,7 +162,7 @@ function stageGraph(componentCount: number): DocumentGraph {
         id: '' as ContentAddress,
         meta: stageMeta,
         entityRef: entity.id,
-        state,
+        state: StateName(state),
         bindings: { [`${name}-opacity`]: value },
       });
     nodes.push(component, entity, projection, pose('low', 0), pose('high', 1));

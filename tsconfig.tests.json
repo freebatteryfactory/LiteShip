@@ -45,6 +45,9 @@
     // Browser Vitest owns both its test entrypoints and config-imported command
     // modules. Admit the complete runtime tree as one typed unit.
     "tests/browser/**/*.ts",
+    // Registered benchmark scripts and the Node-runtime smoke suite share one
+    // executable source tree; admit the complete tier, not a filename roster.
+    "tests/bench/**/*.ts",
     // The runtime fuzz tier reaches coverage-report scripts through the
     // security-boundary corpus. Admit the repository-owned minimal Istanbul
     // declarations so those transitive script contracts stay strict.
@@ -87,8 +90,6 @@
     // so their type-level contracts (RepoIR / GateVerdictKeyParts folds, the
     // alloc-gate budget import, the gate surface) bite rather than rot.
     "tests/unit/gauntlet/perf-claim-bench-gate.test.ts",
-    "tests/bench/allocation.bench.ts",
-    "tests/bench/allocation-curves.bench.ts",
     "tests/unit/meta/allocation-contracts.test.ts",
     "tests/unit/core/reactive-capture.test.ts",
     "tests/unit/core/reactive-model.test.ts",
@@ -98,7 +99,6 @@
     // fixture or catalog drift fails before the runtime campaigns execute.
     "tests/unit/genui/validation-fault-simulation.test.ts",
     "tests/unit/genui/validation-mcdc.test.ts",
-    "tests/bench/genui.bench.ts",
     // Wave 5 asset assurance: strict binary fixtures, audio properties,
     // parser fuzzing, fault simulation/injection, MC/DC, independent sharp
     // differential, and benchmark subject all consume the public asset API.
@@ -107,7 +107,6 @@
     "tests/unit/assets/binary-mcdc.test.ts",
     "tests/unit/assets/decoder-fault-injection.test.ts",
     "tests/integration/assets-image-differential.test.ts",
-    "tests/bench/assets.bench.ts",
     // The transition-conformance gate RUNNER proof (green over the native transports + red on
     // a forced divergence) — folds the shared runner through the lean gate exactly as the CI
     // gate script does, so a runner/law drift fails the typecheck.

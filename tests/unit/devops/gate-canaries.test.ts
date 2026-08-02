@@ -44,6 +44,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, ex
 import { resolve, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import fg from 'fast-glob';
+import { benchScriptTargets } from '../../../scripts/bench/contract-coverage.js';
 import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 import { scaledTimeout, nodeTestInclude } from '../../../vitest.shared.js';
 import browserVitestConfig from '../../../vitest.browser.config.js';
@@ -592,6 +593,55 @@ describe('(a10) browser runtime sources are type-admitted before execution', () 
 
   it('a counterfeit config with browser admission removed exposes the complete runtime-owned tree', () => {
     const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/browser/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
+describe('(a11) benchmark runtime sources are type-admitted before execution', () => {
+  const registeredBenchSources = [...benchScriptTargets(REPO)].sort();
+  const nodeRuntimeBenchSources = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/bench/'))
+    .sort();
+  const runtimeSources = [...new Set([...registeredBenchSources, ...nodeRuntimeBenchSources])].sort();
+  const authoredSources = fg
+    .sync('tests/bench/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/bench/'));
+
+  it('derives the complete bench tree from registered scripts and the Node runtime', () => {
+    expect(
+      registeredBenchSources.length,
+      'the registered benchmark corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(19);
+    expect(
+      nodeRuntimeBenchSources.length,
+      'the Node-runtime bench source corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(1);
+    expect(runtimeSources, 'tests/bench contains a source with no executable owner').toEqual(authoredSources);
+  });
+
+  it('directly admits every executable bench source through one future-proof tree root', () => {
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} benchmark sources; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some((entry) => entry.startsWith('tests/bench/') && entry.includes('*') && entry.endsWith('.ts')),
+      'benchmark admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with benchmark admission removed exposes the complete executable tree', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/bench/'));
     const counterfeitAdmission = new Set(
       fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
     );

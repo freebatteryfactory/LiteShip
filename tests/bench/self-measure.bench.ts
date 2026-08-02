@@ -21,7 +21,7 @@ import {
 import { evaluate } from '@liteship/quantizer';
 import { parseBoundary } from '@liteship/astro/runtime';
 import { SPSCRing } from '@liteship/worker';
-import { classifyThroughputTier, throughputTierBadge } from '../../scripts/bench-format.ts';
+import { classifyThroughputTier, throughputTierBadge } from '../../scripts/bench-format.js';
 
 const bench = new Bench({ warmupIterations: 200, iterations: 1000 });
 
@@ -287,8 +287,10 @@ console.log('\n--- DIAGNOSTIC OUTPUT ---\n');
 
 // tinybench v3: result.latency.mean is in ms, result.throughput.mean is ops/s
 const results = bench.tasks.map((task) => {
-  const lat = task.result?.latency;
-  const thr = task.result?.throughput;
+  const result = task.result;
+  const measured = result.state === 'completed' || result.state === 'aborted-with-statistics' ? result : undefined;
+  const lat = measured?.latency;
+  const thr = measured?.throughput;
   const opsPerSec = thr?.mean ?? 0;
   const meanNs = (lat?.mean ?? 0) * 1e6; // ms → ns
   return {
