@@ -77,6 +77,7 @@ const CI_CONTRACT_TEST_PATHS: readonly string[] = Object.freeze([
   'tests/fuzz/cold-ci-authority-parsers-fuzz.test.ts',
   'tests/property/cold-checkout-authorities.prop.test.ts',
   'tests/property/workflow-output-contract.prop.test.ts',
+  'tests/property/workflow-grammar-corpus.prop.test.ts',
   'tests/property/workflow-scanner-grammar.prop.test.ts',
   'tests/regression/cold-checkout-ci-incidents.test.ts',
   'tests/unit/cli/lib/campaign-wall-budget.test.ts',
