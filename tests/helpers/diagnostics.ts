@@ -14,13 +14,17 @@ function parseConsoleDiagnostic(level: Diagnostics.Level, args: readonly unknown
   if (!match?.groups) {
     return null;
   }
+  const { source, code, message } = match.groups;
+  if (source === undefined || code === undefined || message === undefined) {
+    return null;
+  }
 
   return {
     level,
     timestamp: Date.now(),
-    source: match.groups.source,
-    code: match.groups.code,
-    message: match.groups.message,
+    source,
+    code,
+    message,
     detail,
     cause,
   };

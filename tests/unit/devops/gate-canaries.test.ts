@@ -344,6 +344,45 @@ describe('(a5) smoke evidence is type-admitted before execution', () => {
   });
 });
 
+describe('(a6) regression evidence is type-admitted before execution', () => {
+  const runtimeRegressionSuites = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/regression/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedRegressionRoots = tsconfigTestsRootFiles().filter(
+    (path) => path.startsWith('tests/regression/') && path.endsWith('.test.ts'),
+  );
+
+  it('the tests typecheck project admits every runtime regression suite, including future files', () => {
+    expect(
+      runtimeRegressionSuites.length,
+      'the regression-test corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(4);
+    const admitted = new Set(admittedRegressionRoots);
+    const missing = runtimeRegressionSuites.filter((path) => !admitted.has(path));
+    expect(
+      admittedRegressionRoots,
+      `the tests typecheck project admits ${admittedRegressionRoots.length}/${runtimeRegressionSuites.length} runtime regression suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeRegressionSuites);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/regression/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      'regression admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with regression admission removed exposes the complete missing corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/regression/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeRegressionSuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeRegressionSuites);
+  });
+});
+
 // --------------------------------------------------------------------------
 // (b) Coverage floors — the real gates cover a broad, non-trivial surface.
 // --------------------------------------------------------------------------

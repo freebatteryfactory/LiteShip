@@ -77,7 +77,7 @@ const corpus: readonly RecoveryCorpusEntry[] = [
     owner: '@liteship/compiler',
     invariant: 'a foreign media-type fault is refused atomically and valid source recompiles to the same definition',
     seeds: [7, 0xc011],
-    faultSchedule: [{ point: FAULT_POINT, kind: 'corrupt', probability: 1 }],
+    faultSchedule: [{ point: FAULT_POINT, kind: 'error', probability: 1 }],
     recoveryExpectation: {
       steadyState: 'valid source lowers to one deterministic boundary',
       degradation: 'the corrupted media type emits an error and no definitions',
@@ -111,7 +111,7 @@ describe('compiler migration fault simulation', () => {
     const inactive: RecoveryCorpusEntry = {
       ...corpus[0]!,
       seeds: [19],
-      faultSchedule: [{ point: FAULT_POINT, kind: 'corrupt', probability: 0 }],
+      faultSchedule: [{ point: FAULT_POINT, kind: 'error', probability: 0 }],
     };
     const facts = await runSimulationCorpus([inactive]);
     const runs = facts.runs ?? [];

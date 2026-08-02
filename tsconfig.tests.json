@@ -28,6 +28,9 @@
     // Smoke suites exercise the public package surfaces users import. Admit the
     // whole runtime tier so API drift fails typecheck before the smoke executes.
     "tests/smoke/**/*.test.ts",
+    // Regression suites encode incidents that must remain type-valid as the
+    // corrected production contracts evolve. Admit the entire runtime tier.
+    "tests/regression/**/*.test.ts",
     // The runtime fuzz tier reaches coverage-report scripts through the
     // security-boundary corpus. Admit the repository-owned minimal Istanbul
     // declarations so those transitive script contracts stay strict.

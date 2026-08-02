@@ -173,16 +173,21 @@ describe('red-team runtime regressions', () => {
 
     expect(boundary).not.toBeNull();
 
-    applyBoundaryState(element, boundary!, {
-      discrete: { hero: 'compact' },
-      outputs: {
-        css: { '--liteship-gap': 12, color: 'red' },
-        glsl: {},
-        aria: { 'aria-hidden': 'true', onclick: 'alert(1)' },
+    applyBoundaryState(
+      element,
+      boundary!,
+      {
+        discrete: { hero: 'compact' },
+        outputs: {
+          css: { '--liteship-gap': 12, color: 'red' },
+          glsl: {},
+          aria: { 'aria-hidden': 'true', onclick: 'alert(1)' },
+        },
+        css: { 'background-image': 'url(https://attacker.example/x)' },
+        aria: { style: 'display:none', role: 'status' },
       },
-      css: { 'background-image': 'url(https://attacker.example/x)' },
-      aria: { style: 'display:none', role: 'status' },
-    });
+      'liteship:state',
+    );
 
     expect(element.style.getPropertyValue('--liteship-gap')).toBe('12');
     expect(element.style.getPropertyValue('color')).toBe('');
