@@ -58,6 +58,7 @@ describe('local verification plan', () => {
       'docs-fast',
       'assurance-density',
       'test-constitution',
+      'rustfmt',
       'check-invariants',
       'projections',
       'ci-contract',
@@ -96,6 +97,7 @@ describe('local verification plan', () => {
       ['run', 'docs:check:fast'],
       ['run', 'assurance:gate'],
       ['run', 'test:constitution'],
+      ['run', 'rustfmt:check'],
       ['exec', 'tsx'],
       ['exec', 'vitest'],
       ['exec', 'vitest'],
@@ -198,6 +200,27 @@ describe('local verification plan', () => {
         .steps.map((step) => step.checkId)
         .filter((checkId): checkId is string => checkId !== null),
     ).toEqual(expected);
+  });
+
+  test('selects the registered rustfmt receipt only for workspace or Rust authority changes', () => {
+    const unrelated = buildLocalVerificationPlan({ staged: true, changedPaths: ['README.md'] });
+    const rust = buildLocalVerificationPlan({
+      staged: true,
+      changedPaths: ['crates/liteship-compute/src/lib.rs'],
+    });
+    const toolchain = buildLocalVerificationPlan({ staged: true, changedPaths: ['rust-toolchain.toml'] });
+    const workspace = buildLocalVerificationPlan({ staged: false });
+
+    expect(unrelated.registryChecks.excluded.some((check) => check.id === 'check/rustfmt')).toBe(true);
+    for (const plan of [rust, toolchain, workspace]) {
+      expect(plan.steps).toContainEqual({
+        checkId: 'check/rustfmt',
+        label: 'rustfmt',
+        argv: ['run', 'rustfmt:check'],
+        remedy: "run 'pnpm exec tsx scripts/rustfmt-check.ts --write' with the repository toolchain, then re-run.",
+      });
+      expect(plan.registryChecks.selected.some((check) => check.id === 'check/rustfmt')).toBe(true);
+    }
   });
 
   test('partitions every live registry check exactly once without counting local meta steps', () => {

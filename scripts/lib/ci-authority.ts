@@ -106,15 +106,14 @@ const RELEASE_REPRODUCTION_RULES: readonly ReleaseReproductionRule[] = Object.fr
 ]);
 
 /**
- * Fresh kernel authority with no check-registry subject yet. W1.12 must enroll
- * the Rust/clippy/wasm qualification lane; until then this explicit complement
- * is the bounded prerequisite, and W1.13 rejects any unexplained shell-fold job.
+ * The rustfmt slice is registry-owned; the remaining clippy/wasm qualification
+ * authority stays in this bounded complement until its later W1.12 packets land.
  */
 export const NON_REGISTRY_RELEASE_AUTHORITY_COMPLEMENT = Object.freeze([
   Object.freeze({
     job: 'rust-wasm-parity',
     prerequisite: 'W1.12',
-    reason: 'Rust and wasm32 parity authority has no check-registry subject until the W1.12 Rust lanes land.',
+    reason: 'Clippy and wasm32 parity remain outside the registry until the remaining W1.12 Rust lanes land.',
   }),
 ] as const);
 

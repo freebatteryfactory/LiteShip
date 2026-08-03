@@ -64,6 +64,14 @@ const plan = planAffectedTests(['packages/core/src/index.ts'], PACKAGE_CATALOG, 
   selectorCalibrationId: `sha256:${'c'.repeat(64)}`,
 });
 
+const rustPlan = planAffectedTests(['crates/liteship-compute/src/lib.rs'], PACKAGE_CATALOG, INVENTORY, {
+  baseRef: 'origin/main',
+  baseSha: 'a'.repeat(40),
+  headSha: 'b'.repeat(40),
+  confidence: 'high',
+  selectorCalibrationId: `sha256:${'c'.repeat(64)}`,
+});
+
 describe('CI evidence selection', () => {
   it('matches direct, matrix, and reusable-workflow jobs by exact leaf identity', () => {
     expect(jobNameMatches('format', 'format')).toBe(true);
@@ -80,6 +88,17 @@ describe('CI evidence selection', () => {
     expect(selected.find((entry) => entry.requirement.checkId === 'check/test')?.jobNames).toEqual([
       'pr-affected',
       'pr-windows-affected',
+    ]);
+  });
+
+  it('binds changed Rust formatting evidence to the specialized Rust authority', () => {
+    const pullRequest = selectCheckEvidence(rustPlan, 'pull_request');
+    expect(pullRequest.find((entry) => entry.requirement.checkId === 'check/rustfmt')?.jobNames).toEqual([
+      'rust-wasm-parity',
+    ]);
+    const scheduled = selectCheckEvidence(rustPlan, 'schedule');
+    expect(scheduled.find((entry) => entry.requirement.checkId === 'check/rustfmt')?.jobNames).toEqual([
+      'rust-wasm-parity',
     ]);
   });
 

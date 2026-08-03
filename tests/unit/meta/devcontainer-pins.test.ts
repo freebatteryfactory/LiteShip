@@ -61,7 +61,7 @@ function writeCrate(
   mkdirSync(crateRoot, { recursive: true });
   writeFileSync(
     resolve(crateRoot, 'Cargo.toml'),
-    `[package]\nname = "${input.name}"\nversion = "0.1.0"\n\n[dependencies]\n${input.dependency} = "1"\n\n[features]\ndefault = [${input.defaultFeature === true ? `"${input.feature}"` : ''}]\n${input.feature} = []\n`,
+    `[package]\nname = "${input.name}"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]\n${input.dependency} = "1"\n\n[features]\ndefault = [${input.defaultFeature === true ? `"${input.feature}"` : ''}]\n${input.feature} = []\n`,
     'utf8',
   );
   writeFileSync(
@@ -78,6 +78,7 @@ describe('check/devcontainer-pins', () => {
         manifestPath: 'crates/liteship-compute/Cargo.toml',
         lockPath: 'crates/liteship-compute/Cargo.lock',
         packageName: 'liteship-compute',
+        edition: '2021',
         dependencies: [{ table: 'dependencies', name: 'libm', requirement: '0.2', lockedVersions: ['0.2.16'] }],
         defaultFeatures: [],
         optionalFeatures: [{ name: 'simd', members: [] }],
@@ -165,7 +166,7 @@ describe('check/devcontainer-pins', () => {
       mkdirSync(crateRoot, { recursive: true });
       writeFileSync(
         resolve(crateRoot, 'Cargo.toml'),
-        '[package]\nname = "unlocked"\nversion = "0.1.0"\n\n[dependencies]\n\n[features]\ndefault = []\n',
+        '[package]\nname = "unlocked"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]\n\n[features]\ndefault = []\n',
         'utf8',
       );
       expect(() => deriveRustCrateCensus(root)).toThrow('crates/unlocked/Cargo.toml has no adjacent Cargo.lock');

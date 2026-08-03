@@ -7,14 +7,14 @@
 
 #![no_std]
 
-mod spring;
-mod boundary;
 mod blend;
+mod boundary;
+mod spring;
 
 // Re-export C-ABI functions at crate root for flat WASM exports.
-pub use spring::spring_curve;
-pub use boundary::batch_boundary_eval;
 pub use blend::blend_normalize;
+pub use boundary::batch_boundary_eval;
+pub use spring::spring_curve;
 
 /// Panic handler — required for no_std.
 #[cfg(not(test))]

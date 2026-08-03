@@ -203,6 +203,11 @@ export const CI_SPECIALIZED_CHECK_SPECS: Readonly<Record<string, SpecializedChec
     job: 'format',
     prerequisiteIds: ['install'],
   },
+  rustfmt: {
+    checkId: 'check/rustfmt',
+    job: 'rust-wasm-parity',
+    prerequisiteIds: ['install'],
+  },
   doctor: {
     checkId: 'check/doctor',
     job: 'truth-linux-parallel-setup',

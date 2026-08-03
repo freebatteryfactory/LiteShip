@@ -115,6 +115,7 @@
     "lint:structural": "ast-grep scan -c sgconfig.yml packages tests scripts eslint.config.js liteship.config.ts vite.config.ts vitest.browser.config.ts vitest.config.ts vitest.shared.ts && tsx scripts/source-layout-gate.ts",
     "format": "prettier --write \"packages/*/src/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\" \"packages/cli/fragments/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,jsonc,md,css}\" \"packages/create-liteship/bin/*.{js,mjs,cjs}\" \"packages/liteship/bin/*.{js,mjs,cjs}\" \"{eslint,liteship,vite}.config.{js,mjs,cjs,ts,mts,cts,jsx,tsx}\" \"vitest*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}\"",
     "format:check": "prettier --check \"packages/*/src/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\" \"packages/cli/fragments/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,jsonc,md,css}\" \"packages/create-liteship/bin/*.{js,mjs,cjs}\" \"packages/liteship/bin/*.{js,mjs,cjs}\" \"{eslint,liteship,vite}.config.{js,mjs,cjs,ts,mts,cts,jsx,tsx}\" \"vitest*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}\"",
+    "rustfmt:check": "pnpm exec tsx scripts/rustfmt-check.ts",
     "fix": "pnpm run format && pnpm run lint --fix",
     "cover": "pnpm run coverage",
     "verify": "pnpm exec tsx scripts/verify.ts",

@@ -67,7 +67,9 @@ mod tests {
     static BUF_LOCK: Mutex<()> = Mutex::new(());
 
     fn eval(thresholds: &[f32], values: &[f32]) -> Vec<u32> {
-        let _guard = BUF_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let _guard = BUF_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         let ptr = batch_boundary_eval(
             thresholds.as_ptr(),
             thresholds.len() as u32,
@@ -105,6 +107,9 @@ mod tests {
 
     #[test]
     fn batch_evaluates_each_value_independently() {
-        assert_eq!(eval(&[0.0, 50.0], &[-1.0, 0.0, 49.9, 50.0, 100.0]), [0, 0, 0, 1, 1]);
+        assert_eq!(
+            eval(&[0.0, 50.0], &[-1.0, 0.0, 49.9, 50.0, 100.0]),
+            [0, 0, 0, 1, 1]
+        );
     }
 }

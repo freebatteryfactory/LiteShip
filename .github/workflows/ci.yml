@@ -923,6 +923,10 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Run registry-projected pinned Rust formatting
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.rustfmt.command }}
+        run: bash -c "$PROJECTED_COMMAND"
       # Build the TS workspace so the vitest config can load: its alias setup
       # imports `@liteship/core` config → `cbor.ts` → `@liteship/canonical`, whose
       # config-load resolution needs the package's `dist` (the `development→src`

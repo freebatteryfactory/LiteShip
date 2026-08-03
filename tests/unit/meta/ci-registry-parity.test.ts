@@ -335,9 +335,11 @@ describe('(c) projected lane commands equal the recorded baseline (byte-identica
       }
       expect(lane.prerequisites.map((entry) => entry.id)).toEqual(['install', 'workspace-build']);
     }
-    expect(PLAN.specializedChecks.format!.prerequisites.map((entry) => entry.id)).toEqual(['install']);
+    for (const name of ['format', 'rustfmt'] as const) {
+      expect(PLAN.specializedChecks[name]!.prerequisites.map((entry) => entry.id)).toEqual(['install']);
+    }
     for (const [name, check] of Object.entries(PLAN.specializedChecks)) {
-      if (name !== 'format') {
+      if (name !== 'format' && name !== 'rustfmt') {
         expect(check.prerequisites.map((entry) => entry.id)).toEqual(['install', 'workspace-build']);
       }
     }

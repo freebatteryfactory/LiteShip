@@ -38,8 +38,7 @@ pub extern "C" fn spring_curve(
             // Underdamped
             let omega_d = omega * libm::sqrtf(1.0 - zeta * zeta);
             1.0 - libm::expf(-zeta * omega * t)
-                * (libm::cosf(omega_d * t)
-                    + (zeta * omega / omega_d) * libm::sinf(omega_d * t))
+                * (libm::cosf(omega_d * t) + (zeta * omega / omega_d) * libm::sinf(omega_d * t))
         } else if zeta == 1.0 {
             // Critically damped
             1.0 - (1.0 + omega * t) * libm::expf(-omega * t)
@@ -74,7 +73,9 @@ mod tests {
     static BUF_LOCK: Mutex<()> = Mutex::new(());
 
     fn curve(stiffness: f32, damping: f32, mass: f32, samples: u32) -> Vec<f32> {
-        let _guard = BUF_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let _guard = BUF_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         let ptr = spring_curve(stiffness, damping, mass, samples);
         unsafe { core::slice::from_raw_parts(ptr, samples as usize + 1) }.to_vec()
     }
@@ -93,7 +94,10 @@ mod tests {
         // zeta ≈ 0.19 — visibly oscillatory spring.
         let out = curve(170.0, 5.0, 1.0, 64);
         let max = out.iter().cloned().fold(f32::MIN, f32::max);
-        assert!(max > 1.0, "underdamped spring must overshoot, max was {max}");
+        assert!(
+            max > 1.0,
+            "underdamped spring must overshoot, max was {max}"
+        );
     }
 
     #[test]
@@ -114,7 +118,9 @@ mod tests {
     #[test]
     fn samples_clamp_to_buffer_capacity() {
         // 4096 requested → clamped to 255 inner samples; index 255 readable.
-        let _guard = BUF_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let _guard = BUF_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         let ptr = spring_curve(170.0, 26.0, 1.0, 4096);
         let out = unsafe { core::slice::from_raw_parts(ptr, 256) };
         assert_eq!(out[255], 1.0);

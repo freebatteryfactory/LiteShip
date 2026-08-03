@@ -61,7 +61,7 @@ describe('CI authority requirements', () => {
       {
         job: 'rust-wasm-parity',
         prerequisite: 'W1.12',
-        reason: 'Rust and wasm32 parity authority has no check-registry subject until the W1.12 Rust lanes land.',
+        reason: 'Clippy and wasm32 parity remain outside the registry until the remaining W1.12 Rust lanes land.',
       },
     ]);
   });

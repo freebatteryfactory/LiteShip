@@ -314,6 +314,29 @@ export function projectRepositoryQuickSteps(): readonly LocalVerificationStep[] 
   );
 }
 
+const RUSTFMT_CHECK = CHECK_REGISTRY.find((check) => check.id === 'check/rustfmt');
+if (RUSTFMT_CHECK === undefined) throw new TypeError('local verification requires registered check/rustfmt');
+const RUSTFMT_STEP: LocalVerificationStep = Object.freeze({
+  checkId: RUSTFMT_CHECK.id,
+  label: 'rustfmt',
+  argv: argvForRootCheck(RUSTFMT_CHECK.execution),
+  remedy: RUSTFMT_CHECK.remediation,
+});
+const RUSTFMT_INPUT_PATTERNS: readonly RegExp[] = Object.freeze([
+  /^rust-toolchain\.toml$/u,
+  /^crates\/[^/]+\/Cargo\.(?:toml|lock)$/u,
+  /^crates\/[^/]+\/.*\.rs$/u,
+  /^scripts\/(?:rustfmt-check|lib\/(?:rustfmt-contract|devcontainer-pins))\.ts$/u,
+  /^packages\/command\/src\/host\/launcher\.ts$/u,
+  /^tests\/unit\/(?:devops\/rustfmt-contract|meta\/devcontainer-pins)\.test\.ts$/u,
+]);
+
+/** Whether a changed path can alter the derived rustfmt subject or executable law. */
+export function isRustfmtProofInput(path: string): boolean {
+  const normalized = path.replaceAll('\\', '/').replace(/^\.\//u, '');
+  return RUSTFMT_INPUT_PATTERNS.some((pattern) => pattern.test(normalized));
+}
+
 const DOCS_STEP: LocalVerificationStep = Object.freeze({
   checkId: 'check/docs',
   label: 'docs:check',
@@ -462,7 +485,10 @@ export function buildLocalVerificationPlan(input: {
   const quickSteps = projectRepositoryQuickSteps();
   const docsAffected = !input.staged || (input.changedPaths ?? []).some(isTypeDocProofInput);
   const ciContractAffected = !input.staged || (input.changedPaths ?? []).some(isCiContractInput);
-  const steps: LocalVerificationStep[] = [...quickSteps, INVARIANTS_STEP, PROJECTIONS_STEP];
+  const rustfmtAffected = !input.staged || (input.changedPaths ?? []).some(isRustfmtProofInput);
+  const steps: LocalVerificationStep[] = [...quickSteps];
+  if (rustfmtAffected) steps.push(RUSTFMT_STEP);
+  steps.push(INVARIANTS_STEP, PROJECTIONS_STEP);
   if (ciContractAffected) steps.push(CI_CONTRACT_STEP);
   if (docsAffected) steps.push(DOCS_STEP);
   const selectedCheckIds = steps.flatMap((step) => (step.checkId === null ? [] : [step.checkId]));

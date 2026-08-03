@@ -57,6 +57,7 @@ export interface RustCrateCensusEntry {
   readonly manifestPath: string;
   readonly lockPath: string;
   readonly packageName: string;
+  readonly edition: string;
   readonly dependencies: readonly RustDependencyCensusEntry[];
   readonly defaultFeatures: readonly string[];
   readonly optionalFeatures: readonly RustFeatureCensusEntry[];
@@ -142,6 +143,17 @@ function parseTomlStringArray(raw: string, subject: string): readonly string[] {
   return Object.freeze(values);
 }
 
+/** Derive the exact Rust channel from the committed toolchain table. */
+export function deriveRustToolchainChannel(source: string): string {
+  const raw = tableEntries(source, 'toolchain', 'rust-toolchain.toml').get('channel');
+  if (raw === undefined) throw new TypeError('rust-toolchain.toml has no toolchain.channel');
+  const channel = parseTomlString(raw, 'rust-toolchain.toml toolchain.channel');
+  if (!/^\d+\.\d+\.\d+$/u.test(channel)) {
+    throw new TypeError('rust-toolchain.toml toolchain.channel must be an exact X.Y.Z version');
+  }
+  return channel;
+}
+
 function dependencyRequirement(raw: string, subject: string): string {
   if (raw.startsWith('"')) return parseTomlString(raw, subject);
   if (/^\{[\s\S]*\}$/u.test(raw)) return raw.replace(/\s+/gu, ' ').trim();
@@ -188,6 +200,12 @@ export function deriveRustCrateCensus(repoRoot: string): readonly RustCrateCensu
       const packageNameRaw = packageEntries.get('name');
       if (packageNameRaw === undefined) throw new TypeError(`${manifestPath} has no package.name`);
       const packageName = parseTomlString(packageNameRaw, `${manifestPath} package.name`);
+      const editionRaw = packageEntries.get('edition');
+      if (editionRaw === undefined) throw new TypeError(`${manifestPath} has no package.edition`);
+      const edition = parseTomlString(editionRaw, `${manifestPath} package.edition`);
+      if (!['2015', '2018', '2021', '2024'].includes(edition)) {
+        throw new TypeError(`${manifestPath} has unsupported package.edition ${edition}`);
+      }
       if (!locked.has(packageName)) throw new TypeError(`${lockPath} does not contain crate package ${packageName}`);
 
       const dependencies = directDependencyTableNames(manifestSource, manifestPath)
@@ -245,6 +263,7 @@ export function deriveRustCrateCensus(repoRoot: string): readonly RustCrateCensu
         manifestPath,
         lockPath,
         packageName,
+        edition,
         dependencies: Object.freeze(dependencies),
         defaultFeatures,
         optionalFeatures: Object.freeze(optionalFeatures),
@@ -418,8 +437,12 @@ export function validateDevcontainerPins(input: DevcontainerPinInputs): readonly
     if (!input.postCreate.includes(`pnpm@${pnpmVersion}`))
       failures.push('post-create pnpm pin must match package.json');
   }
-  const rustChannel = /^channel\s*=\s*"(\d+\.\d+\.\d+)"\s*$/m.exec(input.rustToolchain)?.[1];
-  if (!rustChannel) failures.push('rust-toolchain.toml must pin an exact X.Y.Z channel');
+  let rustChannel: string | undefined;
+  try {
+    rustChannel = deriveRustToolchainChannel(input.rustToolchain);
+  } catch {
+    failures.push('rust-toolchain.toml must pin an exact X.Y.Z channel');
+  }
   if (!/^profile\s*=\s*"minimal"\s*$/m.test(input.rustToolchain)) {
     failures.push('rust-toolchain.toml must select the minimal profile');
   }
