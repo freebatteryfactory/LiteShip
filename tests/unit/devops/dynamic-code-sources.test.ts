@@ -22,12 +22,31 @@ import {
 import { tmpdir } from 'node:os';
 import { join, relative, resolve } from 'node:path';
 import {
+  EXTENSIONS_WITHOUT_EXECUTABLE_CODE,
   classifyDynamicCodeLine,
   classifyDynamicCodeSource,
+  dynamicCodeSourceExtensions,
+  executableRegions,
+  findDynamicCodeResidue,
   scanShippedDynamicCode,
 } from '../../../scripts/lib/dynamic-code-residue.js';
 
 const ROOT = resolve(import.meta.dirname, '../../..');
+/**
+ * A representative body per swept extension. THE REGION LAW below requires one
+ * for every extension the sweep reaches, so enrolling a new extension forces an
+ * explicit answer to "what does executable code look like in this format?"
+ * rather than letting it inherit the whole-file-is-a-program assumption.
+ */
+const EXTENSION_PROBES: Readonly<Record<string, string>> = {
+  '.tsx': 'const value = 1;\n',
+  '.js': 'const value = 1;\n',
+  '.jsx': 'const value = 1;\n',
+  '.mjs': 'const value = 1;\n',
+  '.cjs': 'const value = 1;\n',
+  '.astro': '---\nconst value = 1;\n---\n<div>ok</div>\n',
+  '.css': '.a { color: red }\n',
+};
 const RUNTIME_EXTENSIONS = ['.astro', '.js', '.mjs', '.cjs'] as const;
 // Floor observed when the manifest-derived sweep first enrolled the authored
 // published runtime surface. This is a shrink alarm, never a target or ceiling.
@@ -57,6 +76,30 @@ const EVASIONS = [
   // node:url proves nothing — the callee-contract clearance is only as good
   // as the referent (the R9 lesson, applied here before it was reported).
   { name: 'shadowed pathToFileURL specifier', source: 'const pathToFileURL = (v) => v; import(pathToFileURL(x).href)' },
+  // THE PARSER SHAPES. Measured against the masked-text classifier before the
+  // AST inversion: NINE of twelve probed shapes were invisible, and every one
+  // of them asks a question about STRUCTURE that a character test can only
+  // approximate. Each is now decided by the tree.
+  //
+  // An escaped identifier: the scanner decodes `a` into the identifier's
+  // text, so `eval` IS `eval` to a parser and is not to a regex.
+  { name: 'escaped global member', source: 'globalThis.ev\\u0061l(payload)' },
+  { name: 'escaped bare identifier', source: 'ev\\u0061l(payload)' },
+  // A property VALUE and a type annotation are both "a colon then a name".
+  // Only the tree distinguishes them, and the old colon test cleared both.
+  { name: 'object-literal property value', source: 'const runner = { run: eval }; runner.run(payload)' },
+  // The same colon again, meaning the opposite thing: this READS the global.
+  { name: 'destructured global alias', source: 'const { eval: run } = globalThis; run(payload)' },
+  { name: 'nested destructured alias', source: 'const { g: { eval: run } } = holder; run(payload)' },
+  // A computed callee never reached the timer pattern, which anchored on the
+  // bare name followed by a paren.
+  { name: 'computed timer callee', source: "window['setTimeout']('doEvil()', 0)" },
+  { name: 'computed interval callee', source: "globalThis['setInterval']('x', 1)" },
+  // `Reflect.get(o, k)` IS `o[k]`; string masking erased the key entirely.
+  { name: 'reflective global read', source: "Reflect.get(globalThis, 'eval')(payload)" },
+  // A timer argument that is not PROVEN callable is implied eval, whatever it
+  // is spelled as.
+  { name: 'timer argument not proven callable', source: 'setTimeout(handler, 0)' },
 ] as const;
 
 function runtimeSource(path: string): boolean {
@@ -254,7 +297,12 @@ describe('dynamic code in shipped non-TypeScript sources', () => {
       expect(classifyDynamicCodeLine('const text = `${eval(input)}`;')).toBe('EVAL_CALL');
     });
 
-    it('a multiline computed eval and dangerous import are found by the collapsed source pass', () => {
+    // Line-spanning constructs used to be found by a second, collapsed-source
+    // pass that could only report `line: 0` — it had thrown away the offsets.
+    // A parsed construct is ONE node however it is wrapped, so the finding now
+    // names the line the construct starts on and there is no second pass to
+    // keep in step with the first.
+    it('a multiline computed eval and dangerous import report the line each construct starts on', () => {
       const fixture = mkdtempSync(join(tmpdir(), 'liteship-dynamic-multiline-'));
       try {
         const packageDir = join(fixture, 'packages', 'evil');
@@ -266,8 +314,10 @@ describe('dynamic code in shipped non-TypeScript sources', () => {
           'const mod = import(\n  // lazy\n  "blob:payload"\n);\nwindow[\n  "eval"\n](mod);\n',
         );
         const findings = scanShippedDynamicCode(fixture).findings;
-        expect(findings.map((finding) => finding.kind).sort()).toEqual(['DYNAMIC_IMPORT', 'EVAL_CALL']);
-        expect(findings.every((finding) => finding.line === 0)).toBe(true);
+        expect(findings).toEqual([
+          { file: 'packages/evil/src/main.mjs', line: 1, kind: 'DYNAMIC_IMPORT', text: 'const mod = import(' },
+          { file: 'packages/evil/src/main.mjs', line: 5, kind: 'EVAL_CALL', text: 'window[' },
+        ]);
       } finally {
         rmSync(fixture, { recursive: true, force: true });
       }
@@ -330,6 +380,82 @@ describe('dynamic code in shipped non-TypeScript sources', () => {
     expect(classifyDynamicCodeLine('evaluate(model);')).toBeNull();
     expect(classifyDynamicCodeLine('// never call eval( on user input')).toBeNull();
     expect(classifyDynamicCodeLine(' * eval( is banned by this law')).toBeNull();
+  });
+
+  /**
+   * THE REGION LAW — every swept extension is parsed or declared inert.
+   *
+   * The engine classifies a TREE, and a tree needs a program. 28 of the 37
+   * swept files are `.astro`, which is not one: it is frontmatter, optional
+   * `<script>` blocks, and markup carrying `{expression}` holes. An extension
+   * with no extractor and no stated reason would sweep to zero findings and
+   * report that as a pass, which is precisely the silent-hole shape this batch
+   * exists to close.
+   */
+  describe('THE REGION LAW: every swept extension is parsed or declared inert', () => {
+    it('every swept extension has a representative sample in this law', () => {
+      // The forcing function: an extension entering the sweep with no sample
+      // here cannot be classified by the tests below, so it fails loudly rather
+      // than passing by never being examined.
+      const missing = dynamicCodeSourceExtensions(ROOT).filter((extension) => !(extension in EXTENSION_PROBES));
+      expect(missing, `swept extension(s) with no representative sample: ${missing.join(', ')}`).toEqual([]);
+    });
+
+    it('no swept extension is both unparsed and unexplained', () => {
+      const unexplained = dynamicCodeSourceExtensions(ROOT).filter((extension) => {
+        const regions = executableRegions(`probe${extension}`, EXTENSION_PROBES[extension] ?? '');
+        return regions.length === 0 && !(extension in EXTENSIONS_WITHOUT_EXECUTABLE_CODE);
+      });
+      expect(
+        unexplained,
+        `swept extension(s) with no executable-region extractor and no stated reason: ${unexplained.join(', ')} — ` +
+          'a file the engine cannot parse sweeps to zero findings and reports it as a pass',
+      ).toEqual([]);
+    });
+
+    it('an extension declared inert really yields nothing, and really is swept', () => {
+      // Both directions, so the reason list can neither rot into a stale
+      // denylist exempting something the sweep no longer reaches, nor claim
+      // inertness for an extension the extractor actually parses.
+      const swept = new Set(dynamicCodeSourceExtensions(ROOT));
+      for (const [extension, reason] of Object.entries(EXTENSIONS_WITHOUT_EXECUTABLE_CODE)) {
+        expect(swept.has(extension), `${extension} is declared inert but is not swept`).toBe(true);
+        expect(reason.length, `${extension} is declared inert with no reason`).toBeGreaterThan(0);
+        expect(
+          executableRegions(`probe${extension}`, EXTENSION_PROBES[extension] ?? ''),
+          `${extension} is declared inert but yields executable regions`,
+        ).toEqual([]);
+      }
+    });
+
+    it('an .astro component yields its frontmatter, its scripts, and its markup holes', () => {
+      const source = [
+        '---',
+        'const fromFrontmatter = 1;',
+        '---',
+        '<style>.a { color: red }</style>',
+        '<!-- {notAnExpression} -->',
+        '<div>{fromMarkup}</div>',
+        '<script>const fromScript = 2;</script>',
+      ].join('\n');
+      const regions = executableRegions('Component.astro', source);
+      const texts = regions.map((region) => region.text.trim());
+      expect(texts).toContain('const fromFrontmatter = 1;');
+      expect(texts).toContain('const fromScript = 2;');
+      expect(texts).toContain('fromMarkup');
+      // A CSS rule body is braces without being an expression, and an HTML
+      // comment is not code; neither may be mistaken for a markup hole.
+      expect(texts.some((text) => text.includes('color: red'))).toBe(false);
+      expect(texts).not.toContain('notAnExpression');
+    });
+
+    it.each([
+      { name: 'frontmatter', source: '---\nconst v = eval(code);\n---\n<div>ok</div>\n' },
+      { name: 'a markup expression', source: '---\nconst v = 1;\n---\n<div>{eval(code)}</div>\n' },
+      { name: 'a script block', source: '---\nconst v = 1;\n---\n<script>eval(code);</script>\n' },
+    ])('an eval planted in $name of an .astro component is residue', ({ source }) => {
+      expect(findDynamicCodeResidue(source, 'Component.astro').map((entry) => entry.kind)).toContain('EVAL_CALL');
+    });
   });
 
   it('the scanner reds a planted eval in a shipped .astro source (executed mutant)', () => {

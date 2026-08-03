@@ -13,6 +13,7 @@
  * @module
  */
 import ts from 'typescript';
+import { type BindingScope, nearestBinding, scopeOf } from './ts-scope.js';
 
 const BOUNDARY_SELECTOR_ANCHOR = 'data-liteship-boundary="';
 const PACKAGE_SOURCE_PATH = /^packages\/[^/]+\/src\/.*\.[cm]?[jt]sx?$/u;
@@ -38,8 +39,6 @@ export interface CssIdentityScanResult {
   /** Number of anchored template literals inspected, not merely the number of files. */
   readonly anchoredCount: number;
 }
-
-type Scope = ts.SourceFile | ts.Block;
 
 interface TemplateParts {
   readonly chunks: readonly string[];
@@ -102,96 +101,6 @@ function resolveRelative(fromPath: string, specifier: string): string {
   return segments.join('/').replace(/\.[cm]?js$/u, '.ts');
 }
 
-/** Every name a binding pattern introduces (`{ a, b: [c] }` → a, c). */
-function patternNames(name: ts.BindingName, into: Map<string, ts.Node>, declaration: ts.Node): void {
-  if (ts.isIdentifier(name)) {
-    into.set(name.text, declaration);
-    return;
-  }
-  for (const element of name.elements) {
-    if (ts.isBindingElement(element)) patternNames(element.name, into, declaration);
-  }
-}
-
-/** The names a single statement declares, mapped to the node that declares them. */
-function statementBindings(statement: ts.Node, into: Map<string, ts.Node>): void {
-  if (ts.isVariableStatement(statement)) {
-    for (const declaration of statement.declarationList.declarations) patternNames(declaration.name, into, declaration);
-    return;
-  }
-  if (ts.isImportDeclaration(statement)) {
-    const clause = statement.importClause;
-    if (clause?.name !== undefined) into.set(clause.name.text, clause.name);
-    const bindings = clause?.namedBindings;
-    if (bindings !== undefined && ts.isNamedImports(bindings)) {
-      for (const element of bindings.elements) into.set(element.name.text, element);
-    } else if (bindings !== undefined && ts.isNamespaceImport(bindings)) {
-      into.set(bindings.name.text, bindings);
-    }
-    return;
-  }
-  if (
-    (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)) &&
-    statement.name !== undefined &&
-    ts.isIdentifier(statement.name)
-  ) {
-    into.set(statement.name.text, statement);
-  }
-}
-
-/**
- * Every name the given node introduces into the scope IT creates, mapped to the
- * declaring node. Enumerating scopes is a closed problem — the language has a
- * fixed list — whereas enumerating "declaration forms that revoke a name" is an
- * open one, and the open version is what this guard used to attempt.
- */
-function bindingsIntroducedBy(node: ts.Node): ReadonlyMap<string, ts.Node> {
-  const bindings = new Map<string, ts.Node>();
-  if (ts.isSourceFile(node) || ts.isBlock(node) || ts.isModuleBlock(node) || ts.isCaseClause(node)) {
-    for (const statement of node.statements) statementBindings(statement, bindings);
-    return bindings;
-  }
-  if (ts.isFunctionLike(node)) {
-    for (const parameter of node.parameters) patternNames(parameter.name, bindings, parameter);
-    // A function expression's own name is in scope inside its body.
-    if ((ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node)) && node.name !== undefined) {
-      bindings.set(node.name.text, node);
-    }
-    return bindings;
-  }
-  if (ts.isCatchClause(node) && node.variableDeclaration !== undefined) {
-    patternNames(node.variableDeclaration.name, bindings, node.variableDeclaration);
-    return bindings;
-  }
-  if (ts.isForStatement(node) || ts.isForInStatement(node) || ts.isForOfStatement(node)) {
-    const initializer = node.initializer;
-    if (initializer !== undefined && ts.isVariableDeclarationList(initializer)) {
-      for (const declaration of initializer.declarations) patternNames(declaration.name, bindings, declaration);
-    }
-    return bindings;
-  }
-  if ((ts.isClassDeclaration(node) || ts.isClassExpression(node)) && node.name !== undefined) {
-    bindings.set(node.name.text, node);
-  }
-  return bindings;
-}
-
-/**
- * The declaration that binds `identifier` AT ITS USE SITE, found by walking
- * outward through the scopes that enclose it. `undefined` means unbound here
- * (a global, or an ambient).
- */
-function nearestBinding(identifier: ts.Identifier): ts.Node | undefined {
-  const name = identifier.text;
-  let current: ts.Node | undefined = identifier.parent;
-  while (current !== undefined) {
-    const bound = bindingsIntroducedBy(current).get(name);
-    if (bound !== undefined) return bound;
-    current = current.parent;
-  }
-  return undefined;
-}
-
 /** Whether an import specifier brings in the approved escape from an approved module. */
 function isApprovedEscapeImport(
   specifier: ts.ImportSpecifier,
@@ -240,19 +149,10 @@ function isEscapeCall(expression: ts.Expression, path: string, approvedSpecifier
   return declaredAtTopLevel;
 }
 
-function scopeOf(node: ts.Node): Scope {
-  let current: ts.Node | undefined = node.parent;
-  while (current !== undefined) {
-    if (ts.isBlock(current) || ts.isSourceFile(current)) return current;
-    current = current.parent;
-  }
-  return node.getSourceFile();
-}
-
-type ScopeBindings = ReadonlyMap<Scope, ReadonlyMap<string, ts.VariableDeclaration | null>>;
+type ScopeBindings = ReadonlyMap<BindingScope, ReadonlyMap<string, ts.VariableDeclaration | null>>;
 
 function collectConstBindings(sourceFile: ts.SourceFile): ScopeBindings {
-  const mutable = new Map<Scope, Map<string, ts.VariableDeclaration | null>>();
+  const mutable = new Map<BindingScope, Map<string, ts.VariableDeclaration | null>>();
   const visit = (node: ts.Node): void => {
     if (
       ts.isVariableDeclaration(node) &&
@@ -272,7 +172,7 @@ function collectConstBindings(sourceFile: ts.SourceFile): ScopeBindings {
 
 function isProvablyEscaped(
   expression: ts.Expression,
-  scope: Scope,
+  scope: BindingScope,
   bindingsByScope: ScopeBindings,
   path: string,
   approvedSpecifiers: ReadonlySet<string>,

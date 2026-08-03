@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:32fd192c",
+  "address": "fnv1a:8ff1d163",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -672,6 +672,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "packages/audit/src/ts-program.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/ts-scope.ts",
       "level": "L1"
     },
     {

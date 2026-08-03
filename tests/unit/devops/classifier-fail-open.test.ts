@@ -2,11 +2,17 @@
  * THE FAIL-OPEN LAW — a classifier may not clear input it could not read.
  *
  * Every fail-closed classifier in this repo reads a value through a helper
- * that returns `null` when it cannot parse (`stringScalarAt`, and its
- * siblings). Every one of those reads reaches a fork, and the shape of the
- * bug is always the same: the unreadable branch quietly moves on, so an
- * expression the classifier could not understand is treated exactly like one
- * it understood and cleared.
+ * that reports absence when it cannot decide. Every one of those reads reaches
+ * a fork, and the shape of the bug is always the same: the unreadable branch
+ * quietly moves on, so an expression the classifier could not understand is
+ * treated exactly like one it understood and cleared.
+ *
+ * The law outlived the technique it was written against. When the dynamic-code
+ * classifier moved from masked-text regexes to a parsed tree, its text readers
+ * (`stringScalarAt`, `immediateMemberReceiver`) disappeared and this census
+ * went to zero — the vacuity floor caught that immediately, which is what a
+ * floor is for. The obligation is a property of classifying, not of the
+ * technique, so it re-anchored on the new engine's sources of absence.
  *
  * That bug shipped three times on this branch alone — computed member keys,
  * then dynamic-import specifiers in the SIBLING call site of the same
@@ -34,8 +40,18 @@ import ts from 'typescript';
 
 const REPO_ROOT = resolve(import.meta.dirname, '../../..');
 
-/** Helpers that answer "I could not read this" with `null`. */
-const UNREADABLE_READERS: ReadonlySet<string> = new Set(['stringScalarAt', 'immediateMemberReceiver']);
+/**
+ * Helpers that answer "I could not read this".
+ *
+ * These are the AST engine's two sources of absence. `staticKey` cannot read a
+ * member key that is not a literal; `nearestBinding` reports that NO enclosing
+ * scope binds a name, which is how a reference to the host global is
+ * recognised. Both were previously spelled as text readers (`stringScalarAt`,
+ * `immediateMemberReceiver`) whose absence meant the same thing; the obligation
+ * survived the rewrite because it is a property of classification, not of the
+ * technique used to classify.
+ */
+const UNREADABLE_READERS: ReadonlySet<string> = new Set(['staticKey', 'nearestBinding']);
 
 /** Modules whose job is fail-closed classification. */
 const CLASSIFIER_MODULES: readonly string[] = Object.freeze(['scripts/lib/dynamic-code-residue.ts']);
@@ -62,29 +78,62 @@ interface ForkDisposition {
  */
 const DISPOSITIONS: readonly ForkDisposition[] = Object.freeze([
   Object.freeze({
-    site: 'scripts/lib/dynamic-code-residue.ts:stringScalarAt#1',
+    site: 'scripts/lib/dynamic-code-residue.ts:nearestBinding#1',
     kind: 'records' as const,
-    // Computed member on a global receiver: a key that is not a sole complete
-    // literal is residue in both kinds.
+    // isFree: no enclosing scope binds the name, so it IS the host global.
+    // This is the fork that makes `globalThis`, `Reflect`, and a bare `eval`
+    // count as the real capability rather than as some local of that name.
     provenBy: 'tests/unit/devops/dynamic-code-sources.test.ts',
   }),
   Object.freeze({
-    site: 'scripts/lib/dynamic-code-residue.ts:stringScalarAt#2',
+    site: 'scripts/lib/dynamic-code-residue.ts:nearestBinding#2',
     kind: 'records' as const,
-    // Dynamic-import specifier: unreadable is residue, except the
-    // pathToFileURL callee-contract clearance, which is a PROOF, not a skip.
+    // provablySafeReceiver: an unbound receiver is never proven safe, so
+    // `receiver.eval` on it stays residue.
     provenBy: 'tests/unit/devops/dynamic-code-sources.test.ts',
   }),
   Object.freeze({
-    site: 'scripts/lib/dynamic-code-residue.ts:stringScalarAt#3',
-    kind: 'handoff' as const,
-    decidedBy: 'the DYNAMIC_TOKEN callee pass, which owns every non-literal timer callee',
+    site: 'scripts/lib/dynamic-code-residue.ts:nearestBinding#3',
+    kind: 'records' as const,
+    // fileUrlSpecifier: the pathToFileURL clearance is only as good as its
+    // referent, so an unresolved callee refuses the clearance and the import
+    // is reported.
     provenBy: 'tests/unit/devops/dynamic-code-sources.test.ts',
   }),
   Object.freeze({
-    site: 'scripts/lib/dynamic-code-residue.ts:immediateMemberReceiver#1',
+    site: 'scripts/lib/dynamic-code-residue.ts:nearestBinding#4',
+    kind: 'records' as const,
+    // timerArgumentProvenCallable: an unresolved argument is NOT proven
+    // callable, so the timer is reported. The polarity is deliberate — asking
+    // "is it a string?" would clear everything unreadable.
+    provenBy: 'tests/unit/devops/dynamic-code-sources.test.ts',
+  }),
+  Object.freeze({
+    site: 'scripts/lib/dynamic-code-residue.ts:nearestBinding#5',
+    kind: 'records' as const,
+    // The identifier pass: an unbound `eval`/`Function` reference is the
+    // global capability and is reported.
+    provenBy: 'tests/unit/devops/dynamic-code-sources.test.ts',
+  }),
+  Object.freeze({
+    site: 'scripts/lib/dynamic-code-residue.ts:staticKey#1',
     kind: 'handoff' as const,
-    decidedBy: 'the same DYNAMIC_TOKEN pass: a null receiver means a BARE callee, decided by the token guards below it',
+    decidedBy:
+      'the element-access arm of collectResidue (staticKey#3): an unreadable key on a global receiver is residue in BOTH kinds there, which necessarily covers the timer names this call declines to match',
+    provenBy: 'tests/unit/devops/dynamic-code-sources.test.ts',
+  }),
+  Object.freeze({
+    site: 'scripts/lib/dynamic-code-residue.ts:staticKey#2',
+    kind: 'records' as const,
+    // reflectGetKey: an unreadable key in `Reflect.get(globalThis, k)` is
+    // residue in both kinds, exactly as the equivalent `globalThis[k]` is.
+    provenBy: 'tests/unit/devops/dynamic-code-sources.test.ts',
+  }),
+  Object.freeze({
+    site: 'scripts/lib/dynamic-code-residue.ts:staticKey#3',
+    kind: 'records' as const,
+    // The element-access arm: a key on a global receiver that is not a literal
+    // this engine can read is residue in both kinds.
     provenBy: 'tests/unit/devops/dynamic-code-sources.test.ts',
   }),
 ]);
@@ -123,7 +172,7 @@ describe('classifiers may not clear input they could not read', () => {
 
   it('every unreadable-input fork in a classifier declares its disposition', () => {
     const live = CLASSIFIER_MODULES.flatMap(readerSites);
-    expect(live.length, 'the site census must not be vacuous').toBeGreaterThanOrEqual(4);
+    expect(live.length, 'the site census must not be vacuous').toBeGreaterThanOrEqual(8);
     const declared = new Set(DISPOSITIONS.map((entry) => entry.site));
     const undeclared = live.filter((site) => !declared.has(site));
     expect(

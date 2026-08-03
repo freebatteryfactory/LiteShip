@@ -4,9 +4,39 @@
  * The blocking ESLint authority enforces `no-eval` / `no-new-func` /
  * `no-implied-eval` over the root lint command's package-source globs. This
  * engine derives the remaining browser extensions from Vite's host authority,
- * adds runtime-specific module/component forms, and scans those files with a
- * line classifier plus repository sweep. The unit laws pin both package source
- * trees and manifest-published runtime files to zero findings.
+ * adds runtime-specific module/component forms, and scans those files.
+ *
+ * THE CLASS RULE. The ANCHOR is the parsed syntax tree of every executable
+ * region in a swept file — not its bytes. The ALLOWLIST is the small set of
+ * positions a dynamic-code name can occupy harmlessly: a string, a comment, a
+ * type, a declaration's own name, a property key, or a reference that RESOLVES
+ * to a local binding proven to hold a function.
+ *
+ * Why the tree and not the text. The previous engine matched `/\b(?:eval|
+ * Function)\b/` over comment-stripped, string-masked source and decided
+ * membership from neighbouring characters. Every property that decision needed
+ * — is this a type or a value, a key or a value, a declaration or a reference,
+ * which binding owns this name — is a question about structure, and each was
+ * approximated by a character test with its own blind spot. Review then
+ * reported the blind spots one spelling at a time. A measured probe of twelve
+ * shapes found NINE invisible: `eval` (the scanner unescapes identifiers,
+ * a regex does not), `{ run: eval }` (a property VALUE is indistinguishable
+ * from a type annotation when you only look for a preceding colon),
+ * `const { eval: run } = globalThis` (same colon, opposite meaning),
+ * `window['setTimeout']('code')` (a computed callee never reaches the timer
+ * pattern), `Reflect.get(globalThis, 'eval')(x)` (string masking erases the
+ * evidence), and their neighbours. A parser answers all of them by
+ * construction, because it is answering the question that was actually being
+ * asked.
+ *
+ * Regions, not files. `.astro` is 28 of the 37 swept files and is not a
+ * TypeScript program: it is frontmatter, optional `<script>` blocks, and markup
+ * carrying `{expression}` holes. Each executable region is extracted with its
+ * source offset and parsed on its own, so a finding still reports the line it
+ * lives on. {@link EXTENSIONS_WITHOUT_EXECUTABLE_CODE} names the swept
+ * extensions that carry no ECMAScript at all, and a law proves that every
+ * swept extension is either extracted or named there — an extension with
+ * neither is a hole, not a pass.
  *
  * @module
  */
@@ -15,8 +45,15 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import ts from 'typescript';
 import { ValidationError } from '../../packages/error/src/index.js';
+import { nearestBinding } from '../../packages/audit/src/ts-scope.js';
 import { getEnvironmentConfig } from '../../packages/vite/src/environments.js';
 
+/**
+ * `STRING_TIMER` is the implied-`eval` kind: a timer whose first argument is
+ * not PROVEN callable, which includes but is not limited to a literal string of
+ * source. The proof obligation sits on the argument, not on the engine's
+ * ability to recognise a string.
+ */
 export type DynamicCodeKind = 'EVAL_CALL' | 'FUNCTION_CONSTRUCTOR' | 'STRING_TIMER' | 'DYNAMIC_IMPORT';
 
 export interface DynamicCodeFinding {
@@ -31,474 +68,561 @@ export interface DynamicCodeScan {
   readonly swept: readonly string[];
 }
 
-const DYNAMIC_TOKEN = /\b(?:eval|Function)\b/gu;
-const GLOBAL_RECEIVER = new Set(['globalThis', 'window', 'self']);
-const STRING_TIMER_CALLEE = /\bset(?:Timeout|Interval|Immediate)\s*\(/gu;
-const DYNAMIC_IMPORT_CALLEE = /\bimport\s*\(/gu;
-const COMPUTED_MEMBER = /\b([A-Za-z_$][\w$]*)\s*(?:\?\.)?\s*\[/gu;
+/** One residue occurrence located within the source it was classified from. */
+export interface DynamicCodeResidue {
+  readonly kind: DynamicCodeKind;
+  /** 1-based line within the whole file the region came from. */
+  readonly line: number;
+  readonly text: string;
+}
+
+const DYNAMIC_KIND_BY_NAME: ReadonlyMap<string, DynamicCodeKind> = new Map([
+  ['eval', 'EVAL_CALL' as const],
+  ['Function', 'FUNCTION_CONSTRUCTOR' as const],
+]);
+const TIMER_NAMES: ReadonlySet<string> = new Set(['setTimeout', 'setInterval', 'setImmediate']);
+const GLOBAL_RECEIVER: ReadonlySet<string> = new Set(['globalThis', 'window', 'self']);
+const DANGEROUS_IMPORT_SCHEME = /^(?:data|blob|javascript):/iu;
+const FILE_URL_EXPORT_NAME = 'pathToFileURL';
+const NODE_URL_SPECIFIER = 'node:url';
+
+/* ------------------------------------------------------------------ *
+ * Expression shape helpers
+ * ------------------------------------------------------------------ */
+
+function unwrap(expression: ts.Expression): ts.Expression {
+  let current = expression;
+  while (
+    ts.isParenthesizedExpression(current) ||
+    ts.isAsExpression(current) ||
+    ts.isTypeAssertionExpression(current) ||
+    ts.isSatisfiesExpression(current) ||
+    ts.isNonNullExpression(current)
+  ) {
+    current = current.expression;
+  }
+  return current;
+}
+
+/** A reference no enclosing scope binds — therefore whatever the host provides. */
+function isFree(identifier: ts.Identifier): boolean {
+  return nearestBinding(identifier) === undefined;
+}
+
+/** `globalThis` / `window` / `self`, and not a local binding wearing the name. */
+function isGlobalReceiver(expression: ts.Expression): boolean {
+  const current = unwrap(expression);
+  return ts.isIdentifier(current) && GLOBAL_RECEIVER.has(current.text) && isFree(current);
+}
+
+/** The key of a member access when it is a literal this engine can READ. */
+function staticKey(expression: ts.Expression): string | undefined {
+  const current = unwrap(expression);
+  return ts.isStringLiteralLike(current) ? current.text : undefined;
+}
+
+/** A declaration whose initializer is syntactically a function value. */
+function initializerIsFunction(declaration: ts.Node): boolean {
+  if (ts.isFunctionDeclaration(declaration)) return true;
+  if (!ts.isVariableDeclaration(declaration) || declaration.initializer === undefined) return false;
+  const initializer = unwrap(declaration.initializer);
+  return ts.isArrowFunction(initializer) || ts.isFunctionExpression(initializer);
+}
 
 /**
- * `pathToFileURL(x).href` is the ONE non-literal import specifier the
- * classifier can clear, and it clears on the CALLEE'S CONTRACT rather than on
- * the argument: `node:url`'s `pathToFileURL` always yields a `file:` URL, so
- * the result can never carry a scheme {@link DANGEROUS_IMPORT_SCHEME} blocks.
+ * A receiver proven NOT to be the host global object.
+ *
+ * Fail-closed: only a local `const` initialized with a literal object, a
+ * function, a class, or a construction is provable here. A free identifier, a
+ * parameter, or a binding whose initializer is itself a global alias
+ * (`const parser = globalThis`) all stay unproven, so `receiver.eval` on them
+ * remains residue.
  */
-const DANGEROUS_IMPORT_SCHEME = /^(?:data|blob|javascript):/iu;
-const SAFE_CONST_DYNAMIC_BINDING =
-  /\bconst\s+(eval|Function)\s*=\s*(?:(?:async\s+)?function\b|(?:async\s*)?\([^)]*\)\s*=>|(?:async\s+)?[A-Za-z_$][\w$]*\s*=>)/gu;
-const SAFE_DECLARED_DYNAMIC_BINDING = /\b(?:function|class)\s+(eval|Function)\b/gu;
-const SAFE_RECEIVER_BINDING =
-  /\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*(?:\{|(?:async\s+)?function\b|(?:async\s*)?\([^)]*\)\s*=>|(?:async\s+)?[A-Za-z_$][\w$]*\s*=>)/gu;
-
-interface StringScalar {
-  readonly value: string;
-  readonly escaped: boolean;
-  readonly closed: boolean;
-  readonly interpolated: boolean;
-  /** Index just past the literal — lets a caller prove nothing else composes it. */
-  readonly end: number;
+function provablySafeReceiver(expression: ts.Expression): boolean {
+  const current = unwrap(expression);
+  if (!ts.isIdentifier(current)) return false;
+  const binding = nearestBinding(current);
+  if (binding === undefined) return false;
+  if (!ts.isVariableDeclaration(binding) || binding.initializer === undefined) return false;
+  if ((binding.parent.flags & ts.NodeFlags.Const) === 0) return false;
+  const initializer = unwrap(binding.initializer);
+  if (isGlobalReceiver(initializer)) return false;
+  return (
+    ts.isObjectLiteralExpression(initializer) ||
+    ts.isArrowFunction(initializer) ||
+    ts.isFunctionExpression(initializer) ||
+    ts.isClassExpression(initializer) ||
+    ts.isNewExpression(initializer)
+  );
 }
 
-interface ProvenBinding {
-  readonly name: string;
-  readonly scope: string;
-}
-
-const FILE_URL_BINDING_FILE = 'dynamic-code-binding.ts';
-
-function nodeUrlModuleSpecifier(node: ts.Node): boolean {
-  return ts.isStringLiteral(node) && node.text === 'node:url';
-}
-
-function importedPathToFileUrl(declaration: ts.Declaration): boolean {
-  if (ts.isImportSpecifier(declaration)) {
-    const importDeclaration = declaration.parent.parent.parent;
-    return (
-      !declaration.isTypeOnly &&
-      !importDeclaration.importClause?.isTypeOnly &&
-      (declaration.propertyName?.text ?? declaration.name.text) === 'pathToFileURL' &&
-      nodeUrlModuleSpecifier(importDeclaration.moduleSpecifier)
-    );
+/** Any ancestor type node — `const x: Function`, `x as Function`, `typeof eval`. */
+function inTypePosition(node: ts.Node): boolean {
+  for (let current: ts.Node | undefined = node; current !== undefined; current = current.parent) {
+    if (ts.isTypeNode(current)) return true;
   }
-  if (!ts.isBindingElement(declaration) || !ts.isObjectBindingPattern(declaration.parent)) return false;
-  const importedName = declaration.propertyName ?? declaration.name;
-  if (!(ts.isIdentifier(importedName) || ts.isStringLiteral(importedName)) || importedName.text !== 'pathToFileURL') {
+  return false;
+}
+
+/**
+ * Whether an identifier occurrence READS the name it spells.
+ *
+ * Declaration names, member names, property keys, and import/export specifiers
+ * all spell the name without referring to the global capability; the member and
+ * destructuring rules own those positions instead. A shorthand property
+ * (`{ eval }`) IS a read, which is why it is admitted here.
+ */
+function isValueReference(identifier: ts.Identifier): boolean {
+  const parent = identifier.parent;
+  if (parent === undefined) return true;
+  if (ts.isPropertyAccessExpression(parent) && parent.name === identifier) return false;
+  if (ts.isQualifiedName(parent) && parent.right === identifier) return false;
+  if (ts.isPropertyAssignment(parent) && parent.name === identifier) return false;
+  if (ts.isBindingElement(parent)) return false;
+  if (ts.isImportSpecifier(parent) || ts.isExportSpecifier(parent)) return false;
+  if (ts.isImportClause(parent) || ts.isNamespaceImport(parent)) return false;
+  if (ts.isLabeledStatement(parent) && parent.label === identifier) return false;
+  if (ts.isBreakStatement(parent) || ts.isContinueStatement(parent)) return false;
+  const named = parent as { readonly name?: ts.Node };
+  if (
+    named.name === identifier &&
+    (ts.isVariableDeclaration(parent) ||
+      ts.isParameter(parent) ||
+      ts.isFunctionDeclaration(parent) ||
+      ts.isFunctionExpression(parent) ||
+      ts.isClassDeclaration(parent) ||
+      ts.isClassExpression(parent) ||
+      ts.isMethodDeclaration(parent) ||
+      ts.isMethodSignature(parent) ||
+      ts.isPropertyDeclaration(parent) ||
+      ts.isPropertySignature(parent) ||
+      ts.isGetAccessorDeclaration(parent) ||
+      ts.isSetAccessorDeclaration(parent) ||
+      ts.isEnumDeclaration(parent) ||
+      ts.isEnumMember(parent) ||
+      ts.isInterfaceDeclaration(parent) ||
+      ts.isTypeAliasDeclaration(parent) ||
+      ts.isModuleDeclaration(parent))
+  ) {
     return false;
   }
-  const variableDeclaration = declaration.parent.parent;
-  if (!ts.isVariableDeclaration(variableDeclaration)) return false;
-  const declarationList = variableDeclaration.parent;
-  if (!ts.isVariableDeclarationList(declarationList) || !(declarationList.flags & ts.NodeFlags.Const)) return false;
-  const initializer = variableDeclaration.initializer;
+  return true;
+}
+
+/* ------------------------------------------------------------------ *
+ * `pathToFileURL(...).href` — the one clearable non-literal specifier
+ * ------------------------------------------------------------------ */
+
+/**
+ * The precise binding element for `name` when a resolved binding is a
+ * destructuring declaration. Scope resolution reports the declaration that owns
+ * a destructured name, which is the right answer for "is this name bound"; the
+ * `node:url` proof additionally needs to read the element's own property name.
+ */
+function bindingElementFor(binding: ts.Node, name: string): ts.BindingElement | undefined {
+  if (ts.isBindingElement(binding)) return binding;
+  if (!ts.isVariableDeclaration(binding) || !ts.isObjectBindingPattern(binding.name)) return undefined;
+  return binding.name.elements.find((element) => ts.isIdentifier(element.name) && element.name.text === name);
+}
+
+/** Whether a resolved binding really is `node:url`'s exported `pathToFileURL`. */
+function bindsNodeUrlFileUrl(binding: ts.Node): boolean {
+  if (ts.isImportSpecifier(binding)) {
+    const importDeclaration = binding.parent.parent.parent;
+    return (
+      !binding.isTypeOnly &&
+      !importDeclaration.importClause?.isTypeOnly &&
+      (binding.propertyName?.text ?? binding.name.text) === FILE_URL_EXPORT_NAME &&
+      ts.isStringLiteralLike(importDeclaration.moduleSpecifier) &&
+      importDeclaration.moduleSpecifier.text === NODE_URL_SPECIFIER
+    );
+  }
+  // CJS: `const { pathToFileURL } = require('node:url')`. The binding must be
+  // immutable and `require` itself unbound, so a local decoy cannot fabricate
+  // the same syntax.
+  if (!ts.isBindingElement(binding) || !ts.isObjectBindingPattern(binding.parent)) return false;
+  const imported = binding.propertyName ?? binding.name;
+  if (!(ts.isIdentifier(imported) || ts.isStringLiteralLike(imported))) return false;
+  if (imported.text !== FILE_URL_EXPORT_NAME) return false;
+  const declaration = binding.parent.parent;
+  if (!ts.isVariableDeclaration(declaration)) return false;
+  if ((declaration.parent.flags & ts.NodeFlags.Const) === 0) return false;
+  const initializer = declaration.initializer;
   return (
     initializer !== undefined &&
     ts.isCallExpression(initializer) &&
     ts.isIdentifier(initializer.expression) &&
     initializer.expression.text === 'require' &&
+    isFree(initializer.expression) &&
     initializer.arguments.length === 1 &&
-    nodeUrlModuleSpecifier(initializer.arguments[0]!)
+    ts.isStringLiteralLike(initializer.arguments[0]!) &&
+    (initializer.arguments[0] as ts.StringLiteralLike).text === NODE_URL_SPECIFIER
   );
 }
 
 /**
- * Prove that one dynamic import's file-URL callee resolves to the actual local
- * binding imported from `node:url`. Tokens and file-wide import presence are
- * not authority: the call-site symbol must have exactly one declaration, and
- * that declaration must be a direct/aliased ESM import or CJS destructuring of
- * the exported `pathToFileURL` binding. A local shadow or redeclaration therefore
- * fails closed. A CJS `require` must itself be unbound, so a local decoy cannot
- * manufacture the same syntax.
+ * `pathToFileURL(x).href` is the ONE non-literal specifier this engine clears,
+ * and it clears on the CALLEE'S CONTRACT: `node:url`'s `pathToFileURL` always
+ * yields a `file:` URL, which can never carry a blocked scheme. The clearance
+ * is only as good as the referent, so the callee must RESOLVE to that import at
+ * its own call site — a shadow or redeclaration fails closed.
  */
-function fileUrlSpecifierProven(fileContext: string, importOffset: number): boolean {
-  if (importOffset < 0) return false;
-  const options: ts.CompilerOptions = {
-    allowJs: true,
-    module: ts.ModuleKind.ESNext,
-    noLib: true,
-    noResolve: true,
-    target: ts.ScriptTarget.Latest,
-  };
-  const sourceFile = ts.createSourceFile(
-    FILE_URL_BINDING_FILE,
-    fileContext,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TSX,
-  );
-  const host = ts.createCompilerHost(options, true);
-  host.fileExists = (fileName) => fileName === FILE_URL_BINDING_FILE;
-  host.readFile = (fileName) => (fileName === FILE_URL_BINDING_FILE ? fileContext : undefined);
-  host.getSourceFile = (fileName) => (fileName === FILE_URL_BINDING_FILE ? sourceFile : undefined);
-  const program = ts.createProgram([FILE_URL_BINDING_FILE], options, host);
-  const checker = program.getTypeChecker();
-  let importCall: ts.CallExpression | undefined;
-  const findImportCall = (node: ts.Node): void => {
-    if (
-      importCall === undefined &&
-      ts.isCallExpression(node) &&
-      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
-      node.expression.getStart(sourceFile) === importOffset
-    ) {
-      importCall = node;
-      return;
-    }
-    ts.forEachChild(node, findImportCall);
-  };
-  findImportCall(sourceFile);
-  if (importCall === undefined || importCall.arguments.length !== 1) return false;
-  const specifier = importCall.arguments[0]!;
-  if (
-    !ts.isPropertyAccessExpression(specifier) ||
-    specifier.name.text !== 'href' ||
-    !ts.isCallExpression(specifier.expression) ||
-    !ts.isIdentifier(specifier.expression.expression)
-  ) {
-    return false;
+function fileUrlSpecifier(expression: ts.Expression): boolean {
+  const current = unwrap(expression);
+  if (!ts.isPropertyAccessExpression(current) || current.name.text !== 'href') return false;
+  const call = unwrap(current.expression);
+  if (!ts.isCallExpression(call)) return false;
+  const callee = unwrap(call.expression);
+  if (!ts.isIdentifier(callee)) return false;
+  const binding = nearestBinding(callee);
+  if (binding === undefined) return false;
+  return bindsNodeUrlFileUrl(bindingElementFor(binding, callee.text) ?? binding);
+}
+
+/* ------------------------------------------------------------------ *
+ * Timer arguments
+ * ------------------------------------------------------------------ */
+
+/** The timer this callee names, whether spelled bare, member, or computed. */
+function timerCalleeName(expression: ts.Expression): string | undefined {
+  const current = unwrap(expression);
+  if (ts.isIdentifier(current)) {
+    return TIMER_NAMES.has(current.text) && isFree(current) ? current.text : undefined;
   }
-  const callee = specifier.expression.expression;
-  const symbol = checker.getSymbolAtLocation(callee);
-  if (symbol?.declarations?.length !== 1 || !importedPathToFileUrl(symbol.declarations[0]!)) return false;
-  const declaration = symbol.declarations[0]!;
-  if (ts.isBindingElement(declaration)) {
-    const initializer = declaration.parent.parent.initializer;
-    if (
-      initializer !== undefined &&
-      ts.isCallExpression(initializer) &&
-      ts.isIdentifier(initializer.expression) &&
-      checker.getSymbolAtLocation(initializer.expression) !== undefined
-    ) {
-      return false;
-    }
+  if (ts.isPropertyAccessExpression(current)) {
+    return isGlobalReceiver(current.expression) && TIMER_NAMES.has(current.name.text) ? current.name.text : undefined;
   }
-  return true;
-}
-
-/** Replace comments with spaces while preserving source offsets and string contents. */
-function stripCommentsPreservingStrings(source: string): string {
-  const output = [...source];
-  let quote: "'" | '"' | '`' | null = null;
-  let lineComment = false;
-  let blockComment = false;
-  let escaped = false;
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index]!;
-    const next = source[index + 1];
-    if (lineComment) {
-      if (char === '\n' || char === '\r') lineComment = false;
-      else output[index] = ' ';
-      continue;
-    }
-    if (blockComment) {
-      output[index] = char === '\n' || char === '\r' ? char : ' ';
-      if (char === '*' && next === '/') {
-        output[index + 1] = ' ';
-        index += 1;
-        blockComment = false;
-      }
-      continue;
-    }
-    if (quote !== null) {
-      if (escaped) escaped = false;
-      else if (char === '\\') escaped = true;
-      else if (char === quote) quote = null;
-      continue;
-    }
-    if (char === "'" || char === '"' || char === '`') {
-      quote = char;
-    } else if (char === '/' && next === '/') {
-      output[index] = ' ';
-      output[index + 1] = ' ';
-      index += 1;
-      lineComment = true;
-    } else if (char === '/' && next === '*') {
-      output[index] = ' ';
-      output[index + 1] = ' ';
-      index += 1;
-      blockComment = true;
-    }
+  if (ts.isElementAccessExpression(current) && isGlobalReceiver(current.expression)) {
+    const key = staticKey(current.argumentExpression);
+    return key !== undefined && TIMER_NAMES.has(key) ? key : undefined;
   }
-  return output.join('');
-}
-
-/** Mask string contents while preserving source offsets for token classification. */
-function maskStrings(source: string): string {
-  const output = [...source];
-  let quote: "'" | '"' | '`' | null = null;
-  let escaped = false;
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index]!;
-    if (quote !== null) {
-      output[index] = char === '\n' || char === '\r' ? char : ' ';
-      if (escaped) escaped = false;
-      else if (char === '\\') escaped = true;
-      else if (char === quote) quote = null;
-    } else if (char === "'" || char === '"' || char === '`') {
-      output[index] = ' ';
-      quote = char;
-    }
-  }
-  return output.join('');
-}
-
-/** Extract executable `${...}` bodies; ordinary template text remains a string. */
-function templateExpressionBodies(source: string): readonly string[] {
-  const bodies: string[] = [];
-  let outerQuote: "'" | '"' | null = null;
-  let outerEscaped = false;
-  for (let index = 0; index < source.length; index += 1) {
-    const outerChar = source[index]!;
-    if (outerQuote !== null) {
-      if (outerEscaped) outerEscaped = false;
-      else if (outerChar === '\\') outerEscaped = true;
-      else if (outerChar === outerQuote) outerQuote = null;
-      continue;
-    }
-    if (outerChar === "'" || outerChar === '"') {
-      outerQuote = outerChar;
-      continue;
-    }
-    if (source[index] !== '`') continue;
-    for (index += 1; index < source.length; index += 1) {
-      const char = source[index]!;
-      if (char === '\\') {
-        index += 1;
-        continue;
-      }
-      if (char === '`') break;
-      if (char !== '$' || source[index + 1] !== '{') continue;
-      const start = index + 2;
-      let depth = 1;
-      let quote: "'" | '"' | null = null;
-      let escaped = false;
-      let cursor = start;
-      for (; cursor < source.length; cursor += 1) {
-        const expressionChar = source[cursor]!;
-        if (quote !== null) {
-          if (escaped) escaped = false;
-          else if (expressionChar === '\\') escaped = true;
-          else if (expressionChar === quote) quote = null;
-          continue;
-        }
-        if (expressionChar === "'" || expressionChar === '"') {
-          quote = expressionChar;
-        } else if (expressionChar === '{') {
-          depth += 1;
-        } else if (expressionChar === '}') {
-          depth -= 1;
-          if (depth === 0) break;
-        }
-      }
-      bodies.push(source.slice(start, cursor));
-      index = cursor;
-    }
-  }
-  return bodies;
-}
-
-function scopeKeys(source: string): readonly string[] {
-  const keys: string[] = [];
-  const stack: number[] = [];
-  let nextScope = 1;
-  for (let index = 0; index < source.length; index += 1) {
-    if (source[index] === '}') stack.pop();
-    keys[index] = `/${stack.join('/')}/`;
-    if (source[index] === '{') {
-      stack.push(nextScope);
-      nextScope += 1;
-    }
-  }
-  return keys;
-}
-
-function collectProvenBindings(masked: string, scopes: readonly string[], pattern: RegExp): readonly ProvenBinding[] {
-  const bindings: ProvenBinding[] = [];
-  for (const match of masked.matchAll(pattern)) {
-    bindings.push({ name: match[1]!, scope: scopes[match.index] ?? '/' });
-  }
-  return bindings;
-}
-
-function bindingVisible(bindings: readonly ProvenBinding[], name: string, scope: string): boolean {
-  // Same-scope proof is deliberately conservative: an inner block may shadow
-  // an otherwise-safe outer name with an unclassifiable alias. Admitting only
-  // exact scope identity can false-red a nested use, but cannot false-green a
-  // shadowed global dynamic-code capability.
-  return bindings.some((binding) => binding.name === name && scope === binding.scope);
-}
-
-function stringScalarAt(source: string, offset: number): StringScalar | null {
-  let index = offset;
-  while (/\s/u.test(source[index] ?? '')) index += 1;
-  const quote = source[index];
-  if (quote !== "'" && quote !== '"' && quote !== '`') return null;
-  let value = '';
-  let escaped = false;
-  for (index += 1; index < source.length; index += 1) {
-    const char = source[index]!;
-    if (char === '\\') {
-      escaped = true;
-      index += 1;
-      if (index < source.length) value += source[index]!;
-      continue;
-    }
-    if (char === quote) {
-      return { value, escaped, closed: true, interpolated: quote === '`' && value.includes('${'), end: index + 1 };
-    }
-    value += char;
-  }
-  return {
-    value,
-    escaped,
-    closed: false,
-    interpolated: quote === '`' && value.includes('${'),
-    end: source.length,
-  };
-}
-
-function immediateMemberReceiver(masked: string, tokenOffset: number): string | null {
-  const match = masked.slice(0, tokenOffset).match(/([A-Za-z_$][\w$]*)\s*(?:\.|\?\.)\s*$/u);
-  return match?.[1] ?? null;
-}
-
-function previousNonWhitespace(source: string, offset: number): string {
-  for (let index = offset - 1; index >= 0; index -= 1) {
-    if (!/\s/u.test(source[index]!)) return source[index]!;
-  }
-  return '';
-}
-
-function nextNonWhitespace(source: string, offset: number): string {
-  for (let index = offset; index < source.length; index += 1) {
-    if (!/\s/u.test(source[index]!)) return source[index]!;
-  }
-  return '';
-}
-
-function typeOnlyToken(masked: string, tokenOffset: number): boolean {
-  if (previousNonWhitespace(masked, tokenOffset) === ':') return true;
-  return /\bas\s*$/u.test(masked.slice(0, tokenOffset));
+  return undefined;
 }
 
 /**
- * Classify dynamic-code residue in one logical source fragment.
+ * Whether a timer's first argument is PROVEN to be a function.
  *
- * THE CLASS RULE: the ANCHOR is every `eval` / `Function` token in a callee or
- * reference position. The ALLOWLIST is only a comment/string, a proven local
- * binding, a type position, or a property on a receiver proven not to be a
- * global object. The old denylist lost six callee spellings at once; callee
- * syntax is an open grammar, so anything this classifier cannot prove safe is
- * residue. Dangerous `data:`, `blob:`, and `javascript:` imports follow the
- * same fail-closed rule for escaped or unterminated specifiers.
+ * The polarity is the whole point. Asking "is this a string?" clears everything
+ * the engine cannot read, which is the fail-open shape this batch exists to
+ * remove; asking "is this proven callable?" makes an unreadable argument
+ * residue. A syntactic function, a reference resolving to one, and a `.bind`
+ * result are provable. A literal, a template, a concatenation, a call result,
+ * or a reference to an import or global is not.
+ *
+ * Measured before choosing: the swept corpus contains ZERO timer calls, so the
+ * strict polarity has no false-positive cost to weigh against the doctrine. If
+ * it later fires on a legitimate `setTimeout(handler, 0)` whose callee arrives
+ * by import, the cure is an arrow wrapper at the call site — a local, one-token
+ * change that keeps the gate honest rather than a suppression that does not.
  */
-export function classifyDynamicCodeSource(
-  source: string,
-  fileContext: string = source,
-  fileContextOffset: number = source === fileContext ? 0 : -1,
-): readonly DynamicCodeKind[] {
-  const commentStripped = stripCommentsPreservingStrings(source);
-  const masked = maskStrings(commentStripped);
-  const kinds = new Set<DynamicCodeKind>();
-  const scopes = scopeKeys(masked);
-  const localBindings = [
-    ...collectProvenBindings(masked, scopes, SAFE_CONST_DYNAMIC_BINDING),
-    ...collectProvenBindings(masked, scopes, SAFE_DECLARED_DYNAMIC_BINDING),
-  ];
-  const safeReceivers = collectProvenBindings(masked, scopes, SAFE_RECEIVER_BINDING);
-
-  for (const expression of templateExpressionBodies(commentStripped)) {
-    for (const kind of classifyDynamicCodeSource(expression)) kinds.add(kind);
+function timerArgumentProvenCallable(argument: ts.Expression): boolean {
+  const current = unwrap(argument);
+  if (ts.isArrowFunction(current) || ts.isFunctionExpression(current)) return true;
+  if (
+    ts.isCallExpression(current) &&
+    ts.isPropertyAccessExpression(current.expression) &&
+    current.expression.name.text === 'bind'
+  ) {
+    return timerArgumentProvenCallable(current.expression.expression);
   }
-
-  for (const match of masked.matchAll(DYNAMIC_TOKEN)) {
-    const token = match[0]!;
-    const offset = match.index;
-    const scope = scopes[offset] ?? '/';
-    const receiver = immediateMemberReceiver(masked, offset);
-    if (receiver !== null && !GLOBAL_RECEIVER.has(receiver) && bindingVisible(safeReceivers, receiver, scope)) continue;
-    if (receiver === null) {
-      if (bindingVisible(localBindings, token, scope)) continue;
-      if (typeOnlyToken(masked, offset)) continue;
-      if (nextNonWhitespace(masked, offset + token.length) === ':') continue;
-    }
-    kinds.add(token === 'eval' ? 'EVAL_CALL' : 'FUNCTION_CONSTRUCTOR');
+  if (ts.isIdentifier(current)) {
+    const binding = nearestBinding(current);
+    return binding !== undefined && initializerIsFunction(binding);
   }
-
-  for (const match of masked.matchAll(COMPUTED_MEMBER)) {
-    const receiver = match[1]!;
-    const scope = scopes[match.index] ?? '/';
-    const scalar = stringScalarAt(commentStripped, match.index + match[0].length);
-    // ALLOWLIST: on a global receiver the ONLY provably safe key is a single
-    // complete literal that closes the subscript by itself. Anything else —
-    // an identifier (`globalThis[key]`), a concatenation
-    // (`window["ev" + "al"]`), a computed lookup (`self[KEYS.eval]`) — is an
-    // open grammar the classifier cannot read, so it is residue in both kinds
-    // (Codex review on PR #197, confirmed P1). On a NON-global receiver the
-    // DYNAMIC_TOKEN pass owns the decision, so silence here stays correct.
-    // The subscript must CLOSE in the text under analysis: a line pass sees
-    // `window[` truncated at the newline, and the collapsed whole-source pass
-    // owns that shape. An unclosed fragment is deferred, never cleared.
-    const subscriptCloses = commentStripped.indexOf(']', match.index + match[0].length) !== -1;
-    if (GLOBAL_RECEIVER.has(receiver) && subscriptCloses) {
-      const soleLiteralKey = scalar !== null && scalar.closed && nextNonWhitespace(commentStripped, scalar.end) === ']';
-      if (!soleLiteralKey) {
-        kinds.add('EVAL_CALL');
-        kinds.add('FUNCTION_CONSTRUCTOR');
-        continue;
-      }
-    }
-    if (scalar === null) continue;
-    const receiverIsSafe =
-      !GLOBAL_RECEIVER.has(receiver) &&
-      bindingVisible(safeReceivers, receiver, scope) &&
-      scalar.closed &&
-      !scalar.escaped &&
-      !scalar.interpolated;
-    if (receiverIsSafe) continue;
-    if (!scalar.closed || scalar.escaped || scalar.interpolated || scalar.value === 'eval') kinds.add('EVAL_CALL');
-    if (!scalar.closed || scalar.escaped || scalar.interpolated || scalar.value === 'Function') {
-      kinds.add('FUNCTION_CONSTRUCTOR');
-    }
-  }
-
-  for (const match of masked.matchAll(DYNAMIC_IMPORT_CALLEE)) {
-    const argumentOffset = match.index + match[0].length;
-    // The call must CLOSE in the text under analysis. A line pass sees
-    // `const mod = import(` truncated at the newline; the collapsed
-    // whole-source pass owns that shape. An unclosed fragment is deferred to
-    // a named pass that does decide it, never cleared here.
-    if (commentStripped.indexOf(')', argumentOffset) === -1) continue;
-    const scalar = stringScalarAt(commentStripped, argumentOffset);
-    // ALLOWLIST: a complete, unescaped, uninterpolated literal whose scheme
-    // is readable and safe — or a `pathToFileURL(...).href` specifier, whose
-    // callee CONTRACT guarantees a `file:` URL and therefore can never carry
-    // a blocked scheme. Anything else the classifier cannot READ
-    // (`import(s)`, `import("data:" + x)`, `import(config.entry)`) can
-    // resolve at runtime to the very data:/blob:/javascript: URL this gate
-    // blocks when written literally, so it is residue. This is the same
-    // null-scalar fail-open as the computed-member pass above; it survived
-    // that fix because only the named site was swept (Codex review round 4
-    // on PR #197, confirmed P1).
-    if (scalar !== null) {
-      if (!scalar.closed || scalar.escaped || scalar.interpolated || DANGEROUS_IMPORT_SCHEME.test(scalar.value)) {
-        kinds.add('DYNAMIC_IMPORT');
-      }
-      continue;
-    }
-    if (!fileUrlSpecifierProven(fileContext, fileContextOffset + match.index)) {
-      kinds.add('DYNAMIC_IMPORT');
-    }
-  }
-
-  for (const match of masked.matchAll(STRING_TIMER_CALLEE)) {
-    if (stringScalarAt(commentStripped, match.index + match[0].length) !== null) kinds.add('STRING_TIMER');
-  }
-
-  return [...kinds];
+  return false;
 }
 
 /**
- * Compatibility classifier for callers that need the first residue kind on a
- * physical line. The repository sweep consumes the complete source classifier.
+ * `Reflect.get(globalThis, 'eval')` IS `globalThis['eval']` — the same property
+ * read through a different spelling, so it answers to the same rule. Returns
+ * the key when the call reads a global receiver, with `undefined` for a key
+ * this engine cannot read.
+ */
+function reflectGetKey(node: ts.CallExpression): { readonly key: string | undefined } | undefined {
+  const callee = unwrap(node.expression);
+  if (!ts.isPropertyAccessExpression(callee) || callee.name.text !== 'get') return undefined;
+  const receiver = unwrap(callee.expression);
+  if (!ts.isIdentifier(receiver) || receiver.text !== 'Reflect' || !isFree(receiver)) return undefined;
+  if (node.arguments.length < 2 || !isGlobalReceiver(node.arguments[0]!)) return undefined;
+  return { key: staticKey(node.arguments[1]!) };
+}
+
+/* ------------------------------------------------------------------ *
+ * The classifier
+ * ------------------------------------------------------------------ */
+
+function collectResidue(sourceFile: ts.SourceFile, report: (kind: DynamicCodeKind, node: ts.Node) => void): void {
+  const visit = (node: ts.Node): void => {
+    if (ts.isIdentifier(node)) {
+      const kind = DYNAMIC_KIND_BY_NAME.get(node.text);
+      if (kind !== undefined && isValueReference(node) && !inTypePosition(node)) {
+        const binding = nearestBinding(node);
+        // A local binding only clears the name when it is PROVEN to hold a
+        // function. `const eval = alias` re-exposes whatever `alias` is.
+        if (binding === undefined || !initializerIsFunction(binding)) report(kind, node);
+      }
+    }
+
+    if (ts.isPropertyAccessExpression(node)) {
+      const kind = DYNAMIC_KIND_BY_NAME.get(node.name.text);
+      if (kind !== undefined && !provablySafeReceiver(node.expression)) report(kind, node);
+    }
+
+    if (ts.isElementAccessExpression(node)) {
+      const key = staticKey(node.argumentExpression);
+      if (key === undefined) {
+        // ALLOWLIST: on a global receiver the ONLY provably safe key is a
+        // literal this engine can read. An identifier, a concatenation, or a
+        // computed lookup is an open grammar, so both capabilities are
+        // reachable. On a non-global receiver the identifier pass owns the
+        // decision, so silence here stays correct.
+        if (isGlobalReceiver(node.expression)) {
+          report('EVAL_CALL', node);
+          report('FUNCTION_CONSTRUCTOR', node);
+        }
+      } else {
+        const kind = DYNAMIC_KIND_BY_NAME.get(key);
+        if (kind !== undefined && !provablySafeReceiver(node.expression)) report(kind, node);
+      }
+    }
+
+    // `const { eval: run } = globalThis` reads the capability without ever
+    // spelling it in a reference position.
+    if (ts.isBindingElement(node)) {
+      const named = node.propertyName ?? node.name;
+      const key = ts.isIdentifier(named) || ts.isStringLiteralLike(named) ? named.text : undefined;
+      const kind = key === undefined ? undefined : DYNAMIC_KIND_BY_NAME.get(key);
+      if (kind !== undefined) {
+        const declaration = node.parent.parent;
+        const source =
+          ts.isVariableDeclaration(declaration) && declaration.initializer !== undefined
+            ? declaration.initializer
+            : undefined;
+        if (source === undefined || !provablySafeReceiver(source)) report(kind, node);
+      }
+    }
+
+    if (ts.isCallExpression(node)) {
+      if (node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+        classifyImportCall(node, report);
+      } else if (timerCalleeName(node.expression) !== undefined) {
+        const first = node.arguments[0];
+        if (first !== undefined && !timerArgumentProvenCallable(first)) report('STRING_TIMER', node);
+      }
+      const reflected = reflectGetKey(node);
+      if (reflected !== undefined) {
+        if (reflected.key === undefined) {
+          report('EVAL_CALL', node);
+          report('FUNCTION_CONSTRUCTOR', node);
+        } else {
+          const kind = DYNAMIC_KIND_BY_NAME.get(reflected.key);
+          if (kind !== undefined) report(kind, node);
+        }
+      }
+    }
+
+    ts.forEachChild(node, visit);
+  };
+  ts.forEachChild(sourceFile, visit);
+}
+
+function classifyImportCall(node: ts.CallExpression, report: (kind: DynamicCodeKind, node: ts.Node) => void): void {
+  if (node.arguments.length !== 1) {
+    report('DYNAMIC_IMPORT', node);
+    return;
+  }
+  const specifier = unwrap(node.arguments[0]!);
+  // ALLOWLIST: a complete literal whose scheme is readable and safe, or a
+  // `pathToFileURL(...).href` whose callee contract guarantees `file:`.
+  // Anything else — `import(s)`, `import("data:" + x)`, `import(config.entry)`,
+  // an interpolated template — can resolve at runtime to the very
+  // data:/blob:/javascript: URL this gate blocks when written literally.
+  if (ts.isStringLiteralLike(specifier)) {
+    if (DANGEROUS_IMPORT_SCHEME.test(specifier.text)) report('DYNAMIC_IMPORT', node);
+    return;
+  }
+  if (fileUrlSpecifier(specifier)) return;
+  report('DYNAMIC_IMPORT', node);
+}
+
+/* ------------------------------------------------------------------ *
+ * Executable regions
+ * ------------------------------------------------------------------ */
+
+interface CodeRegion {
+  readonly text: string;
+  /** Offset of this region's first character within the whole file. */
+  readonly offset: number;
+  readonly scriptKind: ts.ScriptKind;
+}
+
+/**
+ * Swept extensions that carry no ECMAScript, with the reason each is inert.
+ *
+ * A swept extension that is neither extracted nor named here is a silent hole,
+ * which `tests/unit/devops/dynamic-code-sources.test.ts` refuses.
+ */
+export const EXTENSIONS_WITHOUT_EXECUTABLE_CODE: Readonly<Record<string, string>> = {
+  '.css': 'a stylesheet declares no ECMAScript; a url(javascript:) payload is the style surface’s authority',
+};
+
+const SCRIPT_BLOCK = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/giu;
+const STYLE_BLOCK = /<style\b[^>]*>[\s\S]*?<\/style\s*>/giu;
+const HTML_COMMENT = /<!--[\s\S]*?-->/gu;
+const ASTRO_FRONTMATTER_OPEN = /^---[^\S\n]*\n/u;
+const ASTRO_FRONTMATTER_CLOSE = /\n---[^\S\n]*(?:\n|$)/u;
+
+function scriptKindForExtension(path: string): ts.ScriptKind {
+  if (path.endsWith('.tsx') || path.endsWith('.jsx')) return ts.ScriptKind.TSX;
+  if (path.endsWith('.js') || path.endsWith('.mjs') || path.endsWith('.cjs')) return ts.ScriptKind.JS;
+  return ts.ScriptKind.TS;
+}
+
+/** Blank a span while preserving every offset, so later scans stay aligned. */
+function blankSpan(text: string, start: number, end: number): string {
+  const blanked = text.slice(start, end).replace(/[^\n]/gu, ' ');
+  return text.slice(0, start) + blanked + text.slice(end);
+}
+
+/**
+ * Balanced `{...}` holes in Astro markup, quote-aware so a brace inside an
+ * attribute string cannot open one. Style blocks and HTML comments are blanked
+ * first: a CSS rule body is braces without being an expression.
+ */
+function markupExpressions(body: string, baseOffset: number): readonly CodeRegion[] {
+  let scanned = body;
+  for (const pattern of [SCRIPT_BLOCK, STYLE_BLOCK, HTML_COMMENT]) {
+    pattern.lastIndex = 0;
+    for (const match of [...scanned.matchAll(pattern)]) {
+      scanned = blankSpan(scanned, match.index, match.index + match[0].length);
+    }
+  }
+  const regions: CodeRegion[] = [];
+  for (let index = 0; index < scanned.length; index += 1) {
+    if (scanned[index] !== '{') continue;
+    let depth = 1;
+    let quote: "'" | '"' | '`' | null = null;
+    let escaped = false;
+    let cursor = index + 1;
+    for (; cursor < scanned.length && depth > 0; cursor += 1) {
+      const char = scanned[cursor]!;
+      if (quote !== null) {
+        if (escaped) escaped = false;
+        else if (char === '\\') escaped = true;
+        else if (char === quote) quote = null;
+        continue;
+      }
+      if (char === "'" || char === '"' || char === '`') quote = char;
+      else if (char === '{') depth += 1;
+      else if (char === '}') depth -= 1;
+    }
+    const end = depth === 0 ? cursor - 1 : scanned.length;
+    regions.push({
+      text: scanned.slice(index + 1, end),
+      offset: baseOffset + index + 1,
+      scriptKind: ts.ScriptKind.TSX,
+    });
+    index = end;
+  }
+  return regions;
+}
+
+/**
+ * The executable regions of one swept file.
+ *
+ * A `.astro` component is frontmatter (TypeScript), any `<script>` blocks
+ * (shipped to the browser), and the markup's `{expression}` holes. Everything
+ * else this engine sweeps is a single whole-file program.
+ */
+export function executableRegions(path: string, text: string): readonly CodeRegion[] {
+  if (!path.endsWith('.astro')) {
+    const extension = path.slice(path.lastIndexOf('.'));
+    if (extension in EXTENSIONS_WITHOUT_EXECUTABLE_CODE) return [];
+    return [{ text, offset: 0, scriptKind: scriptKindForExtension(path) }];
+  }
+
+  const regions: CodeRegion[] = [];
+  let bodyOffset = 0;
+  const opening = ASTRO_FRONTMATTER_OPEN.exec(text);
+  if (opening !== null) {
+    const start = opening[0].length;
+    const closing = ASTRO_FRONTMATTER_CLOSE.exec(text.slice(start));
+    // Unterminated frontmatter is not a licence to skip the file: treat the
+    // remainder as the region rather than dropping it.
+    const frontmatterEnd = closing === null ? text.length : start + closing.index;
+    regions.push({ text: text.slice(start, frontmatterEnd), offset: start, scriptKind: ts.ScriptKind.TS });
+    bodyOffset = closing === null ? text.length : frontmatterEnd + closing[0].length;
+  }
+
+  const body = text.slice(bodyOffset);
+  SCRIPT_BLOCK.lastIndex = 0;
+  for (const match of body.matchAll(SCRIPT_BLOCK)) {
+    const inner = match[1] ?? '';
+    regions.push({
+      text: inner,
+      offset: bodyOffset + match.index + match[0].indexOf(inner),
+      scriptKind: ts.ScriptKind.JS,
+    });
+  }
+  regions.push(...markupExpressions(body, bodyOffset));
+  return regions;
+}
+
+/* ------------------------------------------------------------------ *
+ * Public classification surface
+ * ------------------------------------------------------------------ */
+
+function lineOf(text: string, offset: number): number {
+  let line = 1;
+  for (let index = 0; index < offset && index < text.length; index += 1) {
+    if (text[index] === '\n') line += 1;
+  }
+  return line;
+}
+
+/**
+ * Every residue occurrence in one file's executable regions, with the line it
+ * sits on in the ORIGINAL file.
+ */
+export function findDynamicCodeResidue(text: string, path = 'source.ts'): readonly DynamicCodeResidue[] {
+  const lines = text.split('\n');
+  const residue: DynamicCodeResidue[] = [];
+  for (const region of executableRegions(path, text)) {
+    const sourceFile = ts.createSourceFile(
+      `region${region.offset}.ts`,
+      region.text,
+      ts.ScriptTarget.Latest,
+      true,
+      region.scriptKind,
+    );
+    collectResidue(sourceFile, (kind, node) => {
+      const line = lineOf(text, region.offset + node.getStart(sourceFile));
+      residue.push({ kind, line, text: (lines[line - 1] ?? '').trim() });
+    });
+  }
+  return residue;
+}
+
+/**
+ * The distinct residue kinds in one source fragment.
+ *
+ * The extra parameters the text-era signature carried (a whole-file context and
+ * the fragment's offset within it) are gone: a parsed region already has the
+ * binding context that referent proofs need, so a caller never has to supply
+ * one separately.
+ */
+export function classifyDynamicCodeSource(source: string): readonly DynamicCodeKind[] {
+  return [...new Set(findDynamicCodeResidue(source).map((entry) => entry.kind))];
+}
+
+/**
+ * The first residue kind in ONE PHYSICAL LINE, or `null` when it carries none.
+ *
+ * A bare line is not a program, and a JSDoc continuation (` * eval( is banned`)
+ * parses as a multiplication against a call once its enclosing comment is gone.
+ * The whole-file path never needs this guard — a comment is simply absent from
+ * the tree — so the heuristic stays local to the physical-line contract, where
+ * the caller has already discarded the context that would settle it.
  */
 export function classifyDynamicCodeLine(line: string): DynamicCodeKind | null {
   if (line.trimStart().startsWith('*')) return null;
@@ -738,6 +862,10 @@ function collectShipped(dir: string, files: string[], extensions: readonly strin
  * Sweep every package source tree plus every manifest-published authored
  * non-lint-owned runtime source for dynamic-code forms. Returns findings plus
  * the swept inventory so the consuming law can prove it saw the real population.
+ *
+ * One parse per region replaces the text era's line pass plus collapsed-source
+ * fallback: a construct split across lines is simply one node, so there is no
+ * second pass to keep in step with the first.
  */
 export function scanShippedDynamicCode(repoRoot: string): DynamicCodeScan {
   const sourceExtensions = dynamicCodeSourceExtensions(repoRoot);
@@ -756,38 +884,8 @@ export function scanShippedDynamicCode(repoRoot: string): DynamicCodeScan {
   for (const file of [...files].sort()) {
     const rel = relative(repoRoot, file).replace(/\\/g, '/');
     swept.push(rel);
-    const source = readFileSync(file, 'utf8');
-    const lines = source.split('\n');
-    // Strip over the WHOLE file before splitting. A JSDoc interior line starts
-    // with `*`, but a real continuation expression may too; only lexical
-    // comment state can distinguish them without opening an evasion.
-    const activeLines = stripCommentsPreservingStrings(source).split('\n');
-    let found = false;
-    let lineOffset = 0;
-    for (let index = 0; index < activeLines.length; index += 1) {
-      for (const kind of classifyDynamicCodeSource(activeLines[index]!, source, lineOffset)) {
-        findings.push({ file: rel, line: index + 1, kind, text: lines[index]!.trim() });
-        found = true;
-      }
-      lineOffset += lines[index]!.length + 1;
-    }
-    // Mirror effect-residue's second pass over the complete comment-stripped
-    // source so split callees, computed properties, and import specifiers
-    // cannot evade a classifier that otherwise sees physical lines. Preserve
-    // offsets: referent proofs attach an import call to its lexical binding in
-    // this same source. The classifier's grammar is whitespace-tolerant, so no
-    // destructive collapse is needed. A prior finding already blocks the
-    // zero-finding law, so per-file dedup is sound.
-    if (!found) {
-      const completeSource = activeLines.join('\n');
-      for (const kind of classifyDynamicCodeSource(completeSource)) {
-        findings.push({
-          file: rel,
-          line: 0,
-          kind,
-          text: 'construct spans line boundaries (collapsed-source match)',
-        });
-      }
+    for (const entry of findDynamicCodeResidue(readFileSync(file, 'utf8'), rel)) {
+      findings.push({ file: rel, line: entry.line, kind: entry.kind, text: entry.text });
     }
   }
   return { findings, swept };
