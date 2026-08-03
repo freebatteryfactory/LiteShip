@@ -302,6 +302,7 @@ describe('affected test planning', () => {
     const rust = planAffectedTests(['crates/liteship-compute/src/lib.rs'], PACKAGE_CATALOG, inventory({}));
     expect(rust).toMatchObject({ mode: 'focused', benchmarkRequired: false, rustWasmRequired: true });
     expect(rust.requiredChecks).toContain('check/rustfmt');
+    expect(rust.requiredChecks).toContain('check/cargo-audit');
   });
 
   it('fails broad for runtime host fixtures outside package ownership', () => {

@@ -13,6 +13,7 @@ import {
   discoverWorkflowContractTestPaths,
   formatLocalVerificationBudgetPolicy,
   formatLocalVerificationCheckPartition,
+  isCargoAuditProofInput,
   isCiContractInput,
   isTypeDocProofInput,
   localVerificationBudgetRemainingMs,
@@ -181,7 +182,7 @@ describe('local verification plan', () => {
 
   test('every workflow-contract law is enrolled in the staged ci.yml plan', () => {
     const contractLaws = workflowContractTestPaths();
-    expect(contractLaws).toHaveLength(20);
+    expect(contractLaws).toHaveLength(21);
 
     const argv = buildLocalVerificationPlan({ staged: true, changedPaths: ['.github/workflows/ci.yml'] }).steps.flatMap(
       (step) => step.argv,
@@ -221,6 +222,32 @@ describe('local verification plan', () => {
       });
       expect(plan.registryChecks.selected.some((check) => check.id === 'check/rustfmt')).toBe(true);
     }
+  });
+
+  test('selects cargo-audit for affected Linux authority but never executes it in Windows staged preflight', () => {
+    expect(isCargoAuditProofInput('crates/liteship-compute/Cargo.lock')).toBe(true);
+    expect(isCargoAuditProofInput('scripts/lib/cargo-audit-contract.ts')).toBe(true);
+    expect(isCargoAuditProofInput('README.md')).toBe(false);
+
+    const linux = buildLocalVerificationPlan({
+      staged: true,
+      changedPaths: ['crates/liteship-compute/Cargo.lock'],
+      platform: 'linux',
+    });
+    const windows = buildLocalVerificationPlan({
+      staged: true,
+      changedPaths: ['crates/liteship-compute/Cargo.lock'],
+      platform: 'win32',
+    });
+    expect(linux.steps).toContainEqual({
+      checkId: 'check/cargo-audit',
+      label: 'cargo-audit',
+      argv: ['run', 'cargo:audit'],
+      remedy:
+        'inspect reports/cargo-audit.json and reports/cargo-audit/, then update the vulnerable Rust dependency and adjacent Cargo.lock.',
+    });
+    expect(windows.steps.some((step) => step.checkId === 'check/cargo-audit')).toBe(false);
+    expect(windows.registryChecks.excluded.some((check) => check.id === 'check/cargo-audit')).toBe(true);
   });
 
   test('partitions every live registry check exactly once without counting local meta steps', () => {

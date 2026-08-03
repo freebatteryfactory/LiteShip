@@ -221,6 +221,32 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     remediation: 'fix the named pinned Clippy or WASM build arm, then re-run.',
   },
   {
+    id: 'check/cargo-audit',
+    title: 'Pinned Rust dependency advisory audit',
+    claim:
+      'Every independently discovered crates/* Cargo.lock is accepted by the exact qualified cargo-audit version with zero vulnerabilities or denied dependency warnings.',
+    owner: 'scripts/lib/cargo-audit-contract.ts',
+    command: 'pnpm run cargo:audit',
+    inputs: [
+      'crates/*/Cargo.toml',
+      'crates/*/Cargo.lock',
+      'scripts/cargo-audit.ts',
+      'scripts/lib/cargo-audit-contract.ts',
+      'scripts/lib/devcontainer-pins.ts',
+      'packages/command/src/host/launcher.ts',
+      'package.json',
+      '.github/workflows/ci.yml',
+    ],
+    profiles: ['full', 'release'],
+    platforms: ['linux'],
+    timeoutMs: 300_000,
+    cache: 'none',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/devops/cargo-audit-contract.test.ts',
+    remediation:
+      'inspect reports/cargo-audit.json and reports/cargo-audit/, then update the vulnerable Rust dependency and adjacent Cargo.lock.',
+  },
+  {
     id: 'check/lint-structural',
     title: 'Structural lint (ast-grep)',
     claim: 'No banned structural pattern (sgconfig.yml rules) appears in the tree.',

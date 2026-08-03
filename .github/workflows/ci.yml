@@ -1475,12 +1475,22 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Install the pinned Rust advisory auditor
+        uses: taiki-e/install-action@67729d5c413db75907f0ad1e39bb04b9c868ff60
+        with:
+          tool: cargo-audit@0.22.2
+          fallback: none
+          checksum: true
       - run: pnpm install --frozen-lockfile
       - name: Prove governed security minimums
         run: pnpm run security:minimum
       - name: Query the live advisory registry
         env:
           PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.securityAudit.command }}
+        run: bash -c "$PROJECTED_COMMAND"
+      - name: Audit every Rust lockfile with the qualified tool
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.cargoAudit.command }}
         run: bash -c "$PROJECTED_COMMAND"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
@@ -1490,6 +1500,8 @@ jobs:
           path: |
             reports/pnpm-audit.json
             reports/pnpm-audit.stderr.txt
+            reports/cargo-audit.json
+            reports/cargo-audit/
           if-no-files-found: warn
           retention-days: 30
 

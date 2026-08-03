@@ -138,6 +138,7 @@ function requiredCheckIds(
   if (rustWasmRequired) {
     required.add('check/rustfmt');
     required.add('check/rust-wasm-qualification');
+    required.add('check/cargo-audit');
   }
   const registryOrder = new Map(CHECK_REGISTRY.map((check, index) => [check.id, index] as const));
   return [...required].sort(
@@ -561,7 +562,9 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
     (candidate['browserRequired'] && !requiredChecks.includes('check/test-e2e')) ||
     (candidate['benchmarkRequired'] && !requiredChecks.includes('check/bench')) ||
     (candidate['rustWasmRequired'] &&
-      (!requiredChecks.includes('check/rustfmt') || !requiredChecks.includes('check/rust-wasm-qualification'))) ||
+      (!requiredChecks.includes('check/rustfmt') ||
+        !requiredChecks.includes('check/rust-wasm-qualification') ||
+        !requiredChecks.includes('check/cargo-audit'))) ||
     (candidate['mode'] === 'full' &&
       (!candidate['browserRequired'] || !candidate['benchmarkRequired'] || !candidate['rustWasmRequired']))
   ) {

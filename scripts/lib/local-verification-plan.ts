@@ -337,6 +337,30 @@ export function isRustfmtProofInput(path: string): boolean {
   return RUSTFMT_INPUT_PATTERNS.some((pattern) => pattern.test(normalized));
 }
 
+const CARGO_AUDIT_CHECK = CHECK_REGISTRY.find((check) => check.id === 'check/cargo-audit');
+if (CARGO_AUDIT_CHECK === undefined) throw new TypeError('local verification requires registered check/cargo-audit');
+const CARGO_AUDIT_STEP: LocalVerificationStep = Object.freeze({
+  checkId: CARGO_AUDIT_CHECK.id,
+  label: 'cargo-audit',
+  argv: argvForRootCheck(CARGO_AUDIT_CHECK.execution),
+  remedy: CARGO_AUDIT_CHECK.remediation,
+});
+const CARGO_AUDIT_INPUT_PATTERNS: readonly RegExp[] = Object.freeze([
+  /^crates\/[^/]+\/Cargo\.(?:toml|lock)$/u,
+  /^scripts\/(?:cargo-audit|lib\/(?:cargo-audit-contract|devcontainer-pins))\.ts$/u,
+  /^packages\/command\/src\/host\/launcher\.ts$/u,
+  /^packages\/cli\/src\/internal\/workflow-action-pins\.ts$/u,
+  /^tests\/unit\/(?:devops\/cargo-audit-contract|cli\/workflow-action-pins)\.test\.ts$/u,
+  /^package\.json$/u,
+  /^\.github\/workflows\/ci\.yml$/u,
+]);
+
+/** Whether a changed path can alter the derived cargo-audit subject, pin, or executable law. */
+export function isCargoAuditProofInput(path: string): boolean {
+  const normalized = path.replaceAll('\\', '/').replace(/^\.\//u, '');
+  return CARGO_AUDIT_INPUT_PATTERNS.some((pattern) => pattern.test(normalized));
+}
+
 const DOCS_STEP: LocalVerificationStep = Object.freeze({
   checkId: 'check/docs',
   label: 'docs:check',
@@ -481,13 +505,17 @@ export function isCiContractInput(path: string): boolean {
 export function buildLocalVerificationPlan(input: {
   readonly staged: boolean;
   readonly changedPaths?: readonly string[];
+  readonly platform?: NodeJS.Platform;
 }): LocalVerificationPlan {
   const quickSteps = projectRepositoryQuickSteps();
   const docsAffected = !input.staged || (input.changedPaths ?? []).some(isTypeDocProofInput);
   const ciContractAffected = !input.staged || (input.changedPaths ?? []).some(isCiContractInput);
   const rustfmtAffected = !input.staged || (input.changedPaths ?? []).some(isRustfmtProofInput);
+  const cargoAuditAffected = !input.staged || (input.changedPaths ?? []).some(isCargoAuditProofInput);
+  const platform = input.platform ?? process.platform;
   const steps: LocalVerificationStep[] = [...quickSteps];
   if (rustfmtAffected) steps.push(RUSTFMT_STEP);
+  if (platform === 'linux' && cargoAuditAffected) steps.push(CARGO_AUDIT_STEP);
   steps.push(INVARIANTS_STEP, PROJECTIONS_STEP);
   if (ciContractAffected) steps.push(CI_CONTRACT_STEP);
   if (docsAffected) steps.push(DOCS_STEP);

@@ -106,6 +106,12 @@ describe('CI evidence selection', () => {
     expect(scheduled.find((entry) => entry.requirement.checkId === 'check/rust-wasm-qualification')?.jobNames).toEqual([
       'rust-wasm-parity',
     ]);
+    expect(pullRequest.find((entry) => entry.requirement.checkId === 'check/cargo-audit')?.jobNames).toEqual([
+      'security-audit',
+    ]);
+    expect(scheduled.find((entry) => entry.requirement.checkId === 'check/cargo-audit')?.jobNames).toEqual([
+      'security-audit',
+    ]);
   });
 
   it('binds push evidence to every release check and the registry-projected CI owners', () => {

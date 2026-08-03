@@ -213,6 +213,11 @@ export const CI_SPECIALIZED_CHECK_SPECS: Readonly<Record<string, SpecializedChec
     job: 'rust-wasm-parity',
     prerequisiteIds: ['install'],
   },
+  cargoAudit: {
+    checkId: 'check/cargo-audit',
+    job: 'security-audit',
+    prerequisiteIds: ['install'],
+  },
   doctor: {
     checkId: 'check/doctor',
     job: 'truth-linux-parallel-setup',

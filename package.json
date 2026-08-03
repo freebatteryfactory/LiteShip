@@ -117,6 +117,7 @@
     "format:check": "prettier --check \"packages/*/src/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\" \"packages/cli/fragments/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,jsonc,md,css}\" \"packages/create-liteship/bin/*.{js,mjs,cjs}\" \"packages/liteship/bin/*.{js,mjs,cjs}\" \"{eslint,liteship,vite}.config.{js,mjs,cjs,ts,mts,cts,jsx,tsx}\" \"vitest*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}\"",
     "rustfmt:check": "pnpm exec tsx scripts/rustfmt-check.ts",
     "rust:qualify": "pnpm exec tsx scripts/rust-wasm-qualification.ts",
+    "cargo:audit": "pnpm exec tsx scripts/cargo-audit.ts",
     "fix": "pnpm run format && pnpm run lint --fix",
     "cover": "pnpm run coverage",
     "verify": "pnpm exec tsx scripts/verify.ts",

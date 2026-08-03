@@ -95,6 +95,7 @@ export const TRUSTED_ACTION_SOURCES: ReadonlySet<string> = new Set([
   'github/codeql-action/init',
   'github/codeql-action/analyze',
   'pnpm/action-setup',
+  'taiki-e/install-action',
 ]);
 
 /** Local reusable workflows are source-bound by the checkout; external actions require a SHA. */

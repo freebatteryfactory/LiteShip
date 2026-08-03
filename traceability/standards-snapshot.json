@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:5108005a",
+  "address": "fnv1a:32fd192c",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4366,6 +4366,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/cargo-audit.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/ci-plan.ts",
       "level": "L1"
     },
@@ -4522,6 +4527,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/lib/capsule-paths.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/cargo-audit-contract.ts",
       "level": "L1"
     },
     {
