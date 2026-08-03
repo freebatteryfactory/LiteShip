@@ -31,8 +31,12 @@ const EXPIRES = '2026-07-31';
 const TODAY = '2026-07-25';
 
 const emptyInventory: AssuranceInventory = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   packages: [],
+  evidenceOwnership: {
+    packageFiles: [],
+    repositoryTooling: { owner: 'repository/tooling', authoredEvidenceLoc: 0, generatedEvidenceLoc: 0, files: [] },
+  },
   nodeTestSelection: { entrypoints: [], dependents: [] },
   totals: {
     sourceLoc: 0,

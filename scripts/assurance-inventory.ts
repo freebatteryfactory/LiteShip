@@ -5,6 +5,7 @@ import {
   assuranceProgress,
   baselineFromInventory,
   buildAssuranceInventory,
+  formatAssuranceRatchetSummary,
   parseAssuranceBaseline,
 } from './lib/assurance-inventory.js';
 
@@ -44,7 +45,4 @@ if (regressions.length > 0) {
   process.exit(1);
 }
 
-const targetPackages = inventory.packages.filter((entry) => entry.targetReached).length;
-process.stdout.write(
-  `assurance inventory passed: ${(inventory.totals.ratioMilli / 1_000).toFixed(3)}x authored evidence/source; ${targetPackages}/${inventory.packages.length} packages at 10x target\n`,
-);
+process.stdout.write(formatAssuranceRatchetSummary(inventory));

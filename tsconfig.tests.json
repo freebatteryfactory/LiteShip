@@ -18,7 +18,40 @@
   // production modules DIRECTLY (not package indexes) so the typecheck
   // surface stays scoped to the contracts under assertion.
   "include": [
-    "tests/property/**/*.prop.test.ts",
+    "tests/property/**/*.test.ts",
+    "tests/fuzz/**/*.test.ts",
+    // Consumer journeys and runtime setup helpers are executable proof source,
+    // even though they are not `*.test.ts` entrypoints. Admit each whole tier so
+    // a future source cannot execute under check/journey or check/test untyped.
+    "tests/journey/**/*.ts",
+    "tests/setup/**/*.ts",
+    // Smoke suites exercise the public package surfaces users import. Admit the
+    // whole runtime tier so API drift fails typecheck before the smoke executes.
+    "tests/smoke/**/*.test.ts",
+    // Regression suites encode incidents that must remain type-valid as the
+    // corrected production contracts evolve. Admit the entire runtime tier.
+    "tests/regression/**/*.test.ts",
+    // Runtime support modules are executable proof infrastructure reached by
+    // the canonical Node suite. Admit the whole tree so a future helper cannot
+    // execute without first satisfying the tests project's type contracts.
+    "tests/support/**/*.ts",
+    // Runtime helpers are shared executable proof infrastructure. Admit the
+    // whole owned tree so a future helper cannot execute without first
+    // satisfying the tests project's type contracts.
+    "tests/helpers/**/*.ts",
+    // Playwright owns the complete E2E source tree: entrypoints, configuration,
+    // server, and browser fixture modules must typecheck as one runtime unit.
+    "tests/e2e/**/*.ts",
+    // Browser Vitest owns both its test entrypoints and config-imported command
+    // modules. Admit the complete runtime tree as one typed unit.
+    "tests/browser/**/*.ts",
+    // Registered benchmark scripts and the Node-runtime smoke suite share one
+    // executable source tree; admit the complete tier, not a filename roster.
+    "tests/bench/**/*.ts",
+    // The runtime fuzz tier reaches coverage-report scripts through the
+    // security-boundary corpus. Admit the repository-owned minimal Istanbul
+    // declarations so those transitive script contracts stay strict.
+    "scripts/types/istanbul.d.ts",
     "packages/cloudflare/src/cloudflare-workers.d.ts",
     "tests/unit/track-id.test.ts",
     "tests/unit/spawn-quoting-drift.test.ts",
@@ -32,11 +65,25 @@
     // "widen the replay payload with a signal" fix is only uncompilable if THIS
     // project typechecks the fixture.
     "tests/unit/core/motion/state-transition.test.ts",
-    "tests/unit/_spine/beat-contract.test.ts",
-    // The worker spine mirror (worker.d.ts) had no drift guard and silently
-    // diverged; this pins it via bidirectional spine⇔runtime assignability so a
-    // future divergence fails the typecheck (see the file's module doc).
-    "tests/unit/_spine/worker-contract.test.ts",
+    // Spine contract suites are executable type evidence. Admit the complete
+    // owned directory so a future spine mirror cannot run outside typecheck.
+    "tests/unit/_spine/**/*.test.ts",
+    // Canonical encoding and digest suites are executable type evidence. Admit
+    // the complete owned directory so a future canonical proof cannot run
+    // outside the tests project's compiler boundary.
+    "tests/unit/canonical/**/*.test.ts",
+    // The tagged-error algebra is the public failure transport used across the
+    // workspace. Admit its complete suite so factory and narrowing drift fail
+    // typecheck before the runtime laws execute.
+    "tests/unit/error/**/*.test.ts",
+    // ECS composition suites exercise the public world/component contracts.
+    // Admit the complete owned directory so a future ECS proof cannot execute
+    // outside the tests project's compiler boundary.
+    "tests/unit/ecs/**/*.test.ts",
+    // The Remotion adapter suites exercise the public frame/context contracts.
+    // Admit the complete owned directory so a future adapter proof cannot run
+    // outside the tests project's compiler boundary.
+    "tests/unit/remotion/**/*.test.ts",
     // The @liteship/core spine conformance guard: its type-level assignments
     // (Config.Shape ⇔ runtime, and the CompositeState / VideoConfig / CaptureResult
     // bidirectional pins) only bite if THIS project typechecks them. Listed here so
@@ -57,76 +104,30 @@
     // so their type-level contracts (RepoIR / GateVerdictKeyParts folds, the
     // alloc-gate budget import, the gate surface) bite rather than rot.
     "tests/unit/gauntlet/perf-claim-bench-gate.test.ts",
-    "tests/bench/allocation.bench.ts",
-    "tests/bench/allocation-curves.bench.ts",
     "tests/unit/meta/allocation-contracts.test.ts",
-    "tests/helpers/mock-event-source.ts",
-    "tests/helpers/mock-worker.ts",
-    "tests/helpers/mock-dom.ts",
-    "tests/helpers/mock-browser.ts",
-    "tests/support/structural-schema.ts",
-    // The repo-truths single owner (scar S0.4): canonical accessors for the
-    // publishable set, references topology, catalog values, workspace version,
-    // and package roster. Typechecked here so the accessors' contracts bite.
-    "tests/support/repo-truths.ts",
-    // The in-workspace pack owner (scar S0.5): the single owner of the
-    // `pnpm pack` mechanic shared by the ship tests and the release-pack residue
-    // smoke. Typechecked here so PackedManifest / PackInWorkspaceOptions bite.
-    "tests/support/pack.ts",
-    // The near-miss strictness-mutator derivation (scar S1.1): its predicted
-    // issue codes are typed against the kernel `DecodeIssueCode` union, so a
-    // misspelled or stale code fails the typecheck rather than the property run.
-    "tests/support/near-miss.ts",
-    // The Wave 5.5 transition-cage capture substrate: the closed operation-trace
-    // vocabulary + the empirical capture harness that drives the current
-    // Effect-backed reactive primitives. Typechecked here so the trace/observation
-    // contracts and the per-primitive adapters bite (a shape drift fails the
-    // typecheck, not just the capture run).
-    "tests/support/reactive-trace.ts",
-    "tests/support/reactive-capture.ts",
     "tests/unit/core/reactive-capture.test.ts",
-    // The Wave 5.5 single-oracle: the fc.commands reference model DERIVED from the
-    // CellKernel/Lifetime law tables + its internal-consistency/coverage proof.
-    // Typechecked here so the op-vocabulary / Observation / LawCoverage contracts
-    // bite (a drift from the projected laws fails the typecheck, not just the run).
-    "tests/support/reactive-model.ts",
     "tests/unit/core/reactive-model.test.ts",
-    // The Wave 5.5 cross-transport differential oracle (CAGE-A): the reusable
-    // bisimulation harness + its seeded conformance property. Typechecked here so
-    // the TraceSource / ModelConfig / OracleResult / Difference contracts bite (a
-    // model-vs-impl shape drift fails the typecheck, not just the property run),
-    // and so Wave 6 can flip the impl side against the SAME typed model surface.
-    "tests/support/reactive-oracle.ts",
-    // The Wave 5.5 SHARED conformance runner: the single owner of the model configs,
-    // native adapters, reaction vocabulary, PINNED corpus, and per-family declared law.
-    // Consumed by BOTH the property test and the repo-local transition-conformance gate
-    // script (no second oracle / corpus / law), so a drift fails the typecheck.
-    "tests/support/reactive-conformance.ts",
     // Wave 5 generated-UI assurance: shared valid/invalid generators, the
     // validator decision table, fuzz/property campaigns, and benchmark subject
     // all consume the public @liteship/genui contracts. Typecheck the packet so
     // fixture or catalog drift fails before the runtime campaigns execute.
-    "tests/support/genui-fixtures.ts",
-    "tests/fuzz/genui-tree-fuzz.test.ts",
     "tests/unit/genui/validation-fault-simulation.test.ts",
     "tests/unit/genui/validation-mcdc.test.ts",
-    "tests/bench/genui.bench.ts",
     // Wave 5 asset assurance: strict binary fixtures, audio properties,
     // parser fuzzing, fault simulation/injection, MC/DC, independent sharp
     // differential, and benchmark subject all consume the public asset API.
-    "tests/support/wav-fixtures.ts",
-    "tests/fuzz/assets-binary-fuzz.test.ts",
     "tests/unit/assets/analysis/projection-execution.test.ts",
     "tests/unit/assets/binary-fault-simulation.test.ts",
     "tests/unit/assets/binary-mcdc.test.ts",
     "tests/unit/assets/decoder-fault-injection.test.ts",
     "tests/integration/assets-image-differential.test.ts",
-    "tests/bench/assets.bench.ts",
     // The transition-conformance gate RUNNER proof (green over the native transports + red on
     // a forced divergence) — folds the shared runner through the lean gate exactly as the CI
     // gate script does, so a runner/law drift fails the typecheck.
     "tests/unit/gauntlet/transition-conformance-gate.test.ts",
-    "tests/unit/gauntlet/gate-access-manifest.test.ts"
+    "tests/unit/gauntlet/gate-access-manifest.test.ts",
+    // W1.11 shipped-source context derivation + parity/fail-closed laws.
+    "tests/unit/devops/shipped-source-typecheck.test.ts"
   ],
   "exclude": ["node_modules", "**/dist/**"]
 }

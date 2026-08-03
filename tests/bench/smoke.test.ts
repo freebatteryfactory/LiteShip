@@ -27,7 +27,10 @@ describe('Benchmark smoke tests', () => {
     micro.add('noop', () => {});
     await micro.run();
     expect(micro.results.length).toBeGreaterThan(0);
-    const firstResult = micro.results[0]!;
+    const firstResult = micro.results[0];
+    if (firstResult === undefined || firstResult.state !== 'completed') {
+      expect.fail(`micro-benchmark must complete, received ${firstResult?.state ?? 'no result'}`);
+    }
     expect(firstResult.latency.samplesCount).toBeGreaterThan(0);
     expect(Number.isFinite(firstResult.latency.mean)).toBe(true);
   });

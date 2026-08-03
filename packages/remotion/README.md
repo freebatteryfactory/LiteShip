@@ -49,7 +49,7 @@ Every failure path returns a structurally-empty state instead of throwing: an em
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
 - [Remotion demo](https://github.com/freebatteryfactory/LiteShip/tree/main/examples/remotion-demo) — boundary → quantizer → renderer → composition, end to end
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/remotion/src/) — generated from source
+- [Public API roster](https://github.com/freebatteryfactory/LiteShip/blob/main/PUBLIC-EXPORTS.md) — reviewed surface; run `pnpm run docs:build` in a source checkout for TypeDoc
 
 ---
 

@@ -35,7 +35,7 @@ function inventory(
   },
 ): AssuranceInventory {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     packages: PACKAGE_CATALOG.map((record) => ({
       name: record.name,
       sourceLoc: 1,
@@ -64,6 +64,10 @@ function inventory(
       },
       evidenceFiles: evidence[record.name] ?? [],
     })),
+    evidenceOwnership: {
+      packageFiles: [],
+      repositoryTooling: { owner: 'repository/tooling', authoredEvidenceLoc: 0, generatedEvidenceLoc: 0, files: [] },
+    },
     nodeTestSelection,
     totals: {
       sourceLoc: 25,
@@ -297,6 +301,8 @@ describe('affected test planning', () => {
 
     const rust = planAffectedTests(['crates/liteship-compute/src/lib.rs'], PACKAGE_CATALOG, inventory({}));
     expect(rust).toMatchObject({ mode: 'focused', benchmarkRequired: false, rustWasmRequired: true });
+    expect(rust.requiredChecks).toContain('check/rustfmt');
+    expect(rust.requiredChecks).toContain('check/cargo-audit');
   });
 
   it('fails broad for runtime host fixtures outside package ownership', () => {

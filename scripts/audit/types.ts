@@ -24,7 +24,15 @@ export type {
   StructureCoverageClassification,
 } from '@liteship/audit';
 
-import type { AuditCounts, AuditFinding, AuditSectionResult, AuditSuppression } from '@liteship/audit';
+import type {
+  AuditCounts,
+  AuditFinding,
+  AuditSectionResult,
+  AuditSuppression,
+  IntegritySummary,
+  StructureSummary,
+  SurfaceSummary,
+} from '@liteship/audit';
 
 // ── LiteShip HICP report types (repo-local) ──────────────────────────────
 
@@ -206,9 +214,9 @@ export interface AuditStrikeBoardReport {
 }
 
 export interface CodebaseAuditReport<
-  TStructureSummary = Record<string, unknown>,
-  TIntegritySummary = Record<string, unknown>,
-  TSurfaceSummary = Record<string, unknown>,
+  TStructureSummary = StructureSummary,
+  TIntegritySummary = IntegritySummary,
+  TSurfaceSummary = SurfaceSummary,
 > {
   readonly schemaVersion: 2;
   readonly generatedAt: WallClockTimestamp;

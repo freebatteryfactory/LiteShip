@@ -49,6 +49,9 @@
 import { defineGate, requireIR, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
+import { maxLevel, type AssuranceLevel } from '../assurance.js';
+import { levelOf } from '../assurance-map.js';
+import { propagateAssuranceLevels } from '../assurance-propagation.js';
 import {
   makeRepoIR,
   coverageClassSeverity,
@@ -184,13 +187,14 @@ function computeDivergences(ir: RepoIR): readonly Divergence[] {
 /**
  * Build the self-explaining divergence finding for one disagreement. Names BOTH
  * oracles + BOTH coverage classes + the location; the engine picks no winner.
- * Severity is calibrated from the PAIR (`symbol-evidenced`, `file-proxy-only`) via
- * the redlinable {@link coverageClassSeverity} matrix — a cross-class pair →
- * `advisory` (the file-proxy graph is known-imprecise; this is the retire signal).
+ * Severity is calibrated from the PAIR (`symbol-evidenced`, `file-proxy-only`) and
+ * the symbol's propagated effective assurance level via
+ * {@link coverageClassSeverity}: L4/L3 cross-class gaps block, L2 warns, and
+ * L1/L0 remain advisory retire-the-weak-graph work.
  */
-function divergenceFinding(divergence: Divergence): Finding {
+function divergenceFinding(divergence: Divergence, level: AssuranceLevel): Finding {
   const symbolClass: CoverageClass = 'symbol-evidenced';
-  const severity = coverageClassSeverity(symbolClass, FILE_PROXY_CLASS);
+  const severity = coverageClassSeverity(symbolClass, FILE_PROXY_CLASS, level);
   const carriedClass = strongerCoverageClass(symbolClass, FILE_PROXY_CLASS);
   const loc = `${divergence.file}:${divergence.line ?? 0}`;
 
@@ -202,7 +206,7 @@ function divergenceFinding(divergence: Divergence): Finding {
   return finding({
     ruleId: RULE_ID,
     severity,
-    level: 'L1',
+    level,
     title: `Orphan-evidence divergence on ${divergence.symbolName} at ${loc}`,
     detail: `${why}. The engine picks no winner — the reader decides. (severity ${severity}: cross-class coverage gap, symbol-evidenced vs file-proxy-only.)`,
     location: { file: divergence.file, ...(divergence.line !== undefined ? { line: divergence.line } : {}) },
@@ -229,7 +233,10 @@ function divergenceFinding(divergence: Divergence): Finding {
  */
 function fold(context: GateContext): readonly Finding[] {
   const ir = requireIR(context, RULE_ID);
-  return computeDivergences(ir).map(divergenceFinding);
+  const levels = propagateAssuranceLevels(ir, (file) => levelOf(file));
+  return computeDivergences(ir).map((divergence) =>
+    divergenceFinding(divergence, maxLevel('L1', levels.get(divergence.file) ?? levelOf(divergence.file))),
+  );
 }
 
 // ── Fixtures (in-memory IRs — the meta-gauntlet self-proof) ─────────────────

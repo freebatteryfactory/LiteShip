@@ -50,8 +50,7 @@ async function main(): Promise<void> {
     ],
     {
       cwd: repoRoot,
-      env: {
-        ...process.env,
+      envAdditions: {
         LITESHIP_COVERAGE_SHARD_DIR: coverageShardRel,
         NODE_V8_COVERAGE: `coverage/subprocess-raw-shard/${shardIndex}`,
       },

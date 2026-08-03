@@ -114,7 +114,8 @@ export function validateProjectReferenceClosure(
       }
       for (const specifier of staticModuleSpecifiers({ path, text: source.text })) {
         const dependency = workspacePackageName(specifier);
-        const dependencyRecord = dependency === null ? undefined : byName.get(dependency);
+        if (dependency === null) continue;
+        const dependencyRecord = byName.get(dependency);
         if (
           dependencyRecord === undefined ||
           dependency === record.name ||

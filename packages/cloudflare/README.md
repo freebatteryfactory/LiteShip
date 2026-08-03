@@ -48,7 +48,7 @@ A mistyped `binding` emits a LiteShip diagnostic, KV reads return null, writes n
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
 - [Cloudflare hosting guide](https://github.com/freebatteryfactory/LiteShip/blob/main/HOSTING.md) — wrangler config, KV setup, deploy
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/cloudflare/src/) — generated from source
+- [Public API roster](https://github.com/freebatteryfactory/LiteShip/blob/main/PUBLIC-EXPORTS.md) — reviewed surface; run `pnpm run docs:build` in a source checkout for TypeDoc
 
 ---
 

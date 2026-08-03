@@ -138,6 +138,7 @@ jobs:
         with:
           toolchain: 1.85.1
           targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
       - run: pnpm run build:wasm
       - name: Pack the immutable release fleet once
         run: pnpm exec tsx scripts/build-release-artifacts.ts release-artifacts/tarballs
@@ -343,20 +344,23 @@ jobs:
 
       - name: Generate release notes
         if: ${{ inputs.dry-run != 'true' }}
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
         run: |
           pnpm exec tsx scripts/extract-changelog-section.ts \
-            --version "${{ steps.ver.outputs.version }}" \
-            --out "RELEASE_NOTES_v${{ steps.ver.outputs.version }}.md"
+            --version "$VERSION" \
+            --out "RELEASE_NOTES_v$VERSION.md"
 
       - name: Create GitHub Release (if missing)
         if: ${{ inputs.dry-run != 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.ver.outputs.version }}
         run: |
           if ! gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
             gh release create "${GITHUB_REF_NAME}" \
               --title "${GITHUB_REF_NAME}" \
-              --notes-file "RELEASE_NOTES_v${{ steps.ver.outputs.version }}.md"
+              --notes-file "RELEASE_NOTES_v$VERSION.md"
           fi
 
       # ─── roster gate + per-package ship loop ─────────────────────────
@@ -383,10 +387,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ATTACH: ${{ inputs.dry-run != 'true' && github.ref_type == 'tag' }}
           VERSION: ${{ steps.ver.outputs.version }}
+          DRY_RUN: ${{ inputs.dry-run }}
         run: |
           set -euo pipefail
           DRY_RUN_FLAG=""
-          if [ "${{ inputs.dry-run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             DRY_RUN_FLAG="--dry-run"
           fi
           UPLOADED_LIST=$(mktemp)
@@ -437,9 +442,10 @@ jobs:
         if: ${{ inputs.dry-run != 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.ver.outputs.version }}
         run: |
           shopt -s nullglob
-          capsules=(release-artifacts/capsules/*-${{ steps.ver.outputs.version }}.shipcapsule.cbor)
+          capsules=(release-artifacts/capsules/*-"$VERSION".shipcapsule.cbor)
           if [ ${#capsules[@]} -gt 0 ]; then
             gh release upload "${GITHUB_REF_NAME}" "${capsules[@]}" --clobber
           else

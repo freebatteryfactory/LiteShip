@@ -5,9 +5,9 @@
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { delimiter, resolve } from 'node:path';
-import { runPnpm, spawnPnpm } from './support/pnpm-process.ts';
-import { cloudflareChildEnv } from './support/cloudflare-env.ts';
-import { resolveSameOriginHttpReference } from './lib/cloudflare-dev-contract.ts';
+import { runPnpm, spawnPnpm } from './support/pnpm-process.js';
+import { cloudflareChildEnv } from './support/cloudflare-env.js';
+import { resolveSameOriginHttpReference } from './lib/cloudflare-dev-contract.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..');
 const EXAMPLE_DIR = resolve(REPO_ROOT, 'examples/cloudflare-astro');
@@ -55,7 +55,7 @@ function spawnAstroDev(): ReturnType<typeof spawnPnpm> {
   return spawnPnpm(['exec', 'astro', 'dev', '--background', '--host', '127.0.0.1'], {
     cwd: EXAMPLE_DIR,
     env: devChildEnv(),
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: 'pipe',
   });
 }
 

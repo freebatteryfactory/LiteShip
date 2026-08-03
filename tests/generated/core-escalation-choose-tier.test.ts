@@ -35,7 +35,7 @@ describe('core.escalation.choose-tier', () => {
         }
         return true;
       }),
-      { numRuns: 100 },
+      { seed: 0x5eed, numRuns: 100 },
     );
   });
 
@@ -58,7 +58,7 @@ describe('core.escalation.choose-tier', () => {
         if (decoded.ok) expect(decoded.value).toEqual(verdict);
         return true;
       }),
-      { numRuns: 100 },
+      { seed: 0x5eed, numRuns: 100 },
     );
   });
 
@@ -68,7 +68,7 @@ describe('core.escalation.choose-tier', () => {
         expect(decide(subject as never)).toEqual(decide(subject as never));
         return true;
       }),
-      { numRuns: 100 },
+      { seed: 0x5eed, numRuns: 100 },
     );
   });
 
@@ -79,7 +79,7 @@ describe('core.escalation.choose-tier', () => {
           const verdict = decide(subject as never);
           return inv.check(subject as never, verdict as never);
         }),
-        { numRuns: 100 },
+        { seed: 0x5eed, numRuns: 100 },
       );
     });
   }

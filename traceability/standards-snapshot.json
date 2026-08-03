@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:7606605e",
+  "address": "fnv1a:06aba41c",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -551,6 +551,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "packages/audit/src/css-identity-surface.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "packages/audit/src/devops-profile.ts",
       "level": "L3"
     },
@@ -667,6 +672,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "packages/audit/src/ts-program.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/ts-scope.ts",
       "level": "L1"
     },
     {
@@ -1267,6 +1277,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "packages/cli/src/internal/host-detect.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/jsonc.ts",
       "level": "L1"
     },
     {
@@ -2341,6 +2356,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "packages/core/src/harness/property-seed.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "packages/core/src/harness/pure-transform.ts",
       "level": "L1"
     },
@@ -2432,6 +2452,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "packages/core/src/motion/clamp.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/css-identity.ts",
       "level": "L1"
     },
     {
@@ -3031,6 +3056,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/css-identity-unescaped.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "packages/gauntlet/src/gates/declared-fix-protocol.ts",
       "level": "L3"
     },
@@ -3042,6 +3072,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "packages/gauntlet/src/gates/early-return-detect.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/early-return-divergence.ts",
       "level": "L3"
     },
     {
@@ -4341,6 +4376,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/cargo-audit.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/ci-plan.ts",
       "level": "L1"
     },
@@ -4403,6 +4443,11 @@
       "_tag": "assurance-coverage",
       "file": "scripts/gauntlet.ts",
       "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/gen-cli-fragments.ts",
+      "level": "L1"
     },
     {
       "_tag": "assurance-coverage",
@@ -4496,6 +4541,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/lib/cargo-audit-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/lib/change-intent.ts",
       "level": "L1"
     },
@@ -4522,6 +4572,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/lib/ci-test-host-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/claim-coverage.ts",
       "level": "L1"
     },
     {
@@ -4567,6 +4622,16 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/lib/delivery-metrics.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/denominator-census.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/derived-artifacts.ts",
       "level": "L1"
     },
     {
@@ -4696,12 +4761,27 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/lib/rust-wasm-qualification.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/rustfmt-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/lib/script-categories.ts",
       "level": "L1"
     },
     {
       "_tag": "assurance-coverage",
       "file": "scripts/lib/security-audit-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/shipped-source-typecheck.ts",
       "level": "L1"
     },
     {
@@ -4727,6 +4807,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/lib/test-constitution.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/tracked-subject-census.ts",
       "level": "L1"
     },
     {
@@ -4831,6 +4916,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/regen.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/report-adaptive-scan.ts",
       "level": "L1"
     },
@@ -4843,6 +4933,16 @@
       "_tag": "assurance-coverage",
       "file": "scripts/runtime-gate.ts",
       "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/rust-wasm-qualification.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/rustfmt-check.ts",
+      "level": "L1"
     },
     {
       "_tag": "assurance-coverage",
@@ -4947,6 +5047,16 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/transition-conformance-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/typecheck-shipped-sources.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/types/istanbul.d.ts",
       "level": "L1"
     },
     {
@@ -5675,7 +5785,25 @@
     },
     {
       "_tag": "gate",
+      "ruleId": "gauntlet/css-identity-unescaped",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
       "ruleId": "gauntlet/diagnostic-code-registered",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/early-return-divergence",
       "set": "LITESHIP_IR_GATES",
       "level": "L2",
       "redFixtureCount": 1,

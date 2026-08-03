@@ -8,6 +8,7 @@ import {
   assuranceProgress,
   baselineFromInventory,
   buildAssuranceInventory,
+  formatAssuranceRatchetSummary,
   normalizedLogicalLoc,
   parseAssuranceBaseline,
   type AssuranceInventory,
@@ -52,6 +53,42 @@ describe('assurance inventory', () => {
 
     const core = buildAssuranceInventory(root).packages.find((entry) => entry.name === '@liteship/core')!;
     expect(core.sourceLoc).toBe(3);
+  });
+
+  it('lets an injected immutable tracked-file set own the census without a hidden Git enumeration', () => {
+    const root = fixture();
+    mkdirSync(join(root, '.git'));
+    writeFileSync(join(root, 'packages', 'core', 'src', 'outside-census.ts'), 'export const outside = true;\n');
+    const trackedFiles: ReadonlySet<string> = new Set(['packages/core/src/index.ts', 'tests/unit/core/value.test.ts']);
+    const before = [...trackedFiles];
+
+    const inventory = buildAssuranceInventory(root, { trackedFiles });
+    const core = inventory.packages.find((entry) => entry.name === '@liteship/core')!;
+
+    expect([...trackedFiles]).toEqual(before);
+    expect(core.sourceLoc).toBe(2);
+    expect(core.evidenceFiles).toEqual(['tests/unit/core/value.test.ts']);
+  });
+
+  it('fails closed when the injected tracked-file census names a missing member', () => {
+    const root = fixture();
+
+    expect(() =>
+      buildAssuranceInventory(root, {
+        trackedFiles: new Set(['packages/core/src/missing.ts']),
+      }),
+    ).toThrow('injected tracked file does not exist: packages/core/src/missing.ts');
+  });
+
+  it('fails closed when an injected tracked-file census member is not a file', () => {
+    const root = fixture();
+    mkdirSync(join(root, 'packages', 'core', 'src', 'not-a-file.ts'));
+
+    expect(() =>
+      buildAssuranceInventory(root, {
+        trackedFiles: new Set(['packages/core/src/not-a-file.ts']),
+      }),
+    ).toThrow('injected tracked path is not a file: packages/core/src/not-a-file.ts');
   });
 
   it('attributes authored evidence to the canonical package owner and keeps generated evidence separate', () => {
@@ -197,18 +234,72 @@ describe('assurance inventory', () => {
         catalogFingerprint: `sha256:${'0'.repeat(64)}`,
       }),
     ).toThrow('canonical package catalog');
+
+    expect(() =>
+      assuranceRegressions(inventory, {
+        ...baseline,
+        packages: baseline.packages.map((row, index) =>
+          index === 0 ? { ...row, name: '@liteship/not-the-owner' } : row,
+        ),
+      }),
+    ).toThrow('names @liteship/not-the-owner');
+  });
+
+  it('keys every ratchet row by its stable package identity', () => {
+    const inventory = buildAssuranceInventory(fixture());
+    const baseline = baselineFromInventory(inventory);
+
+    expect(baseline.packages.map((row) => row.name)).toEqual(inventory.packages.map((entry) => entry.name));
+  });
+
+  it('credits package-orphaned apparatus evidence to the explicit repository tooling owner', () => {
+    const root = fixture();
+    mkdirSync(join(root, 'scripts', 'lib'), { recursive: true });
+    mkdirSync(join(root, 'tests', 'unit', 'devops'), { recursive: true });
+    writeFileSync(join(root, 'scripts', 'lib', 'authority.ts'), 'export const authority = true;\n');
+    writeFileSync(
+      join(root, 'tests', 'unit', 'devops', 'authority.test.ts'),
+      "import { authority } from '../../../scripts/lib/authority.js';\ntest('authority', () => expect(authority).toBe(true));\n",
+    );
+
+    const inventory = buildAssuranceInventory(root);
+    expect(inventory.evidenceOwnership.packageFiles).toEqual(['tests/unit/core/value.test.ts']);
+    expect(inventory.evidenceOwnership.repositoryTooling).toEqual({
+      owner: 'repository/tooling',
+      authoredEvidenceLoc: expect.any(Number),
+      generatedEvidenceLoc: 0,
+      files: ['tests/unit/devops/authority.test.ts'],
+    });
+    expect(inventory.evidenceOwnership.repositoryTooling.authoredEvidenceLoc).toBeGreaterThan(0);
+    expect(inventory.totals.authoredEvidenceLoc).toBeGreaterThan(
+      inventory.packages.find((entry) => entry.name === '@liteship/core')!.authoredEvidenceLoc,
+    );
+    expect(
+      new Set([...inventory.evidenceOwnership.packageFiles, ...inventory.evidenceOwnership.repositoryTooling.files]),
+    ).toEqual(new Set(['tests/unit/core/value.test.ts', 'tests/unit/devops/authority.test.ts']));
+  });
+
+  it('states ratchet authority and prints every package target complement', () => {
+    const inventory = buildAssuranceInventory(fixture());
+    const summary = formatAssuranceRatchetSummary(inventory);
+
+    expect(summary).toContain('assurance ratchet held:');
+    expect(summary).toContain('remaining to 10.000x target');
+    expect(summary).toMatch(/files \/ \d+ authored logical lines credited to repository\/tooling/u);
+    expect(summary.match(/^assurance target complement /gmu)).toHaveLength(inventory.packages.length);
+    expect(summary).not.toContain('assurance inventory passed');
   });
 
   it('refuses a legacy or malformed assurance ratchet', () => {
-    expect(() => parseAssuranceBaseline({ schemaVersion: 2 })).toThrow(/schema-v3/u);
+    expect(() => parseAssuranceBaseline({ schemaVersion: 3 })).toThrow(/schema-v4/u);
     expect(() =>
       parseAssuranceBaseline({
-        schemaVersion: 3,
+        schemaVersion: 4,
         catalogFingerprint: `sha256:${'0'.repeat(64)}`,
         uniqueRatioMilli: -1,
         packages: [],
       }),
-    ).toThrow(/schema-v3/u);
+    ).toThrow(/schema-v4/u);
   });
 
   it('counts one shared evidence file once globally while retaining every owner edge', () => {

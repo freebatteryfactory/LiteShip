@@ -382,6 +382,36 @@ describe('CellKernel — ReentrancyPolicy (nested write)', () => {
     expect(k.read()).toBe(3);
   });
 
+  test("'deferred': draining queued writes never removes from the array front", () => {
+    const k = CellKernel.replay1(0, { kind: 'all' }, 'deferred');
+    const seen: number[] = [];
+    let fired = false;
+    k.subscribe((value) => {
+      seen.push(value);
+      if (value === 1 && !fired) {
+        fired = true;
+        k.publish(2);
+        k.publish(3);
+        k.publish(4);
+      }
+    });
+
+    const originalShift = Array.prototype.shift;
+    let shiftCalls = 0;
+    Array.prototype.shift = function <T>(this: T[]): T | undefined {
+      shiftCalls += 1;
+      return originalShift.call(this) as T | undefined;
+    };
+    try {
+      k.publish(1);
+    } finally {
+      Array.prototype.shift = originalShift;
+    }
+
+    expect(seen).toEqual([0, 1, 2, 3, 4]);
+    expect(shiftCalls).toBe(0);
+  });
+
   test("'deferred' with no nested write behaves exactly like a plain publish", () => {
     const k = CellKernel.replay1(0, { kind: 'all' }, 'deferred');
     const got: number[] = [];

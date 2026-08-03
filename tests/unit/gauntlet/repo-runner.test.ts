@@ -25,7 +25,7 @@ import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { scaledTimeout } from '../../../vitest.shared.js';
-import { buildCheckGovernanceFacts } from '@liteship/command/host';
+import { checkGovernanceFactsFor } from '@liteship/command/host';
 import {
   litelaunchGauntlet,
   runGauntletOnRepo,
@@ -60,7 +60,7 @@ function launch(now: Date) {
     undefined,
     undefined,
     undefined,
-    buildCheckGovernanceFacts(REPO_ROOT, now),
+    checkGovernanceFactsFor(REPO_ROOT, now),
   );
 }
 

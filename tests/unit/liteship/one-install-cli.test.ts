@@ -157,11 +157,20 @@ beforeAll(
 );
 
 afterAll(() => {
-  if (scratchRoot) {
-    // Windows scanners can retain a just-closed package tarball briefly. These
-    // bounded filesystem retries affect cleanup only; no product command or
-    // assertion is retried.
+  if (!scratchRoot) return;
+  // Windows scanners can retain a just-closed package tarball briefly. These
+  // bounded filesystem retries affect cleanup only; no product command or
+  // assertion is retried.
+  try {
     rmSync(scratchRoot, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  } catch (cause) {
+    // The comment above always claimed cleanup was janitorial, but a THROW here
+    // failed the whole file — CI run 30821426607 reported this suite red with
+    // 11,986 tests passing and zero assertions broken, because a scanner still
+    // held a handle at teardown. A temp directory the OS reaps is not a product
+    // verdict. Report it loudly rather than swallowing it, so a genuine handle
+    // leak stays visible without being fatal.
+    console.warn(`one-install cleanup could not remove ${scratchRoot}: ${String(cause)}`);
   }
 });
 

@@ -32,11 +32,12 @@ import {
   detectEarlyReturnBeforeExpectAST,
   detectDiagnosticEmissionsAST,
   codeOnlyAST,
+  scanCssIdentitySurface,
   type FactOracle,
 } from '@liteship/audit';
 import { liteshipDevopsProfile } from './liteship-audit-profile.js';
 import { INVARIANTS, matchesInvariantExemption, type CheckInvariantEntry } from '@liteship/command/invariants';
-import { buildCheckGovernanceFacts, currentEnvFingerprint } from '@liteship/command/host';
+import { checkGovernanceFactsFor, currentEnvFingerprint } from '@liteship/command/host';
 import { HostCapabilityError, InvariantViolationError } from '@liteship/error';
 import { systemClock } from '@liteship/core';
 import { addressedDigestOf } from '@liteship/canonical';
@@ -269,6 +270,51 @@ export const liteshipRegexOracle: FactOracle = ({ file, text }): readonly Fact[]
 };
 
 /**
+ * The parser-backed CSS-identity surface oracle. Anchor receipts make the
+ * scanner's subject visible in the existing open RepoIR fact channel; violation
+ * facts preserve the scanner's exact path/line/expression evidence for a
+ * downstream fold without inventing a parallel finding registry here.
+ */
+/**
+ * LiteShip's approved CSS-identity escape re-export. The audit engine stays
+ * lean and never names a project package, so this policy is injected here by
+ * the host (the profile-boundary law owns that separation).
+ */
+const APPROVED_CSS_ESCAPE_SPECIFIERS = ['@liteship/core/motion'] as const;
+
+export const cssIdentitySurfaceOracle: FactOracle = ({ file, text }): readonly Fact[] => {
+  const result = scanCssIdentitySurface([{ path: file, text }], {
+    approvedEscapeSpecifiers: APPROVED_CSS_ESCAPE_SPECIFIERS,
+  });
+  const facts: Fact[] = [];
+  if (result.anchoredCount > 0) {
+    facts.push({
+      file,
+      line: 1,
+      property: 'css-identity-anchor-count',
+      value: result.anchoredCount,
+      oracleId: 'css-identity-surface',
+      coverageClass: 'file-proxy-only',
+    });
+  }
+  for (const violation of result.findings) {
+    facts.push({
+      file,
+      line: violation.line,
+      property: 'css-identity-unescaped',
+      value: {
+        column: violation.column,
+        reason: violation.reason,
+        expression: violation.expression,
+      },
+      oracleId: 'css-identity-surface',
+      coverageClass: 'file-proxy-only',
+    });
+  }
+  return facts;
+};
+
+/**
  * Build the repo-IR for the repo at `repoRoot` (the LiteShip reference profile
  * repointed there) WITH the host-injected LiteShip `invariant-regex` oracle. Pure
  * + deterministic — the same source bytes yield an identical IR (the B2 cache
@@ -293,7 +339,7 @@ export function buildRepoIRForRepo(repoRoot: string, withSymbolReferences = fals
     benchmarkDistributions = registry.distributions;
   }
   return buildRepoIR(withRepoRoot(liteshipDevopsProfile, repoRoot), {
-    extraFactOracles: [liteshipRegexOracle],
+    extraFactOracles: [liteshipRegexOracle, cssIdentitySurfaceOracle],
     withSymbolReferences,
     typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
     ...(benchmarkDistributions !== undefined ? { benchmarkDistributions } : {}),
@@ -640,7 +686,10 @@ export async function runGauntletWithRepoIR(
     codeOnly: codeOnlyAST,
     diagnosticEmitterDetector: detectDiagnosticEmissionsAST,
     benchmarkSubjects,
-    checkGovernance: buildCheckGovernanceFacts(repoRoot, now),
+    // Admission is the authority's own decision: a hermetic fixture or a packed
+    // consumer that does not carry LiteShip's governance records gets neutral
+    // facts, never a hard refusal from the strict builder.
+    checkGovernance: checkGovernanceFactsFor(repoRoot, now),
     // The gate set ALWAYS carries `traceabilityBridgeGate` (always-on) plus any
     // opt-in gates, so it always exceeds the bare LITESHIP_IR_GATES set — the engine
     // runs exactly this composed set, never its own default. (The default is now only

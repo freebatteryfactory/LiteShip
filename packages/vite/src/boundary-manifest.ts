@@ -220,10 +220,11 @@ function wgslVector(parts: readonly number[]): WGSLUniformVector | undefined {
 }
 
 /**
- * Parse a `@wgsl` cast value into a scalar or vector. Returns `'invalid'` when the
- * author wrote a vector constructor whose component count does not match the
- * declared arity (or a count outside vec2/vec3/vec4) — the caller turns that into a
- * loud diagnostic instead of a silently-wrong offset.
+ * Parse a `@wgsl` cast value into a scalar or f32 vector. Returns `'invalid'` when
+ * the author declares an element type this value path cannot represent, when a
+ * constructor's component count does not match its arity, or when the width falls
+ * outside vec2/vec3/vec4. The caller turns refusal into a loud diagnostic instead
+ * of silently reinterpreting the binary layout.
  */
 export function parseWgslCastValue(value: string): WGSLUniformValue | 'invalid' | undefined {
   const trimmed = value.trim();
@@ -235,6 +236,7 @@ export function parseWgslCastValue(value: string): WGSLUniformValue | 'invalid' 
   // list. The generic `<...>` must be stripped whole, or its digits (`f32` -> 32)
   // leak into the component scan and mis-shape the vector.
   const ctor = parseWgslVectorConstructor(trimmed);
+  if (ctor?.elementType !== undefined && ctor.elementType !== 'f32') return 'invalid';
   const declaredArity = ctor?.arity;
   // Constructor args, or a bare CSS-authored component list (`1 2`, `1, 2`).
   const componentSource = ctor?.components ?? trimmed;
@@ -254,6 +256,8 @@ export function parseWgslCastValue(value: string): WGSLUniformValue | 'invalid' 
 interface WgslVectorConstructor {
   readonly arity: 2 | 3 | 4;
   readonly components: string;
+  /** Explicit WGSL element type; absent means the constructor leaves it inferred. */
+  readonly elementType?: string;
 }
 
 function isWgslSpace(char: string | undefined): boolean {
@@ -267,17 +271,33 @@ function parseWgslVectorConstructor(source: string): WgslVectorConstructor | nul
   const arity = (arityCode - 48) as 2 | 3 | 4;
   let at = 4;
   const suffix = source[at]?.toLowerCase();
+  let elementType: string | undefined;
   if (suffix === 'f' || suffix === 'i' || suffix === 'u') {
+    elementType = suffix === 'f' ? 'f32' : suffix === 'i' ? 'i32' : 'u32';
     at++;
   } else if (source[at] === '<') {
     const close = source.indexOf('>', at + 1);
     if (close < 0 || close === at + 1) return null;
+    elementType = source
+      .slice(at + 1, close)
+      .trim()
+      .toLowerCase();
+    if (elementType === '') return null;
     at = close + 1;
   }
   while (isWgslSpace(source[at])) at++;
   if (source[at] !== '(' || !source.endsWith(')')) return null;
   if (source.indexOf(')', at + 1) !== source.length - 1) return null;
-  return { arity, components: source.slice(at + 1, -1) };
+  return {
+    arity,
+    components: source.slice(at + 1, -1),
+    ...(elementType !== undefined ? { elementType } : {}),
+  };
+}
+
+function unsupportedWgslVectorElementType(source: string): string | undefined {
+  const ctor = parseWgslVectorConstructor(source.trim());
+  return ctor?.elementType !== undefined && ctor.elementType !== 'f32' ? ctor.elementType : undefined;
 }
 
 function parseWgslNumber(source: string, start: number): { readonly value: number; readonly end: number } | null {
@@ -335,15 +355,24 @@ function wgslCastState(attrs: Record<string, string>): Record<string, WGSLUnifor
   for (const [key, value] of Object.entries(attrs)) {
     const parsed = parseWgslCastValue(value);
     if (parsed === 'invalid') {
+      const unsupportedElementType = unsupportedWgslVectorElementType(value);
       Diagnostics.warnOnce({
         source: 'liteship/vite.wgsl-cast',
         code: `wgsl-cast-value-malformed:${key}`,
         message:
-          `@wgsl uniform "${key}" value "${value}" is not a valid uniform -- expected a number, a ` +
-          `numeric component list, or a vec2/vec3/vec4 constructor with a matching component count ` +
-          `(not arbitrary text like "10px" or "calc(...)"). It was dropped instead of shipped as a ` +
-          `silently-wrong offset. Fix: author a number or vecN, e.g. vec2<f32>(x, y).`,
-        detail: { key, value },
+          (unsupportedElementType === undefined
+            ? `@wgsl uniform "${key}" value "${value}" is not a valid uniform -- expected a number, a ` +
+              `numeric component list, or a vec2/vec3/vec4 constructor with a matching component count ` +
+              `(not arbitrary text like "10px" or "calc(...)").`
+            : `@wgsl uniform "${key}" constructor "${value}" declares unsupported element type ` +
+              `"${unsupportedElementType}"; this authored-value path can represent f32 vectors only.`) +
+          ` It was dropped instead of shipped as a silently-wrong offset. Fix: author a number or ` +
+          `f32 vecN, e.g. vec2<f32>(x, y).`,
+        detail: {
+          key,
+          value,
+          ...(unsupportedElementType !== undefined ? { unsupportedElementType } : {}),
+        },
       });
       continue;
     }

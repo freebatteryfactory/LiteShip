@@ -175,10 +175,114 @@ describe('DAG', () => {
       expect(DAG.pruneToBound(dag, 10)).toBe(dag);
     });
 
-    test('pruneToBound with maxNodes < 1 returns an empty DAG', async () => {
+    test('pruneToBound with maxNodes < 1 throws instead of erasing a populated graph', async () => {
       const chain = await makeChain('actor-1', 'node-a', 5, 1000);
       const dag = DAG.fromReceipts(chain);
-      expect(DAG.pruneToBound(dag, 0)).toEqual(DAG.empty());
+      expect(() => DAG.pruneToBound(dag, 0)).toThrow(/maxNodes.*0/u);
+    });
+
+    test('pruneToBound refuses a bound that is not a whole number of nodes', async () => {
+      const chain = await makeChain('actor-1', 'node-a', 5, 1000);
+      const dag = DAG.fromReceipts(chain);
+      // `maxNodes < 1` is false for NaN, so a non-numeric bound walked straight
+      // past the degenerate-bound guard and pruned against nonsense. A bound is
+      // a COUNT OF NODES: anything that is not a positive whole number names no
+      // retention set at all, and guessing one is how a populated graph gets
+      // silently reshaped.
+      for (const bound of [Number.NaN, 2.5, Number.POSITIVE_INFINITY]) {
+        expect(() => DAG.pruneToBound(dag, bound), `bound ${String(bound)} must be refused`).toThrow(/maxNodes/u);
+      }
+    });
+
+    test('pruneToBound retains every live head even when the head set exceeds the target bound', async () => {
+      const root = (await makeChain('actor-root', 'node-root', 1, 1000))[0]!;
+      const earlyHead = await Receipt.createEnvelope(
+        'op',
+        subject('actor-early'),
+        payload(),
+        HLC.increment(HLC.create('node-early'), 2000),
+        root.hash,
+      );
+      const laterBranch = await Receipt.createEnvelope(
+        'op',
+        subject('actor-later'),
+        payload(),
+        HLC.increment(HLC.create('node-later'), 3000),
+        root.hash,
+      );
+      const laterHead = await Receipt.createEnvelope(
+        'op',
+        subject('actor-later'),
+        payload(),
+        HLC.increment(HLC.create('node-later'), 4000),
+        laterBranch.hash,
+      );
+      const dag = DAG.fromReceipts([root, earlyHead, laterBranch, laterHead]);
+
+      const pruned = DAG.pruneToBound(dag, 1);
+
+      expect(
+        DAG.getHeads(pruned)
+          .map((entry) => entry.hash)
+          .sort(),
+      ).toEqual([earlyHead.hash, laterHead.hash].sort());
+      expect(DAG.isFork(pruned)).toBe(true);
+    });
+
+    test('pruneToBound retains heads first, then fills the target with the newest non-head receipts', async () => {
+      const root = (await makeChain('actor-root', 'node-root', 1, 1000))[0]!;
+      const earlyHead = await Receipt.createEnvelope(
+        'op',
+        subject('actor-early'),
+        payload(),
+        HLC.increment(HLC.create('node-early'), 2000),
+        root.hash,
+      );
+      const laterBranch = await Receipt.createEnvelope(
+        'op',
+        subject('actor-later'),
+        payload(),
+        HLC.increment(HLC.create('node-later'), 3000),
+        root.hash,
+      );
+      const laterHead = await Receipt.createEnvelope(
+        'op',
+        subject('actor-later'),
+        payload(),
+        HLC.increment(HLC.create('node-later'), 4000),
+        laterBranch.hash,
+      );
+      const dag = DAG.fromReceipts([root, earlyHead, laterBranch, laterHead]);
+
+      const pruned = DAG.pruneToBound(dag, 3);
+
+      expect([...pruned.nodes.keys()].sort()).toEqual([earlyHead.hash, laterBranch.hash, laterHead.hash].sort());
+    });
+
+    test('pruneToBound preserves identity when retaining every head also retains the whole graph', async () => {
+      const first = (await makeChain('actor-1', 'node-a', 1, 1000))[0]!;
+      const second = (await makeChain('actor-2', 'node-b', 1, 2000))[0]!;
+      const dag = DAG.fromReceipts([first, second]);
+
+      expect(DAG.pruneToBound(dag, 1)).toBe(dag);
+    });
+
+    test('a pruned graph equals a fresh reload of its retained receipts', async () => {
+      const chain = await makeChain('actor-1', 'node-a', 6, 1000);
+      const pruned = DAG.pruneToBound(DAG.fromReceipts(chain), 3);
+      const retained = DAG.linearize(pruned);
+
+      expect(pruned).toEqual(DAG.fromReceipts(retained));
+    });
+
+    test('re-ingesting a pruned parent reconnects its retained child', async () => {
+      const chain = await makeChain('actor-1', 'node-a', 4, 1000);
+      const pruned = DAG.pruneToBound(DAG.fromReceipts(chain), 2);
+      const rewired = DAG.ingest(pruned, chain[1]!);
+
+      expect(rewired.nodes.get(chain[1]!.hash)?.children).toEqual([chain[2]!.hash]);
+      expect(rewired.nodes.get(chain[2]!.hash)?.parents).toEqual([chain[1]!.hash]);
+      expect(rewired.heads).toEqual([chain[3]!.hash]);
     });
 
     test('linearize ignores missing parent references when the referenced node is absent', async () => {

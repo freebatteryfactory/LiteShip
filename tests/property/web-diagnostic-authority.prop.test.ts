@@ -23,7 +23,7 @@ function webRegistryCodes(): readonly string[] {
 }
 
 describe('Web diagnostic registry authority', () => {
-  it('is an exact 17-code relation between live registered emitters and the canonical registry', () => {
+  it('is an exact 18-code relation between live registered emitters and the canonical registry', () => {
     const context = nodeContext(REPO_ROOT, ['packages/*/src/**/*.ts']);
     const emitted = new Set<string>();
     for (const file of context.files().filter((path) => path.startsWith('packages/web/src/'))) {
@@ -37,9 +37,9 @@ describe('Web diagnostic registry authority', () => {
     }
 
     const registered = webRegistryCodes();
-    // 17: issue #150 enrolled web/stream/receipt-buffer-compaction-unattested
-    // (the fail-safe eviction-without-retention diagnostic).
-    expect(registered).toHaveLength(17);
+    // 18: the bounded stateChanges iterator enrolled
+    // web/stream/sse-state-buffer-saturated as its fail-safe shedding diagnostic.
+    expect(registered).toHaveLength(18);
     expect([...emitted].sort()).toEqual(registered);
     for (const code of registered) {
       expect(explainDiagnostic(code)).toMatchObject({ area: 'web', owner: '@liteship/web' });

@@ -30,26 +30,32 @@
  *     participates" floor instead proves — deterministically, from source —
  *     that every root reference resolves to a real project whose include feeds
  *     >= 1 file into the build.
- *   - tsconfig.tests.json's `include` is a deliberately curated list of
- *     compile-assertion seams (~two dozen files), not the suite's discovery
- *     surface. The ">100 test files" floor is applied to vitest's real
- *     discovery globs (`nodeTestInclude`); tsconfig.tests.json is separately
- *     guarded for dangling entries (every listed file must exist).
+ *   - tsconfig.tests.json directly admits the runtime property tier plus a
+ *     deliberately curated list of other compile-assertion seams. The ">100
+ *     test files" floor is applied to vitest's real discovery globs
+ *     (`nodeTestInclude`); the property-tier law compares that runtime corpus
+ *     with TypeScript's parsed root files, while concrete curated entries are
+ *     separately guarded for dangling paths.
  *
  * @module
  */
 import { describe, it, expect, afterAll } from 'vitest';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { resolve, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import fg from 'fast-glob';
+import { benchScriptTargets } from '../../../scripts/bench/contract-coverage.js';
 import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 import { scaledTimeout, nodeTestInclude } from '../../../vitest.shared.js';
+import browserVitestConfig from '../../../vitest.browser.config.js';
+import playwrightE2EConfig from '../../e2e/playwright.config.js';
 import {
   rootTsconfigReferenceDirs,
   packageTsconfigInputs,
   tsconfigTestsIncludeEntries,
   tsconfigTestsIncludeFiles,
+  tsconfigTestsResolvedFiles,
+  tsconfigTestsRootFiles,
   apiSurfaceSnapshot,
   lintGlobs,
   typecheckLegs,
@@ -133,23 +139,25 @@ describe('(a) typecheck canary — `tsc --build` detects an injected type error'
 });
 
 describe('(a2) property evidence is type-admitted before execution', () => {
-  const propertySuites = fg
-    .sync(['tests/property/**/*.prop.test.ts'], { cwd: REPO })
+  const runtimePropertySuites = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
     .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/property/'))
     .sort();
   const includeEntries = tsconfigTestsIncludeEntries();
-  const admittedProperties = fg
-    .sync([...includeEntries], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
-    .map((path) => path.replaceAll('\\', '/'))
-    .filter((path) => path.startsWith('tests/property/') && path.endsWith('.prop.test.ts'))
-    .sort();
+  const admittedPropertyRoots = tsconfigTestsRootFiles().filter(
+    (path) => path.startsWith('tests/property/') && path.endsWith('.test.ts'),
+  );
 
   it('the tests typecheck project admits every property suite, including future files', () => {
-    expect(propertySuites.length, 'the property-test corpus must be non-empty').toBeGreaterThan(0);
-    expect(admittedProperties).toEqual(propertySuites);
+    expect(
+      runtimePropertySuites.length,
+      'the property-test corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(143);
+    expect(admittedPropertyRoots).toEqual(runtimePropertySuites);
     expect(
       includeEntries.some(
-        (entry) => entry.startsWith('tests/property/') && entry.includes('*') && entry.endsWith('.prop.test.ts'),
+        (entry) => entry.startsWith('tests/property/') && entry.includes('*') && entry.endsWith('.test.ts'),
       ),
       'property admission must be future-proof rather than an authored filename roster',
     ).toBe(true);
@@ -160,7 +168,7 @@ describe('(a2) property evidence is type-admitted before execution', () => {
     const counterfeitAdmission = new Set(
       fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
     );
-    expect(propertySuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(propertySuites);
+    expect(runtimePropertySuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimePropertySuites);
   });
 
   it(
@@ -191,7 +199,7 @@ describe('(a2) property evidence is type-admitted before execution', () => {
             2,
           )}\n`,
         );
-        writeFileSync(join(suiteDir, 'future-admission.prop.test.ts'), source);
+        writeFileSync(join(suiteDir, 'future-admission.test.ts'), source);
       };
 
       const cleanDir = join(sandboxRoot, 'property-clean');
@@ -209,6 +217,609 @@ describe('(a2) property evidence is type-admitted before execution', () => {
     },
     scaledTimeout(60_000),
   );
+});
+
+describe('(a3) fuzz evidence is type-admitted before execution', () => {
+  const runtimeFuzzSuites = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/fuzz/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedFuzzRoots = tsconfigTestsRootFiles().filter(
+    (path) => path.startsWith('tests/fuzz/') && path.endsWith('.test.ts'),
+  );
+
+  it('the tests typecheck project admits every fuzz suite, including future files', () => {
+    expect(runtimeFuzzSuites.length, 'the fuzz-test corpus fell below its committed floor').toBeGreaterThanOrEqual(9);
+    const admitted = new Set(admittedFuzzRoots);
+    const missing = runtimeFuzzSuites.filter((path) => !admitted.has(path));
+    expect(
+      admittedFuzzRoots,
+      `the tests typecheck project admits ${admittedFuzzRoots.length}/${runtimeFuzzSuites.length} runtime fuzz suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeFuzzSuites);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/fuzz/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      'fuzz admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+    expect(includeEntries, 'the fuzz tier transitively imports the repository Istanbul runtime').toContain(
+      'scripts/types/istanbul.d.ts',
+    );
+  });
+
+  it('a counterfeit config with the fuzz admission removed exposes the complete missing corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/fuzz/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeFuzzSuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeFuzzSuites);
+  });
+});
+
+describe('(a4) journey and setup runtime sources are type-admitted before execution', () => {
+  // `check/journey` owns the complete journey tree, while `check/test` executes
+  // every setup source either as Vitest setup or through a runtime test import.
+  // These are source tiers rather than `*.test.ts` entrypoints, so derive their
+  // authored populations directly instead of pretending `nodeTestInclude` owns them.
+  const runtimeJourneySources = fg
+    .sync('tests/journey/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const runtimeSetupSources = fg
+    .sync('tests/setup/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const runtimeSources = [...runtimeJourneySources, ...runtimeSetupSources].sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter(
+    (path) => path.startsWith('tests/journey/') || path.startsWith('tests/setup/'),
+  );
+
+  it('the tests typecheck project admits every journey and setup source, including future files', () => {
+    expect(
+      runtimeJourneySources.length,
+      'the journey source corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(9);
+    expect(runtimeSetupSources.length, 'the setup source corpus fell below its committed floor').toBeGreaterThanOrEqual(
+      2,
+    );
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} runtime journey/setup sources; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    for (const tier of ['journey', 'setup']) {
+      expect(
+        includeEntries.some(
+          (entry) => entry.startsWith(`tests/${tier}/`) && entry.includes('*') && entry.endsWith('.ts'),
+        ),
+        `${tier} admission must be future-proof rather than an authored filename roster`,
+      ).toBe(true);
+    }
+  });
+
+  it('a counterfeit config with journey and setup admission removed exposes the complete missing corpus', () => {
+    const counterfeitEntries = includeEntries.filter(
+      (entry) => !entry.startsWith('tests/journey/') && !entry.startsWith('tests/setup/'),
+    );
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
+describe('(a5) smoke evidence is type-admitted before execution', () => {
+  const runtimeSmokeSuites = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/smoke/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSmokeRoots = tsconfigTestsRootFiles().filter(
+    (path) => path.startsWith('tests/smoke/') && path.endsWith('.test.ts'),
+  );
+
+  it('the tests typecheck project admits every runtime smoke suite, including future files', () => {
+    expect(runtimeSmokeSuites.length, 'the smoke-test corpus fell below its committed floor').toBeGreaterThanOrEqual(7);
+    const admitted = new Set(admittedSmokeRoots);
+    const missing = runtimeSmokeSuites.filter((path) => !admitted.has(path));
+    expect(
+      admittedSmokeRoots,
+      `the tests typecheck project admits ${admittedSmokeRoots.length}/${runtimeSmokeSuites.length} runtime smoke suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSmokeSuites);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/smoke/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      'smoke admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with smoke admission removed exposes the complete missing corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/smoke/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSmokeSuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSmokeSuites);
+  });
+});
+
+describe('(a6) regression evidence is type-admitted before execution', () => {
+  const runtimeRegressionSuites = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/regression/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedRegressionRoots = tsconfigTestsRootFiles().filter(
+    (path) => path.startsWith('tests/regression/') && path.endsWith('.test.ts'),
+  );
+
+  it('the tests typecheck project admits every runtime regression suite, including future files', () => {
+    expect(
+      runtimeRegressionSuites.length,
+      'the regression-test corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(4);
+    const admitted = new Set(admittedRegressionRoots);
+    const missing = runtimeRegressionSuites.filter((path) => !admitted.has(path));
+    expect(
+      admittedRegressionRoots,
+      `the tests typecheck project admits ${admittedRegressionRoots.length}/${runtimeRegressionSuites.length} runtime regression suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeRegressionSuites);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/regression/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      'regression admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with regression admission removed exposes the complete missing corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/regression/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeRegressionSuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeRegressionSuites);
+  });
+});
+
+describe('(a7) runtime support modules are type-admitted before execution', () => {
+  const runtimeEntrypoints = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const runtimeSupportSources = tsconfigTestsResolvedFiles(runtimeEntrypoints).filter((path) =>
+    path.startsWith('tests/support/'),
+  );
+  const authoredSupportSources = fg
+    .sync('tests/support/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSupportRoots = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/support/'));
+
+  it('every authored support module has a live runtime owner and is directly type-admitted', () => {
+    expect(runtimeEntrypoints.length, 'the Node runtime suite fell below its committed floor').toBeGreaterThanOrEqual(
+      1_000,
+    );
+    expect(
+      runtimeSupportSources.length,
+      'the runtime support corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(23);
+    expect(
+      runtimeSupportSources,
+      'tests/support contains a module with no importer in the canonical Node runtime graph',
+    ).toEqual(authoredSupportSources);
+    const admitted = new Set(admittedSupportRoots);
+    const missing = runtimeSupportSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSupportRoots,
+      `the tests typecheck project admits ${admittedSupportRoots.length}/${runtimeSupportSources.length} runtime support modules; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSupportSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/support/') && entry.includes('*') && entry.endsWith('.ts'),
+      ),
+      'support admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with support admission removed exposes the complete runtime-owned corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/support/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSupportSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSupportSources);
+  });
+});
+
+describe('(a8) runtime helper modules are owned and type-admitted before execution', () => {
+  const nodeRuntimeEntrypoints = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const browserRuntimeEntrypoints = fg
+    .sync(browserVitestConfig.test?.include ?? [], { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const runtimeEntrypoints = [...nodeRuntimeEntrypoints, ...browserRuntimeEntrypoints];
+  const runtimeHelperSources = tsconfigTestsResolvedFiles(runtimeEntrypoints).filter((path) =>
+    path.startsWith('tests/helpers/'),
+  );
+  const authoredHelperSources = fg
+    .sync('tests/helpers/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedHelperRoots = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/helpers/'));
+
+  it('every authored helper has a live runtime owner', () => {
+    expect(
+      nodeRuntimeEntrypoints.length,
+      'the Node runtime suite fell below its committed floor',
+    ).toBeGreaterThanOrEqual(1_000);
+    expect(browserRuntimeEntrypoints.length, 'the browser runtime suite changed').toBe(14);
+    expect(
+      runtimeHelperSources.length,
+      'the runtime helper corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(13);
+    const runtimeOwned = new Set(runtimeHelperSources);
+    const unowned = authoredHelperSources.filter((path) => !runtimeOwned.has(path));
+    expect(
+      authoredHelperSources,
+      `tests/helpers contains modules with no importer in the canonical test runtime graphs:\n${unowned.join('\n')}`,
+    ).toEqual(runtimeHelperSources);
+  });
+
+  it('every runtime-owned helper is directly type-admitted', () => {
+    const admitted = new Set(admittedHelperRoots);
+    const missing = runtimeHelperSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedHelperRoots,
+      `the tests typecheck project admits ${admittedHelperRoots.length}/${runtimeHelperSources.length} runtime helper modules; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeHelperSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/helpers/') && entry.includes('*') && entry.endsWith('.ts'),
+      ),
+      'helper admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with helper admission removed exposes the complete runtime-owned corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/helpers/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeHelperSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeHelperSources);
+  });
+});
+
+describe('(a9) Playwright E2E sources are type-admitted before execution', () => {
+  const declaredMatches = Array.isArray(playwrightE2EConfig.testMatch)
+    ? playwrightE2EConfig.testMatch
+    : [playwrightE2EConfig.testMatch];
+  const testMatchGlobs = declaredMatches.filter((match): match is string => typeof match === 'string');
+  const testDir = resolve(REPO, 'tests/e2e', playwrightE2EConfig.testDir ?? '.');
+  const testDirRelative = relative(REPO, testDir).replaceAll('\\', '/');
+  const runtimeEntrypoints = fg
+    .sync(testMatchGlobs, { cwd: testDir })
+    .map((path) => `${testDirRelative}/${path.replaceAll('\\', '/')}`)
+    .sort();
+  const authoredSources = fg
+    .sync('tests/e2e/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/e2e/'));
+
+  it('derives every canonical E2E entrypoint from Playwright testDir and testMatch', () => {
+    expect(
+      testMatchGlobs.length,
+      'the E2E canary cannot classify a non-string Playwright testMatch; extend the enumerator before changing it',
+    ).toBe(declaredMatches.length);
+    expect(runtimeEntrypoints.length, 'the Playwright E2E entrypoint corpus fell below its committed floor').toBe(3);
+    const admitted = new Set(admittedSources);
+    const missing = runtimeEntrypoints.filter((path) => !admitted.has(path));
+    expect(
+      runtimeEntrypoints.filter((path) => admitted.has(path)),
+      `the tests typecheck project admits ${runtimeEntrypoints.length - missing.length}/${runtimeEntrypoints.length} Playwright entrypoints; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeEntrypoints);
+  });
+
+  it('directly admits every authored E2E source through one future-proof tree root', () => {
+    expect(authoredSources.length, 'the tracked E2E TypeScript corpus fell below its committed floor').toBe(9);
+    const admitted = new Set(admittedSources);
+    const missing = authoredSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${authoredSources.length} E2E sources; missing:\n${missing.join('\n')}`,
+    ).toEqual(authoredSources);
+    expect(
+      includeEntries.some((entry) => entry.startsWith('tests/e2e/') && entry.includes('*') && entry.endsWith('.ts')),
+      'E2E admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with E2E admission removed exposes the complete source tree', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/e2e/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(authoredSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(authoredSources);
+  });
+});
+
+describe('(a10) browser runtime sources are type-admitted before execution', () => {
+  const runtimeEntrypoints = fg
+    .sync(browserVitestConfig.test?.include ?? [], { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const configOwnedSources = tsconfigTestsResolvedFiles(['vitest.browser.config.ts']).filter((path) =>
+    path.startsWith('tests/browser/commands/'),
+  );
+  const runtimeSources = [...runtimeEntrypoints, ...configOwnedSources].sort();
+  const authoredSources = fg
+    .sync('tests/browser/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/browser/'));
+
+  it('derives the complete browser source tree from Vitest and its config module graph', () => {
+    expect(runtimeEntrypoints.length, 'the browser test entrypoint corpus fell below its committed floor').toBe(14);
+    expect(configOwnedSources.length, 'the browser config-owned command corpus changed').toBe(1);
+    expect(runtimeSources, 'tests/browser contains a source with no browser runtime owner').toEqual(authoredSources);
+  });
+
+  it('directly admits every runtime-owned browser source through one future-proof tree root', () => {
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} browser sources; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/browser/') && entry.includes('*') && entry.endsWith('.ts'),
+      ),
+      'browser admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with browser admission removed exposes the complete runtime-owned tree', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/browser/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
+describe('(a11) benchmark runtime sources are type-admitted before execution', () => {
+  const registeredBenchSources = [...benchScriptTargets(REPO)].sort();
+  const nodeRuntimeBenchSources = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/bench/'))
+    .sort();
+  const runtimeSources = [...new Set([...registeredBenchSources, ...nodeRuntimeBenchSources])].sort();
+  const authoredSources = fg
+    .sync('tests/bench/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/bench/'));
+
+  it('derives the complete bench tree from registered scripts and the Node runtime', () => {
+    expect(
+      registeredBenchSources.length,
+      'the registered benchmark corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(19);
+    expect(
+      nodeRuntimeBenchSources.length,
+      'the Node-runtime bench source corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(1);
+    expect(runtimeSources, 'tests/bench contains a source with no executable owner').toEqual(authoredSources);
+  });
+
+  it('directly admits every executable bench source through one future-proof tree root', () => {
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} benchmark sources; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some((entry) => entry.startsWith('tests/bench/') && entry.includes('*') && entry.endsWith('.ts')),
+      'benchmark admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with benchmark admission removed exposes the complete executable tree', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/bench/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
+describe('(a12) _spine unit evidence is type-admitted before execution', () => {
+  const runtimeSources = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/unit/_spine/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/unit/_spine/'));
+
+  it('directly admits every canonical Node _spine suite through one future-proof directory root', () => {
+    expect(runtimeSources.length, 'the _spine unit corpus fell below its committed floor').toBeGreaterThanOrEqual(4);
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} runtime _spine suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/unit/_spine/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      '_spine admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with _spine admission removed exposes the complete runtime corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/unit/_spine/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
+describe('(a13) canonical unit evidence is type-admitted before execution', () => {
+  const runtimeSources = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/unit/canonical/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/unit/canonical/'));
+
+  it('directly admits every canonical Node encoding suite through one future-proof directory root', () => {
+    expect(runtimeSources.length, 'the canonical unit corpus fell below its committed floor').toBeGreaterThanOrEqual(9);
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} runtime canonical suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/unit/canonical/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      'canonical admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with canonical admission removed exposes the complete runtime corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/unit/canonical/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
+describe('(a14) error-algebra unit evidence is type-admitted before execution', () => {
+  const runtimeSources = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/unit/error/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/unit/error/'));
+
+  it('directly admits every canonical Node error suite through one future-proof directory root', () => {
+    expect(
+      runtimeSources.length,
+      'the error-algebra unit corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(3);
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} runtime error suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/unit/error/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      'error-suite admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with error-suite admission removed exposes the complete runtime corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/unit/error/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
+describe('(a15) ECS unit evidence is type-admitted before execution', () => {
+  const runtimeSources = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/unit/ecs/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/unit/ecs/'));
+
+  it('directly admits every canonical Node ECS suite through one future-proof directory root', () => {
+    expect(runtimeSources.length, 'the ECS unit corpus fell below its committed floor').toBeGreaterThanOrEqual(1);
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} runtime ECS suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/unit/ecs/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      'ECS admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with ECS admission removed exposes the complete runtime corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/unit/ecs/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
+describe('(a16) Remotion unit evidence is type-admitted before execution', () => {
+  const runtimeSources = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/unit/remotion/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/unit/remotion/'));
+
+  it('directly admits every canonical Node Remotion suite through one future-proof directory root', () => {
+    expect(runtimeSources.length, 'the Remotion unit corpus fell below its committed floor').toBeGreaterThanOrEqual(3);
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} runtime Remotion suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/unit/remotion/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      'Remotion admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with Remotion admission removed exposes the complete runtime corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/unit/remotion/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
 });
 
 // --------------------------------------------------------------------------

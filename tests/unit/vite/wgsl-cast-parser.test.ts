@@ -9,10 +9,17 @@ describe('WGSL cast numeric grammar', () => {
     ['1, 2', [1, 2]],
     ['vec2<f32>(1, 2)', [1, 2]],
     ['vec3f(1, -.5, +2.)', [1, -0.5, 2]],
-    ['vec4u(1 2 3 4)', [1, 2, 3, 4]],
+    ['vec4f(1 2 3 4)', [1, 2, 3, 4]],
   ] as const)('parses %s', (source, expected) => {
     expect(parseWgslCastValue(source)).toEqual(expected);
   });
+
+  test.each(['vec2i(1, 2)', 'vec2u(1, 2)', 'vec2<i32>(1, 2)', 'vec2<u32>(1, 2)', 'vec4u(1 2 3 4)'])(
+    'refuses an unsupported vector element type in %s',
+    (source) => {
+      expect(parseWgslCastValue(source)).toBe('invalid');
+    },
+  );
 
   test.each(['10px', 'calc(100% - 1px)', 'var(--scale-2)', '1-2', 'vec2f(1)', 'vec3f(1,2)', ',', '0x10'])(
     'refuses non-WGSL numeric input %s',

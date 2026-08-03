@@ -68,7 +68,7 @@ If `data-liteship-state` never changes on resize, the boot script was never inje
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
 - [LiteShip for Astro static sites](https://github.com/freebatteryfactory/LiteShip/blob/main/ASTRO-STATIC-MENTAL-MODEL.md) — the authoring mental model
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/astro/src/) — generated from source
+- [Public API roster](https://github.com/freebatteryfactory/LiteShip/blob/main/PUBLIC-EXPORTS.md) — reviewed surface; run `pnpm run docs:build` in a source checkout for TypeDoc
 
 ---
 

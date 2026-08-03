@@ -15,9 +15,9 @@
  * The classic disagreement, and the live dogfood: the `invariant-regex` oracle
  * fires on a line where the keyword pair appears INSIDE A COMMENT, while the
  * `ts-ast` oracle correctly stays silent. That false-positive bit THIS slice's own
- * development repeatedly — the gate reports it as an advisory cross-class
- * divergence, the live proof the text-only oracle is imprecise and should be
- * retired in favour of the AST oracle.
+ * development repeatedly — the gate reports it as a cross-class divergence,
+ * aimed by the affected file's effective assurance level, and as live proof the
+ * text-only oracle is imprecise and should be retired in favour of the AST oracle.
  *
  * THE LAW (the 0.2.3 head-probe scar, as an engine invariant): the comparison is
  * computed from the LIVE oracle facts in the IR — never a hardcoded constant. The

@@ -605,4 +605,18 @@ describe('TransitionProgram — authoring sugar (Reveal.chain / staggerProgram)'
     expect(plan.runtime).toBeDefined();
     expect(plan.diagnostics.some((d) => d.code === 'core/transition-program/multi-target-program')).toBe(false);
   });
+
+  test('interpretProgram escapes a hostile target while carrying the original target as data', () => {
+    const boundary = 'a"b}';
+    const chain = lowerRevealChain({
+      target: boundary,
+      trigger: { type: 'scroll', axis: 'progress' },
+      steps: [{ from: { opacity: 0 }, to: { opacity: 1 }, transition: { durationMs: 200, easing: 'linear' } }],
+      policy: { reducedMotion: 'settle', motionTier: 'transitions' },
+    });
+    const plan = interpretProgram(chain.graph, chain.program);
+
+    expect(plan.css?.target).toBe(boundary);
+    expect(plan.css?.selector).toBe('[data-liteship-boundary="a\\"b}"]');
+  });
 });

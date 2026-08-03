@@ -102,8 +102,8 @@ reports/**/*.tmp
 docs/superpowers/
 docs/sixsigma/
 
-# TypeDoc HTML output — the committed API reference is the markdown in docs/api/;
-# the HTML build (docs/api-html/) is a heavy, regenerable artifact, never committed.
+# TypeDoc output is a heavy, regenerable build artifact; only its input
+# fingerprint under traceability/ is committed (W8.5).
 docs/api-html/
 
 # Stale tsc emit artifacts in scripts/ (tsconfig.scripts.json sets noEmit;
@@ -112,6 +112,13 @@ scripts/**/*.js
 scripts/**/*.js.map
 scripts/**/*.d.ts
 scripts/**/*.d.ts.map
+# …except the AUTHORED istanbul ambient, which is tracked source rather than tsc
+# emit. Git kept it committed because the index outranks an ignore rule, so it
+# looked perfectly governed — while ast-grep, ripgrep, and every fast-glob walk
+# that honours ignore files skipped it silently, since none of them consult the
+# index. Same negation idiom as the benchmarks ratchets above. Pinned by THE
+# IGNORED-TRACKED LAW in tests/unit/devops/denominator-census.test.ts.
+!scripts/types/istanbul.d.ts
 
 # Astro-generated content/types (regenerated on every astro dev / sync)
 **/.astro/
@@ -122,3 +129,4 @@ tests/.liteship-verify-fresh-*/
 
 # Experimental sharded TypeDoc workspace (#136) — never commit
 .typedoc-shards/
+docs/api/

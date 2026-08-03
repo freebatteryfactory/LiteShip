@@ -5,11 +5,11 @@ import { resolve, relative } from 'node:path';
 import fg from 'fast-glob';
 // CUT B5b — slash normalization routes through the one @liteship/audit home (aliased).
 import { normalizeRepoPath as normalizePath } from '@liteship/audit';
-import { repoRoot, nodeTestInclude } from '../vitest.shared.js';
+import { browserTestInclude, repoRoot, nodeTestInclude } from '../vitest.shared.js';
 import { writeTextFile } from './audit/shared.js';
 import { DIRECTIVE_BENCH_PAIRS, DIRECTIVE_BENCH_TASKS } from './bench/directive-suite.js';
 
-export interface ArtifactExpectedCounts {
+export interface ArtifactExpectedCounts extends Readonly<Record<string, number>> {
   readonly nodeTestFileCount: number;
   readonly browserTestFileCount: number;
   readonly e2eSpecCount: number;
@@ -47,11 +47,11 @@ function readPackageJson(root = repoRoot): {
 }
 
 export function buildExpectedCounts(root = repoRoot): ArtifactExpectedCounts {
-  const nodeTestFileCount = fg.sync(nodeTestInclude as readonly string[], {
+  const nodeTestFileCount = fg.sync([...nodeTestInclude], {
     cwd: root,
     onlyFiles: true,
   }).length;
-  const browserTestFileCount = fg.sync(['tests/browser/**/*.test.ts'], {
+  const browserTestFileCount = fg.sync([...browserTestInclude], {
     cwd: root,
     onlyFiles: true,
   }).length;
@@ -162,10 +162,9 @@ export function ensureArtifactContext(
   }
 
   const next: ArtifactContext = {
-    schemaVersion: 1,
+    ...current,
     gauntletRunId: randomUUID(),
     generatedAt: new Date().toISOString(),
-    ...current,
   };
 
   writeTextFile(resolve(root, 'reports', 'gauntlet-context.json'), JSON.stringify(next, null, 2));

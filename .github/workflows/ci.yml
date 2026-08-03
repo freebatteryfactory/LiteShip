@@ -43,7 +43,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Run registry-projected format check
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.format.command }}
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.format.command }}
+        run: bash -c "$PROJECTED_COMMAND"
 
   # Registry-projected CI plan. The parallel merge gate is the RELEASE gauntlet fanned
   # out, so scripts/ci-plan.ts (a PURE projection of @liteship/command's CHECK_REGISTRY —
@@ -390,6 +392,7 @@ jobs:
           # Projection of rust-toolchain.toml; check/devcontainer-pins rejects drift.
           toolchain: 1.85.1
           targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - name: Prepare ffmpeg render capability
         run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg
@@ -399,7 +402,9 @@ jobs:
           git config user.name "github-actions[bot]"
       - run: pnpm run build && pnpm run capsule:compile
       - name: Run registry-projected environment doctor
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.doctor.command }}
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.doctor.command }}
+        run: bash -c "$PROJECTED_COMMAND"
       - name: Mint gauntlet run context for parallel fan-out
         run: pnpm exec tsx scripts/mint-gauntlet-context.ts
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -478,15 +483,17 @@ jobs:
           LITESHIP_SHARD_TOTAL: 4
       - name: Stage shard coverage for artifact upload
         if: always()
+        env:
+          SHARD: ${{ matrix.shard }}
         run: |
           set -euo pipefail
-          mkdir -p "ci-artifacts/coverage/node-shard-${{ matrix.shard }}"
-          if [ -d "coverage/node-shard-${{ matrix.shard }}" ]; then
-            cp -r "coverage/node-shard-${{ matrix.shard }}/." "ci-artifacts/coverage/node-shard-${{ matrix.shard }}/"
+          mkdir -p "ci-artifacts/coverage/node-shard-$SHARD"
+          if [ -d "coverage/node-shard-$SHARD" ]; then
+            cp -r "coverage/node-shard-$SHARD/." "ci-artifacts/coverage/node-shard-$SHARD/"
           fi
-          if [ -d "coverage/subprocess-raw-shard/${{ matrix.shard }}" ]; then
-            mkdir -p "ci-artifacts/coverage/subprocess-raw-shard/${{ matrix.shard }}"
-            cp -r "coverage/subprocess-raw-shard/${{ matrix.shard }}/." "ci-artifacts/coverage/subprocess-raw-shard/${{ matrix.shard }}/"
+          if [ -d "coverage/subprocess-raw-shard/$SHARD" ]; then
+            mkdir -p "ci-artifacts/coverage/subprocess-raw-shard/$SHARD"
+            cp -r "coverage/subprocess-raw-shard/$SHARD/." "ci-artifacts/coverage/subprocess-raw-shard/$SHARD/"
           fi
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
@@ -520,6 +527,7 @@ jobs:
           # Projection of rust-toolchain.toml; check/devcontainer-pins rejects drift.
           toolchain: 1.85.1
           targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - name: Prepare ffmpeg render capability
         run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg
@@ -532,7 +540,9 @@ jobs:
         env:
           CI: true
       - name: Run registry-projected allocation gate
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.benchAlloc.command }}
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.benchAlloc.command }}
+        run: bash -c "$PROJECTED_COMMAND"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
@@ -666,13 +676,15 @@ jobs:
           name: dist-packages
           path: .
       - name: Run registry-projected consumer journeys
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.journey.command }}
+        run: bash -c "$PROJECTED_COMMAND"
         env:
           CI: true
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.journey.command }}
       - name: Run registry-projected hermetic closure
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.hermetic.command }}
+        run: bash -c "$PROJECTED_COMMAND"
         env:
           CI: true
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.hermetic.command }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
@@ -805,7 +817,9 @@ jobs:
         env:
           CI: true
       - name: Run registry-projected DevX policy check
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.devx.command }}
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.devx.command }}
+        run: bash -c "$PROJECTED_COMMAND"
       - name: Confirm lane matches the registry-projected plan
         env:
           PLANNED_PROFILE: ${{ fromJSON(needs.plan.outputs.matrix).lanes.final.profile }}
@@ -850,7 +864,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
-      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - env:
+          BROWSER: ${{ matrix.browser }}
+        run: pnpm exec playwright install --with-deps "$BROWSER"
       - run: pnpm exec vitest run --config vitest.browser.config.ts
         env:
           CI: true
@@ -892,11 +908,8 @@ jobs:
           # Projection of rust-toolchain.toml; check/devcontainer-pins rejects drift.
           toolchain: 1.85.1
           targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
       - run: cargo test
-        working-directory: crates/liteship-compute
-        env:
-          RUSTFLAGS: -D warnings
-      - run: cargo build --release --target wasm32-unknown-unknown
         working-directory: crates/liteship-compute
         env:
           RUSTFLAGS: -D warnings
@@ -906,6 +919,14 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Run registry-projected pinned Rust formatting
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.rustfmt.command }}
+        run: bash -c "$PROJECTED_COMMAND"
+      - name: Run registry-projected pinned Rust and WASM qualification
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.rustWasmQualification.command }}
+        run: bash -c "$PROJECTED_COMMAND"
       # Build the TS workspace so the vitest config can load: its alias setup
       # imports `@liteship/core` config → `cbor.ts` → `@liteship/canonical`, whose
       # config-load resolution needs the package's `dist` (the `development→src`
@@ -1118,10 +1139,11 @@ jobs:
           # inside it, so exhaustion here signals an anomaly, not the plan.
           LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '17100000'
           LITESHIP_CAMPAIGN_SHARD: '${{ matrix.shard }}/6'
+          SHARD: ${{ matrix.shard }}
         run: |
           mkdir -p reports/exhaustive
           set -o pipefail
-          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --mutate 2>&1 | tee reports/exhaustive/mutation-shard${{ matrix.shard }}.log
+          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --mutate 2>&1 | tee "reports/exhaustive/mutation-shard$SHARD.log"
       - name: Save the mutation verdict bank (even when gates exit red)
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         if: always()
@@ -1282,10 +1304,11 @@ jobs:
           # inside it, so exhaustion here signals an anomaly, not the plan.
           LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '17100000'
           LITESHIP_CAMPAIGN_SHARD: '${{ matrix.shard }}/6'
+          SHARD: ${{ matrix.shard }}
         run: |
           mkdir -p reports/exhaustive
           set -o pipefail
-          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --mcdc 2>&1 | tee reports/exhaustive/mcdc-shard${{ matrix.shard }}.log
+          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --mcdc 2>&1 | tee "reports/exhaustive/mcdc-shard$SHARD.log"
       - name: Save the mcdc verdict bank (even when gates exit red)
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         if: always()
@@ -1452,11 +1475,23 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Install the pinned Rust advisory auditor
+        uses: taiki-e/install-action@67729d5c413db75907f0ad1e39bb04b9c868ff60
+        with:
+          tool: cargo-audit@0.22.2
+          fallback: none
+          checksum: true
       - run: pnpm install --frozen-lockfile
       - name: Prove governed security minimums
         run: pnpm run security:minimum
       - name: Query the live advisory registry
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.securityAudit.command }}
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.securityAudit.command }}
+        run: bash -c "$PROJECTED_COMMAND"
+      - name: Audit every Rust lockfile with the qualified tool
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.cargoAudit.command }}
+        run: bash -c "$PROJECTED_COMMAND"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         continue-on-error: true
@@ -1465,6 +1500,8 @@ jobs:
           path: |
             reports/pnpm-audit.json
             reports/pnpm-audit.stderr.txt
+            reports/cargo-audit.json
+            reports/cargo-audit/
           if-no-files-found: warn
           retention-days: 30
 
@@ -1501,6 +1538,7 @@ jobs:
           FORMAT: ${{ needs.format.result }}
           PR_AFFECTED: ${{ needs.pr-affected.result }}
           PR_BROWSER: ${{ needs.pr-browser-affected.result }}
+          BROWSER_REQUIRED: ${{ needs.plan.outputs.affected-browser-required }}
           PR_WINDOWS: ${{ needs.pr-windows-affected.result }}
           PR_EVIDENCE: ${{ needs.pr-affected-evidence.result }}
           SERIAL: ${{ needs.truth-linux.result }}
@@ -1528,7 +1566,11 @@ jobs:
             test "$PR_AFFECTED" = "success"
             test "$PR_WINDOWS" = "success"
             test "$PR_EVIDENCE" = "success"
-            test "$PR_BROWSER" = "success" -o "$PR_BROWSER" = "skipped"
+            if [ "$BROWSER_REQUIRED" = "true" ]; then
+              test "$PR_BROWSER" = "success"
+            else
+              test "$PR_BROWSER" = "skipped"
+            fi
             test "$PARALLEL" = "success"
             test "$BROWSER" = "success"
             test "$WINDOWS" = "success"
@@ -1566,6 +1608,7 @@ jobs:
       - pr-affected
       - pr-browser-affected
       - pr-windows-affected
+      - pr-affected-evidence
       - truth-linux
       - truth-linux-parallel
       - browser-e2e
@@ -1579,6 +1622,7 @@ jobs:
       - exhaustive-mutation-fold
       - exhaustive-mcdc
       - exhaustive-mcdc-fold
+      - semantic-assurance-admission
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:

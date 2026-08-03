@@ -28,15 +28,21 @@ import { MockEventSource } from '../helpers/mock-event-source.js';
 // ---------------------------------------------------------------------------
 
 /** A keyless, order-significant message (an LLM token analogue). */
-const tokenMessage = (n: number): SSEMessage => ({ type: 'batch', data: `tok:${n}` });
+type BatchMessage = Extract<SSEMessage, { readonly type: 'batch' }>;
+type PatchMessage = Extract<SSEMessage, { readonly type: 'patch' }>;
+
+const tokenMessage = (n: number): BatchMessage => ({ type: 'batch', data: `tok:${n}` });
 
 /** An id-keyed, idempotent patch (a newer version supersedes the older). */
-const patchMessage = (id: string, version: number): SSEMessage => ({
+const patchMessage = (id: string, version: number): PatchMessage => ({
   type: 'patch',
   data: `<div data-liteship-id="${id}">v${version}</div>`,
 });
 
 const isTokenData = (data: unknown): data is string => typeof data === 'string' && data.startsWith('tok:');
+
+const isTokenMessage = (message: SSEMessage): message is BatchMessage & { readonly data: string } =>
+  message.type === 'batch' && isTokenData(message.data);
 
 type Step =
   | { readonly kind: 'token'; readonly n: number }
@@ -51,6 +57,20 @@ const stepArb: fc.Arbitrary<Step> = fc.oneof(
 
 const toMessage = (step: Step): SSEMessage =>
   step.kind === 'token' ? tokenMessage(step.n) : patchMessage(step.id, step.version);
+
+const safeAttributeAtomArb = fc
+  .array(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'), {
+    minLength: 1,
+    maxLength: 20,
+  })
+  .map((characters) => characters.join(''));
+
+const safeQuotedTextArb = fc
+  .array(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 _-'), {
+    minLength: 0,
+    maxLength: 20,
+  })
+  .map((characters) => characters.join(''));
 
 // ---------------------------------------------------------------------------
 // Pure invariants over applyOverflow
@@ -96,6 +116,61 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
     expect(extractCoalesceKey(real)).not.toBeNull();
   });
 
+  describe('the coalesce key is quote-aware', () => {
+    test('a quoted > inside an attribute value keeps the key', () => {
+      fc.assert(
+        fc.property(
+          safeAttributeAtomArb,
+          safeQuotedTextArb,
+          safeQuotedTextArb,
+          fc.constantFrom('single' as const, 'double' as const),
+          (id, prefix, suffix, quoteStyle) => {
+            const quote = quoteStyle === 'single' ? "'" : '"';
+            const message: SSEMessage = {
+              type: 'patch',
+              data: `<div title=${quote}${prefix}>${suffix}${quote} data-liteship-id="${id}">content</div>`,
+            };
+            expect(extractCoalesceKey(message)).toBe(`patch:${id}`);
+          },
+        ),
+        { seed: 0x55e20041, numRuns: 160 },
+      );
+    });
+
+    test('an unquoted attribute value is still keyed', () => {
+      fc.assert(
+        fc.property(safeAttributeAtomArb, (id) => {
+          const message: SSEMessage = {
+            type: 'patch',
+            data: `<div data-liteship-id=${id}>content</div>`,
+          };
+          expect(extractCoalesceKey(message)).toBe(`patch:${id}`);
+        }),
+        { seed: 0x55e20042, numRuns: 160 },
+      );
+    });
+
+    test('a malformed start tag yields no key, never a wrong key', () => {
+      fc.assert(
+        fc.property(
+          safeAttributeAtomArb,
+          safeQuotedTextArb,
+          fc.constantFrom('single' as const, 'double' as const),
+          (id, prefix, quoteStyle) => {
+            const quote = quoteStyle === 'single' ? "'" : '"';
+            const otherQuote = quoteStyle === 'single' ? '"' : "'";
+            const message: SSEMessage = {
+              type: 'patch',
+              data: `<div title=${quote}${prefix} data-liteship-id=${otherQuote}${id}${otherQuote}>content</div>`,
+            };
+            expect(extractCoalesceKey(message)).toBeNull();
+          },
+        ),
+        { seed: 0x55e20043, numRuns: 160 },
+      );
+    });
+  });
+
   test('a saturated all-ordered buffer rejects an incoming keyed patch (never sheds an ordered message)', () => {
     const max = 3;
     const buffer: SSEMessage[] = [tokenMessage(0), tokenMessage(1), tokenMessage(2)];
@@ -121,11 +196,7 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
             const keylessBefore = buffer.filter((m) => extractCoalesceKey(m) === null);
             const keyedBefore = buffer.length - keylessBefore.length;
             const tokensOf = (msgs: readonly SSEMessage[]): Set<number> =>
-              new Set(
-                msgs
-                  .filter((m): m is SSEMessage & { data: string } => isTokenData(m.data))
-                  .map((m) => Number(m.data.slice('tok:'.length))),
-              );
+              new Set(msgs.filter(isTokenMessage).map((m) => Number(m.data.slice('tok:'.length))));
             const tokensBefore = tokensOf(buffer);
 
             applyOverflow(buffer, message, 'coalesce-by-id', max);
@@ -145,9 +216,7 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
 
           // No token is mutated/merged: every keyless entry is a verbatim token,
           // and the tokens present appear in strictly increasing insertion order.
-          const survivingTokenNs = buffer
-            .filter((m): m is SSEMessage & { data: string } => isTokenData(m.data))
-            .map((m) => Number(m.data.slice('tok:'.length)));
+          const survivingTokenNs = buffer.filter(isTokenMessage).map((m) => Number(m.data.slice('tok:'.length)));
 
           // Strictly-ordered subsequence of the inserted token order (no reorder).
           let cursor = 0;
@@ -158,6 +227,7 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
           }
         },
       ),
+      { seed: 0x55e20044, numRuns: 100 },
     );
   });
 
@@ -186,14 +256,16 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
             const key = extractCoalesceKey(message);
             if (key === null) continue;
             const id = key.slice('patch:'.length);
-            const data = message.data as string;
-            expect(data).toContain(`v${latestVersionById.get(id)}`);
+            expect(message.type).toBe('patch');
+            if (message.type !== 'patch') continue;
+            expect(message.data).toContain(`v${latestVersionById.get(id)}`);
           }
 
           // Coalesce only ever collapses, never invents — bounded by patch count.
           expect(totalCoalesced).toBeGreaterThanOrEqual(0);
         },
       ),
+      { seed: 0x55e20045, numRuns: 100 },
     );
   });
 
@@ -207,11 +279,12 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
           expect(buffer.length).toBeLessThanOrEqual(SSE_BUFFER_SIZE);
         }
       }),
+      { seed: 0x55e20046, numRuns: 100 },
     );
   });
 
   test('drop-newest rejects the incoming message at capacity; drop-oldest evicts the head', () => {
-    const full = (): SSEMessage[] => Array.from({ length: 3 }, (_, i) => tokenMessage(i));
+    const full = (): BatchMessage[] => Array.from({ length: 3 }, (_, i) => tokenMessage(i));
 
     const newest = full();
     const r1 = applyOverflow(newest, tokenMessage(99), 'drop-newest', 3);

@@ -10,9 +10,10 @@
  * over-reports relative to the regex (more precise, never less).
  *
  * DELIVERABLE 3 (dogfood): the divergence gate, run over a corpus whose ONLY
- * keyword-pair occurrence is inside a doc COMMENT, surfaces that as an ADVISORY
- * cross-class divergence — the live proof the text-only invariant-regex oracle is
- * imprecise (it fires on a comment the AST oracle ignores) and should be retired.
+ * keyword-pair occurrence is inside a doc COMMENT, surfaces that as a cross-class
+ * divergence aimed by the file's effective assurance level — the live proof the
+ * text-only invariant-regex oracle is imprecise (it fires on a comment the AST
+ * oracle ignores) and should be retired.
  * This is exactly the false-positive that bit this slice's own development.
  *
  * @module
@@ -166,7 +167,7 @@ describe('dogfood — the divergence gate surfaces the comment-occurrence false-
       'export const named = 1;\n',
   };
 
-  it('reports the comment-occurrence as an ADVISORY cross-class divergence (retire-the-weak signal)', () => {
+  it('reports the comment-occurrence at the L2 file severity (retire-the-weak signal)', () => {
     const ir = buildHostIR(acmeProfile(makeFixture(corpusFiles)));
 
     // Sanity: the invariant-regex oracle DID fire on the comment line (text-only),
@@ -184,7 +185,7 @@ describe('dogfood — the divergence gate surfaces the comment-occurrence false-
     expect(onThisFile).toHaveLength(1);
     const f = onThisFile[0]!;
     expect(f.location?.line).toBe(3);
-    expect(f.severity).toBe('advisory'); // cross-class: text-only vs file-proxy-only
+    expect(f.severity).toBe('warning'); // L2 cross-class: text-only vs file-proxy-only
     expect(f.detail).toContain('cannot tell comment from code');
     expect(f.detail).toContain('RETIRE');
     expect(f.coverageClass).toBe('file-proxy-only');

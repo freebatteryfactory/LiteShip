@@ -47,13 +47,18 @@ function pushOwners(): ReadonlyMap<string, readonly string[]> {
 
 function prOwners(checkId: string): readonly string[] {
   if (checkId === 'check/format') return ['format'];
+  if (checkId === 'check/rustfmt' || checkId === 'check/rust-wasm-qualification') return ['rust-wasm-parity'];
+  if (checkId === 'check/cargo-audit') return ['security-audit'];
   if (checkId === 'check/test-e2e') return ['pr-browser-affected'];
   if (checkId === 'check/test') return ['pr-affected', 'pr-windows-affected'];
   return ['pr-affected'];
 }
 
 function broadOwners(checkId: string): readonly string[] {
-  return checkId === 'check/format' ? ['format'] : ['truth-linux'];
+  if (checkId === 'check/format') return ['format'];
+  if (checkId === 'check/rustfmt' || checkId === 'check/rust-wasm-qualification') return ['rust-wasm-parity'];
+  if (checkId === 'check/cargo-audit') return ['security-audit'];
+  return ['truth-linux'];
 }
 
 function platformsFor(jobs: readonly string[]): readonly string[] {

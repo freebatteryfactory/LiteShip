@@ -50,20 +50,12 @@
  */
 
 import ts from 'typescript';
-import type { SkipForm, SkipMatch, SkipConditionality } from '@liteship/gauntlet';
+import { TEST_ROOTS, SUITE_ROOTS, type SkipForm, type SkipMatch, type SkipConditionality } from '@liteship/gauntlet';
 
-/** Runner ROOTS a skip hangs off — mirrors the token detector's set (the literal call surfaces + focus aliases). */
-const RUNNER_ROOTS: ReadonlySet<string> = new Set([
-  'it',
-  'test',
-  'describe',
-  'suite',
-  'bench',
-  'fit',
-  'fdescribe',
-  'specify',
-  'fspecify',
-]);
+export { TEST_ROOTS, SUITE_ROOTS };
+
+/** Every runner root the skip detector governs; early-return analysis uses only TEST_ROOTS. */
+const RUNNER_ROOTS: ReadonlySet<string> = new Set([...TEST_ROOTS, ...SUITE_ROOTS]);
 
 /** The legacy x-prefix DISABLE aliases — the bare identifier IS the skip (Jasmine/Mocha/Jest heritage). */
 const X_DISABLE_ALIASES: ReadonlySet<string> = new Set(['xit', 'xtest', 'xdescribe', 'xspecify']);
@@ -1337,18 +1329,18 @@ function recognizeTestEarlyReturns(node: ts.Node, sourceFile: ts.SourceFile, out
   scanCallbackForEarlyReturn(callback.body, sourceFile, out);
 }
 
-/** True when `call` is (possibly chained) `it` / `test` / `describe` / … — not `beforeEach`, `.map`, helpers. */
+/** True when `call` is a (possibly chained) individual test invocation — never a suite or helper. */
 function isTestRunnerInvocation(call: ts.CallExpression): boolean {
   let expr: ts.Expression = call.expression;
   while (ts.isCallExpression(expr)) {
     expr = expr.expression;
   }
-  if (ts.isIdentifier(expr) && RUNNER_ROOTS.has(expr.text)) {
+  if (ts.isIdentifier(expr) && TEST_ROOTS.has(expr.text)) {
     return true;
   }
   if (ts.isPropertyAccessExpression(expr) || ts.isElementAccessExpression(expr)) {
     const peeled = peelAccessChain(expr);
-    if (peeled !== undefined && RUNNER_ROOTS.has(peeled.rootName)) {
+    if (peeled !== undefined && TEST_ROOTS.has(peeled.rootName)) {
       return true;
     }
   }

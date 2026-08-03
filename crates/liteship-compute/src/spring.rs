@@ -28,6 +28,13 @@ pub extern "C" fn spring_curve(
     let omega = libm::sqrtf(stiffness / mass);
     let zeta = damping / (2.0 * libm::sqrtf(stiffness * mass));
 
+    // Written through a raw pointer rather than by indexing the static: taking
+    // a slice or reference to a `static mut` is the pattern Rust 2024 rejects,
+    // and indexing it inside a counted loop is what Clippy reports as
+    // `needless_range_loop`. The store is identical, and the returned pointer
+    // below is already derived the same way.
+    let out = core::ptr::addr_of_mut!(SPRING_BUF) as *mut f32;
+
     for i in 0..=samples {
         let t = i as f32 / samples as f32;
         let value = if t <= 0.0 {
@@ -38,8 +45,7 @@ pub extern "C" fn spring_curve(
             // Underdamped
             let omega_d = omega * libm::sqrtf(1.0 - zeta * zeta);
             1.0 - libm::expf(-zeta * omega * t)
-                * (libm::cosf(omega_d * t)
-                    + (zeta * omega / omega_d) * libm::sinf(omega_d * t))
+                * (libm::cosf(omega_d * t) + (zeta * omega / omega_d) * libm::sinf(omega_d * t))
         } else if zeta == 1.0 {
             // Critically damped
             1.0 - (1.0 + omega * t) * libm::expf(-omega * t)
@@ -52,12 +58,13 @@ pub extern "C" fn spring_curve(
             let c2 = -r1 / (r2 - r1);
             1.0 - (c1 * libm::expf(r1 * t) + c2 * libm::expf(r2 * t))
         };
+        // `i <= samples <= MAX_SAMPLES - 1`, so the store is in bounds.
         unsafe {
-            SPRING_BUF[i] = value;
+            out.add(i).write(value);
         }
     }
 
-    core::ptr::addr_of!(SPRING_BUF) as *const f32
+    out as *const f32
 }
 
 #[cfg(test)]
@@ -74,7 +81,9 @@ mod tests {
     static BUF_LOCK: Mutex<()> = Mutex::new(());
 
     fn curve(stiffness: f32, damping: f32, mass: f32, samples: u32) -> Vec<f32> {
-        let _guard = BUF_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let _guard = BUF_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         let ptr = spring_curve(stiffness, damping, mass, samples);
         unsafe { core::slice::from_raw_parts(ptr, samples as usize + 1) }.to_vec()
     }
@@ -93,7 +102,10 @@ mod tests {
         // zeta ≈ 0.19 — visibly oscillatory spring.
         let out = curve(170.0, 5.0, 1.0, 64);
         let max = out.iter().cloned().fold(f32::MIN, f32::max);
-        assert!(max > 1.0, "underdamped spring must overshoot, max was {max}");
+        assert!(
+            max > 1.0,
+            "underdamped spring must overshoot, max was {max}"
+        );
     }
 
     #[test]
@@ -114,7 +126,9 @@ mod tests {
     #[test]
     fn samples_clamp_to_buffer_capacity() {
         // 4096 requested → clamped to 255 inner samples; index 255 readable.
-        let _guard = BUF_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let _guard = BUF_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         let ptr = spring_curve(170.0, 26.0, 1.0, 4096);
         let out = unsafe { core::slice::from_raw_parts(ptr, 256) };
         assert_eq!(out[255], 1.0);

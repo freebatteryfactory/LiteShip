@@ -18,9 +18,8 @@
  *       command was rewritten, parametrized, or interpolated by the projection).
  *
  * js-yaml is NOT resolvable in the vitest runtime (it is only a transitive store
- * entry, never hoisted to root), so — like the sibling devops ci.yml tests
- * (`gauntlet-ci-invocation`, `parallel-ci-artifacts`) — this parses the workflow
- * with a small indentation-aware reader rather than a YAML dependency.
+ * entry, never hoisted to root), so the dependency-free structural reader lives
+ * in production code and workflow-contract tests consume that one implementation.
  *
  * @module
  */
@@ -28,8 +27,13 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import fg from 'fast-glob';
 import { CHECK_REGISTRY } from '@liteship/command';
 import { gauntletPhases, gauntletPhaseProfiles } from '../../../packages/cli/src/gauntlet-phases.js';
+import {
+  independentWorkflowReaderSites,
+  workflowJobSections,
+} from '../../../packages/cli/src/internal/workflow-action-pins.js';
 import {
   assertBlockingReleasePartition,
   assertCoverageAuthorityReceipts,
@@ -42,28 +46,6 @@ const CI_YML = readFileSync(resolve(ROOT, '.github/workflows/ci.yml'), 'utf8');
 const FIXTURE = JSON.parse(readFileSync(resolve(ROOT, 'tests/fixtures/ci-parallel-lane-commands.json'), 'utf8')) as {
   lanes: Record<string, string[]>;
 };
-
-// ── ci.yml structural reader (dependency-free) ──────────────────────────────
-
-/** Split the workflow into `jobName -> block text` for every top-level job under `jobs:`. */
-function parseJobBlocks(yml: string): Map<string, string> {
-  const lines = yml.split('\n').map((line) => line.replace(/\r$/, ''));
-  const jobsIndex = lines.indexOf('jobs:');
-  expect(jobsIndex, 'ci.yml must have a top-level `jobs:` key').toBeGreaterThanOrEqual(0);
-  const headers: Array<{ name: string; line: number }> = [];
-  for (let i = jobsIndex + 1; i < lines.length; i++) {
-    // A job header is a 2-space-indented `name:` with nothing after the colon.
-    const match = /^ {2}([A-Za-z0-9_-]+):\s*$/.exec(lines[i]!);
-    if (match) headers.push({ name: match[1]!, line: i });
-  }
-  const blocks = new Map<string, string>();
-  for (let h = 0; h < headers.length; h++) {
-    const start = headers[h]!.line;
-    const end = h + 1 < headers.length ? headers[h + 1]!.line : lines.length;
-    blocks.set(headers[h]!.name, lines.slice(start, end).join('\n'));
-  }
-  return blocks;
-}
 
 /** Every single-line `run:` / `- run:` command value in a block (multi-line `|` / `>-` blocks skipped). */
 function runCommandsIn(text: string): string[] {
@@ -78,9 +60,52 @@ function runCommandsIn(text: string): string[] {
   return out;
 }
 
-const JOB_BLOCKS = parseJobBlocks(CI_YML);
+const JOB_BLOCKS = workflowJobSections(CI_YML);
 const ALL_RUN_COMMANDS = new Set(runCommandsIn(CI_YML));
 const PLAN = buildCiPlan();
+
+function assertReceiptProjectionComplete(
+  registryIds: ReadonlySet<string>,
+  receipts: readonly { readonly checkId: string }[],
+): void {
+  const receiptedIds = new Set(receipts.map((receipt) => receipt.checkId));
+  const missing = [...registryIds].filter((checkId) => !receiptedIds.has(checkId));
+  if (missing.length > 0) throw new TypeError(`registry checks missing execution receipts: ${missing.join(', ')}`);
+  const stale = [...receiptedIds].filter((checkId) => !registryIds.has(checkId));
+  if (stale.length > 0)
+    throw new TypeError(`execution receipts reference unknown registry checks: ${stale.join(', ')}`);
+}
+
+describe('workflow reader implementations remain a bounded migration set', () => {
+  const productionSources = fg.sync(['packages/*/src/**/*.ts', 'scripts/**/*.ts'], { cwd: ROOT }).map((path) => ({
+    path,
+    text: readFileSync(resolve(ROOT, path), 'utf8'),
+  }));
+
+  it('derives exactly the remaining independent readers until they consume workflowJobSections', () => {
+    expect(independentWorkflowReaderSites(productionSources)).toEqual([
+      'scripts/lib/prebuild-closure-contract.ts',
+      'scripts/lib/release-promotion-contract.ts',
+      'scripts/lib/workflow-output-contract.ts',
+    ]);
+  });
+
+  it('a newly-added structural reader grows the census instead of passing silently', () => {
+    const synthetic = {
+      path: 'scripts/lib/new-workflow-reader.ts',
+      text: 'export function newReader(line: string) { return line.match(/^ {2}([A-Za-z0-9_-]+):\\s*$/); }',
+    };
+    expect(independentWorkflowReaderSites([...productionSources, synthetic])).toContain(synthetic.path);
+  });
+
+  it('mentioning the shared reader cannot hide an additional local reader', () => {
+    const synthetic = {
+      path: 'scripts/lib/half-migrated-reader.ts',
+      text: "import { workflowJobSections } from './shared.js'; export function oldReader(line: string) { return line.match(/^ {2}([A-Za-z0-9_-]+):\\s*$/); }",
+    };
+    expect(independentWorkflowReaderSites([synthetic])).toEqual([synthetic.path]);
+  });
+});
 
 // ── registry / gauntlet-phase projection tables ─────────────────────────────
 
@@ -163,8 +188,14 @@ describe('blocking release checks have one real CI owner', () => {
 
       const jobBlock = JOB_BLOCKS.get(specialized.job);
       expect(jobBlock, `ci.yml has no specialized owner job "${specialized.job}"`).toBeDefined();
+      // The projection is STAGED into the step's env: mapping and executed
+      // through shell expansion — never interpolated into the run command's
+      // text, which the expression-injection law forbids for every root
+      // (Codex review round 2 on PR #197). Both halves are pinned: the
+      // staging carries the projection, and the run command consumes it.
       const projectedInvocation = '${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.' + key + '.command }}';
-      expect(runCommandsIn(jobBlock!)).toContain(projectedInvocation);
+      expect(jobBlock).toContain(`PROJECTED_COMMAND: ${projectedInvocation}`);
+      expect(runCommandsIn(jobBlock!)).toContain('bash -c "$PROJECTED_COMMAND"');
       expect(jobBlock).not.toContain(specialized.command);
     },
   );
@@ -188,13 +219,34 @@ describe('blocking release checks have one real CI owner', () => {
 });
 
 describe('execution-qualified CI receipts', () => {
+  const projectedRegistry = CHECK_REGISTRY.filter(
+    (check) => check.profiles.includes(PLAN.sourceProfile) && check.platforms.includes(PLAN.platform),
+  );
+
+  it('a synthetic registry check with no receipt is rejected', () => {
+    const registryIds = new Set([...projectedRegistry.map((check) => check.id), 'check/synthetic-unreceipted']);
+    expect(() => assertReceiptProjectionComplete(registryIds, PLAN.executionReceipts)).toThrow(
+      /check\/synthetic-unreceipted/u,
+    );
+  });
+
+  it('a synthetic receipt for an unknown registry check is rejected', () => {
+    const registryIds = new Set(projectedRegistry.map((check) => check.id));
+    const receipts = [...PLAN.executionReceipts, { checkId: 'check/synthetic-stale-receipt' }];
+    expect(() => assertReceiptProjectionComplete(registryIds, receipts)).toThrow(/check\/synthetic-stale-receipt/u);
+  });
+
   it('projects every check to a named job and records the complete composed coverage authority', () => {
-    const registryIds = new Set(CHECK_REGISTRY.map((check) => check.id));
-    for (const receipt of PLAN.executionReceipts) {
-      expect(registryIds.has(receipt.checkId), receipt.id).toBe(true);
-      expect(JOB_BLOCKS.has(receipt.job), receipt.id).toBe(true);
-      if (!receipt.id.startsWith('specialized/')) {
-        expect(JOB_BLOCKS.get(receipt.job), receipt.id).toContain(receipt.command);
+    const registryIds = new Set(projectedRegistry.map((check) => check.id));
+    expect(() => assertReceiptProjectionComplete(registryIds, PLAN.executionReceipts)).not.toThrow();
+    for (const check of projectedRegistry) {
+      const receipts = PLAN.executionReceipts.filter((receipt) => receipt.checkId === check.id);
+      expect(receipts.length, `${check.id} must project to at least one execution receipt`).toBeGreaterThan(0);
+      for (const receipt of receipts) {
+        expect(JOB_BLOCKS.has(receipt.job), receipt.id).toBe(true);
+        if (!receipt.id.startsWith('specialized/')) {
+          expect(JOB_BLOCKS.get(receipt.job), receipt.id).toContain(receipt.command);
+        }
       }
     }
     expect(() => assertCoverageAuthorityReceipts(PLAN.executionReceipts, PLAN.shardCount)).not.toThrow();
@@ -283,9 +335,11 @@ describe('(c) projected lane commands equal the recorded baseline (byte-identica
       }
       expect(lane.prerequisites.map((entry) => entry.id)).toEqual(['install', 'workspace-build']);
     }
-    expect(PLAN.specializedChecks.format!.prerequisites.map((entry) => entry.id)).toEqual(['install']);
+    for (const name of ['format', 'rustfmt', 'rustWasmQualification', 'cargoAudit'] as const) {
+      expect(PLAN.specializedChecks[name]!.prerequisites.map((entry) => entry.id)).toEqual(['install']);
+    }
     for (const [name, check] of Object.entries(PLAN.specializedChecks)) {
-      if (name !== 'format') {
+      if (name !== 'format' && name !== 'rustfmt' && name !== 'rustWasmQualification' && name !== 'cargoAudit') {
         expect(check.prerequisites.map((entry) => entry.id)).toEqual(['install', 'workspace-build']);
       }
     }

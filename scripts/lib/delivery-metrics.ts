@@ -9,6 +9,7 @@ import {
   type BenchmarkEvidenceAuthority,
 } from '../bench/contracts.js';
 import type { AffectedTestPlan } from './affected-test-plan.js';
+import { buildClaimCoverage, claimCoverageRate, parseClaimCoverage, type ClaimCoverage } from './claim-coverage.js';
 import { parseChangeIntent, type ChangeIntent } from './change-intent.js';
 
 export const DELIVERY_SLOS = {
@@ -123,7 +124,7 @@ export interface DeliveryHealth {
 }
 
 export interface DeliveryMetrics {
-  readonly schemaVersion: 3;
+  readonly schemaVersion: 4;
   readonly metricsId: `sha256:${string}`;
   readonly planId: AffectedTestPlan['planId'];
   readonly headSha: string;
@@ -143,6 +144,7 @@ export interface DeliveryMetrics {
   readonly cacheHitRate: number | null;
   readonly rerunRate: number;
   readonly flakeRate: number | null;
+  readonly evidenceCoverage: ClaimCoverage | null;
   readonly evidenceCompleteness: number | null;
   readonly costPerVerifiedPathMinutes: number;
   readonly health: DeliveryHealth;
@@ -382,6 +384,7 @@ const DELIVERY_METRICS_KEYS = [
   'cacheHitRate',
   'rerunRate',
   'flakeRate',
+  'evidenceCoverage',
   'evidenceCompleteness',
   'costPerVerifiedPathMinutes',
   'health',
@@ -393,7 +396,7 @@ const DELIVERY_METRICS_KEYS = [
 /** Parse the complete addressed metrics record. Unknown, missing, and malformed evidence fail closed. */
 export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
   const record = exactRecord(value, DELIVERY_METRICS_KEYS, 'delivery metrics');
-  if (record['schemaVersion'] !== 3) throw new TypeError('delivery metrics schemaVersion must be 3');
+  if (record['schemaVersion'] !== 4) throw new TypeError('delivery metrics schemaVersion must be 4');
   const metricsId = sha256OrNull(record['metricsId'], 'delivery metrics metricsId');
   if (metricsId === null) throw new TypeError('delivery metrics metricsId is required');
   const planId = sha256OrNull(record['planId'], 'delivery metrics planId');
@@ -430,6 +433,16 @@ export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
     nodeTests: finiteNonNegative(selectionWidth['nodeTests'], 'delivery metrics nodeTests', true),
     platforms: finiteNonNegative(selectionWidth['platforms'], 'delivery metrics platforms', true),
   };
+
+  const evidenceCoverage =
+    record['evidenceCoverage'] === null
+      ? null
+      : parseClaimCoverage(record['evidenceCoverage'], 'delivery metrics evidence coverage');
+  const evidenceCompleteness = nullableRate(record['evidenceCompleteness'], 'delivery metrics evidenceCompleteness');
+  const expectedEvidenceCompleteness = evidenceCoverage === null ? null : claimCoverageRate(evidenceCoverage);
+  if (evidenceCompleteness !== expectedEvidenceCompleteness) {
+    throw new TypeError('delivery metrics evidence completeness contradicts evidence coverage');
+  }
 
   const timings = exactRecord(
     record['timings'],
@@ -688,6 +701,15 @@ export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
     artifactIdentity: slo('artifactIdentity'),
     selectorWithinBudget: slo('selectorWithinBudget'),
   };
+  const expectedEvidenceSlo: DeliverySloResult =
+    expectedEvidenceCompleteness === null
+      ? 'unknown'
+      : expectedEvidenceCompleteness >= DELIVERY_SLOS.requiredEvidenceCompletenessMin
+        ? 'pass'
+        : 'fail';
+  if (parsedSlos.evidenceComplete !== expectedEvidenceSlo) {
+    throw new TypeError('delivery metrics evidence SLO contradicts evidence coverage');
+  }
   const sloResults = Object.values(parsedSlos);
   const expectedVerdict = sloResults.includes('fail')
     ? 'outside-slo'
@@ -697,7 +719,7 @@ export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
   if (record['verdict'] !== expectedVerdict) throw new TypeError('delivery metrics verdict does not match SLOs');
 
   const parsed: DeliveryMetrics = {
-    schemaVersion: 3,
+    schemaVersion: 4,
     metricsId,
     planId: planId as DeliveryMetrics['planId'],
     headSha: record['headSha'],
@@ -709,7 +731,8 @@ export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
     cacheHitRate: nullableRate(record['cacheHitRate'], 'delivery metrics cacheHitRate'),
     rerunRate: nullableRate(record['rerunRate'], 'delivery metrics rerunRate') ?? 0,
     flakeRate: nullableRate(record['flakeRate'], 'delivery metrics flakeRate'),
-    evidenceCompleteness: nullableRate(record['evidenceCompleteness'], 'delivery metrics evidenceCompleteness'),
+    evidenceCoverage,
+    evidenceCompleteness,
     costPerVerifiedPathMinutes: finiteNonNegative(
       record['costPerVerifiedPathMinutes'],
       'delivery metrics costPerVerifiedPathMinutes',
@@ -771,6 +794,11 @@ export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetri
     throw new TypeError('present evidence exceeds required evidence');
   }
 
+  const evidenceCoverage =
+    input.requiredEvidence === null || input.presentEvidence === null
+      ? null
+      : buildClaimCoverage(input.presentEvidence, input.requiredEvidence);
+
   const results = input.reports.flatMap((report) => report.results).filter((result) => result.verdict !== 'skipped');
   const cacheHitRate =
     results.length === 0 ? null : results.filter((result) => result.cacheHit).length / results.length;
@@ -781,12 +809,7 @@ export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetri
   for (const packet of resolved) {
     if (!emittedCurePackets.has(packet)) throw new TypeError(`resolved CurePacket was never emitted: ${packet}`);
   }
-  const evidenceCompleteness =
-    input.requiredEvidence === null || input.presentEvidence === null
-      ? null
-      : input.requiredEvidence === 0
-        ? 0
-        : input.presentEvidence / input.requiredEvidence;
+  const evidenceCompleteness = evidenceCoverage === null ? null : claimCoverageRate(evidenceCoverage);
   const rerunRate = input.jobAttempts === 0 ? 0 : input.reruns / input.jobAttempts;
   const flakeRate =
     input.knownFlakyReruns === null || input.flakeAttempts === null
@@ -822,7 +845,7 @@ export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetri
       ? ('insufficient-evidence' as const)
       : ('within-slo' as const);
   const unsigned = {
-    schemaVersion: 3 as const,
+    schemaVersion: 4 as const,
     planId: input.plan.planId,
     headSha: input.plan.headSha,
     risk: input.plan.risk.level,
@@ -841,6 +864,7 @@ export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetri
     cacheHitRate,
     rerunRate,
     flakeRate,
+    evidenceCoverage,
     evidenceCompleteness,
     costPerVerifiedPathMinutes: input.timings.totalComputeMs / 60_000 / Math.max(1, input.plan.changedPaths.length),
     health: buildDeliveryHealth(input, resolved),

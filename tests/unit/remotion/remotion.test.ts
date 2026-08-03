@@ -2,7 +2,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { Compositor, Diagnostics, createVideoRenderer } from '@liteship/core';
+import { Compositor, Diagnostics, Millis, createVideoRenderer } from '@liteship/core';
 import type { CompositeState, VideoFrameOutput } from '@liteship/core';
 import { Internals } from 'remotion';
 import {
@@ -21,7 +21,19 @@ function withRemotionFrame(frame: number, child: React.ReactElement): React.Reac
   return React.createElement(
     Internals.CanUseRemotionHooks.Provider,
     { value: true },
-    React.createElement(Internals.TimelineContext.Provider, { value: { frame: {} } }, child),
+    React.createElement(
+      Internals.TimelineContext.Provider,
+      {
+        value: {
+          frame: {},
+          playing: false,
+          rootId: 'remotion-test',
+          imperativePlaying: { current: false },
+          audioAndVideoTags: { current: [] },
+        },
+      },
+      child,
+    ),
   );
 }
 
@@ -36,6 +48,7 @@ function makeFrames(count: number): VideoFrameOutput[] {
       outputs: {
         css: { '--liteship-index': i },
         glsl: { u_index: i },
+        wgsl: {},
         aria: { 'data-liteship-index': String(i) },
       },
     },
@@ -50,6 +63,7 @@ describe('@liteship/remotion cssVarsFromState', () => {
       outputs: {
         css: { '--liteship-size': 16, '--liteship-theme': 'dark' },
         glsl: {},
+        wgsl: {},
         aria: {},
       },
     };
@@ -81,30 +95,30 @@ describe('@liteship/remotion stateAtFrame', () => {
 describe('@liteship/remotion hooks', () => {
   test('useCompositeState reads the mocked current frame', () => {
     const frames = makeFrames(4);
-    let observed: CompositeState | null = null;
+    const observed: CompositeState[] = [];
 
     function Probe(): React.JSX.Element {
-      observed = useCompositeState(frames);
+      observed.push(useCompositeState(frames));
       return React.createElement('div');
     }
 
     renderToStaticMarkup(withRemotionFrame(2, React.createElement(Probe)));
-    expect(observed?.discrete['index']).toBe('2');
+    expect(observed[0]?.discrete['index']).toBe('2');
   });
 
   test('useLiteshipState reads frames from Provider context', () => {
     const frames = makeFrames(3);
-    let observed: CompositeState | null = null;
+    const observed: CompositeState[] = [];
 
     function Probe(): React.JSX.Element {
-      observed = useLiteshipState();
+      observed.push(useLiteshipState());
       return React.createElement('div');
     }
 
     renderToStaticMarkup(
       withRemotionFrame(1, React.createElement(Provider, { frames, children: React.createElement(Probe) })),
     );
-    expect(observed?.discrete['index']).toBe('1');
+    expect(observed[0]?.discrete['index']).toBe('1');
   });
 
   test('useLiteshipState falls back to the empty state when no frames exist', () => {
@@ -129,7 +143,7 @@ describe('@liteship/remotion hooks', () => {
 describe('@liteship/remotion precomputeFrames', () => {
   test('collects frames from a renderer', async () => {
     const compositor = Compositor.create();
-    const renderer = createVideoRenderer({ fps: 10, width: 640, height: 480, durationMs: 500 }, compositor);
+    const renderer = createVideoRenderer({ fps: 10, width: 640, height: 480, durationMs: Millis(500) }, compositor);
 
     const frames = await precomputeFrames(renderer);
     expect(frames).toHaveLength(5);
@@ -139,7 +153,7 @@ describe('@liteship/remotion precomputeFrames', () => {
 
   test('returns an empty array for zero-duration renders', async () => {
     const compositor = Compositor.create();
-    const renderer = createVideoRenderer({ fps: 30, width: 640, height: 480, durationMs: 0 }, compositor);
+    const renderer = createVideoRenderer({ fps: 30, width: 640, height: 480, durationMs: Millis(0) }, compositor);
 
     await expect(precomputeFrames(renderer)).resolves.toEqual([]);
   });

@@ -26,7 +26,7 @@
  */
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import ts from 'typescript';
 
 /** The monorepo root — this file lives at `tests/support/`, so up two. */
@@ -215,8 +215,19 @@ export function catalogEntry(name: string): string | undefined {
  * returned, so a non-glob quoted flag value cannot inflate the list.
  */
 export function lintGlobs(): readonly string[] {
-  const lint = rootManifest().scripts.lint ?? '';
-  return [...lint.matchAll(/"([^"]+)"/g)].map((match) => match[1]!).filter((glob) => glob.includes('*'));
+  return scriptQuotedTargets('lint').filter((glob) => glob.includes('*'));
+}
+
+/** Quoted filesystem targets passed by one root package script. */
+export function scriptQuotedTargets(scriptName: string): readonly string[] {
+  const script = rootManifest().scripts[scriptName] ?? '';
+  return [...script.matchAll(/"([^"]+)"/g)].map((match) => match[1]!);
+}
+
+/** Shell-like argv tokens for root-script topology laws (quotes removed). */
+export function scriptArgvTokens(scriptName: string): readonly string[] {
+  const script = rootManifest().scripts[scriptName] ?? '';
+  return [...script.matchAll(/"([^"]+)"|'([^']+)'|(\S+)/g)].map((match) => match[1] ?? match[2] ?? match[3]!);
 }
 
 /**
@@ -268,6 +279,49 @@ export function packageTsconfigInputs(dir: string): TsconfigInputs | undefined {
 /** Every authored `include` entry of `tsconfig.tests.json` (JSONC-tolerant). */
 export function tsconfigTestsIncludeEntries(): readonly string[] {
   return readJsonc<TsconfigInputs>(resolve(REPO_ROOT, 'tsconfig.tests.json')).include ?? [];
+}
+
+function parsedTestsConfig(): ts.ParsedCommandLine {
+  const configPath = resolve(REPO_ROOT, 'tsconfig.tests.json');
+  const read = ts.readConfigFile(configPath, ts.sys.readFile);
+  if (read.error !== undefined) {
+    throw new Error(`cannot read ${configPath}: TS${read.error.code}`);
+  }
+  const parsed = ts.parseJsonConfigFileContent(read.config, ts.sys, dirname(configPath), undefined, configPath);
+  if (parsed.errors.length > 0) {
+    throw new Error(`cannot parse ${configPath}: TS${parsed.errors[0]!.code}`);
+  }
+  return parsed;
+}
+
+/**
+ * The explicit root files selected by `tsconfig.tests.json` after TypeScript
+ * expands its authored `files` / `include` inputs. This is deliberately the
+ * parsed config's `fileNames`, not a Program's transitive source-file closure:
+ * an imported test helper cannot counterfeit direct admission by the project.
+ */
+export function tsconfigTestsRootFiles(): readonly string[] {
+  const parsed = parsedTestsConfig();
+  return parsed.fileNames.map((file) => relative(REPO_ROOT, file).replaceAll('\\', '/')).sort();
+}
+
+/**
+ * The TypeScript-resolved module closure reachable from explicit test runtime
+ * entrypoints, under the tests project's real path aliases and compiler rules.
+ * This is the structural owner for "runtime support": a directory member is
+ * evidence only when an executing suite actually reaches it.
+ */
+export function tsconfigTestsResolvedFiles(rootFiles: readonly string[]): readonly string[] {
+  const parsed = parsedTestsConfig();
+  const program = ts.createProgram({
+    rootNames: rootFiles.map((file) => resolve(REPO_ROOT, file)),
+    options: parsed.options,
+  });
+  return program
+    .getSourceFiles()
+    .map((source) => relative(REPO_ROOT, source.fileName).replaceAll('\\', '/'))
+    .filter((file) => file !== '' && !file.startsWith('../'))
+    .sort();
 }
 
 /** The concrete (non-glob) `include` entries of `tsconfig.tests.json`. */

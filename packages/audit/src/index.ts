@@ -38,6 +38,7 @@ export * from './active-surface-reader.js';
 export * from './feature-edge-census.js';
 export * from './catalog-feature-edge-census.js';
 export * from './workers-date-scan.js';
+export * from './css-identity-surface.js';
 
 import { resolveDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';

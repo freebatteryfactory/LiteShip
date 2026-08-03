@@ -6,10 +6,10 @@ import {
   formatDiagnosticWatchReport,
   formatPairReport,
   runDirectiveBenchReplicates,
-} from '../../scripts/bench/directive-suite.ts';
-import { writeDirectiveBenchArtifact } from '../../scripts/bench/replicate-cache.ts';
-import { ensureArtifactContext } from '../../scripts/artifact-context.ts';
-import { repoRoot } from '../../vitest.shared.ts';
+} from '../../scripts/bench/directive-suite.js';
+import { writeDirectiveBenchArtifact } from '../../scripts/bench/replicate-cache.js';
+import { ensureArtifactContext } from '../../scripts/artifact-context.js';
+import { repoRoot } from '../../vitest.shared.js';
 
 async function main(): Promise<void> {
   const bench = createDirectiveBench();

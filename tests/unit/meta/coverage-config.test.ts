@@ -16,11 +16,17 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { coverageExclude } from '../../../vitest.shared.js';
+import { browserTestInclude, coverageExclude } from '../../../vitest.shared.js';
+import browserConfig from '../../../vitest.browser.config.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');
 
 describe('coverage config drift guard', () => {
+  it('browser Vitest admission is owned by vitest.shared.ts and wired into the browser config', () => {
+    expect(browserTestInclude).toEqual(['tests/browser/**/*.test.ts']);
+    expect(browserConfig.test?.include).toBe(browserTestInclude);
+  });
+
   it('coverageExclude has expected size (no silent additions)', () => {
     // 11 baseline + 6 subprocess-only bootstrap modules added in Task 19:
     // bin.ts, http-server.ts, stdio-server.ts, processor.ts, processor-bootstrap.ts,

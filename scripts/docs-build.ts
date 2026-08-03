@@ -29,7 +29,10 @@ try {
   await runTypeDocBuildPipeline({ repoRoot, tempDir, plan });
   const freshCount = countTypeDocMarkdown(tempDir);
   assertCompleteTypeDocProjection(committedCount, freshCount);
-  const fingerprint = writeTypeDocInputFingerprint(repoRoot, resolve(tempDir, '.typedoc-input-fingerprint.json'));
+  // The fingerprint is the one committed byte-record of this build (W8.5:
+  // docs/api itself is a build artifact), so it is written to its canonical
+  // committed path rather than into the tree about to be moved into place.
+  const fingerprint = writeTypeDocInputFingerprint(repoRoot);
   if (existsSync(backupDir)) rmSync(backupDir, { recursive: true, force: true });
   if (existsSync(committedDir)) renameSync(committedDir, backupDir);
   try {

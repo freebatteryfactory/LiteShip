@@ -1,9 +1,10 @@
 /**
  * Benchmark subject qualification properties.
  *
- * The benchmark name is never evidence. These properties vary syntax around the
- * same semantic execution and plant plausible laundering attempts so the AST
- * producer must prove module ownership and measured reachability independently.
+ * The benchmark name is never ownership or reachability evidence. It may classify
+ * the operation explicitly claimed only after the AST producer proves module
+ * ownership and measured reachability independently. These properties vary syntax
+ * around the same semantic execution and plant plausible laundering attempts.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -151,6 +152,88 @@ describe('benchmark subject qualification properties', () => {
       binding: 'compositor.compute',
     });
     expect(qualify(source, distribution([subject])).issues).toEqual([]);
+  });
+
+  it.each(['command registry construction -- full catalog', 'construct command registry -- full catalog'])(
+    'admits an explicit constructor-category claim: %s',
+    (name) => {
+      const source = [
+        "import { createCommandRegistry } from '@liteship/command';",
+        `bench.add('${name}', () => createCommandRegistry([]));`,
+      ].join('\n');
+      const subject = moduleSubject({
+        origin: { kind: 'module', specifier: '@liteship/command' },
+        symbol: 'createCommandRegistry',
+        binding: 'createCommandRegistry',
+      });
+      const result = qualify(source, { ...distribution([subject]), name });
+      expect(result.issues).toEqual([]);
+      expect(result.qualifyingSutSubjects).toEqual([subject]);
+    },
+  );
+
+  it.each(['compute', 'compose', 'tick', 'render'])(
+    'keeps a %s claim red when it constructs the measured subject',
+    (operation) => {
+      const name = `command registry ${operation} -- full catalog`;
+      const source = [
+        "import { createCommandRegistry } from '@liteship/command';",
+        `bench.add('${name}', () => createCommandRegistry([]));`,
+      ].join('\n');
+      const subject = moduleSubject({
+        origin: { kind: 'module', specifier: '@liteship/command' },
+        symbol: 'createCommandRegistry',
+        binding: 'createCommandRegistry',
+      });
+      expect(issueKinds(source, { ...distribution([subject]), name })).toContain(
+        'subject-construction-in-measured-body',
+      );
+    },
+  );
+
+  it('does not let a construction claim for another subject category launder the measured constructor', () => {
+    const name = 'token construction -- full catalog';
+    const source = [
+      "import { createCommandRegistry } from '@liteship/command';",
+      `bench.add('${name}', () => createCommandRegistry([]));`,
+    ].join('\n');
+    const subject = moduleSubject({
+      origin: { kind: 'module', specifier: '@liteship/command' },
+      symbol: 'createCommandRegistry',
+      binding: 'createCommandRegistry',
+    });
+    expect(issueKinds(source, { ...distribution([subject]), name })).toContain('subject-construction-in-measured-body');
+  });
+
+  it('a distribution name that merely CONTAINS the constructor terminal does not claim it (Codex review, confirmed P2)', () => {
+    // 'dag recreate merge' contains the substring 'create' without ever
+    // claiming a construction benchmark; the claim must match on token
+    // boundaries or setup stays inside the timed callback unchallenged.
+    const name = 'dag recreate merge';
+    const source = ["import { DAG } from '@liteship/core/graph';", `bench.add('${name}', () => DAG.create([]));`].join(
+      '\n',
+    );
+    const subject = moduleSubject({
+      origin: { kind: 'module', specifier: '@liteship/core/graph' },
+      symbol: 'DAG.create',
+      binding: 'DAG.create',
+    });
+    expect(issueKinds(source, { ...distribution([subject]), name })).toContain('subject-construction-in-measured-body');
+  });
+
+  it('an exact constructor-symbol claim on a token boundary still qualifies', () => {
+    const name = 'DAG.create() -- 64 nodes';
+    const source = ["import { DAG } from '@liteship/core/graph';", `bench.add('${name}', () => DAG.create([]));`].join(
+      '\n',
+    );
+    const subject = moduleSubject({
+      origin: { kind: 'module', specifier: '@liteship/core/graph' },
+      symbol: 'DAG.create',
+      binding: 'DAG.create',
+    });
+    expect(issueKinds(source, { ...distribution([subject]), name })).not.toContain(
+      'subject-construction-in-measured-body',
+    );
   });
 
   it('refuses a same-root/same-terminal subject with a different member chain', () => {

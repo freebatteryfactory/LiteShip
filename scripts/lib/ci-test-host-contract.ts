@@ -1,6 +1,15 @@
 /** Pure policy for preparing cross-platform CI hosts that execute Node tests. @module */
 
 import { win32 } from 'node:path';
+import { ValidationError } from '../../packages/error/src/index.js';
+import {
+  activeLinesOf,
+  childIndicesOf,
+  stepIndicesOf,
+  stepRunCommandOf,
+  unreadableYamlViolations,
+  workflowJobSections,
+} from '../../packages/cli/src/internal/workflow-action-pins.js';
 
 export const ZERO_SHA = '0000000000000000000000000000000000000000';
 
@@ -136,42 +145,40 @@ export interface HostPreparationConsumer {
  * the host's, which is unprovable against an undeclared ceiling.
  */
 export function hostPreparationConsumers(workflowSource: string): readonly HostPreparationConsumer[] {
-  interface JobScan {
-    name: string;
-    timeoutMinutes?: number;
-    consumes: boolean;
+  const unreadable = unreadableYamlViolations(workflowSource);
+  if (unreadable.length > 0) {
+    throw ValidationError('ci.host-preparation.workflow', `unreadable workflow YAML: ${unreadable.join('; ')}`);
   }
-  const jobs: JobScan[] = [];
-  let inJobs = false;
-  let current: JobScan | undefined;
-  for (const line of workflowSource.split('\n')) {
-    if (/^jobs:\s*$/.test(line)) {
-      inJobs = true;
-      continue;
+
+  const consumers: HostPreparationConsumer[] = [];
+  for (const [job, section] of workflowJobSections(workflowSource)) {
+    const lines = activeLinesOf(section);
+    const invokesPreparation = stepIndicesOf(lines).some((stepIndex) =>
+      stepRunCommandOf(lines, stepIndex)
+        .split('\n')
+        .some((line) => /^\s*pnpm exec tsx scripts\/prepare-ci-test-host\.ts(?:\s|$)/u.test(line)),
+    );
+    if (!invokesPreparation) continue;
+
+    const timeoutLine = childIndicesOf(lines, 0)
+      .map((index) => lines[index]!.body)
+      .find((body) => body.startsWith('timeout-minutes:'));
+    const timeout = /^timeout-minutes:\s*([0-9]+)(?:\s+#.*)?$/u.exec(timeoutLine ?? '');
+    if (timeout === null) {
+      throw ValidationError(
+        'ci.host-preparation.timeout-minutes',
+        `job ${job} runs host preparation but declares no valid job-level timeout-minutes ceiling`,
+      );
     }
-    if (!inJobs) continue;
-    if (/^\S/.test(line)) inJobs = false; // left the jobs: mapping
-    const jobHeader = line.match(/^ {2}([A-Za-z0-9_-]+):\s*$/);
-    if (jobHeader !== null) {
-      current = { name: jobHeader[1]!, consumes: false };
-      jobs.push(current);
-      continue;
-    }
-    if (current === undefined) continue;
-    const timeout = line.match(/^\s+timeout-minutes:\s*(\d+)\s*$/);
-    if (timeout !== null) current.timeoutMinutes = Number(timeout[1]);
-    if (line.includes('prepare-ci-test-host')) current.consumes = true;
+    consumers.push(Object.freeze({ job, timeoutMinutes: Number(timeout[1]) }));
   }
-  return Object.freeze(
-    jobs
-      .filter((job) => job.consumes)
-      .map((job) => {
-        if (job.timeoutMinutes === undefined) {
-          throw new Error(`job ${job.name} runs host preparation but declares no timeout-minutes ceiling`);
-        }
-        return Object.freeze({ job: job.name, timeoutMinutes: job.timeoutMinutes });
-      }),
-  );
+  if (consumers.length === 0) {
+    throw ValidationError(
+      'ci.host-preparation.consumers',
+      'no workflow job invokes pnpm exec tsx scripts/prepare-ci-test-host.ts',
+    );
+  }
+  return Object.freeze(consumers);
 }
 
 /** Package-manager commands used only when the canonical ffmpeg probe is red. */

@@ -26,7 +26,7 @@ import {
 import type { TrustedDeliveryGithubContext } from '../../scripts/lib/delivery-evidence-verifier.js';
 
 const inventory: AssuranceInventory = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   packages: PACKAGE_CATALOG.map((record) => ({
     name: record.name,
     sourceLoc: 1,
@@ -55,6 +55,10 @@ const inventory: AssuranceInventory = {
     },
     evidenceFiles: [],
   })),
+  evidenceOwnership: {
+    packageFiles: [],
+    repositoryTooling: { owner: 'repository/tooling', authoredEvidenceLoc: 0, generatedEvidenceLoc: 0, files: [] },
+  },
   nodeTestSelection: { entrypoints: [], dependents: [] },
   totals: {
     sourceLoc: 25,
@@ -285,7 +289,7 @@ export function createDeliveryEvidenceFixture(): DeliveryEvidenceFixture {
       kind: 'delivery-metrics',
       path: 'reports/delivery-metrics.json',
       digest: sha256RawBytes(metricsRaw),
-      verifier: 'delivery-evidence/metrics-v3',
+      verifier: 'delivery-evidence/metrics-v4',
     },
     verdict: 'accepted',
   };

@@ -1,7 +1,7 @@
-import { RuntimeCoordinator, type CompositeState } from '@liteship/core';
+import { RuntimeCoordinator, StateName, contentAddressOf, type CompositeState } from '@liteship/core';
 import { LLMChunkNormalization, type LLMChunk } from '@liteship/web';
 import type { WorkerHost } from '@liteship/worker';
-import { parseLLMChunk } from '../../../packages/astro/src/runtime/llm.ts';
+import { parseLLMChunk } from '../../../packages/astro/src/runtime/llm.js';
 
 export type WorkerStartupStage =
   | 'claim-or-create'
@@ -53,6 +53,14 @@ export interface WorkerStartupDiagnosticDurationsMs {
   readonly 'state-delivery:callback-queue-turn': number;
   readonly 'state-delivery:host-callback-delivery': number;
 }
+
+type MutableWorkerStartupStageDurationsMs = {
+  -readonly [Stage in keyof WorkerStartupStageDurationsMs]: WorkerStartupStageDurationsMs[Stage];
+};
+
+type MutableWorkerStartupDiagnosticDurationsMs = {
+  -readonly [Stage in keyof WorkerStartupDiagnosticDurationsMs]: WorkerStartupDiagnosticDurationsMs[Stage];
+};
 
 export const WORKER_STARTUP_DIAGNOSTIC_STAGE_LABELS: readonly {
   readonly stage: WorkerStartupDiagnosticStage;
@@ -165,7 +173,7 @@ export interface WorkerStartupSplitMetrics {
   readonly seam: WorkerStartupSeamMetric;
 }
 
-function createWorkerStartupDiagnostics(): WorkerStartupDiagnosticDurationsMs {
+function createWorkerStartupDiagnostics(): MutableWorkerStartupDiagnosticDurationsMs {
   return {
     'coordinator-reset-or-create:runtime-reset-reuse': 0,
     'request-compute:packet-finalize': 0,
@@ -192,7 +200,7 @@ const WORKER_STARTUP_REGISTRATIONS = [
   },
 ] as const;
 
-function evaluateWorkerStartupState(value: number): string {
+function evaluateWorkerStartupState(value: number): (typeof WORKER_STARTUP_QUANTIZER.states)[number] {
   const { thresholds, states } = WORKER_STARTUP_QUANTIZER;
   for (let index = thresholds.length - 1; index >= 0; index--) {
     if (value >= thresholds[index]!) {
@@ -213,7 +221,8 @@ function buildWorkerStartupCompositeState(name: string, state: string): Composit
     },
     outputs: {
       css: { [`--liteship-${name}`]: state },
-      glsl: { [`u_${name}`]: WORKER_STARTUP_QUANTIZER.states.indexOf(state) },
+      glsl: { [`u_${name}`]: WORKER_STARTUP_QUANTIZER.states.findIndex((candidate) => candidate === state) },
+      wgsl: { [`u_${name}`]: WORKER_STARTUP_QUANTIZER.states.findIndex((candidate) => candidate === state) },
       aria: { [`data-liteship-${name}`]: state },
     },
   };
@@ -234,7 +243,7 @@ export async function runWorkerStartupScenario(
 ): Promise<WorkerStartupScenarioResult> {
   const now = options?.now ?? (() => performance.now());
   const nowNs = options?.nowNs ?? currentTimeNs;
-  const stageDurations: WorkerStartupStageDurationsMs = {
+  const stageDurations: MutableWorkerStartupStageDurationsMs = {
     'claim-or-create': 0,
     'coordinator-reset-or-create': 0,
     'listener-bind': 0,
@@ -277,7 +286,7 @@ export async function runWorkerStartupScenario(
 
   const bootstrapStart = now();
   host.compositor.addQuantizer(WORKER_STARTUP_QUANTIZER.name, {
-    id: WORKER_STARTUP_QUANTIZER.id,
+    id: contentAddressOf(WORKER_STARTUP_QUANTIZER.id),
     states: WORKER_STARTUP_QUANTIZER.states,
     thresholds: WORKER_STARTUP_QUANTIZER.thresholds,
   });
@@ -290,7 +299,7 @@ export async function runWorkerStartupScenario(
   host.compositor.bootstrapResolvedState([
     {
       name: WORKER_STARTUP_QUANTIZER.name,
-      state: visibleState,
+      state: StateName(visibleState),
       generation: 1,
     },
   ]);
@@ -322,7 +331,7 @@ export async function runWorkerStartupParityScenario(options?: {
 }): Promise<WorkerStartupScenarioResult> {
   const now = options?.now ?? (() => performance.now());
   const nowNs = options?.nowNs ?? currentTimeNs;
-  const stageDurations: WorkerStartupStageDurationsMs = {
+  const stageDurations: MutableWorkerStartupStageDurationsMs = {
     'claim-or-create': 0,
     'coordinator-reset-or-create': 0,
     'listener-bind': 0,

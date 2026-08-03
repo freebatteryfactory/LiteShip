@@ -43,7 +43,13 @@ import { contentAddressOf } from '@liteship/core';
 import { walkFiles } from '@liteship/core/fs-walk';
 import { normalizeRepoPath } from '@liteship/audit';
 import { ParseError, InvariantViolationError } from '@liteship/error';
-import type { TraceabilityFacts, ResolvedInvariant, InvariantState, TraceabilityDivergence } from '@liteship/gauntlet';
+import {
+  isGovernedTodoPath,
+  type TraceabilityFacts,
+  type ResolvedInvariant,
+  type InvariantState,
+  type TraceabilityDivergence,
+} from '@liteship/gauntlet';
 
 /** Repo-relative location of the requirements register. */
 const INVARIANTS_PATH = 'traceability/invariants.yaml';
@@ -899,10 +905,7 @@ export function buildTraceabilityFacts(repoRoot: string, now: Date): Traceabilit
 const OBLIGATIONS_PATH = 'traceability/obligations.yaml';
 
 /** The source roots the marker scan walks for `// OBLIGATION:` markers (repo-relative). */
-const OBLIGATION_SRC_ROOTS: readonly string[] = ['packages'];
-
-/** The published-source shape a marker may live in — `packages/<pkg>/src/**` `.ts`. */
-const PACKAGE_SRC = /^packages\/[^/]+\/src\//;
+export const OBLIGATION_SRC_ROOTS: readonly string[] = ['packages'];
 
 /** The closed taxonomy bucket every obligation declares. */
 const OBLIGATION_CLASSES: ReadonlySet<string> = new Set(['deferred-feature', 'debt', 'test-note']);
@@ -1010,13 +1013,22 @@ function parseObligations(text: string): readonly DeclaredObligation[] {
   return out;
 }
 
-/** Recursively collect the `packages/<pkg>/src/**` `.ts` files (repo-relative, sorted, deterministic). */
-function collectSourceFiles(repoRoot: string, root: string): readonly string[] {
+/**
+ * Recursively collect the `packages/<pkg>/src/**` `.ts` files (repo-relative, sorted, deterministic).
+ *
+ * Exported so the denominator law can compare THIS derivation against the one
+ * the gauntlet's own glob produces. Both apply {@link isGovernedTodoPath}, but
+ * they reach it by different routes — a filesystem walk here, a fast-glob
+ * expansion there — and nothing previously proved the two agree. A second copy
+ * of this walk written inside the law would have proved only that the copy
+ * matched itself.
+ */
+export function collectSourceFiles(repoRoot: string, root: string): readonly string[] {
   const abs = join(repoRoot, root);
   if (!existsSync(abs)) return [];
   return walkFiles(abs, { skipDirs: ['node_modules', 'dist'], suffixes: ['.ts'] })
     .map((full) => normalizeRepoPath(relative(repoRoot, full)))
-    .filter((rel) => PACKAGE_SRC.test(rel))
+    .filter(isGovernedTodoPath)
     .sort();
 }
 

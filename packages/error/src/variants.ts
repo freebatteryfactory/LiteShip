@@ -101,7 +101,7 @@ export const IoError = (
   operation: string,
   detail: string,
   opts: { readonly path?: string; readonly cause?: unknown } = {},
-): IoError =>
+): IoError & Error =>
   taggedError(
     'IoError',
     opts.path !== undefined ? `${operation} (${opts.path}): ${detail}` : `${operation}: ${detail}`,

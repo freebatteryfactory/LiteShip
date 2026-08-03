@@ -3,9 +3,8 @@
  */
 
 import { Bench } from 'tinybench';
-// The quantizer seam is fully synchronous: the base contract exposes `stateSync`
-// (the compositor's preferred hot-path accessor) and `evaluate`; the reactive
-// CellKernel `state` lives on ReactiveQuantizer, which this fixture doesn't need.
+// The fixture uses CompositorQuantizer's genuine synchronous arm; reactive
+// state belongs to ReactiveQuantizer and is not fabricated for this benchmark.
 // Compositor.create/add/compute went synchronous in the core-seams wave.
 import {
   Scheduler,
@@ -14,6 +13,8 @@ import {
   Compositor,
   Boundary,
   Millis,
+  StateName,
+  ThresholdValue,
   defineBoundary,
   AddressedDigest,
   CanonicalCbor,
@@ -24,6 +25,7 @@ import {
   type CellMeta,
   type ComponentNode,
   type CompositeState,
+  type CompositorQuantizer,
   type ContentAddress,
   type DocumentGraph,
   type DocumentGraphEdge,
@@ -49,14 +51,14 @@ const widthBoundary = defineBoundary({
   ] as const,
 });
 
-function makeQuantizer(boundary: Boundary) {
-  let currentState = boundary.states[0] as string;
+function makeQuantizer<B extends Boundary>(boundary: B): CompositorQuantizer<B> {
+  let currentState = Boundary.evaluate(boundary, Number.NEGATIVE_INFINITY);
   return {
+    _tag: 'Quantizer',
     boundary,
     stateSync: () => currentState,
-    changes: null as never,
     evaluate(value: number) {
-      currentState = Boundary.evaluate(boundary, value) as string;
+      currentState = Boundary.evaluate(boundary, value);
       return currentState;
     },
   };
@@ -80,25 +82,28 @@ bench.add('FixedStepScheduler -- 1000 steps @ 60fps', () => {
   }
 });
 
+const frameSchedule = createFrameSchedule({ fps: 60, durationMs: Millis(5000) });
 bench.add('FrameSchedule -- enumerate 300 deterministic coordinates @ 60fps', () => {
-  const schedule = createFrameSchedule({ fps: 60, durationMs: Millis(5000) });
   let checksum = 0;
-  for (const frame of schedule) checksum += frame.frame + frame.timestamp + frame.progress;
+  for (let index = 0; index < frameSchedule.totalFrames; index++) {
+    const frame = frameSchedule.at(index);
+    checksum += frame.frame + frame.timestamp + frame.progress;
+  }
   if (!Number.isFinite(checksum)) throw new Error('FrameSchedule produced a non-finite coordinate.');
 });
 
+const renderer30Config = { fps: 30, width: 1920, height: 1080, durationMs: Millis(1000) } as const;
+const renderer30 = createVideoRenderer(renderer30Config, Compositor.create());
 bench.add('VideoRenderer -- 30 frames @ 30fps', async () => {
-  const compositor = Compositor.create();
-  const renderer = createVideoRenderer({ fps: 30, width: 1920, height: 1080, durationMs: Millis(1000) }, compositor);
-  for await (const _ of renderer.frames()) {
+  for await (const _ of renderer30.frames()) {
     /* consume */
   }
 });
 
+const renderer300Config = { fps: 60, width: 1920, height: 1080, durationMs: Millis(5000) } as const;
+const renderer300 = createVideoRenderer(renderer300Config, Compositor.create());
 bench.add('VideoRenderer -- 300 frames @ 60fps', async () => {
-  const compositor = Compositor.create();
-  const renderer = createVideoRenderer({ fps: 60, width: 1920, height: 1080, durationMs: Millis(5000) }, compositor);
-  for await (const _ of renderer.frames()) {
+  for await (const _ of renderer300.frames()) {
     /* consume */
   }
 });
@@ -127,8 +132,8 @@ function stageGraph(componentCount: number): DocumentGraph {
       id: '' as ContentAddress,
       meta: stageMeta,
       name,
-      thresholds: [0, 1],
-      states: ['low', 'high'],
+      thresholds: [ThresholdValue(0), ThresholdValue(1)],
+      states: [StateName('low'), StateName('high')],
     });
     const entity = sealNode<EntityNode>({
       _tag: 'DocGraphEntityNode',
@@ -157,7 +162,7 @@ function stageGraph(componentCount: number): DocumentGraph {
         id: '' as ContentAddress,
         meta: stageMeta,
         entityRef: entity.id,
-        state,
+        state: StateName(state),
         bindings: { [`${name}-opacity`]: value },
       });
     nodes.push(component, entity, projection, pose('low', 0), pose('high', 1));
@@ -187,10 +192,10 @@ bench.add('Compositor.compute() -- hot loop with 3-quantizer blend tree (100 cal
   }
 });
 
+const emptyVideoCompositor = Compositor.create();
 bench.add('Compositor.compute() -- hot loop (100 calls)', () => {
-  const c = Compositor.create();
   for (let i = 0; i < 100; i++) {
-    c.compute();
+    emptyVideoCompositor.compute();
   }
 });
 

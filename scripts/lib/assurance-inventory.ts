@@ -10,7 +10,7 @@
 // eslint-disable-next-line no-restricted-imports -- the public inventory API is synchronous; one Git census runs no code under test.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, posix, relative, sep } from 'node:path';
 import ts from 'typescript';
 import { ValidationError } from '@liteship/error';
@@ -68,8 +68,24 @@ export interface PackageAssuranceInventory {
 }
 
 export interface AssuranceInventory {
-  readonly schemaVersion: 3;
+  readonly schemaVersion: 4;
   readonly packages: readonly PackageAssuranceInventory[];
+  /**
+   * Authored repository apparatus and cross-package evidence that has no single
+   * package owner. This is an explicit owner, not an ignored remainder: every
+   * evidence file belongs either to one or more package rows or to this row.
+   */
+  readonly evidenceOwnership: {
+    /** Evidence with at least one canonical package owner. */
+    readonly packageFiles: readonly string[];
+    /** The explicit owner for the complement outside package ownership. */
+    readonly repositoryTooling: {
+      readonly owner: 'repository/tooling';
+      readonly authoredEvidenceLoc: number;
+      readonly generatedEvidenceLoc: number;
+      readonly files: readonly string[];
+    };
+  };
   /**
    * Executable Node-test entrypoints and the reverse dependency closure used by
    * affected-test planning. Support files remain assurance evidence, but they
@@ -102,6 +118,11 @@ export interface AssuranceInventory {
 
 /** Injectable current-state authority for deterministic receipt-verifier tests. */
 export interface AssuranceInventoryOptions {
+  /**
+   * Exact repo-relative tracked-file authority supplied by an outer census.
+   * When present, the inventory never invokes Git or falls back to a tree walk.
+   */
+  readonly trackedFiles?: ReadonlySet<string>;
   readonly semanticAssurance?: {
     readonly ir: RepoIR;
     readonly selection: AssuranceTargetSelection;
@@ -110,13 +131,14 @@ export interface AssuranceInventoryOptions {
 }
 
 export interface AssuranceBaseline {
-  readonly schemaVersion: 3;
-  /** Binds positional ratchet rows to the one canonical package catalog. */
+  readonly schemaVersion: 4;
+  /** Defense-in-depth binding over the canonical package identities. */
   readonly catalogFingerprint: string;
   /** The unique physical repository ratio; package edges never multiply this value. */
   readonly uniqueRatioMilli: number;
-  /** Metrics in canonical PACKAGE_CATALOG order; package identity is never re-authored here. */
+  /** Named metrics in canonical PACKAGE_CATALOG order. */
   readonly packages: readonly {
+    readonly name: string;
     readonly sourceLoc: number;
     readonly authoredEvidenceLoc: number;
     readonly ratioMilli: number;
@@ -157,13 +179,25 @@ export function assuranceProgress(
   baseline: AssuranceBaseline,
 ): readonly PackageAssuranceProgress[] {
   if (baseline.catalogFingerprint !== packageOrderFingerprint(inventory.packages)) {
-    throw new Error('assurance baseline package order does not match the canonical package catalog');
+    throw ValidationError(
+      'assuranceBaseline',
+      'assurance baseline package order does not match the canonical package catalog',
+    );
   }
   if (baseline.packages.length !== inventory.packages.length) {
-    throw new Error('assurance baseline row count does not match the canonical package catalog');
+    throw ValidationError(
+      'assuranceBaseline',
+      'assurance baseline row count does not match the canonical package catalog',
+    );
   }
   return inventory.packages.map((entry, index) => {
     const prior = baseline.packages[index]!;
+    if (prior.name !== entry.name) {
+      throw ValidationError(
+        'assuranceBaseline',
+        `assurance baseline row ${index} names ${prior.name}; expected ${entry.name}`,
+      );
+    }
     const currentGaps = new Set(entry.missingEvidence);
     const priorGaps = new Set(prior.missingEvidence);
     const sourceLocDelta = entry.sourceLoc - prior.sourceLoc;
@@ -190,19 +224,23 @@ export function parseAssuranceBaseline(value: unknown): AssuranceBaseline {
   }
   const candidate = value as Partial<AssuranceBaseline>;
   if (
-    candidate.schemaVersion !== 3 ||
+    candidate.schemaVersion !== 4 ||
     typeof candidate.catalogFingerprint !== 'string' ||
     !/^sha256:[0-9a-f]{64}$/u.test(candidate.catalogFingerprint) ||
     !Number.isSafeInteger(candidate.uniqueRatioMilli) ||
     candidate.uniqueRatioMilli! < 0 ||
     !Array.isArray(candidate.packages)
   ) {
-    throw new TypeError('assurance baseline has an invalid schema-v3 envelope');
+    throw new TypeError('assurance baseline has an invalid schema-v4 envelope');
   }
+  const names = new Set<string>();
   for (const row of candidate.packages) {
     if (
       typeof row !== 'object' ||
       row === null ||
+      typeof row.name !== 'string' ||
+      row.name.length === 0 ||
+      names.has(row.name) ||
       !Number.isSafeInteger(row.sourceLoc) ||
       !Number.isSafeInteger(row.authoredEvidenceLoc) ||
       !Number.isSafeInteger(row.ratioMilli) ||
@@ -211,6 +249,7 @@ export function parseAssuranceBaseline(value: unknown): AssuranceBaseline {
     ) {
       throw new TypeError('assurance baseline contains an invalid package row');
     }
+    names.add(row.name);
   }
   return candidate as AssuranceBaseline;
 }
@@ -268,6 +307,32 @@ function repositoryOwnedFiles(cwd: string): readonly string[] | undefined {
     .sort((left, right) => left.localeCompare(right))
     .map((path) => join(cwd, ...path.split('/')))
     .filter((path) => existsSync(path));
+}
+
+/** Resolve an injected repo-relative census without mutating or re-enumerating it. */
+function injectedRepositoryOwnedFiles(cwd: string, trackedFiles: ReadonlySet<string>): readonly string[] {
+  const ownedFiles = new Set<string>();
+  for (const file of trackedFiles) {
+    const normalized = normalize(file);
+    if (
+      normalized === '' ||
+      normalized.startsWith('/') ||
+      /^[A-Za-z]:\//u.test(normalized) ||
+      normalized.split('/').includes('..')
+    ) {
+      throw ValidationError('assuranceInventory', `injected tracked file must be repo-relative: ${file}`);
+    }
+    const absolute = join(cwd, ...normalized.split('/'));
+    const stats = statSync(absolute, { throwIfNoEntry: false });
+    if (stats === undefined) {
+      throw ValidationError('assuranceInventory', `injected tracked file does not exist: ${normalized}`);
+    }
+    if (!stats.isFile()) {
+      throw ValidationError('assuranceInventory', `injected tracked path is not a file: ${normalized}`);
+    }
+    ownedFiles.add(absolute);
+  }
+  return [...ownedFiles].sort((left, right) => left.localeCompare(right));
 }
 
 function ownedFilesUnder(root: string, ownedFiles: readonly string[] | undefined): readonly string[] {
@@ -601,7 +666,10 @@ function verifiedSemanticAssuranceCredits(
 
 /** Compute the inventory from current repository bytes. */
 export function buildAssuranceInventory(cwd: string, options: AssuranceInventoryOptions = {}): AssuranceInventory {
-  const ownedFiles = repositoryOwnedFiles(cwd);
+  const ownedFiles =
+    options.trackedFiles === undefined
+      ? repositoryOwnedFiles(cwd)
+      : injectedRepositoryOwnedFiles(cwd, options.trackedFiles);
   const evidenceFiles = ownedFilesUnder(join(cwd, 'tests'), ownedFiles).filter((path) =>
     EVIDENCE_EXTENSIONS.has(extname(path)),
   );
@@ -656,6 +724,8 @@ export function buildAssuranceInventory(cwd: string, options: AssuranceInventory
       primaryOwner: direct?.name ?? matches[0]?.name ?? 'repository',
     };
   });
+  const packageOwnedEvidence = ownership.filter(({ owners }) => owners.length > 0).map(({ entry }) => entry);
+  const repositoryToolingEvidence = ownership.filter(({ owners }) => owners.length === 0).map(({ entry }) => entry);
   const nodeTestSelection = buildNodeTestSelection([...knownEvidencePaths], dependencies);
 
   const packages = PACKAGE_CATALOG.map((record) => {
@@ -738,8 +808,21 @@ export function buildAssuranceInventory(cwd: string, options: AssuranceInventory
     0,
   );
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     packages,
+    evidenceOwnership: {
+      packageFiles: packageOwnedEvidence.map((entry) => entry.path).sort(),
+      repositoryTooling: {
+        owner: 'repository/tooling',
+        authoredEvidenceLoc: repositoryToolingEvidence
+          .filter((entry) => !entry.path.startsWith('tests/generated/') && !entry.path.startsWith('tests/fixtures/'))
+          .reduce((sum, entry) => sum + entry.loc, 0),
+        generatedEvidenceLoc: repositoryToolingEvidence
+          .filter((entry) => entry.path.startsWith('tests/generated/'))
+          .reduce((sum, entry) => sum + entry.loc, 0),
+        files: repositoryToolingEvidence.map((entry) => entry.path).sort(),
+      },
+    },
     nodeTestSelection,
     totals: {
       sourceLoc,
@@ -762,10 +845,11 @@ function packageOrderFingerprint(packages: readonly { readonly name: string }[])
 /** Freeze metrics in canonical catalog order without authoring another package roster. */
 export function baselineFromInventory(inventory: AssuranceInventory): AssuranceBaseline {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     catalogFingerprint: packageOrderFingerprint(inventory.packages),
     uniqueRatioMilli: inventory.totals.ratioMilli,
     packages: inventory.packages.map((entry) => ({
+      name: entry.name,
       sourceLoc: entry.sourceLoc,
       authoredEvidenceLoc: entry.authoredEvidenceLoc,
       ratioMilli: entry.ratioMilli,
@@ -781,10 +865,16 @@ export function assuranceRegressions(
   options: AssuranceRegressionOptions = {},
 ): readonly AssuranceRegression[] {
   if (baseline.catalogFingerprint !== packageOrderFingerprint(inventory.packages)) {
-    throw new Error('assurance baseline package order does not match the canonical package catalog');
+    throw ValidationError(
+      'assuranceBaseline',
+      'assurance baseline package order does not match the canonical package catalog',
+    );
   }
   if (baseline.packages.length !== inventory.packages.length) {
-    throw new Error('assurance baseline row count does not match the canonical package catalog');
+    throw ValidationError(
+      'assuranceBaseline',
+      'assurance baseline row count does not match the canonical package catalog',
+    );
   }
   const density: AssuranceRegression[] =
     inventory.totals.ratioMilli < baseline.uniqueRatioMilli
@@ -801,6 +891,12 @@ export function assuranceRegressions(
     const prior = baseline.packages[index];
     const regressions: AssuranceRegression[] = [];
     if (prior !== undefined) {
+      if (prior.name !== entry.name) {
+        throw ValidationError(
+          'assuranceBaseline',
+          `assurance baseline row ${index} names ${prior.name}; expected ${entry.name}`,
+        );
+      }
       const priorGaps = new Set(prior.missingEvidence);
       for (const evidenceGap of entry.missingEvidence) {
         if (CAMPAIGN_EVIDENCE.has(evidenceGap)) continue;
@@ -831,4 +927,29 @@ export function assuranceRegressions(
     (left, right) =>
       left.package.localeCompare(right.package) || (left.evidenceGap ?? '').localeCompare(right.evidenceGap ?? ''),
   );
+}
+
+function densityText(valueMilli: number): string {
+  return `${(valueMilli / 1_000).toFixed(3)}x`;
+}
+
+/**
+ * Report ratchet authority honestly: green means the reviewed floor held, not
+ * that the aspirational density target was reached. The package lines are the
+ * complete target complement, so no weak package disappears inside a total.
+ */
+export function formatAssuranceRatchetSummary(inventory: AssuranceInventory): string {
+  const reached = inventory.packages.filter((entry) => entry.targetReached).length;
+  const repositoryDistance = Math.max(0, inventory.totals.targetMilli - inventory.totals.ratioMilli);
+  const lines = [
+    `assurance ratchet held: repository ${densityText(inventory.totals.ratioMilli)}; ${densityText(repositoryDistance)} remaining to ${densityText(inventory.totals.targetMilli)} target; ${reached}/${inventory.packages.length} package targets reached`,
+    `assurance evidence complement: ${inventory.evidenceOwnership.repositoryTooling.files.length} files / ${inventory.evidenceOwnership.repositoryTooling.authoredEvidenceLoc} authored logical lines credited to ${inventory.evidenceOwnership.repositoryTooling.owner}`,
+  ];
+  for (const entry of inventory.packages) {
+    const distance = Math.max(0, entry.targetMilli - entry.ratioMilli);
+    lines.push(
+      `assurance target complement ${entry.name}: ${densityText(entry.ratioMilli)} current; ${densityText(distance)} remaining; missing evidence: ${entry.missingEvidence.join(', ') || 'none'}`,
+    );
+  }
+  return `${lines.join('\n')}\n`;
 }

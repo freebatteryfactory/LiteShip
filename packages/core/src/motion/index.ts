@@ -115,3 +115,5 @@ export {
 export type { DiscreteStateTransition } from './state-transition.js';
 
 export { clamp01 } from './clamp.js';
+
+export { cssIdentFor, escapeCssString } from './css-identity.js';

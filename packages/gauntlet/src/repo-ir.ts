@@ -23,7 +23,7 @@
 
 import { InvariantViolationError } from '@liteship/error';
 import type { BenchmarkSubjectFacts } from './gates/bench-subjects.js';
-import type { SourceLocation } from './finding.js';
+import type { Severity, SourceLocation } from './finding.js';
 import type { AssuranceLevel } from './assurance.js';
 
 /**
@@ -79,38 +79,48 @@ export const COVERAGE_CLASSES = ['text-only', 'file-proxy-only', 'runtime-eviden
  * oracle-divergence finding is from the coverage-class PAIR of the two
  * disagreeing oracles — NOT a baked-in if-ladder.
  *
- * The doctrine (owner-ratified REPORT-not-DECIDE model):
+ * The doctrine (owner-ratified REPORT-not-DECIDE + aim-the-cannon model):
  * - SAME class disagreeing = a real CONTRADICTION (two equally-strong oracles
- *   cannot both be right) → `'error'` (loud — investigate).
+ *   cannot both be right) → `'error'` at every level (loud — investigate).
  * - CROSS class disagreeing = a coverage GAP, not a contradiction: the weaker
  *   oracle is known-imprecise (e.g. `text-only` regex vs `file-proxy-only` AST),
- *   so the divergence is the work-list signal to RETIRE the weak oracle → quieter
- *   `'advisory'`. Keeping cross-class quiet is the watch-item: it must never drown
- *   the same-class real contradictions.
+ *   so criticality decides how loud the gap is. L4/L3 gaps block, L2 warns, and
+ *   L1/L0 remain advisory retire-the-weak-oracle work. A trust-spine disagreement
+ *   cannot be made non-blocking merely because one oracle is weaker.
  *
  * The matrix is symmetric (the pair `(a, b)` and `(b, a)` calibrate identically) —
  * {@link coverageClassSeverity} normalizes the lookup so callers need not order
  * the arguments. It is exported DATA: a downstream owner can redline the table
  * without touching the divergence gate's fold logic.
  */
-export const COVERAGE_CLASS_SEVERITY: Readonly<Record<'same' | 'cross', 'advisory' | 'warning' | 'error'>> = {
+export const COVERAGE_CLASS_SEVERITY: Readonly<{
+  readonly same: 'error';
+  readonly cross: Readonly<Record<AssuranceLevel, Severity>>;
+}> = {
   /** Two oracles of the SAME coverage class disagree — a real contradiction. */
   same: 'error',
-  /** A stronger and a weaker oracle disagree — a coverage gap + retire-the-weak signal. */
-  cross: 'advisory',
+  /** A stronger and a weaker oracle disagree — aim the coverage gap by criticality. */
+  cross: {
+    L4: 'error',
+    L3: 'error',
+    L2: 'warning',
+    L1: 'advisory',
+    L0: 'advisory',
+  },
 } as const;
 
 /**
  * The severity an oracle-divergence finding carries, calibrated from the
  * coverage-class PAIR of the two disagreeing oracles via the redlinable
- * {@link COVERAGE_CLASS_SEVERITY} matrix. Symmetric: `(a, b)` and `(b, a)` agree.
+ * {@link COVERAGE_CLASS_SEVERITY} matrix and the site's effective assurance
+ * level. Symmetric: `(a, b)` and `(b, a)` agree.
  *
- * - same class → `COVERAGE_CLASS_SEVERITY.same` (a real contradiction, loud).
- * - cross class → `COVERAGE_CLASS_SEVERITY.cross` (a coverage gap; the weak oracle
- *   is known-imprecise — quiet, and itself the retire-the-weak-oracle work-list).
+ * - same class → `COVERAGE_CLASS_SEVERITY.same` (a real contradiction, always loud).
+ * - cross class → `COVERAGE_CLASS_SEVERITY.cross[level]` (a coverage gap aimed by
+ *   criticality: L4/L3 block, L2 warns, L1/L0 remain advisory retire-work).
  */
-export function coverageClassSeverity(a: CoverageClass, b: CoverageClass): 'advisory' | 'warning' | 'error' {
-  return COVERAGE_CLASS_SEVERITY[a === b ? 'same' : 'cross'];
+export function coverageClassSeverity(a: CoverageClass, b: CoverageClass, level: AssuranceLevel): Severity {
+  return a === b ? COVERAGE_CLASS_SEVERITY.same : COVERAGE_CLASS_SEVERITY.cross[level];
 }
 
 /**

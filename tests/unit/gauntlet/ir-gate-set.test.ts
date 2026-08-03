@@ -15,7 +15,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { resolve } from 'node:path';
-import { buildCheckGovernanceFacts } from '@liteship/command/host';
+import { checkGovernanceFactsFor } from '@liteship/command/host';
 import {
   LITESHIP_GATES,
   LITESHIP_IR_GATES,
@@ -150,7 +150,7 @@ describe('the lean path is unaffected — litelaunchGauntlet with NO ir', () => 
       undefined,
       undefined,
       undefined,
-      buildCheckGovernanceFacts(REPO_ROOT, new Date(0)),
+      checkGovernanceFactsFor(REPO_ROOT, new Date(0)),
     );
     const outcomeIds = result.outcomes.map((o) => o.gateId);
     // The seven lean gates ran...

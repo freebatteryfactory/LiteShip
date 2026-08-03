@@ -339,6 +339,8 @@ type NativeTimelineEligibility =
 
 /** Fully lowered CSS motion plan consumed by the compiler. */
 interface CssMotionPlan {
+  /** Original authored boundary identity; selectors are projections, never identity storage. */
+  readonly target: string;
   readonly selector: string;
   readonly fromState: StateName;
   readonly toState: StateName;

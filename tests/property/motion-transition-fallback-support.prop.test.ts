@@ -7,6 +7,7 @@ import { MotionCompiler } from '@liteship/compiler';
 
 function planFor(values: readonly number[], easing?: RuntimeEasing): CssMotionPlan {
   return {
+    target: 'fallback-proof',
     selector: '[data-liteship-boundary="fallback-proof"]',
     fromState: StateName('before'),
     toState: StateName('after'),

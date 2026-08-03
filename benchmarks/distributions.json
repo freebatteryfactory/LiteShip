@@ -122,26 +122,8 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "createBlendTree",
-          "binding": "createBlendTree"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
-          "symbol": "createBlendTree().add",
-          "binding": "tree.add"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
           "symbol": "createBlendTree().compute",
-          "binding": "tree.compute"
+          "binding": "blendTree4.compute"
         }
       ]
     },
@@ -158,17 +140,26 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Compositor.create",
-          "binding": "Compositor.create"
-        },
+          "symbol": "Compositor.create().compute",
+          "binding": "emptyCompositor.compute"
+        }
+      ]
+    },
+    {
+      "name": "DAG.pruneToBound() -- 256 receipts to 64",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 256,
+      "shape": "receipt-dag-nodes",
+      "replicates": 1,
+      "subjects": [
         {
           "role": "sut",
           "origin": {
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Compositor.create().compute",
-          "binding": "compositor.compute"
+          "symbol": "DAG.pruneToBound",
+          "binding": "DAG.pruneToBound"
         }
       ]
     },
@@ -299,7 +290,7 @@
       ]
     },
     {
-      "name": "Composable.make -- boundary only",
+      "name": "createComposable() -- boundary only",
       "file": "tests/bench/ecs-composition.bench.ts",
       "inputSize": 1,
       "shape": "single-call",
@@ -317,7 +308,7 @@
       ]
     },
     {
-      "name": "Composable.make -- boundary + token + style",
+      "name": "createComposable() -- boundary + token + style",
       "file": "tests/bench/ecs-composition.bench.ts",
       "inputSize": 3,
       "shape": "composition-components",
@@ -347,15 +338,6 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "createComposable",
-          "binding": "createComposable"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
           "symbol": "Composable.compose",
           "binding": "Composable.compose"
         }
@@ -368,15 +350,6 @@
       "shape": "composition-entities",
       "replicates": 1,
       "subjects": [
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
-          "symbol": "createComposable",
-          "binding": "createComposable"
-        },
         {
           "role": "sut",
           "origin": {
@@ -399,28 +372,10 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
-          "symbol": "createWorld",
-          "binding": "createWorld"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
-          "symbol": "ComposableWorld.make",
-          "binding": "ComposableWorld.make"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
             "specifier": "@liteship/core"
           },
           "symbol": "ComposableWorld.make().spawn",
-          "binding": "scopedComposableWorld.spawn"
+          "binding": "spawnComposableWorld.spawn"
         }
       ]
     },
@@ -435,37 +390,10 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
-          "symbol": "createWorld",
-          "binding": "createWorld"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
-          "symbol": "ComposableWorld.make",
-          "binding": "ComposableWorld.make"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
-          "symbol": "ComposableWorld.make().spawn",
-          "binding": "scopedComposableWorld.spawn"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
             "specifier": "@liteship/core"
           },
           "symbol": "ComposableWorld.make().evaluate",
-          "binding": "scopedComposableWorld.evaluate"
+          "binding": "evaluationWorld.evaluate"
         }
       ]
     },
@@ -518,15 +446,6 @@
             "kind": "module",
             "specifier": "@liteship/core/ecs"
           },
-          "symbol": "createDenseStore",
-          "binding": "createDenseStore"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
           "symbol": "createDenseStore().writer.set",
           "binding": "tempStore.writer.set"
         },
@@ -554,35 +473,8 @@
             "kind": "module",
             "specifier": "@liteship/core/ecs"
           },
-          "symbol": "createWorld",
-          "binding": "createWorld"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
-          "symbol": "createWorld().spawn",
-          "binding": "scopedWorld.spawn"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
-          "symbol": "createWorld().addSystem",
-          "binding": "scopedWorld.addSystem"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
           "symbol": "createWorld().tick",
-          "binding": "scopedWorld.tick"
+          "binding": "regularWorld.tick"
         }
       ]
     },
@@ -599,71 +491,8 @@
             "kind": "module",
             "specifier": "@liteship/core/ecs"
           },
-          "symbol": "createWorld",
-          "binding": "createWorld"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
-          "symbol": "createDenseStore",
-          "binding": "createDenseStore"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
-          "symbol": "createWorld().addDenseStore",
-          "binding": "scopedWorld.addDenseStore"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
-          "symbol": "createWorld().spawn",
-          "binding": "scopedWorld.spawn"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
-          "symbol": "createDenseStore().writer.set",
-          "binding": "posX.writer.set"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
-          "symbol": "createDenseStore().writer.set",
-          "binding": "posY.writer.set"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
-          "symbol": "createWorld().addSystem",
-          "binding": "scopedWorld.addSystem"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
           "symbol": "createWorld().tick",
-          "binding": "scopedWorld.tick"
+          "binding": "denseWorld.tick"
         }
       ]
     },
@@ -678,37 +507,10 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core/ecs"
-          },
-          "symbol": "createWorld",
-          "binding": "createWorld"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
-          "symbol": "ComposableWorld.make",
-          "binding": "ComposableWorld.make"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
-          "symbol": "ComposableWorld.make().spawn",
-          "binding": "scopedComposableWorld.spawn"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
             "specifier": "@liteship/core"
           },
           "symbol": "ComposableWorld.make().query",
-          "binding": "scopedComposableWorld.query"
+          "binding": "queryComposableWorld.query"
         }
       ]
     },
@@ -986,8 +788,8 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "createFrameSchedule",
-          "binding": "createFrameSchedule"
+          "symbol": "createFrameSchedule().at",
+          "binding": "frameSchedule.at"
         }
       ]
     },
@@ -1004,26 +806,8 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Compositor.create",
-          "binding": "Compositor.create"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
-          "symbol": "createVideoRenderer",
-          "binding": "createVideoRenderer"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
           "symbol": "createVideoRenderer().frames",
-          "binding": "renderer.frames"
+          "binding": "renderer30.frames"
         }
       ]
     },
@@ -1040,26 +824,8 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Compositor.create",
-          "binding": "Compositor.create"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
-          "symbol": "createVideoRenderer",
-          "binding": "createVideoRenderer"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
           "symbol": "createVideoRenderer().frames",
-          "binding": "renderer.frames"
+          "binding": "renderer300.frames"
         }
       ]
     },
@@ -1076,17 +842,8 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Compositor.create",
-          "binding": "Compositor.create"
-        },
-        {
-          "role": "sut",
-          "origin": {
-            "kind": "module",
-            "specifier": "@liteship/core"
-          },
           "symbol": "Compositor.create().compute",
-          "binding": "c.compute"
+          "binding": "emptyVideoCompositor.compute"
         }
       ]
     },

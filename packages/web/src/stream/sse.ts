@@ -450,8 +450,9 @@ export const create = (config: SSEConfig): SSEClient => {
     },
   };
 
-  // `stateChanges` buffers edges per-iterator (each subscriber sees every edge
-  // from its subscription onward — control-plane, never dropped).
+  // `stateChanges` buffers edges per-iterator. A stalled subscriber retains the
+  // newest bounded suffix: current state is more valuable than stale reconnect
+  // history, and no iterator may become an unbounded memory sink.
   const stateChanges: AsyncIterable<SSEState> = {
     [Symbol.asyncIterator](): AsyncIterator<SSEState, undefined> {
       const buffer: SSEState[] = [];
@@ -462,6 +463,7 @@ export const create = (config: SSEConfig): SSEClient => {
       // return() (cancellation) vs source complete (natural end) — see the `messages`
       // iterator: only return() sets `returned`, forcing every later next() to done.
       let returned = false;
+      let saturated = false;
       const deliver = (): void => {
         while (waiters.length > 0 && buffer.length > 0) {
           waiters.shift()!({ value: buffer.shift()!, done: false });
@@ -474,6 +476,20 @@ export const create = (config: SSEConfig): SSEClient => {
         next: (edge) => {
           buffer.push(edge);
           deliver();
+          if (buffer.length > SSE_BUFFER_SIZE) {
+            // Drop the oldest retained transitions. A state stream's newest
+            // suffix describes the live transport; stale reconnect history does not.
+            buffer.splice(0, buffer.length - SSE_BUFFER_SIZE);
+            if (!saturated) {
+              saturated = true;
+              Diagnostics.warnOnceRegistered({
+                source: 'liteship/web.sse',
+                code: 'web/stream/sse-state-buffer-saturated',
+                message: 'An SSE stateChanges iterator saturated; retaining the newest transition suffix.',
+                detail: { maxBufferSize: SSE_BUFFER_SIZE, bufferSize: buffer.length },
+              });
+            }
+          }
         },
         complete: () => {
           completed = true;

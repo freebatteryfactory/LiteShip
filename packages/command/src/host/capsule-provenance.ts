@@ -102,6 +102,10 @@ export const GENERATOR_SOURCE_FILES: readonly string[] = Object.freeze([
   'packages/core/src/evidence/bench-marker.ts',
   'packages/core/src/evidence/bench-classify.ts',
   'packages/core/src/harness/arbitrary-from-schema.ts',
+  // The seed every emitted property pins. Not an arm, but generator LOGIC: its
+  // value lands in all 19 generated suites, so an edit here must invalidate the
+  // corpus exactly as an arm edit does.
+  'packages/core/src/harness/property-seed.ts',
 ]);
 
 /** A `blake3:<hex>` integrity digest string (the provenance currency). */

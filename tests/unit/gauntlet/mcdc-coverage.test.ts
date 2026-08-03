@@ -35,6 +35,7 @@ import {
 import { isTaggedError } from '@liteship/error';
 
 const L4_FILE = 'packages/core/src/schema/brands.ts'; // an L4 glob in the assurance map
+const L3_FILE = 'packages/quantizer/src/quantizer.ts'; // an L3 glob in the assurance map
 const L1_FILE = 'packages/x/src/a.ts'; // an ordinary L1 file
 const HELPER = 'packages/x/src/helper.ts'; // a helper imported by the L4 file
 
@@ -63,7 +64,12 @@ function ctx(ir: RepoIR, mcdc: TestMcdcFacts): GateContext {
     mcdc: {
       ...mcdc,
       targetCensus:
-        mcdc.targetCensus ?? mcdc.conditions.map((item) => ({ file: item.file, applicableConditions: 1, reasons: [] })),
+        mcdc.targetCensus ??
+        [...new Set(mcdc.conditions.map((item) => item.file))].map((file) => ({
+          file,
+          applicableConditions: mcdc.conditions.filter((item) => item.file === file).length,
+          reasons: [],
+        })),
     },
   };
 }
@@ -102,13 +108,84 @@ describe('isMcdcCovered — the ONE coverage rule (both pins killed)', () => {
 });
 
 describe('mcdcCoverageGate — floor calibration by level', () => {
+  it('a per-file covered-condition fraction below the L3 floor is a finding', () => {
+    const findings = mcdcCoverageGate.run(
+      ctx(simpleIR([L3_FILE]), {
+        conditions: [
+          condition({
+            conditionId: 'blake3:covered',
+            file: L3_FILE,
+            line: 10,
+            forceTrueVerdict: 'killed',
+            forceFalseVerdict: 'killed',
+          }),
+          condition({
+            conditionId: 'blake3:gap',
+            file: L3_FILE,
+            line: 20,
+            forceTrueVerdict: 'killed',
+            forceFalseVerdict: 'survived',
+          }),
+        ],
+        targetCensus: [{ file: L3_FILE, applicableConditions: 2, reasons: [] }],
+      }),
+    );
+
+    const floorFindings = findings.filter((item) => item.title.includes('coverage below floor'));
+    expect(floorFindings).toHaveLength(1);
+    expect(floorFindings[0]!.severity).toBe('error');
+    expect(floorFindings[0]!.detail).toContain('0.5000');
+    expect(floorFindings[0]!.detail).toContain('0.9000');
+  });
+
+  it('the target census owns the denominator, so a missing outcome cannot inflate coverage', () => {
+    const findings = mcdcCoverageGate.run(
+      ctx(simpleIR([L3_FILE]), {
+        conditions: [condition({ file: L3_FILE, forceTrueVerdict: 'killed', forceFalseVerdict: 'killed' })],
+        targetCensus: [{ file: L3_FILE, applicableConditions: 2, reasons: [] }],
+      }),
+    );
+
+    const floorFinding = findings.find((item) => item.title.includes('coverage below floor'));
+    expect(floorFinding?.detail).toContain('0.5000 (1/2)');
+  });
+
+  it('an undercounted target census is a blocking refusal, never an over-1 pass', () => {
+    const findings = mcdcCoverageGate.run(
+      ctx(simpleIR([L3_FILE]), {
+        conditions: [
+          condition({
+            conditionId: 'blake3:a',
+            file: L3_FILE,
+            forceTrueVerdict: 'killed',
+            forceFalseVerdict: 'killed',
+          }),
+          condition({
+            conditionId: 'blake3:b',
+            file: L3_FILE,
+            forceTrueVerdict: 'killed',
+            forceFalseVerdict: 'killed',
+          }),
+        ],
+        targetCensus: [{ file: L3_FILE, applicableConditions: 1, reasons: [] }],
+      }),
+    );
+
+    const refusal = findings.filter((item) => item.title.includes('target census inconsistent'));
+    expect(refusal).toHaveLength(1);
+    expect(refusal[0]!.severity).toBe('error');
+    expect(refusal[0]!.detail).toContain('admits 1 condition(s)');
+    expect(refusal[0]!.detail).toContain('carry 2 outcome(s)');
+  });
+
   it('an L4 uncovered condition is severity error (BLOCKS — DO-178B Level A full MC/DC)', () => {
     const findings = mcdcCoverageGate.run(
       ctx(simpleIR([L4_FILE]), {
         conditions: [condition({ file: L4_FILE, forceTrueVerdict: 'killed', forceFalseVerdict: 'survived' })],
       }),
     );
-    expect(findings).toHaveLength(1);
+    expect(findings).toHaveLength(2);
+    expect(findings.some((item) => item.title.includes('coverage below floor'))).toBe(true);
     expect(findings[0]!.severity).toBe('error');
     expect(findings[0]!.level).toBe('L4');
     // The finding names the condition + the decision (so the reader sees the branch).
@@ -130,7 +207,7 @@ describe('mcdcCoverageGate — floor calibration by level', () => {
         ],
       }),
     );
-    expect(findings).toHaveLength(1);
+    expect(findings).toHaveLength(2);
     // The reader must see WHICH infra fault refused the verdict — a timeout, a
     // spawn failure, and a zero-test run demand different responses.
     expect(findings[0]!.detail).toContain('per-mutant budget (240000 ms) expired');
@@ -154,7 +231,7 @@ describe('mcdcCoverageGate — floor calibration by level', () => {
         ],
       }),
     );
-    expect(findings).toHaveLength(1);
+    expect(findings).toHaveLength(2);
     const f = findings[0]!;
     expect(f.title).toContain('inconclusive');
     expect(f.detail).toContain('per-mutant budget (240000 ms) expired');
@@ -252,10 +329,10 @@ describe('mcdcCoverageGate — THE LAW: the level is PROPAGATED from the live IR
     const findings = mcdcCoverageGate.run(
       ctx(ir, { conditions: [condition({ file: HELPER, forceTrueVerdict: 'survived', forceFalseVerdict: 'killed' })] }),
     );
-    expect(findings).toHaveLength(1);
+    expect(findings).toHaveLength(2);
     // Propagated to L4 → error, NOT the L1 advisory its glob alone would give.
-    expect(findings[0]!.level).toBe('L4');
-    expect(findings[0]!.severity).toBe('error');
+    expect(findings.every((item) => item.level === 'L4')).toBe(true);
+    expect(findings.every((item) => item.severity === 'error')).toBe(true);
   });
 });
 

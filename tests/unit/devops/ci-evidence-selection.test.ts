@@ -5,7 +5,7 @@ import { planAffectedTests } from '../../../scripts/lib/affected-test-plan.js';
 import { jobNameMatches, selectCheckEvidence } from '../../../scripts/lib/ci-evidence-selection.js';
 
 const INVENTORY: AssuranceInventory = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   packages: PACKAGE_CATALOG.map((record) => ({
     name: record.name,
     sourceLoc: 1,
@@ -34,6 +34,10 @@ const INVENTORY: AssuranceInventory = {
     },
     evidenceFiles: [],
   })),
+  evidenceOwnership: {
+    packageFiles: [],
+    repositoryTooling: { owner: 'repository/tooling', authoredEvidenceLoc: 0, generatedEvidenceLoc: 0, files: [] },
+  },
   nodeTestSelection: { entrypoints: [], dependents: [] },
   totals: {
     sourceLoc: PACKAGE_CATALOG.length,
@@ -60,6 +64,14 @@ const plan = planAffectedTests(['packages/core/src/index.ts'], PACKAGE_CATALOG, 
   selectorCalibrationId: `sha256:${'c'.repeat(64)}`,
 });
 
+const rustPlan = planAffectedTests(['crates/liteship-compute/src/lib.rs'], PACKAGE_CATALOG, INVENTORY, {
+  baseRef: 'origin/main',
+  baseSha: 'a'.repeat(40),
+  headSha: 'b'.repeat(40),
+  confidence: 'high',
+  selectorCalibrationId: `sha256:${'c'.repeat(64)}`,
+});
+
 describe('CI evidence selection', () => {
   it('matches direct, matrix, and reusable-workflow jobs by exact leaf identity', () => {
     expect(jobNameMatches('format', 'format')).toBe(true);
@@ -76,6 +88,29 @@ describe('CI evidence selection', () => {
     expect(selected.find((entry) => entry.requirement.checkId === 'check/test')?.jobNames).toEqual([
       'pr-affected',
       'pr-windows-affected',
+    ]);
+  });
+
+  it('binds changed Rust formatting evidence to the specialized Rust authority', () => {
+    const pullRequest = selectCheckEvidence(rustPlan, 'pull_request');
+    expect(pullRequest.find((entry) => entry.requirement.checkId === 'check/rustfmt')?.jobNames).toEqual([
+      'rust-wasm-parity',
+    ]);
+    const scheduled = selectCheckEvidence(rustPlan, 'schedule');
+    expect(scheduled.find((entry) => entry.requirement.checkId === 'check/rustfmt')?.jobNames).toEqual([
+      'rust-wasm-parity',
+    ]);
+    expect(
+      pullRequest.find((entry) => entry.requirement.checkId === 'check/rust-wasm-qualification')?.jobNames,
+    ).toEqual(['rust-wasm-parity']);
+    expect(scheduled.find((entry) => entry.requirement.checkId === 'check/rust-wasm-qualification')?.jobNames).toEqual([
+      'rust-wasm-parity',
+    ]);
+    expect(pullRequest.find((entry) => entry.requirement.checkId === 'check/cargo-audit')?.jobNames).toEqual([
+      'security-audit',
+    ]);
+    expect(scheduled.find((entry) => entry.requirement.checkId === 'check/cargo-audit')?.jobNames).toEqual([
+      'security-audit',
     ]);
   });
 

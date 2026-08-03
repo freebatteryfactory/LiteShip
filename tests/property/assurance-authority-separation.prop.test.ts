@@ -50,8 +50,12 @@ function packageRow(name: string, missingEvidence: readonly string[] = []): Pack
 
 function inventory(gaps: Readonly<Record<string, readonly string[]>> = {}, ratioMilli = 2_000): AssuranceInventory {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     packages: PACKAGE_CATALOG.map((record) => packageRow(record.name, gaps[record.name] ?? [])),
+    evidenceOwnership: {
+      packageFiles: [],
+      repositoryTooling: { owner: 'repository/tooling', authoredEvidenceLoc: 0, generatedEvidenceLoc: 0, files: [] },
+    },
     nodeTestSelection: { entrypoints: [], dependents: [] },
     totals: {
       sourceLoc: 2_500,

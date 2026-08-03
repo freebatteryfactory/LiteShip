@@ -33,6 +33,9 @@ const ROOT = resolve(import.meta.dirname, '../../..');
 const ALLOWLIST: ReadonlySet<string> = new Set([
   'scripts/lib/effect-residue.ts', // this engine (pattern literals)
   'tests/unit/devops/effect-residue-scan.test.ts', // this test (negative-control fixtures)
+  // Owner-rebutted whole-file suppression is intentional for files whose only
+  // residue is scanner fixture data; this parity law is such a fixture mirror.
+  'tests/unit/devops/residue-scanner-parity.test.ts',
   'tests/unit/core/invariants.test.ts', // Invariant 14 (static-import regex literal)
   'tests/unit/devops/docs-effect-residue.test.ts', // shipped-docs sweep (pattern literals)
   'tests/unit/core/harness/receipted-mutation.test.ts', // import-guard assertion mirrors
@@ -101,15 +104,23 @@ describe('effect residue — full-scope scan', () => {
     expect(classifyEffectResidueLine(' * was Effect.runSync(compute()) before the shed')).toEqual([]);
   });
 
+  it('inline comments cannot hide residue, while the owner-sanctioned string-context direction stays red', () => {
+    expect(classifyEffectResidueLine("import(/* decoy */ 'effect');")).toContain('dynamic-import');
+    // Owner-rebutted and intentional: ambiguity fails RED, so fixture strings
+    // remain classifier subjects rather than becoming a fail-open exemption.
+    expect(classifyEffectResidueLine('const fixture = "Effect.runSync(program);";')).toContain('call-site');
+  });
+
   it('the scanner reds planted residue in a fragment tree, across line boundaries, and in a nested manifest (executed mutants)', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'liteship-effect-residue-'));
     try {
       const fragments = join(fixture, 'packages', 'cli', 'fragments', 'example', 'app');
       mkdirSync(fragments, { recursive: true });
-      // Multiline dynamic import: no single physical line matches, so only the
-      // collapsed second pass can see it.
-      writeFileSync(join(fragments, 'main.ts'), "const mod = await import(\n  // lazy\n  'effect',\n);\n");
+      // A block comment split across physical lines: only whole-file comment
+      // state plus the collapsed second pass can see the payload after `*/`.
+      writeFileSync(join(fragments, 'main.ts'), "const mod = await import(/*\n * decoy\n */ 'effect',\n);\n");
       writeFileSync(join(fragments, 'package.json'), JSON.stringify({ dependencies: { effect: '^3.0.0' } }));
+      writeFileSync(join(fixture, 'pnpm-workspace.yaml'), "packages:\n  - 'packages/*'\n");
       const planted = scanEffectResidue(fixture, new Set());
       expect(planted.findings).toEqual([
         {
@@ -125,6 +136,23 @@ describe('effect residue — full-scope scan', () => {
           detail: 'dependencies.effect',
         },
       ]);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it('an absent pnpm-workspace.yaml is a finding, not an omitted authority', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'liteship-effect-residue-no-workspace-'));
+    try {
+      mkdirSync(join(fixture, 'packages', 'subject'), { recursive: true });
+      writeFileSync(join(fixture, 'packages', 'subject', 'package.json'), JSON.stringify({ name: 'subject' }));
+
+      expect(scanEffectResidue(fixture, new Set()).findings).toContainEqual({
+        file: 'pnpm-workspace.yaml',
+        line: 0,
+        kind: 'manifest-dependency',
+        detail: 'required workspace dependency authority is absent (fail-closed)',
+      });
     } finally {
       rmSync(fixture, { recursive: true, force: true });
     }

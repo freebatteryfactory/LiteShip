@@ -29,6 +29,7 @@
 import { UnsupportedError } from '@liteship/error';
 import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessContext, HarnessOutput } from './pure-transform.js';
+import { EMITTED_PROPERTY_SEED } from './property-seed.js';
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
 const DEFAULT_CONTENT_ADDRESS_IMPORT = '../../packages/core/src/evidence/content-address.js';
@@ -268,7 +269,7 @@ describe('${cap.name}', () => {
       fc.asyncProperty(sourceArb, async (source) => {
         expect(await derive(source as never)).toEqual(await derive(source as never));
       }),
-      { numRuns: 100 },
+      { seed: ${EMITTED_PROPERTY_SEED}, numRuns: 100 },
     );
   });
 
@@ -279,7 +280,7 @@ describe('${cap.name}', () => {
           const output = await derive(source as never);
           return inv.check(source as never, output as never);
         }),
-        { numRuns: 100 },
+        { seed: ${EMITTED_PROPERTY_SEED}, numRuns: 100 },
       );
     });
   }

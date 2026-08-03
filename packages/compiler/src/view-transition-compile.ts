@@ -26,6 +26,7 @@
  * @module
  */
 
+import { cssIdentFor } from '@liteship/core/motion';
 import { escapeCssString } from './css-string.js';
 
 /** Input to {@link compileViewTransition}. */
@@ -59,7 +60,7 @@ export interface ViewTransitionCompileInput {
 
 /** CSS artifacts emitted by {@link compileViewTransition}. */
 export interface ViewTransitionCompileResult {
-  /** The sanitized custom-ident used as the `view-transition-name`. */
+  /** The readable, content-address-suffixed custom-ident used as the `view-transition-name`. */
   readonly viewTransitionName: string;
   /** `<selector> { view-transition-name: <ident>; }`. */
   readonly nameAssignment: string;
@@ -74,34 +75,11 @@ export interface ViewTransitionCompileResult {
 /**
  * Turn a boundary name into a valid CSS `<custom-ident>` for `view-transition-name`:
  * a stable `liteship-vt-` prefix (guaranteeing an identifier that never starts with a
- * digit or `--`) followed by the boundary with any non `[A-Za-z0-9_-]` run collapsed
- * to a single hyphen and leading/trailing hyphens trimmed.
+ * digit or `--`), a readable boundary slug, and a short FNV-1a suffix over the original
+ * boundary. The suffix keeps distinct names injective when their human slugs coincide.
  */
 function viewTransitionNameFor(boundary: string): string {
-  let projected = '';
-  let invalidRun = false;
-  for (const char of boundary.trim()) {
-    const code = char.codePointAt(0)!;
-    const allowed =
-      (code >= 48 && code <= 57) ||
-      (code >= 65 && code <= 90) ||
-      (code >= 97 && code <= 122) ||
-      char === '_' ||
-      char === '-';
-    if (allowed) {
-      projected += char;
-      invalidRun = false;
-    } else if (!invalidRun) {
-      projected += '-';
-      invalidRun = true;
-    }
-  }
-  let start = 0;
-  let end = projected.length;
-  while (projected[start] === '-') start++;
-  while (end > start && projected[end - 1] === '-') end--;
-  const slug = projected.slice(start, end);
-  return `liteship-vt-${slug.length > 0 ? slug : 'boundary'}`;
+  return cssIdentFor('liteship-vt-', [boundary], { fallback: 'boundary', alwaysAddressed: true });
 }
 
 /**
@@ -110,6 +88,8 @@ function viewTransitionNameFor(boundary: string): string {
  */
 export function compileViewTransition(input: ViewTransitionCompileInput): ViewTransitionCompileResult {
   const { boundary, durationMs, easing, mpaNavigation, delayMs } = input;
+  // An explicit selector is complete authored CSS syntax, not a boundary-name string.
+  // Preserve it byte-for-byte; only the generated default interpolates escaped data.
   const selector = input.selector ?? `[data-liteship-boundary="${escapeCssString(boundary)}"]`;
   const viewTransitionName = viewTransitionNameFor(boundary);
 

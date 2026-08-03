@@ -1,8 +1,8 @@
 /** Live pnpm registry audit with an always-written raw JSON receipt. @module */
 
-import { mkdir, writeFile } from 'node:fs/promises';
-import { spawnArgvCaptureWithEnv } from '../packages/command/src/host/launcher.ts';
-import { blockingAuditFindings, parsePnpmAuditReceipt } from './lib/security-audit-contract.ts';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { spawnArgvCaptureWithEnv } from '../packages/command/src/host/launcher.js';
+import { advisoryFloorFindings, blockingAuditFindings, parsePnpmAuditReceipt } from './lib/security-audit-contract.js';
 
 const reportPath = 'reports/pnpm-audit.json';
 const stderrPath = 'reports/pnpm-audit.stderr.txt';
@@ -19,6 +19,12 @@ try {
 } catch (cause) {
   throw new Error(`pnpm audit emitted no valid receipt (exit ${result.exitCode}): ${String(cause)}`);
 }
-const findings = blockingAuditFindings(receipt);
+// The receipt is the ANCHOR for which packages need a declared floor, so a newly
+// published advisory reds until the minimum is declared AND raised — the table
+// cannot silently fall behind the feed.
+const packageJson = JSON.parse(await readFile('package.json', 'utf8')) as unknown;
+const findings = [...blockingAuditFindings(receipt), ...advisoryFloorFindings(receipt, packageJson)];
 if (findings.length > 0) throw new Error(`pnpm audit blocked:\n${findings.map((item) => `  - ${item}`).join('\n')}`);
-console.log(`Security audit passed; raw receipt written to ${reportPath}.`);
+console.log(
+  `Security audit passed; ${receipt.advisories.length} advisory record(s) reconciled against the declared floors. Raw receipt written to ${reportPath}.`,
+);

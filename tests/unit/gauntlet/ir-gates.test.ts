@@ -9,7 +9,7 @@
  *     the meta-gauntlet (the generalized head-probe-drift), with severity
  *     calibrated by the redlinable coverage-class matrix.
  *  3. The coverage-class severity matrix is symmetric + data-driven (same-class =
- *     error, cross-class = advisory).
+ *     error; cross-class is aimed by the affected site's assurance level).
  *
  * @module
  */
@@ -50,23 +50,32 @@ function fileNode(id = FILE) {
 
 describe('coverage-class severity matrix (the redlinable data knob)', () => {
   it('same-class disagreement is a real contradiction → error', () => {
-    expect(coverageClassSeverity('text-only', 'text-only')).toBe('error');
-    expect(coverageClassSeverity('file-proxy-only', 'file-proxy-only')).toBe('error');
-    expect(coverageClassSeverity('symbol-evidenced', 'symbol-evidenced')).toBe('error');
+    expect(coverageClassSeverity('text-only', 'text-only', 'L0')).toBe('error');
+    expect(coverageClassSeverity('file-proxy-only', 'file-proxy-only', 'L2')).toBe('error');
+    expect(coverageClassSeverity('symbol-evidenced', 'symbol-evidenced', 'L4')).toBe('error');
     expect(COVERAGE_CLASS_SEVERITY.same).toBe('error');
   });
 
-  it('cross-class disagreement is a coverage gap → advisory (and stays quiet)', () => {
-    expect(coverageClassSeverity('text-only', 'file-proxy-only')).toBe('advisory');
-    expect(coverageClassSeverity('text-only', 'symbol-evidenced')).toBe('advisory');
-    expect(COVERAGE_CLASS_SEVERITY.cross).toBe('advisory');
+  it('cross-class disagreement is aimed by criticality', () => {
+    expect(coverageClassSeverity('text-only', 'file-proxy-only', 'L4')).toBe('error');
+    expect(coverageClassSeverity('text-only', 'symbol-evidenced', 'L3')).toBe('error');
+    expect(coverageClassSeverity('text-only', 'file-proxy-only', 'L2')).toBe('warning');
+    expect(coverageClassSeverity('text-only', 'file-proxy-only', 'L1')).toBe('advisory');
+    expect(coverageClassSeverity('text-only', 'file-proxy-only', 'L0')).toBe('advisory');
+    expect(COVERAGE_CLASS_SEVERITY.cross).toEqual({
+      L4: 'error',
+      L3: 'error',
+      L2: 'warning',
+      L1: 'advisory',
+      L0: 'advisory',
+    });
   });
 
   it('is symmetric — argument order does not change the calibration', () => {
     const classes: CoverageClass[] = ['text-only', 'file-proxy-only', 'runtime-evidenced', 'symbol-evidenced'];
     for (const a of classes) {
       for (const b of classes) {
-        expect(coverageClassSeverity(a, b)).toBe(coverageClassSeverity(b, a));
+        expect(coverageClassSeverity(a, b, 'L3')).toBe(coverageClassSeverity(b, a, 'L3'));
       }
     }
   });

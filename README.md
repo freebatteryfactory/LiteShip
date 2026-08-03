@@ -160,7 +160,7 @@ LiteShip can adopt one surface at a time; existing CSS keeps working beside it. 
 
 **Every push and pull request runs the full release candidate before merge.** Affected Linux/Windows/browser jobs remain fast feedback, while `truth-linux-parallel`, `browser-e2e`, `windows-smoke`, `macos-smoke`, `macos-browser`, `rust-wasm-parity`, and `security-audit` prove the exact candidate tree. The main-push run repeats that same fold as confirmation; it is never the first place a release defect is allowed to surface. Scheduled, manual, and release-tag runs add serial and exhaustive mutation/MC/DC authority. The authoritative event-to-job mapping lives in `scripts/lib/ci-authority.ts` and is executed by `.github/workflows/ci.yml`.
 
-The event-authority census covers `format`, `pr-affected`, `pr-windows-affected`, conditional `pr-browser-affected`, `truth-linux-parallel`, serial `truth-linux`, `browser-e2e`, `windows-smoke`, `macos-smoke`, `macos-browser`, `rust-wasm-parity`, `security-audit`, `exhaustive-analysis`, `exhaustive-mutation-fold`, `exhaustive-mcdc-fold`, and `semantic-assurance-admission`.
+The event-authority census covers `format`, `pr-affected`, `pr-affected-evidence`, `pr-windows-affected`, conditional `pr-browser-affected`, `truth-linux-parallel`, serial `truth-linux`, `browser-e2e`, `windows-smoke`, `macos-smoke`, `macos-browser`, `rust-wasm-parity`, `security-audit`, `exhaustive-analysis`, `exhaustive-mutation-fold`, `exhaustive-mcdc-fold`, and `semantic-assurance-admission`.
 
 **macOS is tier-1 release authority.** `macos-smoke` and `macos-browser` run on pull requests and pushes and participate in the final CI fold. Platform-specific path aliases, package-manager behavior, browser execution, and package smoke therefore block before merge instead of becoming post-merge advisory evidence.
 
@@ -175,7 +175,7 @@ The doc set is deliberately small — the file tree and the generated projection
 - [GLOSSARY.md](./GLOSSARY.md): LiteShip / `@liteship/*` naming and prose register
 - [HOSTING.md](./HOSTING.md) · [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md) · [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md): deployment and the Astro mental/runtime models
 - [CONTRIBUTING.md](./CONTRIBUTING.md) · [SECURITY.md](./SECURITY.md) · [RELEASING.md](./RELEASING.md): dev environment, security posture, release process
-- [docs/api](./docs/api): the generated API reference · [CHANGELOG.md](./CHANGELOG.md): release history
+- [PUBLIC-EXPORTS.md](./PUBLIC-EXPORTS.md): the reviewed public-surface roster; run `pnpm run docs:build` in a source checkout for the generated TypeDoc reference · [CHANGELOG.md](./CHANGELOG.md): release history
 
 ## Security posture (summary)
 

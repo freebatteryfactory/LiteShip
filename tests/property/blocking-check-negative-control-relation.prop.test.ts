@@ -34,6 +34,14 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
     'tests/unit/devops/blocking-check-negative-controls.test.ts',
     SHARED_EXTERNAL_AUTHORITY,
   ],
+  ['check/rustfmt', 'pnpm run rustfmt:check', 'tests/unit/devops/rustfmt-contract.test.ts', 'check/rustfmt'],
+  [
+    'check/rust-wasm-qualification',
+    'pnpm run rust:qualify',
+    'tests/unit/devops/rust-wasm-qualification.test.ts',
+    'check/rust-wasm-qualification',
+  ],
+  ['check/cargo-audit', 'pnpm run cargo:audit', 'tests/unit/devops/cargo-audit-contract.test.ts', 'check/cargo-audit'],
   [
     'check/lint-structural',
     'pnpm run lint:structural',

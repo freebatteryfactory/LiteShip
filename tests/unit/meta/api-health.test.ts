@@ -535,6 +535,10 @@ const DEFAULT_CONSTANTS = [
   'THEME_TRANSITION_DURATION_MS',
   'THEME_TRANSITION_EASING',
   'GRAPH_QUERY_FALLBACK_HEADER',
+  // Finite fail-safe for one serialized graph mutation request: a missing or invalid
+  // override settles the stalled submit to the client's error response so the queue
+  // can advance. No default graph-mutation queue entry may wait without a deadline.
+  'GRAPH_MUTATION_DEFAULT_TIMEOUT_MS',
   'CANVAS_FALLBACK_WIDTH',
   'CANVAS_FALLBACK_HEIGHT',
   // Worker-blob twin of rawIndexF32 as an inlinable JS source string (Phase-0).

@@ -25,9 +25,15 @@
  * @module
  */
 
-import { spawnArgv, spawnArgvCapture } from './lib/spawn.js';
+import { spawnArgv, spawnArgvCapture, startSpawnHandle } from './lib/spawn.js';
 import { isDirectExecution } from './audit/shared.js';
-import { buildLocalVerificationPlan } from './lib/local-verification-plan.js';
+import {
+  assertLocalVerificationDurationWithinBudget,
+  buildLocalVerificationPlan,
+  formatLocalVerificationBudgetPolicy,
+  formatLocalVerificationCheckPartition,
+  localVerificationBudgetRemainingMs,
+} from './lib/local-verification-plan.js';
 import {
   formatLocalResourcePlan,
   sampleLocalResources,
@@ -42,18 +48,46 @@ function formatDuration(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
-/** Run one `pnpm run <script>` step with fully visible output. */
-async function runStep(label: string, args: readonly string[]): Promise<number> {
+interface StepResult {
+  readonly exitCode: number;
+  readonly timedOut: boolean;
+}
+
+/** Run one `pnpm run <script>` step with fully visible output and an optional hard wall bound. */
+async function runStep(label: string, args: readonly string[], timeoutMs?: number): Promise<StepResult> {
   console.log(`\n${RULE}`);
   console.log(`  preflight → ${label}`);
   console.log(RULE);
   const start = Date.now();
-  const result = await spawnArgv('pnpm', args, {
-    stdio: ['ignore', 'inherit', 'inherit'],
-  });
+  const result =
+    timeoutMs === undefined
+      ? { ...(await spawnArgv('pnpm', args, { stdio: ['ignore', 'inherit', 'inherit'] })), timedOut: false }
+      : await new Promise<StepResult>((resolvePromise, rejectPromise) => {
+          const handle = startSpawnHandle('pnpm', args, { stdio: ['ignore', 'inherit', 'inherit'] });
+          let settled = false;
+          const timer = setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            void handle.dispose().then(() => resolvePromise({ exitCode: 124, timedOut: true }), rejectPromise);
+          }, timeoutMs);
+          handle.child.once('error', (error) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            rejectPromise(error);
+          });
+          handle.child.once('close', (code) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            resolvePromise({ exitCode: code ?? 1, timedOut: false });
+          });
+        });
   const durationMs = Date.now() - start;
-  console.log(`  ${label} ${result.exitCode === 0 ? 'ok' : 'FAILED'} (${formatDuration(durationMs)})`);
-  return result.exitCode;
+  console.log(
+    `  ${label} ${result.timedOut ? 'TIMED OUT' : result.exitCode === 0 ? 'ok' : 'FAILED'} (${formatDuration(durationMs)})`,
+  );
+  return result;
 }
 
 const HELP = `Builder preflight — the fast pre-commit self-verify (scar S6.3).
@@ -103,6 +137,8 @@ async function main(argv: readonly string[]): Promise<void> {
     else {
       console.log(`preflight plan (${plan.mode}; docs=${plan.docsReason})`);
       console.log(formatLocalResourcePlan(resourcePlan));
+      console.log(formatLocalVerificationBudgetPolicy(plan.budget));
+      console.log(formatLocalVerificationCheckPartition(plan.registryChecks));
       for (const step of plan.steps) console.log(`- pnpm ${step.argv.join(' ')}`);
     }
     return;
@@ -113,42 +149,70 @@ async function main(argv: readonly string[]): Promise<void> {
 
   console.log(`[preflight] mode=${plan.mode} docs=${plan.docsReason}`);
   console.log(formatLocalResourcePlan(resourcePlan));
+  console.log(formatLocalVerificationBudgetPolicy(plan.budget));
   const inheritedWorkers = process.env.LITESHIP_NATIVE_TSC_WORKERS;
   if (inheritedWorkers === undefined) {
     process.env.LITESHIP_NATIVE_TSC_WORKERS = String(resourcePlan.nativeTypeScriptWorkers);
   }
 
   for (const step of plan.steps) {
-    const exitCode = await runStep(step.label, step.argv);
-    if (exitCode !== 0) {
+    let remainingMs: number;
+    try {
+      remainingMs = localVerificationBudgetRemainingMs(plan.budget, Date.now() - overallStart);
+    } catch (error) {
       console.error(`\n${RULE}`);
-      console.error('  PREFLIGHT FAILED');
+      console.error('  PREFLIGHT BUDGET EXHAUSTED');
       console.error(RULE);
-      console.error(`\n  step: ${step.label} (exit ${exitCode})`);
-      console.error(`  fix:  ${step.remedy}`);
+      console.error(`\n  step: ${step.label} was not admitted`);
+      console.error(`  policy: ${error instanceof Error ? error.message : String(error)}`);
+      console.error('  Required containment was not skipped. Not green.\n');
+      process.exit(1);
+    }
+    const result = await runStep(step.label, step.argv, remainingMs);
+    if (result.exitCode !== 0) {
+      console.error(`\n${RULE}`);
+      console.error(result.timedOut ? '  PREFLIGHT BUDGET EXHAUSTED' : '  PREFLIGHT FAILED');
+      console.error(RULE);
+      console.error(`\n  step: ${step.label} (exit ${result.exitCode})`);
+      console.error(
+        result.timedOut
+          ? `  policy: hard T4 wall budget ${plan.budget.maxDurationMs}ms; required containment was not skipped`
+          : `  fix:  ${step.remedy}`,
+      );
       console.error('\n  Remaining steps were skipped (fail-fast). Not green.\n');
       process.exit(1);
     }
   }
 
+  const staticTotalMs = Date.now() - overallStart;
+  try {
+    assertLocalVerificationDurationWithinBudget(plan.budget, staticTotalMs);
+  } catch (error) {
+    console.error(`\n${RULE}`);
+    console.error('  PREFLIGHT BUDGET EXCEEDED');
+    console.error(RULE);
+    console.error(`\n  policy: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('  Required containment completed, but the T4 authority is red. Not green.\n');
+    process.exit(1);
+  }
+
   if (testTargets.length > 0) {
-    const exitCode = await runStep(`test ${testTargets.join(' ')}`, ['run', 'test', ...testTargets]);
-    if (exitCode !== 0) {
+    const result = await runStep(`test ${testTargets.join(' ')}`, ['run', 'test', ...testTargets]);
+    if (result.exitCode !== 0) {
       console.error(`\n${RULE}`);
       console.error('  PREFLIGHT FAILED');
       console.error(RULE);
-      console.error(`\n  step: targeted test (exit ${exitCode})`);
+      console.error(`\n  step: targeted test (exit ${result.exitCode})`);
       console.error(`  fix:  make the failing assertions above pass. Not green.\n`);
       process.exit(1);
     }
   }
 
-  const totalMs = Date.now() - overallStart;
   console.log(`\n${RULE}`);
   console.log('  PREFLIGHT PASSED');
   console.log(RULE);
   console.log(
-    `\n  ${plan.steps.length} static checks${testTargets.length > 0 ? ' + targeted tests' : ''} green in ${formatDuration(totalMs)}.`,
+    `\n  ${plan.steps.length} static checks green in ${formatDuration(staticTotalMs)} within the ${formatDuration(plan.budget.maxDurationMs)} T4 budget${testTargets.length > 0 ? '; targeted tests also green' : ''}.`,
   );
   console.log('  Necessary, not sufficient — integration owns the global gates.\n');
   if (inheritedWorkers === undefined) delete process.env.LITESHIP_NATIVE_TSC_WORKERS;

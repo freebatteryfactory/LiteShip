@@ -429,6 +429,70 @@ function subjectIsInvoked(subject: BenchSubject, reachability: Reachability): bo
   return reachability.calls.has(subject.binding.replace(/\s+/gu, ''));
 }
 
+function constructedSubjectCategory(subject: BenchSubject, terminal: string): string {
+  for (const prefix of ['create', 'define']) {
+    if (terminal.startsWith(prefix) && terminal.length > prefix.length) {
+      return terminal.slice(prefix.length);
+    }
+  }
+  const symbolParts = subject.symbol.replace(/\(\)/gu, '').split('.');
+  return terminal === 'create' || terminal === 'define' ? normalizedTerminal(symbolParts.at(-2) ?? '') : '';
+}
+
+/**
+ * The distribution name's alphanumeric tokens, lowercased. Splitting on token
+ * boundaries is what keeps a claim a CLAIM: collapsing the whole name to one
+ * string made `dag recreate merge` "claim" a `create` terminal by substring
+ * (Codex review on PR #197, confirmed P2).
+ */
+function claimTokens(name: string): readonly string[] {
+  return name
+    .split(/[^A-Za-z0-9]+/u)
+    .filter((token) => token.length > 0)
+    .map((token) => token.toLowerCase());
+}
+
+/**
+ * True iff `term` is spelled by one token or by a CONTIGUOUS run of them —
+ * so `createComposable() -- boundary` and `create composable -- boundary` both
+ * claim `createcomposable`, while `recreate` claims nothing.
+ */
+function claimsTerm(tokens: readonly string[], term: string): boolean {
+  for (let start = 0; start < tokens.length; start += 1) {
+    let joined = '';
+    for (let end = start; end < tokens.length; end += 1) {
+      joined += tokens[end]!;
+      if (joined === term) return true;
+      if (joined.length >= term.length) break;
+    }
+  }
+  return false;
+}
+
+/**
+ * THE CLASS RULE: every invoked create/define subject inside a measured callback
+ * is construction. The allowlist admits only an exact constructor-symbol claim,
+ * or an explicit `construct`/`construction` claim naming the derived subject
+ * category. Merely naming the category beside compute/compose/tick/render is not
+ * construction evidence and remains a finding.
+ */
+function isUnclaimedConstruction(
+  distribution: QualifiedBenchDistribution,
+  subject: BenchSubject,
+  reachability: Reachability,
+): boolean {
+  const terminal = normalizedTerminal(subject.symbol);
+  const constructor = terminal === 'create' || terminal.startsWith('create') || terminal.startsWith('define');
+  if (!constructor || !subjectIsInvoked(subject, reachability)) return false;
+  const claimedTokens = claimTokens(distribution.name);
+  if (claimsTerm(claimedTokens, terminal)) return false;
+  const explicitlyClaimsConstruction = /(?:^|[^A-Za-z0-9])construct(?:ion)?(?:$|[^A-Za-z0-9])/iu.test(
+    distribution.name,
+  );
+  const category = constructedSubjectCategory(subject, terminal);
+  return !(explicitlyClaimsConstruction && category.length > 0 && claimsTerm(claimedTokens, category));
+}
+
 /** Qualify one distribution against source bytes supplied by the repository host. */
 export function qualifyBenchDistribution(
   distribution: QualifiedBenchDistribution,
@@ -544,6 +608,16 @@ export function qualifyBenchDistribution(
         file: executionFile,
         subject,
         detail: `measured execution for "${distribution.name}" never invokes ${subject.binding}`,
+      });
+      continue;
+    }
+    if (execution.kind === 'callback' && isUnclaimedConstruction(distribution, subject, reachability)) {
+      issues.push({
+        kind: 'subject-construction-in-measured-body',
+        name: distribution.name,
+        file: executionFile,
+        subject,
+        detail: `measured callback for "${distribution.name}" constructs ${subject.binding}; construct the subject before timing the claimed operation`,
       });
       continue;
     }

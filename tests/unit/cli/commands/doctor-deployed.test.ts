@@ -1,6 +1,10 @@
 import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest';
 import { lookup as dnsLookup } from 'node:dns/promises';
-import { probeDeployedSite } from '../../../../packages/cli/src/commands/doctor/probes-deployed.js';
+import {
+  isAdmissiblePublicAddress,
+  probeDeployedSite,
+  SPECIAL_PURPOSE_ADDRESS_BLOCKS,
+} from '../../../../packages/cli/src/commands/doctor/probes-deployed.js';
 // Source of truth for what liteship emits — the probe validates DEPLOYED headers against
 // exactly these, so the tests derive their "ok" fixtures from them too (no hardcoded
 // header copy that could drift from the framework — Law 6).
@@ -203,6 +207,63 @@ describe('doctor --deployed (#116)', () => {
     expect(checks[0]?.detail).toMatch(/DNS resolution returned a loopback\/private/i);
   });
 
+  test('refuses an address family the parser does not recognize', async () => {
+    mockedLookup.mockImplementation(async () => [{ address: 'not-an-address', family: 0 }]);
+    const fetchSpy = vi.fn(async () => new Response('ok', { status: 200 }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const checks = await probeDeployedSite('https://unrecognized-address.example/');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(checks[0]?.status).toBe('fail');
+    expect(checks[0]?.detail).toMatch(/SSRF guard/i);
+  });
+
+  test('refuses a DNS address whose spelling does not match its declared family', async () => {
+    mockedLookup.mockImplementation(async () => [{ address: '2607:f8b0:4005:8000::2003', family: 4 }]);
+    const fetchSpy = vi.fn(async () => new Response('ok', { status: 200 }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const checks = await probeDeployedSite('https://mismatched-address-family.example/');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(checks[0]?.status).toBe('fail');
+    expect(checks[0]?.detail).toMatch(/SSRF guard/i);
+  });
+
+  test('refuses an IANA documentation address that the denylist omitted', async () => {
+    mockedLookup.mockImplementation(async () => [{ address: '203.0.113.5', family: 4 }]);
+    const fetchSpy = vi.fn(async () => new Response('ok', { status: 200 }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const checks = await probeDeployedSite('https://documentation-address.example/');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(checks[0]?.status).toBe('fail');
+    expect(checks[0]?.detail).toMatch(/SSRF guard/i);
+  });
+
+  test('every embedded IANA special-purpose registry entry is refused', async () => {
+    expect(SPECIAL_PURPOSE_ADDRESS_BLOCKS.length).toBeGreaterThan(40);
+    const fetchSpy = vi.fn(async () => new Response('ok', { status: 200 }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    for (const { cidr, name } of SPECIAL_PURPOSE_ADDRESS_BLOCKS) {
+      const address = cidr.slice(0, cidr.lastIndexOf('/'));
+      mockedLookup.mockImplementation(async () => [{ address, family: address.includes(':') ? 6 : 4 }]);
+      const checks = await probeDeployedSite('https://special-purpose.example/');
+      expect(checks[0]?.status, `${name} (${cidr})`).toBe('fail');
+    }
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test('IPv4 and IPv6 multicast are refused outside the special-purpose table', () => {
+    expect(isAdmissiblePublicAddress('224.0.0.1')).toBe(false);
+    expect(isAdmissiblePublicAddress('ff02::1')).toBe(false);
+  });
+
+  test('global-unicast public IPv4 and IPv6 addresses are admitted', () => {
+    expect(isAdmissiblePublicAddress('93.184.216.34')).toBe(true);
+    expect(isAdmissiblePublicAddress('2607:f8b0:4005:8000::2003')).toBe(true);
+  });
+
   test('refuses hostname resolving to IPv6 special-use address before fetch (DNS SSRF)', async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal('fetch', fetchSpy);
@@ -323,14 +384,12 @@ describe('doctor --deployed (#116)', () => {
     }
   });
 
-  test('public v4-mapped Google DNS (::ffff:8.8.8.8) is allowed through the host filter', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response('ok', { status: 200, headers: { 'accept-ch': 'Sec-CH-Viewport-Width' } })),
-    );
-
+  test('IPv4-mapped IPv6 is refused as an IANA special-purpose address', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
     const checks = await probeDeployedSite('https://[::ffff:808:808]/');
-    expect(checks[0]?.status).not.toBe('fail');
-    expect(checks[0]?.detail).not.toMatch(/SSRF guard/i);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(checks[0]?.status).toBe('fail');
+    expect(checks[0]?.detail).toMatch(/SSRF guard/i);
   });
 });

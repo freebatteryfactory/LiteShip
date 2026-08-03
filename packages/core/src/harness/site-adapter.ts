@@ -36,6 +36,7 @@ import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessLane } from './scene-composition.js';
 import type { HarnessOutput, HarnessContext } from './pure-transform.js';
 import { benchNotApplicableMarker } from '../evidence/bench-marker.js';
+import { EMITTED_PROPERTY_SEED } from './property-seed.js';
 
 /** Inputs presampled from the round-trip arbitrary at module load. */
 const BENCH_SAMPLE_COUNT = 64;
@@ -152,7 +153,7 @@ describe('${name}', () => {
         const back = decode(CanonicalCbor.encode(native));
         return contentAddressOf(back) === contentAddressOf(native);
       }),
-      { numRuns: ${ROUND_TRIP_RUNS} },
+      { seed: ${EMITTED_PROPERTY_SEED}, numRuns: ${ROUND_TRIP_RUNS} },
     );
   }, scaledTimeout(30000));
 });

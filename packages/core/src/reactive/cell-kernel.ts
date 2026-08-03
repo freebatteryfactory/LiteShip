@@ -226,6 +226,8 @@ function createCore<T>() {
     // simply restored so ONE faulty listener cannot corrupt the channel.
     try {
       for (let i = 0; i < limit; i++) {
+        // Unsubscribed registrations stay structurally retained during dispatch, but a reentrant
+        // close truncates the table; the guard keeps a snapshotted index safe in both cases.
         const registration = registrations[i];
         if (registration !== undefined && registration.active) registration.sink.next(value);
       }
@@ -332,6 +334,7 @@ function replay1<T>(
   // is enqueued here and drained FIFO after the fan-out unwinds (breadth-first).
   let inFanOut = false;
   const pending: { readonly value: T }[] = [];
+  let pendingHead = 0;
 
   // Fan `value` out now, honoring the emission policy. Under {all} this is a raw
   // generation-bounded fan-out (dispatch-snapshot membership — zero allocation).
@@ -375,14 +378,18 @@ function replay1<T>(
         try {
           core.runBatch(() => {
             emit(value);
-            while (pending.length > 0) {
-              const next = pending.shift();
+            // A head cursor keeps every dequeue O(1). The length is read on each
+            // turn so writes appended reentrantly during `emit` join this drain.
+            while (pendingHead < pending.length) {
+              const next = pending[pendingHead];
+              pendingHead += 1;
               if (next !== undefined) emit(next.value);
             }
           });
         } finally {
           inFanOut = false;
           pending.length = 0;
+          pendingHead = 0;
         }
         return;
       }

@@ -256,6 +256,25 @@ describe('applyWaivers', () => {
     expect(waiverFindings).toEqual([]);
   });
 
+  it('a date-only waiver remains valid throughout its named UTC calendar day', () => {
+    const f = findingAt('r/a', 'src/x.ts', 10);
+    const { kept, waived, waiverFindings } = applyWaivers(
+      [f],
+      [waiver({ ruleId: 'r/a', expires: '2026-06-20' })],
+      new Date('2026-06-20T23:59:59.999Z'),
+    );
+    expect(waived).toEqual([f]);
+    expect(kept).toEqual([]);
+    expect(waiverFindings).toEqual([]);
+  });
+
+  it('a malformed waiver expiry is refused instead of silently remaining active', () => {
+    const f = findingAt('r/a', 'src/x.ts', 10);
+    expect(() => applyWaivers([f], [waiver({ ruleId: 'r/a', expires: '2026-02-30' })], NOW)).toThrow(
+      /real yyyy-mm-dd/u,
+    );
+  });
+
   it('STALE waiver (matches nothing, not expired) → warning (waiver-stale)', () => {
     const f = findingAt('r/a', 'src/x.ts', 10);
     const { kept, waiverFindings } = applyWaivers([f], [waiver({ ruleId: 'r/NOPE' })], NOW);

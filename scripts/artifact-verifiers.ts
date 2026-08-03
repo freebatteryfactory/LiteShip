@@ -718,7 +718,10 @@ export function verifyRuntimeSeamsReport(
               typeof context.replicate === 'number' &&
               Array.isArray(context.tasks) &&
               context.tasks.every(
-                (task) =>
+                (task: unknown) =>
+                  typeof task === 'object' &&
+                  task !== null &&
+                  'name' in task &&
                   typeof task.name === 'string' &&
                   'beforeMeanNs' in task &&
                   'afterMeanNs' in task &&
@@ -735,7 +738,10 @@ export function verifyRuntimeSeamsReport(
               typeof context.replicate === 'number' &&
               Array.isArray(context.tasks) &&
               context.tasks.every(
-                (task) =>
+                (task: unknown) =>
+                  typeof task === 'object' &&
+                  task !== null &&
+                  'name' in task &&
                   typeof task.name === 'string' &&
                   'beforeMeanNs' in task &&
                   'afterMeanNs' in task &&

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import llmDirective from '../../packages/astro/src/client-directives/llm.js';
 import streamDirective from '../../packages/astro/src/client-directives/stream.js';
+import { customEventListener } from '../helpers/custom-event-listener.js';
 
 const noop = () => Promise.resolve();
 
@@ -68,7 +69,10 @@ describe('browser stream and llm directives', () => {
     document.body.appendChild(inner);
     inner.scrollTop = 48;
     inner.addEventListener('liteship:stream-morph', () => morphEvents.push('morph'));
-    inner.addEventListener('liteship:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
+    inner.addEventListener(
+      'liteship:signal',
+      customEventListener((event) => signals.push(event.detail)),
+    );
 
     streamDirective(noop, {}, inner);
     let source = latestSource();
@@ -138,8 +142,10 @@ describe('browser stream and llm directives', () => {
     vi.stubGlobal('clearTimeout', clearTimeoutMock as never);
 
     document.body.addEventListener('liteship:stream-disconnected', () => disconnects.push('disconnect'));
-    document.body.addEventListener('liteship:stream-error', ((event: CustomEvent) =>
-      errors.push(event.detail)) as EventListener);
+    document.body.addEventListener(
+      'liteship:stream-error',
+      customEventListener((event) => errors.push(event.detail)),
+    );
 
     const el = document.createElement('section');
     el.setAttribute('data-liteship-stream-url', '/stream');
@@ -208,13 +214,26 @@ describe('browser stream and llm directives', () => {
     document.body.appendChild(el);
 
     el.addEventListener('liteship:llm-start', () => starts.push('start'));
-    el.addEventListener('liteship:llm-token', ((event: CustomEvent) => tokens.push(event.detail)) as EventListener);
-    el.addEventListener('liteship:llm-tool-start', ((event: CustomEvent) =>
-      toolStarts.push(event.detail)) as EventListener);
-    el.addEventListener('liteship:llm-tool-end', ((event: CustomEvent) =>
-      toolEnds.push(event.detail)) as EventListener);
-    el.addEventListener('liteship:llm-done', ((event: CustomEvent) => dones.push(event.detail)) as EventListener);
-    el.addEventListener('liteship:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    el.addEventListener(
+      'liteship:llm-token',
+      customEventListener((event) => tokens.push(event.detail)),
+    );
+    el.addEventListener(
+      'liteship:llm-tool-start',
+      customEventListener((event) => toolStarts.push(event.detail)),
+    );
+    el.addEventListener(
+      'liteship:llm-tool-end',
+      customEventListener((event) => toolEnds.push(event.detail)),
+    );
+    el.addEventListener(
+      'liteship:llm-done',
+      customEventListener((event) => dones.push(event.detail)),
+    );
+    el.addEventListener(
+      'liteship:llm-error',
+      customEventListener((event) => errors.push(event.detail)),
+    );
 
     llmDirective(noop, {}, el);
     let source = latestSource();
@@ -257,7 +276,10 @@ describe('browser stream and llm directives', () => {
     const el = document.createElement('section');
     el.setAttribute('data-liteship-llm-url', '/llm');
     document.body.appendChild(el);
-    el.addEventListener('liteship:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    el.addEventListener(
+      'liteship:llm-error',
+      customEventListener((event) => errors.push(event.detail)),
+    );
 
     llmDirective(noop, {}, el);
     const source = latestSource();

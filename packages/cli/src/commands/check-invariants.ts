@@ -18,7 +18,7 @@
  *
  * @module
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { walkFiles, type WalkFilesIssue, type WalkFilesOptions } from '@liteship/core/fs-walk';
 import { IoError } from '@liteship/error';
@@ -36,7 +36,11 @@ import {
 } from '@liteship/command';
 import { spawnArgvCapture } from '@liteship/command/host';
 import { emit, type WallClockTimestamp } from '../receipts.js';
-import { scanWorkflowActionPins, scanWorkflowCheckoutCredentials } from '../internal/workflow-action-pins.js';
+import {
+  scanWorkflowActionPins,
+  scanWorkflowCheckoutCredentials,
+  scanWorkflowExpressionInjection,
+} from '../internal/workflow-action-pins.js';
 
 /** Receipt emitted by `liteship check-invariants`. */
 export interface CheckInvariantsReceipt extends CheckInvariantsPayload {
@@ -52,6 +56,21 @@ export interface CheckInvariantsReceipt extends CheckInvariantsPayload {
  * call sites stay byte-identical.
  */
 type SpawnArgvCapture = typeof spawnArgvCapture;
+
+/** Exact W1.11 root config files scanned for every general source invariant. */
+export const W111_INVARIANT_ROOT_FILES = [
+  'eslint.config.js',
+  'liteship.config.ts',
+  'vite.config.ts',
+  'vitest.browser.config.ts',
+  'vitest.config.ts',
+  'vitest.shared.ts',
+] as const;
+
+/** Fragment declarations are exact scanner subjects; other package declarations remain type-only. */
+export const W111_INVARIANT_DECLARATION_FILES = [
+  'packages/cli/fragments/example/cloudflare-astro/src/env.d.ts',
+] as const;
 
 interface LineEndingRule {
   readonly pattern: string;
@@ -77,39 +96,66 @@ function walkOptionalDeclaredRoot(scanRoot: string, options: Omit<WalkFilesOptio
  * Every banned-pattern violation of `invariant` under `root`. A repo-relative,
  * slash-normalized `file` + 1-based `line` + trimmed `content` per hit.
  */
-export function findViolations(invariant: CheckInvariantEntry, root: string): InvariantViolation[] {
+export function findViolations(
+  invariant: CheckInvariantEntry,
+  root: string,
+  exactFiles: readonly string[] = [],
+): InvariantViolation[] {
   const violations: InvariantViolation[] = [];
 
-  for (const dir of invariant.dirs) {
+  for (const file of collectInvariantSourceFiles(root, invariant.dirs, exactFiles)) {
+    const rel = normalizeRepoPath(relative(root, file));
+    if (isExempt(rel, invariant)) continue;
+
+    const lines = readFileSync(file, 'utf8').split(/\r?\n/);
+    lines.forEach((line, index) => {
+      if (invariant.pattern.test(line)) {
+        violations.push({
+          file: rel,
+          line: index + 1,
+          content: line.trim(),
+        });
+      }
+    });
+  }
+
+  return violations;
+}
+
+/** Enumerate the exact source files one invariant scan will read. */
+export function collectInvariantSourceFiles(
+  root: string,
+  dirs: readonly string[],
+  exactFiles: readonly string[] = [],
+): readonly string[] {
+  const files = new Set<string>();
+
+  for (const dir of dirs) {
     const scanRoot = resolve(root, dir);
-    // The shared `@liteship/core/fs-walk` walker (skips `dist`/`node_modules`, keeps
-    // `.ts`); a `.d.ts` is filtered here since `suffixes: ['.ts']` also matches it.
+    // The shared `@liteship/core/fs-walk` walker skips build/vendor trees and
+    // admits every JavaScript/TypeScript grammar the W1.11 census recognizes.
     // This caller explicitly observes the walker's fail-soft callback and admits
     // only a missing declared rule root. The walker itself stays strict by default.
     for (const file of walkOptionalDeclaredRoot(scanRoot, {
       skipDirs: ['dist', 'node_modules'],
-      suffixes: ['.ts'],
+      suffixes: ['.js', '.mjs', '.cjs', '.jsx', '.ts', '.mts', '.cts', '.tsx'],
     })) {
       if (file.endsWith('.d.ts')) continue;
-      // relative-then-normalize (a relativeToRoot composition); the slash step is
-      // normalizeRepoPath applied to a repo-relative path.
-      const rel = normalizeRepoPath(relative(root, file));
-      if (isExempt(rel, invariant)) continue;
-
-      const lines = readFileSync(file, 'utf8').split(/\r?\n/);
-      lines.forEach((line, index) => {
-        if (invariant.pattern.test(line)) {
-          violations.push({
-            file: rel,
-            line: index + 1,
-            content: line.trim(),
-          });
-        }
-      });
+      files.add(file);
     }
   }
 
-  return violations;
+  for (const path of exactFiles) {
+    const file = resolve(root, path);
+    if (!existsSync(file)) {
+      throw IoError('check-invariants.missing-declared-file', `declared scanner file does not exist: ${path}`, {
+        path: file,
+      });
+    }
+    files.add(file);
+  }
+
+  return [...files].sort();
 }
 
 function globToRegExp(glob: string): RegExp {
@@ -248,7 +294,11 @@ export async function runCheckInvariantsScan(
 ): Promise<CheckInvariantsSummary> {
   const groups: InvariantViolationGroup[] = [];
   for (const invariant of INVARIANTS) {
-    const violations = findViolations(invariant, root);
+    const exactFiles =
+      invariant.name === 'NO_SIGNAL_INPUT_REPARSE'
+        ? []
+        : [...W111_INVARIANT_ROOT_FILES, ...W111_INVARIANT_DECLARATION_FILES];
+    const violations = findViolations(invariant, root, exactFiles);
     if (violations.length === 0) continue;
     groups.push({ name: invariant.name, message: invariant.message, violations });
   }
@@ -259,7 +309,11 @@ export async function runCheckInvariantsScan(
   })) {
     const rel = normalizeRepoPath(relative(root, file));
     const workflow = readFileSync(file, 'utf8');
-    for (const violation of [...scanWorkflowActionPins(workflow), ...scanWorkflowCheckoutCredentials(workflow)]) {
+    for (const violation of [
+      ...scanWorkflowActionPins(workflow),
+      ...scanWorkflowCheckoutCredentials(workflow),
+      ...scanWorkflowExpressionInjection(workflow),
+    ]) {
       actionPinViolations.push({ file: rel, line: violation.line, content: violation.content });
     }
   }
@@ -267,7 +321,7 @@ export async function runCheckInvariantsScan(
     groups.push({
       name: 'IMMUTABLE_WORKFLOW_ACTIONS',
       message:
-        'Use only reviewed third-party GitHub Actions pinned to immutable commit SHAs and disable checkout credential persistence.',
+        'Use only reviewed third-party GitHub Actions pinned to immutable commit SHAs, disable checkout credential persistence, and keep attacker-controlled expressions out of run commands.',
       violations: actionPinViolations,
     });
   }

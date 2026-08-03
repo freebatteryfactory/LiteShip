@@ -5,21 +5,23 @@ import {
   GenFrame,
   UIQuality,
   RuntimeCoordinator,
+  StateName,
   type CompositeState,
+  contentAddressOf,
   defineBoundary,
   createTokenBuffer,
 } from '@liteship/core';
 import { ClientHints, compileTheme, createEdgeHostAdapter, EdgeTier } from '@liteship/edge';
 import { LLMChunkNormalization, SSE, type LLMChunk } from '@liteship/web';
 import { WorkerHost } from '@liteship/worker';
-import { evaluateBoundary, parseBoundary } from '../../packages/astro/src/runtime/boundary.ts';
-import { parseLLMChunk } from '../../packages/astro/src/runtime/llm.ts';
-import { defineResolvedStateEnvelope } from '../../packages/worker/src/messages.ts';
+import { evaluateBoundary, parseBoundary } from '../../packages/astro/src/runtime/boundary.js';
+import { parseLLMChunk } from '../../packages/astro/src/runtime/llm.js';
+import { defineResolvedStateEnvelope, type ResolvedStateEntry } from '../../packages/worker/src/messages.js';
 import {
   createLLMSessionWithHost,
   createSupportLLMSessionHost,
   createSupportLLMTokenBoundaryHost,
-} from '../../packages/astro/src/runtime/llm-session.ts';
+} from '../../packages/astro/src/runtime/llm-session.js';
 import {
   WORKER_STARTUP_STAGE_LABELS,
   WORKER_STARTUP_DIAGNOSTIC_STAGE_LABELS,
@@ -35,7 +37,7 @@ import {
   collectNormalizedLLMStartupChunks,
   runWorkerStartupParityScenario,
   runWorkerStartupScenario,
-} from '../../tests/e2e/fixtures/startup-scenarios.ts';
+} from '../../tests/e2e/fixtures/startup-scenarios.js';
 
 export interface BenchResult {
   readonly name: string;
@@ -239,6 +241,7 @@ const llmStartupChunks = {
   simple: collectNormalizedLLMStartupChunks('simple'),
   promoted: collectNormalizedLLMStartupChunks('promoted'),
 } as const;
+type LLMStartupMode = keyof typeof llmStartupScenarios;
 const llmFastRuntimeMessages = llmStartupScenarios.simple.messages.map((data) => ({
   type: 'patch',
   data,
@@ -305,7 +308,9 @@ export function buildDirectiveBenchConfig(replicates = DEFAULT_GATE_REPLICATES):
 function buildCompositeState(state: string): void {
   const discrete: Record<string, string> = { layout: state };
   const css: Record<string, string> = { '--liteship-layout': state };
-  const glsl: Record<string, number> = { u_layout: adaptiveBoundary.states.indexOf(state) };
+  const glsl: Record<string, number> = {
+    u_layout: adaptiveBoundary.states.findIndex((candidate) => candidate === state),
+  };
   const aria: Record<string, string> = { 'data-liteship-layout': state };
   void discrete;
   void css;
@@ -322,13 +327,13 @@ function buildCompositePayload(state: string): {
   return {
     discrete: { layout: state },
     css: { '--liteship-layout': state },
-    glsl: { u_layout: adaptiveBoundary.states.indexOf(state) },
+    glsl: { u_layout: adaptiveBoundary.states.findIndex((candidate) => candidate === state) },
     aria: { 'data-liteship-layout': state },
   };
 }
 
 function buildWorkerCompositeState(name: string, state: string): CompositeState {
-  const stateIndex = adaptiveBoundary.states.indexOf(state);
+  const stateIndex = adaptiveBoundary.states.findIndex((candidate) => candidate === state);
 
   return {
     discrete: { [name]: state },
@@ -338,15 +343,16 @@ function buildWorkerCompositeState(name: string, state: string): CompositeState 
     outputs: {
       css: { [`--liteship-${name}`]: state },
       glsl: { [`u_${name}`]: stateIndex },
+      wgsl: { [`u_${name}`]: stateIndex },
       aria: { [`data-liteship-${name}`]: state },
     },
   };
 }
 
-function buildResolvedStatePayload(state: string): readonly BenchResolvedState[] {
+function buildResolvedStatePayload(state: string): readonly ResolvedStateEntry[] {
   return Array.from({ length: 16 }, (_, index) => ({
     name: `layout-${index}`,
-    state: adaptiveBoundary.states[index % adaptiveBoundary.states.length] ?? state,
+    state: StateName(adaptiveBoundary.states[index % adaptiveBoundary.states.length] ?? state),
     generation: index + 1,
   }));
 }
@@ -421,7 +427,7 @@ class BenchWorker {
       case 'bootstrap-quantizers': {
         const registrations = Array.isArray(message.registrations)
           ? message.registrations.filter(
-              (registration): registration is { name?: unknown; states?: unknown } =>
+              (registration): registration is Readonly<Record<string, unknown>> =>
                 !!registration && typeof registration === 'object',
             )
           : [];
@@ -438,7 +444,7 @@ class BenchWorker {
             : { registrations: [], updates: [] };
         const registrations = Array.isArray(packet.registrations)
           ? packet.registrations.filter(
-              (registration): registration is { name?: unknown; states?: unknown } =>
+              (registration): registration is Readonly<Record<string, unknown>> =>
                 !!registration && typeof registration === 'object',
             )
           : [];
@@ -566,11 +572,7 @@ class BenchWorker {
     }
   }
 
-  private registerQuantizer(registration: {
-    readonly name?: unknown;
-    readonly states?: unknown;
-    readonly initialState?: unknown;
-  }): void {
+  private registerQuantizer(registration: Readonly<Record<string, unknown>>): void {
     const name = typeof registration.name === 'string' ? registration.name : 'layout';
     const states = Array.isArray(registration.states)
       ? registration.states.filter((state): state is string => typeof state === 'string')
@@ -739,7 +741,7 @@ function boundaryStateFromValue(value: number): string {
 
 function createBenchLLMRuntimeSession() {
   const tokenBuffer = createTokenBuffer<string>({ capacity: 64 });
-  const quality = UIQuality.make({ deviceTier: 'animations' });
+  const quality = UIQuality.make();
   const scheduler = GenFrame.make({
     tokenBuffer,
     getQualityTier: () => quality.evaluate(tokenBuffer.occupancy, 'animations'),
@@ -833,20 +835,20 @@ function createBenchHostElement(target: BenchTargetElement): BenchHostElement {
 }
 
 async function withBenchDocumentGlobalsAsync<T>(fn: () => Promise<T>): Promise<T> {
-  const globalRecord = globalThis as typeof globalThis & {
-    document?: { createTextNode(text: string): BenchTextNode };
-    CustomEvent?: typeof CustomEvent;
-  };
-  const previousDocument = globalRecord.document;
-  const previousCustomEvent = globalRecord.CustomEvent;
+  const previousDocument = globalThis.document;
+  const previousCustomEvent = globalThis.CustomEvent;
 
-  globalRecord.document = {
-    createTextNode(text: string): BenchTextNode {
-      return { textContent: text };
+  Object.defineProperty(globalThis, 'document', {
+    configurable: true,
+    writable: true,
+    value: {
+      createTextNode(text: string): BenchTextNode {
+        return { textContent: text };
+      },
     },
-  };
+  });
 
-  if (typeof globalRecord.CustomEvent === 'undefined') {
+  if (typeof globalThis.CustomEvent === 'undefined') {
     class BenchCustomEvent<T = unknown> extends Event {
       readonly detail: T;
 
@@ -856,22 +858,30 @@ async function withBenchDocumentGlobalsAsync<T>(fn: () => Promise<T>): Promise<T
       }
     }
 
-    globalRecord.CustomEvent = BenchCustomEvent as typeof CustomEvent;
+    Object.defineProperty(globalThis, 'CustomEvent', {
+      configurable: true,
+      writable: true,
+      value: BenchCustomEvent,
+    });
   }
 
   try {
     return await fn();
   } finally {
     if (previousDocument === undefined) {
-      delete globalRecord.document;
+      Reflect.deleteProperty(globalThis, 'document');
     } else {
-      globalRecord.document = previousDocument;
+      Object.defineProperty(globalThis, 'document', { configurable: true, writable: true, value: previousDocument });
     }
 
     if (previousCustomEvent === undefined) {
-      delete globalRecord.CustomEvent;
+      Reflect.deleteProperty(globalThis, 'CustomEvent');
     } else {
-      globalRecord.CustomEvent = previousCustomEvent;
+      Object.defineProperty(globalThis, 'CustomEvent', {
+        configurable: true,
+        writable: true,
+        value: previousCustomEvent,
+      });
     }
   }
 }
@@ -1123,7 +1133,7 @@ function runWorkerRuntimeCoordinatorSteady(): void {
 
 function registerBenchWorkerQuantizer(host: WorkerHost): void {
   host.compositor.addQuantizer('layout', {
-    id: 'layout',
+    id: contentAddressOf('layout'),
     states: adaptiveBoundary.states,
     thresholds: adaptiveBoundary.thresholds,
   });
@@ -1765,8 +1775,9 @@ export function createDirectiveBench(options?: Partial<ConstructorParameters<typ
 
 export function collectBenchResults(bench: Pick<Bench, 'tasks'>): BenchResult[] {
   return bench.tasks.map((task) => {
-    const latency = task.result?.latency;
-    const throughput = task.result?.throughput;
+    const result = task.result;
+    const latency = result !== undefined && 'latency' in result ? result.latency : undefined;
+    const throughput = result !== undefined && 'throughput' in result ? result.throughput : undefined;
     const opsPerSec = throughput?.mean ?? 0;
     const fallbackMeanNs = opsPerSec > 0 ? 1e9 / opsPerSec : 0;
     const meanNs = latency?.mean && latency.mean > 0 ? latency.mean * 1e6 : fallbackMeanNs;

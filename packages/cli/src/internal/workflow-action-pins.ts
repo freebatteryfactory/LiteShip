@@ -1,9 +1,77 @@
 /** Fast-lane scanner for immutable third-party GitHub Action references. */
 
+/**
+ * Locally-built tagged `ValidationError` (structurally conformant to the
+ * `@liteship/error` contract, which is a shape, not a base class). It stays
+ * local because this module must load on a cold checkout — the host-preparation
+ * contract imports it before any workspace dist exists, so a value-import of
+ * `@liteship/error` resolves into dist and is exactly the cold-start failure
+ * the prebuild-dist-free gate forbids — while a relative reach into
+ * `../../../error/src` is the cross-package escape that the shipped-dist
+ * smoke and the package-import-boundaries law forbid. Same pattern as
+ * `packages/command/src/checks/registry.ts`.
+ */
+const workflowValidationError = (module: string, detail: string): Error =>
+  Object.assign(Error(`${module}: ${detail}`), {
+    name: 'ValidationError',
+    _tag: 'ValidationError' as const,
+    module,
+    detail,
+  });
+
 export interface WorkflowActionPinViolation {
   readonly line: number;
   readonly content: string;
-  readonly reason: 'missing-immutable-revision' | 'untrusted-source' | 'credentials-persisted';
+  readonly reason:
+    | 'missing-immutable-revision'
+    | 'untrusted-source'
+    | 'credentials-persisted'
+    | 'unreadable-yaml'
+    | 'expression-in-run';
+}
+
+interface YamlShapeViolation {
+  readonly line: number;
+  readonly content: string;
+  readonly message: string;
+}
+
+export interface WorkflowReaderSource {
+  readonly path: string;
+  readonly text: string;
+}
+
+/**
+ * Locate dependency-free workflow readers that still parse structure instead
+ * of consuming {@link workflowJobSections}. This is a migration census: its
+ * grammar recognizes the extant job-header, dynamic job-marker, and artifact
+ * step-walk shapes. Only the module that owns the shared implementation is
+ * exempt from its own header grammar; merely importing or mentioning the
+ * shared symbol cannot hide an additional reader.
+ */
+export function independentWorkflowReaderSites(files: readonly WorkflowReaderSource[]): readonly string[] {
+  const sites: string[] = [];
+  for (const file of files) {
+    const subject = withoutFunctionThroughNextDoc(
+      withoutFunctionThroughNextDoc(file.text, 'export function independentWorkflowReaderSites'),
+      'export function workflowJobSections',
+    );
+    const readsJobHeader = subject.includes('^ {2}([A-Za-z0-9_-]+):');
+    const slicesDynamicJobMarker = subject.includes('.indexOf(`  ${');
+    const walksArtifactSteps =
+      subject.includes('function scanDeliveryEvidenceDownloads') && subject.includes('text.split(/\\r?\\n/u)');
+    if (readsJobHeader || slicesDynamicJobMarker || walksArtifactSteps) {
+      sites.push(file.path.replaceAll('\\', '/'));
+    }
+  }
+  return sites.sort();
+}
+
+function withoutFunctionThroughNextDoc(text: string, declaration: string): string {
+  const start = text.indexOf(declaration);
+  if (start === -1) return text;
+  const nextDoc = text.indexOf('\n/**', start + declaration.length);
+  return nextDoc === -1 ? text.slice(0, start) : `${text.slice(0, start)}${text.slice(nextDoc)}`;
 }
 
 const IMMUTABLE_REF = /^[0-9a-f]{40}$/i;
@@ -27,23 +95,72 @@ export const TRUSTED_ACTION_SOURCES: ReadonlySet<string> = new Set([
   'github/codeql-action/init',
   'github/codeql-action/analyze',
   'pnpm/action-setup',
+  'taiki-e/install-action',
 ]);
 
 /** Local reusable workflows are source-bound by the checkout; external actions require a SHA. */
 export function scanWorkflowActionPins(text: string): readonly WorkflowActionPinViolation[] {
+  const unreadable = yamlShapeViolations(text).map((violation) => ({
+    line: violation.line,
+    content: violation.content,
+    reason: 'unreadable-yaml' as const,
+  }));
+  if (unreadable.length > 0) return unreadable;
   const violations: WorkflowActionPinViolation[] = [];
-  for (const [index, raw] of text.split(/\r?\n/).entries()) {
-    const match = /^\s*(?:-\s*)?uses:\s*(?:"([^"]+)"|'([^']+)'|([^\s#]+))(?:\s+#.*)?$/u.exec(raw);
-    if (!match) continue;
-    const reference = match[1] ?? match[2] ?? match[3]!;
+  for (const field of workflowUseEntries(text)) {
+    const reference = unquoteScalar(field.value);
     if (reference.startsWith('./')) continue;
     const at = reference.lastIndexOf('@');
     const source = at >= 0 ? reference.slice(0, at) : reference;
     const revision = at >= 0 ? reference.slice(at + 1) : '';
     if (!IMMUTABLE_REF.test(revision)) {
-      violations.push({ line: index + 1, content: raw.trim(), reason: 'missing-immutable-revision' });
+      violations.push({ line: field.line, content: field.content, reason: 'missing-immutable-revision' });
     } else if (!TRUSTED_ACTION_SOURCES.has(source)) {
-      violations.push({ line: index + 1, content: raw.trim(), reason: 'untrusted-source' });
+      violations.push({ line: field.line, content: field.content, reason: 'untrusted-source' });
+    }
+  }
+  return violations;
+}
+
+/**
+ * THE CLASS RULE — expressions interpolated into a shell command.
+ *
+ * ANCHOR: every `${{ }}` expression in every step's `run:` field. ALLOWLIST:
+ * EMPTY. GitHub substitutes an expression into the command TEXT before the
+ * shell parses it, so the value becomes syntax rather than data — and no
+ * context root proves the value is safe, because provenance is not a property
+ * of the root token. `env.TITLE` can be staged from
+ * `github.event.pull_request.title`; `matrix.*` can be derived from
+ * `fromJSON(inputs.*)`; `steps.*.outputs.*` carries whatever an earlier step
+ * echoed. Admitting roots is a denylist wearing an allowlist's clothes: each
+ * removal only invites the next neighbour (this rule shed `github.*`, then
+ * `inputs`, then the rest — the sequence is the proof).
+ *
+ * THE SANCTIONED PATTERN: stage the value into the step's `env:` mapping,
+ * which GitHub evaluates as an expression and never as command text, then let
+ * the shell expand it as data (`"$VAR"`). Staging positions — `env:`, `if:`,
+ * `with:` — are unaffected; only the run command's text is governed here.
+ */
+export function scanWorkflowExpressionInjection(text: string): readonly WorkflowActionPinViolation[] {
+  const unreadable = yamlShapeViolations(text).map((violation) => ({
+    line: violation.line,
+    content: violation.content,
+    reason: 'unreadable-yaml' as const,
+  }));
+  if (unreadable.length > 0) return unreadable;
+
+  const violations: WorkflowActionPinViolation[] = [];
+  for (const section of workflowJobSectionRecords(text).values()) {
+    const lines = activeLinesOf(section.text, section.lineOffset);
+    for (const stepIndex of stepIndicesOf(lines)) {
+      const command = stepRunCommandOf(lines, stepIndex);
+      // The allowlist is empty, so the presence of an opening delimiter is the
+      // whole test: an unclosed `${{` is as much a violation as a closed one,
+      // and no path parsing can admit anything.
+      if (command.includes('${{')) {
+        const step = lines[stepIndex]!;
+        violations.push({ line: step.line, content: step.content, reason: 'expression-in-run' });
+      }
     }
   }
   return violations;
@@ -60,25 +177,20 @@ export function scanWorkflowActionPins(text: string): readonly WorkflowActionPin
  * `actions/cache` use. Returns one violation string per broken job.
  */
 export function scanExhaustiveCachePersistence(text: string, jobs: readonly string[]): readonly string[] {
-  const violations: string[] = [];
+  const violations: string[] = [...unreadableYamlViolations(text)];
+  if (violations.length > 0) return violations;
+  const sections = workflowSectionsForScan(text);
   for (const job of jobs) {
-    const section = campaignJobSection(text, job);
+    const section = campaignJobSection(sections, job);
     if (section === null) {
       violations.push(`${job}: job not found`);
       continue;
     }
-    if (!/uses: actions\/cache\/restore@[0-9a-f]{40}/u.test(section)) {
-      violations.push(`${job}: no actions/cache/restore step — the verdict bank is never restored`);
-    }
-    if (!/uses: actions\/cache\/save@[0-9a-f]{40}[^\n]*\n\s+if: always\(\)/u.test(section)) {
-      violations.push(`${job}: no always() actions/cache/save step — a red campaign never banks its verdicts`);
-    }
-    if (/uses: actions\/cache@[0-9a-f]/u.test(section)) {
-      violations.push(`${job}: combined actions/cache present — its post-if: success() save skips red runs`);
-    }
     const lines = activeLinesOf(section);
     const saves: Array<{ readonly key: string; readonly path: string | null }> = [];
     const restores: Array<{ readonly prefixes: readonly string[]; readonly path: string | null }> = [];
+    let sawSave = false;
+    let sawRestore = false;
     for (const step of stepIndicesOf(lines)) {
       // The step's uses FIELD decides its role — live steps are written as
       // `- name:` bullets with uses: on a child line, and a bullet-spelling
@@ -89,10 +201,25 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
       if (uses === null) continue;
       const isSave = /^actions\/cache\/save@[0-9a-f]{40}/u.test(uses);
       const isRestore = /^actions\/cache\/restore@[0-9a-f]{40}/u.test(uses);
+      if (/^actions\/cache@[0-9a-f]{40}/u.test(uses)) {
+        violations.push(`${job}: combined actions/cache present — its post-if: success() save skips red runs`);
+      }
       if (!isSave && !isRestore) continue;
-      const withIndex = childIndicesOf(lines, step).find((c) => lines[c]!.body === 'with:');
+      sawSave ||= isSave;
+      sawRestore ||= isRestore;
+      const withIndex = childIndicesOf(lines, step).find((c) => mappingKeyIs(lines[c]!.body, 'with'));
       const withChildren = withIndex === undefined ? [] : childIndicesOf(lines, withIndex);
       if (isSave) {
+        // The always() condition binds to EACH save step — a decoy always()
+        // save elsewhere in the job must not shield a success()-gated bank
+        // save (PR #196 review round 13, confirmed P2: the job-wide regex
+        // was satisfied by any single always() save).
+        const condition = stepFieldOf(lines, step, 'if: ');
+        if (condition === null || !stepConditionIsUnconditional(condition)) {
+          violations.push(
+            `${job}: cache save step is not gated if: always() — a red campaign never banks this step's verdicts`,
+          );
+        }
         // GitHub cache keys are immutable per scope: a re-run attempt saving
         // under a run_id-only key finds it reserved by attempt 1 and banks
         // NOTHING (PR #195 review, confirmed). Only a DIRECT child key: of
@@ -103,11 +230,11 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
         const key = withChildren.map((c) => lines[c]!.body).find((body) => body.startsWith('key: '));
         if (key === undefined) {
           violations.push(`${job}: cache save step has no with.key — the attempt-qualification contract is unprovable`);
-        } else if (!uncommentedScalar(key).includes('${{ github.run_attempt }}')) {
+        } else if (!normalizeExpressions(uncommentedScalar(key)).includes('${{ github.run_attempt }}')) {
           violations.push(
             `${job}: cache save key lacks github.run_attempt — a re-run attempt cannot bank its verdicts`,
           );
-        } else if (!uncommentedScalar(key).includes('${{ github.run_id }}')) {
+        } else if (!normalizeExpressions(uncommentedScalar(key)).includes('${{ github.run_id }}')) {
           // run_attempt restarts at 1 for every workflow run — without the
           // run id, a later run collides with the first run's immutable key
           // and banks nothing (PR #196 review round 10, confirmed P2).
@@ -115,9 +242,16 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
             `${job}: cache save key lacks github.run_id — a later run collides with the first run's reserved key`,
           );
         } else {
-          saves.push({ key: uncommentedScalar(key).slice(5), path: withPathOf(lines, withChildren) });
+          saves.push({
+            key: normalizeExpressions(uncommentedScalar(key)).slice(5),
+            path: withPathOf(lines, withChildren),
+          });
         }
       } else {
+        if (!stepConditionIsUnconditional(stepFieldOf(lines, step, 'if: '))) {
+          violations.push(`${job}: conditional cache restore step cannot discharge the persistence contract`);
+          continue;
+        }
         // Restore fallbacks are REQUIRED and ordered (rounds 3, 7, 8, 12):
         // attempt-qualified primaries can never exact-match a re-run, so a
         // restore without a non-empty restore-keys leaves banked work
@@ -129,12 +263,18 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
         // and SOME run-scoped entry must prefix the restore's own primary,
         // or the same-run self-recovery it claims cannot happen.
         const rkIndex = withChildren.find((c) => lines[c]!.body.startsWith('restore-keys:'));
+        const restoreKeysValue =
+          rkIndex === undefined ? '' : uncommentedScalar(lines[rkIndex]!.body.slice('restore-keys:'.length).trim());
         const entries =
           rkIndex === undefined
             ? []
-            : blockLinesOf(lines, rkIndex).map((line) => uncommentedScalar(line.body.replace(/^- /u, '')));
+            : restoreKeysValue !== '' && !/^[|>][-+]?$/u.test(restoreKeysValue)
+              ? [normalizeExpressions(unquoteScalar(restoreKeysValue))]
+              : blockLinesOf(lines, rkIndex).map((line) =>
+                  normalizeExpressions(uncommentedScalar(line.body.replace(/^- /u, ''))),
+                );
         const primary = withChildren.map((c) => lines[c]!.body).find((body) => body.startsWith('key: '));
-        const primaryKey = primary === undefined ? null : uncommentedScalar(primary).slice(5);
+        const primaryKey = primary === undefined ? null : normalizeExpressions(uncommentedScalar(primary)).slice(5);
         if (entries.length === 0) {
           violations.push(
             `${job}: cache restore has no restore-keys fallback — an attempt-qualified primary can never exact-match a re-run, leaving banked work unrecoverable`,
@@ -168,6 +308,12 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
         }
       }
     }
+    if (!sawRestore) {
+      violations.push(`${job}: no actions/cache/restore step — the verdict bank is never restored`);
+    }
+    if (!sawSave) {
+      violations.push(`${job}: no always() actions/cache/save step — a red campaign never banks its verdicts`);
+    }
     // Every saved namespace must be one some restore RECOVERS: a job that
     // saves bank-* while only restoring wrong-* passes every per-step check
     // yet no re-run ever restores the bank it banks (PR #196 review round
@@ -196,9 +342,11 @@ export function scanExhaustiveCachePersistence(text: string, jobs: readonly stri
 }
 
 /** A comment-free, blank-free view of a YAML fragment: indentation plus trimmed body per line. */
-interface ActiveLine {
+export interface ActiveLine {
   readonly indent: number;
   readonly body: string;
+  readonly line: number;
+  readonly content: string;
 }
 
 /**
@@ -214,12 +362,38 @@ function uncommentedScalar(body: string): string {
   return (cut === -1 ? body : body.slice(0, cut)).trim();
 }
 
-function activeLinesOf(text: string): readonly ActiveLine[] {
+/** A block-mapping key stays the same key when followed by an inert YAML comment. */
+function mappingKeyIs(body: string, key: string): boolean {
+  return uncommentedScalar(body) === `${key}:`;
+}
+
+/** A scalar with surrounding quotes removed after its inline comment is stripped. */
+function unquoteScalar(body: string): string {
+  const value = uncommentedScalar(body);
+  if (
+    value.length >= 2 &&
+    ((value.startsWith("'") && value.endsWith("'")) || (value.startsWith('"') && value.endsWith('"')))
+  ) {
+    return value.slice(1, -1);
+  }
+  return value;
+}
+
+/** Collapse legal whitespace variations inside GitHub expression delimiters. */
+function normalizeExpressions(value: string): string {
+  return value.replace(/\$\{\{\s*(.*?)\s*\}\}/gu, (_whole, expression: string) => {
+    const normalized = expression.trim().replace(/\s+/gu, ' ');
+    return `\${{ ${normalized} }}`;
+  });
+}
+
+export function activeLinesOf(text: string, lineOffset = 0): readonly ActiveLine[] {
   const lines: ActiveLine[] = [];
-  for (const raw of text.split('\n')) {
+  for (const [index, source] of text.split('\n').entries()) {
+    const raw = source.replace(/\r$/u, '');
     const body = raw.trim();
     if (body.length === 0 || body.startsWith('#')) continue;
-    lines.push({ indent: /^ */u.exec(raw)![0].length, body });
+    lines.push({ indent: /^ */u.exec(raw)![0].length, body, line: lineOffset + index + 1, content: body });
   }
   return lines;
 }
@@ -237,7 +411,7 @@ function blockLinesOf(lines: readonly ActiveLine[], index: number): readonly Act
  * level inside its block. Deeper lines are nested mappings or block-scalar
  * content and never satisfy a direct-child contract.
  */
-function childIndicesOf(lines: readonly ActiveLine[], index: number): readonly number[] {
+export function childIndicesOf(lines: readonly ActiveLine[], index: number): readonly number[] {
   const parent = lines[index]!.indent;
   let end = index + 1;
   while (end < lines.length && lines[end]!.indent > parent) end++;
@@ -248,12 +422,263 @@ function childIndicesOf(lines: readonly ActiveLine[], index: number): readonly n
   return children;
 }
 
-/** The job section of a workflow, from its key to the next top-level job key (two-space indent). */
-function campaignJobSection(text: string, job: string): string | null {
-  const start = text.indexOf(`\n  ${job}:`);
-  if (start === -1) return null;
-  const next = text.slice(start + 1).search(/\n {2}[a-z][a-z-]*:\n/u);
-  return next === -1 ? text.slice(start) : text.slice(start, start + 1 + next);
+/**
+ * One top-level job's text, keyed by exact job id, for every job under
+ * `jobs:`. Missing structural authority is refused rather than interpreted
+ * as an empty workflow.
+ */
+export function workflowJobSections(text: string): ReadonlyMap<string, string> {
+  return new Map([...workflowJobSectionRecords(text)].map(([name, record]) => [name, record.text] as const));
+}
+
+interface WorkflowJobSectionRecord {
+  readonly text: string;
+  readonly lineOffset: number;
+}
+
+// The line index of the top-level `jobs:` mapping key, or -1. A trailing
+// comment is inert exactly as on every other mapping key; an indented
+// `jobs:` belongs to some other mapping and never confers authority.
+// (Line comments, not TSDoc: this helper lives inside the reader-census
+// self-exemption span, which runs from workflowJobSections through the
+// next doc comment.)
+function topLevelJobsIndex(lines: readonly string[]): number {
+  return lines.findIndex((line) => !/^\s/u.test(line) && mappingKeyIs(line, 'jobs'));
+}
+
+function workflowJobSectionRecords(text: string): ReadonlyMap<string, WorkflowJobSectionRecord> {
+  const lines = text.split('\n').map((line) => line.replace(/\r$/u, ''));
+  const jobsIndex = topLevelJobsIndex(lines);
+  if (jobsIndex === -1) {
+    throw workflowValidationError('workflow.jobs', 'workflow must declare a top-level jobs: mapping');
+  }
+  let jobsEnd = lines.length;
+  for (let index = jobsIndex + 1; index < lines.length; index++) {
+    const body = lines[index]!.trim();
+    if (body !== '' && !body.startsWith('#') && /^\S/u.test(lines[index]!)) {
+      jobsEnd = index;
+      break;
+    }
+  }
+  // The direct children of `jobs:` sit at the SHALLOWEST indentation inside
+  // its block — derived, never assumed. The shape allowlist admits any
+  // consistent block-mapping indentation, so hardcoding two spaces made a
+  // four-space workflow yield an empty section map and every scanner return
+  // no findings: a total fail-open on valid YAML (Codex review round 3 on
+  // PR #197, confirmed P1). Block-scalar content can never be shallower than
+  // the job header that ultimately contains it, so the minimum is the job
+  // level.
+  let childIndent = Number.POSITIVE_INFINITY;
+  for (let index = jobsIndex + 1; index < jobsEnd; index++) {
+    const body = lines[index]!.trim();
+    if (body === '' || body.startsWith('#')) continue;
+    childIndent = Math.min(childIndent, /^ */u.exec(lines[index]!)![0].length);
+  }
+
+  const headers: Array<{ readonly name: string; readonly line: number }> = [];
+  if (Number.isFinite(childIndent) && childIndent > 0) {
+    // A trailing comment is inert YAML and therefore part of the admitted
+    // block-mapping spelling, not a reason to lose the next-job boundary.
+    const header = new RegExp(`^ {${childIndent}}([A-Za-z0-9_-]+):(?:\\s+#.*)?\\s*$`, 'u');
+    for (let index = jobsIndex + 1; index < jobsEnd; index++) {
+      const match = header.exec(lines[index]!);
+      if (match !== null) headers.push({ name: match[1]!, line: index });
+    }
+  }
+  const sections = new Map<string, WorkflowJobSectionRecord>();
+  for (let index = 0; index < headers.length; index++) {
+    const header = headers[index]!;
+    const end = headers[index + 1]?.line ?? jobsEnd;
+    if (sections.has(header.name)) {
+      throw workflowValidationError('workflow.jobs', `workflow declares duplicate top-level job id "${header.name}"`);
+    }
+    sections.set(header.name, { text: lines.slice(header.line, end).join('\n'), lineOffset: header.line });
+  }
+  return sections;
+}
+
+/**
+ * THE CLASS RULE — workflow YAML reader completeness.
+ *
+ * ANCHOR: every active line visited by this dependency-free block-mapping
+ * reader. ALLOWLIST: ordinary block mappings, block sequences, and block
+ * scalars. Flow collections, aliases, merge keys, tab indentation, malformed
+ * carriage returns, and duplicate sibling keys are outside that closed
+ * grammar. An unclassified spelling is a violation; it is never skipped.
+ */
+export function unreadableYamlViolations(text: string): readonly string[] {
+  return yamlShapeViolations(text).map(
+    (violation) => `workflow line ${violation.line}: ${violation.message}: ${violation.content}`,
+  );
+}
+
+/**
+ * YAML's indicator characters — the closed set the spec reserves at the start of
+ * a node. This is what makes the allowlist below FINITE: "a plain scalar is
+ * anything that does not begin with one of these" is bounded by the grammar,
+ * not by what a reviewer happened to try.
+ */
+const YAML_INDICATORS: ReadonlySet<string> = new Set([...'-?:,[]{}#&*!|>%@`"\'']);
+
+/** A scalar this reader carries verbatim: absent, a block-scalar header, a quoted scalar, or a plain one. */
+function readableScalar(rest: string): boolean {
+  const value = rest.trim();
+  if (value === '' || value.startsWith('#')) return true;
+  if (/^[|>][+-]?\d*(?:\s+#.*)?$/u.test(value)) return true;
+  if (/^"(?:[^"\\]|\\.)*"(?:\s*#.*)?$/u.test(value)) return true;
+  if (/^'(?:[^']|'')*'(?:\s*#.*)?$/u.test(value)) return true;
+  // A flow SEQUENCE OF PLAIN SCALARS (`branches: [main]`, `shard: [1, 2, 3, 4]`)
+  // hides no structure and is idiomatic Actions YAML — the live workflows prove
+  // it must stay legal, and the sibling rule already refuses a flow sequence
+  // that CONTAINS a mapping. Admitting it here keeps the allowlist agreeing with
+  // that carve-out instead of contradicting it.
+  if (/^\[[^{}[\]:]*\](?:\s*#.*)?$/u.test(value)) return true;
+  const head = value[0]!;
+  // `-1` is a plain scalar; `- x` opens a nested sequence this reader does not carry.
+  if (head === '-') return !/^-\s/u.test(value);
+  return !YAML_INDICATORS.has(head);
+}
+
+/**
+ * One block line the structural reader positively understands: a block-mapping
+ * entry whose colon binds to its key and whose value is a readable scalar, or —
+ * only inside a sequence — a bare scalar entry.
+ *
+ * `run : echo …` fails here because the colon does not bind to the key, which is
+ * exactly the spelling `stepRunCommandOf` cannot see either.
+ */
+function readableBlockLine(value: string, sequenceItem: boolean): boolean {
+  const keyed = /^([A-Za-z0-9_-]+):(?:\s|$)/u.exec(value);
+  if (keyed !== null) return readableScalar(value.slice(keyed[0].length));
+  if (!sequenceItem || !readableScalar(value)) return false;
+  // A bare sequence entry is a SCALAR. An unquoted mapping separator makes it a
+  // MAPPING whose key this reader could not bind — `- run : echo …` is exactly
+  // that, and admitting it as a scalar is the fail-open the review found: the
+  // step carries a `run` the expression scanner never sees.
+  const trimmed = value.trim();
+  return /^["']/u.test(trimmed) || !/:(?:\s|$)/u.test(trimmed);
+}
+
+function yamlShapeViolations(text: string): readonly YamlShapeViolation[] {
+  const violations: YamlShapeViolation[] = [];
+  const lines = text.split('\n');
+  const siblingKeys = new Map<string, Map<string, number>>();
+  const parents: Array<{ readonly indent: number; readonly identity: string }> = [];
+  let scalarIndent: number | null = null;
+  for (let index = 0; index < lines.length; index++) {
+    const original = lines[index]!;
+    const raw = original.replace(/\r$/u, '');
+    const line = index + 1;
+    if (/\r/u.test(raw)) {
+      violations.push({ line, content: raw.trim(), message: 'carriage return is not part of a CRLF line ending' });
+    }
+    if (/^\s*\t/u.test(raw) || /^ *\t/u.test(raw)) {
+      violations.push({ line, content: raw.trim(), message: 'tab indentation is unreadable' });
+    }
+    const body = raw.trim();
+    if (body === '' || body.startsWith('#')) continue;
+    const indent = /^ */u.exec(raw)![0].length;
+    if (scalarIndent !== null) {
+      if (indent > scalarIndent) continue;
+      scalarIndent = null;
+    }
+    while (parents.length > 0 && parents.at(-1)!.indent >= indent) parents.pop();
+    const sequenceItem = /^-\s+/u.test(body);
+    if (sequenceItem) parents.push({ indent, identity: `item:${line}` });
+    const value = body.replace(/^-\s+/u, '');
+    // A flow MAPPING can hide the very keys the structural reader must see
+    // (`uses`, `run`, `with`), so it is refused after ANY key — keyed on the
+    // shape, never on a subset of key names. A fixed key list let
+    // `build: { uses: ... }` past the shape allowlist while the section
+    // reader could not see it either, so both scanners returned clean for
+    // the whole job (Codex review round 4 on PR #197, confirmed P1).
+    //
+    // A flow SEQUENCE OF PLAIN SCALARS (`branches: [main]`,
+    // `shard: [1, 2, 3, 4]`) hides no structure and is idiomatic Actions
+    // YAML — the live workflows prove it must stay legal. A sequence that
+    // CONTAINS a mapping (`steps: [{ run: … }]`) hides structure again and
+    // is refused with the mappings.
+    // The named refusals below are DIAGNOSTICS: a specific message beats a
+    // generic one. The allowlist backstop at the end of the loop speaks only
+    // when none of them claimed this line, so a refused line yields exactly one
+    // violation and the precise message wins wherever there is one.
+    const namedRefusals = violations.length;
+    const flowMapping = /^[{]/u.test(value) || /^[A-Za-z0-9_-]+:\s*[{]/u.test(value);
+    const flowSequence = /^\[/u.test(value) || /^[A-Za-z0-9_-]+:\s*\[/u.test(value);
+    const sequenceHidesMapping = flowSequence && /[{:]/u.test(value.slice(value.indexOf('[') + 1));
+    if ((sequenceItem && /^[{[]/u.test(value)) || flowMapping || sequenceHidesMapping) {
+      violations.push({ line, content: body, message: 'flow collection is outside the structural reader grammar' });
+    }
+    if (/^(?:[A-Za-z0-9_-]+:\s*)?\*[A-Za-z0-9_-]+(?:\s+#.*)?$/u.test(value)) {
+      violations.push({ line, content: body, message: 'YAML aliases are outside the structural reader grammar' });
+    }
+    if (/^<<:/u.test(value)) {
+      violations.push({ line, content: body, message: 'YAML merge keys are outside the structural reader grammar' });
+    }
+    // A quoted mapping key is valid YAML the structural readers cannot see:
+    // stepRunCommandOf and the field walkers recognize only the unquoted
+    // spelling, so admitting the quoted one would let `- "run": …` carry an
+    // expression past every scanner. Fail closed instead (Codex review on
+    // PR #197, confirmed P1).
+    if (/^(?:"[^"]*"|'[^']*')\s*:(?:\s|$)/u.test(value)) {
+      violations.push({
+        line,
+        content: body,
+        message: 'quoted mapping keys are outside the structural reader grammar',
+      });
+    }
+    const keyMatch = /^([A-Za-z0-9_-]+):/u.exec(value);
+    if (keyMatch !== null) {
+      const parent = parents.map((entry) => entry.identity).join('/');
+      const byKey = siblingKeys.get(parent) ?? new Map<string, number>();
+      const key = keyMatch[1]!;
+      const first = byKey.get(key);
+      if (first !== undefined) {
+        violations.push({
+          line,
+          content: body,
+          message: `duplicate key ${key} at one level (first declared on line ${first})`,
+        });
+      } else {
+        byKey.set(key, line);
+        siblingKeys.set(parent, byKey);
+      }
+      if (!sequenceItem) parents.push({ indent, identity: `${line}:${key}` });
+    }
+    // THE INVERSION. Everything above names a SPECIFIC unreadable spelling,
+    // which is a denylist over an open grammar: it admits every form nobody
+    // thought to enumerate. Three review rounds produced three such forms — a
+    // flow mapping under an unlisted key, an `&anchor` declaration, and
+    // `run : cmd` with space before the colon — each with the IDENTICAL failure
+    // mode: this refusal did not recognize the line, the section reader did not
+    // recognize it either, and so both security scanners returned clean for a
+    // job they had never read. Patching the three spellings would have produced
+    // a fourth.
+    //
+    // The final word is therefore an allowlist stated against the READER'S OWN
+    // COMPETENCE: a line the block-mapping reader cannot positively classify is
+    // a violation. The named refusals above survive as diagnostics — a specific
+    // message is more useful than a generic one — but they are no longer the
+    // guard.
+    if (violations.length === namedRefusals && !readableBlockLine(value, sequenceItem)) {
+      violations.push({ line, content: body, message: 'line is outside the structural reader grammar' });
+    }
+    if (/^.*:\s*[|>][-+]?\s*(?:#.*)?$/u.test(value)) scalarIndent = indent;
+  }
+  return violations;
+}
+
+function workflowSectionsForScan(text: string): ReadonlyMap<string, string> {
+  if (topLevelJobsIndex(text.split(/\r?\n/u)) !== -1) return workflowJobSections(text);
+  // Several focused scanner laws deliberately pass a job fragment instead
+  // of a complete workflow. Give those fragments the same structural reader
+  // by supplying only the absent authority wrapper.
+  return workflowJobSections(`jobs:\n${text.replace(/^\r?\n/u, '')}`);
+}
+
+/** The job section of a workflow, from its key to the next job key at the derived job indent. */
+function campaignJobSection(sections: ReadonlyMap<string, string>, job: string): string | null {
+  return sections.get(job) ?? null;
 }
 
 /** The literal campaign invocation — the one command whose step owns the wall-budget env. */
@@ -275,9 +700,11 @@ export const CAMPAIGN_POST_STEP_MARGIN_MS = 900_000;
  * the always() save/upload post-steps the banking design depends on.
  */
 export function scanCampaignWallBudget(text: string, jobs: readonly string[]): readonly string[] {
-  const violations: string[] = [];
+  const violations: string[] = [...unreadableYamlViolations(text)];
+  if (violations.length > 0) return violations;
+  const sections = workflowSectionsForScan(text);
   for (const job of jobs) {
-    const section = campaignJobSection(text, job);
+    const section = campaignJobSection(sections, job);
     if (section === null) {
       violations.push(`${job}: job not found`);
       continue;
@@ -289,41 +716,132 @@ export function scanCampaignWallBudget(text: string, jobs: readonly string[]): r
     // accepted a knob the runner never honors).
     const lines = activeLinesOf(section);
     const jobChildren = childIndicesOf(lines, 0).map((c) => lines[c]!);
-    const timeout = jobChildren
-      .map((line) => /^timeout-minutes: (\d+)$/u.exec(uncommentedScalar(line.body)))
+    const timeoutBody = jobChildren
+      .map((line) => /^timeout-minutes:\s*(.*)$/u.exec(uncommentedScalar(line.body)))
       .find((match) => match !== null);
-    const budget = campaignStepBudgetOf(lines, job.includes('mcdc') ? '--mcdc' : '--mutate');
-    if (timeout === undefined || timeout === null || budget === null) {
-      violations.push(
-        `${job}: job-level timeout-minutes or the campaign step's LITESHIP_CAMPAIGN_WALL_BUDGET_MS missing — the budget contract is unenforceable`,
-      );
+    const timeoutValue = timeoutBody === undefined ? null : unquoteScalar(timeoutBody[1]!);
+    const timeout = timeoutValue !== null && /^\d+$/u.test(timeoutValue) ? timeoutValue : null;
+    const budgets = campaignStepBudgets(lines, job.includes('mcdc') ? '--mcdc' : '--mutate');
+    if (timeoutBody === undefined) {
+      violations.push(`${job}: job-level timeout-minutes is missing — the budget contract is unenforceable`);
       continue;
     }
-    const budgetMs = Number(budget);
-    if (budgetMs < CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS) {
-      violations.push(
-        `${job}: wall budget ${budgetMs}ms cannot absorb a cold probe plus two targets — a cold run folds everything inconclusive and banks nothing`,
-      );
+    if (timeout === null) {
+      violations.push(`${job}: job-level timeout-minutes is present but is not an integer`);
+      continue;
     }
-    // The budget is checked at the per-target BOUNDARY, so a target that
-    // starts just under the budget runs to completion — the ceiling must
-    // reserve a twice-measured in-flight allowance on top of the post-step
-    // margin, or an ordinary ~9.5-minute target started at budget-1ms hands
-    // the kill to GitHub's backstop before the always() save (PR #196
-    // review round 6, confirmed P2).
-    if (budgetMs + 2 * CAMPAIGN_TARGET_EVAL_MS + CAMPAIGN_POST_STEP_MARGIN_MS > Number(timeout[1]) * 60_000) {
-      violations.push(
-        `${job}: wall budget ${budgetMs}ms leaves no in-flight-target and post-step margin under timeout-minutes ${timeout[1]} — the backstop kill skips the always() save`,
-      );
+    if (budgets.length === 0) {
+      violations.push(`${job}: no qualifying campaign step invokes the gates — the budget contract has no subject`);
+      continue;
+    }
+    for (const budget of budgets) {
+      if (!budget.unconditional) {
+        violations.push(
+          `${job}: campaign step at line ${budget.line} is conditional and cannot discharge the budget contract`,
+        );
+      }
+      if (budget.value === null) {
+        violations.push(
+          budget.declared
+            ? `${job}: campaign step at line ${budget.line} declares a non-integer LITESHIP_CAMPAIGN_WALL_BUDGET_MS`
+            : `${job}: campaign step at line ${budget.line} is missing LITESHIP_CAMPAIGN_WALL_BUDGET_MS`,
+        );
+        continue;
+      }
+      const budgetMs = Number(budget.value);
+      if (budgetMs < CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS) {
+        violations.push(
+          `${job}: wall budget ${budgetMs}ms cannot absorb a cold probe plus two targets — a cold run folds everything inconclusive and banks nothing`,
+        );
+      }
+      // The budget is checked at the per-target BOUNDARY, so a target that
+      // starts just under the budget runs to completion — the ceiling must
+      // reserve a twice-measured in-flight allowance on top of the post-step
+      // margin, or an ordinary ~9.5-minute target started at budget-1ms hands
+      // the kill to GitHub's backstop before the always() save (PR #196
+      // review round 6, confirmed P2).
+      if (budgetMs + 2 * CAMPAIGN_TARGET_EVAL_MS + CAMPAIGN_POST_STEP_MARGIN_MS > Number(timeout) * 60_000) {
+        violations.push(
+          `${job}: wall budget ${budgetMs}ms leaves no in-flight-target and post-step margin under timeout-minutes ${timeout} — the backstop kill skips the always() save`,
+        );
+      }
     }
   }
   return violations;
 }
 
 /** Indices of the step bullets under the job's direct-child `steps:` mapping (lines[0] is the job key). */
-function stepIndicesOf(lines: readonly ActiveLine[]): readonly number[] {
-  const stepsIndex = childIndicesOf(lines, 0).find((c) => lines[c]!.body === 'steps:');
+export function stepIndicesOf(lines: readonly ActiveLine[]): readonly number[] {
+  const stepsIndex = childIndicesOf(lines, 0).find((c) => mappingKeyIs(lines[c]!.body, 'steps'));
   return stepsIndex === undefined ? [] : childIndicesOf(lines, stepsIndex);
+}
+
+interface WorkflowUseEntry {
+  readonly line: number;
+  readonly content: string;
+  readonly value: string;
+  readonly lines?: readonly ActiveLine[];
+  readonly stepIndex?: number;
+}
+
+function fieldEntryOf(
+  lines: readonly ActiveLine[],
+  ownerIndex: number,
+  prefix: string,
+): { readonly line: ActiveLine; readonly value: string } | null {
+  const owner = lines[ownerIndex]!;
+  const candidates = [
+    { line: owner, body: owner.body.replace(/^- /u, '') },
+    ...childIndicesOf(lines, ownerIndex).map((index) => ({ line: lines[index]!, body: lines[index]!.body })),
+  ];
+  const field = candidates.find((candidate) => candidate.body.startsWith(prefix));
+  return field === undefined ? null : { line: field.line, value: field.body.slice(prefix.length) };
+}
+
+function workflowUseEntries(text: string): readonly WorkflowUseEntry[] {
+  const sourceLines = text.split('\n').map((line) => line.replace(/\r$/u, ''));
+  const entries: WorkflowUseEntry[] = [];
+  if (topLevelJobsIndex(sourceLines) !== -1) {
+    for (const section of workflowJobSectionRecords(text).values()) {
+      const lines = activeLinesOf(section.text, section.lineOffset);
+      const jobUse = fieldEntryOf(lines, 0, 'uses: ');
+      if (jobUse !== null) {
+        entries.push({ line: jobUse.line.line, content: jobUse.line.content, value: jobUse.value });
+      }
+      for (const stepIndex of stepIndicesOf(lines)) {
+        const use = fieldEntryOf(lines, stepIndex, 'uses: ');
+        if (use !== null) {
+          entries.push({
+            line: use.line.line,
+            content: use.line.content,
+            value: use.value,
+            lines,
+            stepIndex,
+          });
+        }
+      }
+    }
+    return entries;
+  }
+  const hasStepsRoot = sourceLines.some((line) => line.trim() === 'steps:' && /^steps:/u.test(line));
+  const prefix = hasStepsRoot ? 'synthetic:\n' : 'synthetic:\n  steps:\n';
+  const indentation = hasStepsRoot ? '  ' : '    ';
+  const lineOffset = hasStepsRoot ? -1 : -2;
+  const section = `${prefix}${sourceLines.map((line) => `${indentation}${line}`).join('\n')}`;
+  const lines = activeLinesOf(section, lineOffset);
+  for (const stepIndex of stepIndicesOf(lines)) {
+    const use = fieldEntryOf(lines, stepIndex, 'uses: ');
+    if (use !== null) {
+      entries.push({
+        line: use.line.line,
+        content: use.line.content,
+        value: use.value,
+        lines,
+        stepIndex,
+      });
+    }
+  }
+  return entries;
 }
 
 /**
@@ -333,12 +851,7 @@ function stepIndicesOf(lines: readonly ActiveLine[]): readonly number[] {
  * or sub-mapping cannot impersonate the field.
  */
 function stepFieldOf(lines: readonly ActiveLine[], stepIndex: number, prefix: string): string | null {
-  const candidates = [
-    lines[stepIndex]!.body.replace(/^- /u, ''),
-    ...childIndicesOf(lines, stepIndex).map((c) => lines[c]!.body),
-  ];
-  const field = candidates.find((body) => body.startsWith(prefix));
-  return field === undefined ? null : field.slice(prefix.length);
+  return fieldEntryOf(lines, stepIndex, prefix)?.value ?? null;
 }
 
 /**
@@ -347,7 +860,7 @@ function stepFieldOf(lines: readonly ActiveLine[], stepIndex: number, prefix: st
  * invokes the gates — a step merely named after the campaign, or echoing its
  * name, never qualifies (PR #196 review round 5, confirmed P2).
  */
-function stepRunCommandOf(lines: readonly ActiveLine[], stepIndex: number): string {
+export function stepRunCommandOf(lines: readonly ActiveLine[], stepIndex: number): string {
   const bullet = lines[stepIndex]!.body.replace(/^- /u, '');
   if (bullet.startsWith('run:')) {
     const value = bullet.slice(4).trim();
@@ -386,7 +899,25 @@ function scalarLinesUnder(lines: readonly ActiveLine[], index: number, boundaryI
  * An env on any other step never reaches the campaign process, so it must
  * not satisfy the contract (PR #196 review rounds 3 and 5, confirmed P2s).
  */
-function campaignStepBudgetOf(lines: readonly ActiveLine[], modeFlag: string): string | null {
+interface CampaignStepBudget {
+  readonly value: string | null;
+  readonly declared: boolean;
+  readonly line: number;
+  readonly unconditional: boolean;
+}
+
+function stepConditionIsUnconditional(condition: string | null): boolean {
+  if (condition === null) return true;
+  const value = normalizeExpressions(uncommentedScalar(condition));
+  return value === 'always()' || value === '${{ always() }}';
+}
+
+function campaignStepBudgets(lines: readonly ActiveLine[], modeFlag: string): readonly CampaignStepBudget[] {
+  const budgets: CampaignStepBudget[] = [];
+  // GitHub inherits job env into every step. Workflow-level env deliberately
+  // remains outside this reader's admitted grammar.
+  const jobEnvIndex = childIndicesOf(lines, 0).find((child) => mappingKeyIs(lines[child]!.body, 'env'));
+  const jobBudget = campaignBudgetFieldOf(lines, jobEnvIndex);
   for (const stepIndex of stepIndicesOf(lines)) {
     // An INVOCATION, not a mention: only a command line that STARTS with the
     // literal gates invocation qualifies — `echo check gates`, a name, or an
@@ -404,35 +935,59 @@ function campaignStepBudgetOf(lines: readonly ActiveLine[], modeFlag: string): s
           line.split(/\s+/u).includes(modeFlag),
       );
     if (!invokes) continue;
-    const envIndex = childIndicesOf(lines, stepIndex).find((c) => lines[c]!.body === 'env:');
-    if (envIndex === undefined) continue;
-    for (const envChild of childIndicesOf(lines, envIndex)) {
-      const value = /^LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '(\d+)'$/u.exec(uncommentedScalar(lines[envChild]!.body));
-      if (value !== null) return value[1]!;
-    }
+    const envIndex = childIndicesOf(lines, stepIndex).find((c) => mappingKeyIs(lines[c]!.body, 'env'));
+    const stepBudget = campaignBudgetFieldOf(lines, envIndex);
+    const selectedBudget = stepBudget.declared ? stepBudget : jobBudget;
+    budgets.push({
+      value: selectedBudget.value,
+      declared: selectedBudget.declared,
+      line: lines[stepIndex]!.line,
+      unconditional: stepConditionIsUnconditional(stepFieldOf(lines, stepIndex, 'if: ')),
+    });
   }
-  return null;
+  return budgets;
+}
+
+interface CampaignBudgetField {
+  readonly declared: boolean;
+  readonly value: string | null;
+}
+
+function campaignBudgetFieldOf(lines: readonly ActiveLine[], envIndex: number | undefined): CampaignBudgetField {
+  if (envIndex === undefined) return { declared: false, value: null };
+  const body = childIndicesOf(lines, envIndex)
+    .map((child) => lines[child]!.body)
+    .find((line) => line.startsWith('LITESHIP_CAMPAIGN_WALL_BUDGET_MS:'));
+  if (body === undefined) return { declared: false, value: null };
+  const value = unquoteScalar(body.slice('LITESHIP_CAMPAIGN_WALL_BUDGET_MS:'.length));
+  return { declared: true, value: /^\d+$/u.test(value) ? value : null };
 }
 
 /** A checkout step is safe only when it explicitly declines credential persistence. */
 export function scanWorkflowCheckoutCredentials(text: string): readonly WorkflowActionPinViolation[] {
-  const lines = text.split(/\r?\n/u);
+  const unreadable = yamlShapeViolations(text).map((violation) => ({
+    line: violation.line,
+    content: violation.content,
+    reason: 'unreadable-yaml' as const,
+  }));
+  if (unreadable.length > 0) return unreadable;
   const violations: WorkflowActionPinViolation[] = [];
-  for (let index = 0; index < lines.length; index++) {
-    const raw = lines[index]!;
-    const match = /^(\s*)(?:-\s*)?uses:\s*(?:["'])?actions\/checkout@[0-9a-f]{40}(?:["'])?(?:\s+#.*)?$/iu.exec(raw);
-    if (match === null) continue;
-    const indent = match[1]!.length;
+  for (const use of workflowUseEntries(text)) {
+    if (!/^actions\/checkout@[0-9a-f]{40}$/iu.test(unquoteScalar(use.value))) continue;
     let safe = false;
-    for (let cursor = index + 1; cursor < lines.length; cursor++) {
-      const candidate = lines[cursor]!;
-      if (candidate.trim().length === 0) continue;
-      const candidateIndent = /^\s*/u.exec(candidate)![0].length;
-      if (candidateIndent <= indent) break;
-      if (/^\s*persist-credentials:\s*false\s*(?:#.*)?$/u.test(candidate)) safe = true;
+    if (use.lines !== undefined && use.stepIndex !== undefined) {
+      const withIndex = childIndicesOf(use.lines, use.stepIndex).find((index) =>
+        mappingKeyIs(use.lines![index]!.body, 'with'),
+      );
+      if (withIndex !== undefined) {
+        const persisted = childIndicesOf(use.lines, withIndex)
+          .map((index) => use.lines![index]!.body)
+          .find((body) => body.startsWith('persist-credentials:'));
+        safe = persisted !== undefined && uncommentedScalar(persisted.slice('persist-credentials:'.length)) === 'false';
+      }
     }
     if (!safe) {
-      violations.push({ line: index + 1, content: raw.trim(), reason: 'credentials-persisted' });
+      violations.push({ line: use.line, content: use.content, reason: 'credentials-persisted' });
     }
   }
   return violations;

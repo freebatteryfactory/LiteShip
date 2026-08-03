@@ -29,8 +29,7 @@ describe('quantizer smoke', () => {
         [50, 'b'],
       ] as const,
     });
-    const stub = { boundary: b, state: null as any, changes: null as any, evaluate: () => 'a' as const };
-    const t = Transition.for(stub, { '*': { duration: Millis(300) } });
+    const t = Transition.for(b, { '*': { duration: Millis(300) } });
     expect(t.getTransition('a', 'b').duration).toBe(300);
   });
 });

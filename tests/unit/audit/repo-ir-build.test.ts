@@ -23,7 +23,7 @@ import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { buildRepoIR, withRepoRoot, resolveDevopsProfile, type FactOracle } from '@liteship/audit';
 import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
-import { buildCheckGovernanceFacts } from '@liteship/command/host';
+import { checkGovernanceFactsFor } from '@liteship/command/host';
 import {
   PLACEHOLDER_DIGEST,
   litelaunchGauntlet,
@@ -300,7 +300,7 @@ describe('the injection seam — litelaunchGauntlet threads an injected IR', () 
       undefined,
       undefined,
       undefined,
-      buildCheckGovernanceFacts(REPO_ROOT, now),
+      checkGovernanceFactsFor(REPO_ROOT, now),
     );
     expect(result.outcomes.length).toBeGreaterThan(0);
   });

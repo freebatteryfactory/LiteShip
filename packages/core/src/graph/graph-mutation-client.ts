@@ -15,6 +15,12 @@ import type { DocumentGraph } from './document-graph.js';
 import { GraphPatch, type PatchOp } from './graph-patch.js';
 import { sendGraphMutation, type GraphMutationResponse } from './graph-mutation.js';
 
+/**
+ * Conservative client-side ceiling for one mutation request. This is an
+ * explicit finite safety default, not a measurement-derived performance claim.
+ */
+export const GRAPH_MUTATION_DEFAULT_TIMEOUT_MS = 30_000;
+
 /** Configuration for {@link createGraphMutationClient} — endpoint, initial base, and stale-recovery policy. */
 export interface GraphMutationClientOptions {
   /** The mutation endpoint `sendGraphMutation` POSTs to. */
@@ -33,28 +39,54 @@ export interface GraphMutationClientOptions {
   readonly maxStaleRetries?: number;
   /**
    * Abort a submit's request after this many milliseconds, settling it to the channel's
-   * `{ status: 'error' }` shape. Without it, a hung request holds the SERIALIZED submit
-   * queue for as long as the runtime's own fetch deadline (minutes in some browsers) —
-   * every queued submit on this client waits behind it. Default: no client-side timeout.
+   * `{ status: 'error' }` shape. A finite non-negative value overrides
+   * {@link GRAPH_MUTATION_DEFAULT_TIMEOUT_MS}; `undefined`, non-finite, and negative
+   * values use that finite default. An unbounded request is deliberately not expressible:
+   * it would hold every later submit in this client's serialized queue.
    */
   readonly timeoutMs?: number;
 }
 
-/** Wrap a fetch with an AbortController deadline; the abort reason names the timeout. */
-const withTimeout = (impl: typeof fetch, timeoutMs: number | undefined): typeof fetch => {
-  if (timeoutMs === undefined) return impl;
-  return async (input, init) => {
-    const controller = new AbortController();
-    const timer = setTimeout(
-      () => controller.abort(new Error(`mutation request timed out after ${timeoutMs}ms`)),
-      timeoutMs,
-    );
-    try {
-      return await impl(input, { ...init, signal: controller.signal });
-    } finally {
-      clearTimeout(timer);
-    }
-  };
+/**
+ * Run one exchange under a deadline that covers the WHOLE round trip — response
+ * headers AND the body read that follows them.
+ *
+ * The deadline used to wrap `fetch` alone, clearing its timer in a `finally` on
+ * that promise. But `fetch` settles as soon as RESPONSE HEADERS arrive, while
+ * the body is still streaming, so `sendGraphMutation`'s `await response.json()`
+ * ran with no deadline at all. A server that commits a 200 and then wedges —
+ * the ordinary behaviour of a proxy that has lost its upstream — held the caller
+ * forever, and because submits are strictly serialized it held every later
+ * submit in this client's queue with it. That is exactly the unbounded request
+ * {@link GraphMutationClientOptions.timeoutMs} documents as not expressible.
+ *
+ * The abort still fires, so a real `fetch` unwinds its socket rather than
+ * leaking it. The race is what makes the guarantee TOTAL: it settles the
+ * exchange even when the injected transport ignores the signal, which a
+ * conforming one is free to do for a body it has already begun delivering.
+ */
+const sendWithDeadline = async (
+  url: string,
+  patch: GraphPatch,
+  impl: typeof fetch,
+  timeoutMs: number,
+): Promise<GraphMutationResponse> => {
+  const controller = new AbortController();
+  let expire: (reason: Error) => void = () => undefined;
+  const expiry = new Promise<never>((_resolve, reject) => {
+    expire = reject;
+  });
+  const timer = setTimeout(() => {
+    const reason = new Error(`mutation request timed out after ${timeoutMs}ms`);
+    controller.abort(reason);
+    expire(reason);
+  }, timeoutMs);
+  const signalled: typeof fetch = (input, init) => impl(input, { ...init, signal: controller.signal });
+  try {
+    return await Promise.race([sendGraphMutation(url, patch, signalled), expiry]);
+  } finally {
+    clearTimeout(timer);
+  }
 };
 
 /**
@@ -96,7 +128,11 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
  */
 export function createGraphMutationClient(options: GraphMutationClientOptions): GraphMutationClient {
   let currentBase = options.base;
-  const fetchImpl = withTimeout(options.fetchImpl ?? fetch, options.timeoutMs);
+  const timeoutMs =
+    options.timeoutMs !== undefined && Number.isFinite(options.timeoutMs) && options.timeoutMs >= 0
+      ? options.timeoutMs
+      : GRAPH_MUTATION_DEFAULT_TIMEOUT_MS;
+  const fetchImpl = options.fetchImpl ?? fetch;
   const maxStaleRetries = options.maxStaleRetries ?? (options.refreshBase ? 1 : 0);
   let queue: Promise<void> = Promise.resolve();
 
@@ -118,7 +154,7 @@ export function createGraphMutationClient(options: GraphMutationClientOptions): 
         return { status: 'error', message: `propose failed: ${messageOf(error)}` };
       }
 
-      const response = await sendGraphMutation(options.url, patch, fetchImpl);
+      const response = await sendWithDeadline(options.url, patch, fetchImpl, timeoutMs);
       if (response.status === 'applied') {
         currentBase = response.graph;
         return response;

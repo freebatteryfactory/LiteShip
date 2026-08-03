@@ -1,13 +1,110 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { requiredAuthorityJobs } from '../../../scripts/lib/ci-authority.js';
+import {
+  ciAuthorityWorkflowParityViolations,
+  ciSummaryAuthorityParityViolations,
+  deriveReleaseCandidateAuthorityJobs,
+  NON_REGISTRY_RELEASE_AUTHORITY_COMPLEMENT,
+  releaseAuthorityClassViolations,
+  requiredAuthorityJobs,
+} from '../../../scripts/lib/ci-authority.js';
 import { jobNameMatches } from '../../../scripts/lib/ci-evidence-selection.js';
+import { buildCiPlan } from '../../../scripts/ci-plan.js';
+import { CHECK_REGISTRY } from '../../../packages/command/src/checks/registry.js';
 
 const README = readFileSync(resolve(import.meta.dirname, '../../..', 'README.md'), 'utf8');
 const SUPPORT_MATRIX = README.slice(README.indexOf('## Support matrix'), README.indexOf('## Documentation'));
+const CI_YML = readFileSync(resolve(import.meta.dirname, '../../..', '.github/workflows/ci.yml'), 'utf8');
 
 describe('CI authority requirements', () => {
+  it('every closed release-authority class remains selected by the registry', () => {
+    expect(releaseAuthorityClassViolations(CHECK_REGISTRY)).toEqual([]);
+  });
+
+  it('refuses a release-authority class selected away by a registry profile edit', () => {
+    const withoutHermeticRelease = CHECK_REGISTRY.map((check) =>
+      check.id === 'check/hermetic'
+        ? { ...check, profiles: check.profiles.filter((profile) => profile !== 'release') }
+        : check,
+    );
+    expect(releaseAuthorityClassViolations(withoutHermeticRelease)).toEqual([
+      'release authority class hermetic selected away: check/hermetic is not in profile release',
+    ]);
+  });
+
+  it('derives the release candidate from registry-owned execution receipts', () => {
+    const plan = buildCiPlan();
+    expect(plan.executionReceipts.length).toBeGreaterThan(0);
+    expect(deriveReleaseCandidateAuthorityJobs(CHECK_REGISTRY, plan.executionReceipts)).toEqual([
+      'browser-e2e',
+      'format',
+      'macos-browser',
+      'macos-smoke',
+      'rust-wasm-parity',
+      'security-audit',
+      'truth-linux-parallel',
+      'windows-smoke',
+    ]);
+  });
+
+  it('refuses a release-profile check without a named CI execution receipt', () => {
+    const plan = buildCiPlan();
+    const withoutHermetic = plan.executionReceipts.filter((receipt) => receipt.checkId !== 'check/hermetic');
+    expect(() => deriveReleaseCandidateAuthorityJobs(CHECK_REGISTRY, withoutHermetic)).toThrow(
+      'release check check/hermetic has no CI execution receipt',
+    );
+  });
+
+  it('has no non-registry Rust authority after W1.12 qualification is receipted', () => {
+    expect(NON_REGISTRY_RELEASE_AUTHORITY_COMPLEMENT).toEqual([]);
+    expect(CHECK_REGISTRY.find((check) => check.id === 'check/rust-wasm-qualification')).toMatchObject({
+      authority: 'blocking',
+      profiles: expect.arrayContaining(['full', 'release']),
+      platforms: ['linux'],
+    });
+  });
+
+  it('the final shell fold and evidence authority require the same jobs for every event', () => {
+    const cases = [
+      { event: 'pull_request', ref: 'refs/pull/197/merge', browserAffected: false, rustWasmAffected: false },
+      { event: 'pull_request', ref: 'refs/pull/197/merge', browserAffected: true, rustWasmAffected: true },
+      { event: 'push', ref: 'refs/heads/main', browserAffected: false, rustWasmAffected: false },
+      { event: 'schedule', ref: 'refs/heads/main', browserAffected: false, rustWasmAffected: false },
+      { event: 'workflow_dispatch', ref: 'refs/heads/main', browserAffected: false, rustWasmAffected: false },
+      { event: 'workflow_call', ref: 'refs/heads/main', browserAffected: false, rustWasmAffected: false },
+      { event: 'workflow_call', ref: 'refs/tags/v0.19.0', browserAffected: false, rustWasmAffected: false },
+    ] as const;
+    for (const input of cases) {
+      expect(ciAuthorityWorkflowParityViolations(CI_YML, input), `${input.event} ${input.ref}`).toEqual([]);
+    }
+  });
+
+  it('reports an authority omitted by a synthetic summary fold', () => {
+    const jobs = [
+      'browser-e2e',
+      'format',
+      'macos-browser',
+      'macos-smoke',
+      'rust-wasm-parity',
+      'security-audit',
+      'truth-linux-parallel',
+      // `windows-smoke` deliberately omitted: this is the synthetic tooth.
+      'evidence-admission',
+    ] as const;
+    const env = jobs.map((job, index) => `          JOB_${index}: \${{ needs.${job}.result }}`).join('\n');
+    const tests = jobs.map((_job, index) => `          test "$JOB_${index}" = "success"`).join('\n');
+    const workflow = `jobs:\n  ci-summary:\n    steps:\n      - name: fold\n        env:\n${env}\n        run: |\n${tests}\n`;
+    expect(
+      ciSummaryAuthorityParityViolations(workflow, {
+        event: 'push',
+        ref: 'refs/heads/main',
+        browserAffected: false,
+        rustWasmAffected: false,
+      }),
+    ).toEqual(['ci-summary is missing required authority windows-smoke']);
+  });
+
   it('requires the full release candidate on every PR while retaining affected fast feedback', () => {
     expect(
       requiredAuthorityJobs({
@@ -22,6 +119,7 @@ describe('CI authority requirements', () => {
       'macos-browser',
       'macos-smoke',
       'pr-affected',
+      'pr-affected-evidence',
       'pr-windows-affected',
       'rust-wasm-parity',
       'security-audit',

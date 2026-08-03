@@ -46,7 +46,7 @@ export function buildAffectedResultEvidence(
   if (input.steps.length === 0) throw new TypeError('affected result requires at least one step');
 
   const seen = new Set<string>();
-  const steps = input.steps.map((step) => {
+  const steps: AffectedResultEvidence['steps'] = input.steps.map((step) => {
     if (!/^[a-z0-9][a-z0-9-]*$/u.test(step.id) || seen.has(step.id)) {
       throw new TypeError(`affected result step id is invalid or duplicated: ${step.id}`);
     }

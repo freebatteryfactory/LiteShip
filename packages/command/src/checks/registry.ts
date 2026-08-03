@@ -30,6 +30,14 @@ const PACKAGE_TS_GLOB = 'packages/**/*.ts';
 const TESTS_GLOB = 'tests/**';
 /** Repo scripts — the covered bytes of the script-owned gates. */
 const SCRIPTS_GLOB = 'scripts/**/*.ts';
+/** Published scaffold, bin, and executable config subjects enrolled by W1.11. */
+const W111_TOOLING_INPUTS = [
+  'packages/cli/fragments/**',
+  'packages/create-liteship/bin/*.{js,mjs,cjs}',
+  'packages/liteship/bin/*.{js,mjs,cjs}',
+  '{eslint,liteship,vite}.config.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+  'vitest*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+] as const;
 
 /** Configuration files read transitively by Prettier for the root format script. */
 const FORMAT_CONFIG_INPUTS = ['.prettierrc', '.prettierignore', '.editorconfig'] as const;
@@ -41,6 +49,14 @@ const TYPESCRIPT_CONFIG_INPUTS = [
   'packages/*/package.json',
   'pnpm-workspace.yaml',
   'scripts/native-tsc.ts',
+] as const;
+
+/** Canonical and projected inputs consumed by W1.11's shipped-source typecheck. */
+const SHIPPED_SOURCE_TYPECHECK_INPUTS = [
+  'examples/**',
+  'packages/create-liteship/templates/**',
+  'packages/cli/fragments/**',
+  'packages/*/bin/**',
 ] as const;
 
 /**
@@ -55,7 +71,7 @@ const TYPEDOC_FAST_INPUTS = [
   'packages/*/package.json',
   'scripts/docs-input-fingerprint.ts',
   'scripts/lib/typedoc-input-fingerprint.ts',
-  'docs/api/.typedoc-input-fingerprint.json',
+  'traceability/typedoc-input-fingerprint.json',
 ] as const;
 
 /** Fields shared by repository rows before the repository context is projected. */
@@ -142,10 +158,10 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   {
     id: 'check/format',
     title: 'Prettier formatting',
-    claim: 'Every source, test, and script file the linter sweeps is Prettier-clean.',
+    claim: 'Every Prettier-supported package, fragment, bin, config, test, and script source is formatted.',
     owner: '.prettierrc',
     command: 'pnpm run format:check',
-    inputs: [SRC_GLOB, TESTS_GLOB, SCRIPTS_GLOB, ...FORMAT_CONFIG_INPUTS],
+    inputs: [SRC_GLOB, TESTS_GLOB, SCRIPTS_GLOB, ...W111_TOOLING_INPUTS, ...FORMAT_CONFIG_INPUTS],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 60_000,
@@ -153,6 +169,82 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     authority: 'blocking',
     negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
     remediation: "run 'pnpm run format' to auto-fix, then re-run.",
+  },
+  {
+    id: 'check/rustfmt',
+    title: 'Pinned Rust formatting',
+    claim:
+      'Every Rust source under every independently discovered crates/* Cargo subject is formatted by rust-toolchain.toml rustfmt.',
+    owner: 'scripts/lib/rustfmt-contract.ts',
+    command: 'pnpm run rustfmt:check',
+    inputs: [
+      'rust-toolchain.toml',
+      'crates/*/Cargo.toml',
+      'crates/*/Cargo.lock',
+      'crates/**/*.rs',
+      'scripts/rustfmt-check.ts',
+      'scripts/lib/rustfmt-contract.ts',
+      'scripts/lib/devcontainer-pins.ts',
+      'packages/command/src/host/launcher.ts',
+    ],
+    profiles: ['full', 'release'],
+    platforms: ['linux', 'darwin', 'win32'],
+    timeoutMs: 60_000,
+    cache: 'content-addressed',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/devops/rustfmt-contract.test.ts',
+    remediation: "run 'pnpm exec tsx scripts/rustfmt-check.ts --write' with the repository toolchain, then re-run.",
+  },
+  {
+    id: 'check/rust-wasm-qualification',
+    title: 'Pinned Rust and WASM qualification',
+    claim:
+      'Every discovered crate passes host Clippy and builds for every committed WASM target with default and each optional feature set.',
+    owner: 'scripts/lib/rust-wasm-qualification.ts',
+    command: 'pnpm run rust:qualify',
+    inputs: [
+      'rust-toolchain.toml',
+      'crates/*/Cargo.toml',
+      'crates/*/Cargo.lock',
+      'crates/**/*.rs',
+      'scripts/rust-wasm-qualification.ts',
+      'scripts/lib/rust-wasm-qualification.ts',
+      'scripts/lib/devcontainer-pins.ts',
+      'packages/command/src/host/launcher.ts',
+    ],
+    profiles: ['full', 'release'],
+    platforms: ['linux'],
+    timeoutMs: 180_000,
+    cache: 'content-addressed',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/devops/rust-wasm-qualification.test.ts',
+    remediation: 'fix the named pinned Clippy or WASM build arm, then re-run.',
+  },
+  {
+    id: 'check/cargo-audit',
+    title: 'Pinned Rust dependency advisory audit',
+    claim:
+      'Every independently discovered crates/* Cargo.lock is accepted by the exact qualified cargo-audit version with zero vulnerabilities or denied dependency warnings.',
+    owner: 'scripts/lib/cargo-audit-contract.ts',
+    command: 'pnpm run cargo:audit',
+    inputs: [
+      'crates/*/Cargo.toml',
+      'crates/*/Cargo.lock',
+      'scripts/cargo-audit.ts',
+      'scripts/lib/cargo-audit-contract.ts',
+      'scripts/lib/devcontainer-pins.ts',
+      'packages/command/src/host/launcher.ts',
+      'package.json',
+      '.github/workflows/ci.yml',
+    ],
+    profiles: ['full', 'release'],
+    platforms: ['linux'],
+    timeoutMs: 300_000,
+    cache: 'none',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/devops/cargo-audit-contract.test.ts',
+    remediation:
+      'inspect reports/cargo-audit.json and reports/cargo-audit/, then update the vulnerable Rust dependency and adjacent Cargo.lock.',
   },
   {
     id: 'check/lint-structural',
@@ -164,6 +256,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
       PACKAGE_TS_GLOB,
       TESTS_GLOB,
       SCRIPTS_GLOB,
+      ...W111_TOOLING_INPUTS,
       'sgconfig.yml',
       'sgrules/**/*.yml',
       'vitest.config.ts',
@@ -203,7 +296,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     claim: 'Every governed security override and resolved lockfile instance meets its fixed minimum version.',
     owner: 'scripts/lib/security-audit-contract.ts',
     command: 'pnpm run security:minimum',
-    inputs: ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml'],
+    inputs: ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'scripts/lib/security-audit-contract.ts'],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 30_000,
@@ -215,10 +308,17 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   {
     id: 'check/security-audit',
     title: 'Live package-registry vulnerability audit',
-    claim: 'The current lockfile has no high- or critical-severity advisory in the live pnpm registry receipt.',
+    claim:
+      'The current lockfile has no high- or critical-severity advisory in the live pnpm registry receipt, and every module the receipt reports at those severities carries a declared security minimum at or above the floor that closes it.',
     owner: 'scripts/security-audit.ts',
     command: 'pnpm run security:audit',
-    inputs: ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', '.npmrc'],
+    inputs: [
+      'package.json',
+      'pnpm-lock.yaml',
+      'pnpm-workspace.yaml',
+      '.npmrc',
+      'scripts/lib/security-audit-contract.ts',
+    ],
     profiles: ['full', 'release'],
     platforms: ['linux'],
     timeoutMs: 120_000,
@@ -294,10 +394,10 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   {
     id: 'check/lint',
     title: 'ESLint (max-warnings 0)',
-    claim: 'Package/test/script source passes ESLint with zero warnings.',
+    claim: 'Package, fragment, bin, config, test, and script source passes ESLint with zero warnings.',
     owner: 'eslint.config.js',
     command: 'pnpm run lint',
-    inputs: [SRC_GLOB, TESTS_GLOB, SCRIPTS_GLOB, 'eslint.config.js'],
+    inputs: [SRC_GLOB, TESTS_GLOB, SCRIPTS_GLOB, ...W111_TOOLING_INPUTS, 'eslint.config.js'],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 180_000,
@@ -309,7 +409,8 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   {
     id: 'check/typecheck',
     title: 'TypeScript typecheck',
-    claim: 'The package, scripts, and tests projects all typecheck through the bounded native TypeScript 7 compiler.',
+    claim:
+      'The package, scripts, tests, and context-correct shipped-source projects all typecheck through the bounded native TypeScript 7 compiler.',
     owner: 'tsconfig.json',
     command: 'pnpm run typecheck',
     inputs: [
@@ -319,6 +420,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
       'package.json',
       'packages/_spine/**/*.d.ts',
       ...TYPESCRIPT_CONFIG_INPUTS,
+      ...SHIPPED_SOURCE_TYPECHECK_INPUTS,
     ],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
@@ -326,7 +428,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     cache: 'content-addressed',
     authority: 'blocking',
     negativeControl: 'tests/unit/devops/gate-canaries.test.ts',
-    remediation: 'fix the native TypeScript errors in the build, scripts, and tests projects.',
+    remediation: 'fix the native TypeScript errors in the build, scripts, tests, or shipped-source contexts.',
   },
   {
     id: 'check/typescript-toolchain-qualification',
@@ -374,14 +476,15 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     claim: 'The committed API docs match the current public TSDoc surface.',
     owner: 'scripts/docs-check.ts',
     command: 'pnpm run docs:check',
-    inputs: [SRC_GLOB, 'typedoc.json', 'docs/api/**'],
+    inputs: [SRC_GLOB, 'typedoc.json', 'traceability/typedoc-input-fingerprint.json'],
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 240_000,
     cache: 'none',
     authority: 'blocking',
     negativeControl: 'tests/unit/devops/typedoc-input-fingerprint.test.ts',
-    remediation: "run 'pnpm run docs:build' and commit docs/api/ if you touched a public TSDoc surface.",
+    remediation:
+      "run 'pnpm run docs:build' if you touched a public TSDoc surface (docs/api is a build artifact, not committed).",
   },
   {
     id: 'check/assurance-density',
@@ -390,7 +493,13 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
       'Authored test and benchmark evidence per source LOC never decreases for any package while progressing toward 10:1.',
     owner: 'scripts/assurance-inventory.ts',
     command: 'pnpm run assurance:gate',
-    inputs: [PACKAGE_TS_GLOB, TESTS_GLOB, 'scripts/lib/assurance-inventory.ts', 'scripts/assurance-ratchet.json'],
+    inputs: [
+      PACKAGE_TS_GLOB,
+      TESTS_GLOB,
+      'scripts/assurance-inventory.ts',
+      'scripts/lib/assurance-inventory.ts',
+      'scripts/assurance-ratchet.json',
+    ],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 30_000,
@@ -406,7 +515,12 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     claim: 'Deterministic tests add no new real-time waits, ambient clocks, or source-byte coupling.',
     owner: 'scripts/test-constitution.ts',
     command: 'pnpm run test:constitution',
-    inputs: [TESTS_GLOB, 'scripts/lib/test-constitution.ts', 'scripts/test-constitution-ratchet.json'],
+    inputs: [
+      TESTS_GLOB,
+      'scripts/test-constitution.ts',
+      'scripts/lib/test-constitution.ts',
+      'scripts/test-constitution-ratchet.json',
+    ],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 30_000,

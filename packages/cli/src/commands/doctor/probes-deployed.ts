@@ -6,9 +6,9 @@
  *
  * SSRF hardening: the probe only ever fetches public HTTPS origins. The URL
  * (and every redirect hop — redirects are followed MANUALLY so each hop is
- * re-validated) must be `https:` and must not name a loopback / private /
- * link-local host. Each hop resolves DNS, rejects any private/reserved address
- * in the A/AAAA set (fail-closed), then tries each validated public address via
+ * re-validated) must be `https:` and must not name a local-only host. Each hop
+ * resolves DNS, admits only parsed global-unicast addresses in the A/AAAA set
+ * (fail-closed), then tries each validated public address via
  * a pinned undici dispatcher (closing active DNS rebinding TOCTOU).
  *
  * @module
@@ -22,112 +22,174 @@ import type { DoctorCheck } from './types.js';
 const MAX_REDIRECT_HOPS = 5;
 const FETCH_TIMEOUT_MS = 10_000;
 
-const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
-
-/** True when dotted-quad `a.b.c.d` is loopback / private / link-local / CGNAT. */
-function isBlockedIpv4(a: number, b: number, _c: number, _d: number): boolean {
-  if (a === 0 || a === 10 || a === 127) return true;
-  if (a === 169 && b === 254) return true;
-  if (a === 172 && b >= 16 && b <= 31) return true;
-  if (a === 192 && b === 168) return true;
-  if (a === 100 && b >= 64 && b <= 127) return true;
-  // 198.18.0.0/15 — benchmarking (RFC 2544); not a public probe target.
-  if (a === 198 && b >= 18 && b <= 19) return true;
-  // 224.0.0.0/4 multicast and 240.0.0.0/4 reserved — align with runtime-url SSRF guard.
-  if (a >= 224) return true;
-  return false;
-}
-
-/** Extract an embedded IPv4 from a hex/dotted two-hextet tail (`a9fe:a9fe` / `127.0.0.1`). */
-function ipv4FromEmbeddedTail(tail: string): string | null {
-  const dotted = IPV4_RE.exec(tail);
-  if (dotted) {
-    return tail;
-  }
-  const parts = tail.split(':').filter(Boolean);
-  if (parts.length !== 2) {
-    return null;
-  }
-  const high = Number.parseInt(parts[0]!, 16);
-  const low = Number.parseInt(parts[1]!, 16);
-  if (!Number.isFinite(high) || !Number.isFinite(low) || high < 0 || low < 0 || high > 0xffff || low > 0xffff) {
-    return null;
-  }
-  return `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`;
-}
-
-/** True when a blocked IPv4 is embedded in a v4-mapped or IPv4-compatible IPv6 host. */
-function isBlockedEmbeddedIpv4(host: string): boolean {
-  if (host.startsWith('::ffff:')) {
-    const embedded = ipv4FromEmbeddedTail(host.slice('::ffff:'.length));
-    if (embedded !== null) {
-      const octets = IPV4_RE.exec(embedded);
-      if (octets) {
-        return isBlockedIpv4(Number(octets[1]), Number(octets[2]), Number(octets[3]), Number(octets[4]));
-      }
-    }
-    // Unparseable v4-mapped — never a canonical public probe target.
-    return true;
-  }
-
-  // Deprecated IPv4-compatible form (`::7f00:1`, `::a9fe:a9fe`) — URL normalizes
-  // `::127.0.0.1` to this shape. Fail-closed when the embedded v4 is blocked.
-  if (host.startsWith('::') && host !== '::' && host !== '::1' && !host.startsWith('::ffff:')) {
-    const embedded = ipv4FromEmbeddedTail(host.slice(2));
-    if (embedded !== null) {
-      const octets = IPV4_RE.exec(embedded);
-      if (octets) {
-        return isBlockedIpv4(Number(octets[1]), Number(octets[2]), Number(octets[3]), Number(octets[4]));
-      }
-    }
-  }
-
-  return false;
+interface SpecialPurposeAddressBlock {
+  readonly cidr: string;
+  readonly name: string;
 }
 
 /**
- * True when an IPv6 literal is a non-public special-use range not covered by the
- * ULA/link-local/loopback checks above — multicast (ff00::/8), deprecated
- * site-local (fec0::/10), documentation (2001:db8::/32), 6to4 (2002::/16).
- * Prefix heuristics on the normalized host string (DNS verbatim form).
+ * THE CLASS RULE — ANCHOR: every current IANA IPv4/IPv6 special-purpose
+ * registry entry. ALLOWLIST: only a parsed address in the global-unicast
+ * allocation and outside every entry below may be dialled. The former
+ * denylist lost several ranges at once; adding bad-address spellings can
+ * never make an address admissible.
+ *
+ * Embedded authority: IANA IPv4/IPv6 Special-Purpose Address Registries,
+ * last updated 2025-10-09. A registry row is retained even when it overlaps a
+ * broader row, so the test can prove that this embedded inventory stays live.
  */
-function isBlockedIpv6SpecialUse(host: string): boolean {
-  const lower = host.toLowerCase();
-  if (/^ff/i.test(lower)) return true;
-  if (/^fec[0-3]/i.test(lower)) return true;
-  if (/^2001:0?db8:/i.test(lower)) return true;
-  if (/^2002:/i.test(lower)) return true;
-  if (/^100:/i.test(lower)) return true;
-  return false;
+export const SPECIAL_PURPOSE_ADDRESS_BLOCKS = [
+  { cidr: '0.0.0.0/8', name: 'This network' },
+  { cidr: '0.0.0.0/32', name: 'This host on this network' },
+  { cidr: '10.0.0.0/8', name: 'Private-Use' },
+  { cidr: '100.64.0.0/10', name: 'Shared Address Space' },
+  { cidr: '127.0.0.0/8', name: 'Loopback' },
+  { cidr: '169.254.0.0/16', name: 'Link Local' },
+  { cidr: '172.16.0.0/12', name: 'Private-Use' },
+  { cidr: '192.0.0.0/24', name: 'IETF Protocol Assignments' },
+  { cidr: '192.0.0.0/29', name: 'IPv4 Service Continuity Prefix' },
+  { cidr: '192.0.0.8/32', name: 'IPv4 dummy address' },
+  { cidr: '192.0.0.9/32', name: 'Port Control Protocol Anycast' },
+  { cidr: '192.0.0.10/32', name: 'Traversal Using Relays around NAT Anycast' },
+  { cidr: '192.0.0.170/32', name: 'NAT64/DNS64 Discovery' },
+  { cidr: '192.0.0.171/32', name: 'NAT64/DNS64 Discovery' },
+  { cidr: '192.0.2.0/24', name: 'Documentation (TEST-NET-1)' },
+  { cidr: '192.31.196.0/24', name: 'AS112-v4' },
+  { cidr: '192.52.193.0/24', name: 'AMT' },
+  { cidr: '192.88.99.0/24', name: 'Deprecated (6to4 Relay Anycast)' },
+  { cidr: '192.88.99.2/32', name: '6a44-relay anycast address' },
+  { cidr: '192.168.0.0/16', name: 'Private-Use' },
+  { cidr: '192.175.48.0/24', name: 'Direct Delegation AS112 Service' },
+  { cidr: '198.18.0.0/15', name: 'Benchmarking' },
+  { cidr: '198.51.100.0/24', name: 'Documentation (TEST-NET-2)' },
+  { cidr: '203.0.113.0/24', name: 'Documentation (TEST-NET-3)' },
+  { cidr: '240.0.0.0/4', name: 'Reserved' },
+  { cidr: '255.255.255.255/32', name: 'Limited Broadcast' },
+  { cidr: '::1/128', name: 'Loopback Address' },
+  { cidr: '::/128', name: 'Unspecified Address' },
+  { cidr: '::ffff:0:0/96', name: 'IPv4-mapped Address' },
+  { cidr: '64:ff9b::/96', name: 'IPv4-IPv6 Translation' },
+  { cidr: '64:ff9b:1::/48', name: 'IPv4-IPv6 Translation' },
+  { cidr: '100::/64', name: 'Discard-Only Address Block' },
+  { cidr: '100:0:0:1::/64', name: 'Dummy IPv6 Prefix' },
+  { cidr: '2001::/23', name: 'IETF Protocol Assignments' },
+  { cidr: '2001::/32', name: 'TEREDO' },
+  { cidr: '2001:1::1/128', name: 'Port Control Protocol Anycast' },
+  { cidr: '2001:1::2/128', name: 'Traversal Using Relays around NAT Anycast' },
+  { cidr: '2001:1::3/128', name: 'DNS-SD Service Registration Protocol Anycast' },
+  { cidr: '2001:2::/48', name: 'Benchmarking' },
+  { cidr: '2001:3::/32', name: 'AMT' },
+  { cidr: '2001:4:112::/48', name: 'AS112-v6' },
+  { cidr: '2001:10::/28', name: 'Deprecated (previously ORCHID)' },
+  { cidr: '2001:20::/28', name: 'ORCHIDv2' },
+  { cidr: '2001:30::/28', name: 'Drone Remote ID Protocol Entity Tags Prefix' },
+  { cidr: '2001:db8::/32', name: 'Documentation' },
+  { cidr: '2002::/16', name: '6to4' },
+  { cidr: '2620:4f:8000::/48', name: 'Direct Delegation AS112 Service' },
+  { cidr: '3fff::/20', name: 'Documentation' },
+  { cidr: '5f00::/16', name: 'Segment Routing SIDs' },
+  { cidr: 'fc00::/7', name: 'Unique-Local' },
+  { cidr: 'fe80::/10', name: 'Link-Local Unicast' },
+] as const satisfies readonly SpecialPurposeAddressBlock[];
+
+const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+
+function parseIpv4Address(address: string): readonly [number, number, number, number] | null {
+  const match = IPV4_RE.exec(address);
+  if (!match) return null;
+  const octets = [Number(match[1]), Number(match[2]), Number(match[3]), Number(match[4])] as const;
+  return octets.every((octet) => Number.isInteger(octet) && octet >= 0 && octet <= 255) ? octets : null;
 }
 
-/** True when `hostname` is a loopback / private / link-local / special-use host. */
-function isBlockedHostname(hostname: string): boolean {
-  const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
-  if (host === '' || host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local')) {
-    return true;
-  }
-
-  const v4 = IPV4_RE.exec(host);
-  if (v4) {
-    return isBlockedIpv4(Number(v4[1]), Number(v4[2]), Number(v4[3]), Number(v4[4]));
-  }
-
-  if (host.includes(':')) {
-    if (host === '::' || host === '::1') return true;
-    if (host.startsWith('fc') || host.startsWith('fd')) return true;
-    if (/^fe[89ab]/.test(host)) return true;
-    if (isBlockedIpv6SpecialUse(host)) return true;
-    if (isBlockedEmbeddedIpv4(host)) return true;
-  }
-
-  return false;
+function ipv4Value(octets: readonly [number, number, number, number]): number {
+  return ((octets[0] * 256 + octets[1]) * 256 + octets[2]) * 256 + octets[3];
 }
 
-/** True when the hostname is a literal IP (v4 or v6) — skip DNS, use string guard only. */
+function ipv6SideWords(side: string): readonly number[] | null {
+  if (side === '') return [];
+  const tokens = side.split(':');
+  if (tokens.some((token) => token === '')) return null;
+  const words: number[] = [];
+  for (const [index, token] of tokens.entries()) {
+    if (token.includes('.')) {
+      if (index !== tokens.length - 1) return null;
+      const octets = parseIpv4Address(token);
+      if (octets === null) return null;
+      words.push(octets[0] * 256 + octets[1], octets[2] * 256 + octets[3]);
+      continue;
+    }
+    if (!/^[0-9a-f]{1,4}$/iu.test(token)) return null;
+    words.push(Number.parseInt(token, 16));
+  }
+  return words;
+}
+
+function parseIpv6Address(address: string): readonly number[] | null {
+  const bare = address.toLowerCase().replace(/^\[|\]$/g, '');
+  if (bare.includes('%')) return null;
+  const compression = bare.indexOf('::');
+  if (compression !== -1 && compression !== bare.lastIndexOf('::')) return null;
+  const leftText = compression === -1 ? bare : bare.slice(0, compression);
+  const rightText = compression === -1 ? '' : bare.slice(compression + 2);
+  const left = ipv6SideWords(leftText);
+  const right = ipv6SideWords(rightText);
+  if (left === null || right === null) return null;
+  if (compression === -1) return left.length === 8 ? left : null;
+  const omitted = 8 - left.length - right.length;
+  return omitted > 0 ? [...left, ...Array.from({ length: omitted }, () => 0), ...right] : null;
+}
+
+function addressInCidr(address: string, cidr: string): boolean {
+  const separator = cidr.lastIndexOf('/');
+  const network = cidr.slice(0, separator);
+  const prefix = Number(cidr.slice(separator + 1));
+  const addressV4 = parseIpv4Address(address);
+  const networkV4 = parseIpv4Address(network);
+  if (addressV4 !== null || networkV4 !== null) {
+    if (addressV4 === null || networkV4 === null || !Number.isInteger(prefix) || prefix < 0 || prefix > 32)
+      return false;
+    const divisor = 2 ** (32 - prefix);
+    return Math.floor(ipv4Value(addressV4) / divisor) === Math.floor(ipv4Value(networkV4) / divisor);
+  }
+
+  const addressV6 = parseIpv6Address(address);
+  const networkV6 = parseIpv6Address(network);
+  if (addressV6 === null || networkV6 === null || !Number.isInteger(prefix) || prefix < 0 || prefix > 128) return false;
+  const wholeWords = Math.floor(prefix / 16);
+  for (let index = 0; index < wholeWords; index += 1) {
+    if (addressV6[index] !== networkV6[index]) return false;
+  }
+  const remainingBits = prefix % 16;
+  if (remainingBits === 0) return true;
+  const divisor = 2 ** (16 - remainingBits);
+  return Math.floor(addressV6[wholeWords]! / divisor) === Math.floor(networkV6[wholeWords]! / divisor);
+}
+
+/** True only for a parsed, globally routable unicast address. */
+export function isAdmissiblePublicAddress(address: string): boolean {
+  const bare = address.toLowerCase().replace(/^\[|\]$/g, '');
+  const ipv4 = parseIpv4Address(bare);
+  if (ipv4 !== null) {
+    // IPv4 multicast is not in the special-purpose registry, but it is never unicast.
+    if (ipv4[0] >= 224) return false;
+  } else {
+    const ipv6 = parseIpv6Address(bare);
+    if (ipv6 === null) return false;
+    // Current IANA global-unicast allocation is 2000::/3; ff00::/8 multicast
+    // and every other unallocated family fail closed before the table check.
+    if ((ipv6[0]! & 0xe000) !== 0x2000) return false;
+  }
+  return !SPECIAL_PURPOSE_ADDRESS_BLOCKS.some(({ cidr }) => addressInCidr(bare, cidr));
+}
+
 function isLiteralIpHostname(hostname: string): boolean {
-  const host = hostname.replace(/^\[|\]$/g, '');
-  return IPV4_RE.test(host) || host.includes(':');
+  const bare = hostname.replace(/^\[|\]$/g, '');
+  return parseIpv4Address(bare) !== null || parseIpv6Address(bare) !== null;
+}
+
+function isLocalHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  return host === '' || host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local');
 }
 
 interface PinnedAddress {
@@ -148,7 +210,7 @@ async function resolvePinnedPublicAddresses(hostname: string): Promise<ResolvePi
   const bare = hostname.replace(/^\[|\]$/g, '');
 
   if (isLiteralIpHostname(hostname)) {
-    if (isBlockedHostname(bare)) return { _tag: 'blocked' };
+    if (!isAdmissiblePublicAddress(bare)) return { _tag: 'blocked' };
     return { _tag: 'ok', pins: [{ address: bare, family: bare.includes(':') ? 6 : 4 }] };
   }
 
@@ -163,19 +225,18 @@ async function resolvePinnedPublicAddresses(hostname: string): Promise<ResolvePi
 
   if (records.length === 0) return { _tag: 'blocked' };
 
+  const pins: PinnedAddress[] = [];
   for (const record of records) {
-    if (isBlockedHostname(record.address)) {
+    if (record.family !== 4 && record.family !== 6) return { _tag: 'blocked' };
+    const familyMatchesAddress =
+      record.family === 4 ? parseIpv4Address(record.address) !== null : parseIpv6Address(record.address) !== null;
+    if (!familyMatchesAddress || !isAdmissiblePublicAddress(record.address)) {
       return { _tag: 'blocked' };
     }
+    pins.push({ address: record.address, family: record.family });
   }
 
-  return {
-    _tag: 'ok',
-    pins: records.map((record) => ({
-      address: record.address,
-      family: record.family === 6 ? 6 : 4,
-    })),
-  };
+  return { _tag: 'ok', pins };
 }
 
 /** undici dispatcher that connects only to a pre-validated address (DNS rebinding guard). */
@@ -216,8 +277,11 @@ function rejectedDeployedUrl(url: URL): string | null {
   if (url.protocol !== 'https:') {
     return `Refusing to probe non-HTTPS URL ${url.href} — deployed probes only fetch public https:// origins`;
   }
-  if (isBlockedHostname(url.hostname)) {
-    return `Refusing to probe ${url.href} — host resolves to a loopback/private/link-local range (SSRF guard)`;
+  if (
+    isLocalHostname(url.hostname) ||
+    (isLiteralIpHostname(url.hostname) && !isAdmissiblePublicAddress(url.hostname))
+  ) {
+    return `Refusing to probe ${url.href} — host is not a public global-unicast address (SSRF guard)`;
   }
   return null;
 }
@@ -311,7 +375,7 @@ export async function probeDeployedSite(url: string): Promise<readonly DoctorChe
       }
       if (resolved._tag === 'blocked') {
         return refusedCheck(
-          `Refusing to probe ${current.href} — DNS resolution returned a loopback/private/link-local address (SSRF guard)`,
+          `Refusing to probe ${current.href} — DNS resolution returned a loopback/private/link-local/special-use or unparseable address (SSRF guard)`,
         );
       }
 

@@ -1,6 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { remotionAdapterCapsule } from '@liteship/remotion';
 
+const frame = (index: number) => ({
+  frame: index,
+  timestamp: index * 1000,
+  progress: index / 2,
+  state: null,
+});
+
+function invokeWithUntrustedOutput(check: (...args: never[]) => boolean, input: unknown, output: unknown): boolean {
+  return Reflect.apply(check, undefined, [input, output]);
+}
+
 describe('remotionAdapterCapsule', () => {
   it('declares a siteAdapter bridging Remotion composition API to liteship VideoFrameOutput', () => {
     expect(remotionAdapterCapsule._kind).toBe('siteAdapter');
@@ -23,11 +34,11 @@ describe('remotionAdapterCapsule', () => {
     const inv = remotionAdapterCapsule.invariants.find((i) => i.name === 'frame-indices-are-contiguous');
     expect(inv).toBeDefined();
     // Contiguous: ok.
-    expect(inv!.check({ totalFrames: 3 }, [{ frame: 0 }, { frame: 1 }, { frame: 2 }])).toBe(true);
+    expect(inv!.check({ totalFrames: 3 }, [frame(0), frame(1), frame(2)])).toBe(true);
     // Non-contiguous: fail.
-    expect(inv!.check({ totalFrames: 3 }, [{ frame: 0 }, { frame: 2 }, { frame: 1 }])).toBe(false);
+    expect(inv!.check({ totalFrames: 3 }, [frame(0), frame(2), frame(1)])).toBe(false);
     // Non-array: fail.
-    expect(inv!.check({ totalFrames: 3 }, { not: 'an array' })).toBe(false);
+    expect(invokeWithUntrustedOutput(inv!.check, { totalFrames: 3 }, { not: 'an array' })).toBe(false);
     // Empty array is trivially contiguous.
     expect(inv!.check({ totalFrames: 0 }, [])).toBe(true);
   });
@@ -38,9 +49,9 @@ describe('remotionAdapterCapsule', () => {
     );
     expect(inv).toBeDefined();
 
-    expect(inv!.check({ totalFrames: 3 }, [{ frame: 0 }, { frame: 1 }, { frame: 2 }])).toBe(true);
-    expect(inv!.check({ totalFrames: 3 }, [{ frame: 0 }, { frame: 1 }])).toBe(false);
-    expect(inv!.check({ totalFrames: 1 }, [{ frame: 0 }, { frame: 1 }])).toBe(false);
-    expect(inv!.check({ totalFrames: 1 }, { not: 'an array' })).toBe(false);
+    expect(inv!.check({ totalFrames: 3 }, [frame(0), frame(1), frame(2)])).toBe(true);
+    expect(inv!.check({ totalFrames: 3 }, [frame(0), frame(1)])).toBe(false);
+    expect(inv!.check({ totalFrames: 1 }, [frame(0), frame(1)])).toBe(false);
+    expect(invokeWithUntrustedOutput(inv!.check, { totalFrames: 1 }, { not: 'an array' })).toBe(false);
   });
 });

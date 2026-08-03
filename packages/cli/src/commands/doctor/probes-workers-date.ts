@@ -12,6 +12,7 @@ import { normalizeRepoPath, scanModuleScopeDateReads } from '@liteship/audit';
 import { walkFiles, type WalkFilesIssue } from '@liteship/core/fs-walk';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { parseJsonc } from '../../internal/jsonc.js';
 import { readWranglerConfig } from './manifest.js';
 import type { DoctorCheck } from './types.js';
 
@@ -25,16 +26,10 @@ function isWorkersTargeted(rel: string): boolean {
 }
 
 function parseJsonWranglerMain(config: string): string {
-  const stripped = config.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-  const quotedMain = /"main"\s*:\s*"((?:\\.|[^"\\])*)"/.exec(stripped);
-  if (quotedMain?.[1]) {
-    return normalizeRepoPath(quotedMain[1].replace(/\\"/g, '"'));
-  }
-  const singleQuotedMain = /'main'\s*:\s*'([^']+)'/.exec(stripped);
-  if (singleQuotedMain?.[1]) {
-    return normalizeRepoPath(singleQuotedMain[1]);
-  }
-  return DEFAULT_WRANGLER_MAIN;
+  const parsed = parseJsonc(config);
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return DEFAULT_WRANGLER_MAIN;
+  const main = (parsed as Record<string, unknown>)['main'];
+  return typeof main === 'string' && main.length > 0 ? normalizeRepoPath(main) : DEFAULT_WRANGLER_MAIN;
 }
 
 function parseWranglerMain(cwd: string): string {

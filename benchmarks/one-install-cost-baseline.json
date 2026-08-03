@@ -19,15 +19,15 @@
   },
   "fleetPackageCount": 25,
   "total": {
-    "compressedBytes": 4962493,
-    "unpackedBytes": 22042377,
-    "fileCount": 4327
+    "compressedBytes": 5048905,
+    "unpackedBytes": 22371247,
+    "fileCount": 4347
   },
   "packages": [
     {
       "package": "@liteship/_spine",
-      "compressedBytes": 73148,
-      "unpackedBytes": 304700,
+      "compressedBytes": 73195,
+      "unpackedBytes": 304824,
       "fileCount": 24,
       "files": [
         {
@@ -44,7 +44,7 @@
         },
         {
           "path": "compiler.d.ts",
-          "bytes": 19958
+          "bytes": 20082
         },
         {
           "path": "config.d.ts",
@@ -390,8 +390,8 @@
     },
     {
       "package": "@liteship/astro",
-      "compressedBytes": 388153,
-      "unpackedBytes": 1586093,
+      "compressedBytes": 388567,
+      "unpackedBytes": 1587165,
       "fileCount": 359,
       "files": [
         {
@@ -884,11 +884,11 @@
         },
         {
           "path": "dist/runtime/directive-boot.js",
-          "bytes": 14976
+          "bytes": 15471
         },
         {
           "path": "dist/runtime/directive-boot.js.map",
-          "bytes": 7783
+          "bytes": 7901
         },
         {
           "path": "dist/runtime/directive-bound.d.ts",
@@ -1668,7 +1668,7 @@
         },
         {
           "path": "src/runtime/directive-boot.ts",
-          "bytes": 15882
+          "bytes": 16341
         },
         {
           "path": "src/runtime/directive-bound.ts",
@@ -1834,9 +1834,9 @@
     },
     {
       "package": "@liteship/audit",
-      "compressedBytes": 336002,
-      "unpackedBytes": 1422701,
-      "fileCount": 171,
+      "compressedBytes": 349258,
+      "unpackedBytes": 1474854,
+      "fileCount": 176,
       "files": [
         {
           "path": "dist/active-surface-reader.d.ts",
@@ -1864,11 +1864,11 @@
         },
         {
           "path": "dist/benchmark-subject-facts.js",
-          "bytes": 22594
+          "bytes": 24708
         },
         {
           "path": "dist/benchmark-subject-facts.js.map",
-          "bytes": 21059
+          "bytes": 22619
         },
         {
           "path": "dist/catalog-feature-edge-census.d.ts",
@@ -1917,6 +1917,22 @@
         {
           "path": "dist/consumer.js.map",
           "bytes": 3132
+        },
+        {
+          "path": "dist/css-identity-surface.d.ts",
+          "bytes": 978
+        },
+        {
+          "path": "dist/css-identity-surface.d.ts.map",
+          "bytes": 704
+        },
+        {
+          "path": "dist/css-identity-surface.js",
+          "bytes": 6834
+        },
+        {
+          "path": "dist/css-identity-surface.js.map",
+          "bytes": 6570
         },
         {
           "path": "dist/devops-profile.d.ts",
@@ -1968,19 +1984,19 @@
         },
         {
           "path": "dist/index.d.ts",
-          "bytes": 3127
+          "bytes": 3170
         },
         {
           "path": "dist/index.d.ts.map",
-          "bytes": 1574
+          "bytes": 1597
         },
         {
           "path": "dist/index.js",
-          "bytes": 7455
+          "bytes": 7498
         },
         {
           "path": "dist/index.js.map",
-          "bytes": 4260
+          "bytes": 4283
         },
         {
           "path": "dist/integrity.d.ts",
@@ -2016,19 +2032,19 @@
         },
         {
           "path": "dist/mcdc-facts-build.d.ts",
-          "bytes": 2070
+          "bytes": 2257
         },
         {
           "path": "dist/mcdc-facts-build.d.ts.map",
-          "bytes": 807
+          "bytes": 888
         },
         {
           "path": "dist/mcdc-facts-build.js",
-          "bytes": 7976
+          "bytes": 9117
         },
         {
           "path": "dist/mcdc-facts-build.js.map",
-          "bytes": 4422
+          "bytes": 5003
         },
         {
           "path": "dist/mutation-engine.d.ts",
@@ -2040,11 +2056,11 @@
         },
         {
           "path": "dist/mutation-engine.js",
-          "bytes": 21609
+          "bytes": 24586
         },
         {
           "path": "dist/mutation-engine.js.map",
-          "bytes": 11316
+          "bytes": 12446
         },
         {
           "path": "dist/mutation-equivalents.d.ts",
@@ -2064,35 +2080,35 @@
         },
         {
           "path": "dist/mutation-facts-build.d.ts",
-          "bytes": 2533
+          "bytes": 2720
         },
         {
           "path": "dist/mutation-facts-build.d.ts.map",
-          "bytes": 1038
+          "bytes": 1119
         },
         {
           "path": "dist/mutation-facts-build.js",
-          "bytes": 5543
+          "bytes": 5757
         },
         {
           "path": "dist/mutation-facts-build.js.map",
-          "bytes": 3568
+          "bytes": 3785
         },
         {
           "path": "dist/mutation-verdict.d.ts",
-          "bytes": 10794
+          "bytes": 13680
         },
         {
           "path": "dist/mutation-verdict.d.ts.map",
-          "bytes": 2941
+          "bytes": 3429
         },
         {
           "path": "dist/mutation-verdict.js",
-          "bytes": 9152
+          "bytes": 11680
         },
         {
           "path": "dist/mutation-verdict.js.map",
-          "bytes": 4185
+          "bytes": 5099
         },
         {
           "path": "dist/package-catalog.generated.d.ts",
@@ -2240,19 +2256,19 @@
         },
         {
           "path": "dist/skip-detect-ast.d.ts",
-          "bytes": 7874
+          "bytes": 7935
         },
         {
           "path": "dist/skip-detect-ast.d.ts.map",
-          "bytes": 754
+          "bytes": 816
         },
         {
           "path": "dist/skip-detect-ast.js",
-          "bytes": 67477
+          "bytes": 67439
         },
         {
           "path": "dist/skip-detect-ast.js.map",
-          "bytes": 38095
+          "bytes": 38130
         },
         {
           "path": "dist/spine-relation-build.d.ts",
@@ -2400,7 +2416,7 @@
         },
         {
           "path": "src/benchmark-subject-facts.ts",
-          "bytes": 22284
+          "bytes": 24393
         },
         {
           "path": "src/catalog-feature-edge-census.ts",
@@ -2413,6 +2429,10 @@
         {
           "path": "src/consumer.ts",
           "bytes": 4916
+        },
+        {
+          "path": "src/css-identity-surface.ts",
+          "bytes": 7975
         },
         {
           "path": "src/devops-profile.ts",
@@ -2428,7 +2448,7 @@
         },
         {
           "path": "src/index.ts",
-          "bytes": 8165
+          "bytes": 8208
         },
         {
           "path": "src/integrity.ts",
@@ -2440,11 +2460,11 @@
         },
         {
           "path": "src/mcdc-facts-build.ts",
-          "bytes": 9620
+          "bytes": 11111
         },
         {
           "path": "src/mutation-engine.ts",
-          "bytes": 27513
+          "bytes": 30509
         },
         {
           "path": "src/mutation-equivalents.ts",
@@ -2452,11 +2472,11 @@
         },
         {
           "path": "src/mutation-facts-build.ts",
-          "bytes": 7374
+          "bytes": 7755
         },
         {
           "path": "src/mutation-verdict.ts",
-          "bytes": 17943
+          "bytes": 22523
         },
         {
           "path": "src/policy.ts",
@@ -2488,7 +2508,7 @@
         },
         {
           "path": "src/skip-detect-ast.ts",
-          "bytes": 70215
+          "bytes": 70169
         },
         {
           "path": "src/spine-relation-build.ts",
@@ -2726,9 +2746,9 @@
     },
     {
       "package": "@liteship/cli",
-      "compressedBytes": 867945,
-      "unpackedBytes": 4595423,
-      "fileCount": 841,
+      "compressedBytes": 923993,
+      "unpackedBytes": 4808117,
+      "fileCount": 846,
       "files": [
         {
           "path": "dist/bin.d.ts",
@@ -2932,11 +2952,11 @@
         },
         {
           "path": "dist/commands/check-invariants.js",
-          "bytes": 11353
+          "bytes": 11539
         },
         {
           "path": "dist/commands/check-invariants.js.map",
-          "bytes": 8520
+          "bytes": 8570
         },
         {
           "path": "dist/commands/check.d.ts",
@@ -3084,19 +3104,19 @@
         },
         {
           "path": "dist/commands/doctor/probe-support.d.ts",
-          "bytes": 1365
+          "bytes": 1916
         },
         {
           "path": "dist/commands/doctor/probe-support.d.ts.map",
-          "bytes": 475
+          "bytes": 482
         },
         {
           "path": "dist/commands/doctor/probe-support.js",
-          "bytes": 1574
+          "bytes": 2125
         },
         {
           "path": "dist/commands/doctor/probe-support.js.map",
-          "bytes": 971
+          "bytes": 978
         },
         {
           "path": "dist/commands/doctor/probes-astro.d.ts",
@@ -3132,19 +3152,19 @@
         },
         {
           "path": "dist/commands/doctor/probes-deployed.d.ts",
-          "bytes": 936
+          "bytes": 5927
         },
         {
           "path": "dist/commands/doctor/probes-deployed.d.ts.map",
-          "bytes": 307
+          "bytes": 1747
         },
         {
           "path": "dist/commands/doctor/probes-deployed.js",
-          "bytes": 15947
+          "bytes": 20087
         },
         {
           "path": "dist/commands/doctor/probes-deployed.js.map",
-          "bytes": 12845
+          "bytes": 17005
         },
         {
           "path": "dist/commands/doctor/probes-workers-date.d.ts",
@@ -3156,11 +3176,11 @@
         },
         {
           "path": "dist/commands/doctor/probes-workers-date.js",
-          "bytes": 5951
+          "bytes": 5839
         },
         {
           "path": "dist/commands/doctor/probes-workers-date.js.map",
-          "bytes": 5082
+          "bytes": 4950
         },
         {
           "path": "dist/commands/doctor/probes-workspace.d.ts",
@@ -3819,6 +3839,22 @@
           "bytes": 778
         },
         {
+          "path": "dist/internal/jsonc.d.ts",
+          "bytes": 256
+        },
+        {
+          "path": "dist/internal/jsonc.d.ts.map",
+          "bytes": 181
+        },
+        {
+          "path": "dist/internal/jsonc.js",
+          "bytes": 4552
+        },
+        {
+          "path": "dist/internal/jsonc.js.map",
+          "bytes": 4952
+        },
+        {
           "path": "dist/internal/liteship-audit-policy.d.ts",
           "bytes": 2358
         },
@@ -3924,11 +3960,11 @@
         },
         {
           "path": "dist/internal/mutation-runner.js",
-          "bytes": 16250
+          "bytes": 18636
         },
         {
           "path": "dist/internal/mutation-runner.js.map",
-          "bytes": 5797
+          "bytes": 6695
         },
         {
           "path": "dist/internal/mutation-targets.d.ts",
@@ -4092,19 +4128,19 @@
         },
         {
           "path": "dist/internal/repo-ir-gauntlet.d.ts",
-          "bytes": 13507
+          "bytes": 19478
         },
         {
           "path": "dist/internal/repo-ir-gauntlet.d.ts.map",
-          "bytes": 1786
+          "bytes": 2740
         },
         {
           "path": "dist/internal/repo-ir-gauntlet.js",
-          "bytes": 48155
+          "bytes": 61958
         },
         {
           "path": "dist/internal/repo-ir-gauntlet.js.map",
-          "bytes": 19952
+          "bytes": 26796
         },
         {
           "path": "dist/internal/run-command.d.ts",
@@ -4172,19 +4208,19 @@
         },
         {
           "path": "dist/internal/semantic-assurance-receipt.d.ts",
-          "bytes": 2924
+          "bytes": 3051
         },
         {
           "path": "dist/internal/semantic-assurance-receipt.d.ts.map",
-          "bytes": 2106
+          "bytes": 2155
         },
         {
           "path": "dist/internal/semantic-assurance-receipt.js",
-          "bytes": 14265
+          "bytes": 17032
         },
         {
           "path": "dist/internal/semantic-assurance-receipt.js.map",
-          "bytes": 13782
+          "bytes": 14984
         },
         {
           "path": "dist/internal/simulation-corpus.d.ts",
@@ -4316,7 +4352,7 @@
         },
         {
           "path": "dist/internal/taint-policy.d.ts",
-          "bytes": 4072
+          "bytes": 4079
         },
         {
           "path": "dist/internal/taint-policy.d.ts.map",
@@ -4324,11 +4360,11 @@
         },
         {
           "path": "dist/internal/taint-policy.js",
-          "bytes": 5973
+          "bytes": 6340
         },
         {
           "path": "dist/internal/taint-policy.js.map",
-          "bytes": 1744
+          "bytes": 1761
         },
         {
           "path": "dist/internal/template-renames.generated.d.ts",
@@ -4380,19 +4416,19 @@
         },
         {
           "path": "dist/internal/workflow-action-pins.d.ts",
-          "bytes": 875
+          "bytes": 6224
         },
         {
           "path": "dist/internal/workflow-action-pins.d.ts.map",
-          "bytes": 548
+          "bytes": 2004
         },
         {
           "path": "dist/internal/workflow-action-pins.js",
-          "bytes": 2773
+          "bytes": 44668
         },
         {
           "path": "dist/internal/workflow-action-pins.js.map",
-          "bytes": 2574
+          "bytes": 34559
         },
         {
           "path": "dist/internal/workspace.d.ts",
@@ -5716,7 +5752,7 @@
         },
         {
           "path": "src/commands/check-invariants.ts",
-          "bytes": 12600
+          "bytes": 12770
         },
         {
           "path": "src/commands/check.ts",
@@ -5756,7 +5792,7 @@
         },
         {
           "path": "src/commands/doctor/probe-support.ts",
-          "bytes": 1620
+          "bytes": 2171
         },
         {
           "path": "src/commands/doctor/probes-astro.ts",
@@ -5768,11 +5804,11 @@
         },
         {
           "path": "src/commands/doctor/probes-deployed.ts",
-          "bytes": 15986
+          "bytes": 20346
         },
         {
           "path": "src/commands/doctor/probes-workers-date.ts",
-          "bytes": 5821
+          "bytes": 5746
         },
         {
           "path": "src/commands/doctor/probes-workspace.ts",
@@ -5935,6 +5971,10 @@
           "bytes": 1389
         },
         {
+          "path": "src/internal/jsonc.ts",
+          "bytes": 4063
+        },
+        {
           "path": "src/internal/liteship-audit-policy.ts",
           "bytes": 13792
         },
@@ -5960,7 +6000,7 @@
         },
         {
           "path": "src/internal/mutation-runner.ts",
-          "bytes": 19661
+          "bytes": 22179
         },
         {
           "path": "src/internal/mutation-targets.ts",
@@ -6000,7 +6040,7 @@
         },
         {
           "path": "src/internal/repo-ir-gauntlet.ts",
-          "bytes": 59865
+          "bytes": 73788
         },
         {
           "path": "src/internal/run-command.ts",
@@ -6020,7 +6060,7 @@
         },
         {
           "path": "src/internal/semantic-assurance-receipt.ts",
-          "bytes": 16190
+          "bytes": 19027
         },
         {
           "path": "src/internal/simulation-corpus.ts",
@@ -6056,7 +6096,7 @@
         },
         {
           "path": "src/internal/taint-policy.ts",
-          "bytes": 9667
+          "bytes": 10037
         },
         {
           "path": "src/internal/template-renames.generated.ts",
@@ -6072,7 +6112,7 @@
         },
         {
           "path": "src/internal/workflow-action-pins.ts",
-          "bytes": 2855
+          "bytes": 44975
         },
         {
           "path": "src/internal/workspace.ts",
@@ -6286,8 +6326,8 @@
     },
     {
       "package": "@liteship/command",
-      "compressedBytes": 305926,
-      "unpackedBytes": 1484105,
+      "compressedBytes": 305906,
+      "unpackedBytes": 1484305,
       "fileCount": 271,
       "files": [
         {
@@ -7044,11 +7084,11 @@
         },
         {
           "path": "dist/host/launcher.d.ts",
-          "bytes": 3516
+          "bytes": 3578
         },
         {
           "path": "dist/host/launcher.d.ts.map",
-          "bytes": 1926
+          "bytes": 2006
         },
         {
           "path": "dist/host/launcher.js",
@@ -7348,7 +7388,7 @@
         },
         {
           "path": "src/host/launcher.ts",
-          "bytes": 8274
+          "bytes": 8332
         },
         {
           "path": "src/host/manifest-path.ts",
@@ -7378,8 +7418,8 @@
     },
     {
       "package": "@liteship/compiler",
-      "compressedBytes": 243133,
-      "unpackedBytes": 1087000,
+      "compressedBytes": 242737,
+      "unpackedBytes": 1085297,
       "fileCount": 220,
       "files": [
         {
@@ -7496,19 +7536,19 @@
         },
         {
           "path": "dist/css-string.d.ts",
-          "bytes": 399
+          "bytes": 191
         },
         {
           "path": "dist/css-string.d.ts.map",
-          "bytes": 181
+          "bytes": 168
         },
         {
           "path": "dist/css-string.js",
-          "bytes": 653
+          "bytes": 189
         },
         {
           "path": "dist/css-string.js.map",
-          "bytes": 417
+          "bytes": 166
         },
         {
           "path": "dist/css-syntax.d.ts",
@@ -7664,11 +7704,11 @@
         },
         {
           "path": "dist/migrate/from-container-queries.js",
-          "bytes": 17550
+          "bytes": 17763
         },
         {
           "path": "dist/migrate/from-container-queries.js.map",
-          "bytes": 11755
+          "bytes": 11918
         },
         {
           "path": "dist/migrate/from-css-custom-properties.d.ts",
@@ -7712,11 +7752,11 @@
         },
         {
           "path": "dist/migrate/from-media-queries.js",
-          "bytes": 38028
+          "bytes": 38309
         },
         {
           "path": "dist/migrate/from-media-queries.js.map",
-          "bytes": 26626
+          "bytes": 26841
         },
         {
           "path": "dist/migrate/from-tailwind-theme.d.ts",
@@ -7808,11 +7848,11 @@
         },
         {
           "path": "dist/motion-augment.js",
-          "bytes": 2822
+          "bytes": 2723
         },
         {
           "path": "dist/motion-augment.js.map",
-          "bytes": 1526
+          "bytes": 1433
         },
         {
           "path": "dist/motion-utils.d.ts",
@@ -7840,11 +7880,11 @@
         },
         {
           "path": "dist/motion.js",
-          "bytes": 18336
+          "bytes": 18335
         },
         {
           "path": "dist/motion.js.map",
-          "bytes": 13616
+          "bytes": 13626
         },
         {
           "path": "dist/parse/css-cascade.d.ts",
@@ -8056,19 +8096,19 @@
         },
         {
           "path": "dist/view-transition-compile.d.ts",
-          "bytes": 3979
+          "bytes": 4004
         },
         {
           "path": "dist/view-transition-compile.d.ts.map",
-          "bytes": 887
+          "bytes": 886
         },
         {
           "path": "dist/view-transition-compile.js",
-          "bytes": 4172
+          "bytes": 3715
         },
         {
           "path": "dist/view-transition-compile.js.map",
-          "bytes": 2342
+          "bytes": 1560
         },
         {
           "path": "dist/wgsl.d.ts",
@@ -8124,7 +8164,7 @@
         },
         {
           "path": "src/css-string.ts",
-          "bytes": 575
+          "bytes": 151
         },
         {
           "path": "src/css-syntax.ts",
@@ -8160,7 +8200,7 @@
         },
         {
           "path": "src/migrate/from-container-queries.ts",
-          "bytes": 19136
+          "bytes": 19403
         },
         {
           "path": "src/migrate/from-css-custom-properties.ts",
@@ -8172,7 +8212,7 @@
         },
         {
           "path": "src/migrate/from-media-queries.ts",
-          "bytes": 39963
+          "bytes": 40300
         },
         {
           "path": "src/migrate/from-tailwind-theme.ts",
@@ -8196,11 +8236,11 @@
         },
         {
           "path": "src/motion-augment.ts",
-          "bytes": 2937
+          "bytes": 2848
         },
         {
           "path": "src/motion.ts",
-          "bytes": 21182
+          "bytes": 21183
         },
         {
           "path": "src/parse/css-cascade.ts",
@@ -8256,7 +8296,7 @@
         },
         {
           "path": "src/view-transition-compile.ts",
-          "bytes": 6054
+          "bytes": 5721
         },
         {
           "path": "src/wgsl.ts",
@@ -8266,9 +8306,9 @@
     },
     {
       "package": "@liteship/core",
-      "compressedBytes": 899868,
-      "unpackedBytes": 3809433,
-      "fileCount": 775,
+      "compressedBytes": 904634,
+      "unpackedBytes": 3825852,
+      "fileCount": 780,
       "files": [
         {
           "path": "dist/authoring/adaptive.d.ts",
@@ -9200,19 +9240,19 @@
         },
         {
           "path": "dist/graph/dag.d.ts",
-          "bytes": 11148
+          "bytes": 11519
         },
         {
           "path": "dist/graph/dag.d.ts.map",
-          "bytes": 3114
+          "bytes": 3120
         },
         {
           "path": "dist/graph/dag.js",
-          "bytes": 20694
+          "bytes": 20846
         },
         {
           "path": "dist/graph/dag.js.map",
-          "bytes": 15432
+          "bytes": 15017
         },
         {
           "path": "dist/graph/document-graph-address.d.ts",
@@ -9264,19 +9304,19 @@
         },
         {
           "path": "dist/graph/graph-mutation-client.d.ts",
-          "bytes": 4041
+          "bytes": 4321
         },
         {
           "path": "dist/graph/graph-mutation-client.d.ts.map",
-          "bytes": 1145
+          "bytes": 1191
         },
         {
           "path": "dist/graph/graph-mutation-client.js",
-          "bytes": 3702
+          "bytes": 4049
         },
         {
           "path": "dist/graph/graph-mutation-client.js.map",
-          "bytes": 3028
+          "bytes": 3207
         },
         {
           "path": "dist/graph/graph-mutation.d.ts",
@@ -9320,11 +9360,11 @@
         },
         {
           "path": "dist/graph/graph-query-gap-replay.js",
-          "bytes": 17516
+          "bytes": 18751
         },
         {
           "path": "dist/graph/graph-query-gap-replay.js.map",
-          "bytes": 10569
+          "bytes": 11115
         },
         {
           "path": "dist/graph/graph-query.d.ts",
@@ -9344,19 +9384,19 @@
         },
         {
           "path": "dist/graph/index.d.ts",
-          "bytes": 2320
+          "bytes": 2355
         },
         {
           "path": "dist/graph/index.d.ts.map",
-          "bytes": 1476
+          "bytes": 1488
         },
         {
           "path": "dist/graph/index.js",
-          "bytes": 1246
+          "bytes": 1281
         },
         {
           "path": "dist/graph/index.js.map",
-          "bytes": 751
+          "bytes": 763
         },
         {
           "path": "dist/graph/projection.d.ts",
@@ -9552,19 +9592,19 @@
         },
         {
           "path": "dist/index.d.ts",
-          "bytes": 14647
+          "bytes": 14682
         },
         {
           "path": "dist/index.d.ts.map",
-          "bytes": 10726
+          "bytes": 10738
         },
         {
           "path": "dist/index.js",
-          "bytes": 20045
+          "bytes": 20080
         },
         {
           "path": "dist/index.js.map",
-          "bytes": 8113
+          "bytes": 8125
         },
         {
           "path": "dist/internal/fnv.d.ts",
@@ -9903,6 +9943,22 @@
           "bytes": 269
         },
         {
+          "path": "dist/motion/css-identity.d.ts",
+          "bytes": 1011
+        },
+        {
+          "path": "dist/motion/css-identity.d.ts.map",
+          "bytes": 419
+        },
+        {
+          "path": "dist/motion/css-identity.js",
+          "bytes": 2660
+        },
+        {
+          "path": "dist/motion/css-identity.js.map",
+          "bytes": 2373
+        },
+        {
           "path": "dist/motion/easing.d.ts",
           "bytes": 4390
         },
@@ -9920,19 +9976,19 @@
         },
         {
           "path": "dist/motion/index.d.ts",
-          "bytes": 2833
+          "bytes": 2899
         },
         {
           "path": "dist/motion/index.d.ts.map",
-          "bytes": 1873
+          "bytes": 1926
         },
         {
           "path": "dist/motion/index.js",
-          "bytes": 1630
+          "bytes": 1696
         },
         {
           "path": "dist/motion/index.js.map",
-          "bytes": 1034
+          "bytes": 1087
         },
         {
           "path": "dist/motion/interpolate.d.ts",
@@ -9952,19 +10008,19 @@
         },
         {
           "path": "dist/motion/interpret-transition.d.ts",
-          "bytes": 7814
+          "bytes": 7942
         },
         {
           "path": "dist/motion/interpret-transition.d.ts.map",
-          "bytes": 2687
+          "bytes": 2736
         },
         {
           "path": "dist/motion/interpret-transition.js",
-          "bytes": 8136
+          "bytes": 8238
         },
         {
           "path": "dist/motion/interpret-transition.js.map",
-          "bytes": 6599
+          "bytes": 6688
         },
         {
           "path": "dist/motion/reveal.d.ts",
@@ -10072,11 +10128,11 @@
         },
         {
           "path": "dist/motion/transition-program.js",
-          "bytes": 27576
+          "bytes": 27681
         },
         {
           "path": "dist/motion/transition-program.js.map",
-          "bytes": 17582
+          "bytes": 17681
         },
         {
           "path": "dist/reactive/cell-kernel.d.ts",
@@ -10088,11 +10144,11 @@
         },
         {
           "path": "dist/reactive/cell-kernel.js",
-          "bytes": 19494
+          "bytes": 20013
         },
         {
           "path": "dist/reactive/cell-kernel.js.map",
-          "bytes": 6927
+          "bytes": 7068
         },
         {
           "path": "dist/reactive/cell.d.ts",
@@ -10184,11 +10240,11 @@
         },
         {
           "path": "dist/reactive/live-cell.js",
-          "bytes": 12432
+          "bytes": 12506
         },
         {
           "path": "dist/reactive/live-cell.js.map",
-          "bytes": 5648
+          "bytes": 5776
         },
         {
           "path": "dist/reactive/primitive.d.ts",
@@ -11020,7 +11076,7 @@
         },
         {
           "path": "src/graph/dag.ts",
-          "bytes": 22986
+          "bytes": 23149
         },
         {
           "path": "src/graph/document-graph-address.ts",
@@ -11036,7 +11092,7 @@
         },
         {
           "path": "src/graph/graph-mutation-client.ts",
-          "bytes": 6552
+          "bytes": 6949
         },
         {
           "path": "src/graph/graph-mutation.ts",
@@ -11048,7 +11104,7 @@
         },
         {
           "path": "src/graph/graph-query-gap-replay.ts",
-          "bytes": 20686
+          "bytes": 21859
         },
         {
           "path": "src/graph/graph-query.ts",
@@ -11056,7 +11112,7 @@
         },
         {
           "path": "src/graph/index.ts",
-          "bytes": 2385
+          "bytes": 2420
         },
         {
           "path": "src/graph/projection.ts",
@@ -11100,7 +11156,7 @@
         },
         {
           "path": "src/index.ts",
-          "bytes": 28287
+          "bytes": 28322
         },
         {
           "path": "src/media/av-bridge.ts",
@@ -11155,12 +11211,16 @@
           "bytes": 360
         },
         {
+          "path": "src/motion/css-identity.ts",
+          "bytes": 2668
+        },
+        {
           "path": "src/motion/easing.ts",
           "bytes": 16175
         },
         {
           "path": "src/motion/index.ts",
-          "bytes": 2933
+          "bytes": 3000
         },
         {
           "path": "src/motion/interpolate.ts",
@@ -11168,7 +11228,7 @@
         },
         {
           "path": "src/motion/interpret-transition.ts",
-          "bytes": 15290
+          "bytes": 15512
         },
         {
           "path": "src/motion/reveal.ts",
@@ -11196,11 +11256,11 @@
         },
         {
           "path": "src/motion/transition-program.ts",
-          "bytes": 33161
+          "bytes": 33262
         },
         {
           "path": "src/reactive/cell-kernel.ts",
-          "bytes": 22974
+          "bytes": 23427
         },
         {
           "path": "src/reactive/cell.ts",
@@ -11224,7 +11284,7 @@
         },
         {
           "path": "src/reactive/live-cell.ts",
-          "bytes": 14172
+          "bytes": 14207
         },
         {
           "path": "src/reactive/primitive.ts",
@@ -11734,25 +11794,25 @@
     },
     {
       "package": "@liteship/error",
-      "compressedBytes": 86327,
-      "unpackedBytes": 343635,
+      "compressedBytes": 86709,
+      "unpackedBytes": 345294,
       "fileCount": 28,
       "files": [
         {
           "path": "dist/codes.d.ts",
-          "bytes": 25314
+          "bytes": 25451
         },
         {
           "path": "dist/codes.d.ts.map",
-          "bytes": 1315
+          "bytes": 1317
         },
         {
           "path": "dist/codes.js",
-          "bytes": 101812
+          "bytes": 102490
         },
         {
           "path": "dist/codes.js.map",
-          "bytes": 25013
+          "bytes": 25147
         },
         {
           "path": "dist/contract.d.ts",
@@ -11832,7 +11892,7 @@
         },
         {
           "path": "src/codes.ts",
-          "bytes": 108536
+          "bytes": 109244
         },
         {
           "path": "src/contract.ts",
@@ -11854,9 +11914,9 @@
     },
     {
       "package": "@liteship/gauntlet",
-      "compressedBytes": 719809,
-      "unpackedBytes": 3006837,
-      "fileCount": 403,
+      "compressedBytes": 729005,
+      "unpackedBytes": 3039177,
+      "fileCount": 408,
       "files": [
         {
           "path": "dist/ambition-proof.d.ts",
@@ -12036,11 +12096,11 @@
         },
         {
           "path": "dist/facts/composition-facts.d.ts",
-          "bytes": 6585
+          "bytes": 7362
         },
         {
           "path": "dist/facts/composition-facts.d.ts.map",
-          "bytes": 929
+          "bytes": 1001
         },
         {
           "path": "dist/facts/composition-facts.js",
@@ -12084,11 +12144,11 @@
         },
         {
           "path": "dist/facts/mcdc-facts.d.ts",
-          "bytes": 6507
+          "bytes": 7147
         },
         {
           "path": "dist/facts/mcdc-facts.d.ts.map",
-          "bytes": 1195
+          "bytes": 1329
         },
         {
           "path": "dist/facts/mcdc-facts.js",
@@ -12100,11 +12160,11 @@
         },
         {
           "path": "dist/facts/mutation-facts.d.ts",
-          "bytes": 7212
+          "bytes": 7851
         },
         {
           "path": "dist/facts/mutation-facts.d.ts.map",
-          "bytes": 1952
+          "bytes": 2030
         },
         {
           "path": "dist/facts/mutation-facts.js",
@@ -12308,11 +12368,11 @@
         },
         {
           "path": "dist/gates/bench-subjects.d.ts",
-          "bytes": 3693
+          "bytes": 3735
         },
         {
           "path": "dist/gates/bench-subjects.d.ts.map",
-          "bytes": 2413
+          "bytes": 2426
         },
         {
           "path": "dist/gates/bench-subjects.js",
@@ -12420,19 +12480,19 @@
         },
         {
           "path": "dist/gates/composition-coverage.d.ts",
-          "bytes": 3956
+          "bytes": 4450
         },
         {
           "path": "dist/gates/composition-coverage.d.ts.map",
-          "bytes": 486
+          "bytes": 618
         },
         {
           "path": "dist/gates/composition-coverage.js",
-          "bytes": 14059
+          "bytes": 17286
         },
         {
           "path": "dist/gates/composition-coverage.js.map",
-          "bytes": 5554
+          "bytes": 7332
         },
         {
           "path": "dist/gates/crdt-laws.d.ts",
@@ -12484,19 +12544,35 @@
         },
         {
           "path": "dist/gates/early-return-detect.d.ts",
-          "bytes": 606
+          "bytes": 1131
         },
         {
           "path": "dist/gates/early-return-detect.d.ts.map",
-          "bytes": 347
+          "bytes": 478
         },
         {
           "path": "dist/gates/early-return-detect.js",
-          "bytes": 5220
+          "bytes": 5839
         },
         {
           "path": "dist/gates/early-return-detect.js.map",
-          "bytes": 5787
+          "bytes": 6108
+        },
+        {
+          "path": "dist/gates/early-return-divergence.d.ts",
+          "bytes": 493
+        },
+        {
+          "path": "dist/gates/early-return-divergence.d.ts.map",
+          "bytes": 260
+        },
+        {
+          "path": "dist/gates/early-return-divergence.js",
+          "bytes": 1237
+        },
+        {
+          "path": "dist/gates/early-return-divergence.js.map",
+          "bytes": 462
         },
         {
           "path": "dist/gates/facade-export-budget.d.ts",
@@ -12572,11 +12648,11 @@
         },
         {
           "path": "dist/gates/mcdc-coverage.js",
-          "bytes": 15632
+          "bytes": 18350
         },
         {
           "path": "dist/gates/mcdc-coverage.js.map",
-          "bytes": 6928
+          "bytes": 7990
         },
         {
           "path": "dist/gates/mutation-divergence.d.ts",
@@ -12588,11 +12664,11 @@
         },
         {
           "path": "dist/gates/mutation-divergence.js",
-          "bytes": 18410
+          "bytes": 20361
         },
         {
           "path": "dist/gates/mutation-divergence.js.map",
-          "bytes": 8842
+          "bytes": 9541
         },
         {
           "path": "dist/gates/no-bare-throw-ir.d.ts",
@@ -12868,19 +12944,19 @@
         },
         {
           "path": "dist/gates/skip-allowlist.d.ts",
-          "bytes": 14636
+          "bytes": 14655
         },
         {
           "path": "dist/gates/skip-allowlist.d.ts.map",
-          "bytes": 1635
+          "bytes": 1648
         },
         {
           "path": "dist/gates/skip-allowlist.js",
-          "bytes": 29416
+          "bytes": 29988
         },
         {
           "path": "dist/gates/skip-allowlist.js.map",
-          "bytes": 7044
+          "bytes": 7171
         },
         {
           "path": "dist/gates/skip-detect.d.ts",
@@ -13012,19 +13088,19 @@
         },
         {
           "path": "dist/index.d.ts",
-          "bytes": 11865
+          "bytes": 11971
         },
         {
           "path": "dist/index.d.ts.map",
-          "bytes": 7626
+          "bytes": 7693
         },
         {
           "path": "dist/index.js",
-          "bytes": 25880
+          "bytes": 25986
         },
         {
           "path": "dist/index.js.map",
-          "bytes": 7251
+          "bytes": 7316
         },
         {
           "path": "dist/node-context.d.ts",
@@ -13084,11 +13160,11 @@
         },
         {
           "path": "dist/runner.js",
-          "bytes": 28739
+          "bytes": 28850
         },
         {
           "path": "dist/runner.js.map",
-          "bytes": 11094
+          "bytes": 11152
         },
         {
           "path": "dist/verdict-cache.d.ts",
@@ -13196,7 +13272,7 @@
         },
         {
           "path": "src/facts/composition-facts.ts",
-          "bytes": 6468
+          "bytes": 7221
         },
         {
           "path": "src/facts/feature-edge-facts.ts",
@@ -13208,11 +13284,11 @@
         },
         {
           "path": "src/facts/mcdc-facts.ts",
-          "bytes": 6497
+          "bytes": 7361
         },
         {
           "path": "src/facts/mutation-facts.ts",
-          "bytes": 7113
+          "bytes": 7748
         },
         {
           "path": "src/facts/proof-facts.ts",
@@ -13264,7 +13340,7 @@
         },
         {
           "path": "src/gates/bench-subjects.ts",
-          "bytes": 7228
+          "bytes": 7272
         },
         {
           "path": "src/gates/capability-gate-link.ts",
@@ -13292,7 +13368,7 @@
         },
         {
           "path": "src/gates/composition-coverage.ts",
-          "bytes": 14368
+          "bytes": 17527
         },
         {
           "path": "src/gates/crdt-laws.ts",
@@ -13308,7 +13384,11 @@
         },
         {
           "path": "src/gates/early-return-detect.ts",
-          "bytes": 5134
+          "bytes": 5796
+        },
+        {
+          "path": "src/gates/early-return-divergence.ts",
+          "bytes": 1230
         },
         {
           "path": "src/gates/facade-export-budget.ts",
@@ -13328,11 +13408,11 @@
         },
         {
           "path": "src/gates/mcdc-coverage.ts",
-          "bytes": 15986
+          "bytes": 18557
         },
         {
           "path": "src/gates/mutation-divergence.ts",
-          "bytes": 18655
+          "bytes": 20556
         },
         {
           "path": "src/gates/no-bare-throw-ir.ts",
@@ -13404,7 +13484,7 @@
         },
         {
           "path": "src/gates/skip-allowlist.ts",
-          "bytes": 31293
+          "bytes": 31843
         },
         {
           "path": "src/gates/skip-detect.ts",
@@ -13440,7 +13520,7 @@
         },
         {
           "path": "src/index.ts",
-          "bytes": 31487
+          "bytes": 31601
         },
         {
           "path": "src/node-context.ts",
@@ -13456,7 +13536,7 @@
         },
         {
           "path": "src/runner.ts",
-          "bytes": 49204
+          "bytes": 49313
         },
         {
           "path": "src/verdict-cache.ts",
@@ -13714,7 +13794,7 @@
     },
     {
       "package": "@liteship/mcp-server",
-      "compressedBytes": 111590,
+      "compressedBytes": 111587,
       "unpackedBytes": 433849,
       "fileCount": 133,
       "files": [
@@ -14570,7 +14650,7 @@
     },
     {
       "package": "@liteship/scene",
-      "compressedBytes": 86763,
+      "compressedBytes": 86761,
       "unpackedBytes": 362406,
       "fileCount": 143,
       "files": [
@@ -15270,25 +15350,25 @@
     },
     {
       "package": "@liteship/vite",
-      "compressedBytes": 141830,
-      "unpackedBytes": 594061,
+      "compressedBytes": 142647,
+      "unpackedBytes": 597716,
       "fileCount": 138,
       "files": [
         {
           "path": "dist/boundary-manifest.d.ts",
-          "bytes": 5627
+          "bytes": 5702
         },
         {
           "path": "dist/boundary-manifest.d.ts.map",
-          "bytes": 1637
+          "bytes": 1638
         },
         {
           "path": "dist/boundary-manifest.js",
-          "bytes": 30180
+          "bytes": 31478
         },
         {
           "path": "dist/boundary-manifest.js.map",
-          "bytes": 19897
+          "bytes": 20864
         },
         {
           "path": "dist/boundary-shadowing.d.ts",
@@ -15720,7 +15800,7 @@
         },
         {
           "path": "src/boundary-manifest.ts",
-          "bytes": 32098
+          "bytes": 33412
         },
         {
           "path": "src/boundary-shadowing.ts",
@@ -15830,8 +15910,8 @@
     },
     {
       "package": "@liteship/web",
-      "compressedBytes": 205799,
-      "unpackedBytes": 891849,
+      "compressedBytes": 207666,
+      "unpackedBytes": 901977,
       "fileCount": 215,
       "files": [
         {
@@ -16356,11 +16436,11 @@
         },
         {
           "path": "dist/stream/sse-pure.js",
-          "bytes": 10709
+          "bytes": 13365
         },
         {
           "path": "dist/stream/sse-pure.js.map",
-          "bytes": 6582
+          "bytes": 9470
         },
         {
           "path": "dist/stream/sse.d.ts",
@@ -16372,11 +16452,11 @@
         },
         {
           "path": "dist/stream/sse.js",
-          "bytes": 24108
+          "bytes": 25140
         },
         {
           "path": "dist/stream/sse.js.map",
-          "bytes": 11304
+          "bytes": 11764
         },
         {
           "path": "dist/types.d.ts",
@@ -16652,11 +16732,11 @@
         },
         {
           "path": "src/stream/sse-pure.ts",
-          "bytes": 11193
+          "bytes": 13447
         },
         {
           "path": "src/stream/sse.ts",
-          "bytes": 24626
+          "bytes": 25464
         },
         {
           "path": "src/types.ts",
@@ -17138,8 +17218,8 @@
     },
     {
       "package": "liteship",
-      "compressedBytes": 54304,
-      "unpackedBytes": 287719,
+      "compressedBytes": 54344,
+      "unpackedBytes": 287848,
       "fileCount": 97,
       "files": [
         {
@@ -17260,19 +17340,19 @@
         },
         {
           "path": "dist/graph.d.ts",
-          "bytes": 2358
+          "bytes": 2393
         },
         {
           "path": "dist/graph.d.ts.map",
-          "bytes": 1468
+          "bytes": 1480
         },
         {
           "path": "dist/graph.js",
-          "bytes": 1277
+          "bytes": 1312
         },
         {
           "path": "dist/graph.js.map",
-          "bytes": 741
+          "bytes": 753
         },
         {
           "path": "dist/index.d.ts",
@@ -17488,7 +17568,7 @@
         },
         {
           "path": "src/graph.ts",
-          "bytes": 2409
+          "bytes": 2444
         },
         {
           "path": "src/index.ts",
@@ -17630,7 +17710,7 @@
   "coldImports": [
     {
       "specifier": "liteship",
-      "moduleCount": 193,
+      "moduleCount": 194,
       "packageCount": 8,
       "packages": [
         "@liteship/canonical@0.24.0",
@@ -18197,6 +18277,11 @@
           "package": "@liteship/core",
           "version": "0.24.0",
           "path": "dist/motion/clamp.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.24.0",
+          "path": "dist/motion/css-identity.js"
         },
         {
           "package": "@liteship/core",
@@ -18825,5 +18910,5 @@
       ]
     }
   ],
-  "baselineId": "sha256:360a5c7b20cd04b12d7ffbeda08c8dedb9aabb768e6e07c9e8b9686e41078d32"
+  "baselineId": "sha256:2b39c072a66d0f99d4a87508a58231c9729c3b26eb0eb0b76a482fa52b93968e"
 }

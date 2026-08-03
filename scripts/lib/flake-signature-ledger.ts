@@ -194,11 +194,12 @@ export function parseFlakeSignatureLedger(value: unknown): FlakeSignatureLedger 
   if (!isDate(value['observedThrough']) || !isDate(value['expires']) || value['expires'] <= value['observedThrough']) {
     throw new TypeError('flake signature ledger dates are invalid');
   }
+  const evidenceIds = value['evidenceIds'];
   if (
-    !Array.isArray(value['evidenceIds']) ||
-    value['evidenceIds'].length === 0 ||
-    value['evidenceIds'].some((id) => !isDigest(id)) ||
-    new Set(value['evidenceIds']).size !== value['evidenceIds'].length
+    !Array.isArray(evidenceIds) ||
+    evidenceIds.length === 0 ||
+    evidenceIds.some((id) => !isDigest(id)) ||
+    new Set(evidenceIds).size !== evidenceIds.length
   ) {
     throw new TypeError('flake signature ledger evidence ids are invalid');
   }
@@ -244,7 +245,7 @@ export function parseFlakeSignatureLedger(value: unknown): FlakeSignatureLedger 
       entry['reproducer'].some((part) => typeof part !== 'string') ||
       !Array.isArray(entry['evidenceIds']) ||
       entry['evidenceIds'].length === 0 ||
-      entry['evidenceIds'].some((id) => !value['evidenceIds'].includes(id)) ||
+      entry['evidenceIds'].some((id) => typeof id !== 'string' || !evidenceIds.includes(id)) ||
       (entry['status'] !== 'open' && entry['status'] !== 'resolved' && entry['status'] !== 'reopened')
     ) {
       throw new TypeError('flake signature ledger entry fields are invalid');

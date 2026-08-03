@@ -1,0 +1,14 @@
+# W1.11 scanner floor for TypeScript sources. It is intentionally language-wide:
+# every TypeScript path admitted by lint:structural, including fragments and root
+# configs, has an applicable ESM rule even when narrower domain rules do not fit.
+id: governed-esm-typescript
+language: typescript
+severity: error
+message: 'CommonJS syntax is forbidden in governed TypeScript; use ESM imports and exports.'
+rule:
+  any:
+    - pattern: require($$$ARGS)
+    - kind: assignment_expression
+      has:
+        field: left
+        regex: '^(module\.exports|exports\.)'

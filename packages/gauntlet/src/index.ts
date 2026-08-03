@@ -366,9 +366,14 @@ export { noNondeterminismGate } from './gates/no-nondeterminism.js';
 export { noSilentCatchGate } from './gates/no-silent-catch.js';
 export { noSkippedTestGate } from './gates/no-skipped-test.js';
 export { noPlaceholderGate } from './gates/no-placeholder.js';
-export { noUnregisteredTodoGate } from './gates/no-unregistered-todo.js';
+export { isGovernedTodoPath, noUnregisteredTodoGate } from './gates/no-unregistered-todo.js';
 export { noEarlyReturnTestGate } from './gates/no-early-return-test.js';
-export { detectEarlyReturnBeforeExpect, type EarlyReturnMatch } from './gates/early-return-detect.js';
+export {
+  detectEarlyReturnBeforeExpect,
+  TEST_ROOTS,
+  SUITE_ROOTS,
+  type EarlyReturnMatch,
+} from './gates/early-return-detect.js';
 
 // The skip-form detector + the enumerated sanctioned-skip allowlist — exported so the
 // standards-surface extractor can fold the allowlist into the content-addressed snapshot
@@ -406,6 +411,7 @@ export { type OracleDivergenceSpec, makeOracleDivergenceGate } from './gates/mak
 export { noDefaultExportDivergenceGate } from './gates/no-default-export-divergence.js';
 export { noVarDivergenceGate } from './gates/no-var-divergence.js';
 export { noRequireDivergenceGate } from './gates/no-require-divergence.js';
+export { earlyReturnDivergenceGate } from './gates/early-return-divergence.js';
 export { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
 export { activeModeledSurfaceReaderGate, decideActiveSurfaceReaders } from './gates/active-modeled-surface-reader.js';
 export { featureEdgeConnectivityGate, decideFeatureEdgeConnectivity } from './gates/feature-edge-connectivity.js';
@@ -423,13 +429,22 @@ export { checkRegistryCompleteGate, decideCheckRegistryComplete } from './gates/
 export { checkNegativeControlGate, decideCheckNegativeControl } from './gates/check-negative-control.js';
 export { checkWaiverFreshnessGate, decideCheckWaiverFreshness } from './gates/check-waiver-freshness.js';
 export {
+  isStrictWaiverExpiry,
+  WAIVER_FRESHNESS_STORES,
   type CheckGovernanceFacts,
   type CheckPartitionFacts,
   type RegisteredCheckFact,
   type NegativeControlFact,
   type WaiverFreshnessFact,
+  type WaiverFreshnessStore,
 } from './facts/check-governance-facts.js';
 export { crdtLawsGate } from './gates/crdt-laws.js';
+
+// The BLOCKING consumer of the CSS-identity surface oracle (Codex review on
+// PR #197, confirmed P1) — folds the host-emitted `css-identity-unescaped`
+// facts into error findings. Rides LITESHIP_IR_ONLY_GATES: the facts exist
+// only when the CLI host builds the IR with `cssIdentitySurfaceOracle`.
+export { cssIdentityUnescapedGate } from './gates/css-identity-unescaped.js';
 
 // The DIAGNOSTIC-CODE REGISTRY guard — statically scans packages/gauntlet/src for every
 // emitted `gauntlet/…` ruleId and the check registry for every `check/<slug>` id, and reds

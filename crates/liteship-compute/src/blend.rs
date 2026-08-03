@@ -11,8 +11,13 @@
 ///
 /// # Safety
 /// Single-threaded WASM. Caller must ensure `weights_ptr` is valid for `len` floats.
+///
+/// This obligation is on the CALLER, so the function is `unsafe`: a safe caller
+/// could otherwise hand in a dangling pointer and reach undefined behaviour
+/// without writing `unsafe` anywhere. The `extern "C"` ABI and the exported
+/// wasm symbol are unchanged by the marker.
 #[no_mangle]
-pub extern "C" fn blend_normalize(weights_ptr: *mut f32, len: u32) {
+pub unsafe extern "C" fn blend_normalize(weights_ptr: *mut f32, len: u32) {
     let len = len as usize;
     if len == 0 {
         return;
@@ -31,8 +36,9 @@ pub extern "C" fn blend_normalize(weights_ptr: *mut f32, len: u32) {
     {
         // SIMD path — process 4 floats at a time
         // Note: requires wasm32 SIMD proposal support
+        // The tail is driven by `(chunks * 4)..len` below, so the remainder
+        // count itself is never needed.
         let chunks = len / 4;
-        let remainder = len % 4;
 
         for i in 0..chunks {
             let base = i * 4;
@@ -42,10 +48,18 @@ pub extern "C" fn blend_normalize(weights_ptr: *mut f32, len: u32) {
                 let mut v2 = *weights_ptr.add(base + 2);
                 let mut v3 = *weights_ptr.add(base + 3);
 
-                if v0 < 0.0 { v0 = 0.0; }
-                if v1 < 0.0 { v1 = 0.0; }
-                if v2 < 0.0 { v2 = 0.0; }
-                if v3 < 0.0 { v3 = 0.0; }
+                if v0 < 0.0 {
+                    v0 = 0.0;
+                }
+                if v1 < 0.0 {
+                    v1 = 0.0;
+                }
+                if v2 < 0.0 {
+                    v2 = 0.0;
+                }
+                if v3 < 0.0 {
+                    v3 = 0.0;
+                }
 
                 *weights_ptr.add(base) = v0;
                 *weights_ptr.add(base + 1) = v1;
@@ -59,7 +73,9 @@ pub extern "C" fn blend_normalize(weights_ptr: *mut f32, len: u32) {
         for i in (chunks * 4)..len {
             unsafe {
                 let mut v = *weights_ptr.add(i);
-                if v < 0.0 { v = 0.0; }
+                if v < 0.0 {
+                    v = 0.0;
+                }
                 *weights_ptr.add(i) = v;
                 total += v as f64;
             }
@@ -97,7 +113,11 @@ mod tests {
     use super::*;
 
     fn normalize(weights: &mut [f32]) {
-        blend_normalize(weights.as_mut_ptr(), weights.len() as u32);
+        // The pointer and length come from a live slice, so the caller
+        // obligation `blend_normalize` documents is discharged here.
+        unsafe {
+            blend_normalize(weights.as_mut_ptr(), weights.len() as u32);
+        }
     }
 
     #[test]

@@ -213,9 +213,76 @@ function uncoveredFinding(
 }
 
 /**
+ * Build the per-file aggregate MC/DC floor findings from the host-owned target
+ * census. The census is the denominator authority: counting only returned
+ * outcomes would let a dropped condition make the measured fraction look better.
+ */
+function coverageFloorFindings(facts: McdcFacts, levels: ReadonlyMap<string, AssuranceLevel>): readonly Finding[] {
+  const findings: Finding[] = [];
+  for (const target of [...facts.targetCensus].sort((left, right) =>
+    left.file < right.file ? -1 : left.file > right.file ? 1 : 0,
+  )) {
+    const outcomes = facts.conditions.filter((outcome) => outcome.file === target.file);
+    const level = levelForFile(target.file, levels);
+    if (
+      !Number.isInteger(target.applicableConditions) ||
+      target.applicableConditions < 0 ||
+      outcomes.length > target.applicableConditions
+    ) {
+      findings.push(
+        finding({
+          ruleId: GATE_ID,
+          severity: 'error',
+          level,
+          title: `MC/DC target census inconsistent for ${target.file} (${level})`,
+          detail: `The MC/DC target census admits ${target.applicableConditions} condition(s) for ${target.file}, but the facts carry ${outcomes.length} outcome(s). An invalid or undercounted denominator cannot produce a trustworthy coverage fraction, so the gate refuses it instead of clamping or passing.`,
+          location: { file: target.file },
+          remediation: {
+            kind: 'instruction',
+            description: 'Repair the host-owned MC/DC target census and re-run the campaign.',
+            steps: [
+              'Fix the facts producer so applicableConditions is a non-negative integer and is at least the number of emitted outcomes.',
+              'Re-run `liteship check gates --ir --mcdc`; the census and outcome set must agree before the floor can pass.',
+            ],
+          },
+        }),
+      );
+      continue;
+    }
+    const covered = outcomes.filter(isMcdcCovered).length;
+    const score = target.applicableConditions === 0 ? 1 : covered / target.applicableConditions;
+    const floor = MCDC_FLOOR_BY_LEVEL[level];
+    if (score >= floor) continue;
+    const campaignIds = requiredCampaigns(facts, target.file);
+
+    findings.push(
+      finding({
+        ruleId: GATE_ID,
+        severity: campaignIds.length > 0 ? 'error' : MCDC_SEVERITY_BY_LEVEL[level],
+        level,
+        title: `MC/DC coverage below floor for ${target.file} (${level})`,
+        detail: `The per-file MC/DC covered-condition fraction for ${target.file} is ${score.toFixed(4)} (${covered}/${target.applicableConditions}), BELOW the effective ${level} floor ${floor.toFixed(4)}. The denominator comes from the host-owned target census, so a condition that was admitted but did not earn a covered verdict cannot disappear from the measurement.${campaignIds.length > 0 ? ` Semantic campaign(s) ${campaignIds.join(', ')} require MC/DC closure for this target.` : ''}`,
+        location: { file: target.file },
+        remediation: {
+          kind: 'instruction',
+          description: `Raise ${target.file}'s MC/DC coverage to at least ${floor.toFixed(4)}.`,
+          steps: [
+            `Inspect the uncovered condition findings for ${target.file}; ${target.applicableConditions - covered} of ${target.applicableConditions} admitted conditions are not covered.`,
+            'Add distinguishing tests until both the force-true and force-false pins are killed for enough conditions to clear the floor.',
+            'Re-run `liteship check gates --ir --mcdc` and confirm the aggregate fraction clears the floor.',
+          ],
+        },
+      }),
+    );
+  }
+  return findings;
+}
+
+/**
  * The shared fold — folds the injected MC/DC facts. Each UNCOVERED condition (not both
- * pins killed) → a finding at its file's effective level; a fully-covered condition
- * produces nothing. Findings are emitted in a deterministic order (sorted by location).
+ * pins killed) → a finding at its file's effective level; each target whose aggregate
+ * covered-condition fraction is below its effective-level floor → one aggregate
+ * finding. A fully-covered target produces nothing. Findings are deterministic.
  */
 function foldMcdc(context: GateContext): readonly Finding[] {
   const facts = requireMcdc(context, GATE_ID);
@@ -235,7 +302,7 @@ function foldMcdc(context: GateContext): readonly Finding[] {
       (a.location?.line ?? 0) - (b.location?.line ?? 0) ||
       (a.location?.column ?? 0) - (b.location?.column ?? 0),
   );
-  return findings;
+  return [...findings, ...coverageFloorFindings(facts, levels)];
 }
 
 // ── Fixtures (in-memory, no parse / no test run) ──────────────────────────────

@@ -1,7 +1,7 @@
 /**
  * Gate: check-waiver-freshness — the two-store waiver-expiry meta-gate.
  *
- * A waiver is a time-boxed, owner-signed suppression; the moment its `expires` date
+ * A waiver is a time-boxed, owner-signed suppression; the moment its `expiry` date
  * passes, the debt comes due and the suppression must NOT silently keep holding. Two
  * stores carry waivers with an expiry: the gauntlet's own `waivers.ts` registry
  * ({@link LITESHIP_WAIVERS}) and the traceability ledger (`testing-ledger.yaml`'s
@@ -21,28 +21,26 @@
 import { defineFactGate, type FactBundle, type FactGate, type Gate, type GateContext } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import type { CheckGovernanceFacts, WaiverFreshnessFact } from '../facts/check-governance-facts.js';
+import {
+  WAIVER_FRESHNESS_STORES,
+  type CheckGovernanceFacts,
+  type WaiverFreshnessFact,
+} from '../facts/check-governance-facts.js';
 
 /** The gate id — namespaces every {@link Finding} it emits. */
 const RULE_ID = 'gauntlet/check-waiver-freshness';
 
-/** Human label for a waiver store. */
-function storeLabel(store: WaiverFreshnessFact['store']): string {
-  return store === 'gauntlet'
-    ? 'the gauntlet waivers registry (waivers.ts)'
-    : 'the traceability ledger (testing-ledger.yaml)';
-}
-
 /** Build one expired-waiver finding. */
 function expiredFinding(entry: WaiverFreshnessFact): Finding {
+  const store = WAIVER_FRESHNESS_STORES[entry.store];
   return finding({
     ruleId: RULE_ID,
     severity: 'error',
     level: 'L2',
-    title: `Expired waiver in ${storeLabel(entry.store)}: ${entry.id}`,
-    detail: `The waiver "${entry.id}" in ${storeLabel(entry.store)} expired ${entry.expires} — the debt came due. An expired waiver no longer holds: the finding (or the untraced obligation) it covered is live again. Fix the underlying issue or renew the waiver with a fresh owner-signed expiry.`,
+    title: `Expired waiver in ${store.label}: ${entry.id}`,
+    detail: `The waiver "${entry.id}" owned by ${entry.owner} in ${store.label} expired ${entry.expiry} — the debt came due. An expired waiver no longer holds: the finding (or the untraced obligation) it covered is live again. Fix the underlying issue or renew the waiver with a fresh owner-signed expiry and justification.`,
     location: {
-      file: entry.store === 'gauntlet' ? 'packages/gauntlet/src/waivers.ts' : 'traceability/testing-ledger.yaml',
+      file: store.location,
       line: 1,
     },
     remediation: {
@@ -91,13 +89,34 @@ function governance(waivers: readonly WaiverFreshnessFact[]): CheckGovernanceFac
 
 /** RED — an expired ledger waiver (the debt came due). */
 const RED_FACTS = governance([
-  Object.freeze({ store: 'ledger', id: 'INV-EXAMPLE', expires: '2020-01-01', expired: true }),
+  Object.freeze({
+    store: 'ledger',
+    id: 'INV-EXAMPLE',
+    owner: 'fixture-owner',
+    justification: 'Expired-waiver red fixture.',
+    expiry: '2020-01-01',
+    expired: true,
+  }),
 ]);
 
 /** GREEN — fresh waivers in both stores (neither expired). */
 const GREEN_FACTS = governance([
-  Object.freeze({ store: 'gauntlet', id: 'gauntlet/no-nondeterminism@a.ts:1', expires: '2099-01-01', expired: false }),
-  Object.freeze({ store: 'ledger', id: 'INV-EXAMPLE', expires: '2099-01-01', expired: false }),
+  Object.freeze({
+    store: 'gauntlet',
+    id: 'gauntlet/no-nondeterminism@a.ts:1',
+    owner: 'fixture-owner',
+    justification: 'Fresh gauntlet-waiver green fixture.',
+    expiry: '2099-01-01',
+    expired: false,
+  }),
+  Object.freeze({
+    store: 'ledger',
+    id: 'INV-EXAMPLE',
+    owner: 'fixture-owner',
+    justification: 'Fresh ledger-waiver green fixture.',
+    expiry: '2099-01-01',
+    expired: false,
+  }),
 ]);
 
 /**

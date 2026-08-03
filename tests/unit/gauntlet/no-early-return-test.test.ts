@@ -1,6 +1,18 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { globSync } from 'fast-glob';
 import { describe, it, expect } from 'vitest';
 import { detectEarlyReturnBeforeExpectAST } from '@liteship/audit';
-import { detectEarlyReturnBeforeExpect, noEarlyReturnTestGate, verifyGate } from '@liteship/gauntlet';
+import {
+  detectEarlyReturnBeforeExpect,
+  earlyReturnDivergenceGate,
+  noEarlyReturnTestGate,
+  verifyGate,
+} from '@liteship/gauntlet';
+
+// Measured at 10.9 s over the 1,000+ governed test files on the 2026-07-31
+// Windows reference host; the doubled ceiling keeps the corpus proof bounded.
+const ORACLE_CORPUS_TIMEOUT_MS = 22_000;
 
 describe('detectEarlyReturnBeforeExpectAST', () => {
   it('flags if-guard return before expect', () => {
@@ -20,6 +32,54 @@ describe('detectEarlyReturnBeforeExpectAST', () => {
       '[1].map(() => {\n  if (x) return;\n  expect(1).toBe(1);\n});\n';
     expect(detectEarlyReturnBeforeExpectAST(src)).toEqual([]);
   });
+});
+
+describe('suite-root callbacks', () => {
+  it('a describe-level capability guard is not an early-return finding', () => {
+    const source =
+      "describe('gpu', () => {\n  if (!hasGPU) return;\n  it('works', () => { expect(true).toBe(true); });\n});\n";
+    expect(detectEarlyReturnBeforeExpectAST(source)).toEqual([]);
+  });
+
+  it('an it-level early return before expect is still a finding', () => {
+    const source = "it('gpu', () => {\n  if (!hasGPU) return;\n  expect(true).toBe(true);\n});\n";
+    expect(detectEarlyReturnBeforeExpectAST(source).map(({ line }) => line)).toEqual([2]);
+    expect(detectEarlyReturnBeforeExpect(source).map(({ line }) => line)).toEqual([2]);
+  });
+
+  it('bench registers an individual callback, so its early return is a finding in both oracles (Codex review, confirmed P2)', () => {
+    // Vitest's bench(...) is an individual benchmark registration, not a
+    // grouping suite: a premise guard like `if (!supported) return;` makes
+    // the benchmark vacuous exactly as it would a test. Classifying bench
+    // as a suite root silently exempted such bodies.
+    const source = "bench('gpu', () => {\n  if (!supported) return;\n  expect(work()).toBeDefined();\n});\n";
+    expect(detectEarlyReturnBeforeExpectAST(source).map(({ line }) => line)).toEqual([2]);
+    expect(detectEarlyReturnBeforeExpect(source).map(({ line }) => line)).toEqual([2]);
+  });
+
+  it(
+    'the AST and lean oracles agree on every corpus file',
+    () => {
+      const root = resolve(import.meta.dirname, '../../..');
+      const divergences: string[] = [];
+      const files = globSync(['tests/**/*.test.ts', 'tests/**/*.prop.test.ts'], {
+        cwd: root,
+        ignore: ['tests/generated/**'],
+        onlyFiles: true,
+      }).sort();
+      expect(files.length).toBeGreaterThan(0);
+      for (const file of files) {
+        const source = readFileSync(resolve(root, file), 'utf8');
+        const ast = detectEarlyReturnBeforeExpectAST(source).map(({ line }) => line);
+        const lean = detectEarlyReturnBeforeExpect(source).map(({ line }) => line);
+        if (JSON.stringify(ast) !== JSON.stringify(lean)) {
+          divergences.push(`${file}: AST=${ast.join(',')} lean=${lean.join(',')}`);
+        }
+      }
+      expect(divergences).toEqual([]);
+    },
+    ORACLE_CORPUS_TIMEOUT_MS,
+  );
 });
 
 describe('detectEarlyReturnBeforeExpect lean fallback', () => {
@@ -101,5 +161,9 @@ describe('noEarlyReturnTestGate fixtures', () => {
   it('self-proves red/green/mutation', () => {
     const verdict = verifyGate(noEarlyReturnTestGate);
     expect(verdict.selfProven).toBe(true);
+  });
+
+  it('self-proves the parser-vs-token divergence instance', () => {
+    expect(verifyGate(earlyReturnDivergenceGate).selfProven).toBe(true);
   });
 });

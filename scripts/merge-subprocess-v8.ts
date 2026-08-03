@@ -17,6 +17,7 @@
 import { appendFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import type { Profiler } from 'node:inspector';
 import { normalizeRepoPath } from '@liteship/core';
 import libCoverage from 'istanbul-lib-coverage';
 import V8ToIstanbul from 'v8-to-istanbul';
@@ -76,9 +77,9 @@ for (const dumpName of dumpFiles) {
     console.warn(`[merge-subprocess-v8] skipping empty dump ${dumpName} (process killed before flush)`);
     continue;
   }
-  let dump: { result: Array<{ url: string; functions: unknown[] }> };
+  let dump: { result: Array<{ url: string; functions: Profiler.FunctionCoverage[] }> };
   try {
-    dump = JSON.parse(raw) as { result: Array<{ url: string; functions: unknown[] }> };
+    dump = JSON.parse(raw) as { result: Array<{ url: string; functions: Profiler.FunctionCoverage[] }> };
   } catch (err) {
     skippedMalformed++;
     const reason = err instanceof Error ? err.message : String(err);
@@ -112,7 +113,7 @@ for (const dumpName of dumpFiles) {
     }
 
     try {
-      const converter = new V8ToIstanbul(pathToFileURL(normalized).href, 0);
+      const converter = V8ToIstanbul(pathToFileURL(normalized).href, 0);
       await converter.load();
       converter.applyCoverage(script.functions);
       const fileData = converter.toIstanbul();

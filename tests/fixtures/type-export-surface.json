@@ -1972,6 +1972,22 @@
           "kind": "interface"
         },
         {
+          "name": "CssIdentityFinding",
+          "kind": "interface"
+        },
+        {
+          "name": "CssIdentityScanOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "CssIdentityScanResult",
+          "kind": "interface"
+        },
+        {
+          "name": "CssIdentitySource",
+          "kind": "interface"
+        },
+        {
           "name": "DevopsProfile",
           "kind": "interface"
         },
@@ -5112,6 +5128,10 @@
         },
         {
           "name": "WaiverFreshnessFact",
+          "kind": "type"
+        },
+        {
+          "name": "WaiverFreshnessStore",
           "kind": "type"
         },
         {

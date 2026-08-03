@@ -231,6 +231,10 @@
           "kind": "const"
         },
         {
+          "name": "SUITE_ROOTS",
+          "kind": "const"
+        },
+        {
           "name": "SYMBOL_ORPHAN_PROPERTY",
           "kind": "const"
         },
@@ -240,6 +244,10 @@
         },
         {
           "name": "TAINT_ORACLE_ID",
+          "kind": "const"
+        },
+        {
+          "name": "TEST_ROOTS",
           "kind": "const"
         },
         {
@@ -576,6 +584,11 @@
         },
         {
           "name": "runSurfaceAudit",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "scanCssIdentitySurface",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1340,6 +1353,10 @@
           "name": "Easing",
           "kind": "namespace",
           "signature": "cubicBezier:function,ease:function,easeIn:function,easeInCubic:function,easeInOut:function,easeInOutCubic:function,easeOut:function,easeOutBack:function,easeOutBounce:function,easeOutCubic:function,easeOutElastic:function,easeOutExpo:function,easingToLinearCSS:function,linear:function,spring:function,springNaturalDuration:function,springToLinearCSS:function"
+        },
+        {
+          "name": "GRAPH_MUTATION_DEFAULT_TIMEOUT_MS",
+          "kind": "const"
         },
         {
           "name": "GRAPH_QUERY_FALLBACK_HEADER",
@@ -2766,7 +2783,15 @@
           "kind": "const"
         },
         {
+          "name": "SUITE_ROOTS",
+          "kind": "const"
+        },
+        {
           "name": "SURVIVOR_SEVERITY_BY_LEVEL",
+          "kind": "const"
+        },
+        {
+          "name": "TEST_ROOTS",
           "kind": "const"
         },
         {
@@ -2779,6 +2804,10 @@
         },
         {
           "name": "UNMEASURED_WEAK_LINK_SEVERITY",
+          "kind": "const"
+        },
+        {
+          "name": "WAIVER_FRESHNESS_STORES",
           "kind": "const"
         },
         {
@@ -2874,7 +2903,7 @@
         {
           "name": "coverageClassSeverity",
           "kind": "function",
-          "signature": "(2)"
+          "signature": "(3)"
         },
         {
           "name": "coverageDigestOf",
@@ -2885,6 +2914,11 @@
           "name": "crdtLawsGate",
           "kind": "namespace",
           "signature": "access:const,describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "cssIdentityUnescapedGate",
+          "kind": "namespace",
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "decideActiveSurfaceReaders",
@@ -2955,6 +2989,11 @@
           "name": "diffStandardsSurface",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "earlyReturnDivergenceGate",
+          "kind": "namespace",
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "earnedAuthority",
@@ -3037,12 +3076,22 @@
           "signature": "(1)"
         },
         {
+          "name": "isGovernedTodoPath",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "isMcdcCovered",
           "kind": "function",
           "signature": "(1)"
         },
         {
           "name": "isProjectableError",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isStrictWaiverExpiry",
           "kind": "function",
           "signature": "(1)"
         },

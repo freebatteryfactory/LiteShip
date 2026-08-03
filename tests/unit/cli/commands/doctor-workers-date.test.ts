@@ -186,6 +186,28 @@ export default { fetch() { return new Response(String(bootedAt)); } };`,
     expect(check.detail).toContain('src/custom.ts');
   });
 
+  test('a route URL in wrangler.jsonc does not corrupt the configured worker main', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-url-'));
+    try {
+      mkdirSync(join(dir, 'worker'), { recursive: true });
+      writeFileSync(
+        join(dir, 'wrangler.jsonc'),
+        '{ "routes": ["https://example.com/api"], "main": "worker/custom.ts" }',
+      );
+      writeFileSync(
+        join(dir, 'worker', 'custom.ts'),
+        `export const bootedAt = Date.now();
+export default { fetch() { return new Response(String(bootedAt)); } };`,
+      );
+
+      const check = probeWorkersModuleScopeDate(dir);
+      expect(check.status).toBe('warn');
+      expect(check.detail).toContain('worker/custom.ts');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test('wrangler.toml project flags generic src/index.ts without worker path hints (#115)', () => {
     const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });

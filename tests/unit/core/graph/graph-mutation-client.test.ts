@@ -1,7 +1,8 @@
 // @vitest-environment node
-import { describe, test, expect } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import fc from 'fast-check';
 import {
+  GRAPH_MUTATION_DEFAULT_TIMEOUT_MS,
   GraphPatch,
   createGraphMutationClient,
   type DocumentGraph,
@@ -247,27 +248,132 @@ describe('GraphMutationClient', () => {
 });
 
 describe('createGraphMutationClient — timeoutMs', () => {
-  test('a hung request is aborted at the deadline and settles to the error shape', async () => {
-    // A fetch that never settles EXCEPT on abort — deterministic: the promise resolves
-    // exactly when the client's own AbortController fires, no timing races.
-    const hangingFetch: typeof fetch = (_input, init) =>
-      new Promise((_resolve, reject) => {
-        init?.signal?.addEventListener('abort', () => {
-          reject(init.signal?.reason ?? new Error('aborted'));
-        });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const abortOnlyFetch = (): typeof fetch =>
+    vi.fn(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+        }),
+    );
+
+  test('a stalled request times out at the finite default and the next queued request proceeds', async () => {
+    vi.useFakeTimers();
+    const base = graph([node('a')]);
+    let calls = 0;
+    const fetchImpl: typeof fetch = vi.fn((_input, init) => {
+      calls += 1;
+      if (calls === 2) return Promise.resolve(response({ status: 'refused', errors: ['next reached'] }, 409));
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(init.signal?.reason));
       });
+    });
+    const client = createGraphMutationClient({ url: '/api/graph', base, fetchImpl });
+
+    const stalled = client.submit([]);
+    const next = client.submit([]);
+    await vi.advanceTimersByTimeAsync(GRAPH_MUTATION_DEFAULT_TIMEOUT_MS);
+
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    await expect(stalled).resolves.toMatchObject({
+      status: 'error',
+      message: expect.stringContaining(`timed out after ${GRAPH_MUTATION_DEFAULT_TIMEOUT_MS}ms`),
+    });
+    await expect(next).resolves.toEqual({ status: 'refused', errors: ['next reached'] });
+  });
+
+  /**
+   * Headers arrive; the body never does. This is what a proxy produces when it
+   * commits a 200 and then wedges, and it is the half the other fixtures here
+   * never exercised — every one of them stalls the FETCH, which is precisely the
+   * half that was already covered.
+   */
+  const headersThenStalledBody = (): typeof fetch =>
+    vi.fn(() =>
+      Promise.resolve(
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start() {
+              // Deliberately never enqueue and never close.
+            },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      ),
+    );
+
+  test('a stalled BODY times out and the next queued request proceeds', async () => {
+    vi.useFakeTimers();
+    let calls = 0;
+    const fetchImpl: typeof fetch = vi.fn((input, init) => {
+      calls += 1;
+      if (calls === 2) return Promise.resolve(response({ status: 'refused', errors: ['next reached'] }, 409));
+      return headersThenStalledBody()(input, init);
+    });
+    const client = createGraphMutationClient({ url: '/api/graph', base: graph([node('a')]), fetchImpl });
+
+    const stalled = client.submit([]);
+    const next = client.submit([]);
+    let settled = false;
+    void stalled.then(() => {
+      settled = true;
+    });
+    await vi.advanceTimersByTimeAsync(GRAPH_MUTATION_DEFAULT_TIMEOUT_MS);
+
+    // The deadline is documented as total — an unbounded request "would hold
+    // every later submit in this client's serialized queue". A body that never
+    // settles is exactly that unbounded request.
+    expect(settled, 'a stalled response BODY must still settle at the deadline').toBe(true);
+    await expect(stalled).resolves.toMatchObject({
+      status: 'error',
+      message: expect.stringContaining(`timed out after ${GRAPH_MUTATION_DEFAULT_TIMEOUT_MS}ms`),
+    });
+    await expect(next).resolves.toEqual({ status: 'refused', errors: ['next reached'] });
+  });
+
+  test('an explicit finite timeoutMs overrides the default', async () => {
+    vi.useFakeTimers();
+    const hangingFetch = abortOnlyFetch();
     const client = createGraphMutationClient({
       url: '/api/graph',
       base: graph([node('a')]),
       fetchImpl: hangingFetch,
-      timeoutMs: 5,
+      timeoutMs: 17,
     });
 
-    const res = await client.submit([]);
+    const result = client.submit([]);
+    let settled = false;
+    void result.then(() => {
+      settled = true;
+    });
+    await vi.advanceTimersByTimeAsync(16);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
 
-    expect(res.status).toBe('error');
-    if (res.status === 'error') {
-      expect(res.message).toContain('timed out after 5ms');
-    }
+    await expect(result).resolves.toMatchObject({ status: 'error', message: expect.stringContaining('17ms') });
   });
+
+  test.each([undefined, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    'timeoutMs %s cannot disable the finite default',
+    async (timeoutMs) => {
+      vi.useFakeTimers();
+      const client = createGraphMutationClient({
+        url: '/api/graph',
+        base: graph([node('a')]),
+        fetchImpl: abortOnlyFetch(),
+        timeoutMs,
+      });
+
+      const result = client.submit([]);
+      await vi.advanceTimersByTimeAsync(GRAPH_MUTATION_DEFAULT_TIMEOUT_MS);
+
+      await expect(result).resolves.toMatchObject({
+        status: 'error',
+        message: expect.stringContaining(`timed out after ${GRAPH_MUTATION_DEFAULT_TIMEOUT_MS}ms`),
+      });
+    },
+  );
 });

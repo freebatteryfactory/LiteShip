@@ -10,6 +10,9 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { CanonicalCbor, decode } from '@liteship/canonical';
 
+/** One fixed seed → a differential failure replays byte-for-byte on any machine. */
+const SEED = 0x5eed;
+
 const differentialValue = fc.letrec<{ value: unknown }>((tie) => ({
   value: fc.oneof(
     { depthSize: 'small', withCrossShrink: true },
@@ -58,7 +61,7 @@ describe('@liteship/canonical ↔ cborg independent differential', () => {
       fc.property(differentialValue, (value) => {
         expectSameBytes(CanonicalCbor.encode(value), referenceEncode(value));
       }),
-      { numRuns: 300 },
+      { seed: SEED, numRuns: 300 },
     );
   });
 
@@ -70,7 +73,7 @@ describe('@liteship/canonical ↔ cborg independent differential', () => {
         expect(decode(referenceBytes)).toStrictEqual(normalized(value));
         expect(normalizedReference(referenceDecode(liteBytes, { useMaps: true }))).toStrictEqual(normalized(value));
       }),
-      { numRuns: 300 },
+      { seed: SEED, numRuns: 300 },
     );
   });
 

@@ -18,7 +18,7 @@ import { dirname, resolve, join } from 'node:path';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isTaggedError } from '@liteship/error';
-import { noUnregisteredTodoGate, verifyGate, nodeContext, memoryContext } from '@liteship/gauntlet';
+import { isGovernedTodoPath, noUnregisteredTodoGate, verifyGate, nodeContext, memoryContext } from '@liteship/gauntlet';
 import { buildObligationLedger } from '../../../packages/cli/src/internal/traceability.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -31,6 +31,23 @@ function locOf(file: string | undefined, line: number | undefined): string {
 }
 
 describe('gauntlet/no-unregistered-todo — the OBLIGATIONS-LEDGER enforcement teeth', () => {
+  it('owns the exact published TypeScript path admission used by TODO governance', () => {
+    expect(
+      ['packages/demo/src/index.ts', 'packages/demo/src/nested/value.ts', 'packages/demo/src/types.d.ts'].filter(
+        isGovernedTodoPath,
+      ),
+    ).toEqual(['packages/demo/src/index.ts', 'packages/demo/src/nested/value.ts', 'packages/demo/src/types.d.ts']);
+    expect(
+      [
+        'packages/demo/src/index.tsx',
+        'packages/demo/test/index.ts',
+        'packages/demo/src.js',
+        'packages/nested/demo/src/index.ts',
+        'tests/unit/demo.test.ts',
+      ].filter(isGovernedTodoPath),
+    ).toEqual([]);
+  });
+
   it('self-proves (red caught, green clean, mutation killed)', () => {
     expect(verifyGate(noUnregisteredTodoGate).selfProven).toBe(true);
   });

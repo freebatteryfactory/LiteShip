@@ -37,6 +37,8 @@ import {
   CAMPAIGN_TARGET_EVAL_MS,
   scanCampaignWallBudget,
   scanExhaustiveCachePersistence,
+  unreadableYamlViolations,
+  workflowJobSections,
 } from '../../../../packages/cli/src/internal/workflow-action-pins.js';
 // Relative endpoint imports, deliberately not the package specifiers: these
 // laws are the integration cover for the campaign's two composition edges
@@ -320,6 +322,16 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
         v.includes('never restored'),
       ),
     ).toBe(true);
+    // A DECOY always() save shielding a success()-gated bank save — the
+    // always() contract binds to EACH save step, not to the job at large
+    // (PR #196 review round 13, confirmed P2: the coarse job-wide regex was
+    // satisfied by any single always() save).
+    const decoyAlwaysSave = jobOf(
+      `      - uses: actions/cache/restore@${sha} # v4\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n${saveOk}      - uses: actions/cache/save@${sha} # v4\n        if: success()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`,
+    );
+    expect(
+      scanExhaustiveCachePersistence(decoyAlwaysSave, ['exhaustive-mutation']).some((v) => v.includes('always')),
+    ).toBe(true);
     // A matching namespace over DIFFERENT paths — actions/cache versions the
     // archive by its path list, so the restore can never recover the save's
     // archive despite the key text matching (PR #196 review round 11,
@@ -337,6 +349,132 @@ describe('the exhaustive lanes SAVE the verdict bank even when gates exit red (P
     expect(scanExhaustiveCachePersistence(good, ['exhaustive-mutation'])).toEqual([]);
     // A missing job is a violation, never a silent pass.
     expect(scanExhaustiveCachePersistence('\n  other:\n    a: b\n', ['exhaustive-mutation'])).not.toEqual([]);
+  });
+});
+
+describe('the job boundary is a structural reader, not a lowercase-only regex', () => {
+  const sha = 'a'.repeat(40);
+  const save = `      - uses: actions/cache/save@${sha}\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`;
+  const compliantNext = `      - uses: actions/cache/restore@${sha}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n${save}`;
+
+  it.each(['next_job2', 'NextJob2'])('a job id containing %s bounds the section', (boundary) => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n  ${boundary}:\n    steps:\n${compliantNext}`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).not.toEqual([]);
+  });
+
+  it('a trailing comment on a job header still bounds the section', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n  next-job: # notes\n    steps:\n${compliantNext}`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).not.toEqual([]);
+  });
+
+  it('CRLF input bounds the section identically to LF', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n  next_job2:\n    steps:\n${compliantNext}`;
+    expect(scanExhaustiveCachePersistence(workflow.replaceAll('\n', '\r\n'), ['exhaustive-mutation'])).toEqual(
+      scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation']),
+    );
+  });
+
+  it('a job id that prefixes a later id resolves only its own section', () => {
+    const workflow = `jobs:\n  exhaustive-mcdc-fold:\n    steps:\n${compliantNext}  exhaustive-mcdc:\n    steps:\n`;
+    const sections = workflowJobSections(workflow);
+    expect(sections.get('exhaustive-mcdc')).not.toContain('exhaustive-mcdc-fold');
+  });
+
+  it('a campaign job with no cache steps is a violation even when the next job is compliant', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n  next_job2:\n    steps:\n${compliantNext}`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).not.toEqual([]);
+  });
+});
+
+describe('unreadable YAML is a violation, never a skipped line', () => {
+  it.each([
+    ['flow collection', 'jobs:\n  x:\n    steps:\n      - { uses: actions/checkout@abc }\n'],
+    ['alias', 'jobs:\n  x:\n    steps:\n      - *shared\n'],
+    ['merge key', 'jobs:\n  x:\n    <<: *defaults\n'],
+    ['tab indentation', 'jobs:\n  x:\n\tsteps:\n'],
+  ])('%s is refused', (_name, workflow) => {
+    expect(unreadableYamlViolations(workflow)).not.toEqual([]);
+  });
+
+  it('a duplicate key at one level is refused', () => {
+    expect(unreadableYamlViolations('jobs:\n  x:\n    timeout-minutes: 1\n    timeout-minutes: 2\n')).not.toEqual([]);
+  });
+
+  /**
+   * THE INVERSION (Codex review rounds 4-6 on PR #197, three confirmed P1s).
+   *
+   * Each spelling below has the identical failure mode: the refusal did not
+   * recognize the line, the SECTION READER did not recognize it either, and so
+   * both security scanners returned clean for a job they never read. They were
+   * reported as three findings; they are one defect — a denylist of named bad
+   * shapes over an open grammar.
+   *
+   * The last two rows are the point. Nobody reported a YAML tag or a
+   * space-before-colon `uses:`; they are refused because the guard now states
+   * what the reader UNDERSTANDS rather than what a reviewer happened to try.
+   */
+  it.each([
+    ['flow mapping under an arbitrary key', 'jobs:\n  build: { uses: owner/repo/.github/workflows/ci.yml@main }\n'],
+    ['an anchor declaration', 'jobs:\n  unsafe: &job\n    steps:\n      - uses: owner/action@main\n'],
+    [
+      'space before the colon on run',
+      'jobs:\n  a:\n    steps:\n      - run : echo "${{ github.event.head_commit.message }}"\n',
+    ],
+    ['space before the colon on uses', 'jobs:\n  a:\n    steps:\n      - uses : owner/action@main\n'],
+    ['a YAML tag nobody reported', 'jobs:\n  a:\n    name: !!str foo\n'],
+  ])('%s is refused', (_name, workflow) => {
+    expect(unreadableYamlViolations(workflow)).not.toEqual([]);
+  });
+
+  it('the inversion does not refuse what the reader genuinely carries', () => {
+    // The complement arm, mandatory: a guard that refuses everything is also
+    // broken, and a flow SEQUENCE OF PLAIN SCALARS is idiomatic Actions YAML
+    // that hides no structure.
+    expect(
+      unreadableYamlViolations(
+        'on:\n  push:\n    branches: [main]\njobs:\n  a:\n    runs-on: ubuntu-24.04\n    strategy:\n      matrix:\n        shard: [1, 2, 3, 4]\n    steps:\n      - uses: actions/checkout@abc\n      - name: build\n        run: |\n          echo hi\n',
+      ),
+    ).toEqual([]);
+  });
+
+  it('the LIVE workflows carry no unreadable line', () => {
+    // The regression invariant: a fix that reds the real corpus is a false
+    // positive, not a catch.
+    for (const workflow of ['ci.yml', 'release.yml']) {
+      const text = readFileSync(resolve(import.meta.dirname, '../../../..', '.github', 'workflows', workflow), 'utf8');
+      expect(unreadableYamlViolations(text), workflow).toEqual([]);
+    }
+  });
+
+  it('a bullet field and a child field with the same key are refused', () => {
+    expect(
+      unreadableYamlViolations(
+        'jobs:\n  x:\n    steps:\n      - uses: actions/checkout@abc\n        uses: actions/setup-node@abc\n',
+      ),
+    ).not.toEqual([]);
+  });
+
+  it('the public reader refuses duplicate top-level job ids instead of overwriting one', () => {
+    expect(() => workflowJobSections('jobs:\n  x:\n    runs-on: a\n  x:\n    runs-on: b\n')).toThrow(/duplicate/u);
+  });
+
+  it('a later top-level mapping cannot contribute an impersonating job', () => {
+    const sections = workflowJobSections(
+      'jobs:\n  harmless:\n    runs-on: ubuntu-latest\nconcurrency:\n  exhaustive-mutation:\n    steps:\n      - run: echo decoy\n',
+    );
+    expect([...sections.keys()]).toEqual(['harmless']);
+    expect(sections.get('harmless')).not.toContain('concurrency:');
+  });
+
+  it('a trailing comment on the jobs: line is inert, exactly as on every other mapping key (Codex review, confirmed P2)', () => {
+    const sections = workflowJobSections('jobs: # CI jobs\n  x:\n    runs-on: ubuntu-latest\n');
+    expect([...sections.keys()]).toEqual(['x']);
+  });
+
+  it('a key that merely begins with jobs, an indented jobs:, and a jobs-in-comment all stay refused', () => {
+    expect(() => workflowJobSections('jobs2:\n  x:\n    runs-on: a\n')).toThrow(/top-level jobs/u);
+    expect(() => workflowJobSections('outer:\n  jobs:\n    x:\n      runs-on: a\n')).toThrow(/top-level jobs/u);
+    expect(() => workflowJobSections('# jobs:\nother:\n  x: 1\n')).toThrow(/top-level jobs/u);
   });
 });
 
@@ -453,6 +591,153 @@ describe('campaign wall budgets absorb a cold probe and leave post-step margin (
     // campaign step — its env satisfies the contract.
     const namedCampaignStep = `\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - name: the real campaign\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n        run: |\n          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n  next-job:\n    a: b\n`;
     expect(scanCampaignWallBudget(namedCampaignStep, ['exhaustive-mutation'])).toEqual([]);
+  });
+});
+
+describe('the budget contract is universal over campaign steps, not existential', () => {
+  const floor = CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS;
+  const campaign = (env: string, condition = ''): string =>
+    `      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n${condition}        env:\n${env}`;
+  const workflow = (steps: string): string =>
+    `jobs:\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n${steps}`;
+
+  it('a second campaign step with no budget is a violation', () => {
+    const steps = `${campaign(`          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`)}${campaign('')}`;
+    expect(
+      scanCampaignWallBudget(workflow(steps), ['exhaustive-mutation']).some((violation) =>
+        violation.includes('missing LITESHIP_CAMPAIGN_WALL_BUDGET_MS'),
+      ),
+    ).toBe(true);
+  });
+
+  it('a second campaign step with an out-of-bounds budget is a violation', () => {
+    const steps = `${campaign(`          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`)}${campaign(
+      "          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '1'\n",
+    )}`;
+    expect(
+      scanCampaignWallBudget(workflow(steps), ['exhaustive-mutation']).some((violation) =>
+        violation.includes('cannot absorb a cold probe'),
+      ),
+    ).toBe(true);
+  });
+
+  it('a campaign step gated if false cannot discharge the contract', () => {
+    const steps = campaign(`          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`, '        if: false\n');
+    expect(
+      scanCampaignWallBudget(workflow(steps), ['exhaustive-mutation']).some((violation) =>
+        violation.includes('conditional'),
+      ),
+    ).toBe(true);
+  });
+
+  it.each([
+    ['an absent if', ''],
+    ['if always()', '        if: always()\n'],
+    ['if expression always()', '        if: ${{ always() }}\n'],
+  ])('%s discharges the campaign budget contract', (_name, condition) => {
+    const steps = campaign(`          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`, condition);
+    expect(scanCampaignWallBudget(workflow(steps), ['exhaustive-mutation'])).toEqual([]);
+  });
+
+  it('duplicate job-level timeout-minutes is refused through the shared YAML classifier', () => {
+    const subject = workflow(campaign(`          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`)).replace(
+      '    timeout-minutes: 150\n',
+      '    timeout-minutes: 150\n    timeout-minutes: 151\n',
+    );
+    expect(
+      scanCampaignWallBudget(subject, ['exhaustive-mutation']).some((violation) =>
+        violation.includes('duplicate key timeout-minutes'),
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('a conditional cache step cannot discharge a persistence contract', () => {
+  const sha = 'a'.repeat(40);
+  const save = `      - uses: actions/cache/save@${sha}\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`;
+
+  it('a restore step gated on success is a violation', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n        if: success()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n${save}`;
+    expect(
+      scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation']).some((violation) =>
+        violation.includes('conditional'),
+      ),
+    ).toBe(true);
+  });
+
+  it.each([
+    ['an absent if', ''],
+    ['if always()', '        if: always()\n'],
+    ['if expression always()', '        if: ${{ always() }}\n'],
+  ])('%s discharges the restore contract', (_name, condition) => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n${condition}        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n${save}`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).toEqual([]);
+  });
+
+  it('duplicate with.key children are refused through the shared YAML classifier', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          key: bank-decoy\n          restore-keys: |\n            bank-\${{ github.run_id }}-\n${save}`;
+    expect(
+      scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation']).some((violation) =>
+        violation.includes('duplicate key key'),
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('a legal respelling of a compliant workflow is not a violation', () => {
+  const sha = 'a'.repeat(40);
+  const floor = CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS;
+
+  it('a job-level env declaration satisfies the campaign budget contract', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: 150\n    env:\n      LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n`;
+    expect(scanCampaignWallBudget(workflow, ['exhaustive-mutation'])).toEqual([]);
+  });
+
+  it('a restore-keys block scalar with strip chomping remains a block', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n          restore-keys: |-\n            bank-\${{ github.run_id }}-\n      - uses: actions/cache/save@${sha}\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }}-\${{ github.run_attempt }}\n`;
+    expect(scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation'])).toEqual([]);
+  });
+
+  it('present non-integer timeout and budget values are not mislabeled as absent', () => {
+    const badTimeout = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: later\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`;
+    expect(scanCampaignWallBudget(badTimeout, ['exhaustive-mutation'])).toContain(
+      'exhaustive-mutation: job-level timeout-minutes is present but is not an integer',
+    );
+
+    const badBudget = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: later\n`;
+    expect(
+      scanCampaignWallBudget(badBudget, ['exhaustive-mutation']).some((violation) =>
+        violation.includes('declares a non-integer LITESHIP_CAMPAIGN_WALL_BUDGET_MS'),
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('legal-spelling normalization does not open a hole', () => {
+  const floor = CAMPAIGN_COLD_PROBE_MS + 2 * CAMPAIGN_TARGET_EVAL_MS;
+
+  it('a commented-out expression cannot satisfy the cache key contract', () => {
+    const sha = 'a'.repeat(40);
+    const workflow = `jobs:\n  exhaustive-mutation:\n    steps:\n      - uses: actions/cache/restore@${sha}\n      - uses: actions/cache/save@${sha}\n        if: always()\n        with:\n          path: x\n          key: bank-\${{ github.run_id }} # \${{  github.run_attempt  }}\n`;
+    expect(
+      scanExhaustiveCachePersistence(workflow, ['exhaustive-mutation']).some((violation) =>
+        violation.includes('lacks github.run_attempt'),
+      ),
+    ).toBe(true);
+  });
+
+  it('an env on an unrelated step cannot satisfy the campaign budget contract', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: echo warmup\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n`;
+    expect(
+      scanCampaignWallBudget(workflow, ['exhaustive-mutation']).some((violation) => violation.includes('missing')),
+    ).toBe(true);
+  });
+
+  it('if success() cannot satisfy the always-running campaign contract', () => {
+    const workflow = `jobs:\n  exhaustive-mutation:\n    timeout-minutes: 150\n    steps:\n      - run: pnpm exec tsx packages/cli/src/bin.ts check gates --ir --mutate\n        if: success()\n        env:\n          LITESHIP_CAMPAIGN_WALL_BUDGET_MS: '${floor}'\n`;
+    expect(
+      scanCampaignWallBudget(workflow, ['exhaustive-mutation']).some((violation) => violation.includes('conditional')),
+    ).toBe(true);
   });
 });
 

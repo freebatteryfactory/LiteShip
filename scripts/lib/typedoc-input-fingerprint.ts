@@ -3,7 +3,7 @@ import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from '
 import { dirname, relative, resolve } from 'node:path';
 import ts from 'typescript';
 
-export const TYPEDOC_INPUT_FINGERPRINT_PATH = 'docs/api/.typedoc-input-fingerprint.json';
+export const TYPEDOC_INPUT_FINGERPRINT_PATH = 'traceability/typedoc-input-fingerprint.json';
 
 export interface TypeDocInputFingerprint {
   readonly schemaVersion: 1;
@@ -47,7 +47,7 @@ function isPublicTopLevelStatement(statement: ts.Statement): boolean {
 }
 
 function bodyCanBeErased(node: ts.Node): node is ts.FunctionLikeDeclaration & { readonly body: ts.Block } {
-  if (!ts.isFunctionLike(node) || node.body === undefined || !ts.isBlock(node.body)) return false;
+  if (!ts.isFunctionLike(node) || !('body' in node) || node.body === undefined || !ts.isBlock(node.body)) return false;
   return (
     ts.isConstructorDeclaration(node) ||
     ts.isSetAccessorDeclaration(node) ||

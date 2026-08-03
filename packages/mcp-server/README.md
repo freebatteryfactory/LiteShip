@@ -50,7 +50,7 @@ After the host connects, its `tools/list` call returns the liteship command cata
 | `scene.verify` | Run a scene capsule’s generated tests. |
 <!-- END MCP-TOOL-CATALOG -->
 
-Each tool runs the **same handler** as the matching `liteship <verb>` (one registry, two skins — `@liteship/command`), so a tool call and a terminal verb are byte-identical. Input/output schemas are in the [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/mcp-server/src/).
+Each tool runs the **same handler** as the matching `liteship <verb>` (one registry, two skins — `@liteship/command`), so a tool call and a terminal verb are byte-identical. Input/output schemas are owned by the exported TypeScript declarations and enrolled in the [public API roster](https://github.com/freebatteryfactory/LiteShip/blob/main/PUBLIC-EXPORTS.md).
 
 ## Where it sits
 
@@ -64,7 +64,7 @@ A stdio MCP server prints nothing at startup — silence is normal, not a hang. 
 
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
 - [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/mcp-server/src/) — generated from source
+- [Public API roster](https://github.com/freebatteryfactory/LiteShip/blob/main/PUBLIC-EXPORTS.md) — reviewed surface; run `pnpm run docs:build` in a source checkout for TypeDoc
 
 ---
 

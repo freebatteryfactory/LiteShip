@@ -75,7 +75,7 @@ describe('security boundary totality', () => {
     expect(classifyBenchSource(`${repeated('/*x*/', 10_000)}bench('x', () => {});`)).toBe('placeholder');
     expect(
       compileViewTransition({ boundary: repeated(' !'), durationMs: 1, easing: 'linear' }).viewTransitionName,
-    ).toBe('liteship-vt-boundary');
+    ).toMatch(/^liteship-vt-boundary-[0-9a-f]{8}$/u);
     expect(projectNameFromDir(repeated(' !'))).toBe('liteship-app');
     expect(parseEventId(`${repeated('node-')}123`).sequence).toBe(123);
   });

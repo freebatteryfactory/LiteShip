@@ -23,9 +23,10 @@
  *     LIVE oracle facts in the IR, never a hardcoded constant or a proxy. The
  *     exclude set, too, is read from live marker facts, never a path list baked
  *     into the gate.
- *   • Severity is calibrated from the coverage-class PAIR via the redlinable
- *     {@link coverageClassSeverity} matrix (cross-class = advisory + a
- *     retire-the-weak-oracle signal; same-class = a loud contradiction).
+ *   • Severity is calibrated from the coverage-class PAIR and the site's
+ *     propagated effective assurance level via {@link coverageClassSeverity}.
+ *     Same-class contradictions are always errors; cross-class gaps block at
+ *     L4/L3, warn at L2, and stay advisory retire-work at L1/L0.
  *
  * Each instantiated gate {@link requireIR}, so it runs ONLY on the host path (the
  * CLI builds + injects the IR); the lean MCP/command path does not run it.
@@ -45,6 +46,9 @@ import {
   type RepoIR,
 } from '../repo-ir.js';
 import type { AssuranceLevel } from '../assurance.js';
+import { maxLevel } from '../assurance.js';
+import { levelOf } from '../assurance-map.js';
+import { propagateAssuranceLevels } from '../assurance-propagation.js';
 
 /** The two oracle ids every divergence gate triangulates — the fixed pair. */
 const AST_ORACLE = 'ts-ast';
@@ -152,11 +156,11 @@ function policyExcludedFiles(facts: readonly Fact[], excludedMarkerProperty: str
  * absent), their coverage classes, and the location — the reader decides; the
  * engine picks no winner. Severity is calibrated from the coverage-class pair.
  */
-function divergenceFinding(spec: OracleDivergenceSpec, site: SiteObservations): Finding {
+function divergenceFinding(spec: OracleDivergenceSpec, site: SiteObservations, level: AssuranceLevel): Finding {
   const present = site.ast ?? site.regex!;
   const absentOracle = site.ast !== undefined ? REGEX_ORACLE : AST_ORACLE;
   const absentClass: CoverageClass = absentOracle === AST_ORACLE ? AST_CLASS : REGEX_CLASS;
-  const severity = coverageClassSeverity(present.coverageClass, absentClass);
+  const severity = coverageClassSeverity(present.coverageClass, absentClass, level);
   const carriedClass = strongerCoverageClass(present.coverageClass, absentClass);
 
   const loc = `${site.file}:${site.line ?? 0}`;
@@ -170,7 +174,7 @@ function divergenceFinding(spec: OracleDivergenceSpec, site: SiteObservations): 
   return finding({
     ruleId: spec.gateId,
     severity,
-    level: spec.level,
+    level,
     title: `Oracle divergence on ${spec.property} at ${loc}`,
     detail: `${presentDesc} flags ${spec.property} at ${loc}; ${absentDesc} does not. ${why}. The engine picks no winner — the reader decides. (severity ${severity}: ${present.coverageClass === absentClass ? 'same-class contradiction' : 'cross-class coverage gap'}.)`,
     location: { file: site.file, ...(site.line !== undefined ? { line: site.line } : {}) },
@@ -198,13 +202,15 @@ function divergenceFinding(spec: OracleDivergenceSpec, site: SiteObservations): 
 function foldDivergences(spec: OracleDivergenceSpec, context: GateContext): readonly Finding[] {
   const ir = requireIR(context, spec.gateId);
   const excluded = policyExcludedFiles(ir.facts, spec.excludedMarkerProperty);
+  const levels = propagateAssuranceLevels(ir, (file) => levelOf(file));
   const findings: Finding[] = [];
   for (const site of groupBySite(ir.facts, spec.property)) {
     const astSaw = site.ast !== undefined;
     const regexSaw = site.regex !== undefined;
     if (astSaw === regexSaw) continue;
     if (astSaw && !regexSaw && excluded.has(site.file)) continue;
-    findings.push(divergenceFinding(spec, site));
+    const level = maxLevel(spec.level, levels.get(site.file) ?? levelOf(site.file));
+    findings.push(divergenceFinding(spec, site, level));
   }
   return findings;
 }
@@ -295,9 +301,13 @@ function buildFixtures(spec: OracleDivergenceSpec) {
         ...gate,
         run: (context: GateContext): readonly Finding[] => {
           const ir = requireIR(context, spec.gateId);
+          const levels = propagateAssuranceLevels(ir, (file) => levelOf(file));
           const findings: Finding[] = [];
           for (const site of groupBySite(ir.facts, spec.property)) {
-            if ((site.ast !== undefined) !== (site.regex !== undefined)) findings.push(divergenceFinding(spec, site));
+            if ((site.ast !== undefined) !== (site.regex !== undefined)) {
+              const level = maxLevel(spec.level, levels.get(site.file) ?? levelOf(site.file));
+              findings.push(divergenceFinding(spec, site, level));
+            }
           }
           return findings;
         },

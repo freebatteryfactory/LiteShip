@@ -27,12 +27,18 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
-import { PUBLISHABLE_ROSTER, collectRosterDrift } from '../../../scripts/gen-roster.js';
+import {
+  ASSURANCE_RATCHET_JSON,
+  PUBLISHABLE_ROSTER,
+  collectAssuranceRatchetIdentityDrift,
+  collectRosterDrift,
+} from '../../../scripts/gen-roster.js';
 import { repositoryProofTimeout } from '../../../vitest.shared.js';
 import { packageManifests } from '../../support/repo-truths.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const PUBLISH_ROSTER_JSON = resolve(REPO, 'scripts/ci/publish-roster.json');
+const ASSURANCE_RATCHET_PATH = resolve(REPO, ASSURANCE_RATCHET_JSON);
 
 // The publishable-set truth (packages/*/package.json) is owned by
 // tests/support/repo-truths.ts (scar S0.4). release.yml's own predicate is
@@ -125,6 +131,32 @@ describe('release publish roster matches the workspace (scripts/ci/publish-roste
     expect([...publishRoster().packages].sort()).toEqual(
       [...LITESHIP_PACKAGE_ROSTER, 'create-liteship', 'liteship'].sort(),
     );
+  });
+
+  it('projects assurance-ratchet row identities from the catalog and refuses rename or reorder drift', () => {
+    const ratchet = JSON.parse(readFileSync(ASSURANCE_RATCHET_PATH, 'utf8')) as {
+      readonly schemaVersion: 4;
+      readonly packages: readonly Record<string, unknown>[];
+    };
+    expect(collectAssuranceRatchetIdentityDrift(ratchet)).toEqual([]);
+
+    const reordered = {
+      ...ratchet,
+      packages: [ratchet.packages[1]!, ratchet.packages[0]!, ...ratchet.packages.slice(2)],
+    };
+    expect(collectAssuranceRatchetIdentityDrift(reordered)).toEqual([
+      expect.objectContaining({ copy: ASSURANCE_RATCHET_JSON }),
+    ]);
+
+    const renamed = {
+      ...ratchet,
+      packages: ratchet.packages.map((row, index) =>
+        index === 0 ? { ...row, name: '@liteship/not-the-catalog-owner' } : row,
+      ),
+    };
+    expect(collectAssuranceRatchetIdentityDrift(renamed)).toEqual([
+      expect.objectContaining({ copy: ASSURANCE_RATCHET_JSON }),
+    ]);
   });
 
   it(

@@ -51,7 +51,7 @@ export type {
   AppliedGraphVerification,
 } from '@liteship/core/graph';
 
-export { createGraphMutationClient } from '@liteship/core/graph';
+export { createGraphMutationClient, GRAPH_MUTATION_DEFAULT_TIMEOUT_MS } from '@liteship/core/graph';
 export type { GraphMutationClient, GraphMutationClientOptions, GraphMutationOps } from '@liteship/core/graph';
 
 export {

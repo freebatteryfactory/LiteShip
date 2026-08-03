@@ -38,6 +38,7 @@ function graph(nodes: DocumentGraphNode[], edges: DocumentGraphEdge[] = []): Doc
 function revealFixture(
   durationMs = 420,
   easing?: RuntimeEasing,
+  componentName = 'hero',
 ): { graph: DocumentGraph; transitionId: ContentAddress } {
   const signal = sealNode({
     _tag: 'DocGraphSignalNode',
@@ -54,7 +55,7 @@ function revealFixture(
     family: 'component',
     id: '',
     meta: META,
-    name: 'hero',
+    name: componentName,
     thresholds: [0, 1],
     states: ['before', 'after'],
   } as unknown as ComponentNode);
@@ -124,6 +125,15 @@ describe('interpretTransition', () => {
     expect(plan.runtime?.routing).toBe('seq');
     expect(plan.css?.fromState).toBe('before');
     expect(plan.css?.toState).toBe('after');
+  });
+
+  test('escapes a hostile boundary name in the generated selector and carries its original identity as data', () => {
+    const boundary = 'a"b}';
+    const { graph: g, transitionId } = revealFixture(420, undefined, boundary);
+    const plan = interpretTransition(g, transitionId);
+
+    expect(plan.css?.target).toBe(boundary);
+    expect(plan.css?.selector).toBe('[data-liteship-boundary="a\\"b}"]');
   });
 
   test('defaults runtime easing to { kind: ease } when the node authors none', () => {

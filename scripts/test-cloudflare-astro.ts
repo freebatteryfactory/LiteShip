@@ -7,8 +7,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { walkFiles } from '@liteship/core/fs-walk';
-import { runPnpm } from './support/pnpm-process.ts';
-import { cloudflareChildEnv } from './support/cloudflare-env.ts';
+import { runPnpm } from './support/pnpm-process.js';
+import { cloudflareChildEnv } from './support/cloudflare-env.js';
 import { doctor } from '../packages/cli/src/commands/doctor.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..');

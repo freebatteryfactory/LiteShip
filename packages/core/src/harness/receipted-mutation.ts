@@ -36,6 +36,7 @@
 import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessOutput, HarnessContext } from './pure-transform.js';
 import { benchNotApplicableMarker } from '../evidence/bench-marker.js';
+import { EMITTED_PROPERTY_SEED } from './property-seed.js';
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
 
@@ -121,7 +122,7 @@ import 'vitest';
           if (result.ok) expect(result.value).toEqual(value);
           return true;
         }),
-        { numRuns: 100 },
+        { seed: ${EMITTED_PROPERTY_SEED}, numRuns: 100 },
       );
     }
   });`);

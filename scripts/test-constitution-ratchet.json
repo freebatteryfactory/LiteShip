@@ -10,26 +10,238 @@
     "tests/component/render-worker.test.ts": {
       "ambient-clock": 1
     },
+    "tests/component/sse-client.test.ts": {
+      "ambient-entropy-spy": 2
+    },
     "tests/component/zap-debounce-throttle.test.ts": {
       "real-timer": 1
     },
     "tests/component/zap-events.test.ts": {
       "real-timer": 1
     },
+    "tests/fuzz/assets-binary-fuzz.test.ts": {
+      "unseeded-property": 4
+    },
+    "tests/fuzz/genui-tree-fuzz.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/property/ai-cast.prop.test.ts": {
+      "unseeded-property": 5
+    },
+    "tests/property/assets-audio.prop.test.ts": {
+      "unseeded-property": 5
+    },
+    "tests/property/astro-host-contract.prop.test.ts": {
+      "unseeded-property": 3
+    },
+    "tests/property/audit-package-artifacts.prop.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/property/audit-policy-isolation.prop.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/property/bench-classify-lexical.prop.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/property/benchmark-subject-qualification.prop.test.ts": {
+      "unseeded-property": 3
+    },
+    "tests/property/blend-determinism.prop.test.ts": {
+      "unseeded-property": 3
+    },
     "tests/property/boundary-evaluate-batch.prop.test.ts": {
-      "source-byte-oracle": 1
+      "source-byte-oracle": 1,
+      "unseeded-property": 2
+    },
+    "tests/property/boundary-evaluator-parity.prop.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/property/boundary-manifest.prop.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/property/boundary.prop.test.ts": {
+      "unseeded-property": 10
+    },
+    "tests/property/check-evidence-requirements.prop.test.ts": {
+      "unseeded-property": 6
+    },
+    "tests/property/ci-test-host-contract.prop.test.ts": {
+      "unseeded-property": 3
+    },
+    "tests/property/cli-argv-receipt.prop.test.ts": {
+      "unseeded-property": 4
+    },
+    "tests/property/command-benchmark-admission-laws.prop.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/property/command-projection-permutation.prop.test.ts": {
+      "unseeded-property": 2
     },
     "tests/property/compositor-zero-alloc.test.ts": {
       "source-byte-oracle": 1
     },
+    "tests/property/config.prop.test.ts": {
+      "unseeded-property": 3
+    },
+    "tests/property/content-address.prop.test.ts": {
+      "unseeded-property": 4
+    },
+    "tests/property/core-validation.prop.test.ts": {
+      "unseeded-property": 5
+    },
+    "tests/property/dag-compaction.prop.test.ts": {
+      "unseeded-property": 5
+    },
+    "tests/property/dag.prop.test.ts": {
+      "unseeded-property": 3
+    },
+    "tests/property/definition-snapshot-own-data.prop.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/property/delivery-evidence-verifier.prop.test.ts": {
+      "unseeded-property": 6
+    },
+    "tests/property/easing.prop.test.ts": {
+      "unseeded-property": 14
+    },
+    "tests/property/ecs-composable.prop.test.ts": {
+      "unseeded-property": 12
+    },
+    "tests/property/ecs-owner-witness-laws.prop.test.ts": {
+      "unseeded-property": 4
+    },
+    "tests/property/error/check-diagnostic-projection.prop.test.ts": {
+      "unseeded-property": 9
+    },
+    "tests/property/event-protocol-detail-projection.prop.test.ts": {
+      "unseeded-property": 11
+    },
+    "tests/property/facade-contract-algebra.prop.test.ts": {
+      "unseeded-property": 14
+    },
+    "tests/property/feature-edge-authority-adversarial.prop.test.ts": {
+      "unseeded-property": 3
+    },
+    "tests/property/feature-edge-connectivity-laws.prop.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/property/flake-evidence-admission.prop.test.ts": {
+      "unseeded-property": 11
+    },
+    "tests/property/flake-evidence.prop.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/property/frame-schedule-parity.prop.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/property/gate-composition.prop.test.ts": {
+      "unseeded-property": 3
+    },
+    "tests/property/gate-context-capability-projection.prop.test.ts": {
+      "unseeded-property": 5
+    },
+    "tests/property/gauntlet-authority-integrity.prop.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/property/genui-tree.prop.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/property/hlc.prop.test.ts": {
+      "unseeded-property": 7
+    },
+    "tests/property/integrity-digest.prop.test.ts": {
+      "unseeded-property": 4
+    },
+    "tests/property/local-resource-profile.prop.test.ts": {
+      "unseeded-property": 3
+    },
+    "tests/property/mcp-protocol.prop.test.ts": {
+      "unseeded-property": 5
+    },
+    "tests/property/mutation-mcdc-evidence.prop.test.ts": {
+      "unseeded-property": 5
+    },
+    "tests/property/one-install-cost-gate.prop.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/property/package-source-entrypoint-laws.prop.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/property/performance-admission-laws.prop.test.ts": {
+      "unseeded-property": 4
+    },
+    "tests/property/public-export-inhabitation-laws.prop.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/property/public-surface-command-laws.prop.test.ts": {
+      "unseeded-property": 5
+    },
+    "tests/property/public-surface-context-laws.prop.test.ts": {
+      "unseeded-property": 3
+    },
     "tests/property/receipt.prop.test.ts": {
-      "ambient-clock": 1
+      "ambient-clock": 1,
+      "unseeded-property": 1
+    },
+    "tests/property/scene-motion-runtime-parity.prop.test.ts": {
+      "unseeded-property": 2
     },
     "tests/property/schema-strictness.prop.test.ts": {
       "source-byte-oracle": 1
     },
+    "tests/property/security-audit-contract.prop.test.ts": {
+      "unseeded-property": 8
+    },
+    "tests/property/signal-input-roundtrip.prop.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/property/source-layout-graduation-laws.prop.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/property/source-reachability-model.prop.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/property/spine-provenance-adversarial-laws.prop.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/property/spine-surface-generation-laws.prop.test.ts": {
+      "unseeded-property": 3
+    },
+    "tests/property/traceability-title-resolution.prop.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/property/typed-ecs-laws.prop.test.ts": {
+      "unseeded-property": 4
+    },
+    "tests/property/vector-clock.prop.test.ts": {
+      "unseeded-property": 7
+    },
+    "tests/property/web-diagnostic-authority.prop.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/property/web-edge-cases.prop.test.ts": {
+      "unseeded-property": 6
+    },
+    "tests/property/web-physical-owned-lifecycle.prop.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/support/beginner-surface.ts": {
+      "unanchored-text-slice": 2
+    },
     "tests/support/repo-truths.ts": {
-      "source-byte-oracle": 2
+      "source-byte-oracle": 1
+    },
+    "tests/unit/arbitrary-from-schema.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/assets/brand-validators.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/assets/error-contract.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/astro/astro-directive-branches.test.ts": {
+      "ambient-entropy-spy": 7
     },
     "tests/unit/astro/astro-directives.test.ts": {
       "real-timer": 8
@@ -44,7 +256,14 @@
       "real-timer": 1
     },
     "tests/unit/astro/stream-llm-lifecycle.test.ts": {
+      "ambient-entropy-spy": 2,
       "real-timer": 1
+    },
+    "tests/unit/astro/stream-recovery.test.ts": {
+      "ambient-entropy-spy": 4
+    },
+    "tests/unit/astro/wave3-dx-guards.test.ts": {
+      "unseeded-property": 6
     },
     "tests/unit/audit/b5-normalize-repo-path.test.ts": {
       "source-byte-oracle": 1
@@ -61,20 +280,103 @@
     "tests/unit/audit/realrepo-skip-proof.test.ts": {
       "source-byte-oracle": 1
     },
+    "tests/unit/audit/repo-ir-language-service.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/canonical/cbor-decode.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/canonical/cbor-fault-simulation.test.ts": {
+      "unseeded-property": 1
+    },
     "tests/unit/cli/commands/completion.test.ts": {
       "source-byte-oracle": 1
+    },
+    "tests/unit/cli/commands/doctor/probe-support.test.ts": {
+      "unseeded-property": 3
+    },
+    "tests/unit/cli/commands/doctor/summary.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/cli/commands/package-smoke-engine.test.ts": {
+      "unseeded-property": 2
     },
     "tests/unit/cli/commands/scene-dev.test.ts": {
       "real-timer": 1
     },
+    "tests/unit/cli/fleet-event-feature-edge.test.ts": {
+      "unseeded-property": 1
+    },
     "tests/unit/cli/idempotency.test.ts": {
       "source-byte-oracle": 1
     },
+    "tests/unit/cli/lib/gauntlet-verdict-cache.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/cli/lib/local-vs-global.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/unit/cli/lib/mutation-targets.test.ts": {
+      "unseeded-property": 1
+    },
     "tests/unit/cli/lib/repo-ir-gauntlet.test.ts": {
-      "source-byte-oracle": 1
+      "source-byte-oracle": 1,
+      "unseeded-property": 2
+    },
+    "tests/unit/cli/lib/seam-execution-coverage.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/cli/lib/taint-policy.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/unit/cli/lib/test-corpus.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/cli/supply-chain-lib.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/command/catalog.test.ts": {
+      "unanchored-text-slice": 1
+    },
+    "tests/unit/compiler/ai-manifest-compiler.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/compiler/aria-compiler.test.ts": {
+      "unseeded-property": 1
     },
     "tests/unit/compiler/compiler-branch-coverage.test.ts": {
       "ambient-clock": 2
+    },
+    "tests/unit/compiler/design-layer.test.ts": {
+      "unseeded-property": 5
+    },
+    "tests/unit/compiler/glsl-compiler.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/compiler/migrate/from-container-queries.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/compiler/migrate/from-css-custom-properties.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/compiler/migrate/from-design-tokens.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/compiler/migrate/from-media-queries.test.ts": {
+      "unanchored-text-slice": 2,
+      "unseeded-property": 1
+    },
+    "tests/unit/compiler/migrate/from-tailwind-theme.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/compiler/motion-compiler.test.ts": {
+      "unanchored-text-slice": 1
+    },
+    "tests/unit/compiler/theme-compiler.test.ts": {
+      "unseeded-property": 3
+    },
+    "tests/unit/compiler/wgsl-compiler.test.ts": {
+      "unseeded-property": 1
     },
     "tests/unit/core/authoring/ai-cast.test.ts": {
       "source-byte-oracle": 1
@@ -82,17 +384,39 @@
     "tests/unit/core/canonical-identity.test.ts": {
       "source-byte-oracle": 3
     },
+    "tests/unit/core/clock/vector-clock-full.test.ts": {
+      "unseeded-property": 5
+    },
     "tests/unit/core/graph/graph-query-gap-replay.test.ts": {
       "ambient-clock": 2
     },
     "tests/unit/core/invariants.test.ts": {
-      "source-byte-oracle": 1
+      "source-byte-oracle": 1,
+      "unseeded-property": 22
     },
     "tests/unit/core/media/frame-budget.test.ts": {
       "ambient-clock": 2
     },
+    "tests/unit/core/media/responsive-media.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/unit/core/motion-parity.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/core/motion/blend-tree.test.ts": {
+      "unseeded-property": 2
+    },
+    "tests/unit/core/motion/motion-primitives.prop.test.ts": {
+      "unseeded-property": 5
+    },
     "tests/unit/core/motion/reveal.test.ts": {
       "source-byte-oracle": 2
+    },
+    "tests/unit/core/motion/scroll-timeline.test.ts": {
+      "unanchored-text-slice": 1
+    },
+    "tests/unit/core/motion/stagger.test.ts": {
+      "unanchored-text-slice": 1
     },
     "tests/unit/core/reactive/live-cell.test.ts": {
       "ambient-clock": 2
@@ -103,8 +427,12 @@
     "tests/unit/core/receipt-byte-law.test.ts": {
       "source-byte-oracle": 10
     },
+    "tests/unit/core/schema/brand-validators.test.ts": {
+      "unseeded-property": 12
+    },
     "tests/unit/core/simulation-determinism-substrate.test.ts": {
-      "source-byte-oracle": 4
+      "source-byte-oracle": 4,
+      "unanchored-text-slice": 1
     },
     "tests/unit/core/simulation-dst-meta-proof.test.ts": {
       "ambient-clock": 1
@@ -113,17 +441,25 @@
       "ambient-clock": 1,
       "source-byte-oracle": 3
     },
+    "tests/unit/core/wasm-parity.test.ts": {
+      "unseeded-property": 6
+    },
     "tests/unit/core/wasm-shipping.test.ts": {
       "source-byte-oracle": 8
     },
     "tests/unit/create-liteship/scaffold.test.ts": {
-      "source-byte-oracle": 12
+      "source-byte-oracle": 10
     },
     "tests/unit/detect/detect-runtime.test.ts": {
       "real-timer": 4
     },
+    "tests/unit/detect/head-probe-drift.test.ts": {
+      "unanchored-text-slice": 2,
+      "unseeded-property": 1
+    },
     "tests/unit/devops/audience-vocabulary.test.ts": {
-      "source-byte-oracle": 1
+      "source-byte-oracle": 1,
+      "unanchored-text-slice": 1
     },
     "tests/unit/devops/audit-command.test.ts": {
       "source-byte-oracle": 1
@@ -132,7 +468,8 @@
       "source-byte-oracle": 1
     },
     "tests/unit/devops/audit-defaults.test.ts": {
-      "source-byte-oracle": 2
+      "source-byte-oracle": 2,
+      "unanchored-text-slice": 2
     },
     "tests/unit/devops/audit-profile-seam.test.ts": {
       "source-byte-oracle": 3
@@ -140,11 +477,9 @@
     "tests/unit/devops/beginner-surface-contract.test.ts": {
       "source-byte-oracle": 5
     },
-    "tests/unit/devops/check-registry.test.ts": {
-      "source-byte-oracle": 1
-    },
     "tests/unit/devops/ci-authority.test.ts": {
-      "source-byte-oracle": 2
+      "source-byte-oracle": 2,
+      "unanchored-text-slice": 1
     },
     "tests/unit/devops/ci-plan-prebuild-closure.test.ts": {
       "source-byte-oracle": 3
@@ -157,6 +492,9 @@
     },
     "tests/unit/devops/docs-effect-residue.test.ts": {
       "source-byte-oracle": 1
+    },
+    "tests/unit/devops/event-protocol-contract.test.ts": {
+      "unseeded-property": 1
     },
     "tests/unit/devops/gate-canaries.test.ts": {
       "source-byte-oracle": 2
@@ -171,10 +509,10 @@
       "source-byte-oracle": 9
     },
     "tests/unit/devops/parallel-ci-artifacts.test.ts": {
-      "source-byte-oracle": 21
+      "source-byte-oracle": 8
     },
     "tests/unit/devops/pre-commit-hook.test.ts": {
-      "source-byte-oracle": 11
+      "source-byte-oracle": 10
     },
     "tests/unit/devops/profile-boundary.test.ts": {
       "source-byte-oracle": 8
@@ -188,14 +526,44 @@
     "tests/unit/devops/release-roster.test.ts": {
       "source-byte-oracle": 1
     },
+    "tests/unit/edge/tier-space.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/error/algebra.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/gauntlet/assurance-propagation.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/gauntlet/effective-level-scoping.test.ts": {
+      "unanchored-text-slice": 1
+    },
     "tests/unit/gauntlet/no-skipped-test-scope.test.ts": {
       "source-byte-oracle": 1
+    },
+    "tests/unit/gauntlet/scope-and-waivers.test.ts": {
+      "unanchored-text-slice": 1
+    },
+    "tests/unit/gauntlet/symbol-orphan-divergence.test.ts": {
+      "unseeded-property": 1
+    },
+    "tests/unit/gauntlet/verdict-cache.test.ts": {
+      "unanchored-text-slice": 1
     },
     "tests/unit/lib/spawn.test.ts": {
       "real-timer": 2
     },
+    "tests/unit/liteship/facade-failure-proof-binding.test.ts": {
+      "unanchored-text-slice": 1
+    },
+    "tests/unit/mcp-server/d4-ui-resources.test.ts": {
+      "unseeded-property": 1
+    },
     "tests/unit/meta/a1-seam-integrity.test.ts": {
       "source-byte-oracle": 4
+    },
+    "tests/unit/meta/bench-contracts.test.ts": {
+      "unseeded-property": 3
     },
     "tests/unit/meta/bench-production-pin.test.ts": {
       "source-byte-oracle": 1
@@ -228,10 +596,13 @@
       "source-byte-oracle": 1
     },
     "tests/unit/meta/gauntlet-order.test.ts": {
-      "source-byte-oracle": 9
+      "source-byte-oracle": 8
     },
     "tests/unit/meta/phase-count-drift.test.ts": {
       "source-byte-oracle": 1
+    },
+    "tests/unit/meta/prebuild-dist-free-closure.test.ts": {
+      "unseeded-property": 1
     },
     "tests/unit/meta/release-roster-projection.test.ts": {
       "source-byte-oracle": 5
@@ -263,8 +634,14 @@
     "tests/unit/vite/token-manifest.test.ts": {
       "ambient-clock": 2
     },
+    "tests/unit/vite/vite-dx-wave3.test.ts": {
+      "unseeded-property": 1
+    },
     "tests/unit/vite/vite-resolve.test.ts": {
       "ambient-clock": 1
+    },
+    "tests/unit/web/shader-integrity.test.ts": {
+      "unseeded-property": 2
     },
     "tests/unit/web/web-runtime-primitives.test.ts": {
       "real-timer": 1

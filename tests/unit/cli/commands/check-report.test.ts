@@ -21,6 +21,8 @@ import { CHECK_REGISTRY, type CheckPlan, type CheckReport } from '@liteship/comm
 import { createCurePacket } from '../../../../packages/cli/src/internal/cure-packet.js';
 import { captureCli } from '../../../integration/cli/capture.js';
 import {
+  cacheClosureCovers,
+  cacheClosurePatterns,
   check,
   createCheckPlanRunner,
   detectCheckContext,
@@ -515,14 +517,37 @@ describe('check profile cache and diagnostic execution', () => {
     }
   });
 
-  it('keeps non-quick checks uncached and invalidates cache probes on support/config changes', () => {
+  it('keeps every cached verdict closed over its own authority and invalidates on support/config changes', () => {
     const structural = CHECK_REGISTRY.find((entry) => entry.id === 'check/lint-structural')!;
     expect(structural.inputs).toEqual(
       expect.arrayContaining(['packages/**/*.ts', 'vitest.config.ts', 'vitest.browser.config.ts', 'vitest.shared.ts']),
     );
+
+    // A `content-addressed` verdict is sound only when `inputs` captures
+    // everything that can change it (see CheckCache in checks/definition.ts).
+    // The most load-bearing such byte is the check's OWN authority module: a
+    // check whose `owner` sits outside its closure serves a stale pass after
+    // the very code that decides the verdict is edited.
+    //
+    // This replaces an earlier assertion that no non-`quick` check may cache.
+    // That was a property of the population at the time, not a contract —
+    // `definition.ts` conditions caching on closure soundness, never on
+    // profile membership — and it fired on two Rust checks whose closures are
+    // sound (rust-toolchain.toml pins channel, targets, and components, and is
+    // declared). Asserting the real obligation instead caught three genuine
+    // holes the proxy never could: security-minimum, assurance-density, and
+    // test-constitution each cached a verdict computed by an unclosed module.
+    const unclosed = CHECK_REGISTRY.filter(
+      (entry) =>
+        entry.cache === 'content-addressed' &&
+        !cacheClosureCovers(cacheClosurePatterns(entry.inputs, entry.context), entry.owner),
+    ).map((entry) => `${entry.id} (owner ${entry.owner})`);
     expect(
-      CHECK_REGISTRY.filter((entry) => !entry.profiles.includes('quick')).every((entry) => entry.cache === 'none'),
-    ).toBe(true);
+      unclosed,
+      `cached check(s) whose authority module is outside their own cache closure: ${unclosed.join(', ')}`,
+    ).toEqual([]);
+    // Non-vacuity: the census must actually reach the cached population.
+    expect(CHECK_REGISTRY.filter((entry) => entry.cache === 'content-addressed').length).toBeGreaterThan(10);
 
     const root = mkdtempSync(join(tmpdir(), 'liteship-check-cache-closure-'));
     try {
@@ -577,7 +602,7 @@ describe('check profile cache and diagnostic execution', () => {
     },
     {
       checkId: 'check/docs-fast',
-      inputPath: 'docs/api/.typedoc-input-fingerprint.json',
+      inputPath: 'traceability/typedoc-input-fingerprint.json',
       inputClass: 'generated receipt',
     },
   ])(

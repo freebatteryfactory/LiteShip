@@ -21,7 +21,8 @@
  */
 
 import { repoRoot } from '../vitest.shared.js';
-import { buildCapabilityLinkFacts, type CapabilityLinkFacts } from '../packages/audit/src/index.js';
+import { buildCapabilityLinkFacts } from '../packages/audit/src/index.js';
+import type { CapabilityLinkFacts } from '../packages/gauntlet/src/index.js';
 import {
   LITESHIP_CAPABILITY_MODULES,
   LITESHIP_CAPABILITY_IDS,

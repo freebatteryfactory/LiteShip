@@ -9,17 +9,17 @@ import { defineConfig, defineBoundary } from '@liteship/core';
 const viewport = defineBoundary({
   input: 'viewport.width',
   at: [
-    [0,    'mobile'],
-    [768,  'tablet'],
+    [0, 'mobile'],
+    [768, 'tablet'],
     [1280, 'desktop'],
   ] as const,
 });
 
 export default defineConfig({
   boundaries: { viewport },
-  tokens:     {},
-  themes:     {},
-  styles:     {},
+  tokens: {},
+  themes: {},
+  styles: {},
   vite: {
     hmr: true,
   },

@@ -32,10 +32,12 @@ export type RequiredBump = 'none' | 'patch' | 'minor' | 'major';
  */
 export interface ApiSurfacePolicy {
   /**
-   * The published `@liteship/*` (and bare-named) main barrels LiteShip locks against
+   * The published runtime packages whose main barrels LiteShip locks against
    * silent drift. Each entry is an npm package name importable at its `.` entry.
-   * Kept as DATA so adding/removing a public package is a deliberate edit here,
-   * reviewed alongside the snapshot it changes.
+   * The export-map census independently closes every catalog package/subpath
+   * key, including type-only and denied exclusions. Kept as DATA so changing a
+   * runtime package owner is a deliberate generated projection reviewed
+   * alongside the snapshot it changes.
    */
   readonly publicPackages: readonly string[];
   /**
@@ -54,15 +56,14 @@ export const isBreakingClass = (changeClass: ChangeClass): boolean =>
   changeClass === 'removed' || changeClass === 'signature-changed';
 
 /**
- * The LiteShip 0.x policy: every published `@liteship/*` main barrel is locked; a
+ * The LiteShip 0.x policy: every published runtime-package main barrel is locked; a
  * breaking change demands at least a MINOR bump (pre-1.0 semantics), an added
  * export at least a minor (a new public surface is a feature, not a patch).
  *
  * The package list is the published, non-private workspace set (the same set the
- * monorepo build orders), minus the pseudo-public root whose surface is a
- * curated re-export, not a primary barrel:
- *  - `@liteship/_spine` ships `.d.ts` only (no runtime barrel to enumerate);
- *  - `liteship` is an aggregator whose exact curated budget has its own stronger lock.
+ * monorepo build orders), minus `@liteship/_spine`, which ships declarations only
+ * and has no runtime barrel to enumerate. The `liteship` aggregator remains in
+ * this policy; its exact curated budget is a complementary, stronger root lock.
  *
  * `create-liteship` deliberately remains in this policy: its package exports a
  * reusable typed scaffold engine in addition to its executable, so its barrel

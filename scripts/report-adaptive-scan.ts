@@ -111,6 +111,7 @@ function buildBlindSpots(
   runtimeSeams: RuntimeSeamsReportArtifact,
 ): readonly string[] {
   const paired = runtimeSeams.pairedTruth ?? [];
+  const workerStartupP99 = startupReality.browser.worker.summary.totalStartupMs.p99;
   const driftEntries = paired
     .filter((entry) => entry.status === 'seam-drift')
     .map(
@@ -129,8 +130,8 @@ function buildBlindSpots(
       .map((entry) => `${entry.id} misses fidelity target ${entry.fidelity.driftTargetPct}%`),
     startupReality.browser.worker.exceededFrameBudgetCount > 0
       ? `worker browser frame-budget exceedances ${startupReality.browser.worker.exceededFrameBudgetCount}/${startupReality.browser.worker.iterations}`
-      : `worker browser startup tail-watch p99 ${startupReality.browser.worker.summary.totalStartupMs.p99.toFixed(4)}ms stays within ${startupReality.browser.worker.frameBudgetMs.toFixed(0)}ms frame budget`,
-    `worker browser top outlier ${startupReality.browser.worker.topOutliers?.[0]?.valueMs?.toFixed?.(4) ?? 'n/a'}ms`,
+      : `worker browser startup tail-watch p99 ${typeof workerStartupP99 === 'number' ? workerStartupP99.toFixed(4) : workerStartupP99}ms stays within ${startupReality.browser.worker.frameBudgetMs.toFixed(0)}ms frame budget`,
+    `worker browser top outlier ${typeof startupReality.browser.worker.topOutliers?.[0]?.valueMs === 'number' ? startupReality.browser.worker.topOutliers[0].valueMs.toFixed(4) : 'n/a'}ms`,
     `llm simple top outlier ${startupReality.browser.llm.simple.topOutliers?.[0]?.valueMs?.toFixed?.(4) ?? 'n/a'}ms`,
     `llm promoted top outlier ${startupReality.browser.llm.promoted?.topOutliers?.[0]?.valueMs?.toFixed?.(4) ?? 'n/a'}ms`,
     ...(runtimeSeams.workerStartupAudit?.dominantStage

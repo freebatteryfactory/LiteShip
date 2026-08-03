@@ -63,7 +63,7 @@ The authority ratchet is the usual surprise: a gate whose semantic findings stay
 ## Docs
 
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
-- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/gauntlet/src/) — generated from source
+- [Public API roster](https://github.com/freebatteryfactory/LiteShip/blob/main/PUBLIC-EXPORTS.md) — reviewed surface; run `pnpm run docs:build` in a source checkout for TypeDoc
 
 ---
 

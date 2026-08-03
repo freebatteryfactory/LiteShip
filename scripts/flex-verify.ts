@@ -11,7 +11,7 @@
  *   3. Testing rigor — full gauntlet test surface green
  *   4. Performance — bench gate clean, no WATCHLIST entries, SSE preflight mandatory
  *   5. Release discipline — feedback:verify + docs:check both pass
- *   6. Docs — TSDoc on public exports; TypeDoc committed without drift; kept prose set present
+ *   6. Docs — TSDoc on public exports; TypeDoc builds completely; kept prose set present
  *   7. CapsuleFactory — capsule manifest present and structurally valid
  *
  * Folded into gauntlet:full so 10/10 is continuously enforced on every CI run.
@@ -136,6 +136,7 @@ const scanFiles = (patterns: string[], matcher: RegExp, excludeSanctioned = fals
     const lines = readFileSync(file, 'utf8').split('\n');
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+      if (line === undefined) continue;
       // Skip JSDoc continuation lines (lines starting with optional whitespace + `*`)
       if (/^\s*\*/.test(line)) continue;
       // Skip import/export lines that legitimately use `as` for aliasing
@@ -307,7 +308,7 @@ const checks: Check[] = [
       //   reuse the session, inflating per-replicate overhead spread (~70%+) even
       //   when median overhead stays near parity; flex still enforces
       //   llmRuntimeSteadySignals (exceedance rate + P99 tail) separately.
-      const acceptedNoisyPairs = new Set(ACCEPTED_BENCH_STABILITY_NOISY_LABELS);
+      const acceptedNoisyPairs: ReadonlySet<string> = new Set(ACCEPTED_BENCH_STABILITY_NOISY_LABELS);
       let runtimeSeamsCover = 'runtime-seams=not-available';
       let runtimeSeamsOk = true;
       if (existsSync('reports/runtime-seams.json')) {
@@ -423,11 +424,15 @@ const checks: Check[] = [
       const archBytes = archExists ? statSync('ARCHITECTURE.md').size : 0;
       const archText = archExists ? readFileSync('ARCHITECTURE.md', 'utf8') : '';
       const archIsSelfSufficient = archExists && archBytes >= 4096 && /document graph/i.test(archText);
-      const apiExists = existsSync('docs/api') && readdirSync('docs/api').length > 0;
-      const pass = missingDocs.length === 0 && renderRuntimeGone && archIsSelfSufficient && apiExists;
+      // `check/docs` (a declared prerequisite in registry mode, and executed by
+      // Release discipline in standalone mode) proves the uncommitted TypeDoc
+      // projection builds completely. Looking for ignored `docs/api` bytes here
+      // made a dirty workstation pass while a clean checkout failed (W8.5).
+      const typeDocProjectionProven = PRECHECKED || sh('pnpm run docs:check').ok;
+      const pass = missingDocs.length === 0 && renderRuntimeGone && archIsSelfSufficient && typeDocProjectionProven;
       return {
         pass,
-        detail: `kept-docs-missing=[${missingDocs.join(', ')}] render-runtime-deleted=${renderRuntimeGone} arch-self-sufficient=${archIsSelfSufficient} (bytes=${archBytes}) api-exists=${apiExists}`,
+        detail: `kept-docs-missing=[${missingDocs.join(', ')}] render-runtime-deleted=${renderRuntimeGone} arch-self-sufficient=${archIsSelfSufficient} (bytes=${archBytes}) typedoc-projection-proven=${typeDocProjectionProven}`,
       };
     },
   },

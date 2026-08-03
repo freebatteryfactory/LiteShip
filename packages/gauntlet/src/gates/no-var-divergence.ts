@@ -13,10 +13,11 @@
  * The likely real divergence on this repo is the comment/string occurrence: the
  * keyword appears textually inside a doc comment or a string literal that mentions
  * the legacy binding form by name, the regex fires (it is comment-blind), and the
- * AST oracle correctly stays silent (no real legacy declaration). That advisory
- * cross-class finding is the live proof the text-only oracle should be retired in
- * favour of the AST oracle — exactly the same dogfood shape as the headline
- * default-export gate, now triangulating a second property.
+ * AST oracle correctly stays silent (no real legacy declaration). That
+ * cross-class finding is aimed by the affected file's effective assurance level
+ * and is the live proof the text-only oracle should be retired in favour of the
+ * AST oracle — exactly the same dogfood shape as the headline default-export
+ * gate, now triangulating a second property.
  *
  * It REQUIRES the injected IR, so it runs only on the host path; the lean
  * MCP/command path does not run it.

@@ -77,38 +77,55 @@ bench.add('direct boundary evaluation', () => {
   Boundary.evaluate(boundary, 800);
 });
 
-bench.add('Composable.make -- boundary only', () => {
+bench.add('createComposable() -- boundary only', () => {
   createComposable<TestSchema>({ boundary });
 });
 
-bench.add('Composable.make -- boundary + token + style', () => {
+bench.add('createComposable() -- boundary + token + style', () => {
   createComposable<TestSchema>({ boundary, token, style });
 });
 
+const boundaryComposable = createComposable<TestSchema>({ boundary });
+const tokenStyleComposable = createComposable<TestSchema>({ token, style });
+const tokenComposable = createComposable<TestSchema>({ token });
+const styleComposable = createComposable<TestSchema>({ style });
+
 bench.add('Composable.compose -- two entities', () => {
-  Composable.compose(createComposable<TestSchema>({ boundary }), createComposable<TestSchema>({ token, style }));
+  Composable.compose(boundaryComposable, tokenStyleComposable);
 });
 
 bench.add('Composable.merge -- three entities', () => {
-  Composable.merge(
-    createComposable<TestSchema>({ boundary }),
-    createComposable<TestSchema>({ token }),
-    createComposable<TestSchema>({ style }),
-  );
+  Composable.merge(boundaryComposable, tokenComposable, styleComposable);
 });
 
-bench.add('ComposableWorld.spawn -- single entity', () => {
-  const scopedWorld = createWorld();
-  const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
-  scopedComposableWorld.spawn({ boundary, token, style });
-});
+const freshComposableWorld = () => ComposableWorld.make<TestSchema>(createWorld());
+let spawnComposableWorld = freshComposableWorld();
+// prettier-ignore
+bench.add('ComposableWorld.spawn -- single entity',
+  () => {
+    spawnComposableWorld.spawn({ boundary, token, style });
+  },
+  {
+    beforeEach() {
+      spawnComposableWorld = freshComposableWorld();
+    },
+  },
+);
 
-bench.add('ComposableWorld.evaluate -- boundary + token + style', () => {
-  const scopedWorld = createWorld();
-  const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
-  const entity = scopedComposableWorld.spawn({ boundary, token, style });
-  scopedComposableWorld.evaluate(entity, { 'viewport.width': 800, themeLevel: 1 });
-});
+let evaluationWorld = freshComposableWorld();
+let evaluationEntity = evaluationWorld.spawn({ boundary, token, style });
+// prettier-ignore
+bench.add('ComposableWorld.evaluate -- boundary + token + style',
+  () => {
+    evaluationWorld.evaluate(evaluationEntity, { 'viewport.width': 800, themeLevel: 1 });
+  },
+  {
+    beforeEach() {
+      evaluationWorld = freshComposableWorld();
+      evaluationEntity = evaluationWorld.spawn({ boundary, token, style });
+    },
+  },
+);
 
 bench.add('DenseStore get -- hot lookup', () => {
   denseStore.store.get(denseEntityIds[128]!);
@@ -118,56 +135,55 @@ bench.add('DenseStore set -- overwrite hot slot', () => {
   denseStore.writer.set(denseEntityIds[128]!, 999);
 });
 
+const tempStore = createDenseStore(Temp, 8);
+const tempIdA = EntityId('entity-a:fnv1a:aaaaaaaa');
+const tempIdB = EntityId('entity-b:fnv1a:bbbbbbbb');
+tempStore.writer.set(tempIdA, 1);
+tempStore.writer.set(tempIdB, 2);
 bench.add('DenseStore delete + reinsert', () => {
-  const tempStore = createDenseStore(Temp, 8);
-  const idA = EntityId('entity-a:fnv1a:aaaaaaaa');
-  const idB = EntityId('entity-b:fnv1a:bbbbbbbb');
-  tempStore.writer.set(idA, 1);
-  tempStore.writer.set(idB, 2);
-  tempStore.writer.delete(idA);
-  tempStore.writer.set(idA, 3);
+  tempStore.writer.delete(tempIdA);
+  tempStore.writer.set(tempIdA, 3);
 });
 
+const regularWorld = createWorld();
+const admittedBoundary = admitPart(BoundaryPart, boundary);
+if (!admittedBoundary.ok) throw new Error('benchmark fixture failed boundary admission');
+regularWorld.spawn(admittedBoundary.value);
+regularWorld.addSystem(defineSystem({ name: 'reader', query: [BoundaryPart], reads: [], writes: [], execute() {} }));
 bench.add('World.tick -- regular system', () => {
-  const scopedWorld = createWorld();
-  const admitted = admitPart(BoundaryPart, boundary);
-  if (!admitted.ok) throw new Error('benchmark fixture failed boundary admission');
-  scopedWorld.spawn(admitted.value);
-  scopedWorld.addSystem(defineSystem({ name: 'reader', query: [BoundaryPart], reads: [], writes: [], execute() {} }));
-  scopedWorld.tick();
+  regularWorld.tick();
 });
 
+const denseWorld = createWorld();
+const posX = createDenseStore(PosX, 8);
+const posY = createDenseStore(PosY, 8);
+denseWorld.addDenseStore(posX);
+denseWorld.addDenseStore(posY);
+const denseId = denseWorld.spawn();
+posX.writer.set(denseId, 1);
+posY.writer.set(denseId, 2);
+denseWorld.addSystem(
+  defineDenseSystem({
+    name: 'dense-reader',
+    reads: [],
+    writes: [PosX, PosY],
+    execute(context) {
+      const x = context.write(PosX).view();
+      const y = context.write(PosY).view();
+      x[0] = x[0]! + 1;
+      y[0] = y[0]! + 1;
+    },
+  }),
+);
 bench.add('World.tick -- dense system', () => {
-  const scopedWorld = createWorld();
-  const posX = createDenseStore(PosX, 8);
-  const posY = createDenseStore(PosY, 8);
-  scopedWorld.addDenseStore(posX);
-  scopedWorld.addDenseStore(posY);
-  const id = scopedWorld.spawn();
-  posX.writer.set(id, 1);
-  posY.writer.set(id, 2);
-  scopedWorld.addSystem(
-    defineDenseSystem({
-      name: 'dense-reader',
-      reads: [],
-      writes: [PosX, PosY],
-      execute(context) {
-        const x = context.write(PosX).view();
-        const y = context.write(PosY).view();
-        x[0] = x[0]! + 1;
-        y[0] = y[0]! + 1;
-      },
-    }),
-  );
-  scopedWorld.tick();
+  denseWorld.tick();
 });
 
+const queryComposableWorld = freshComposableWorld();
+queryComposableWorld.spawn({ boundary });
+queryComposableWorld.spawn({ boundary, token });
 bench.add('ComposableWorld.query -- existing world', () => {
-  const scopedWorld = createWorld();
-  const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
-  scopedComposableWorld.spawn({ boundary });
-  scopedComposableWorld.spawn({ boundary, token });
-  scopedComposableWorld.query('boundary');
+  queryComposableWorld.query('boundary');
 });
 
 bench.add('baseline object construction', () => {

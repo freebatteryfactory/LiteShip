@@ -6,7 +6,14 @@
  * only validates a client's proposed patch against whatever loadGraph returns.
  */
 import { sealNode, sealGraph } from '@liteship/core';
-import type { DocumentGraph, DocumentGraphNode, DocumentGraphEdge, SignalNode, CellMeta, GraphStore } from '@liteship/core';
+import type {
+  DocumentGraph,
+  DocumentGraphNode,
+  DocumentGraphEdge,
+  SignalNode,
+  CellMeta,
+  GraphStore,
+} from '@liteship/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 'server' },
@@ -15,7 +22,14 @@ const META: CellMeta = {
 };
 
 const signal = (input: string): SignalNode =>
-  sealNode({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', id: '', meta: META, input } as unknown as SignalNode);
+  sealNode({
+    _tag: 'DocGraphSignalNode',
+    _version: 1,
+    family: 'signal',
+    id: '',
+    meta: META,
+    input,
+  } as unknown as SignalNode);
 
 const build = (nodes: DocumentGraphNode[], edges: DocumentGraphEdge[] = []): DocumentGraph =>
   sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: META, nodes, edges } as Omit<DocumentGraph, 'id' | 'digest'>);

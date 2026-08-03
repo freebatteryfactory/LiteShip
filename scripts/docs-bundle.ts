@@ -11,7 +11,9 @@ import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'no
 import { join } from 'node:path';
 import { normalizeRepoPath } from '@liteship/core';
 import { walkFiles } from '@liteship/core/fs-walk';
+import { ValidationError } from '@liteship/error';
 import { computeBundleId } from '../packages/astro/src/docs-bundle-id.js';
+import { spawnArgv } from './lib/spawn.js';
 
 const REPO_ROOT = join(import.meta.dirname, '..');
 const DEFAULT_SOURCES = [
@@ -36,6 +38,17 @@ export interface DocsBundleManifest {
   readonly bundleId: string;
 }
 
+export interface DocsBundleEmitOptions {
+  readonly outDir: string;
+  readonly sources?: readonly string[];
+  readonly version?: string;
+}
+
+export interface DocsBundleWorkflowDependencies {
+  readonly runDocsBuild: () => Promise<{ readonly exitCode: number }>;
+  readonly emitBundle: (opts: DocsBundleEmitOptions) => Promise<DocsBundleManifest>;
+}
+
 async function sha256File(abs: string): Promise<{ sha256: string; bytes: number }> {
   const { createHash } = await import('node:crypto');
   const { readFileSync } = await import('node:fs');
@@ -44,7 +57,9 @@ async function sha256File(abs: string): Promise<{ sha256: string; bytes: number 
 }
 
 function collectFiles(root: string, relBase: string, out: string[]): void {
-  if (!existsSync(root)) return;
+  if (!existsSync(root)) {
+    throw ValidationError('docs-bundle', `declared source ${normalizeRepoPath(relBase)} is missing`);
+  }
   const st = statSync(root);
   if (st.isFile()) {
     out.push(relBase);
@@ -55,11 +70,7 @@ function collectFiles(root: string, relBase: string, out: string[]): void {
   }
 }
 
-export async function emitDocsBundle(opts: {
-  readonly outDir: string;
-  readonly sources?: readonly string[];
-  readonly version?: string;
-}): Promise<DocsBundleManifest> {
+export async function emitDocsBundle(opts: DocsBundleEmitOptions): Promise<DocsBundleManifest> {
   const sources = opts.sources ?? DEFAULT_SOURCES;
   const files: string[] = [];
   for (const source of sources) {
@@ -77,7 +88,8 @@ export async function emitDocsBundle(opts: {
   }
 
   const version =
-    opts.version ?? JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8') as { version: string }).version;
+    opts.version ??
+    (JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')) as { readonly version: string }).version;
   const bundleId = computeBundleId(entries);
   const manifest: DocsBundleManifest = {
     version,
@@ -91,9 +103,25 @@ export async function emitDocsBundle(opts: {
   return manifest;
 }
 
+async function runCanonicalDocsBuild(): Promise<{ readonly exitCode: number }> {
+  return spawnArgv('pnpm', ['run', 'docs:build'], { cwd: REPO_ROOT, stdio: 'inherit' });
+}
+
+/** Build the canonical TypeDoc projection, then seal the default docs bundle. */
+export async function runDocsBundleWorkflow(
+  opts: { readonly outDir: string },
+  dependencies: Partial<DocsBundleWorkflowDependencies> = {},
+): Promise<DocsBundleManifest> {
+  const result = await (dependencies.runDocsBuild ?? runCanonicalDocsBuild)();
+  if (result.exitCode !== 0) {
+    throw ValidationError('docs-bundle', `canonical docs build failed with exit code ${result.exitCode}`);
+  }
+  return (dependencies.emitBundle ?? emitDocsBundle)({ outDir: opts.outDir });
+}
+
 if (process.argv[1]?.endsWith('docs-bundle.ts')) {
   const outDir = process.argv[2] ?? join(REPO_ROOT, 'dist', 'docs-bundle');
-  const manifest = await emitDocsBundle({ outDir });
+  const manifest = await runDocsBundleWorkflow({ outDir });
   console.log(
     `docs:bundle → ${outDir} (${manifest.entries.length} files, bundleId=${manifest.bundleId.slice(0, 12)}…)`,
   );

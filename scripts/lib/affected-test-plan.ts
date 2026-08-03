@@ -124,13 +124,22 @@ function highestAssurance(affected: readonly string[], inventory: AssuranceInven
     );
 }
 
-function requiredCheckIds(browserRequired: boolean, benchmarkRequired: boolean): readonly string[] {
+function requiredCheckIds(
+  browserRequired: boolean,
+  benchmarkRequired: boolean,
+  rustWasmRequired: boolean,
+): readonly string[] {
   const ids = CHECK_REGISTRY.filter(
     (check) => check.contexts.includes('repository') && check.profiles.includes('quick'),
   ).map((check) => check.id);
   const required = new Set([...ids, 'check/test']);
   if (browserRequired) required.add('check/test-e2e');
   if (benchmarkRequired) required.add('check/bench');
+  if (rustWasmRequired) {
+    required.add('check/rustfmt');
+    required.add('check/rust-wasm-qualification');
+    required.add('check/cargo-audit');
+  }
   const registryOrder = new Map(CHECK_REGISTRY.map((check, index) => [check.id, index] as const));
   return [...required].sort(
     (a, b) => (registryOrder.get(a) ?? Number.MAX_SAFE_INTEGER) - (registryOrder.get(b) ?? Number.MAX_SAFE_INTEGER),
@@ -184,7 +193,7 @@ function finalizePlan(
     ...planInput,
     changedPathDigest: digest(input.changedPaths),
     risk,
-    requiredChecks: requiredCheckIds(input.browserRequired, input.benchmarkRequired),
+    requiredChecks: requiredCheckIds(input.browserRequired, input.benchmarkRequired, input.rustWasmRequired),
     testPartitions: {
       node: input.testFiles,
       benchmark: benchmarkFiles,
@@ -552,6 +561,10 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
   if (
     (candidate['browserRequired'] && !requiredChecks.includes('check/test-e2e')) ||
     (candidate['benchmarkRequired'] && !requiredChecks.includes('check/bench')) ||
+    (candidate['rustWasmRequired'] &&
+      (!requiredChecks.includes('check/rustfmt') ||
+        !requiredChecks.includes('check/rust-wasm-qualification') ||
+        !requiredChecks.includes('check/cargo-audit'))) ||
     (candidate['mode'] === 'full' &&
       (!candidate['browserRequired'] || !candidate['benchmarkRequired'] || !candidate['rustWasmRequired']))
   ) {

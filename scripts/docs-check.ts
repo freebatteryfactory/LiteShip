@@ -1,41 +1,38 @@
 #!/usr/bin/env tsx
 /**
- * Regenerates docs/api/ to a temp directory and diffs it against the committed
- * docs/api/. Fails non-zero if they differ — prevents committed API docs from
- * silently drifting away from source TSDoc.
+ * Proves TypeDoc still builds a COMPLETE projection from the live source
+ * TSDoc. `docs/api` is a build artifact, not committed truth (W8.5), so there
+ * is no committed copy to diff against — and there never needed to be: the
+ * only consumer of those 3,556 committed files was this check comparing them
+ * to a fresh build.
  *
- * Run this in CI after every gauntlet pass. Run `pnpm run docs:build` locally
- * when TSDoc blocks change to refresh the committed output.
+ * The cheap staleness signal is the committed input fingerprint in
+ * `traceability/`, asserted before the expensive build runs.
  */
 
-import { mkdtempSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { assertTypeDocInputFingerprint, writeTypeDocInputFingerprint } from './lib/typedoc-input-fingerprint.js';
+import { assertTypeDocInputFingerprint } from './lib/typedoc-input-fingerprint.js';
 import {
   awaitLocalDocsAdmission,
   formatLocalResourcePlan,
   withAdmittedNodeHeap,
 } from './lib/local-resource-profile.js';
 import {
-  buildTypeDocProofIdentity,
   assertCompleteTypeDocProjection,
+  buildTypeDocProofIdentity,
   countTypeDocMarkdown,
   readTypeDocProofReceipt,
+  TYPEDOC_COMPLETENESS_FLOOR,
   writeTypeDocProofReceipt,
 } from './lib/typedoc-proof-cache.js';
-import { spawnArgv, spawnArgvCapture } from './lib/spawn.js';
+import { spawnArgv } from './lib/spawn.js';
 
-const COMMITTED_DIR = 'docs/api';
 const REPO_ROOT = process.cwd();
 const useLocalCache = process.argv.includes('--local-cache') && process.env.CI !== 'true';
 const printPlan = process.argv.includes('--plan');
 const json = process.argv.includes('--json');
-
-if (!existsSync(COMMITTED_DIR)) {
-  console.error(`docs:check — ${COMMITTED_DIR} does not exist. Run 'pnpm run docs:build' first.`);
-  process.exit(1);
-}
 
 try {
   assertTypeDocInputFingerprint(REPO_ROOT);
@@ -96,32 +93,21 @@ try {
   }
   if (build.exitCode !== 0) throw new Error(`typedoc build failed (exit ${build.exitCode})`);
 
-  // A typedoc OOM can be laundered to exit 0 through the pnpm exec chain,
-  // leaving PARTIAL output that diffs as phantom mass-deletion drift. File
-  // count is the honest signal: a fresh build that produced far fewer pages
-  // than the committed tree did not finish — fail with the real cause.
-  const committedCount = countTypeDocMarkdown(COMMITTED_DIR);
-  const freshCount = countTypeDocMarkdown(tempDir);
-  assertCompleteTypeDocProjection(committedCount, freshCount);
-
-  // The manifest is part of committed generated truth. TypeDoc itself does not
-  // emit it, so project the same live input fingerprint into the fresh tree
-  // before the exact no-index diff.
-  writeTypeDocInputFingerprint(REPO_ROOT, join(tempDir, '.typedoc-input-fingerprint.json'));
-
-  const diff = await spawnArgvCapture('git', ['diff', '--no-index', '--stat', COMMITTED_DIR, tempDir]);
-  const diffOutput = diff.stdout + diff.stderr;
-
-  if (diff.exitCode !== 0 || diffOutput.trim().length > 0) {
-    throw new Error(
-      `committed ${COMMITTED_DIR}/ is out of sync with source TSDoc:\n${diffOutput}\n` +
-        `Run 'pnpm run docs:build' and commit the result.`,
-    );
-  }
+  // docs/api is a BUILD ARTIFACT, not committed truth (W8.5): 3,556 files
+  // that are a pure function of source bought only review noise — they were
+  // 52% of a branch's changed files for 10% of its content, and the only
+  // consumer of the committed bytes was this very check diffing them against
+  // a fresh build. What remains worth proving is what a committed copy could
+  // never prove on its own: that TypeDoc still builds from the live TSDoc and
+  // emits a COMPLETE projection. The committed input fingerprint (now in
+  // traceability/, outside the ignored tree) carries the cheap staleness
+  // signal, and it is asserted above before any of this runs.
+  const freshLocal = countTypeDocMarkdown(tempDir);
+  assertCompleteTypeDocProjection(0, freshLocal);
 
   if (useLocalCache) writeTypeDocProofReceipt(REPO_ROOT, proofIdentity);
   console.log(
-    `docs:check passed — committed ${COMMITTED_DIR}/ matches source TSDoc.` +
+    `docs:check passed — TypeDoc builds from source TSDoc; ${freshLocal} pages emitted (floor ${TYPEDOC_COMPLETENESS_FLOOR}).` +
       (useLocalCache ? ` Proof ${proofIdentity.proofKey} cached locally.` : ''),
   );
 } catch (error) {
