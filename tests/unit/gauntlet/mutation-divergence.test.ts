@@ -34,6 +34,7 @@ import {
 import { isTaggedError } from '@liteship/error';
 
 const L4_FILE = 'packages/core/src/schema/brands.ts'; // an L4 glob in the assurance map
+const L3_FILE = 'packages/quantizer/src/quantizer.ts'; // an L3 glob in the assurance map
 const L1_FILE = 'packages/x/src/a.ts'; // an ordinary L1 file
 const HELPER = 'packages/x/src/helper.ts'; // a helper imported by the L4 file
 
@@ -65,7 +66,11 @@ function ctx(ir: RepoIR, mutation: TestMutationFacts): GateContext {
       ...mutation,
       targetCensus:
         mutation.targetCensus ??
-        mutation.outcomes.map((item) => ({ file: item.file, applicableMutants: 1, reasons: [] })),
+        [...new Set(mutation.outcomes.map((item) => item.file))].map((file) => ({
+          file,
+          applicableMutants: mutation.outcomes.filter((item) => item.file === file).length,
+          reasons: [],
+        })),
       operatorApplicability:
         mutation.operatorApplicability ??
         mutation.outcomes.map((item) => ({ file: item.file, operator: item.operator, applicableMutants: 1 })),
@@ -90,11 +95,62 @@ describe('mutationDivergenceGate — self-proof (the authority ratchet)', () => 
 });
 
 describe('mutationDivergenceGate — kill-floor calibration by level', () => {
+  it('a per-file kill fraction below the L3 floor is a finding', () => {
+    const findings = mutationDivergenceGate.run(
+      ctx(simpleIR([L3_FILE]), {
+        outcomes: [
+          outcome({ file: L3_FILE, verdict: 'killed', mutantId: 'blake3:killed', line: 10 }),
+          outcome({ file: L3_FILE, verdict: 'survived', mutantId: 'blake3:survived', line: 20 }),
+        ],
+        targetCensus: [{ file: L3_FILE, applicableMutants: 2, reasons: [] }],
+        scoreBaseline: {},
+      }),
+    );
+
+    const floorFindings = findings.filter((item) => item.title.includes('kill score below floor'));
+    expect(floorFindings).toHaveLength(1);
+    expect(floorFindings[0]!.severity).toBe('error');
+    expect(floorFindings[0]!.detail).toContain('0.5000');
+    expect(floorFindings[0]!.detail).toContain('0.9000');
+  });
+
+  it('the target census owns the denominator, so a missing outcome cannot inflate the kill score', () => {
+    const findings = mutationDivergenceGate.run(
+      ctx(simpleIR([L3_FILE]), {
+        outcomes: [outcome({ file: L3_FILE, verdict: 'killed' })],
+        targetCensus: [{ file: L3_FILE, applicableMutants: 2, reasons: [] }],
+        scoreBaseline: {},
+      }),
+    );
+
+    const floorFinding = findings.find((item) => item.title.includes('kill score below floor'));
+    expect(floorFinding?.detail).toContain('0.5000 (1/2)');
+  });
+
+  it('equivalent outcomes cannot undercut the census denominator into an over-1 pass', () => {
+    const findings = mutationDivergenceGate.run(
+      ctx(simpleIR([L3_FILE]), {
+        outcomes: [
+          outcome({ file: L3_FILE, verdict: 'equivalent', mutantId: 'blake3:eq-a' }),
+          outcome({ file: L3_FILE, verdict: 'equivalent', mutantId: 'blake3:eq-b' }),
+        ],
+        targetCensus: [{ file: L3_FILE, applicableMutants: 1, reasons: [] }],
+        scoreBaseline: {},
+      }),
+    );
+
+    const refusal = findings.filter((item) => item.title.includes('target census inconsistent'));
+    expect(refusal).toHaveLength(1);
+    expect(refusal[0]!.severity).toBe('error');
+    expect(refusal[0]!.detail).toContain('including 2 justified-equivalent outcome(s)');
+  });
+
   it('an L4 survivor is severity error (BLOCKS — the trust spine)', () => {
     const findings = mutationDivergenceGate.run(
       ctx(simpleIR([L4_FILE]), { outcomes: [outcome({ file: L4_FILE, verdict: 'survived' })], scoreBaseline: {} }),
     );
-    expect(findings).toHaveLength(1);
+    expect(findings).toHaveLength(2);
+    expect(findings.some((item) => item.title.includes('kill score below floor'))).toBe(true);
     expect(findings[0]!.severity).toBe('error');
     expect(findings[0]!.level).toBe('L4');
     // The finding names the exact rewrite (so the reader sees what survived).
@@ -115,7 +171,7 @@ describe('mutationDivergenceGate — kill-floor calibration by level', () => {
         scoreBaseline: {},
       }),
     );
-    expect(findings).toHaveLength(1);
+    expect(findings).toHaveLength(2);
     const f = findings[0]!;
     expect(f.title).toContain('inconclusive');
     expect(f.detail).toContain('per-mutant budget (240000 ms) expired');
@@ -246,10 +302,10 @@ describe('mutationDivergenceGate — THE LAW: the level is PROPAGATED from the l
     const findings = mutationDivergenceGate.run(
       ctx(ir, { outcomes: [outcome({ file: HELPER, verdict: 'survived' })], scoreBaseline: {} }),
     );
-    expect(findings).toHaveLength(1);
+    expect(findings).toHaveLength(2);
     // Propagated to L4 → error, NOT the L1 advisory its glob alone would give.
-    expect(findings[0]!.level).toBe('L4');
-    expect(findings[0]!.severity).toBe('error');
+    expect(findings.every((item) => item.level === 'L4')).toBe(true);
+    expect(findings.every((item) => item.severity === 'error')).toBe(true);
   });
 });
 

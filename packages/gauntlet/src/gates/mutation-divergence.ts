@@ -242,10 +242,80 @@ function measuredScores(outcomes: readonly MutantOutcome[]): ReadonlyMap<string,
 }
 
 /**
+ * Build per-file kill-floor findings from the host-owned target census. The
+ * census supplies the admitted-mutant denominator, so a missing outcome cannot
+ * silently inflate the score. Justified-equivalent outcomes are removed from
+ * both numerator and denominator, matching the standing mutation-score law.
+ */
+function killFloorFindings(facts: MutationFacts, levels: ReadonlyMap<string, AssuranceLevel>): readonly Finding[] {
+  const findings: Finding[] = [];
+  for (const target of [...facts.targetCensus].sort((left, right) =>
+    left.file < right.file ? -1 : left.file > right.file ? 1 : 0,
+  )) {
+    const outcomes = facts.outcomes.filter((outcome) => outcome.file === target.file);
+    const killed = outcomes.filter((outcome) => outcome.verdict === 'killed').length;
+    const equivalent = outcomes.filter((outcome) => outcome.verdict === 'equivalent').length;
+    const level = levelForFile(target.file, levels);
+    if (
+      !Number.isInteger(target.applicableMutants) ||
+      target.applicableMutants < 0 ||
+      outcomes.length > target.applicableMutants ||
+      equivalent > target.applicableMutants
+    ) {
+      findings.push(
+        finding({
+          ruleId: GATE_ID,
+          severity: 'error',
+          level,
+          title: `Mutation target census inconsistent for ${target.file} (${level})`,
+          detail: `The mutation target census admits ${target.applicableMutants} mutant(s) for ${target.file}, but the facts carry ${outcomes.length} outcome(s), including ${equivalent} justified-equivalent outcome(s). An invalid or undercounted denominator cannot produce a trustworthy kill score, so the gate refuses it instead of clamping or passing.`,
+          location: { file: target.file },
+          remediation: {
+            kind: 'instruction',
+            description: 'Repair the host-owned mutation target census and re-run the campaign.',
+            steps: [
+              'Fix the facts producer so applicableMutants is a non-negative integer and is at least the number of emitted outcomes.',
+              'Re-run `liteship check gates --ir --mutate`; the census and outcome set must agree before the floor can pass.',
+            ],
+          },
+        }),
+      );
+      continue;
+    }
+    const scoredTotal = target.applicableMutants - equivalent;
+    const score = scoredTotal === 0 ? 1 : killed / scoredTotal;
+    const floor = KILL_FLOOR_BY_LEVEL[level];
+    if (score >= floor) continue;
+    const campaignIds = requiredCampaigns(facts, target.file);
+
+    findings.push(
+      finding({
+        ruleId: GATE_ID,
+        severity: campaignIds.length > 0 ? 'error' : SURVIVOR_SEVERITY_BY_LEVEL[level],
+        level,
+        title: `Mutation kill score below floor for ${target.file} (${level})`,
+        detail: `The per-file mutation kill score for ${target.file} is ${score.toFixed(4)} (${killed}/${scoredTotal}), BELOW the effective ${level} floor ${floor.toFixed(4)}. The denominator starts from the host-owned target census and excludes only ${equivalent} justified-equivalent mutant(s), so an admitted mutant without a killed verdict cannot disappear from the measurement.${campaignIds.length > 0 ? ` Semantic campaign(s) ${campaignIds.join(', ')} require mutation closure for this target.` : ''}`,
+        location: { file: target.file },
+        remediation: {
+          kind: 'instruction',
+          description: `Raise ${target.file}'s mutation kill score to at least ${floor.toFixed(4)}.`,
+          steps: [
+            `Inspect the survivor, no-coverage, and inconclusive findings for ${target.file}; ${scoredTotal - killed} of ${scoredTotal} scored mutants are not killed.`,
+            'Add or strengthen tests until enough admitted mutants are killed to clear the floor.',
+            'Re-run `liteship check gates --ir --mutate` and confirm the aggregate score clears the floor.',
+          ],
+        },
+      }),
+    );
+  }
+  return findings;
+}
+
+/**
  * The shared fold — folds the injected mutation facts. Each survived/no-coverage
- * mutant → a survivor finding at its file's effective level; each per-file score
- * drop → a ratchet finding. A `killed` mutant produces nothing (adequate coverage).
- * Findings are emitted in a deterministic order (sorted by location).
+ * mutant → a survivor finding at its file's effective level; each target below its
+ * effective-level kill floor → an aggregate finding; each per-file score drop → a
+ * ratchet finding. A fully-killed target produces nothing. Findings are deterministic.
  */
 function foldMutation(context: GateContext): readonly Finding[] {
   const facts = requireMutation(context, GATE_ID);
@@ -268,7 +338,7 @@ function foldMutation(context: GateContext): readonly Finding[] {
       (a.location?.column ?? 0) - (b.location?.column ?? 0),
   );
 
-  return [...survivors, ...ratchetFindings(facts, levels)];
+  return [...survivors, ...killFloorFindings(facts, levels), ...ratchetFindings(facts, levels)];
 }
 
 // ── Fixtures (in-memory, no parse / no test run) ──────────────────────────────
