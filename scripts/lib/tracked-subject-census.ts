@@ -88,6 +88,44 @@ export async function readTrackedFileCensus(
   return createTrackedFileCensus(result.stdout.split('\0').filter((path) => path.length > 0));
 }
 
+/**
+ * Tracked files that the repository's own ignore rules nevertheless match.
+ *
+ * Git resolves the conflict in the INDEX's favour, so these files stay
+ * committed and plain `git check-ignore` reports nothing about them. Every
+ * other tool disagrees: ast-grep, ripgrep, and fast-glob apply the ignore rules
+ * WITHOUT consulting the index, so each silently skips the file. The result is
+ * a source file governed in git's eyes and by nothing else — invisible
+ * precisely because the anchor still reports it as present.
+ *
+ * Derived from git's own resolution: `--exclude-standard` folds `.gitignore`,
+ * `.git/info/exclude`, and the global excludes in their real precedence. The
+ * pattern grammar is never re-implemented here — ordering, negation, and
+ * directory semantics are exactly the open grammar a restatement loses to.
+ */
+export async function readIgnoredTrackedFiles(
+  repoRoot: string,
+  run: GitTrackedFileRunner = spawnArgvCapture,
+): Promise<readonly string[]> {
+  const result = await run('git', ['ls-files', '-z', '--cached', '--ignored', '--exclude-standard'], {
+    cwd: repoRoot,
+    timeoutMs: 30_000,
+    captureBytes: 4 * 1024 * 1024,
+  });
+  if (result.timedOut) {
+    throw ValidationError('tracked-subject-census', 'git ls-files --ignored timed out after 30000ms');
+  }
+  if (result.exitCode !== 0) {
+    throw ValidationError(
+      'tracked-subject-census',
+      `git ls-files --ignored failed (exit ${result.exitCode}): ${result.stderr}`,
+    );
+  }
+  const paths = result.stdout.split('\0').filter((path) => path.length > 0);
+  for (const path of paths) assertRepoRelativePath(path);
+  return Object.freeze([...paths].sort(comparePath));
+}
+
 function packageBinTargets(manifestPath: string, text: string): readonly string[] {
   let manifest: unknown;
   try {

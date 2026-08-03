@@ -112,6 +112,13 @@ scripts/**/*.js
 scripts/**/*.js.map
 scripts/**/*.d.ts
 scripts/**/*.d.ts.map
+# …except the AUTHORED istanbul ambient, which is tracked source rather than tsc
+# emit. Git kept it committed because the index outranks an ignore rule, so it
+# looked perfectly governed — while ast-grep, ripgrep, and every fast-glob walk
+# that honours ignore files skipped it silently, since none of them consult the
+# index. Same negation idiom as the benchmarks ratchets above. Pinned by THE
+# IGNORED-TRACKED LAW in tests/unit/devops/denominator-census.test.ts.
+!scripts/types/istanbul.d.ts
 
 # Astro-generated content/types (regenerated on every astro dev / sync)
 **/.astro/

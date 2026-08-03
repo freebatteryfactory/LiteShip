@@ -165,6 +165,109 @@ export function ungovernedTrackedFiles(
  * uncovered — the complement, so the exemption list cannot rot into a denylist
  * that quietly excuses files a layer has since picked up.
  */
+/**
+ * Tracked files an ignore rule also matches — governed by git, invisible to
+ * everything else.
+ *
+ * THE CLASS. The other obligations all compare a layer against the anchor and
+ * trust the anchor. This one checks the ANCHOR ITSELF for a file whose two
+ * authorities disagree: `git ls-files` publishes it, `.gitignore` matches it.
+ * Git breaks the tie for the index, so the file stays committed and reads as
+ * perfectly normal — while ast-grep, ripgrep, and every fast-glob walk that
+ * honours ignore files skip it without a word. A layer can then report full
+ * coverage of a population that silently excludes it, and no floor moves,
+ * because the file was never in the layer's covered set to begin with.
+ *
+ * `ignored` must come from git's own resolution (see `readIgnoredTrackedFiles`),
+ * never from re-reading the pattern grammar here.
+ *
+ * An exemption is only honest when the file genuinely must stay ignorable; the
+ * usual cure is to narrow the ignore rule, because a tracked file that no tool
+ * can see is a hole whatever the reason for the pattern.
+ */
+export function ignoredTrackedFiles(
+  census: TrackedFileCensus,
+  ignored: readonly string[],
+  declaredIgnorable: Readonly<Record<string, string>> = {},
+): readonly string[] {
+  const declared = new Set(Object.keys(declaredIgnorable).map(normalizeCensusPath));
+  const tracked = new Set(census.paths.map(normalizeCensusPath));
+  return [
+    ...new Set(
+      ignored
+        .map(normalizeCensusPath)
+        .filter((path) => tracked.has(path))
+        .filter((path) => !declared.has(path)),
+    ),
+  ].sort();
+}
+
+/** Two independent derivations of ONE population, each labelled with its authority. */
+export interface PopulationParity {
+  readonly id: string;
+  readonly leftLabel: string;
+  readonly left: readonly string[];
+  readonly rightLabel: string;
+  readonly right: readonly string[];
+}
+
+/**
+ * Two derivations of the same population that no longer agree.
+ *
+ * Non-vacuity and floors are stated per layer, so they cannot see the case where
+ * two consumers of ONE population each compute it their own way and drift apart:
+ * both remain non-empty, both stay above their floors, and the smaller one simply
+ * judges less. The gap is only visible by comparing the derivations to each other,
+ * in BOTH directions — a subset relation would let the larger side grow junk while
+ * the smaller side silently shrank.
+ */
+export function populationParityFindings(pairs: readonly PopulationParity[]): readonly string[] {
+  const findings: string[] = [];
+  for (const pair of pairs) {
+    const left = new Set(pair.left.map(normalizeCensusPath));
+    const right = new Set(pair.right.map(normalizeCensusPath));
+    const onlyLeft = [...left].filter((path) => !right.has(path)).sort();
+    const onlyRight = [...right].filter((path) => !left.has(path)).sort();
+    if (onlyLeft.length > 0) {
+      findings.push(
+        `${pair.id}: ${onlyLeft.length} path(s) in ${pair.leftLabel} but absent from ${pair.rightLabel} ` +
+          `(e.g. ${onlyLeft.slice(0, 3).join(', ')})`,
+      );
+    }
+    if (onlyRight.length > 0) {
+      findings.push(
+        `${pair.id}: ${onlyRight.length} path(s) in ${pair.rightLabel} but absent from ${pair.leftLabel} ` +
+          `(e.g. ${onlyRight.slice(0, 3).join(', ')})`,
+      );
+    }
+  }
+  return findings;
+}
+
+/**
+ * Files handed to a judge that the judge's own scoping then discards.
+ *
+ * A levelled gate receives a population and is filtered to the files at or above
+ * its own rigor level. That filter is correct — but it is applied AFTER the
+ * denominator is claimed, so a file demoted below the gate's level leaves the
+ * judged set with no finding, no floor movement, and no record. The population
+ * still looks complete from every angle except this one.
+ *
+ * Stated over ranks rather than level names so the ladder stays the caller's
+ * authority; propagation may only ever RAISE a level, so checking the base map
+ * bounds the propagated case too.
+ */
+export function scopedOutOfJudgment(
+  judged: readonly string[],
+  rankOfPath: (path: string) => number,
+  floorRank: number,
+): readonly string[] {
+  return judged
+    .map(normalizeCensusPath)
+    .filter((path) => rankOfPath(path) < floorRank)
+    .sort();
+}
+
 export function staleUngovernedDeclarations(
   census: TrackedFileCensus,
   layers: readonly CoverageLayer[],

@@ -35,14 +35,31 @@ import fg from 'fast-glob';
 import { getFileInfo } from 'prettier';
 import {
   configGovernanceFindings,
+  ignoredTrackedFiles,
   layerFindings,
+  populationParityFindings,
+  scopedOutOfJudgment,
   staleUngovernedDeclarations,
   ungovernedTrackedFiles,
   type CoverageLayer,
 } from '../../../scripts/lib/denominator-census.js';
 import { SHIPPED_BIN_TSCONFIG, STANDALONE_CONTEXTS } from '../../../scripts/lib/shipped-source-typecheck.js';
-import { createTrackedFileCensus, readTrackedFileCensus } from '../../../scripts/lib/tracked-subject-census.js';
+import {
+  createTrackedFileCensus,
+  readIgnoredTrackedFiles,
+  readTrackedFileCensus,
+} from '../../../scripts/lib/tracked-subject-census.js';
 import type { TrackedFileCensus } from '../../../scripts/lib/tracked-subject-census.js';
+import {
+  DEFAULT_GAUNTLET_GLOBS,
+  LITESHIP_ASSURANCE_MAP,
+  isGovernedTodoPath,
+  levelOf,
+  nodeContext,
+  noUnregisteredTodoGate,
+  rankOf,
+} from '../../../packages/gauntlet/src/index.js';
+import { OBLIGATION_SRC_ROOTS, collectSourceFiles } from '../../../packages/cli/src/internal/traceability.js';
 import {
   rootManifest,
   rootTsconfigReferenceDirs,
@@ -207,6 +224,31 @@ function tsconfigProjectCovered(census: TrackedFileCensus): readonly string[] {
 }
 
 /**
+ * The population the gauntlet actually judges — built by the PRODUCTION context
+ * factory, never by restating its glob here. A change to `nodeContext`'s ignore
+ * set or dotfile policy therefore moves this law with it, which is the whole
+ * point: the law must track the judge, not a description of the judge.
+ */
+function judgedGauntletFiles(): readonly string[] {
+  return nodeContext(REPO_ROOT, DEFAULT_GAUNTLET_GLOBS).files().map(posixPath);
+}
+
+/**
+ * The same globs re-expanded WITH dotfiles.
+ *
+ * This is the one derivation that must NOT come from `nodeContext`: it exists to
+ * compute the complement `nodeContext` refuses to answer for. `dot: false` is a
+ * silent narrowing — a tracked source under a dot-directory is judged by nobody
+ * and reported by nothing, so the only way to see it is to ask the question the
+ * production factory declines to ask.
+ */
+function judgedIncludingDotfiles(): readonly string[] {
+  return fg
+    .sync([...DEFAULT_GAUNTLET_GLOBS], { cwd: REPO_ROOT, onlyFiles: true, unique: true, ignore: DERIVED, dot: true })
+    .map(posixPath);
+}
+
+/**
  * Tracked files no layer governs, each with the reason it is exempt.
  *
  * A reason must say why the file CANNOT be governed, not that governing it is
@@ -218,7 +260,8 @@ function tsconfigProjectCovered(census: TrackedFileCensus): readonly string[] {
 const DECLARED_UNGOVERNED: Readonly<Record<string, string>> = {
   '.editorconfig': 'editor metadata in INI; no layer here has a parser for it',
   '.gitattributes': 'git metadata consumed by git itself, not a checkable source',
-  '.gitignore': 'git metadata consumed by git itself, not a checkable source',
+  '.gitignore':
+    'git metadata with no source parser; what it can silently HIDE from every other tool is governed by the ignored-tracked law below',
   '.nvmrc': 'a bare version string with no syntax for any layer to check',
   '.prettierrc': 'the formatter cannot format the rc that configures it without reading its own output',
   '.prettierignore': 'the ignore list itself; pinned exactly by tests/unit/devops/format-tree-parity.test.ts',
@@ -240,9 +283,14 @@ const DECLARED_UNGOVERNED: Readonly<Record<string, string>> = {
 describe('W1.3 THE DENOMINATOR LAW: every layer answers for its own population', () => {
   let census: TrackedFileCensus;
   let layers: readonly CoverageLayer[];
+  let ignoredTracked: readonly string[];
 
   beforeAll(async () => {
-    census = await readTrackedFileCensus();
+    // The repo root is passed EXPLICITLY: the reader's signature requires it, and
+    // relying on the runner's cwd made the anchor depend on where vitest happened
+    // to be invoked from — an accident, not a derivation.
+    census = await readTrackedFileCensus(REPO_ROOT);
+    ignoredTracked = await readIgnoredTrackedFiles(REPO_ROOT);
     layers = [
       {
         id: 'eslint',
@@ -298,6 +346,20 @@ describe('W1.3 THE DENOMINATOR LAW: every layer answers for its own population',
         covered: tsconfigProjectCovered(census),
         floor: 5,
       },
+      {
+        // Intent-debt governance judges published package source for
+        // unregistered markers. Its population is the gauntlet's judged set
+        // filtered by the gate's own shared predicate — the three configs below
+        // are exactly the files whose edit moves it.
+        id: 'todo-governance',
+        configPaths: [
+          'packages/gauntlet/src/gates/no-unregistered-todo.ts',
+          'packages/gauntlet/src/runner.ts',
+          'packages/gauntlet/src/assurance-map.ts',
+        ],
+        covered: judgedGauntletFiles().filter(isGovernedTodoPath),
+        floor: 750,
+      },
     ];
   }, repositoryProofTimeout());
 
@@ -348,6 +410,76 @@ describe('W1.3 THE DENOMINATOR LAW: every layer answers for its own population',
       expect(reason.length, `${entry} is exempt with no reason`).toBeGreaterThan(20);
     }
   });
+
+  it('THE IGNORED-TRACKED LAW: no tracked file is also matched by an ignore rule', () => {
+    const hidden = ignoredTrackedFiles(census, ignoredTracked);
+    expect(
+      hidden,
+      `tracked file(s) every gitignore-respecting tool silently skips (${hidden.length}):\n` +
+        `${hidden.join('\n')}\n` +
+        'git keeps them because the INDEX wins the tie; ast-grep, ripgrep, and fast-glob never ask the ' +
+        'index, so each one skips the file without a word. Narrow the ignore rule — the negation idiom ' +
+        'is already used in .gitignore for the benchmarks ratchets — so the tools meant to govern it can see it.',
+    ).toEqual([]);
+  });
+
+  it('THE PARITY LAW: the judge, the obligation ledger, and the anchor resolve ONE population', () => {
+    // Three routes to the same set: the production context factory, the ledger's
+    // own filesystem walk, and git. All three apply the gate's exported predicate;
+    // none of them restates another's glob. Nothing previously proved they agree.
+    const judged = judgedGauntletFiles().filter(isGovernedTodoPath);
+    const anchored = census.paths.map(posixPath).filter(isGovernedTodoPath);
+    const ledger = OBLIGATION_SRC_ROOTS.flatMap((root) => collectSourceFiles(REPO_ROOT, root)).map(posixPath);
+    const findings = populationParityFindings([
+      {
+        id: 'todo-governance',
+        leftLabel: "the gauntlet's judged set",
+        left: judged,
+        rightLabel: 'the tracked anchor',
+        right: anchored,
+      },
+      {
+        id: 'obligation-ledger',
+        leftLabel: "the gauntlet's judged set",
+        left: judged,
+        rightLabel: "the obligation ledger's own walk",
+        right: ledger,
+      },
+    ]);
+    expect(findings, `population derivations disagree:\n${findings.join('\n')}`).toEqual([]);
+    // Anti-vacuity: parity over an empty population is trivially true.
+    expect(judged.length, 'the parity arms are empty, so they prove nothing').toBeGreaterThan(750);
+  });
+
+  it('no tracked source hides behind the judge’s dotfile blindness', () => {
+    const judged = new Set(judgedGauntletFiles());
+    const hidden = judgedIncludingDotfiles().filter((path) => !judged.has(path) && census.has(path));
+    expect(
+      hidden,
+      `tracked source(s) matched by the judged globs but dropped by \`dot: false\` (${hidden.length}):\n` +
+        `${hidden.join('\n')}\n` +
+        'a source under a dot-directory is judged by nobody and reported by nothing',
+    ).toEqual([]);
+  });
+
+  it('THE SCOPING LAW: no file the TODO gate is handed sits below the level that judges it', () => {
+    // Level-scoping is applied AFTER the denominator is claimed, so a file demoted
+    // below the gate's own level leaves the judged set with no finding, no floor
+    // movement, and no record. Propagation may only ever RAISE, so pinning the base
+    // map bounds the propagated case too.
+    const floorRank = rankOf(noUnregisteredTodoGate.level);
+    const dropped = scopedOutOfJudgment(
+      judgedGauntletFiles().filter(isGovernedTodoPath),
+      (path) => rankOf(levelOf(path, LITESHIP_ASSURANCE_MAP)),
+      floorRank,
+    );
+    expect(
+      dropped,
+      `file(s) the TODO gate judges but its own ${noUnregisteredTodoGate.level} scoping discards ` +
+        `(${dropped.length}):\n${dropped.slice(0, 40).join('\n')}\n` +
+        'an unregistered marker in one of these ships invisibly',
+    ).toEqual([]);
+  });
 });
 
 describe('the denominator law reds on each failure mode it claims to catch', () => {
@@ -385,6 +517,35 @@ describe('the denominator law reds on each failure mode it claims to catch', () 
     // A directory declaration covers its members, so an exemption is stated once.
     const nested = createTrackedFileCensus(['a.ts', 'vendor/x.ts', 'vendor/deep/y.ts']);
     expect(ungovernedTrackedFiles(nested, [{ ...healthy, covered: ['a.ts'] }], { vendor: 'third party' })).toEqual([]);
+  });
+
+  it('a tracked file an ignore rule also matches is a finding; a declaration excuses it', () => {
+    // The live corpus is clean once the ignore rule is narrowed, so these fixtures
+    // are the teeth: an untracked ignored path is correctly NOT a finding (it is
+    // just an ignored file), while a TRACKED one is the hole this law exists for.
+    expect(ignoredTrackedFiles(census, ['b.ts', 'untracked/derived.js'])).toEqual(['b.ts']);
+    expect(ignoredTrackedFiles(census, ['b.ts'], { 'b.ts': 'declared ignorable' })).toEqual([]);
+    expect(ignoredTrackedFiles(census, [])).toEqual([]);
+  });
+
+  it('two derivations of one population that disagree are a finding in BOTH directions', () => {
+    const pair = { id: 'p', leftLabel: 'left', rightLabel: 'right' } as const;
+    expect(populationParityFindings([{ ...pair, left: ['a.ts', 'b.ts'], right: ['a.ts'] }])).toEqual([
+      'p: 1 path(s) in left but absent from right (e.g. b.ts)',
+    ]);
+    // The mirrored arm is mandatory: a subset check would let the smaller side
+    // shrink silently, which is the exact failure this law is aimed at.
+    expect(populationParityFindings([{ ...pair, left: ['a.ts'], right: ['a.ts', 'b.ts'] }])).toEqual([
+      'p: 1 path(s) in right but absent from left (e.g. b.ts)',
+    ]);
+    expect(populationParityFindings([{ ...pair, left: ['a.ts'], right: ['a.ts'] }])).toEqual([]);
+  });
+
+  it('a judged file below the judge’s own level is a finding', () => {
+    const ranks: Readonly<Record<string, number>> = { 'a.ts': 0, 'b.ts': 2 };
+    const rankOfPath = (path: string): number => ranks[path] ?? 0;
+    expect(scopedOutOfJudgment(['a.ts', 'b.ts'], rankOfPath, 1)).toEqual(['a.ts']);
+    expect(scopedOutOfJudgment(['b.ts'], rankOfPath, 1)).toEqual([]);
   });
 
   it('a stale exemption is a finding in both directions', () => {

@@ -905,7 +905,7 @@ export function buildTraceabilityFacts(repoRoot: string, now: Date): Traceabilit
 const OBLIGATIONS_PATH = 'traceability/obligations.yaml';
 
 /** The source roots the marker scan walks for `// OBLIGATION:` markers (repo-relative). */
-const OBLIGATION_SRC_ROOTS: readonly string[] = ['packages'];
+export const OBLIGATION_SRC_ROOTS: readonly string[] = ['packages'];
 
 /** The closed taxonomy bucket every obligation declares. */
 const OBLIGATION_CLASSES: ReadonlySet<string> = new Set(['deferred-feature', 'debt', 'test-note']);
@@ -1013,8 +1013,17 @@ function parseObligations(text: string): readonly DeclaredObligation[] {
   return out;
 }
 
-/** Recursively collect the `packages/<pkg>/src/**` `.ts` files (repo-relative, sorted, deterministic). */
-function collectSourceFiles(repoRoot: string, root: string): readonly string[] {
+/**
+ * Recursively collect the `packages/<pkg>/src/**` `.ts` files (repo-relative, sorted, deterministic).
+ *
+ * Exported so the denominator law can compare THIS derivation against the one
+ * the gauntlet's own glob produces. Both apply {@link isGovernedTodoPath}, but
+ * they reach it by different routes — a filesystem walk here, a fast-glob
+ * expansion there — and nothing previously proved the two agree. A second copy
+ * of this walk written inside the law would have proved only that the copy
+ * matched itself.
+ */
+export function collectSourceFiles(repoRoot: string, root: string): readonly string[] {
   const abs = join(repoRoot, root);
   if (!existsSync(abs)) return [];
   return walkFiles(abs, { skipDirs: ['node_modules', 'dist'], suffixes: ['.ts'] })
