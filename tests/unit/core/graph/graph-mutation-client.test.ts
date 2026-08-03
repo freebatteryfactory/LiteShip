@@ -285,6 +285,55 @@ describe('createGraphMutationClient — timeoutMs', () => {
     await expect(next).resolves.toEqual({ status: 'refused', errors: ['next reached'] });
   });
 
+  /**
+   * Headers arrive; the body never does. This is what a proxy produces when it
+   * commits a 200 and then wedges, and it is the half the other fixtures here
+   * never exercised — every one of them stalls the FETCH, which is precisely the
+   * half that was already covered.
+   */
+  const headersThenStalledBody = (): typeof fetch =>
+    vi.fn(() =>
+      Promise.resolve(
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start() {
+              // Deliberately never enqueue and never close.
+            },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      ),
+    );
+
+  test('a stalled BODY times out and the next queued request proceeds', async () => {
+    vi.useFakeTimers();
+    let calls = 0;
+    const fetchImpl: typeof fetch = vi.fn((input, init) => {
+      calls += 1;
+      if (calls === 2) return Promise.resolve(response({ status: 'refused', errors: ['next reached'] }, 409));
+      return headersThenStalledBody()(input, init);
+    });
+    const client = createGraphMutationClient({ url: '/api/graph', base: graph([node('a')]), fetchImpl });
+
+    const stalled = client.submit([]);
+    const next = client.submit([]);
+    let settled = false;
+    void stalled.then(() => {
+      settled = true;
+    });
+    await vi.advanceTimersByTimeAsync(GRAPH_MUTATION_DEFAULT_TIMEOUT_MS);
+
+    // The deadline is documented as total — an unbounded request "would hold
+    // every later submit in this client's serialized queue". A body that never
+    // settles is exactly that unbounded request.
+    expect(settled, 'a stalled response BODY must still settle at the deadline').toBe(true);
+    await expect(stalled).resolves.toMatchObject({
+      status: 'error',
+      message: expect.stringContaining(`timed out after ${GRAPH_MUTATION_DEFAULT_TIMEOUT_MS}ms`),
+    });
+    await expect(next).resolves.toEqual({ status: 'refused', errors: ['next reached'] });
+  });
+
   test('an explicit finite timeoutMs overrides the default', async () => {
     vi.useFakeTimers();
     const hangingFetch = abortOnlyFetch();
