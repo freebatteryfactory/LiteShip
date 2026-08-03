@@ -88,6 +88,68 @@ describe('CSS identity interpolation must be escaped', () => {
     ]);
   });
 
+  /**
+   * THE BINDING LAW — the approved name must be resolved at its CALL SITE.
+   *
+   * The scanner used to build one file-wide set of approved names and subtract
+   * the shadows, which meant enumerating the declaration forms that shadow: an
+   * open grammar. Review reported this same defect EIGHT times across
+   * successive commits, each round naming a form the last fix left standing —
+   * local const, then function parameter, then catch binding. Every case below
+   * keeps the approved import present in the file (so a file-wide name set
+   * still holds it) while a nearer lexical binding owns the name at the call
+   * site. Resolution by scope walk covers all of them at once, including the
+   * forms nobody has enumerated yet.
+   */
+  it.each([
+    [
+      'a function parameter',
+      'function render(escapeCssString, name) {\n  return `[data-liteship-boundary="${escapeCssString(name)}"]`;\n}',
+    ],
+    [
+      'an arrow parameter',
+      'const render = (escapeCssString) => `[data-liteship-boundary="${escapeCssString(name)}"]`;',
+    ],
+    [
+      'a destructured parameter',
+      'function render({ escapeCssString }) {\n  return `[data-liteship-boundary="${escapeCssString(name)}"]`;\n}',
+    ],
+    [
+      'a catch binding',
+      'function render() {\n  try {\n    risky();\n  } catch (escapeCssString) {\n    return `[data-liteship-boundary="${escapeCssString(name)}"]`;\n  }\n  return "";\n}',
+    ],
+    [
+      'a for-of binding',
+      'function render(values) {\n  for (const escapeCssString of values) {\n    return `[data-liteship-boundary="${escapeCssString(name)}"]`;\n  }\n  return "";\n}',
+    ],
+    [
+      'a nested block const',
+      'function render() {\n  {\n    const escapeCssString = (v) => v;\n    return `[data-liteship-boundary="${escapeCssString(name)}"]`;\n  }\n}',
+    ],
+    [
+      'a named function expression binding its own name',
+      'const render = function escapeCssString(name) {\n  return `[data-liteship-boundary="${escapeCssString(name)}"]`;\n};',
+    ],
+  ])('THE BINDING LAW: %s shadowing the approved import is a finding', (_form, body) => {
+    const result = scan(`${APPROVED_IMPORT}${body}`);
+    expect(result.anchoredCount).toBe(1);
+    expect(
+      result.findings,
+      'a nearer lexical binding owns the name at the call site; the approved import elsewhere in the file proves nothing',
+    ).toEqual([expect.objectContaining({ reason: 'unescaped-interpolation', expression: 'escapeCssString(name)' })]);
+  });
+
+  it('THE BINDING LAW holds in the other direction: an inner scope still sees the approved import', () => {
+    // Non-vacuity for the law above — the scope walk must not simply refuse
+    // everything that is nested, or the seven cases would pass for the wrong
+    // reason and the guard would be useless on real code.
+    const result = scan(
+      `${APPROVED_IMPORT}function render(name) {\n  {\n    return \`[data-liteship-boundary="\${escapeCssString(name)}"]\`;\n  }\n}`,
+    );
+    expect(result.anchoredCount).toBe(1);
+    expect(result.findings).toEqual([]);
+  });
+
   it('a bare identifier interpolated into a boundary selector is a finding', () => {
     const result = scan('const selector = `[data-liteship-boundary="${name}"]`;');
     expect(result.findings).toEqual([

@@ -102,58 +102,142 @@ function resolveRelative(fromPath: string, specifier: string): string {
   return segments.join('/').replace(/\.[cm]?js$/u, '.ts');
 }
 
-/**
- * The local names in this file that provably denote an approved escape: the
- * bindings imported from an approved module (alias included), plus the export
- * an approved module declares for itself. A local declaration of the same name
- * REMOVES it — a shadow is never a proof.
- */
-function approvedEscapeNames(
-  sourceFile: ts.SourceFile,
-  path: string,
-  approvedSpecifiers: ReadonlySet<string>,
-): ReadonlySet<string> {
-  const approved = new Set<string>();
-  if (APPROVED_ESCAPE_MODULES.has(path)) approved.add(ESCAPE_EXPORT_NAME);
-
-  const locallyDeclared = new Set<string>();
-  const visit = (node: ts.Node): void => {
-    if (ts.isImportDeclaration(node) && ts.isStringLiteralLike(node.moduleSpecifier)) {
-      const specifier = node.moduleSpecifier.text;
-      const target = specifier.startsWith('.') ? resolveRelative(path, specifier) : specifier;
-      const moduleApproved = APPROVED_ESCAPE_MODULES.has(target) || approvedSpecifiers.has(target);
-      const bindings = node.importClause?.namedBindings;
-      if (moduleApproved && bindings !== undefined && ts.isNamedImports(bindings)) {
-        for (const element of bindings.elements) {
-          const imported = element.propertyName?.text ?? element.name.text;
-          if (imported === ESCAPE_EXPORT_NAME) approved.add(element.name.text);
-        }
-      }
-    }
-    if (
-      (ts.isVariableDeclaration(node) || ts.isFunctionDeclaration(node)) &&
-      node.name !== undefined &&
-      ts.isIdentifier(node.name)
-    ) {
-      locallyDeclared.add(node.name.text);
-    }
-    ts.forEachChild(node, visit);
-  };
-  visit(sourceFile);
-
-  // An approved module declares its own escape; every OTHER local declaration
-  // of an approved name is a shadow and revokes the proof.
-  for (const name of locallyDeclared) {
-    if (!APPROVED_ESCAPE_MODULES.has(path)) approved.delete(name);
+/** Every name a binding pattern introduces (`{ a, b: [c] }` → a, c). */
+function patternNames(name: ts.BindingName, into: Map<string, ts.Node>, declaration: ts.Node): void {
+  if (ts.isIdentifier(name)) {
+    into.set(name.text, declaration);
+    return;
   }
-  return approved;
+  for (const element of name.elements) {
+    if (ts.isBindingElement(element)) patternNames(element.name, into, declaration);
+  }
 }
 
-function isEscapeCall(expression: ts.Expression, approvedNames: ReadonlySet<string>): boolean {
+/** The names a single statement declares, mapped to the node that declares them. */
+function statementBindings(statement: ts.Node, into: Map<string, ts.Node>): void {
+  if (ts.isVariableStatement(statement)) {
+    for (const declaration of statement.declarationList.declarations) patternNames(declaration.name, into, declaration);
+    return;
+  }
+  if (ts.isImportDeclaration(statement)) {
+    const clause = statement.importClause;
+    if (clause?.name !== undefined) into.set(clause.name.text, clause.name);
+    const bindings = clause?.namedBindings;
+    if (bindings !== undefined && ts.isNamedImports(bindings)) {
+      for (const element of bindings.elements) into.set(element.name.text, element);
+    } else if (bindings !== undefined && ts.isNamespaceImport(bindings)) {
+      into.set(bindings.name.text, bindings);
+    }
+    return;
+  }
+  if (
+    (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)) &&
+    statement.name !== undefined &&
+    ts.isIdentifier(statement.name)
+  ) {
+    into.set(statement.name.text, statement);
+  }
+}
+
+/**
+ * Every name the given node introduces into the scope IT creates, mapped to the
+ * declaring node. Enumerating scopes is a closed problem — the language has a
+ * fixed list — whereas enumerating "declaration forms that revoke a name" is an
+ * open one, and the open version is what this guard used to attempt.
+ */
+function bindingsIntroducedBy(node: ts.Node): ReadonlyMap<string, ts.Node> {
+  const bindings = new Map<string, ts.Node>();
+  if (ts.isSourceFile(node) || ts.isBlock(node) || ts.isModuleBlock(node) || ts.isCaseClause(node)) {
+    for (const statement of node.statements) statementBindings(statement, bindings);
+    return bindings;
+  }
+  if (ts.isFunctionLike(node)) {
+    for (const parameter of node.parameters) patternNames(parameter.name, bindings, parameter);
+    // A function expression's own name is in scope inside its body.
+    if ((ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node)) && node.name !== undefined) {
+      bindings.set(node.name.text, node);
+    }
+    return bindings;
+  }
+  if (ts.isCatchClause(node) && node.variableDeclaration !== undefined) {
+    patternNames(node.variableDeclaration.name, bindings, node.variableDeclaration);
+    return bindings;
+  }
+  if (ts.isForStatement(node) || ts.isForInStatement(node) || ts.isForOfStatement(node)) {
+    const initializer = node.initializer;
+    if (initializer !== undefined && ts.isVariableDeclarationList(initializer)) {
+      for (const declaration of initializer.declarations) patternNames(declaration.name, bindings, declaration);
+    }
+    return bindings;
+  }
+  if ((ts.isClassDeclaration(node) || ts.isClassExpression(node)) && node.name !== undefined) {
+    bindings.set(node.name.text, node);
+  }
+  return bindings;
+}
+
+/**
+ * The declaration that binds `identifier` AT ITS USE SITE, found by walking
+ * outward through the scopes that enclose it. `undefined` means unbound here
+ * (a global, or an ambient).
+ */
+function nearestBinding(identifier: ts.Identifier): ts.Node | undefined {
+  const name = identifier.text;
+  let current: ts.Node | undefined = identifier.parent;
+  while (current !== undefined) {
+    const bound = bindingsIntroducedBy(current).get(name);
+    if (bound !== undefined) return bound;
+    current = current.parent;
+  }
+  return undefined;
+}
+
+/** Whether an import specifier brings in the approved escape from an approved module. */
+function isApprovedEscapeImport(
+  specifier: ts.ImportSpecifier,
+  path: string,
+  approvedSpecifiers: ReadonlySet<string>,
+): boolean {
+  if ((specifier.propertyName?.text ?? specifier.name.text) !== ESCAPE_EXPORT_NAME) return false;
+  const declaration = specifier.parent.parent.parent;
+  if (!ts.isImportDeclaration(declaration) || !ts.isStringLiteralLike(declaration.moduleSpecifier)) return false;
+  const text = declaration.moduleSpecifier.text;
+  const target = text.startsWith('.') ? resolveRelative(path, text) : text;
+  return APPROVED_ESCAPE_MODULES.has(target) || approvedSpecifiers.has(target);
+}
+
+/**
+ * Whether the call's callee RESOLVES to an approved escape.
+ *
+ * Resolution happens at the CALL SITE, not across the file. The previous shape
+ * built one file-wide set of approved names and then tried to subtract the
+ * shadows, which required enumerating every declaration form that can shadow —
+ * an open grammar. Review reported the same defect eight times over successive
+ * commits as each newly-enumerated form left a neighbour standing: a local
+ * const, then a function parameter, then a catch binding. Walking outward from
+ * the use site inverts that: the FIRST enclosing scope that binds the name
+ * wins, so every binding form is covered at once, including forms nobody has
+ * thought of, and only an approved import (or an approved module's own
+ * top-level declaration) can satisfy it.
+ */
+function isEscapeCall(expression: ts.Expression, path: string, approvedSpecifiers: ReadonlySet<string>): boolean {
   const current = unwrap(expression);
   if (!ts.isCallExpression(current)) return false;
   const callee = unwrap(current.expression);
-  return ts.isIdentifier(callee) && approvedNames.has(callee.text);
+  if (!ts.isIdentifier(callee)) return false;
+
+  const binding = nearestBinding(callee);
+  if (binding === undefined) return false; // Unbound: a global is never the approved helper.
+  if (ts.isImportSpecifier(binding)) return isApprovedEscapeImport(binding, path, approvedSpecifiers);
+
+  // An approved module may call the escape it declares itself — but only when
+  // the binding really is that module's own top-level declaration.
+  if (!APPROVED_ESCAPE_MODULES.has(path) || callee.text !== ESCAPE_EXPORT_NAME) return false;
+  const declaredAtTopLevel =
+    (ts.isFunctionDeclaration(binding) || ts.isVariableDeclaration(binding)) &&
+    binding.getSourceFile() !== undefined &&
+    scopeOf(binding) === binding.getSourceFile();
+  return declaredAtTopLevel;
 }
 
 function scopeOf(node: ts.Node): Scope {
@@ -190,14 +274,15 @@ function isProvablyEscaped(
   expression: ts.Expression,
   scope: Scope,
   bindingsByScope: ScopeBindings,
-  approvedNames: ReadonlySet<string>,
+  path: string,
+  approvedSpecifiers: ReadonlySet<string>,
 ): boolean {
   const current = unwrap(expression);
-  if (isEscapeCall(current, approvedNames)) return true;
+  if (isEscapeCall(current, path, approvedSpecifiers)) return true;
   if (!ts.isIdentifier(current)) return false;
   const declaration = bindingsByScope.get(scope)?.get(current.text);
   return declaration !== undefined && declaration !== null && declaration.initializer !== undefined
-    ? isEscapeCall(declaration.initializer, approvedNames)
+    ? isEscapeCall(declaration.initializer, path, approvedSpecifiers)
     : false;
 }
 
@@ -242,7 +327,8 @@ function scanAnchor(
   chunkIndex: number,
   anchorOffset: number,
   bindingsByScope: ScopeBindings,
-  approvedNames: ReadonlySet<string>,
+  path: string,
+  approvedSpecifiers: ReadonlySet<string>,
 ): readonly CssIdentityFinding[] {
   const findings: CssIdentityFinding[] = [];
   const identityStart = anchorOffset + BOUNDARY_SELECTOR_ANCHOR.length;
@@ -252,7 +338,7 @@ function scanAnchor(
   let closed = false;
   for (let expressionIndex = chunkIndex; expressionIndex < parts.expressions.length; expressionIndex += 1) {
     const expression = parts.expressions[expressionIndex]!;
-    if (!isProvablyEscaped(expression, scope, bindingsByScope, approvedNames)) {
+    if (!isProvablyEscaped(expression, scope, bindingsByScope, path, approvedSpecifiers)) {
       findings.push(finding(source, sourceFile, expression, 'unescaped-interpolation', expression.getText(sourceFile)));
     }
     if (unescapedQuoteIndex(parts.chunks[expressionIndex + 1] ?? '') !== -1) {
@@ -281,7 +367,6 @@ export function scanCssIdentitySurface(
     if (!PACKAGE_SOURCE_PATH.test(path)) continue;
     const sourceFile = ts.createSourceFile(path, source.text, ts.ScriptTarget.Latest, true, scriptKindFor(path));
     const bindingsByScope = collectConstBindings(sourceFile);
-    const approvedNames = approvedEscapeNames(sourceFile, path, approvedSpecifiers);
 
     const visit = (node: ts.Node): void => {
       if (ts.isTemplateExpression(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
@@ -295,7 +380,17 @@ export function scanCssIdentitySurface(
             if (anchorOffset === -1) break;
             isAnchored = true;
             findings.push(
-              ...scanAnchor(source, sourceFile, node, parts, chunkIndex, anchorOffset, bindingsByScope, approvedNames),
+              ...scanAnchor(
+                source,
+                sourceFile,
+                node,
+                parts,
+                chunkIndex,
+                anchorOffset,
+                bindingsByScope,
+                path,
+                approvedSpecifiers,
+              ),
             );
             from = anchorOffset + BOUNDARY_SELECTOR_ANCHOR.length;
           }
