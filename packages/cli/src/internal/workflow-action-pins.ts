@@ -512,6 +512,53 @@ export function unreadableYamlViolations(text: string): readonly string[] {
   );
 }
 
+/**
+ * YAML's indicator characters — the closed set the spec reserves at the start of
+ * a node. This is what makes the allowlist below FINITE: "a plain scalar is
+ * anything that does not begin with one of these" is bounded by the grammar,
+ * not by what a reviewer happened to try.
+ */
+const YAML_INDICATORS: ReadonlySet<string> = new Set([...'-?:,[]{}#&*!|>%@`"\'']);
+
+/** A scalar this reader carries verbatim: absent, a block-scalar header, a quoted scalar, or a plain one. */
+function readableScalar(rest: string): boolean {
+  const value = rest.trim();
+  if (value === '' || value.startsWith('#')) return true;
+  if (/^[|>][+-]?\d*(?:\s+#.*)?$/u.test(value)) return true;
+  if (/^"(?:[^"\\]|\\.)*"(?:\s*#.*)?$/u.test(value)) return true;
+  if (/^'(?:[^']|'')*'(?:\s*#.*)?$/u.test(value)) return true;
+  // A flow SEQUENCE OF PLAIN SCALARS (`branches: [main]`, `shard: [1, 2, 3, 4]`)
+  // hides no structure and is idiomatic Actions YAML — the live workflows prove
+  // it must stay legal, and the sibling rule already refuses a flow sequence
+  // that CONTAINS a mapping. Admitting it here keeps the allowlist agreeing with
+  // that carve-out instead of contradicting it.
+  if (/^\[[^{}[\]:]*\](?:\s*#.*)?$/u.test(value)) return true;
+  const head = value[0]!;
+  // `-1` is a plain scalar; `- x` opens a nested sequence this reader does not carry.
+  if (head === '-') return !/^-\s/u.test(value);
+  return !YAML_INDICATORS.has(head);
+}
+
+/**
+ * One block line the structural reader positively understands: a block-mapping
+ * entry whose colon binds to its key and whose value is a readable scalar, or —
+ * only inside a sequence — a bare scalar entry.
+ *
+ * `run : echo …` fails here because the colon does not bind to the key, which is
+ * exactly the spelling `stepRunCommandOf` cannot see either.
+ */
+function readableBlockLine(value: string, sequenceItem: boolean): boolean {
+  const keyed = /^([A-Za-z0-9_-]+):(?:\s|$)/u.exec(value);
+  if (keyed !== null) return readableScalar(value.slice(keyed[0].length));
+  if (!sequenceItem || !readableScalar(value)) return false;
+  // A bare sequence entry is a SCALAR. An unquoted mapping separator makes it a
+  // MAPPING whose key this reader could not bind — `- run : echo …` is exactly
+  // that, and admitting it as a scalar is the fail-open the review found: the
+  // step carries a `run` the expression scanner never sees.
+  const trimmed = value.trim();
+  return /^["']/u.test(trimmed) || !/:(?:\s|$)/u.test(trimmed);
+}
+
 function yamlShapeViolations(text: string): readonly YamlShapeViolation[] {
   const violations: YamlShapeViolation[] = [];
   const lines = text.split('\n');
@@ -551,6 +598,11 @@ function yamlShapeViolations(text: string): readonly YamlShapeViolation[] {
     // YAML — the live workflows prove it must stay legal. A sequence that
     // CONTAINS a mapping (`steps: [{ run: … }]`) hides structure again and
     // is refused with the mappings.
+    // The named refusals below are DIAGNOSTICS: a specific message beats a
+    // generic one. The allowlist backstop at the end of the loop speaks only
+    // when none of them claimed this line, so a refused line yields exactly one
+    // violation and the precise message wins wherever there is one.
+    const namedRefusals = violations.length;
     const flowMapping = /^[{]/u.test(value) || /^[A-Za-z0-9_-]+:\s*[{]/u.test(value);
     const flowSequence = /^\[/u.test(value) || /^[A-Za-z0-9_-]+:\s*\[/u.test(value);
     const sequenceHidesMapping = flowSequence && /[{:]/u.test(value.slice(value.indexOf('[') + 1));
@@ -592,6 +644,24 @@ function yamlShapeViolations(text: string): readonly YamlShapeViolation[] {
         siblingKeys.set(parent, byKey);
       }
       if (!sequenceItem) parents.push({ indent, identity: `${line}:${key}` });
+    }
+    // THE INVERSION. Everything above names a SPECIFIC unreadable spelling,
+    // which is a denylist over an open grammar: it admits every form nobody
+    // thought to enumerate. Three review rounds produced three such forms — a
+    // flow mapping under an unlisted key, an `&anchor` declaration, and
+    // `run : cmd` with space before the colon — each with the IDENTICAL failure
+    // mode: this refusal did not recognize the line, the section reader did not
+    // recognize it either, and so both security scanners returned clean for a
+    // job they had never read. Patching the three spellings would have produced
+    // a fourth.
+    //
+    // The final word is therefore an allowlist stated against the READER'S OWN
+    // COMPETENCE: a line the block-mapping reader cannot positively classify is
+    // a violation. The named refusals above survive as diagnostics — a specific
+    // message is more useful than a generic one — but they are no longer the
+    // guard.
+    if (violations.length === namedRefusals && !readableBlockLine(value, sequenceItem)) {
+      violations.push({ line, content: body, message: 'line is outside the structural reader grammar' });
     }
     if (/^.*:\s*[|>][-+]?\s*(?:#.*)?$/u.test(value)) scalarIndent = indent;
   }

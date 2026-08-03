@@ -400,6 +400,52 @@ describe('unreadable YAML is a violation, never a skipped line', () => {
     expect(unreadableYamlViolations('jobs:\n  x:\n    timeout-minutes: 1\n    timeout-minutes: 2\n')).not.toEqual([]);
   });
 
+  /**
+   * THE INVERSION (Codex review rounds 4-6 on PR #197, three confirmed P1s).
+   *
+   * Each spelling below has the identical failure mode: the refusal did not
+   * recognize the line, the SECTION READER did not recognize it either, and so
+   * both security scanners returned clean for a job they never read. They were
+   * reported as three findings; they are one defect — a denylist of named bad
+   * shapes over an open grammar.
+   *
+   * The last two rows are the point. Nobody reported a YAML tag or a
+   * space-before-colon `uses:`; they are refused because the guard now states
+   * what the reader UNDERSTANDS rather than what a reviewer happened to try.
+   */
+  it.each([
+    ['flow mapping under an arbitrary key', 'jobs:\n  build: { uses: owner/repo/.github/workflows/ci.yml@main }\n'],
+    ['an anchor declaration', 'jobs:\n  unsafe: &job\n    steps:\n      - uses: owner/action@main\n'],
+    [
+      'space before the colon on run',
+      'jobs:\n  a:\n    steps:\n      - run : echo "${{ github.event.head_commit.message }}"\n',
+    ],
+    ['space before the colon on uses', 'jobs:\n  a:\n    steps:\n      - uses : owner/action@main\n'],
+    ['a YAML tag nobody reported', 'jobs:\n  a:\n    name: !!str foo\n'],
+  ])('%s is refused', (_name, workflow) => {
+    expect(unreadableYamlViolations(workflow)).not.toEqual([]);
+  });
+
+  it('the inversion does not refuse what the reader genuinely carries', () => {
+    // The complement arm, mandatory: a guard that refuses everything is also
+    // broken, and a flow SEQUENCE OF PLAIN SCALARS is idiomatic Actions YAML
+    // that hides no structure.
+    expect(
+      unreadableYamlViolations(
+        'on:\n  push:\n    branches: [main]\njobs:\n  a:\n    runs-on: ubuntu-24.04\n    strategy:\n      matrix:\n        shard: [1, 2, 3, 4]\n    steps:\n      - uses: actions/checkout@abc\n      - name: build\n        run: |\n          echo hi\n',
+      ),
+    ).toEqual([]);
+  });
+
+  it('the LIVE workflows carry no unreadable line', () => {
+    // The regression invariant: a fix that reds the real corpus is a false
+    // positive, not a catch.
+    for (const workflow of ['ci.yml', 'release.yml']) {
+      const text = readFileSync(resolve(import.meta.dirname, '../../../..', '.github', 'workflows', workflow), 'utf8');
+      expect(unreadableYamlViolations(text), workflow).toEqual([]);
+    }
+  });
+
   it('a bullet field and a child field with the same key are refused', () => {
     expect(
       unreadableYamlViolations(

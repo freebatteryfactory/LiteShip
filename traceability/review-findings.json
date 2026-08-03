@@ -55,9 +55,9 @@
       "acknowledged": true
     },
     {
-      "id": "owner-rebuttal/czap-era-surfaces",
+      "id": "owner-rebuttal/pre-rename-era-surfaces",
       "provider": "owner-rebuttal",
-      "summary": "czap to liteship rename findings and ADR/docs-era references",
+      "summary": "rename findings against the pre-LiteShip brand surfaces, and ADR/docs-era references",
       "status": "disputed",
       "owner": "heyoub",
       "justification": "those surfaces are deleted, not renamed. A finding against them is a finding against bytes that no longer ship.",

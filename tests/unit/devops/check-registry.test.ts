@@ -36,6 +36,7 @@ import {
   checkRegistryCompleteGate,
   checkNegativeControlGate,
   checkWaiverFreshnessGate,
+  WAIVER_FRESHNESS_STORES,
   type CheckGovernanceFacts,
   type GateContext,
   type Gate,
@@ -294,9 +295,12 @@ describe('waiver freshness facts are signed, stable, and calendar-bounded', () =
     return { ...FACTS, waivers: waivers as CheckGovernanceFacts['waivers'] };
   }
 
-  it('projects stable store identities and owner-signed metadata from both enrolled stores', () => {
+  it('projects stable store identities and owner-signed metadata from EVERY enrolled store', () => {
     expect(FACTS.waivers.length).toBeGreaterThan(0);
-    expect(new Set(FACTS.waivers.map((entry) => entry.store))).toEqual(new Set(['gauntlet', 'ledger']));
+    // Derived from the enrolled-store table rather than a hand-listed pair, so a
+    // newly enrolled store that produces no facts reds here instead of riding
+    // along silently — which is exactly what a two-name assertion allowed.
+    expect(new Set(FACTS.waivers.map((entry) => entry.store))).toEqual(new Set(Object.keys(WAIVER_FRESHNESS_STORES)));
     expect(FACTS.waivers.find((entry) => entry.store === 'ledger')?.id).toBe('INV-VECTOR-CLOCK-MONOTONIC');
     expect(
       FACTS.waivers.every(
