@@ -28,18 +28,29 @@ function writeCrate(root: string, directory: string, name: string, features: rea
 }
 
 describe('check/rust-wasm-qualification derived arms', () => {
-  it('pins the live crate to host Clippy plus default and SIMD WASM builds', () => {
+  it('pins the live crate to per-target Clippy plus default and SIMD WASM builds', () => {
     const source = readFileSync(resolve(ROOT, 'rust-toolchain.toml'), 'utf8');
     const arms = deriveRustWasmQualificationArms(ROOT, source);
     expect(arms.map((arm) => arm.id)).toEqual([
-      'liteship-compute/host-clippy',
+      'liteship-compute/wasm32-unknown-unknown/clippy',
+      'liteship-compute/host-test-clippy',
       'liteship-compute/wasm32-unknown-unknown/default',
       'liteship-compute/wasm32-unknown-unknown/feature:simd',
     ]);
     expect(arms.every((arm) => arm.command === 'rustup' && arm.argv.slice(0, 3).join(' ') === 'run 1.85.1 cargo')).toBe(
       true,
     );
-    expect(arms.find((arm) => arm.kind === 'host-clippy')?.argv).toEqual([
+
+    // THE TARGET LAW: no Clippy arm may sweep `--all-targets`. A `no_std` wasm
+    // `cdylib` cannot compile its lib target for the host at all, so such a
+    // sweep reports the wrong target's errors rather than the crate's defects.
+    expect(
+      arms.filter((arm) => arm.argv.includes('clippy') && arm.argv.includes('--all-targets')),
+      'a Clippy arm swept --all-targets; check the library per wasm target and the tests on the host instead',
+    ).toEqual([]);
+
+    // The library is checked where it actually compiles…
+    expect(arms.find((arm) => arm.kind === 'wasm-clippy')?.argv).toEqual([
       'run',
       '1.85.1',
       'cargo',
@@ -47,7 +58,24 @@ describe('check/rust-wasm-qualification derived arms', () => {
       '--manifest-path',
       'crates/liteship-compute/Cargo.toml',
       '--locked',
-      '--all-targets',
+      '--target',
+      'wasm32-unknown-unknown',
+      '--lib',
+      '--all-features',
+      '--',
+      '-D',
+      'warnings',
+    ]);
+    // …and the std-linked test target where it actually runs.
+    expect(arms.find((arm) => arm.kind === 'host-test-clippy')?.argv).toEqual([
+      'run',
+      '1.85.1',
+      'cargo',
+      'clippy',
+      '--manifest-path',
+      'crates/liteship-compute/Cargo.toml',
+      '--locked',
+      '--tests',
       '--all-features',
       '--',
       '-D',
@@ -76,10 +104,12 @@ describe('check/rust-wasm-qualification derived arms', () => {
       writeCrate(root, 'alpha', 'alpha', ['simd']);
       writeCrate(root, 'hidden', 'hidden', ['fast', 'wide']);
       expect(deriveRustWasmQualificationArms(root, TOOLCHAIN).map((arm) => arm.id)).toEqual([
-        'alpha/host-clippy',
+        'alpha/wasm32-unknown-unknown/clippy',
+        'alpha/host-test-clippy',
         'alpha/wasm32-unknown-unknown/default',
         'alpha/wasm32-unknown-unknown/feature:simd',
-        'hidden/host-clippy',
+        'hidden/wasm32-unknown-unknown/clippy',
+        'hidden/host-test-clippy',
         'hidden/wasm32-unknown-unknown/default',
         'hidden/wasm32-unknown-unknown/feature:fast',
         'hidden/wasm32-unknown-unknown/feature:wide',

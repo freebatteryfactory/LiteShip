@@ -782,6 +782,32 @@ function createInputCorpus(cwd: string): InputCorpus {
   };
 }
 
+/**
+ * The EFFECTIVE cache closure for a check: its declared `inputs` plus, for a
+ * repository-context check, the bytes every repository verdict depends on
+ * (the manifest, the lockfile, this sweep, and the registry itself).
+ *
+ * Exported so the soundness law in check-report.test.ts can assert coverage
+ * against the closure the cache actually uses, rather than re-deriving a
+ * second copy that could drift from this one.
+ */
+export function cacheClosurePatterns(declared: readonly string[], context: CheckPlan['context']): readonly string[] {
+  return context === 'repository'
+    ? [
+        ...declared,
+        'package.json',
+        'pnpm-lock.yaml',
+        'packages/cli/src/commands/check.ts',
+        'packages/command/src/checks/**/*.ts',
+      ]
+    : [...declared];
+}
+
+/** Whether a repo-relative path falls inside a cache closure produced by {@link cacheClosurePatterns}. */
+export function cacheClosureCovers(patterns: readonly string[], repoRelativePath: string): boolean {
+  return patterns.some((pattern) => globToRegExp(normalizeRepoPath(pattern)).test(normalizeRepoPath(repoRelativePath)));
+}
+
 /** Canonical SHA-256 identity of one check's declared input bytes and toolchain. */
 function checkCacheKey(
   check: CheckPlan['checks'][number],
@@ -789,16 +815,7 @@ function checkCacheKey(
   corpus: InputCorpus,
   env: Readonly<Record<string, string>>,
 ): string {
-  const declaredPatterns =
-    plan.context === 'repository'
-      ? [
-          ...check.inputs,
-          'package.json',
-          'pnpm-lock.yaml',
-          'packages/cli/src/commands/check.ts',
-          'packages/command/src/checks/**/*.ts',
-        ]
-      : [...check.inputs];
+  const declaredPatterns = cacheClosurePatterns(check.inputs, plan.context);
   const inputs = [...new Set(declaredPatterns)].map((pattern) => {
     const matcher = globToRegExp(normalizeRepoPath(pattern));
     const matches = corpus.files

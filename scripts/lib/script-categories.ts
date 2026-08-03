@@ -29,6 +29,8 @@ export const CATEGORIES: readonly CategorySpec[] = [
     scripts: [
       'build',
       'build:wasm',
+      'rust:qualify',
+      'cargo:audit',
       'typecheck',
       'typecheck:scripts',
       'typecheck:tests',
@@ -99,7 +101,7 @@ export const CATEGORIES: readonly CategorySpec[] = [
   {
     name: 'lint-format',
     description: 'ESLint + Prettier + structural AST lint.',
-    scripts: ['lint', 'lint:structural', 'format', 'format:check', 'check', 'preflight', 'regen'],
+    scripts: ['lint', 'lint:structural', 'rustfmt:check', 'format', 'format:check', 'check', 'preflight', 'regen'],
   },
   {
     name: 'audit',

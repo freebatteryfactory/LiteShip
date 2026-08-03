@@ -21,9 +21,12 @@ static mut BOUNDARY_BUF: [u32; MAX_VALUES] = [0; MAX_VALUES];
 /// Returns a pointer to a static u32 buffer of length `values_len`.
 ///
 /// # Safety
-/// Single-threaded WASM — static buffer access is safe.
+/// Single-threaded WASM — static buffer access is safe. The caller must ensure
+/// `thresholds_ptr` is valid for `thresholds_len` floats and `values_ptr` for
+/// `values_len` floats; because that obligation is the caller's, this function
+/// is `unsafe`. The `extern "C"` ABI and the exported wasm symbol are unchanged.
 #[no_mangle]
-pub extern "C" fn batch_boundary_eval(
+pub unsafe extern "C" fn batch_boundary_eval(
     thresholds_ptr: *const f32,
     thresholds_len: u32,
     values_ptr: *const f32,
@@ -31,6 +34,13 @@ pub extern "C" fn batch_boundary_eval(
 ) -> *const u32 {
     let thresholds_len = thresholds_len as usize;
     let values_len = (values_len as usize).min(MAX_VALUES);
+
+    // Written through a raw pointer rather than by indexing the static: taking
+    // a slice or reference to a `static mut` is the pattern Rust 2024 rejects,
+    // and indexing it inside a counted loop is what Clippy reports as
+    // `needless_range_loop`. The write is the same store either way, and the
+    // returned pointer below is already derived the same way.
+    let out = core::ptr::addr_of_mut!(BOUNDARY_BUF) as *mut u32;
 
     for vi in 0..values_len {
         let value = unsafe { *values_ptr.add(vi) };
@@ -45,12 +55,13 @@ pub extern "C" fn batch_boundary_eval(
             }
         }
 
+        // `vi < values_len <= MAX_VALUES`, so the store is in bounds.
         unsafe {
-            BOUNDARY_BUF[vi] = state_idx;
+            out.add(vi).write(state_idx);
         }
     }
 
-    core::ptr::addr_of!(BOUNDARY_BUF) as *const u32
+    out as *const u32
 }
 
 #[cfg(test)]
@@ -70,12 +81,16 @@ mod tests {
         let _guard = BUF_LOCK
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner());
-        let ptr = batch_boundary_eval(
-            thresholds.as_ptr(),
-            thresholds.len() as u32,
-            values.as_ptr(),
-            values.len() as u32,
-        );
+        // Both pointers and both lengths come from live slices, so the caller
+        // obligation `batch_boundary_eval` documents is discharged here.
+        let ptr = unsafe {
+            batch_boundary_eval(
+                thresholds.as_ptr(),
+                thresholds.len() as u32,
+                values.as_ptr(),
+                values.len() as u32,
+            )
+        };
         unsafe { core::slice::from_raw_parts(ptr, values.len()) }.to_vec()
     }
 

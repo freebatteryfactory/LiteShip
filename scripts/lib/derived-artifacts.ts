@@ -141,7 +141,17 @@ export const DERIVED_ARTIFACTS: readonly DerivedArtifact[] = Object.freeze([
     // is what a committed copy was actually providing, at one file instead of
     // three and a half thousand.
     paths: Object.freeze(['traceability/typedoc-input-fingerprint.json']),
-    regen: Object.freeze(['run', 'docs:build']),
+    // The DIRECT writer, not `docs:build`. Both emit this file, but routing the
+    // regen through the full TypeDoc build made refreshing one JSON record cost
+    // a multi-minute documentation build — so in practice nobody ran it, and the
+    // artifact drifted. That is the precise failure this registry exists to
+    // prevent, so the registered command is the cheap one.
+    //
+    // The attestation stays honest because the fingerprint was only ever the
+    // STALENESS signal (see scripts/docs-check.ts): the separate `check/docs`
+    // authority is what proves TypeDoc still builds a complete projection from
+    // these inputs, and it runs on its own.
+    regen: Object.freeze(['exec', 'tsx', 'scripts/docs-input-fingerprint.ts', '--write']),
     regenEnv: Object.freeze({}),
     enforcedBy: 'tests/unit/devops/typedoc-input-fingerprint.test.ts',
     inPreflight: true,

@@ -2,7 +2,7 @@
 
 import { deriveRustCrateCensus, deriveRustToolchainChannel, deriveRustToolchainTargets } from './devcontainer-pins.js';
 
-export type RustWasmQualificationKind = 'host-clippy' | 'wasm-default' | 'wasm-feature';
+export type RustWasmQualificationKind = 'wasm-clippy' | 'host-test-clippy' | 'wasm-default' | 'wasm-feature';
 
 export interface RustWasmQualificationArm {
   readonly id: string;
@@ -43,10 +43,50 @@ export function deriveRustWasmQualificationArms(
 
   const arms: RustWasmQualificationArm[] = [];
   for (const crate of crates) {
+    // Clippy runs PER TARGET, never as one `--all-targets` host sweep.
+    //
+    // These crates are `no_std` wasm `cdylib`s. A host `--all-targets` sweep
+    // builds the LIB target for the host, where the crate cannot compile at
+    // all: the panic handler calls `core::arch::wasm32::unreachable` (absent
+    // off-target) and a `cdylib` needs a panic handler the host's unwinding
+    // strategy rejects. The first run of that sweep reported three such
+    // errors — none of them a defect in the crate, all of them artifacts of
+    // checking wasm-only code on the wrong target.
+    //
+    // Splitting the sweep loses no lint coverage: the library lints are
+    // target-independent, so the wasm arm still reports them (proved by
+    // reintroducing a `needless_range_loop` and watching this arm red). The
+    // test target is the mirror case — it is `cfg(test)`, links std, and only
+    // ever runs on the host — so it is checked there and nowhere else.
+    for (const target of wasmTargets) {
+      arms.push(
+        Object.freeze({
+          id: `${crate.packageName}/${target}/clippy`,
+          kind: 'wasm-clippy',
+          manifestPath: crate.manifestPath,
+          target,
+          command: 'rustup',
+          argv: pinnedCargoArgv(channel, [
+            'clippy',
+            '--manifest-path',
+            crate.manifestPath,
+            '--locked',
+            '--target',
+            target,
+            '--lib',
+            '--all-features',
+            '--',
+            '-D',
+            'warnings',
+          ]),
+          envAdditions: DENY_WARNINGS_ENV,
+        }),
+      );
+    }
     arms.push(
       Object.freeze({
-        id: `${crate.packageName}/host-clippy`,
-        kind: 'host-clippy',
+        id: `${crate.packageName}/host-test-clippy`,
+        kind: 'host-test-clippy',
         manifestPath: crate.manifestPath,
         command: 'rustup',
         argv: pinnedCargoArgv(channel, [
@@ -54,7 +94,7 @@ export function deriveRustWasmQualificationArms(
           '--manifest-path',
           crate.manifestPath,
           '--locked',
-          '--all-targets',
+          '--tests',
           '--all-features',
           '--',
           '-D',

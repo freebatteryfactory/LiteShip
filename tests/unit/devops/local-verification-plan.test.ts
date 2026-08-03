@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { CHECK_REGISTRY } from '@liteship/command';
 import {
+  CARGO_AUDIT_CI_ONLY_REASON,
   PREFLIGHT_T4_DEFAULT_MAX_MS,
   WORKFLOW_READER_FAMILIES,
   assertLocalVerificationBudgetPolicy,
@@ -81,7 +82,10 @@ describe('local verification plan', () => {
   });
 
   test('does not duplicate the TypeScript build before typecheck', () => {
-    const plan = buildLocalVerificationPlan({ staged: false });
+    // Platform is PINNED: an unpinned plan describes whichever host ran the
+    // suite, and the ordered-argv expectation below would then encode one
+    // machine's shape as if it were the contract.
+    const plan = buildLocalVerificationPlan({ staged: false, platform: 'linux' });
     expect(plan.steps.filter((step) => step.label === 'typecheck')).toHaveLength(1);
     expect(plan.steps.some((step) => step.label === 'build')).toBe(false);
     expect(plan.steps.map((step) => step.argv.slice(0, 2))).toEqual([
@@ -224,35 +228,55 @@ describe('local verification plan', () => {
     }
   });
 
-  test('selects cargo-audit for affected Linux authority but never executes it in Windows staged preflight', () => {
+  test('keeps the Rust advisory audit a CI authority on every platform, with its reason stated', () => {
+    // The affected-input derivation stays live: CI still needs to know when a
+    // change can move the audit verdict, even though the fast lane never runs it.
     expect(isCargoAuditProofInput('crates/liteship-compute/Cargo.lock')).toBe(true);
     expect(isCargoAuditProofInput('scripts/lib/cargo-audit-contract.ts')).toBe(true);
     expect(isCargoAuditProofInput('README.md')).toBe(false);
 
-    const linux = buildLocalVerificationPlan({
-      staged: true,
-      changedPaths: ['crates/liteship-compute/Cargo.lock'],
-      platform: 'linux',
-    });
-    const windows = buildLocalVerificationPlan({
-      staged: true,
-      changedPaths: ['crates/liteship-compute/Cargo.lock'],
-      platform: 'win32',
-    });
-    expect(linux.steps).toContainEqual({
-      checkId: 'check/cargo-audit',
-      label: 'cargo-audit',
-      argv: ['run', 'cargo:audit'],
-      remedy:
-        'inspect reports/cargo-audit.json and reports/cargo-audit/, then update the vulnerable Rust dependency and adjacent Cargo.lock.',
-    });
-    expect(windows.steps.some((step) => step.checkId === 'check/cargo-audit')).toBe(false);
-    expect(windows.registryChecks.excluded.some((check) => check.id === 'check/cargo-audit')).toBe(true);
+    // A network-resolved advisory database is not a function of the tree, and
+    // the devcontainer does not provision cargo-audit. Scheduling it pre-push
+    // made the mandated precommit loop unrunnable in the official container.
+    expect(CARGO_AUDIT_CI_ONLY_REASON.length).toBeGreaterThan(60);
+
+    for (const platform of ['linux', 'darwin', 'win32'] as const) {
+      for (const changedPaths of [
+        ['crates/liteship-compute/Cargo.lock'],
+        ['package.json'],
+        ['.github/workflows/ci.yml'],
+      ]) {
+        const staged = buildLocalVerificationPlan({ staged: true, changedPaths, platform });
+        const workspace = buildLocalVerificationPlan({ staged: false, platform });
+        for (const plan of [staged, workspace]) {
+          expect(
+            plan.steps.some((step) => step.checkId === 'check/cargo-audit'),
+            `${platform} ${plan.mode} plan schedules the network-dependent Rust advisory audit`,
+          ).toBe(false);
+          expect(plan.registryChecks.excluded.some((check) => check.id === 'check/cargo-audit')).toBe(true);
+        }
+      }
+    }
+
+    // The npm-side twin this placement mirrors is CI-only for the same reason.
+    const anyPlan = buildLocalVerificationPlan({ staged: false, platform: 'linux' });
+    expect(anyPlan.registryChecks.excluded.some((check) => check.id === 'check/security-audit')).toBe(true);
+  });
+
+  test('THE PLATFORM LAW: the pre-push plan is the same on every host', () => {
+    // A plan that differs by host is a plan whose shape assertions silently
+    // describe whichever machine ran them — which is exactly how three CI jobs
+    // failed on a Linux-only step while the Windows author's suite stayed green.
+    const shapes = (['linux', 'darwin', 'win32'] as const).map((platform) =>
+      buildLocalVerificationPlan({ staged: false, platform }).steps.map((step) => step.argv.join(' ')),
+    );
+    expect(shapes[1]).toEqual(shapes[0]);
+    expect(shapes[2]).toEqual(shapes[0]);
   });
 
   test('partitions every live registry check exactly once without counting local meta steps', () => {
-    const workspace = buildLocalVerificationPlan({ staged: false });
-    const staged = buildLocalVerificationPlan({ staged: true, changedPaths: ['README.md'] });
+    const workspace = buildLocalVerificationPlan({ staged: false, platform: 'linux' });
+    const staged = buildLocalVerificationPlan({ staged: true, changedPaths: ['README.md'], platform: 'linux' });
 
     expect(workspace.schema).toBe('liteship/local-verification-plan@3');
     for (const plan of [workspace, staged]) {

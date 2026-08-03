@@ -339,12 +339,30 @@ export function isRustfmtProofInput(path: string): boolean {
 
 const CARGO_AUDIT_CHECK = CHECK_REGISTRY.find((check) => check.id === 'check/cargo-audit');
 if (CARGO_AUDIT_CHECK === undefined) throw new TypeError('local verification requires registered check/cargo-audit');
-const CARGO_AUDIT_STEP: LocalVerificationStep = Object.freeze({
-  checkId: CARGO_AUDIT_CHECK.id,
-  label: 'cargo-audit',
-  argv: argvForRootCheck(CARGO_AUDIT_CHECK.execution),
-  remedy: CARGO_AUDIT_CHECK.remediation,
-});
+
+/**
+ * Why the Rust advisory audit is a CI authority and never a pre-push step.
+ *
+ * Two independent reasons, either sufficient:
+ *
+ *  1. NOT A FUNCTION OF THE CHANGE. `cargo-audit` resolves the RustSec advisory
+ *     database over the network, so the same bytes red today and green
+ *     yesterday. A pre-push lane whose verdict moves without the tree moving
+ *     cannot support "green locally means green in CI", which is the only
+ *     thing the lane is for.
+ *  2. NOT PROVISIONED. The checked `.devcontainer/` installs the pinned
+ *     toolchain, the wasm32 target, rustfmt, and clippy — never `cargo-audit`,
+ *     which exists only in the CI security job. Scheduling it locally makes
+ *     the mandated precommit loop unrunnable in the official container.
+ *
+ * The npm-side twin, `check/security-audit`, has always been full/release-only
+ * for reason (1); this is the same authority over a different ecosystem, so it
+ * gets the same placement. `check/security-minimum` stays in the fast lane
+ * because fixed version floors ARE a pure function of the lockfile bytes.
+ */
+export const CARGO_AUDIT_CI_ONLY_REASON =
+  'cargo-audit resolves the RustSec advisory database over the network (its verdict is not a function of the tree) and the devcontainer does not provision it; check/security-audit, the npm twin, is CI-only for the same reason';
+
 const CARGO_AUDIT_INPUT_PATTERNS: readonly RegExp[] = Object.freeze([
   /^crates\/[^/]+\/Cargo\.(?:toml|lock)$/u,
   /^scripts\/(?:cargo-audit|lib\/(?:cargo-audit-contract|devcontainer-pins))\.ts$/u,
@@ -511,11 +529,9 @@ export function buildLocalVerificationPlan(input: {
   const docsAffected = !input.staged || (input.changedPaths ?? []).some(isTypeDocProofInput);
   const ciContractAffected = !input.staged || (input.changedPaths ?? []).some(isCiContractInput);
   const rustfmtAffected = !input.staged || (input.changedPaths ?? []).some(isRustfmtProofInput);
-  const cargoAuditAffected = !input.staged || (input.changedPaths ?? []).some(isCargoAuditProofInput);
-  const platform = input.platform ?? process.platform;
   const steps: LocalVerificationStep[] = [...quickSteps];
   if (rustfmtAffected) steps.push(RUSTFMT_STEP);
-  if (platform === 'linux' && cargoAuditAffected) steps.push(CARGO_AUDIT_STEP);
+  // check/cargo-audit is deliberately NOT here — see CARGO_AUDIT_CI_ONLY_REASON.
   steps.push(INVARIANTS_STEP, PROJECTIONS_STEP);
   if (ciContractAffected) steps.push(CI_CONTRACT_STEP);
   if (docsAffected) steps.push(DOCS_STEP);
