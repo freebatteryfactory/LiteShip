@@ -3,6 +3,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import ts from 'typescript';
+import { nearestBinding } from '../../packages/audit/src/ts-scope.js';
 
 export type TestDebtKind =
   | 'ambient-clock'
@@ -851,26 +852,165 @@ function staticPropertyName(node: ts.ObjectLiteralElementLike): string | undefin
   return undefined;
 }
 
+/** Strip the parenthesis / `as const` / `satisfies` wrappers a value may carry. */
+function unwrapExpression(node: ts.Expression): ts.Expression {
+  let current = node;
+  while (ts.isParenthesizedExpression(current) || ts.isAsExpression(current) || ts.isSatisfiesExpression(current)) {
+    current = current.expression;
+  }
+  return current;
+}
+
+/**
+ * The `const` initializer an identifier denotes, or `undefined` when it denotes
+ * nothing fixed at authoring time.
+ *
+ * `let` and `var` are refused deliberately: a rebindable name is not a constant,
+ * however constant its first assignment happens to look.
+ */
+function constInitializer(identifier: ts.Identifier): ts.Expression | undefined {
+  const binding = nearestBinding(identifier);
+  if (binding === undefined || !ts.isVariableDeclaration(binding)) return undefined;
+  const declarationList = binding.parent;
+  if (!ts.isVariableDeclarationList(declarationList)) return undefined;
+  if ((declarationList.flags & ts.NodeFlags.Const) === 0) return undefined;
+  return binding.initializer;
+}
+
+/**
+ * The compile-time integer an expression denotes, or `undefined` when it denotes
+ * nothing statically knowable.
+ *
+ * TOKEN vs REFERENT. `numRuns: RUNS` is perfectly replayable when `RUNS` is a
+ * `const` bound to a literal, and not replayable at all when it is a `let`, a
+ * parameter, or a call. The two are spelled identically, so the binding is
+ * RESOLVED through the shared scope walker rather than guessed from the text —
+ * the same discipline the referent law applies elsewhere.
+ */
+/**
+ * Fold one binary operator over two resolved integers.
+ *
+ * The set is deliberately closed: these are the operators that combine two
+ * compile-time integers into a third with no ambient input. `SEED ^ 0x4e414e`
+ * is exactly as replayable as the literal it evaluates to, so refusing it would
+ * judge the spelling. Every other operator — comparison, logical, `??`,
+ * exponent-with-fractions — falls through to `undefined` and is refused.
+ */
+function applyIntegerOperator(kind: ts.SyntaxKind, left: number, right: number): number | undefined {
+  switch (kind) {
+    case ts.SyntaxKind.CaretToken:
+      return left ^ right;
+    case ts.SyntaxKind.BarToken:
+      return left | right;
+    case ts.SyntaxKind.AmpersandToken:
+      return left & right;
+    case ts.SyntaxKind.LessThanLessThanToken:
+      return left << right;
+    case ts.SyntaxKind.GreaterThanGreaterThanToken:
+      return left >> right;
+    case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
+      return left >>> right;
+    case ts.SyntaxKind.PlusToken:
+      return left + right;
+    case ts.SyntaxKind.MinusToken:
+      return left - right;
+    case ts.SyntaxKind.AsteriskToken:
+      return left * right;
+    default:
+      return undefined;
+  }
+}
+
+function staticIntegerValue(node: ts.Expression, depth = 0): number | undefined {
+  // A const may be defined in terms of another const; bound the chase rather
+  // than trusting the graph to be acyclic.
+  if (depth > 8) return undefined;
+  const expression = unwrapExpression(node);
+  if (ts.isPrefixUnaryExpression(expression)) {
+    if (expression.operator !== ts.SyntaxKind.MinusToken) return undefined;
+    const operand = staticIntegerValue(expression.operand, depth + 1);
+    return operand === undefined ? undefined : -operand;
+  }
+  if (ts.isNumericLiteral(expression)) {
+    const value = Number(expression.text.replaceAll('_', ''));
+    return Number.isSafeInteger(value) ? value : undefined;
+  }
+  if (ts.isBinaryExpression(expression)) {
+    const left = staticIntegerValue(expression.left, depth + 1);
+    const right = staticIntegerValue(expression.right, depth + 1);
+    if (left === undefined || right === undefined) return undefined;
+    const combined = applyIntegerOperator(expression.operatorToken.kind, left, right);
+    return combined !== undefined && Number.isSafeInteger(combined) ? combined : undefined;
+  }
+  if (ts.isIdentifier(expression)) {
+    const initializer = constInitializer(expression);
+    return initializer === undefined ? undefined : staticIntegerValue(initializer, depth + 1);
+  }
+  return undefined;
+}
+
+/**
+ * The options object an `fc.assert` call passes, resolved through a `const`
+ * binding when the call names one.
+ *
+ * `fc.assert(property, RUNS)` with `const RUNS = { seed, numRuns } as const` is
+ * fully seeded evidence; refusing it because the ARGUMENT is not literally an
+ * object expression judged a spelling instead of a value.
+ */
+function assertOptions(node: ts.CallExpression): ts.ObjectLiteralExpression | undefined {
+  const argument = node.arguments[1];
+  if (argument === undefined) return undefined;
+  const expression = unwrapExpression(argument);
+  if (ts.isObjectLiteralExpression(expression)) return expression;
+  if (!ts.isIdentifier(expression)) return undefined;
+  const initializer = constInitializer(expression);
+  if (initializer === undefined) return undefined;
+  const resolved = unwrapExpression(initializer);
+  return ts.isObjectLiteralExpression(resolved) ? resolved : undefined;
+}
+
 /**
  * THE CLASS RULE — ANCHOR: every fast-check assertion in a handwritten
- * deterministic or fuzz suite. ALLOWLIST: an explicit options object with one
- * statically named `seed` and one statically named `numRuns`, and no spread or
- * duplicate option that could override either. Anything less is unseeded debt:
- * a failure that cannot be replayed with the same campaign is not evidence.
+ * deterministic or fuzz suite. ALLOWLIST: an options object — written inline or
+ * reached through a `const` — carrying exactly one `seed` and exactly one
+ * `numRuns`, each RESOLVING to a compile-time integer, with `numRuns >= 1` and
+ * no spread or computed option that could override either.
+ *
+ * Naming the keys was never the claim. The claim is that a failure can be
+ * REPLAYED, and `{ seed: Date.now(), numRuns: 0 }` names both keys while
+ * proving nothing: the seed is different every run and the property executes
+ * zero cases. A key-presence test over an open value grammar is a denylist in
+ * disguise — it admits every value it forgot to think about. Values are
+ * therefore resolved, and anything unresolvable is debt.
  */
 function unseededProperties(ast: ts.SourceFile): readonly ts.CallExpression[] {
   const findings: ts.CallExpression[] = [];
   const visit = (node: ts.Node): void => {
     if (ts.isCallExpression(node) && propertyCall(node, 'fc', 'assert')) {
-      const options = node.arguments[1];
-      if (options === undefined || !ts.isObjectLiteralExpression(options)) {
+      const options = assertOptions(node);
+      if (options === undefined) {
         findings.push(node);
       } else {
-        const names = options.properties.map(staticPropertyName);
-        const seedCount = names.filter((name) => name === 'seed').length;
-        const runCount = names.filter((name) => name === 'numRuns').length;
-        const hasDynamicOption = names.some((name) => name === undefined);
-        if (seedCount !== 1 || runCount !== 1 || hasDynamicOption) findings.push(node);
+        const entries = options.properties.map((property) => ({
+          name: staticPropertyName(property),
+          // A shorthand `{ seed }` denotes the identifier itself, which resolves
+          // exactly like an explicit initializer would.
+          value: ts.isPropertyAssignment(property)
+            ? property.initializer
+            : ts.isShorthandPropertyAssignment(property)
+              ? property.name
+              : undefined,
+        }));
+        const hasDynamicOption = entries.some((entry) => entry.name === undefined);
+        const seeds = entries.filter((entry) => entry.name === 'seed');
+        const runs = entries.filter((entry) => entry.name === 'numRuns');
+        const seedValue =
+          seeds.length === 1 && seeds[0]?.value !== undefined ? staticIntegerValue(seeds[0].value) : undefined;
+        const runValue =
+          runs.length === 1 && runs[0]?.value !== undefined ? staticIntegerValue(runs[0].value) : undefined;
+        if (hasDynamicOption || seedValue === undefined || runValue === undefined || runValue < 1) {
+          findings.push(node);
+        }
       }
     }
     ts.forEachChild(node, visit);

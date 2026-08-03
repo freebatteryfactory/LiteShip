@@ -71,6 +71,9 @@
     "tests/property/cli-argv-receipt.prop.test.ts": {
       "unseeded-property": 4
     },
+    "tests/property/command-benchmark-admission-laws.prop.test.ts": {
+      "unseeded-property": 1
+    },
     "tests/property/command-projection-permutation.prop.test.ts": {
       "unseeded-property": 2
     },
@@ -97,9 +100,6 @@
     },
     "tests/property/delivery-evidence-verifier.prop.test.ts": {
       "unseeded-property": 6
-    },
-    "tests/property/delivery-health.prop.test.ts": {
-      "unseeded-property": 3
     },
     "tests/property/easing.prop.test.ts": {
       "unseeded-property": 14
@@ -195,9 +195,6 @@
     "tests/property/signal-input-roundtrip.prop.test.ts": {
       "unseeded-property": 1
     },
-    "tests/property/simulation-campaign.prop.test.ts": {
-      "unseeded-property": 2
-    },
     "tests/property/source-layout-graduation-laws.prop.test.ts": {
       "unseeded-property": 1
     },
@@ -233,6 +230,9 @@
     },
     "tests/support/repo-truths.ts": {
       "source-byte-oracle": 1
+    },
+    "tests/unit/arbitrary-from-schema.test.ts": {
+      "unseeded-property": 1
     },
     "tests/unit/assets/brand-validators.test.ts": {
       "unseeded-property": 1

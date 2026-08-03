@@ -167,6 +167,83 @@ describe('test constitution', () => {
       `);
       expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('unseeded-property');
     });
+
+    // Naming the keys was never the claim — the claim is that a failure can be
+    // REPLAYED. Each of these names both keys and proves nothing.
+    it('flags numRuns: 0 — a property that executes zero cases is not evidence', () => {
+      const root = fixture(`
+        fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), { seed: 0x5eed, numRuns: 0 });
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('unseeded-property');
+    });
+
+    it('flags a negative numRuns', () => {
+      const root = fixture(`
+        fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), { seed: 0x5eed, numRuns: -1 });
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('unseeded-property');
+    });
+
+    it('flags a seed that is different on every run', () => {
+      const root = fixture(`
+        fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), {
+          seed: Date.now(),
+          numRuns: 40,
+        });
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('unseeded-property');
+    });
+
+    it('flags a run count derived from runtime data', () => {
+      const root = fixture(`
+        const names = collectNames();
+        fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), {
+          seed: 0x5eed,
+          numRuns: names.length * 2,
+        });
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('unseeded-property');
+    });
+
+    it('flags options reached through a REBINDABLE name', () => {
+      // `let` is refused deliberately: a rebindable name is not a constant,
+      // however constant its first assignment happens to look.
+      const root = fixture(`
+        let RUNS = { seed: 0x5eed, numRuns: 40 };
+        fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), RUNS);
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).toContain('unseeded-property');
+    });
+
+    // The other direction: the tightening must not start judging spellings that
+    // are fully replayable. Each of these was counted as debt before.
+    it('admits an options object reached through a const binding', () => {
+      const root = fixture(`
+        const RUNS = { seed: 0xd311, numRuns: 72 } as const;
+        fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), RUNS);
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('unseeded-property');
+    });
+
+    it('admits a seed built from a constant expression', () => {
+      const root = fixture(`
+        const SEED = 0x5eed;
+        fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), {
+          seed: SEED ^ 0x4e414e,
+          numRuns: 300,
+        });
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('unseeded-property');
+    });
+
+    it('admits const-bound shorthand options and a single-case campaign', () => {
+      const root = fixture(`
+        const seed = 0x5eed;
+        const numRuns = 1;
+        fc.assert(fc.property(fc.integer(), (value) => Number.isInteger(value)), { seed, numRuns });
+      `);
+      expect(scanTestConstitution(root).map(({ kind }) => kind)).not.toContain('unseeded-property');
+    });
   });
 
   describe('generated-payload-delimiter', () => {
