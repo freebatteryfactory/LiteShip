@@ -70,12 +70,14 @@ const scripts = (
 ).scripts;
 
 describe('format/lint tree parity', () => {
-  it('format sweeps exactly the trees lint sweeps', () => {
-    expect(scriptGlobs(scripts['format']!)).toEqual(scriptGlobs(scripts['lint']!));
+  it('format sweeps every file lint sweeps', () => {
+    const linted = exactnessPopulation(scripts['lint']!);
+    const formatted = new Set(exactnessPopulation(scripts['format']!));
+    expect(linted.filter((path) => !formatted.has(path))).toEqual([]);
   });
 
-  it('format:check sweeps exactly the trees lint sweeps', () => {
-    expect(scriptGlobs(scripts['format:check']!)).toEqual(scriptGlobs(scripts['lint']!));
+  it('format and format:check have exact population parity', () => {
+    expect(exactnessPopulation(scripts['format:check']!)).toEqual(exactnessPopulation(scripts['format']!));
   });
 
   it('the check/format registry inputs cover the widened trees (cache identity)', () => {

@@ -215,8 +215,19 @@ export function catalogEntry(name: string): string | undefined {
  * returned, so a non-glob quoted flag value cannot inflate the list.
  */
 export function lintGlobs(): readonly string[] {
-  const lint = rootManifest().scripts.lint ?? '';
-  return [...lint.matchAll(/"([^"]+)"/g)].map((match) => match[1]!).filter((glob) => glob.includes('*'));
+  return scriptQuotedTargets('lint').filter((glob) => glob.includes('*'));
+}
+
+/** Quoted filesystem targets passed by one root package script. */
+export function scriptQuotedTargets(scriptName: string): readonly string[] {
+  const script = rootManifest().scripts[scriptName] ?? '';
+  return [...script.matchAll(/"([^"]+)"/g)].map((match) => match[1]!);
+}
+
+/** Shell-like argv tokens for root-script topology laws (quotes removed). */
+export function scriptArgvTokens(scriptName: string): readonly string[] {
+  const script = rootManifest().scripts[scriptName] ?? '';
+  return [...script.matchAll(/"([^"]+)"|'([^']+)'|(\S+)/g)].map((match) => match[1] ?? match[2] ?? match[3]!);
 }
 
 /**

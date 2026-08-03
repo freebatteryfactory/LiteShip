@@ -1,0 +1,14 @@
+# W1.11 scanner floor for TSX sources. A scan is not meaningful merely because
+# the parser opened a file; this unconditional language rule gives every TSX
+# subject an applicable ESM invariant.
+id: governed-esm-tsx
+language: tsx
+severity: error
+message: 'CommonJS syntax is forbidden in governed TSX; use ESM imports and exports.'
+rule:
+  any:
+    - pattern: require($$$ARGS)
+    - kind: assignment_expression
+      has:
+        field: left
+        regex: '^(module\.exports|exports\.)'

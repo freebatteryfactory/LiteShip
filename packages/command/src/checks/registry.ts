@@ -30,6 +30,14 @@ const PACKAGE_TS_GLOB = 'packages/**/*.ts';
 const TESTS_GLOB = 'tests/**';
 /** Repo scripts — the covered bytes of the script-owned gates. */
 const SCRIPTS_GLOB = 'scripts/**/*.ts';
+/** Published scaffold, bin, and executable config subjects enrolled by W1.11. */
+const W111_TOOLING_INPUTS = [
+  'packages/cli/fragments/**',
+  'packages/create-liteship/bin/*.{js,mjs,cjs}',
+  'packages/liteship/bin/*.{js,mjs,cjs}',
+  '{eslint,liteship,vite}.config.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+  'vitest*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+] as const;
 
 /** Configuration files read transitively by Prettier for the root format script. */
 const FORMAT_CONFIG_INPUTS = ['.prettierrc', '.prettierignore', '.editorconfig'] as const;
@@ -142,10 +150,10 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   {
     id: 'check/format',
     title: 'Prettier formatting',
-    claim: 'Every source, test, and script file the linter sweeps is Prettier-clean.',
+    claim: 'Every Prettier-supported package, fragment, bin, config, test, and script source is formatted.',
     owner: '.prettierrc',
     command: 'pnpm run format:check',
-    inputs: [SRC_GLOB, TESTS_GLOB, SCRIPTS_GLOB, ...FORMAT_CONFIG_INPUTS],
+    inputs: [SRC_GLOB, TESTS_GLOB, SCRIPTS_GLOB, ...W111_TOOLING_INPUTS, ...FORMAT_CONFIG_INPUTS],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 60_000,
@@ -164,6 +172,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
       PACKAGE_TS_GLOB,
       TESTS_GLOB,
       SCRIPTS_GLOB,
+      ...W111_TOOLING_INPUTS,
       'sgconfig.yml',
       'sgrules/**/*.yml',
       'vitest.config.ts',
@@ -294,10 +303,10 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   {
     id: 'check/lint',
     title: 'ESLint (max-warnings 0)',
-    claim: 'Package/test/script source passes ESLint with zero warnings.',
+    claim: 'Package, fragment, bin, config, test, and script source passes ESLint with zero warnings.',
     owner: 'eslint.config.js',
     command: 'pnpm run lint',
-    inputs: [SRC_GLOB, TESTS_GLOB, SCRIPTS_GLOB, 'eslint.config.js'],
+    inputs: [SRC_GLOB, TESTS_GLOB, SCRIPTS_GLOB, ...W111_TOOLING_INPUTS, 'eslint.config.js'],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 180_000,

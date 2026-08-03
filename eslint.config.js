@@ -4,7 +4,7 @@ import tsdoc from 'eslint-plugin-tsdoc';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/*.js', '**/*.d.ts'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/*.d.ts', '!packages/cli/fragments/**/*.d.ts'],
   },
   ...tseslint.configs.recommended,
   {
@@ -61,21 +61,24 @@ export default tseslint.config(
     files: ['packages/core/src/**/*.ts'],
     rules: {
       'tsdoc/syntax': 'error',
-      'jsdoc/require-jsdoc': ['error', {
-        publicOnly: true,
-        require: {
-          FunctionDeclaration: true,
-          ClassDeclaration: true,
-          MethodDefinition: false,
-          ArrowFunctionExpression: false,
-          FunctionExpression: false,
+      'jsdoc/require-jsdoc': [
+        'error',
+        {
+          publicOnly: true,
+          require: {
+            FunctionDeclaration: true,
+            ClassDeclaration: true,
+            MethodDefinition: false,
+            ArrowFunctionExpression: false,
+            FunctionExpression: false,
+          },
+          contexts: [
+            'TSInterfaceDeclaration',
+            'TSTypeAliasDeclaration',
+            'ExportNamedDeclaration > VariableDeclaration',
+          ],
         },
-        contexts: [
-          'TSInterfaceDeclaration',
-          'TSTypeAliasDeclaration',
-          'ExportNamedDeclaration > VariableDeclaration',
-        ],
-      }],
+      ],
     },
   },
   {
@@ -87,21 +90,24 @@ export default tseslint.config(
     ],
     rules: {
       'tsdoc/syntax': 'error',
-      'jsdoc/require-jsdoc': ['error', {
-        publicOnly: true,
-        require: {
-          FunctionDeclaration: true,
-          ClassDeclaration: true,
-          MethodDefinition: false,
-          ArrowFunctionExpression: false,
-          FunctionExpression: false,
+      'jsdoc/require-jsdoc': [
+        'error',
+        {
+          publicOnly: true,
+          require: {
+            FunctionDeclaration: true,
+            ClassDeclaration: true,
+            MethodDefinition: false,
+            ArrowFunctionExpression: false,
+            FunctionExpression: false,
+          },
+          contexts: [
+            'TSInterfaceDeclaration',
+            'TSTypeAliasDeclaration',
+            'ExportNamedDeclaration > VariableDeclaration',
+          ],
         },
-        contexts: [
-          'TSInterfaceDeclaration',
-          'TSTypeAliasDeclaration',
-          'ExportNamedDeclaration > VariableDeclaration',
-        ],
-      }],
+      ],
     },
   },
   {
@@ -114,21 +120,24 @@ export default tseslint.config(
     ],
     rules: {
       'tsdoc/syntax': 'error',
-      'jsdoc/require-jsdoc': ['error', {
-        publicOnly: true,
-        require: {
-          FunctionDeclaration: true,
-          ClassDeclaration: true,
-          MethodDefinition: false,
-          ArrowFunctionExpression: false,
-          FunctionExpression: false,
+      'jsdoc/require-jsdoc': [
+        'error',
+        {
+          publicOnly: true,
+          require: {
+            FunctionDeclaration: true,
+            ClassDeclaration: true,
+            MethodDefinition: false,
+            ArrowFunctionExpression: false,
+            FunctionExpression: false,
+          },
+          contexts: [
+            'TSInterfaceDeclaration',
+            'TSTypeAliasDeclaration',
+            'ExportNamedDeclaration > VariableDeclaration',
+          ],
         },
-        contexts: [
-          'TSInterfaceDeclaration',
-          'TSTypeAliasDeclaration',
-          'ExportNamedDeclaration > VariableDeclaration',
-        ],
-      }],
+      ],
     },
   },
   // Suppress TSDoc rules entirely for test + script files (not public API).
@@ -296,18 +305,23 @@ export default tseslint.config(
       'tests/scratch/spike-subprocess-coverage.test.ts',
     ],
     rules: {
-      'no-restricted-imports': ['error', {
-        paths: [
-          {
-            name: 'node:child_process',
-            message: 'Import from scripts/lib/spawn.ts (spawnArgv / withSpawned). The canonical helper preserves NODE_V8_COVERAGE inheritance for subprocess coverage capture.',
-          },
-          {
-            name: 'child_process',
-            message: 'Import from scripts/lib/spawn.ts (spawnArgv / withSpawned). The canonical helper preserves NODE_V8_COVERAGE inheritance for subprocess coverage capture.',
-          },
-        ],
-      }],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'node:child_process',
+              message:
+                'Import from scripts/lib/spawn.ts (spawnArgv / withSpawned). The canonical helper preserves NODE_V8_COVERAGE inheritance for subprocess coverage capture.',
+            },
+            {
+              name: 'child_process',
+              message:
+                'Import from scripts/lib/spawn.ts (spawnArgv / withSpawned). The canonical helper preserves NODE_V8_COVERAGE inheritance for subprocess coverage capture.',
+            },
+          ],
+        },
+      ],
     },
   },
 );

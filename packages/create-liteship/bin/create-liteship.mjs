@@ -13,8 +13,7 @@ const distEntry = resolve(here, '../dist/index.js');
 
 if (!existsSync(distEntry)) {
   process.stderr.write(
-    'create-liteship: dist/ is missing (monorepo checkout before build?).\n' +
-      '  Build it with: pnpm run build\n',
+    'create-liteship: dist/ is missing (monorepo checkout before build?).\n' + '  Build it with: pnpm run build\n',
   );
   process.exit(127);
 }

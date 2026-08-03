@@ -1,0 +1,14 @@
+# W1.11 scanner floor for JavaScript/MJS/CJS sources. This rule deliberately has
+# no files filter: every JavaScript file admitted by lint:structural gets a real
+# ESM rule, including shipped bins, fragment configs, and eslint.config.js.
+id: governed-esm-javascript
+language: javascript
+severity: error
+message: 'CommonJS syntax is forbidden in governed JavaScript; use ESM imports and exports.'
+rule:
+  any:
+    - pattern: require($$$ARGS)
+    - kind: assignment_expression
+      has:
+        field: left
+        regex: '^(module\.exports|exports\.)'

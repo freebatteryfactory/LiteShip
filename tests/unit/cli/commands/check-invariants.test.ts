@@ -7,8 +7,8 @@
  *
  *  1. The PURE scan primitives over a real temp fixture tree (deterministic, no
  *     mocks): `findViolations` (banned-pattern hits with repo-relative slash-
- *     normalized file + 1-based line + trimmed content; the `dist`/`node_modules`/
- *     `.d.ts` skips; exact/subtree exemptions; the explicitly admitted
+ *     normalized file + 1-based line + trimmed content; the `dist`/`node_modules`
+ *     skips; declaration scanning; exact/subtree exemptions; the explicitly admitted
  *     missing-scoped-dir branch; and non-ENOENT I/O propagation)
  *     and `expectedLineEnding`'s precedence / binary / no-match branches.
  *
@@ -34,6 +34,8 @@ import {
   findViolations,
   expectedLineEnding,
   parseLineEndingRules,
+  W111_INVARIANT_DECLARATION_FILES,
+  W111_INVARIANT_ROOT_FILES,
 } from '../../../../packages/cli/src/commands/check-invariants.js';
 
 afterEach(() => vi.restoreAllMocks());
@@ -65,7 +67,7 @@ describe('findViolations — banned-pattern scan (real fixture tree)', () => {
     expect(hits).toEqual([{ file: 'packages/x/src/a.ts', line: 2, content: 'bannedToken();' }]);
   });
 
-  it('skips dist/, node_modules/, and *.d.ts; honors a scoped subtree exemption only', () => {
+  it('skips dist/, node_modules/, and declarations unless exact, and honors a scoped subtree exemption', () => {
     write('packages/x/src/keep.ts', 'bannedToken();\n');
     write('packages/x/dist/built.ts', 'bannedToken();\n');
     write('packages/x/node_modules/dep.ts', 'bannedToken();\n');
@@ -135,14 +137,23 @@ describe('findViolations — banned-pattern scan (real fixture tree)', () => {
     expect(() => findViolations(inv, root)).toThrow(/check-invariants\.readdir/u);
   });
 
-  it('treats generated CLI fragments as packaged data, while their authored owners remain independently guarded', () => {
+  it('fails closed when an exact scanner file disappears', () => {
+    const inv = { name: 'NO_BANNED', message: 'no banned token', dirs: [], pattern: /bannedToken/ };
+    expect(() => findViolations(inv, root, ['vite.config.ts'])).toThrow(/check-invariants\.missing-declared-file/u);
+  });
+
+  it('scans generated CLI fragment sources instead of exempting the published subtree', () => {
     write(
       'packages/cli/fragments/template/default/config.ts',
       'const dep = require("x");\nmodule.exports = dep;\nvar legacy = dep;\nexport default legacy;\n',
     );
-    for (const invariant of INVARIANTS) {
-      expect(findViolations(invariant, root), invariant.name).toEqual([]);
-    }
+    const governed = INVARIANTS.filter((invariant) => invariant.name !== 'NO_SIGNAL_INPUT_REPARSE');
+    expect(governed.map((invariant) => [invariant.name, findViolations(invariant, root).length])).toEqual([
+      ['NO_REQUIRE', 1],
+      ['NO_MODULE_EXPORTS', 1],
+      ['NO_DEFAULT_EXPORT', 1],
+      ['NO_VAR', 1],
+    ]);
   });
 });
 
@@ -171,6 +182,8 @@ describe('liteship check invariants — adapter projection (scan via injected ca
   let root: string;
   beforeEach(() => {
     root = mkdtempSync(join(tmpdir(), 'liteship-inv-adapter-'));
+    for (const path of W111_INVARIANT_ROOT_FILES) write(path, '');
+    for (const path of W111_INVARIANT_DECLARATION_FILES) write(path, '');
     // A clean `git ls-files --eol` probe → no line-ending violations by default.
     spawnMock.mockReset().mockResolvedValue({ exitCode: 0, stdout: '' });
   });

@@ -14,23 +14,23 @@ const ROOT_ENTRY = path.resolve(import.meta.dirname, 'src/Root.tsx');
 const OUTPUT_PATH = path.resolve(import.meta.dirname, 'out/liteship-demo.mp4');
 
 async function main(): Promise<void> {
-  console.log('[liteship] Bundling Remotion project...');
+  process.stdout.write('[liteship] Bundling Remotion project...\n');
   const bundleLocation = await bundle({
     entryPoint: ROOT_ENTRY,
     onProgress: (progress: number) => {
       if (progress % 10 === 0) {
-        console.log(`  bundle: ${progress}%`);
+        process.stdout.write(`  bundle: ${progress}%\n`);
       }
     },
   });
 
-  console.log('[liteship] Selecting composition "LiteshipDemo"...');
+  process.stdout.write('[liteship] Selecting composition "LiteshipDemo"...\n');
   const composition = await selectComposition({
     serveUrl: bundleLocation,
     id: 'LiteshipDemo',
   });
 
-  console.log(`[liteship] Rendering ${composition.durationInFrames} frames at ${composition.fps}fps...`);
+  process.stdout.write(`[liteship] Rendering ${composition.durationInFrames} frames at ${composition.fps}fps...\n`);
   await renderMedia({
     composition,
     serveUrl: bundleLocation,
@@ -44,10 +44,11 @@ async function main(): Promise<void> {
     },
   });
 
-  console.log(`\n[liteship] Done -> ${OUTPUT_PATH}`);
+  process.stdout.write(`\n[liteship] Done -> ${OUTPUT_PATH}\n`);
 }
 
-main().catch((err) => {
-  console.error('[liteship] Render failed:', err);
+main().catch((err: unknown) => {
+  const detail = err instanceof Error ? (err.stack ?? err.message) : String(err);
+  process.stderr.write(`[liteship] Render failed: ${detail}\n`);
   process.exit(1);
 });

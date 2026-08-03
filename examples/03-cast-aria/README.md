@@ -24,12 +24,22 @@ reading move together, nothing hand-synced.
 ```css
 @quantize nav {
   compact {
-    .extra { max-height: 0; opacity: 0; }
-    @aria { aria-hidden: "true"; }
+    .extra {
+      max-height: 0;
+      opacity: 0;
+    }
+    @aria {
+      aria-hidden: 'true';
+    }
   }
   wide {
-    .extra { max-height: 2rem; opacity: 1; }
-    @aria { aria-hidden: "false"; }
+    .extra {
+      max-height: 2rem;
+      opacity: 1;
+    }
+    @aria {
+      aria-hidden: 'false';
+    }
   }
 }
 ```

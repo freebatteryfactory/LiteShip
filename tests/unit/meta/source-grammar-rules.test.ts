@@ -208,6 +208,9 @@ describe('source-grammar rules are registered with ast-grep', () => {
       'detect-tier-vocab-drift.yml',
       'facade-only-reexports.yml',
       'float-determinism-boundary.yml',
+      'governed-esm-javascript.yml',
+      'governed-esm-tsx.yml',
+      'governed-esm-typescript.yml',
       'hallucinated-themes-option.yml',
       'no-fire-and-forget-dispose.yml',
       'no-internal-vi-mock-tsx.yml',
@@ -227,6 +230,37 @@ describe('source-grammar rules are registered with ast-grep', () => {
       .filter((f) => f.endsWith('.yml'))
       .sort();
     expect(onDisk).toEqual([...PINNED_RULES].sort());
+  });
+});
+
+describe('governed ESM rules have executable teeth in every admitted grammar', () => {
+  const CASES = [
+    {
+      rule: 'governed-esm-javascript.yml',
+      path: 'packages/faux/bin/tool.mjs',
+      commonJs: "const dep = require('dep');\nmodule.exports = dep;\n",
+      esm: "import dep from 'dep';\nexport { dep };\n",
+    },
+    {
+      rule: 'governed-esm-typescript.yml',
+      path: 'packages/faux/src/tool.ts',
+      commonJs: "const dep = require('dep');\nmodule.exports = dep;\n",
+      esm: "import dep from 'dep';\nexport { dep };\n",
+    },
+    {
+      rule: 'governed-esm-tsx.yml',
+      path: 'packages/faux/src/tool.tsx',
+      commonJs: "const dep = require('dep');\nmodule.exports = <div>{dep}</div>;\n",
+      esm: "import dep from 'dep';\nexport const view = <div>{dep}</div>;\n",
+    },
+  ] as const;
+
+  it.each(CASES)('$rule flags both require() and module.exports', async ({ rule, path, commonJs }) => {
+    expect(await scan(rule, fixture(path, commonJs))).toHaveLength(2);
+  });
+
+  it.each(CASES)('$rule admits ordinary ESM', async ({ rule, path, esm }) => {
+    expect(await scan(rule, fixture(path, esm))).toEqual([]);
   });
 });
 

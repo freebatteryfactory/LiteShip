@@ -193,7 +193,7 @@ const timeoutScale = (): number => {
 // LITESHIP_COVERAGE is authoritative when present: test workers always receive it
 // from the configs' `test.env` injection ('1' or '0'), while their argv never
 // carries --coverage. The argv probe only decides for the config process
-// itself, where the env var hasn't been injected yet.
+// itself, where the environment setting hasn't been injected yet.
 const coverageActive = (): boolean => {
   const env = process.env['LITESHIP_COVERAGE'];
   if (env !== undefined) return env === '1';
