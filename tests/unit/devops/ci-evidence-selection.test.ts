@@ -100,6 +100,12 @@ describe('CI evidence selection', () => {
     expect(scheduled.find((entry) => entry.requirement.checkId === 'check/rustfmt')?.jobNames).toEqual([
       'rust-wasm-parity',
     ]);
+    expect(
+      pullRequest.find((entry) => entry.requirement.checkId === 'check/rust-wasm-qualification')?.jobNames,
+    ).toEqual(['rust-wasm-parity']);
+    expect(scheduled.find((entry) => entry.requirement.checkId === 'check/rust-wasm-qualification')?.jobNames).toEqual([
+      'rust-wasm-parity',
+    ]);
   });
 
   it('binds push evidence to every release check and the registry-projected CI owners', () => {

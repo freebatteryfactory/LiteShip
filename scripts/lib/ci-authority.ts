@@ -105,17 +105,15 @@ const RELEASE_REPRODUCTION_RULES: readonly ReleaseReproductionRule[] = Object.fr
   { job: 'macos-browser', checkId: 'check/test-e2e', platform: 'darwin' },
 ]);
 
-/**
- * The rustfmt slice is registry-owned; the remaining clippy/wasm qualification
- * authority stays in this bounded complement until its later W1.12 packets land.
- */
-export const NON_REGISTRY_RELEASE_AUTHORITY_COMPLEMENT = Object.freeze([
-  Object.freeze({
-    job: 'rust-wasm-parity',
-    prerequisite: 'W1.12',
-    reason: 'Clippy and wasm32 parity remain outside the registry until the remaining W1.12 Rust lanes land.',
-  }),
-] as const);
+export interface NonRegistryReleaseAuthorityComplement {
+  readonly job: string;
+  readonly prerequisite: string;
+  readonly reason: string;
+}
+
+/** Every current release authority is registry-owned; no workflow-only complement remains. */
+export const NON_REGISTRY_RELEASE_AUTHORITY_COMPLEMENT: readonly NonRegistryReleaseAuthorityComplement[] =
+  Object.freeze([]);
 
 function foldedAuthorityJob(job: string): string {
   return job.startsWith('truth-linux-parallel-') ? 'truth-linux-parallel' : job;

@@ -913,10 +913,6 @@ jobs:
         working-directory: crates/liteship-compute
         env:
           RUSTFLAGS: -D warnings
-      - run: cargo build --release --target wasm32-unknown-unknown
-        working-directory: crates/liteship-compute
-        env:
-          RUSTFLAGS: -D warnings
       - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -926,6 +922,10 @@ jobs:
       - name: Run registry-projected pinned Rust formatting
         env:
           PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.rustfmt.command }}
+        run: bash -c "$PROJECTED_COMMAND"
+      - name: Run registry-projected pinned Rust and WASM qualification
+        env:
+          PROJECTED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.rustWasmQualification.command }}
         run: bash -c "$PROJECTED_COMMAND"
       # Build the TS workspace so the vitest config can load: its alias setup
       # imports `@liteship/core` config → `cbor.ts` → `@liteship/canonical`, whose

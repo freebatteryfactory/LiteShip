@@ -56,14 +56,13 @@ describe('CI authority requirements', () => {
     );
   });
 
-  it('bounds the non-registry kernel authority to the W1.12 prerequisite', () => {
-    expect(NON_REGISTRY_RELEASE_AUTHORITY_COMPLEMENT).toEqual([
-      {
-        job: 'rust-wasm-parity',
-        prerequisite: 'W1.12',
-        reason: 'Clippy and wasm32 parity remain outside the registry until the remaining W1.12 Rust lanes land.',
-      },
-    ]);
+  it('has no non-registry Rust authority after W1.12 qualification is receipted', () => {
+    expect(NON_REGISTRY_RELEASE_AUTHORITY_COMPLEMENT).toEqual([]);
+    expect(CHECK_REGISTRY.find((check) => check.id === 'check/rust-wasm-qualification')).toMatchObject({
+      authority: 'blocking',
+      profiles: expect.arrayContaining(['full', 'release']),
+      platforms: ['linux'],
+    });
   });
 
   it('the final shell fold and evidence authority require the same jobs for every event', () => {

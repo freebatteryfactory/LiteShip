@@ -154,6 +154,15 @@ export function deriveRustToolchainChannel(source: string): string {
   return channel;
 }
 
+/** Derive the non-empty target set from the same committed toolchain table. */
+export function deriveRustToolchainTargets(source: string): readonly string[] {
+  const raw = tableEntries(source, 'toolchain', 'rust-toolchain.toml').get('targets');
+  if (raw === undefined) throw new TypeError('rust-toolchain.toml has no toolchain.targets');
+  const targets = parseTomlStringArray(raw, 'rust-toolchain.toml toolchain.targets');
+  if (targets.length === 0) throw new TypeError('rust-toolchain.toml toolchain.targets must not be empty');
+  return Object.freeze([...targets].sort(codeUnitCompare));
+}
+
 function dependencyRequirement(raw: string, subject: string): string {
   if (raw.startsWith('"')) return parseTomlString(raw, subject);
   if (/^\{[\s\S]*\}$/u.test(raw)) return raw.replace(/\s+/gu, ' ').trim();

@@ -47,7 +47,7 @@ function pushOwners(): ReadonlyMap<string, readonly string[]> {
 
 function prOwners(checkId: string): readonly string[] {
   if (checkId === 'check/format') return ['format'];
-  if (checkId === 'check/rustfmt') return ['rust-wasm-parity'];
+  if (checkId === 'check/rustfmt' || checkId === 'check/rust-wasm-qualification') return ['rust-wasm-parity'];
   if (checkId === 'check/test-e2e') return ['pr-browser-affected'];
   if (checkId === 'check/test') return ['pr-affected', 'pr-windows-affected'];
   return ['pr-affected'];
@@ -55,7 +55,7 @@ function prOwners(checkId: string): readonly string[] {
 
 function broadOwners(checkId: string): readonly string[] {
   if (checkId === 'check/format') return ['format'];
-  if (checkId === 'check/rustfmt') return ['rust-wasm-parity'];
+  if (checkId === 'check/rustfmt' || checkId === 'check/rust-wasm-qualification') return ['rust-wasm-parity'];
   return ['truth-linux'];
 }
 

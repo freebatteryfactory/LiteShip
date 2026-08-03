@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:41edebb2",
+  "address": "fnv1a:5108005a",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4736,6 +4736,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/lib/rust-wasm-qualification.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/lib/rustfmt-contract.ts",
       "level": "L1"
     },
@@ -4903,6 +4908,11 @@
       "_tag": "assurance-coverage",
       "file": "scripts/runtime-gate.ts",
       "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/rust-wasm-qualification.ts",
+      "level": "L1"
     },
     {
       "_tag": "assurance-coverage",

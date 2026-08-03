@@ -135,7 +135,10 @@ function requiredCheckIds(
   const required = new Set([...ids, 'check/test']);
   if (browserRequired) required.add('check/test-e2e');
   if (benchmarkRequired) required.add('check/bench');
-  if (rustWasmRequired) required.add('check/rustfmt');
+  if (rustWasmRequired) {
+    required.add('check/rustfmt');
+    required.add('check/rust-wasm-qualification');
+  }
   const registryOrder = new Map(CHECK_REGISTRY.map((check, index) => [check.id, index] as const));
   return [...required].sort(
     (a, b) => (registryOrder.get(a) ?? Number.MAX_SAFE_INTEGER) - (registryOrder.get(b) ?? Number.MAX_SAFE_INTEGER),
@@ -557,7 +560,8 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
   if (
     (candidate['browserRequired'] && !requiredChecks.includes('check/test-e2e')) ||
     (candidate['benchmarkRequired'] && !requiredChecks.includes('check/bench')) ||
-    (candidate['rustWasmRequired'] && !requiredChecks.includes('check/rustfmt')) ||
+    (candidate['rustWasmRequired'] &&
+      (!requiredChecks.includes('check/rustfmt') || !requiredChecks.includes('check/rust-wasm-qualification'))) ||
     (candidate['mode'] === 'full' &&
       (!candidate['browserRequired'] || !candidate['benchmarkRequired'] || !candidate['rustWasmRequired']))
   ) {
