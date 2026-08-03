@@ -683,6 +683,40 @@ describe('(a12) _spine unit evidence is type-admitted before execution', () => {
   });
 });
 
+describe('(a13) canonical unit evidence is type-admitted before execution', () => {
+  const runtimeSources = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/unit/canonical/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/unit/canonical/'));
+
+  it('directly admits every canonical Node encoding suite through one future-proof directory root', () => {
+    expect(runtimeSources.length, 'the canonical unit corpus fell below its committed floor').toBeGreaterThanOrEqual(9);
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} runtime canonical suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/unit/canonical/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      'canonical admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with canonical admission removed exposes the complete runtime corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/unit/canonical/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
 // --------------------------------------------------------------------------
 // (b) Coverage floors — the real gates cover a broad, non-trivial surface.
 // --------------------------------------------------------------------------
