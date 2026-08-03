@@ -46,7 +46,16 @@ function exactnessPopulation(formatScript: string): readonly string[] {
 function independentlyExpandedFormatGlobs(formatScript: string): readonly string[] {
   const files = new Set<string>();
   for (const glob of scriptGlobs(formatScript)) {
-    for (const path of globSync(glob, { cwd: ROOT, onlyFiles: true })) {
+    // PRUNE, don't post-filter, the one tree that can never be a format target:
+    // an installed package is not tracked, so no glob may legitimately resolve
+    // into it. This walk used to descend every `node_modules` for EVERY glob and
+    // discard the results in JS afterwards — invisible until `examples/` joined
+    // the format population and brought its own installs, at which point the
+    // law took 18.9s against its 10s budget. The `dist` filter below stays in
+    // JS: derived output IS a legitimate resolution this expansion must decide
+    // for itself, and deciding it here is what keeps this derivation
+    // independent of `exactnessPopulation`'s single pre-ignored pass.
+    for (const path of globSync(glob, { cwd: ROOT, onlyFiles: true, ignore: ['**/node_modules/**'] })) {
       const segments = path.replaceAll('\\', '/').split('/');
       if (!segments.includes('node_modules') && !segments.includes('dist')) files.add(resolve(ROOT, path));
     }

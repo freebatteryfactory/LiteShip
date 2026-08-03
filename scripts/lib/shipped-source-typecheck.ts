@@ -23,7 +23,16 @@ const DEFAULT_EXAMPLE_PREFIX = 'examples/default/';
 const SOURCE_EXTENSION = /\.(?:[cm]?js|jsx|[cm]?ts|tsx)$/u;
 const BIN_SOURCE = /^packages\/[^/]+\/bin\/.*\.[cm]?js$/u;
 
-const STANDALONE_CONTEXTS = Object.freeze([
+/**
+ * Standalone fragment trees that carry their own TypeScript project.
+ *
+ * Exported because these config paths ARE a governed population: the
+ * denominator census (W1.3) derives the typecheck layer from the projects the
+ * toolchain actually names, and a list only this module could see would make
+ * those projects invisible to the census — governed in fact, ungoverned in
+ * evidence.
+ */
+export const STANDALONE_CONTEXTS = Object.freeze([
   Object.freeze({ sourcePrefix: 'examples/07-stagger-reveal/', configPath: 'tsconfig.fragment-stagger.json' }),
   Object.freeze({ sourcePrefix: 'examples/scenes/', configPath: 'tsconfig.fragment-scenes.json' }),
 ]);

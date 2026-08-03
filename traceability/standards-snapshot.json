@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:8ff1d163",
+  "address": "fnv1a:97205635",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4617,6 +4617,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/lib/delivery-metrics.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/denominator-census.ts",
       "level": "L1"
     },
     {
