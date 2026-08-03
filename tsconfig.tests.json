@@ -65,11 +65,9 @@
     // "widen the replay payload with a signal" fix is only uncompilable if THIS
     // project typechecks the fixture.
     "tests/unit/core/motion/state-transition.test.ts",
-    "tests/unit/_spine/beat-contract.test.ts",
-    // The worker spine mirror (worker.d.ts) had no drift guard and silently
-    // diverged; this pins it via bidirectional spine⇔runtime assignability so a
-    // future divergence fails the typecheck (see the file's module doc).
-    "tests/unit/_spine/worker-contract.test.ts",
+    // Spine contract suites are executable type evidence. Admit the complete
+    // owned directory so a future spine mirror cannot run outside typecheck.
+    "tests/unit/_spine/**/*.test.ts",
     // The @liteship/core spine conformance guard: its type-level assignments
     // (Config.Shape ⇔ runtime, and the CompositeState / VideoConfig / CaptureResult
     // bidirectional pins) only bite if THIS project typechecks them. Listed here so
