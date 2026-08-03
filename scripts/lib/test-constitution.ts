@@ -33,7 +33,14 @@ export interface TestConstitutionRegression {
 }
 
 const DETERMINISTIC_ROOTS = ['tests/unit', 'tests/property', 'tests/component', 'tests/regression', 'tests/support'];
-const FUZZ_ROOTS = ['tests/fuzz'];
+/**
+ * The population for `unseeded-property`: the whole authored test tree.
+ *
+ * Replayability is not lane-specific, so this kind's denominator is the anchor
+ * rather than a curated subset. A hand-listed root set is what let 20 files
+ * carrying `fc.assert` sit outside every root and report nothing.
+ */
+const SEEDED_PROPERTY_ROOTS = ['tests'];
 
 function normalize(path: string): string {
   return path.split(sep).join('/');
@@ -1050,10 +1057,17 @@ export function scanTestConstitution(cwd: string): readonly TestDebtFinding[] {
       for (const slice of unanchoredTextSlices(ast)) add('unanchored-text-slice', slice);
       for (const spy of ambientEntropySpies(ast)) add('ambient-entropy-spy', spy);
       for (const payload of generatedPayloadDelimiters(ast)) add('generated-payload-delimiter', payload);
-      for (const property of unseededProperties(ast)) add('unseeded-property', property);
     }
   }
-  for (const relativeRoot of FUZZ_ROOTS) {
+  // `unseeded-property` owns a WIDER population than the kinds above, and
+  // deliberately so. The other kinds are scoped to the lanes whose determinism
+  // they describe; replayability is not lane-specific — an `fc.assert` anywhere
+  // under `tests/` that cannot replay its own failure is not evidence, wherever
+  // it lives. Six hand-listed roots is how 20 such files stayed invisible: 19
+  // generated suites inheriting an unseeded emitter, and one integration
+  // differential. The population is the authored test tree, so enrolling a new
+  // lane cannot silently exclude its properties.
+  for (const relativeRoot of SEEDED_PROPERTY_ROOTS) {
     for (const absolute of filesUnder(join(cwd, relativeRoot))) {
       const file = normalize(relative(cwd, absolute));
       const source = readFileSync(absolute, 'utf8');

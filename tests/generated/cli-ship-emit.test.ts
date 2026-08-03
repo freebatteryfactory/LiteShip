@@ -20,7 +20,7 @@ describe('cli.ship-emit', () => {
           if (result.ok) expect(result.value).toEqual(value);
           return true;
         }),
-        { numRuns: 100 },
+        { seed: 0x5eed, numRuns: 100 },
       );
     }
   });

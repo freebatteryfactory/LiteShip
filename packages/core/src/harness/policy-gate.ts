@@ -32,6 +32,7 @@
 import { UnsupportedError } from '@liteship/error';
 import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessContext, HarnessOutput } from './pure-transform.js';
+import { EMITTED_PROPERTY_SEED } from './property-seed.js';
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
 
@@ -148,7 +149,7 @@ describe('${cap.name}', () => {
         }
         return true;
       }),
-      { numRuns: 100 },
+      { seed: ${EMITTED_PROPERTY_SEED}, numRuns: 100 },
     );
   });
 
@@ -171,7 +172,7 @@ describe('${cap.name}', () => {
         if (decoded.ok) expect(decoded.value).toEqual(verdict);
         return true;
       }),
-      { numRuns: 100 },
+      { seed: ${EMITTED_PROPERTY_SEED}, numRuns: 100 },
     );
   });
 
@@ -181,7 +182,7 @@ describe('${cap.name}', () => {
         expect(decide(subject as never)).toEqual(decide(subject as never));
         return true;
       }),
-      { numRuns: 100 },
+      { seed: ${EMITTED_PROPERTY_SEED}, numRuns: 100 },
     );
   });
 
@@ -192,7 +193,7 @@ describe('${cap.name}', () => {
           const verdict = decide(subject as never);
           return inv.check(subject as never, verdict as never);
         }),
-        { numRuns: 100 },
+        { seed: ${EMITTED_PROPERTY_SEED}, numRuns: 100 },
       );
     });
   }

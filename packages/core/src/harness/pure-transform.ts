@@ -15,6 +15,7 @@
  */
 import { UnsupportedError } from '@liteship/error';
 import type { CapsuleDef } from '../authoring/assembly.js';
+import { EMITTED_PROPERTY_SEED } from './property-seed.js';
 
 /** Emitted file contents for a capsule harness (test + bench pair). */
 export interface HarnessOutput {
@@ -361,7 +362,7 @@ describe('${cap.name}', () => {
           const output = run(input as never);
           return inv.check(input as never, output as never);
         }),
-        { numRuns: 100 },
+        { seed: ${EMITTED_PROPERTY_SEED}, numRuns: 100 },
       );
       // Generous per-invariant timeout: 100 property runs over a heavier capsule
       // (e.g. the cast compilers) can exceed vitest's 10s default on a slow/loaded

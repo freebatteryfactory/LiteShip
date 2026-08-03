@@ -81,7 +81,7 @@ describe('scene.runtime', () => {
           expect(await trajectory()).toEqual(await trajectory());
         },
       ),
-      { numRuns: 20 },
+      { seed: 0x5eed, numRuns: 20 },
     );
   }, scaledTimeout(30000));
 });

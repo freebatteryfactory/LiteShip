@@ -26,7 +26,7 @@ describe('core.token-buffer', () => {
         }
         return true;
       }),
-      { numRuns: 100 },
+      { seed: 0x5eed, numRuns: 100 },
     );
   });
 
@@ -37,7 +37,7 @@ describe('core.token-buffer', () => {
           events.reduce((state, event) => step(state as never, event as never), seedState());
         expect(replay()).toEqual(replay());
       }),
-      { numRuns: 50 },
+      { seed: 0x5eed, numRuns: 50 },
     );
   });
 });

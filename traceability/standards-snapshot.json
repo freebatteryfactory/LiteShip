@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:97205635",
+  "address": "fnv1a:06aba41c",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -2352,6 +2352,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "packages/core/src/harness/policy-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/harness/property-seed.ts",
       "level": "L1"
     },
     {

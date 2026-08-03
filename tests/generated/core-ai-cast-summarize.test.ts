@@ -18,7 +18,7 @@ describe('core.ai-cast.summarize', () => {
           const output = run(input as never);
           return inv.check(input as never, output as never);
         }),
-        { numRuns: 100 },
+        { seed: 0x5eed, numRuns: 100 },
       );
       // Generous per-invariant timeout: 100 property runs over a heavier capsule
       // (e.g. the cast compilers) can exceed vitest's 10s default on a slow/loaded

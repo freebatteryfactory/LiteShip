@@ -25,7 +25,7 @@ describe('remotion.video-frame-output', () => {
         const back = decode(CanonicalCbor.encode(native));
         return contentAddressOf(back) === contentAddressOf(native);
       }),
-      { numRuns: 100 },
+      { seed: 0x5eed, numRuns: 100 },
     );
   }, scaledTimeout(30000));
 });
