@@ -3072,6 +3072,11 @@
           "signature": "(1)"
         },
         {
+          "name": "isGovernedTodoPath",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "isMcdcCovered",
           "kind": "function",
           "signature": "(1)"

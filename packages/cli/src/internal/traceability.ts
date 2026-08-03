@@ -43,7 +43,13 @@ import { contentAddressOf } from '@liteship/core';
 import { walkFiles } from '@liteship/core/fs-walk';
 import { normalizeRepoPath } from '@liteship/audit';
 import { ParseError, InvariantViolationError } from '@liteship/error';
-import type { TraceabilityFacts, ResolvedInvariant, InvariantState, TraceabilityDivergence } from '@liteship/gauntlet';
+import {
+  isGovernedTodoPath,
+  type TraceabilityFacts,
+  type ResolvedInvariant,
+  type InvariantState,
+  type TraceabilityDivergence,
+} from '@liteship/gauntlet';
 
 /** Repo-relative location of the requirements register. */
 const INVARIANTS_PATH = 'traceability/invariants.yaml';
@@ -901,9 +907,6 @@ const OBLIGATIONS_PATH = 'traceability/obligations.yaml';
 /** The source roots the marker scan walks for `// OBLIGATION:` markers (repo-relative). */
 const OBLIGATION_SRC_ROOTS: readonly string[] = ['packages'];
 
-/** The published-source shape a marker may live in — `packages/<pkg>/src/**` `.ts`. */
-const PACKAGE_SRC = /^packages\/[^/]+\/src\//;
-
 /** The closed taxonomy bucket every obligation declares. */
 const OBLIGATION_CLASSES: ReadonlySet<string> = new Set(['deferred-feature', 'debt', 'test-note']);
 
@@ -1016,7 +1019,7 @@ function collectSourceFiles(repoRoot: string, root: string): readonly string[] {
   if (!existsSync(abs)) return [];
   return walkFiles(abs, { skipDirs: ['node_modules', 'dist'], suffixes: ['.ts'] })
     .map((full) => normalizeRepoPath(relative(repoRoot, full)))
-    .filter((rel) => PACKAGE_SRC.test(rel))
+    .filter(isGovernedTodoPath)
     .sort();
 }
 

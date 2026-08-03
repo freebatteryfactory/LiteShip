@@ -237,3 +237,6 @@ export function repositoryProofTimeout(): number {
 
 /** One authored corpus root set drives Vitest and every assurance evidence scanner. */
 export const nodeTestInclude = TEST_CORPUS_ROOTS.map((root) => `${root}/**/*.test.ts`);
+
+/** One browser corpus admission drives Vitest and every browser-test census. */
+export const browserTestInclude = ['tests/browser/**/*.test.ts'];

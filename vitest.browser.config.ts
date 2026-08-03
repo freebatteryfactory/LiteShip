@@ -1,16 +1,19 @@
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
-import { alias, coverageExclude, coverageInclude, scaledTimeout } from './vitest.shared.js';
+import { alias, browserTestInclude, coverageExclude, coverageInclude, scaledTimeout } from './vitest.shared.js';
 import { startSceneDev, stopSceneDev } from './tests/browser/commands/scene-dev-spawn.js';
 
 const coverageEnabled = process.argv.includes('--coverage');
 const isCI = process.env.CI !== undefined && process.env.CI !== '';
 
-const browserInstances = (coverageEnabled ? 'chromium' : process.env.LITESHIP_VITEST_BROWSERS ?? 'chromium,firefox,webkit')
+const browserInstances = (
+  coverageEnabled ? 'chromium' : (process.env.LITESHIP_VITEST_BROWSERS ?? 'chromium,firefox,webkit')
+)
   .split(',')
   .map((browser) => browser.trim())
-  .filter((browser): browser is 'chromium' | 'firefox' | 'webkit' =>
-    browser === 'chromium' || browser === 'firefox' || browser === 'webkit',
+  .filter(
+    (browser): browser is 'chromium' | 'firefox' | 'webkit' =>
+      browser === 'chromium' || browser === 'firefox' || browser === 'webkit',
   )
   .map((browser) => ({ browser }));
 
@@ -41,7 +44,7 @@ export default defineConfig({
   },
   cacheDir: 'node_modules/.vite-browser',
   test: {
-    include: ['tests/browser/**/*.test.ts'],
+    include: browserTestInclude,
     // Browser test files can't import vitest.shared.ts (node:path), so this
     // lane sets lane-wide budgets here instead of per-test literals: 30s
     // covers the slowest case (scene-dev-player's spawned dev server) and

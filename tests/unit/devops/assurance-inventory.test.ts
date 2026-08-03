@@ -55,6 +55,42 @@ describe('assurance inventory', () => {
     expect(core.sourceLoc).toBe(3);
   });
 
+  it('lets an injected immutable tracked-file set own the census without a hidden Git enumeration', () => {
+    const root = fixture();
+    mkdirSync(join(root, '.git'));
+    writeFileSync(join(root, 'packages', 'core', 'src', 'outside-census.ts'), 'export const outside = true;\n');
+    const trackedFiles: ReadonlySet<string> = new Set(['packages/core/src/index.ts', 'tests/unit/core/value.test.ts']);
+    const before = [...trackedFiles];
+
+    const inventory = buildAssuranceInventory(root, { trackedFiles });
+    const core = inventory.packages.find((entry) => entry.name === '@liteship/core')!;
+
+    expect([...trackedFiles]).toEqual(before);
+    expect(core.sourceLoc).toBe(2);
+    expect(core.evidenceFiles).toEqual(['tests/unit/core/value.test.ts']);
+  });
+
+  it('fails closed when the injected tracked-file census names a missing member', () => {
+    const root = fixture();
+
+    expect(() =>
+      buildAssuranceInventory(root, {
+        trackedFiles: new Set(['packages/core/src/missing.ts']),
+      }),
+    ).toThrow('injected tracked file does not exist: packages/core/src/missing.ts');
+  });
+
+  it('fails closed when an injected tracked-file census member is not a file', () => {
+    const root = fixture();
+    mkdirSync(join(root, 'packages', 'core', 'src', 'not-a-file.ts'));
+
+    expect(() =>
+      buildAssuranceInventory(root, {
+        trackedFiles: new Set(['packages/core/src/not-a-file.ts']),
+      }),
+    ).toThrow('injected tracked path is not a file: packages/core/src/not-a-file.ts');
+  });
+
   it('attributes authored evidence to the canonical package owner and keeps generated evidence separate', () => {
     const root = fixture();
     mkdirSync(join(root, 'tests', 'generated'), { recursive: true });

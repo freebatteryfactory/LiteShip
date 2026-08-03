@@ -10,7 +10,7 @@
 // eslint-disable-next-line no-restricted-imports -- the public inventory API is synchronous; one Git census runs no code under test.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, posix, relative, sep } from 'node:path';
 import ts from 'typescript';
 import { ValidationError } from '@liteship/error';
@@ -118,6 +118,11 @@ export interface AssuranceInventory {
 
 /** Injectable current-state authority for deterministic receipt-verifier tests. */
 export interface AssuranceInventoryOptions {
+  /**
+   * Exact repo-relative tracked-file authority supplied by an outer census.
+   * When present, the inventory never invokes Git or falls back to a tree walk.
+   */
+  readonly trackedFiles?: ReadonlySet<string>;
   readonly semanticAssurance?: {
     readonly ir: RepoIR;
     readonly selection: AssuranceTargetSelection;
@@ -302,6 +307,32 @@ function repositoryOwnedFiles(cwd: string): readonly string[] | undefined {
     .sort((left, right) => left.localeCompare(right))
     .map((path) => join(cwd, ...path.split('/')))
     .filter((path) => existsSync(path));
+}
+
+/** Resolve an injected repo-relative census without mutating or re-enumerating it. */
+function injectedRepositoryOwnedFiles(cwd: string, trackedFiles: ReadonlySet<string>): readonly string[] {
+  const ownedFiles = new Set<string>();
+  for (const file of trackedFiles) {
+    const normalized = normalize(file);
+    if (
+      normalized === '' ||
+      normalized.startsWith('/') ||
+      /^[A-Za-z]:\//u.test(normalized) ||
+      normalized.split('/').includes('..')
+    ) {
+      throw ValidationError('assuranceInventory', `injected tracked file must be repo-relative: ${file}`);
+    }
+    const absolute = join(cwd, ...normalized.split('/'));
+    const stats = statSync(absolute, { throwIfNoEntry: false });
+    if (stats === undefined) {
+      throw ValidationError('assuranceInventory', `injected tracked file does not exist: ${normalized}`);
+    }
+    if (!stats.isFile()) {
+      throw ValidationError('assuranceInventory', `injected tracked path is not a file: ${normalized}`);
+    }
+    ownedFiles.add(absolute);
+  }
+  return [...ownedFiles].sort((left, right) => left.localeCompare(right));
 }
 
 function ownedFilesUnder(root: string, ownedFiles: readonly string[] | undefined): readonly string[] {
@@ -635,7 +666,10 @@ function verifiedSemanticAssuranceCredits(
 
 /** Compute the inventory from current repository bytes. */
 export function buildAssuranceInventory(cwd: string, options: AssuranceInventoryOptions = {}): AssuranceInventory {
-  const ownedFiles = repositoryOwnedFiles(cwd);
+  const ownedFiles =
+    options.trackedFiles === undefined
+      ? repositoryOwnedFiles(cwd)
+      : injectedRepositoryOwnedFiles(cwd, options.trackedFiles);
   const evidenceFiles = ownedFilesUnder(join(cwd, 'tests'), ownedFiles).filter((path) =>
     EVIDENCE_EXTENSIONS.has(extname(path)),
   );

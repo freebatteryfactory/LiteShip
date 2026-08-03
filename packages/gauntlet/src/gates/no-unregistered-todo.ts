@@ -57,11 +57,11 @@ const PACKAGE_SRC = /^packages\/[^/]+\/src\//;
 
 /** The governed corpus: the judged `files()`, filtered to published package `.ts` source, sorted. */
 function governedFiles(context: GateContext): readonly string[] {
-  return [...context.files()].filter(isGoverned).sort();
+  return [...context.files()].filter(isGovernedTodoPath).sort();
 }
 
 /** Is `file` a `.ts` under a `packages/<pkg>/src/` tree (the judged, published surface)? */
-function isGoverned(file: string): boolean {
+export function isGovernedTodoPath(file: string): boolean {
   return file.endsWith('.ts') && PACKAGE_SRC.test(file);
 }
 
