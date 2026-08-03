@@ -321,8 +321,17 @@ export const DEFAULT_MAX_DAG_NODES = 10_000;
  * A bound below one is invalid and throws {@link ValidationError}.
  */
 export const pruneToBound = (dag: ReceiptDAG, maxNodes: number = DEFAULT_MAX_DAG_NODES): ReceiptDAG => {
-  if (maxNodes < 1) {
-    throw ValidationError('DAG.pruneToBound', `maxNodes must be at least 1; received ${maxNodes}`);
+  // A bound is a COUNT OF NODES, so it must be a positive whole number. The
+  // earlier `maxNodes < 1` test read as total and was not: `NaN < 1` is false,
+  // so a non-numeric bound walked past the degenerate-bound refusal and then
+  // failed `count <= NaN` too, pruning a populated graph against nonsense. A
+  // fractional or infinite bound names no retention set either. Refuse all of
+  // them rather than guess which nodes the caller meant.
+  if (!Number.isSafeInteger(maxNodes) || maxNodes < 1) {
+    throw ValidationError(
+      'DAG.pruneToBound',
+      `maxNodes must be a whole number of nodes at least 1; received ${maxNodes}`,
+    );
   }
   const count = size(dag);
   if (count <= maxNodes) return dag;

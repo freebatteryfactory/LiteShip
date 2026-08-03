@@ -181,6 +181,19 @@ describe('DAG', () => {
       expect(() => DAG.pruneToBound(dag, 0)).toThrow(/maxNodes.*0/u);
     });
 
+    test('pruneToBound refuses a bound that is not a whole number of nodes', async () => {
+      const chain = await makeChain('actor-1', 'node-a', 5, 1000);
+      const dag = DAG.fromReceipts(chain);
+      // `maxNodes < 1` is false for NaN, so a non-numeric bound walked straight
+      // past the degenerate-bound guard and pruned against nonsense. A bound is
+      // a COUNT OF NODES: anything that is not a positive whole number names no
+      // retention set at all, and guessing one is how a populated graph gets
+      // silently reshaped.
+      for (const bound of [Number.NaN, 2.5, Number.POSITIVE_INFINITY]) {
+        expect(() => DAG.pruneToBound(dag, bound), `bound ${String(bound)} must be refused`).toThrow(/maxNodes/u);
+      }
+    });
+
     test('pruneToBound retains every live head even when the head set exceeds the target bound', async () => {
       const root = (await makeChain('actor-root', 'node-root', 1, 1000))[0]!;
       const earlyHead = await Receipt.createEnvelope(
