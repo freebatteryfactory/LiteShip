@@ -197,9 +197,60 @@ describe('scaledTimeout semantics', () => {
     expect(contentionScaleFor(-1, 4)).toBe(1);
   });
 
-  it('the auto-contention scale is a FLOOR under the manual env scale (whichever is larger wins)', async () => {
-    const { scaledTimeout, contentionScaleFor } = await import('../../../vitest.shared.js');
+  it('contentionScaleFromBusyPercent scales the budget by CPU saturation, clamped', async () => {
+    const { contentionScaleFromBusyPercent, IDLE_BUSY_PERCENT, MAX_AUTO_TIMEOUT_SCALE } =
+      await import('../../../vitest.shared.js');
+    // Spare capacity → the tight budget that fast-fails a true hang.
+    expect(contentionScaleFromBusyPercent(0)).toBe(1);
+    expect(contentionScaleFromBusyPercent(IDLE_BUSY_PERCENT)).toBe(1);
+    // Saturated → proportional headroom, reaching the same cap as the load arm.
+    expect(contentionScaleFromBusyPercent(100)).toBe(MAX_AUTO_TIMEOUT_SCALE);
+    expect(contentionScaleFromBusyPercent(75)).toBeGreaterThan(1);
+    expect(contentionScaleFromBusyPercent(75)).toBeLessThan(MAX_AUTO_TIMEOUT_SCALE);
+    // Monotone in pressure, and never past the cap that keeps a real hang detectable.
+    expect(contentionScaleFromBusyPercent(90)).toBeGreaterThan(contentionScaleFromBusyPercent(70));
+    expect(contentionScaleFromBusyPercent(1_000)).toBe(MAX_AUTO_TIMEOUT_SCALE);
+    // Garbage → 1, same conservative answer as the load arm.
+    expect(contentionScaleFromBusyPercent(Number.NaN)).toBe(1);
+    expect(contentionScaleFromBusyPercent(-1)).toBe(1);
+  });
+
+  /**
+   * THE PLATFORM LAW — the automatic scale must have a live signal EVERYWHERE.
+   *
+   * `os.loadavg()` returns `[0, 0, 0]` on Windows, which `contentionScaleFor`
+   * correctly reads as "no usable load average" and answers 1. The consequence
+   * was that the automatic contention scale — the mechanism whose entire job is
+   * to stop a starved runner from flaking — was structurally INERT on Windows,
+   * and every subprocess-spawning suite there ran on a fixed budget however
+   * oversubscribed the host was. CI run 30821426607 is the receipt: zero broken
+   * assertions, 11,986 tests passing, and the file red because an `npm pack` of
+   * four tiny synthetic packages exceeded a fixed 40s budget.
+   *
+   * A budget that claims to track pressure and cannot on a supported platform
+   * is a gate that lies. This law pins that every platform has SOME arm whose
+   * reading can exceed 1.
+   */
+  it('THE PLATFORM LAW: the autoscale is never inert — every host has a live arm', async () => {
+    const { contentionScaleFor, contentionScaleFromBusyPercent, MAX_AUTO_TIMEOUT_SCALE } =
+      await import('../../../vitest.shared.js');
     const os = await import('node:os');
+    const load = os.loadavg()[0] ?? 0;
+    const hasLoadAverage = Number.isFinite(load) && load > 0;
+    // Whichever arm this host uses, a saturated reading must produce headroom.
+    const saturated = hasLoadAverage
+      ? contentionScaleFor(os.cpus().length * MAX_AUTO_TIMEOUT_SCALE, os.cpus().length)
+      : contentionScaleFromBusyPercent(100);
+    expect(
+      saturated,
+      `on ${process.platform} the automatic contention scale cannot exceed 1 — a starved runner cannot buy headroom, ` +
+        'so every subprocess-spawning suite here flakes on a fixed budget',
+    ).toBeGreaterThan(1);
+    expect(saturated).toBeLessThanOrEqual(MAX_AUTO_TIMEOUT_SCALE);
+  });
+
+  it('the auto-contention scale is a FLOOR under the manual env scale (whichever is larger wins)', async () => {
+    const { scaledTimeout, MAX_AUTO_TIMEOUT_SCALE } = await import('../../../vitest.shared.js');
     const saved = {
       coverage: process.env['LITESHIP_COVERAGE'],
       scale: process.env['LITESHIP_TEST_TIMEOUT_SCALE'],
@@ -208,14 +259,24 @@ describe('scaledTimeout semantics', () => {
     try {
       process.env['LITESHIP_COVERAGE'] = '0';
       delete process.env['LITESHIP_TEST_TIMEOUT_AUTOSCALE']; // auto ON — read the live host
-      const live = contentionScaleFor(os.loadavg()[0] ?? 0, os.cpus().length);
-      // With no manual scale, the budget is the base × the live auto scale (>= base).
+      // Stated as a PROPERTY, not as a re-derivation of the production formula:
+      // which arm supplies the live reading is platform-dependent (load average
+      // where the host has one, sampled CPU busy where it does not), so a test
+      // that recomputed one arm would silently stop covering the other.
       delete process.env['LITESHIP_TEST_TIMEOUT_SCALE'];
-      expect(scaledTimeout(10_000)).toBe(10_000 * live);
+      const auto = scaledTimeout(10_000);
+      // The auto scale never SHRINKS a budget, and never exceeds the cap that
+      // keeps a real hang detectable.
+      expect(auto).toBeGreaterThanOrEqual(10_000);
+      expect(auto).toBeLessThanOrEqual(10_000 * MAX_AUTO_TIMEOUT_SCALE);
+      // A manual scale above the cap always wins outright, so the manual floor
+      // is proven to compose with whatever the live arm reported.
+      const beyondCap = MAX_AUTO_TIMEOUT_SCALE + 5;
+      process.env['LITESHIP_TEST_TIMEOUT_SCALE'] = String(beyondCap);
+      expect(scaledTimeout(10_000)).toBe(10_000 * beyondCap);
+      // And a manual scale of 1 cannot pull the budget BELOW the live auto arm.
+      process.env['LITESHIP_TEST_TIMEOUT_SCALE'] = '1';
       expect(scaledTimeout(10_000)).toBeGreaterThanOrEqual(10_000);
-      // A manual scale ABOVE the live auto wins; one BELOW is floored by auto.
-      process.env['LITESHIP_TEST_TIMEOUT_SCALE'] = String(Math.ceil(live) + 5);
-      expect(scaledTimeout(10_000)).toBe(10_000 * (Math.ceil(live) + 5));
     } finally {
       restoreEnv('LITESHIP_COVERAGE', saved.coverage);
       restoreEnv('LITESHIP_TEST_TIMEOUT_SCALE', saved.scale);

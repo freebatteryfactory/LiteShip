@@ -1,6 +1,7 @@
 import { cpus, loadavg } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { cpuBusyPercent, snapshotCpuTimes, type CpuTimesSnapshot } from './scripts/lib/local-resource-profile.js';
 import { Config, defineConfig } from './packages/core/src/authoring/config.js';
 import { TEST_CORPUS_ROOTS } from './packages/cli/src/internal/test-corpus.js';
 
@@ -164,14 +165,74 @@ export function contentionScaleFor(load: number, cores: number): number {
 }
 
 /**
- * The live contention scale from the host's 1-minute load average ÷ core count.
- * Set `LITESHIP_TEST_TIMEOUT_AUTOSCALE=0` to disable it (strict, deterministic budgets
- * — e.g. when pinning the policy, or on a dedicated CI runner that wants the tight
- * limit). Otherwise it is read fresh each call.
+ * Busy percentage at or below which a host counts as having spare capacity.
+ * Mirrors `contentionScaleFor`'s `load / cores < 1` threshold: a box running at
+ * half its cores has room, and the tight budget that fast-fails a real hang is
+ * the right one.
+ */
+export const IDLE_BUSY_PERCENT = 50;
+
+/**
+ * The contention scale for a CPU-busy percentage — PURE, so the policy can be
+ * pinned deterministically.
+ *
+ * This is the signal for hosts that expose NO load average. `os.loadavg()`
+ * returns `[0, 0, 0]` on Windows, so {@link contentionScaleFor} reads it as
+ * "non-positive load" and yields 1 — which meant the automatic scale was
+ * structurally INERT on Windows, and every subprocess-spawning test there ran
+ * on a fixed budget no matter how starved the runner was. The mechanism
+ * claimed to track pressure and, on that platform, could not. Busy percentage
+ * is the equivalent oversubscription reading that Windows does expose.
+ */
+export function contentionScaleFromBusyPercent(busyPercent: number): number {
+  if (!Number.isFinite(busyPercent) || busyPercent <= IDLE_BUSY_PERCENT) return 1;
+  const saturation = Math.min(1, (busyPercent - IDLE_BUSY_PERCENT) / (100 - IDLE_BUSY_PERCENT));
+  return Math.min(MAX_AUTO_TIMEOUT_SCALE, 1 + saturation * (MAX_AUTO_TIMEOUT_SCALE - 1));
+}
+
+/** The shortest sampling window that yields a meaningful busy percentage. */
+export const CPU_SAMPLE_WINDOW_MS = 250;
+
+let previousCpuSample: { readonly at: number; readonly snapshot: CpuTimesSnapshot } | undefined;
+let lastBusyPercent = 0;
+
+/**
+ * CPU busy percentage over a ROLLING window between successive calls.
+ *
+ * `os.cpus()` reports counters cumulative since boot, so a percentage needs two
+ * samples separated in time. Rather than block to manufacture that gap, each
+ * call closes the window opened by the previous one: the first call in a worker
+ * has no window and reports idle (scale 1, exactly today's behaviour), and every
+ * later call reads real pressure. A worker registers many test files over its
+ * life, so the reading is live well before the long subprocess suites run.
+ */
+function rollingCpuBusyPercent(): number {
+  const now = Date.now();
+  const snapshot = snapshotCpuTimes(cpus());
+  if (previousCpuSample === undefined) {
+    previousCpuSample = { at: now, snapshot };
+    return 0;
+  }
+  if (now - previousCpuSample.at < CPU_SAMPLE_WINDOW_MS) return lastBusyPercent;
+  lastBusyPercent = cpuBusyPercent(previousCpuSample.snapshot, snapshot);
+  previousCpuSample = { at: now, snapshot };
+  return lastBusyPercent;
+}
+
+/**
+ * The live contention scale. Prefers the host's 1-minute load average ÷ core
+ * count; where the platform exposes no load average, falls back to sampled CPU
+ * busy so the scale is never inert.
+ *
+ * Set `LITESHIP_TEST_TIMEOUT_AUTOSCALE=0` to disable it (strict, deterministic
+ * budgets — e.g. when pinning the policy, or on a dedicated CI runner that wants
+ * the tight limit). Otherwise it is read fresh each call.
  */
 const contentionScale = (): number => {
   if (process.env['LITESHIP_TEST_TIMEOUT_AUTOSCALE'] === '0') return 1;
-  return contentionScaleFor(loadavg()[0] ?? 0, cpus().length);
+  const load = loadavg()[0] ?? 0;
+  if (Number.isFinite(load) && load > 0) return contentionScaleFor(load, cpus().length);
+  return contentionScaleFromBusyPercent(rollingCpuBusyPercent());
 };
 
 /**
