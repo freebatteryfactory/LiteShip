@@ -37,7 +37,7 @@ import {
 } from '@liteship/audit';
 import { liteshipDevopsProfile } from './liteship-audit-profile.js';
 import { INVARIANTS, matchesInvariantExemption, type CheckInvariantEntry } from '@liteship/command/invariants';
-import { buildCheckGovernanceFacts, currentEnvFingerprint } from '@liteship/command/host';
+import { checkGovernanceFactsFor, currentEnvFingerprint } from '@liteship/command/host';
 import { HostCapabilityError, InvariantViolationError } from '@liteship/error';
 import { systemClock } from '@liteship/core';
 import { addressedDigestOf } from '@liteship/canonical';
@@ -686,7 +686,10 @@ export async function runGauntletWithRepoIR(
     codeOnly: codeOnlyAST,
     diagnosticEmitterDetector: detectDiagnosticEmissionsAST,
     benchmarkSubjects,
-    checkGovernance: buildCheckGovernanceFacts(repoRoot, now),
+    // Admission is the authority's own decision: a hermetic fixture or a packed
+    // consumer that does not carry LiteShip's governance records gets neutral
+    // facts, never a hard refusal from the strict builder.
+    checkGovernance: checkGovernanceFactsFor(repoRoot, now),
     // The gate set ALWAYS carries `traceabilityBridgeGate` (always-on) plus any
     // opt-in gates, so it always exceeds the bare LITESHIP_IR_GATES set — the engine
     // runs exactly this composed set, never its own default. (The default is now only

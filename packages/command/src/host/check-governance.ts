@@ -21,13 +21,76 @@ import {
 import { CHECK_REGISTRY } from '../checks/registry.js';
 import { SCRIPT_EXEMPTIONS } from '../checks/script-exemptions.js';
 
+/**
+ * THE ADMISSION CONTRACT — one list, not two.
+ *
+ * {@link buildCheckGovernanceFacts} REFUSES a tree missing any record it reads:
+ * a governance record that reads as absent must never read as "no findings".
+ * That refusal is only safe because something decides FIRST whether a tree is
+ * held to the contract at all — {@link hasCheckGovernanceSurface} — and a
+ * packed consumer gets {@link applicationCheckGovernanceFacts} instead.
+ *
+ * The probe and the reads used to be two independent hand-maintained lists that
+ * shared exactly one path. `traceability/review-findings.json` was enrolled as
+ * a required record and the probe was not widened, so the hermetic gauntlet
+ * fixture — a tree that satisfied the probe and carried every record but that
+ * one — passed admission and then hard-failed inside the builder, reding 13
+ * laws across six CI jobs on one enrollment.
+ *
+ * ANCHOR: {@link REQUIRED_GOVERNANCE_RECORDS} is the closed set of repo-relative
+ * paths this module reads, and `governanceRecordText` is the ONLY way it reads
+ * one. A record that is read is therefore a record that is declared, and the
+ * declaration is what the probe tests — the two lists are one list BY
+ * CONSTRUCTION rather than by a test asserting they agree.
+ *
+ * {@link IDENTITY_MARKERS} are deliberately NOT records: they answer "is this
+ * the LiteShip source tree", not "can this tree answer for its governance".
+ * Both must hold, so admission is strictly narrower than either alone and this
+ * change can only ever REJECT a tree the old probe accepted.
+ */
+const REQUIRED_GOVERNANCE_RECORDS = Object.freeze([
+  'package.json',
+  'traceability/testing-ledger.yaml',
+  'traceability/review-findings.json',
+] as const);
+
+/** Source-tree markers that identify LiteShip itself but carry no governance record. */
+const IDENTITY_MARKERS = Object.freeze(['scripts/package-catalog.ts', 'packages/command/src/checks/registry.ts']);
+
+/**
+ * Every repo-relative path admission requires — identity markers and records
+ * alike. Exported so the admission laws enumerate the real set instead of
+ * restating it; a newly enrolled record gets its own coverage for free.
+ */
+export const GOVERNANCE_SURFACE_PATHS: readonly string[] = Object.freeze([
+  ...IDENTITY_MARKERS,
+  ...REQUIRED_GOVERNANCE_RECORDS,
+]);
+
+/** One repo-relative governance record path. */
+type GovernanceRecord = (typeof REQUIRED_GOVERNANCE_RECORDS)[number];
+
 /** True only for the LiteShip source tree that owns the repository governance records. */
 export function hasCheckGovernanceSurface(repoRoot: string): boolean {
-  return (
-    existsSync(resolve(repoRoot, 'scripts', 'package-catalog.ts')) &&
-    existsSync(resolve(repoRoot, 'packages', 'command', 'src', 'checks', 'registry.ts')) &&
-    existsSync(resolve(repoRoot, 'traceability', 'testing-ledger.yaml'))
-  );
+  return GOVERNANCE_SURFACE_PATHS.every((rel) => existsSync(resolve(repoRoot, rel)));
+}
+
+/**
+ * Read one DECLARED governance record. The single read path in this module, so
+ * a record cannot be read without being declared in
+ * {@link REQUIRED_GOVERNANCE_RECORDS} — and therefore cannot be required
+ * without the admission probe already testing for it.
+ */
+function governanceRecordText(repoRoot: string, record: GovernanceRecord): string {
+  const path = resolve(repoRoot, record);
+  try {
+    return readFileSync(path, 'utf8');
+  } catch (error) {
+    throw ValidationError(
+      'buildCheckGovernanceFacts',
+      `cannot read governance record ${path}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 /** Neutral governance facts for an application that does not own LiteShip's repository controls. */
@@ -44,14 +107,14 @@ export function applicationCheckGovernanceFacts(): CheckGovernanceFacts {
 }
 
 function readRootScripts(repoRoot: string): readonly string[] {
-  const manifestPath = resolve(repoRoot, 'package.json');
+  const text = governanceRecordText(repoRoot, 'package.json');
   let parsed: unknown;
   try {
-    parsed = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    parsed = JSON.parse(text);
   } catch (error) {
     throw ValidationError(
       'buildCheckGovernanceFacts',
-      `cannot read root package scripts from ${manifestPath}: ${error instanceof Error ? error.message : String(error)}`,
+      `root package.json is not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
@@ -83,16 +146,7 @@ function yamlScalar(raw: string): string {
 }
 
 function ledgerWaivers(repoRoot: string, now: Date): CheckGovernanceFacts['waivers'] {
-  const ledgerPath = resolve(repoRoot, 'traceability/testing-ledger.yaml');
-  let text: string;
-  try {
-    text = readFileSync(ledgerPath, 'utf8');
-  } catch (error) {
-    throw ValidationError(
-      'buildCheckGovernanceFacts',
-      `cannot read testing ledger ${ledgerPath}: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
+  const text = governanceRecordText(repoRoot, 'traceability/testing-ledger.yaml');
   const waivers: WaiverFreshnessFact[] = [];
   let id: string | undefined;
   let inWaiver = false;
@@ -283,18 +337,8 @@ export function parseReviewFindings(text: string): readonly ReviewFinding[] {
 
 /** The `waived` / `disputed` entries, as freshness facts on the shared expiry clock. */
 function reviewFindingWaivers(repoRoot: string, now: Date): CheckGovernanceFacts['waivers'] {
-  const path = resolve(repoRoot, 'traceability/review-findings.json');
-  let text: string;
-  try {
-    text = readFileSync(path, 'utf8');
-  } catch (error) {
-    throw ValidationError(
-      'buildCheckGovernanceFacts',
-      `cannot read review-findings ledger ${path}: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
   return Object.freeze(
-    parseReviewFindings(text)
+    parseReviewFindings(governanceRecordText(repoRoot, 'traceability/review-findings.json'))
       .filter((finding) => finding.status !== 'resolved')
       .map((finding) =>
         Object.freeze({
@@ -361,4 +405,22 @@ export function buildCheckGovernanceFacts(repoRoot: string, now: Date): CheckGov
       ...reviewFindingWaivers(repoRoot, now),
     ]),
   });
+}
+
+/**
+ * The governance pack for `repoRoot`: real facts where the tree owns LiteShip's
+ * governance records, neutral facts where it does not.
+ *
+ * THIS IS THE ENTRY POINT, and the only one the `@liteship/command/host` barrel
+ * publishes. {@link buildCheckGovernanceFacts} is the strict half and refuses an
+ * unqualified tree by design; leaving the admission decision to each caller is
+ * precisely what let `repo-ir-gauntlet.ts` call the strict half unconditionally
+ * while its sibling in `context.ts` guarded correctly. Two call sites of one
+ * authority disagreed about admission because admission was not part of the
+ * authority. Now it is.
+ */
+export function checkGovernanceFactsFor(repoRoot: string, now: Date): CheckGovernanceFacts {
+  return hasCheckGovernanceSurface(repoRoot)
+    ? buildCheckGovernanceFacts(repoRoot, now)
+    : applicationCheckGovernanceFacts();
 }

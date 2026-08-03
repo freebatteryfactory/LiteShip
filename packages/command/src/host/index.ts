@@ -13,7 +13,7 @@
  * @module
  */
 export { createNodeCommandContext } from './context.js';
-export { buildCheckGovernanceFacts } from './check-governance.js';
+export { checkGovernanceFactsFor } from './check-governance.js';
 export {
   spawnArgv,
   spawnArgvVisible,

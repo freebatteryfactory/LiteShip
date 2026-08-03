@@ -24,11 +24,7 @@ import { VitestRunner } from './vitest-runner.js';
 import { renderWithFfmpeg } from './ffmpeg.js';
 import { tryReadCache, writeCache } from './idempotency.js';
 import { getCapsuleManifestPath } from './manifest-path.js';
-import {
-  applicationCheckGovernanceFacts,
-  buildCheckGovernanceFacts,
-  hasCheckGovernanceSurface,
-} from './check-governance.js';
+import { checkGovernanceFactsFor } from './check-governance.js';
 import { runPlumbScan } from './plumb-scan.js';
 
 /** Render-dimension fallbacks when the scene contract carries no width/height. */
@@ -120,10 +116,9 @@ export function createNodeCommandContext(
       // Registry coverage, negative controls, and testing-ledger waivers are
       // governance facts owned by the LiteShip repository. A packed consumer
       // still gets the real semantic gates over its own source, but must not be
-      // required to carry LiteShip's private repository ledger.
-      const governance = hasCheckGovernanceSurface(cwd)
-        ? buildCheckGovernanceFacts(cwd, now)
-        : applicationCheckGovernanceFacts();
+      // required to carry LiteShip's private repository ledger. That admission
+      // decision lives inside the authority, so no call site can skip it.
+      const governance = checkGovernanceFactsFor(cwd, now);
       return litelaunchGauntlet(
         cwd,
         now,
