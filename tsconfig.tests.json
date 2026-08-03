@@ -76,6 +76,10 @@
     // workspace. Admit its complete suite so factory and narrowing drift fail
     // typecheck before the runtime laws execute.
     "tests/unit/error/**/*.test.ts",
+    // ECS composition suites exercise the public world/component contracts.
+    // Admit the complete owned directory so a future ECS proof cannot execute
+    // outside the tests project's compiler boundary.
+    "tests/unit/ecs/**/*.test.ts",
     // The @liteship/core spine conformance guard: its type-level assignments
     // (Config.Shape ⇔ runtime, and the CompositeState / VideoConfig / CaptureResult
     // bidirectional pins) only bite if THIS project typechecks them. Listed here so

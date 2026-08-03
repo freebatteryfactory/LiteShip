@@ -754,6 +754,40 @@ describe('(a14) error-algebra unit evidence is type-admitted before execution', 
   });
 });
 
+describe('(a15) ECS unit evidence is type-admitted before execution', () => {
+  const runtimeSources = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/unit/ecs/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/unit/ecs/'));
+
+  it('directly admits every canonical Node ECS suite through one future-proof directory root', () => {
+    expect(runtimeSources.length, 'the ECS unit corpus fell below its committed floor').toBeGreaterThanOrEqual(1);
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} runtime ECS suites; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/unit/ecs/') && entry.includes('*') && entry.endsWith('.test.ts'),
+      ),
+      'ECS admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with ECS admission removed exposes the complete runtime corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/unit/ecs/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
 // --------------------------------------------------------------------------
 // (b) Coverage floors — the real gates cover a broad, non-trivial surface.
 // --------------------------------------------------------------------------
