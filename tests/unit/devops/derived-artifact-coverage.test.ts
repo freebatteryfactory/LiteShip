@@ -11,19 +11,109 @@
  * @module
  */
 
-import { describe, expect, it } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   DERIVED_ARTIFACTS,
   CI_ONLY_REASON,
+  artifactPathCovers,
+  generatedCommittedFiles,
   preflightEnforcedArtifacts,
   preflightEnforcerPaths,
   selectDerivedArtifacts,
+  undeclaredGeneratedFiles,
+  type TrackedFile,
 } from '../../../scripts/lib/derived-artifacts.js';
 import { buildLocalVerificationPlan } from '../../../scripts/lib/local-verification-plan.js';
+import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '../../..');
+
+/**
+ * Every tracked file, with its bytes — the population the allowlist answers to.
+ *
+ * TRACKED, not globbed: a generated tree that is gitignored (docs/api) is not a
+ * committed artifact and must not be censused, and only git knows the
+ * difference.
+ */
+async function trackedFiles(): Promise<readonly TrackedFile[]> {
+  const listed = (await spawnArgvCapture('git', ['ls-files', '-z'], { cwd: REPO_ROOT })).stdout
+    .split('\0')
+    .filter((path) => path.length > 0);
+  const files: TrackedFile[] = [];
+  for (const path of listed) {
+    const absolute = resolve(REPO_ROOT, path);
+    let stats;
+    try {
+      stats = statSync(absolute);
+    } catch {
+      continue; // A tracked path absent from the working tree cannot be classified.
+    }
+    // Only the head is needed to classify, but Markdown regions can sit
+    // anywhere; 256 KiB covers every tracked text file in this repository.
+    if (!stats.isFile() || stats.size > 256 * 1024) continue;
+    try {
+      files.push({ path, text: readFileSync(absolute, 'utf8') });
+    } catch {
+      continue; // Binary or unreadable: not a text projection.
+    }
+  }
+  return files;
+}
+
+describe('THE ANCHOR: the registry is complete, not merely well-formed', () => {
+  let tracked: readonly TrackedFile[] = [];
+  beforeAll(async () => {
+    tracked = await trackedFiles();
+  });
+
+  it('the census reaches the tree and recognizes the artifacts it exists to find', () => {
+    expect(tracked.length, 'git ls-files returned nothing readable').toBeGreaterThan(500);
+    const generated = generatedCommittedFiles(tracked);
+    // A silent census is the failure mode this whole law guards against, so
+    // pin that it finds the three signals it claims to.
+    expect(generated).toContain('tsconfig.test-paths.generated.json'); // by name
+    expect(generated).toContain('packages/liteship/src/package-roster.generated.ts'); // by banner
+    expect(generated).toContain('packages/cli/README.md'); // by region
+    expect(generated.length).toBeGreaterThan(50);
+  });
+
+  it('a producer that merely DISCUSSES generation is not censused as a product', () => {
+    // The whole census turns on shouting-vs-prose. These modules write or
+    // describe generated output; none of them IS generated output, and a
+    // case-insensitive marker would sweep every one of them in and force a
+    // permanent exemption list — the denylist shape this repo keeps rejecting.
+    const generated = new Set(generatedCommittedFiles(tracked));
+    for (const producer of [
+      'scripts/lib/doc-registry.ts',
+      'scripts/lib/agent-context.ts',
+      'scripts/lib/command-docs.ts',
+      'packages/web/src/wire/render-contract-doc.ts',
+      'scripts/lib/derived-artifacts.ts',
+    ]) {
+      expect(generated.has(producer), `${producer} is a producer, not a product`).toBe(false);
+    }
+  });
+
+  it('THE CONTAINMENT LAW: every generated-and-committed file is declared', () => {
+    const undeclared = undeclaredGeneratedFiles(tracked);
+    expect(
+      undeclared,
+      `generated-and-committed file(s) missing from DERIVED_ARTIFACTS:\n${undeclared.join('\n')}\n` +
+        'Declare each with the command that regenerates it and the check that reds when it drifts.',
+    ).toEqual([]);
+  });
+
+  it('artifact paths match exact files, directory roots, and globs alike', () => {
+    expect(artifactPathCovers('PUBLIC-EXPORTS.md', 'PUBLIC-EXPORTS.md')).toBe(true);
+    expect(artifactPathCovers('tests/generated', 'tests/generated/core-boundary-evaluate.test.ts')).toBe(true);
+    expect(artifactPathCovers('tests/generated', 'tests/generated-other/x.ts')).toBe(false);
+    expect(artifactPathCovers('packages/*/src/a.ts', 'packages/cli/src/a.ts')).toBe(true);
+    expect(artifactPathCovers('packages/*/src/a.ts', 'packages/cli/deep/src/a.ts')).toBe(false);
+    expect(artifactPathCovers('tests/**/*.gen.ts', 'tests/a/b/c.gen.ts')).toBe(true);
+  });
+});
 
 describe('committed derivable artifacts are declared and covered', () => {
   it('the registry is non-vacuous and every id is unique', () => {

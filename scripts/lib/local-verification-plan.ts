@@ -168,6 +168,21 @@ const INVARIANTS_STEP: LocalVerificationStep = Object.freeze({
   remedy: 'fix the reported invariant violation, then re-run preflight',
 });
 
+/**
+ * The spine projection's drift authority. It is a SCRIPT authority rather than
+ * a Vitest path, so {@link PROJECTIONS_STEP} — which folds only the `.ts`
+ * enforcers into one Vitest process — cannot carry it and it needs its own
+ * step. The derived-artifact containment law is what surfaced the omission:
+ * declaring the spine provenance projection immediately reported that the
+ * pre-push lane did not run the check that catches its drift.
+ */
+const SPINE_STEP: LocalVerificationStep = Object.freeze({
+  checkId: null,
+  label: 'spine:check',
+  argv: Object.freeze(['run', 'spine:check']),
+  remedy: "run 'pnpm run spine:gen' and commit the regenerated spine projection",
+});
+
 export interface LocalVerificationPlan {
   readonly schema: 'liteship/local-verification-plan@3';
   readonly mode: 'workspace' | 'staged';
@@ -532,7 +547,7 @@ export function buildLocalVerificationPlan(input: {
   const steps: LocalVerificationStep[] = [...quickSteps];
   if (rustfmtAffected) steps.push(RUSTFMT_STEP);
   // check/cargo-audit is deliberately NOT here — see CARGO_AUDIT_CI_ONLY_REASON.
-  steps.push(INVARIANTS_STEP, PROJECTIONS_STEP);
+  steps.push(INVARIANTS_STEP, SPINE_STEP, PROJECTIONS_STEP);
   if (ciContractAffected) steps.push(CI_CONTRACT_STEP);
   if (docsAffected) steps.push(DOCS_STEP);
   const selectedCheckIds = steps.flatMap((step) => (step.checkId === null ? [] : [step.checkId]));

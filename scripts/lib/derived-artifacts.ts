@@ -31,6 +31,37 @@
 /** Whether the committed bytes are a pure projection of source, or a reviewed prior state. */
 export type DerivedArtifactKind = 'projection' | 'ratchet';
 
+/**
+ * Whether `path` falls under one declared artifact path. A declared path is an
+ * exact file, a directory root, or a `*` / `**` glob — enough for a generator
+ * that writes a whole tree (`tests/generated/**`) to be declared once instead
+ * of by roster.
+ */
+export function artifactPathCovers(pattern: string, path: string): boolean {
+  if (pattern === path) return true;
+  if (!pattern.includes('*')) return path.startsWith(`${pattern}/`);
+  let source = '^';
+  for (let index = 0; index < pattern.length; index += 1) {
+    const char = pattern[index]!;
+    if (char === '*') {
+      if (pattern[index + 1] === '*') {
+        index += 1;
+        if (pattern[index + 1] === '/') {
+          index += 1;
+          source += '(?:.*/)?';
+        } else {
+          source += '.*';
+        }
+      } else {
+        source += '[^/]*';
+      }
+    } else {
+      source += /[\\^$+.()|[\]{}?]/u.test(char) ? `\\${char}` : char;
+    }
+  }
+  return new RegExp(`${source}$`, 'u').test(path);
+}
+
 /** One committed derivable artifact and the three facts that make it safe to commit. */
 export interface DerivedArtifact {
   /** Stable id, used by the regen runner and the coverage law. */
@@ -60,6 +91,8 @@ export interface DerivedArtifact {
 export const CI_ONLY_REASON: Readonly<Record<string, string>> = Object.freeze({
   'one-install-cost-baseline': 'enforcement requires packing 25 tarballs and a clean install (package:smoke)',
   'composition-baseline': 'enforcement runs inside the cross-package composition suite, not the fast lane',
+  'capsule-generated-corpus':
+    'capsule:verify recompiles the whole generated corpus through the capsule gate, well past the fast lane budget',
 });
 
 /**
@@ -157,6 +190,83 @@ export const DERIVED_ARTIFACTS: readonly DerivedArtifact[] = Object.freeze([
     inPreflight: true,
   }),
   Object.freeze({
+    id: 'roster-projections',
+    kind: 'projection' as const,
+    // One generator, fourteen committed products. Declared as a family because
+    // that is how they are produced: a per-file roster would drift the moment
+    // gen-roster.ts learned a fifteenth projection.
+    paths: Object.freeze([
+      'packages/cli/src/internal/audit-package-catalog.generated.ts',
+      'packages/cli/src/internal/audit-package-topology.generated.ts',
+      'packages/cli/src/internal/package-metadata-catalog.generated.ts',
+      'packages/cli/src/internal/semantic-assurance-campaigns.generated.ts',
+      'packages/cli/src/internal/template-renames.generated.ts',
+      'packages/cli/src/internal/fleet-event-protocol.generated.ts',
+      'packages/command/src/commands/package-smoke-registry.generated.ts',
+      'packages/command/src/commands/plumb-registry.generated.ts',
+      'packages/liteship/src/package-roster.generated.ts',
+      'packages/web/src/wire/liteship-events.generated.ts',
+      'packages/_spine/events.generated.d.ts',
+      'scripts/lib/package-docs.generated.ts',
+      'tests/fixtures/api-surface-packages.generated.ts',
+      'tsconfig.test-paths.generated.json',
+    ]),
+    regen: Object.freeze(['exec', 'tsx', 'scripts/gen-roster.ts', '--write']),
+    regenEnv: Object.freeze({}),
+    enforcedBy: 'tests/unit/devops/roster-projection-freshness.test.ts',
+    inPreflight: true,
+  }),
+  Object.freeze({
+    id: 'spine-provenance',
+    kind: 'projection' as const,
+    paths: Object.freeze(['packages/cli/src/internal/spine-provenance.generated.ts']),
+    regen: Object.freeze(['run', 'spine:gen']),
+    regenEnv: Object.freeze({}),
+    enforcedBy: 'spine:check',
+    inPreflight: true,
+  }),
+  Object.freeze({
+    id: 'public-surface-context',
+    kind: 'projection' as const,
+    paths: Object.freeze(['packages/command/src/commands/public-surface-context.generated.ts']),
+    regen: Object.freeze(['exec', 'tsx', 'scripts/gen-public-surface-context.ts']),
+    regenEnv: Object.freeze({}),
+    enforcedBy: 'tests/property/public-surface-context-laws.prop.test.ts',
+    inPreflight: true,
+  }),
+  Object.freeze({
+    id: 'doc-registry-blocks',
+    kind: 'projection' as const,
+    // Generated REGIONS inside hand-written documents. The whole file is not
+    // derived, but the marked blocks are, and a stale block is drift exactly
+    // like a stale file — which is how the CLI README's check-profile table
+    // shipped three checks behind its own registry.
+    paths: Object.freeze([
+      'AGENTS.md',
+      'ARCHITECTURE.md',
+      'AUTHORING-MODEL.md',
+      'GLOSSARY.md',
+      'PACKAGE-SURFACES.md',
+      'README.md',
+      'packages/cli/README.md',
+      'packages/mcp-server/README.md',
+      'packages/web/README.md',
+    ]),
+    regen: Object.freeze(['run', 'docs:gen']),
+    regenEnv: Object.freeze({}),
+    enforcedBy: 'tests/unit/devops/doc-registry.test.ts',
+    inPreflight: true,
+  }),
+  Object.freeze({
+    id: 'capsule-generated-corpus',
+    kind: 'projection' as const,
+    paths: Object.freeze(['tests/generated']),
+    regen: Object.freeze(['run', 'capsule:compile']),
+    regenEnv: Object.freeze({}),
+    enforcedBy: 'capsule:verify',
+    inPreflight: false,
+  }),
+  Object.freeze({
     id: 'composition-baseline',
     kind: 'ratchet' as const,
     paths: Object.freeze(['benchmarks/composition-uncovered-baseline.json']),
@@ -175,6 +285,59 @@ export const DERIVED_ARTIFACTS: readonly DerivedArtifact[] = Object.freeze([
     inPreflight: false,
   }),
 ]);
+
+/**
+ * THE ANCHOR — how a generated-and-committed file is RECOGNIZED, independent of
+ * whether anyone remembered to declare it.
+ *
+ * Without this, {@link DERIVED_ARTIFACTS} is an allowlist with nothing to be
+ * complete against: it can prove every DECLARED artifact is well-formed and
+ * enforced while the tree quietly carries dozens that were never declared. That
+ * is precisely the half-measure this repository keeps finding in its own guards,
+ * and it was true of this very module until the anchor existed — the registry's
+ * own doc claimed an anchor that was never implemented, and the tree held 73
+ * undeclared generated files.
+ *
+ * Three EXACT signals, no heuristics that need a growing exemption list:
+ *
+ *  1. NAME — `*.generated.<ext>`, the repository's own convention.
+ *  2. BANNER — the first non-empty line carries a machine marker. Matched
+ *     CASE-SENSITIVELY (`@generated`, `GENERATED`, `DO NOT EDIT`): a generator
+ *     shouts, whereas a module doc that merely discusses generation writes
+ *     "Generated ..." in prose. That one distinction is what keeps producers
+ *     (gen-roster.ts, doc-registry.ts) out of a census of products.
+ *  3. REGION — a Markdown file carrying a `<!-- BEGIN X -->` projection block.
+ *     Restricted to Markdown so the module that CONSTRUCTS those markers is not
+ *     mistaken for a file that contains them.
+ */
+const GENERATED_NAME = /\.generated\.[a-z]+$/u;
+const GENERATED_BANNER = /^\s*(?:\/\/|\/\*\*?|#|<!--|;)?\s*(?:@generated\b|GENERATED\b|DO NOT EDIT)/u;
+const GENERATED_REGION = /<!--\s*BEGIN [A-Z0-9-]+/u;
+
+/** One tracked file and the bytes needed to classify it. */
+export interface TrackedFile {
+  readonly path: string;
+  readonly text: string;
+}
+
+/** Every tracked file that IS a committed derivable artifact, by the three signals above. */
+export function generatedCommittedFiles(tracked: readonly TrackedFile[]): readonly string[] {
+  const found = tracked.filter(({ path, text }) => {
+    if (GENERATED_NAME.test(path)) return true;
+    const first = text.split('\n').find((line) => line.trim().length > 0) ?? '';
+    if (GENERATED_BANNER.test(first)) return true;
+    return path.endsWith('.md') && GENERATED_REGION.test(text);
+  });
+  return found.map(({ path }) => path).sort();
+}
+
+/** Anchor members that no declared artifact claims — the containment breach. */
+export function undeclaredGeneratedFiles(tracked: readonly TrackedFile[]): readonly string[] {
+  const declared = DERIVED_ARTIFACTS.flatMap((artifact) => artifact.paths);
+  return generatedCommittedFiles(tracked).filter(
+    (path) => !declared.some((pattern) => artifactPathCovers(pattern, path)),
+  );
+}
 
 /** Artifacts the fast pre-push lane must enforce. */
 export function preflightEnforcedArtifacts(): readonly DerivedArtifact[] {
