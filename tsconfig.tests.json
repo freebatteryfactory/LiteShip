@@ -80,6 +80,10 @@
     // Admit the complete owned directory so a future ECS proof cannot execute
     // outside the tests project's compiler boundary.
     "tests/unit/ecs/**/*.test.ts",
+    // The Remotion adapter suites exercise the public frame/context contracts.
+    // Admit the complete owned directory so a future adapter proof cannot run
+    // outside the tests project's compiler boundary.
+    "tests/unit/remotion/**/*.test.ts",
     // The @liteship/core spine conformance guard: its type-level assignments
     // (Config.Shape ⇔ runtime, and the CompositeState / VideoConfig / CaptureResult
     // bidirectional pins) only bite if THIS project typechecks them. Listed here so
