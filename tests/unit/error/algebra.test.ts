@@ -267,7 +267,11 @@ describe('assertNever — statement-level exhaustiveness guard', () => {
 describe('matchTagOr — open match with fallback (the extension-friendly matcher)', () => {
   it('handles known tags, falls back for the rest', () => {
     const classify = (e: TaggedError): 'known' | 'other' =>
-      matchTagOr(e, { ParseError: () => 'known' as const, IoError: () => 'known' as const }, () => 'other' as const);
+      matchTagOr<TaggedError, 'known' | 'other'>(
+        e,
+        { ParseError: () => 'known', IoError: () => 'known' },
+        () => 'other',
+      );
     expect(classify(ParseError('cbor', 'd'))).toBe('known');
     expect(classify(IoError('readFile', 'd'))).toBe('known');
     expect(classify(ValidationError('M', 'd'))).toBe('other');

@@ -72,6 +72,10 @@
     // the complete owned directory so a future canonical proof cannot run
     // outside the tests project's compiler boundary.
     "tests/unit/canonical/**/*.test.ts",
+    // The tagged-error algebra is the public failure transport used across the
+    // workspace. Admit its complete suite so factory and narrowing drift fail
+    // typecheck before the runtime laws execute.
+    "tests/unit/error/**/*.test.ts",
     // The @liteship/core spine conformance guard: its type-level assignments
     // (Config.Shape ⇔ runtime, and the CompositeState / VideoConfig / CaptureResult
     // bidirectional pins) only bite if THIS project typechecks them. Listed here so

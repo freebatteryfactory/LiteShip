@@ -7,7 +7,6 @@ import {
   isErr,
   IoError,
   ParseError,
-  hasTag,
   matchTag,
   type Result,
   type Ok,
@@ -135,8 +134,11 @@ describe('isOk / isErr — the narrowing guards', () => {
   it('isErr selects the failure arm and narrows `.error` into scope', () => {
     const r: Result<number, LiteShipError> = err(ParseError('profile.json', 'not an object'));
     if (isErr(r)) {
-      expect(hasTag(r.error, 'ParseError')).toBe(true); // narrowed to the failure arm
-      expect(r.error.source).toBe('profile.json');
+      if (r.error._tag === 'ParseError') {
+        expect(r.error.source).toBe('profile.json');
+      } else {
+        throw new Error('the failure arm should carry a ParseError');
+      }
     } else {
       throw new Error('isErr should have matched a failure');
     }
