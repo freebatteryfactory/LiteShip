@@ -12,7 +12,12 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ValidationError } from '@liteship/error';
-import { LITESHIP_WAIVERS, type CheckGovernanceFacts } from '@liteship/gauntlet';
+import {
+  isStrictWaiverExpiry,
+  LITESHIP_WAIVERS,
+  type CheckGovernanceFacts,
+  type WaiverFreshnessFact,
+} from '@liteship/gauntlet';
 import { CHECK_REGISTRY } from '../checks/registry.js';
 import { SCRIPT_EXEMPTIONS } from '../checks/script-exemptions.js';
 
@@ -59,6 +64,24 @@ function readRootScripts(repoRoot: string): readonly string[] {
   return Object.freeze(Object.keys(scripts));
 }
 
+function expiredAfterCalendarDate(expiry: string, now: Date): boolean {
+  if (!isStrictWaiverExpiry(expiry)) {
+    throw ValidationError('buildCheckGovernanceFacts', `waiver expiry "${expiry}" must be a real yyyy-mm-dd date`);
+  }
+  return now.toISOString().slice(0, 10) > expiry;
+}
+
+function yamlScalar(raw: string): string {
+  const value = raw.trim();
+  if (value.length >= 2 && value.startsWith("'") && value.endsWith("'")) {
+    return value.slice(1, -1).replaceAll("''", "'");
+  }
+  if (value.length >= 2 && value.startsWith('"') && value.endsWith('"')) {
+    return value.slice(1, -1);
+  }
+  return value;
+}
+
 function ledgerWaivers(repoRoot: string, now: Date): CheckGovernanceFacts['waivers'] {
   const ledgerPath = resolve(repoRoot, 'traceability/testing-ledger.yaml');
   let text: string;
@@ -70,17 +93,65 @@ function ledgerWaivers(repoRoot: string, now: Date): CheckGovernanceFacts['waive
       `cannot read testing ledger ${ledgerPath}: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-  return Object.freeze(
-    [...text.matchAll(/^\s*expiry:\s*['"]?(\d{4}-\d{2}-\d{2})['"]?/gmu)].map((match, index) => {
-      const expires = match[1]!;
-      return Object.freeze({
-        store: 'ledger' as const,
-        id: `ledger-waiver-${index}`,
-        expires,
-        expired: new Date(expires).getTime() < now.getTime(),
-      });
-    }),
-  );
+  const waivers: WaiverFreshnessFact[] = [];
+  let id: string | undefined;
+  let inWaiver = false;
+  let fields: { owner?: string; justification?: string; expiry?: string } = {};
+
+  const finishWaiver = (): void => {
+    if (!inWaiver) return;
+    if (
+      id === undefined ||
+      id.trim().length === 0 ||
+      fields.owner === undefined ||
+      fields.owner.trim().length === 0 ||
+      fields.justification === undefined ||
+      fields.justification.trim().length === 0 ||
+      fields.expiry === undefined
+    ) {
+      throw ValidationError('buildCheckGovernanceFacts', `testing-ledger waiver "${id ?? '<unknown>'}" is malformed`);
+    }
+    waivers.push(
+      Object.freeze({
+        store: 'ledger',
+        id,
+        owner: fields.owner,
+        justification: fields.justification,
+        expiry: fields.expiry,
+        expired: expiredAfterCalendarDate(fields.expiry, now),
+      }),
+    );
+    inWaiver = false;
+    fields = {};
+  };
+
+  for (const line of text.split(/\r?\n/u)) {
+    const idMatch = /^  - id:\s*(.*?)\s*$/u.exec(line);
+    if (idMatch !== null) {
+      finishWaiver();
+      id = yamlScalar(idMatch[1]!);
+      continue;
+    }
+    const waiverMatch = /^    waiver:(.*)$/u.exec(line);
+    if (waiverMatch !== null) {
+      if (id === undefined || waiverMatch[1]!.trim().length > 0) {
+        throw ValidationError('buildCheckGovernanceFacts', 'testing-ledger waiver must be a block beneath an id');
+      }
+      inWaiver = true;
+      fields = {};
+      continue;
+    }
+    if (!inWaiver) continue;
+    const fieldMatch = /^      (owner|justification|expiry):\s*(.*?)\s*$/u.exec(line);
+    if (fieldMatch === null) continue;
+    const field = fieldMatch[1] as keyof typeof fields;
+    if (fields[field] !== undefined) {
+      throw ValidationError('buildCheckGovernanceFacts', `testing-ledger waiver "${id!}" repeats ${field}`);
+    }
+    fields[field] = yamlScalar(fieldMatch[2]!);
+  }
+  finishWaiver();
+  return Object.freeze(waivers);
 }
 
 /** Build the complete, immutable governance pack for one repository and clock. */
@@ -116,8 +187,10 @@ export function buildCheckGovernanceFacts(repoRoot: string, now: Date): CheckGov
     Object.freeze({
       store: 'gauntlet' as const,
       id: `${waiver.ruleId}@${waiver.file ?? ''}:${waiver.line ?? ''}`,
-      expires: waiver.expires,
-      expired: new Date(waiver.expires).getTime() < now.getTime(),
+      owner: waiver.owner,
+      justification: waiver.reason,
+      expiry: waiver.expires,
+      expired: expiredAfterCalendarDate(waiver.expires, now),
     }),
   );
   return Object.freeze({

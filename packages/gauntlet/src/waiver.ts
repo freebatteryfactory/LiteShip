@@ -22,6 +22,8 @@
  * @module
  */
 
+import { ValidationError } from '@liteship/error';
+import { isStrictWaiverExpiry } from './facts/check-governance-facts.js';
 import { finding, type Finding } from './finding.js';
 
 /**
@@ -93,12 +95,15 @@ function waiverMatchesFinding(waiver: Waiver, f: Finding): boolean {
 }
 
 /**
- * Expired iff the waiver's `expires` date is strictly before `now`. We compare
- * at day granularity so a waiver expiring "today" is still valid for all of
- * today (the contract: `new Date(expires) >= now`). Pure given `now`.
+ * Expired iff the injected UTC calendar date is strictly after `expires`. A
+ * malformed date is refused rather than becoming an immortal suppression.
+ * Pure given `now`.
  */
 function isExpired(waiver: Waiver, now: Date): boolean {
-  return new Date(waiver.expires).getTime() < now.getTime();
+  if (!isStrictWaiverExpiry(waiver.expires)) {
+    throw ValidationError('applyWaivers', `waiver expiry "${waiver.expires}" must be a real yyyy-mm-dd date`);
+  }
+  return now.toISOString().slice(0, 10) > waiver.expires;
 }
 
 /** True iff this waiver targets a rule no waiver may ever cover. */

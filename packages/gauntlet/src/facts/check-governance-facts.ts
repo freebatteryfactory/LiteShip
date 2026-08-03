@@ -57,15 +57,41 @@ export interface NegativeControlFact {
   readonly exists: boolean;
 }
 
+/** The currently enrolled waiver stores and their finding presentation. */
+export const WAIVER_FRESHNESS_STORES = Object.freeze({
+  gauntlet: Object.freeze({
+    label: 'the gauntlet waivers registry (waivers.ts)',
+    location: 'packages/gauntlet/src/waivers.ts',
+  }),
+  ledger: Object.freeze({
+    label: 'the traceability ledger (testing-ledger.yaml)',
+    location: 'traceability/testing-ledger.yaml',
+  }),
+});
+
+/** Stable identity of one enrolled waiver store. */
+export type WaiverFreshnessStore = keyof typeof WAIVER_FRESHNESS_STORES;
+
+/** True only for a canonical `yyyy-mm-dd` string that names a real UTC calendar date. */
+export function isStrictWaiverExpiry(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
 /** One waiver's freshness verdict for `check-waiver-freshness`, decided vs the injected wall-clock date. */
 export interface WaiverFreshnessFact {
-  /** Which store the waiver lives in — the gauntlet `waivers.ts` registry or the traceability ledger. */
-  readonly store: 'gauntlet' | 'ledger';
-  /** A human identity for the waiver (ruleId@file:line for gauntlet; the invariant id / expiry for the ledger). */
+  /** Which enrolled store owns this waiver. */
+  readonly store: WaiverFreshnessStore;
+  /** Stable store-local identity (ruleId@file:line for gauntlet; invariant id for the ledger). */
   readonly id: string;
-  /** The waiver's ISO `yyyy-mm-dd` expiry. */
-  readonly expires: string;
-  /** Whether the waiver's expiry is strictly before the injected wall-clock date (the debt came due). */
+  /** The accountable owner who signed this relaxation. */
+  readonly owner: string;
+  /** Why the relaxation is necessary and bounded. */
+  readonly justification: string;
+  /** The waiver's strict ISO `yyyy-mm-dd` expiry. */
+  readonly expiry: string;
+  /** Whether the injected UTC calendar date is strictly after the expiry date (the debt came due). */
   readonly expired: boolean;
 }
 

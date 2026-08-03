@@ -2807,6 +2807,10 @@
           "kind": "const"
         },
         {
+          "name": "WAIVER_FRESHNESS_STORES",
+          "kind": "const"
+        },
+        {
           "name": "activeModeledSurfaceReaderGate",
           "kind": "namespace",
           "signature": "access:const,decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
@@ -3083,6 +3087,11 @@
         },
         {
           "name": "isProjectableError",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isStrictWaiverExpiry",
           "kind": "function",
           "signature": "(1)"
         },

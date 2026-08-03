@@ -245,9 +245,102 @@ describe('the check-governance meta-gates have TEETH over injected facts', () =>
   it('check-waiver-freshness flags a synthetic expired waiver', () => {
     const withExpired: CheckGovernanceFacts = {
       ...FACTS,
-      waivers: [...FACTS.waivers, { store: 'ledger', id: '__synthetic__', expires: '2000-01-01', expired: true }],
+      waivers: [
+        ...FACTS.waivers,
+        {
+          store: 'gauntlet',
+          id: 'gauntlet/synthetic@a.ts:1',
+          owner: 'test-owner',
+          justification: 'Synthetic gauntlet location proof.',
+          expiry: '2000-01-01',
+          expired: true,
+        },
+        {
+          store: 'ledger',
+          id: '__synthetic__',
+          owner: 'test-owner',
+          justification: 'Synthetic expired-waiver negative control.',
+          expiry: '2000-01-01',
+          expired: true,
+        },
+      ],
     };
-    expect(checkWaiverFreshnessGate.run(factContext(withExpired)).length).toBeGreaterThan(0);
+    const findings = checkWaiverFreshnessGate.run(factContext(withExpired));
+    expect(findings.map((entry) => entry.location?.file).sort()).toEqual([
+      'packages/gauntlet/src/waivers.ts',
+      'traceability/testing-ledger.yaml',
+    ]);
+    expect(findings.map((entry) => entry.title)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('gauntlet waivers registry'),
+        expect.stringContaining('traceability ledger'),
+      ]),
+    );
+  });
+});
+
+describe('waiver freshness facts are signed, stable, and calendar-bounded', () => {
+  const VALID_WAIVER = Object.freeze({
+    store: 'ledger' as const,
+    id: 'INV-SYNTHETIC',
+    owner: 'test-owner',
+    justification: 'Synthetic freshness-kernel proof row.',
+    expiry: '2027-06-20',
+    expired: false,
+  });
+  const LEGACY_ACCEPTED_WAIVER = Object.freeze({ ...VALID_WAIVER, expires: VALID_WAIVER.expiry });
+
+  function withWaivers(waivers: readonly unknown[]): CheckGovernanceFacts {
+    return { ...FACTS, waivers: waivers as CheckGovernanceFacts['waivers'] };
+  }
+
+  it('projects stable store identities and owner-signed metadata from both enrolled stores', () => {
+    expect(FACTS.waivers.length).toBeGreaterThan(0);
+    expect(new Set(FACTS.waivers.map((entry) => entry.store))).toEqual(new Set(['gauntlet', 'ledger']));
+    expect(FACTS.waivers.find((entry) => entry.store === 'ledger')?.id).toBe('INV-VECTOR-CLOCK-MONOTONIC');
+    expect(
+      FACTS.waivers.every(
+        (entry) =>
+          entry.id.length > 0 &&
+          entry.owner.trim().length > 0 &&
+          entry.justification.trim().length > 0 &&
+          /^\d{4}-\d{2}-\d{2}$/u.test(entry.expiry),
+      ),
+    ).toBe(true);
+    const identities = FACTS.waivers.map((entry) => `${entry.store}\u0000${entry.id}`);
+    expect(new Set(identities).size).toBe(identities.length);
+  });
+
+  it('uses the injected calendar date: fresh before and throughout expiry, expired only after it', () => {
+    const before = buildCheckGovernanceFacts(REPO, new Date('2027-06-19T23:59:59.999Z')).waivers.filter(
+      (entry) => entry.store === 'gauntlet',
+    );
+    const at = buildCheckGovernanceFacts(REPO, new Date('2027-06-20T23:59:59.999Z')).waivers.filter(
+      (entry) => entry.store === 'gauntlet',
+    );
+    const after = buildCheckGovernanceFacts(REPO, new Date('2027-06-21T00:00:00.000Z')).waivers.filter(
+      (entry) => entry.store === 'gauntlet',
+    );
+
+    expect(before.length).toBeGreaterThan(0);
+    expect(before.every((entry) => !entry.expired)).toBe(true);
+    expect(at.every((entry) => !entry.expired)).toBe(true);
+    expect(after.every((entry) => entry.expired)).toBe(true);
+  });
+
+  it.each([
+    ['missing owner', { ...LEGACY_ACCEPTED_WAIVER, owner: undefined }],
+    ['blank justification', { ...LEGACY_ACCEPTED_WAIVER, justification: '   ' }],
+    ['non-canonical date width', { ...LEGACY_ACCEPTED_WAIVER, expiry: '2027-6-20' }],
+    ['impossible calendar date', { ...LEGACY_ACCEPTED_WAIVER, expiry: '2027-02-29' }],
+  ])('refuses %s before the gate can decide', (_label, malformed) => {
+    expect(() => checkWaiverFreshnessGate.run(factContext(withWaivers([malformed])))).toThrow(/waivers\[0\]/u);
+  });
+
+  it('refuses a duplicate store+id identity before the gate can decide', () => {
+    expect(() =>
+      checkWaiverFreshnessGate.run(factContext(withWaivers([LEGACY_ACCEPTED_WAIVER, { ...LEGACY_ACCEPTED_WAIVER }]))),
+    ).toThrow(/duplicate waiver identity/u);
   });
 });
 

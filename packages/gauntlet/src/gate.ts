@@ -49,7 +49,12 @@ import type {
   FeatureEdgeSubjectCoverage,
   OpaqueFeatureEdgeSite,
 } from './facts/feature-edge-facts.js';
-import type { CheckGovernanceFacts, WaiverFreshnessFact } from './facts/check-governance-facts.js';
+import {
+  isStrictWaiverExpiry,
+  WAIVER_FRESHNESS_STORES,
+  type CheckGovernanceFacts,
+  type WaiverFreshnessFact,
+} from './facts/check-governance-facts.js';
 import type { BenchmarkSubjectFacts } from './gates/bench-subjects.js';
 import { factAccessEvidenceDigest, stableEvidenceDigest } from './verdict-cache.js';
 
@@ -986,8 +991,6 @@ function normalizeFeatureEdgeFacts(value: FeatureEdgeFacts | undefined): Feature
   });
 }
 
-const WAIVER_STORES = new Set(['gauntlet', 'ledger']);
-
 function normalizeStringArray(value: unknown, label: string): readonly string[] {
   if (!Array.isArray(value) || !value.every((s) => typeof s === 'string')) {
     throw ValidationError('FactGate', `${label} must be an array of strings`);
@@ -1043,22 +1046,43 @@ function normalizeCheckGovernanceFacts(value: CheckGovernanceFacts | undefined):
   if (!Array.isArray(waivers)) {
     throw ValidationError('FactGate', 'checkGovernance.waivers must be an array');
   }
+  const waiverIdentities = new Set<string>();
   const normalizedWaivers = waivers.map((entry, index) => {
     assertPlainFactRecord(entry, `checkGovernance.waivers[${index}]`);
     const store = ownDataField(entry, 'store');
     const id = ownDataField(entry, 'id');
-    const expires = ownDataField(entry, 'expires');
+    const owner = ownDataField(entry, 'owner');
+    const justification = ownDataField(entry, 'justification');
+    const expiry = ownDataField(entry, 'expiry');
     const expired = ownDataField(entry, 'expired');
     if (
       typeof store !== 'string' ||
-      !WAIVER_STORES.has(store) ||
+      !Object.hasOwn(WAIVER_FRESHNESS_STORES, store) ||
       typeof id !== 'string' ||
-      typeof expires !== 'string' ||
+      id.trim().length === 0 ||
+      typeof owner !== 'string' ||
+      owner.trim().length === 0 ||
+      typeof justification !== 'string' ||
+      justification.trim().length === 0 ||
+      typeof expiry !== 'string' ||
+      !isStrictWaiverExpiry(expiry) ||
       typeof expired !== 'boolean'
     ) {
       throw ValidationError('FactGate', `checkGovernance.waivers[${index}] is malformed`);
     }
-    return Object.freeze({ store: store as WaiverFreshnessFact['store'], id, expires, expired });
+    const identity = `${store}\u0000${id}`;
+    if (waiverIdentities.has(identity)) {
+      throw ValidationError('FactGate', `duplicate waiver identity "${store}+${id}"`);
+    }
+    waiverIdentities.add(identity);
+    return Object.freeze({
+      store: store as WaiverFreshnessFact['store'],
+      id,
+      owner,
+      justification,
+      expiry,
+      expired,
+    });
   });
   return Object.freeze({
     partition: normalizedPartition,

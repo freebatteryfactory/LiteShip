@@ -5131,6 +5131,10 @@
           "kind": "type"
         },
         {
+          "name": "WaiverFreshnessStore",
+          "kind": "type"
+        },
+        {
           "name": "WaiverSurface",
           "kind": "type"
         },

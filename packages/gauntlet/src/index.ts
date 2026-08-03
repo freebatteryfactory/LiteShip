@@ -429,11 +429,14 @@ export { checkRegistryCompleteGate, decideCheckRegistryComplete } from './gates/
 export { checkNegativeControlGate, decideCheckNegativeControl } from './gates/check-negative-control.js';
 export { checkWaiverFreshnessGate, decideCheckWaiverFreshness } from './gates/check-waiver-freshness.js';
 export {
+  isStrictWaiverExpiry,
+  WAIVER_FRESHNESS_STORES,
   type CheckGovernanceFacts,
   type CheckPartitionFacts,
   type RegisteredCheckFact,
   type NegativeControlFact,
   type WaiverFreshnessFact,
+  type WaiverFreshnessStore,
 } from './facts/check-governance-facts.js';
 export { crdtLawsGate } from './gates/crdt-laws.js';
 
