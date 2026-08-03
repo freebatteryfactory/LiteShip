@@ -53,6 +53,10 @@ function collectDocs(paths: readonly string[]): readonly string[] {
 
 const LINK = /\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 const GITHUB_REPOSITORY_LINK = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/(?:blob|tree)\/main\/(.+)$/;
+const LITESHIP_REPOSITORY_URL = 'https://github.com/freebatteryfactory/LiteShip/';
+const LITESHIP_REPOSITORY_LINK = /^https?:\/\/github\.com\/freebatteryfactory\/LiteShip\//u;
+const LITESHIP_BLOB_MAIN_LINK =
+  /^https?:\/\/github\.com\/freebatteryfactory\/LiteShip\/blob\/main\/([^#?]+)(?:[?#].*)?$/u;
 const INLINE_REPOSITORY_PATH = /`((?:packages|scripts|tests|docs|examples|crates|\.github)\/[^`\s,)]+)/g;
 const CURRENT_AUTHORITY_DOCS = [
   'AGENTS.md',
@@ -70,6 +74,31 @@ const CURRENT_AUTHORITY_DOCS = [
   'SECURITY.md',
   'STATUS.md',
 ] as const;
+
+type ExternalSymbolLinkMappings = Readonly<Record<string, Readonly<Record<string, string>>>>;
+
+/** Same-repository TypeDoc mappings must resolve through Git's published set, never warm ignored output. */
+export function externalSymbolRepositoryLinkViolations(
+  mappings: ExternalSymbolLinkMappings,
+  tracked: readonly string[],
+): readonly string[] {
+  const violations: string[] = [];
+  for (const [moduleName, symbols] of Object.entries(mappings)) {
+    for (const [symbol, url] of Object.entries(symbols)) {
+      if (!LITESHIP_REPOSITORY_LINK.test(url)) continue;
+      const match = LITESHIP_BLOB_MAIN_LINK.exec(url);
+      if (!match) {
+        violations.push(`${moduleName}#${symbol} -> unsupported same-repository URL ${url}`);
+        continue;
+      }
+      const target = decodeURIComponent(match[1]!);
+      if (!repoPathIsTracked(target, tracked)) {
+        violations.push(`${moduleName}#${symbol} -> untracked repository target ${target}`);
+      }
+    }
+  }
+  return violations;
+}
 
 describe('doc link integrity', () => {
   test('every relative markdown link (and repository main link) resolves to a tracked file', async () => {
@@ -123,5 +152,37 @@ describe('doc link integrity', () => {
     const published = synthetic.filter((path) => path !== 'docs/api/core/index.md');
     expect(repoPathIsTracked('docs/api', published)).toBe(false);
     expect(published.filter(isHandAuthoredProsePath)).toHaveLength(3);
+  });
+
+  test('TypeDoc external-symbol mappings target durable tracked repository sources', async () => {
+    const tracked = await trackedPaths(REPO);
+    const config = JSON.parse(readFileSync(resolve(REPO, 'typedoc.json'), 'utf8')) as {
+      readonly externalSymbolLinkMappings: ExternalSymbolLinkMappings;
+    };
+    const violations = externalSymbolRepositoryLinkViolations(config.externalSymbolLinkMappings, tracked);
+    expect(violations, `invalid TypeDoc repository mappings (${violations.length}):\n${violations.join('\n')}`).toEqual(
+      [],
+    );
+  });
+
+  test('TypeDoc mapping authority fails closed for ignored output and unsupported repository URLs', () => {
+    const tracked = ['packages/core/src/index.ts'];
+    expect(
+      externalSymbolRepositoryLinkViolations(
+        {
+          '@liteship/core': {
+            tracked: `${LITESHIP_REPOSITORY_URL}blob/main/packages/core/src/index.ts`,
+            ignored: `${LITESHIP_REPOSITORY_URL}blob/main/docs/api/core/index.md`,
+            ignoredHttp: 'http://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/index.md',
+            ambiguous: `${LITESHIP_REPOSITORY_URL}tree/main/packages/core/src/index.ts`,
+          },
+        },
+        tracked,
+      ),
+    ).toEqual([
+      '@liteship/core#ignored -> untracked repository target docs/api/core/index.md',
+      '@liteship/core#ignoredHttp -> untracked repository target docs/api/core/index.md',
+      `@liteship/core#ambiguous -> unsupported same-repository URL ${LITESHIP_REPOSITORY_URL}tree/main/packages/core/src/index.ts`,
+    ]);
   });
 });

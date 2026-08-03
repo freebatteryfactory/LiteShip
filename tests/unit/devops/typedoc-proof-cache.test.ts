@@ -7,6 +7,7 @@ import {
   createTypeDocProofIdentity,
   digestTypeDocOutput,
   readTypeDocProofReceipt,
+  TYPEDOC_COMPLETENESS_FLOOR,
   TYPEDOC_TOOLCHAIN_PATHS,
   writeTypeDocProofReceipt,
 } from '../../../scripts/lib/typedoc-proof-cache.js';
@@ -89,9 +90,11 @@ describe('TypeDoc proof cache', () => {
   });
 
   test('refuses empty and OOM-shaped partial projections without rejecting a complete refresh', () => {
-    expect(() => assertCompleteTypeDocProjection(100, 100)).not.toThrow();
-    expect(() => assertCompleteTypeDocProjection(100, 90)).not.toThrow();
-    expect(() => assertCompleteTypeDocProjection(100, 89)).toThrow(/did not finish/);
+    expect(() => assertCompleteTypeDocProjection(4000, 4000)).not.toThrow();
+    expect(() => assertCompleteTypeDocProjection(4000, 3600)).not.toThrow();
+    expect(() => assertCompleteTypeDocProjection(4000, 3599)).toThrow(/did not finish/);
     expect(() => assertCompleteTypeDocProjection(0, 0)).toThrow(/did not finish/);
+    expect(() => assertCompleteTypeDocProjection(0, TYPEDOC_COMPLETENESS_FLOOR - 1)).toThrow(/completeness floor/);
+    expect(() => assertCompleteTypeDocProjection(0, TYPEDOC_COMPLETENESS_FLOOR)).not.toThrow();
   });
 });

@@ -20,20 +20,15 @@ import {
   withAdmittedNodeHeap,
 } from './lib/local-resource-profile.js';
 import {
+  assertCompleteTypeDocProjection,
   buildTypeDocProofIdentity,
   countTypeDocMarkdown,
   readTypeDocProofReceipt,
+  TYPEDOC_COMPLETENESS_FLOOR,
   writeTypeDocProofReceipt,
 } from './lib/typedoc-proof-cache.js';
 import { spawnArgv } from './lib/spawn.js';
 
-/**
- * Non-vacuity floor for the emitted projection. Observed 3,555 markdown pages
- * at the W8.5 decommit; the floor sits below that so ordinary surface churn
- * does not trip it, while a truncated build (a TypeDoc OOM can exit 0 through
- * the pnpm exec chain) cannot pass as success.
- */
-const TYPEDOC_COMPLETENESS_FLOOR = 3000;
 const REPO_ROOT = process.cwd();
 const useLocalCache = process.argv.includes('--local-cache') && process.env.CI !== 'true';
 const printPlan = process.argv.includes('--plan');
@@ -108,12 +103,7 @@ try {
   // traceability/, outside the ignored tree) carries the cheap staleness
   // signal, and it is asserted above before any of this runs.
   const freshLocal = countTypeDocMarkdown(tempDir);
-  if (freshLocal < TYPEDOC_COMPLETENESS_FLOOR) {
-    throw new Error(
-      `TypeDoc emitted ${freshLocal} markdown pages, below the ${TYPEDOC_COMPLETENESS_FLOOR}-page completeness floor — ` +
-        `the build did not finish (a typedoc OOM can exit 0 through the pnpm exec chain).`,
-    );
-  }
+  assertCompleteTypeDocProjection(0, freshLocal);
 
   if (useLocalCache) writeTypeDocProofReceipt(REPO_ROOT, proofIdentity);
   console.log(

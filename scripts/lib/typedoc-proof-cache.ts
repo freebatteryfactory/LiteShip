@@ -18,6 +18,13 @@ export interface TypeDocProofReceipt extends TypeDocProofIdentity {
   readonly status: 'passed';
 }
 
+/**
+ * Absolute non-vacuity floor shared by every canonical TypeDoc authority.
+ * W8.5 observed 3,555 pages; this leaves ordinary surface churn headroom while
+ * refusing the handful of pages an OOM-laundered build can leave behind.
+ */
+export const TYPEDOC_COMPLETENESS_FLOOR = 3000;
+
 function digestParts(parts: readonly (string | Buffer)[]): `sha256:${string}` {
   const hash = createHash('sha256');
   for (const part of parts) {
@@ -47,9 +54,10 @@ export function countTypeDocMarkdown(directory: string): number {
 
 /** Refuse an empty or mass-truncated TypeDoc projection, including laundered OOM output. */
 export function assertCompleteTypeDocProjection(committedCount: number, freshCount: number): void {
-  if (freshCount === 0 || (committedCount > 0 && freshCount < committedCount * 0.9)) {
+  if (freshCount < TYPEDOC_COMPLETENESS_FLOOR || (committedCount > 0 && freshCount < committedCount * 0.9)) {
     throw new Error(
-      `the fresh TypeDoc build produced ${freshCount} pages versus ${committedCount} committed; ` +
+      `the fresh TypeDoc build produced ${freshCount} pages versus ${committedCount} previously present, ` +
+        `below the ${TYPEDOC_COMPLETENESS_FLOOR}-page completeness floor or relative 90% floor; ` +
         'the build did not finish (typically an out-of-memory abort laundered to exit 0)',
     );
   }
