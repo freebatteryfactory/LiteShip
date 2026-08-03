@@ -20,7 +20,7 @@
   "scripts": {
     "build": "pnpm exec tsx scripts/native-tsc.ts -- --build",
     "build:wasm": "pnpm exec tsx scripts/build-wasm.ts",
-    "typecheck": "pnpm exec tsx scripts/native-tsc.ts -- --build && pnpm run typecheck:scripts && pnpm run typecheck:tests",
+    "typecheck": "pnpm exec tsx scripts/native-tsc.ts -- --build && pnpm run typecheck:scripts && pnpm run typecheck:tests && pnpm exec tsx scripts/typecheck-shipped-sources.ts",
     "typecheck:scripts": "pnpm exec tsx scripts/native-tsc.ts -- --project tsconfig.scripts.json",
     "typecheck:tests": "pnpm exec tsx scripts/native-tsc.ts -- --project tsconfig.tests.json",
     "typecheck:spine": "pnpm exec tsx scripts/native-tsc.ts -- --noEmit --project packages/_spine/tsconfig.json",

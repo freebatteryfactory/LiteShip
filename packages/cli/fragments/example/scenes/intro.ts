@@ -19,6 +19,8 @@ import { assetRegistry } from './assets.js';
 
 const SceneInputSchema = schema.unknown;
 const SceneOutputSchema = schema.unknown;
+const introBudgets: NonNullable<SceneContract['budgets']> = { p95FrameMs: 16, memoryMb: 200 };
+const introSite: NonNullable<SceneContract['site']> = ['node', 'browser'];
 
 // Phantom-kinded ids — declared once, referenced by syncTo / target / between
 // so cross-kind references fail at compile time.
@@ -99,8 +101,8 @@ const contract: SceneContract = {
       message: 'no track may extend past scene duration',
     },
   ],
-  budgets: { p95FrameMs: 16, memoryMb: 200 },
-  site: ['node', 'browser'],
+  budgets: introBudgets,
+  site: introSite,
   beats: introBeats,
 };
 
@@ -112,8 +114,8 @@ export const intro = defineCapsule({
   output: SceneOutputSchema,
   capabilities: { reads: ['asset:intro-bed', 'asset:intro-bed:beats'], writes: [] },
   invariants: [],
-  budgets: { p95Ms: contract.budgets.p95FrameMs },
-  site: contract.site,
+  budgets: { p95Ms: introBudgets.p95FrameMs },
+  site: introSite,
 });
 
 /** The scene contract, exported for compile/test access. */

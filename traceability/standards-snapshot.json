@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:a03c82a9",
+  "address": "fnv1a:61736901",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4746,6 +4746,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/lib/shipped-source-typecheck.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/lib/source-import-contract.ts",
       "level": "L1"
     },
@@ -4997,6 +5002,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/transition-conformance-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/typecheck-shipped-sources.ts",
       "level": "L1"
     },
     {

@@ -51,6 +51,14 @@ const TYPESCRIPT_CONFIG_INPUTS = [
   'scripts/native-tsc.ts',
 ] as const;
 
+/** Canonical and projected inputs consumed by W1.11's shipped-source typecheck. */
+const SHIPPED_SOURCE_TYPECHECK_INPUTS = [
+  'examples/**',
+  'packages/create-liteship/templates/**',
+  'packages/cli/fragments/**',
+  'packages/*/bin/**',
+] as const;
+
 /**
  * Authored configuration and generated receipt inputs read by the cheap
  * TypeDoc-freshness authority. Keep this closure beside the check registry:
@@ -318,7 +326,8 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   {
     id: 'check/typecheck',
     title: 'TypeScript typecheck',
-    claim: 'The package, scripts, and tests projects all typecheck through the bounded native TypeScript 7 compiler.',
+    claim:
+      'The package, scripts, tests, and context-correct shipped-source projects all typecheck through the bounded native TypeScript 7 compiler.',
     owner: 'tsconfig.json',
     command: 'pnpm run typecheck',
     inputs: [
@@ -328,6 +337,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
       'package.json',
       'packages/_spine/**/*.d.ts',
       ...TYPESCRIPT_CONFIG_INPUTS,
+      ...SHIPPED_SOURCE_TYPECHECK_INPUTS,
     ],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
@@ -335,7 +345,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     cache: 'content-addressed',
     authority: 'blocking',
     negativeControl: 'tests/unit/devops/gate-canaries.test.ts',
-    remediation: 'fix the native TypeScript errors in the build, scripts, and tests projects.',
+    remediation: 'fix the native TypeScript errors in the build, scripts, tests, or shipped-source contexts.',
   },
   {
     id: 'check/typescript-toolchain-qualification',
