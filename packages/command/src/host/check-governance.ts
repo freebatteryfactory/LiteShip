@@ -154,6 +154,161 @@ function ledgerWaivers(repoRoot: string, now: Date): CheckGovernanceFacts['waive
   return Object.freeze(waivers);
 }
 
+/** The closed set of dispositions an external review finding may carry. */
+const REVIEW_STATUSES = Object.freeze(['resolved', 'waived', 'disputed'] as const);
+
+/** One external review finding's recorded disposition. */
+export type ReviewFindingStatus = (typeof REVIEW_STATUSES)[number];
+
+/** One entry in the external review-finding ledger. */
+export interface ReviewFinding {
+  readonly id: string;
+  readonly status: ReviewFindingStatus;
+  /** Present on `waived` / `disputed` — the accountable signer of the relaxation. */
+  readonly owner?: string;
+  readonly justification?: string;
+  /** Strict `yyyy-mm-dd`, required on `waived` / `disputed`. */
+  readonly expiry?: string;
+  /** Whether the external THREAD was answered — deliberately separate from technical resolution. */
+  readonly acknowledged: boolean;
+}
+
+/** Narrow an unknown to the closed disposition set — a predicate, not a cast at the use site. */
+function isReviewStatus(value: unknown): value is ReviewFindingStatus {
+  return typeof value === 'string' && (REVIEW_STATUSES as readonly string[]).includes(value);
+}
+
+function requiredString(record: Readonly<Record<string, unknown>>, key: string, id: string): string {
+  const value = record[key];
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw ValidationError('buildCheckGovernanceFacts', `review finding "${id}" must carry a non-empty ${key}`);
+  }
+  return value;
+}
+
+/**
+ * Parse and VALIDATE the external review-finding ledger.
+ *
+ * Two obligations the other stores do not have, and the reason this ledger
+ * exists at all: a finding may be closed TECHNICALLY while its thread is never
+ * answered, which is how one finding survived thirteen review rounds. So the
+ * external acknowledgement is a separate required field from the technical
+ * disposition, and neither can be inferred from the other.
+ *
+ * `resolved` demands EVIDENCE — the commit that closed it and the law that keeps
+ * it closed — and must carry no expiry, because a resolution does not come due.
+ * `waived` and `disputed` are relaxations and are held to the same
+ * owner + justification + strict-expiry contract as every other suppression in
+ * the repository; a dispute with no clock is an argument that wins by outliving
+ * the reviewer.
+ */
+export function parseReviewFindings(text: string): readonly ReviewFinding[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    throw ValidationError(
+      'buildCheckGovernanceFacts',
+      `review-findings ledger is not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw ValidationError('buildCheckGovernanceFacts', 'review-findings ledger must be a JSON object');
+  }
+  const root: Readonly<Record<string, unknown>> = { ...parsed };
+  if (root['schema'] !== 'liteship/review-findings@1') {
+    throw ValidationError(
+      'buildCheckGovernanceFacts',
+      `review-findings ledger declares schema ${JSON.stringify(root['schema'])}, expected "liteship/review-findings@1"`,
+    );
+  }
+  const rawFindings = root['findings'];
+  if (!Array.isArray(rawFindings)) {
+    throw ValidationError('buildCheckGovernanceFacts', 'review-findings ledger must carry a findings array');
+  }
+  const seen = new Set<string>();
+  const findings: ReviewFinding[] = [];
+  for (const entry of rawFindings) {
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+      throw ValidationError('buildCheckGovernanceFacts', 'each review finding must be a JSON object');
+    }
+    const record: Readonly<Record<string, unknown>> = { ...entry };
+    const id = requiredString(record, 'id', '<unknown>');
+    if (seen.has(id)) {
+      throw ValidationError('buildCheckGovernanceFacts', `duplicate review finding id "${id}"`);
+    }
+    seen.add(id);
+    requiredString(record, 'summary', id);
+    const status = record['status'];
+    if (!isReviewStatus(status)) {
+      throw ValidationError(
+        'buildCheckGovernanceFacts',
+        `review finding "${id}" declares status ${JSON.stringify(status)}, not one of [${REVIEW_STATUSES.join(', ')}]`,
+      );
+    }
+    const acknowledged = record['acknowledged'];
+    if (typeof acknowledged !== 'boolean') {
+      throw ValidationError(
+        'buildCheckGovernanceFacts',
+        `review finding "${id}" must state whether its external thread was acknowledged`,
+      );
+    }
+    if (status === 'resolved') {
+      const resolution = record['resolution'];
+      if (typeof resolution !== 'object' || resolution === null || Array.isArray(resolution)) {
+        throw ValidationError(
+          'buildCheckGovernanceFacts',
+          `resolved review finding "${id}" must carry resolution evidence, not a bare claim`,
+        );
+      }
+      const evidence: Readonly<Record<string, unknown>> = { ...resolution };
+      requiredString(evidence, 'commit', id);
+      requiredString(evidence, 'evidence', id);
+      if (record['expiry'] !== undefined) {
+        throw ValidationError(
+          'buildCheckGovernanceFacts',
+          `resolved review finding "${id}" must not carry an expiry — a resolution does not come due`,
+        );
+      }
+      findings.push(Object.freeze({ id, status, acknowledged }));
+      continue;
+    }
+    const owner = requiredString(record, 'owner', id);
+    const justification = requiredString(record, 'justification', id);
+    const expiry = requiredString(record, 'expiry', id);
+    findings.push(Object.freeze({ id, status, owner, justification, expiry, acknowledged }));
+  }
+  return Object.freeze(findings);
+}
+
+/** The `waived` / `disputed` entries, as freshness facts on the shared expiry clock. */
+function reviewFindingWaivers(repoRoot: string, now: Date): CheckGovernanceFacts['waivers'] {
+  const path = resolve(repoRoot, 'traceability/review-findings.json');
+  let text: string;
+  try {
+    text = readFileSync(path, 'utf8');
+  } catch (error) {
+    throw ValidationError(
+      'buildCheckGovernanceFacts',
+      `cannot read review-findings ledger ${path}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  return Object.freeze(
+    parseReviewFindings(text)
+      .filter((finding) => finding.status !== 'resolved')
+      .map((finding) =>
+        Object.freeze({
+          store: 'review' as const,
+          id: finding.id,
+          owner: finding.owner ?? '',
+          justification: finding.justification ?? '',
+          expiry: finding.expiry ?? '',
+          expired: expiredAfterCalendarDate(finding.expiry ?? '', now),
+        }),
+      ),
+  );
+}
+
 /** Build the complete, immutable governance pack for one repository and clock. */
 export function buildCheckGovernanceFacts(repoRoot: string, now: Date): CheckGovernanceFacts {
   if (!Number.isFinite(now.getTime())) {
@@ -200,6 +355,10 @@ export function buildCheckGovernanceFacts(repoRoot: string, now: Date): CheckGov
       exempted: Object.freeze(SCRIPT_EXEMPTIONS.map((entry) => entry.script)),
     }),
     negativeControls: Object.freeze(negativeControls),
-    waivers: Object.freeze([...gauntletWaivers, ...ledgerWaivers(repoRoot, now)]),
+    waivers: Object.freeze([
+      ...gauntletWaivers,
+      ...ledgerWaivers(repoRoot, now),
+      ...reviewFindingWaivers(repoRoot, now),
+    ]),
   });
 }

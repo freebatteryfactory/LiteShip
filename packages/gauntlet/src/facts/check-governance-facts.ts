@@ -67,6 +67,14 @@ export const WAIVER_FRESHNESS_STORES = Object.freeze({
     label: 'the traceability ledger (testing-ledger.yaml)',
     location: 'traceability/testing-ledger.yaml',
   }),
+  // W1.5 packet 5 — the structural answer to an external review finding
+  // surviving thirteen rounds. A finding that is disputed or waived rather than
+  // fixed is a relaxation like any other, so it expires on the SAME clock as
+  // the other two stores instead of living in a reviewer's memory.
+  review: Object.freeze({
+    label: 'the external review-finding ledger (review-findings.json)',
+    location: 'traceability/review-findings.json',
+  }),
 });
 
 /** Stable identity of one enrolled waiver store. */

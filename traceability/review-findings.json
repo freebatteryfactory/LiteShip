@@ -1,0 +1,78 @@
+{
+  "schema": "liteship/review-findings@1",
+  "findings": [
+    {
+      "id": "coderabbit/pr-194/3688115225",
+      "provider": "coderabbit",
+      "pullRequest": 194,
+      "summary": "campaignJobSection bounded a workflow job with a lowercase-only regex, so a section bled into the next job and a campaign job with no cache steps passed",
+      "status": "resolved",
+      "resolution": {
+        "commit": "732dca9b",
+        "evidence": "tests/unit/cli/lib/campaign-wall-budget.test.ts"
+      },
+      "acknowledged": false,
+      "acknowledgementNote": "the fix landed; the thread reply is still owed (plan S1.6, an after-merge duty)"
+    },
+    {
+      "id": "owner-rebuttal/content-address-hash",
+      "provider": "owner-rebuttal",
+      "summary": "proposals to replace FNV-1a for content addresses with SHA-256",
+      "status": "disputed",
+      "owner": "heyoub",
+      "justification": "decided: fnv1a addresses identity, SHA-256 covers integrity digests over canonical bytes. The two answer different questions and neither is a weakening of the other.",
+      "expiry": "2027-02-01",
+      "acknowledged": true
+    },
+    {
+      "id": "owner-rebuttal/effect-residue-string-context",
+      "provider": "owner-rebuttal",
+      "summary": "effect-residue.ts string-context blindness and whole-file allowlist suppression reported as fail-open",
+      "status": "disputed",
+      "owner": "heyoub",
+      "justification": "intentional: RED is the fail-closed direction for this scanner, so the reported behaviour is the safe one. Re-argued and re-rebutted more than once.",
+      "expiry": "2027-02-01",
+      "acknowledged": true
+    },
+    {
+      "id": "owner-rebuttal/playwright-with-deps",
+      "provider": "owner-rebuttal",
+      "summary": "install Playwright browsers with --with-deps in CI",
+      "status": "disputed",
+      "owner": "heyoub",
+      "justification": "the pinned ubuntu-24.04 image contract already supplies the system dependencies; --with-deps would re-install them on every run for no verdict change.",
+      "expiry": "2027-02-01",
+      "acknowledged": true
+    },
+    {
+      "id": "owner-rebuttal/audit-profile-floor-dispatch",
+      "provider": "owner-rebuttal",
+      "summary": "audit --profile floor dispatch reported as unguarded",
+      "status": "disputed",
+      "owner": "heyoub",
+      "justification": "refuted and already pinned by tests/unit/cli/dispatch-subcommand-arity.test.ts, which enumerates the catalog identities rather than sampling them.",
+      "expiry": "2027-02-01",
+      "acknowledged": true
+    },
+    {
+      "id": "owner-rebuttal/czap-era-surfaces",
+      "provider": "owner-rebuttal",
+      "summary": "czap to liteship rename findings and ADR/docs-era references",
+      "status": "disputed",
+      "owner": "heyoub",
+      "justification": "those surfaces are deleted, not renamed. A finding against them is a finding against bytes that no longer ship.",
+      "expiry": "2027-02-01",
+      "acknowledged": true
+    },
+    {
+      "id": "owner-rebuttal/test-title-polarity-scanner",
+      "provider": "owner-rebuttal",
+      "summary": "build a scanner that detects test titles whose polarity contradicts their assertion",
+      "status": "disputed",
+      "owner": "heyoub",
+      "justification": "polarity is not decidable from text; an approximate scanner over an open grammar would emit noise forever. The one live instance was fixed by hand, deliberately without a guard.",
+      "expiry": "2027-02-01",
+      "acknowledged": true
+    }
+  ]
+}
