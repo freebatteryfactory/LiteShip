@@ -27,7 +27,11 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { CHECK_REGISTRY, SCRIPT_EXEMPTIONS } from '@liteship/command';
-import { buildCheckGovernanceFacts } from '@liteship/command/host';
+// The STRICT builder, reached by module path on purpose: the `@liteship/command/host`
+// barrel deliberately publishes only the admission-carrying `checkGovernanceFactsFor`,
+// so a consumer cannot call the strict half unguarded. These laws are about the strict
+// half itself and hold the repository root, which does carry every governance record.
+import { buildCheckGovernanceFacts } from '../../../packages/command/src/host/check-governance.js';
 import { EXECUTION_PREREQUISITES } from '../../../scripts/lib/execution-prerequisites.js';
 import {
   verifyGate,

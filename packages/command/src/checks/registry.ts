@@ -308,10 +308,17 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   {
     id: 'check/security-audit',
     title: 'Live package-registry vulnerability audit',
-    claim: 'The current lockfile has no high- or critical-severity advisory in the live pnpm registry receipt.',
+    claim:
+      'The current lockfile has no high- or critical-severity advisory in the live pnpm registry receipt, and every module the receipt reports at those severities carries a declared security minimum at or above the floor that closes it.',
     owner: 'scripts/security-audit.ts',
     command: 'pnpm run security:audit',
-    inputs: ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', '.npmrc'],
+    inputs: [
+      'package.json',
+      'pnpm-lock.yaml',
+      'pnpm-workspace.yaml',
+      '.npmrc',
+      'scripts/lib/security-audit-contract.ts',
+    ],
     profiles: ['full', 'release'],
     platforms: ['linux'],
     timeoutMs: 120_000,
