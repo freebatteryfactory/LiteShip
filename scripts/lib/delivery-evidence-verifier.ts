@@ -456,6 +456,20 @@ export function verifyStandaloneDeliveryEvidence(input: VerifyDeliveryEvidenceIn
   ) {
     fail('delivery metrics selection width does not match the admitted plan');
   }
+  const evidenceCoverage = metrics.evidenceCoverage;
+  const independentlyRequired = selected.length;
+  const independentlyPresent = parsedEvidence.length;
+  const independentlyMissing = independentlyRequired - independentlyPresent;
+  if (
+    evidenceCoverage === null ||
+    evidenceCoverage.required !== independentlyRequired ||
+    evidenceCoverage.present !== independentlyPresent ||
+    evidenceCoverage.missing !== independentlyMissing
+  ) {
+    fail(
+      `delivery metrics evidence coverage contradicts the independently enumerated requirement domain (${independentlyPresent}/${independentlyRequired}, missing ${independentlyMissing})`,
+    );
+  }
   if (metrics.slos.evidenceComplete !== 'pass') fail('delivery metrics do not prove complete evidence');
   if (metrics.slos.artifactIdentity !== 'pass') fail('delivery metrics do not prove admitted artifact identity');
   if (manifest.metrics.id !== metrics.metricsId) fail('manifest metrics id does not match raw metrics');

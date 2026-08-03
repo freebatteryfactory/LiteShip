@@ -263,6 +263,28 @@ describe('standalone delivery evidence verifier', () => {
     }
   });
 
+  test('binds serialized evidence coverage to the independently enumerated requirement domain', () => {
+    const value = current();
+    expect(value.selected).toHaveLength(14);
+    const metricsPath = join(value.root, 'reports', 'delivery-metrics.json');
+    const original = JSON.parse(readFileSync(metricsPath, 'utf8')) as Record<string, unknown>;
+    const { metricsId: _ignored, ...unsignedOriginal } = original;
+    const unsigned = {
+      ...unsignedOriginal,
+      evidenceCoverage: { present: 13, required: 13, missing: 0 },
+    };
+    const metrics = { ...unsigned, metricsId: semanticSha256(unsigned) };
+    const raw = `${JSON.stringify(metrics, null, 2)}\n`;
+    writeRaw(value.root, 'reports/delivery-metrics.json', raw);
+
+    expect(() =>
+      verify({
+        ...value.unsigned,
+        metrics: { ...value.unsigned.metrics, id: metrics.metricsId, digest: sha256RawBytes(raw) },
+      }),
+    ).toThrow(/evidence coverage.*independently enumerated/u);
+  });
+
   test('independently re-admits change intent and refuses a valid but unauthorized declaration', () => {
     const value = current();
     const parsed = JSON.parse(readFileSync(join(value.root, 'reports', 'change-intent.json'), 'utf8')) as {

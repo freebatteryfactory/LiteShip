@@ -289,7 +289,7 @@ export function createDeliveryEvidenceFixture(): DeliveryEvidenceFixture {
       kind: 'delivery-metrics',
       path: 'reports/delivery-metrics.json',
       digest: sha256RawBytes(metricsRaw),
-      verifier: 'delivery-evidence/metrics-v3',
+      verifier: 'delivery-evidence/metrics-v4',
     },
     verdict: 'accepted',
   };

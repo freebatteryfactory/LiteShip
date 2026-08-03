@@ -7,6 +7,7 @@ import {
   parseDeliveryMetrics,
 } from '../../../scripts/lib/delivery-metrics.js';
 import { buildChangeIntent } from '../../../scripts/lib/change-intent.js';
+import { semanticSha256 } from '../../../scripts/lib/delivery-evidence-schema.js';
 import { createBenchmarkEvidence, createBenchmarkEvidenceArtifact } from '../../../scripts/bench/contracts.js';
 import { planAffectedTests } from '../../../scripts/lib/affected-test-plan.js';
 import type { AssuranceInventory } from '../../../scripts/lib/assurance-inventory.js';
@@ -130,6 +131,7 @@ describe('delivery metrics and SLO fold', () => {
     expect(first.metricsId).toMatch(/^sha256:[0-9a-f]{64}$/u);
     expect(first.verdict).toBe('within-slo');
     expect(first.evidenceCompleteness).toBe(1);
+    expect(first.evidenceCoverage).toEqual({ present: 10, required: 10, missing: 0 });
     expect(first.evidenceSources).toEqual({
       selectorCalibrationId: plan.selectorCalibrationId,
       flakeEvidenceId: `sha256:${'d'.repeat(64)}`,
@@ -300,6 +302,43 @@ describe('delivery metrics and SLO fold', () => {
         timeline: { ...timeline, failureAt: null, recoveredAt: '2026-07-24T12:00:50.000Z' },
       }),
     ).toThrow(/no preceding failure/u);
+  });
+
+  it('serializes the required and missing complement beside the present evidence numerator', () => {
+    const metrics = buildDeliveryMetrics({ ...base(), presentEvidence: 9 });
+    expect(metrics.evidenceCoverage).toEqual({ present: 9, required: 10, missing: 1 });
+    expect(metrics.evidenceCompleteness).toBe(0.9);
+  });
+
+  it('refuses numerator-only, missing-complement, and non-closing evidence coverage', () => {
+    const metrics = buildDeliveryMetrics(base());
+    const candidate = metrics as typeof metrics & {
+      readonly evidenceCoverage?: Readonly<Record<string, number>>;
+    };
+    const { evidenceCoverage: _removed, ...numeratorOnly } = candidate;
+    expect(() => parseDeliveryMetrics(numeratorOnly)).toThrow(/delivery metrics keys/u);
+
+    expect(() =>
+      parseDeliveryMetrics({
+        ...metrics,
+        evidenceCoverage: { present: 10, required: 10 },
+      }),
+    ).toThrow(/evidence coverage.*keys/u);
+    expect(() =>
+      parseDeliveryMetrics({
+        ...metrics,
+        evidenceCoverage: { present: 9, required: 10, missing: 0 },
+      }),
+    ).toThrow(/evidence coverage.*close/u);
+  });
+
+  it('refuses a re-addressed passing SLO whose evidence rate contradicts its coverage', () => {
+    const metrics = buildDeliveryMetrics(base());
+    const { metricsId: _metricsId, ...unsignedMetrics } = metrics;
+    const unsigned = { ...unsignedMetrics, evidenceCompleteness: 0 };
+    const forged = { ...unsigned, metricsId: semanticSha256(unsigned) };
+
+    expect(() => parseDeliveryMetrics(forged)).toThrow(/evidence completeness.*coverage/u);
   });
 
   it('re-addresses artifact identity only after standalone admission', () => {

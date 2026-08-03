@@ -61,7 +61,7 @@ export interface DeliveryMetricsEvidenceReference {
   readonly kind: 'delivery-metrics';
   readonly path: 'reports/delivery-metrics.json';
   readonly digest: Sha256Digest;
-  readonly verifier: 'delivery-evidence/metrics-v3';
+  readonly verifier: 'delivery-evidence/metrics-v4';
 }
 
 export interface DeliveryEvidenceManifestUnsigned {
@@ -291,7 +291,7 @@ export function parseDeliveryEvidenceManifest(raw: string | Uint8Array): Deliver
   digest(value['metrics']['digest'], 'metrics.digest');
   if (value['metrics']['kind'] !== 'delivery-metrics') fail('metrics.kind is invalid');
   if (value['metrics']['path'] !== 'reports/delivery-metrics.json') fail('metrics.path is invalid');
-  if (value['metrics']['verifier'] !== 'delivery-evidence/metrics-v3') fail('metrics.verifier is invalid');
+  if (value['metrics']['verifier'] !== 'delivery-evidence/metrics-v4') fail('metrics.verifier is invalid');
 
   return deepFreeze(value as unknown as DeliveryEvidenceManifest);
 }

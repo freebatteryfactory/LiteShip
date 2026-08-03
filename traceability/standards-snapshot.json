@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:028ba990",
+  "address": "fnv1a:a03c82a9",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4552,6 +4552,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/lib/ci-test-host-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/claim-coverage.ts",
       "level": "L1"
     },
     {
