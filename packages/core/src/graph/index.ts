@@ -68,6 +68,7 @@ export {
   parseGraphQueryEtagList,
   createGraphQueryRefreshBase,
   GRAPH_QUERY_FALLBACK_HEADER,
+  GRAPH_QUERY_DEFAULT_TIMEOUT_MS,
 } from './graph-query.js';
 
 export type {

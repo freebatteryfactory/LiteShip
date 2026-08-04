@@ -16,6 +16,7 @@
 
 import { ValidationError } from '@liteship/error';
 import type { DocumentGraph } from './document-graph.js';
+import { runWithExchangeDeadline, resolveExchangeTimeoutMs } from './exchange-deadline.js';
 import type { GraphStore } from './graph-mutation.js';
 import { verifyAppliedGraph } from './graph-mutation.js';
 
@@ -40,6 +41,14 @@ export type GraphQueryResponse =
 
 /** HTTP fallback header when the host cannot dispatch `QUERY` (loud ladder, not silent). */
 export const GRAPH_QUERY_FALLBACK_HEADER = 'X-Liteship-Query';
+
+/**
+ * Conservative client-side ceiling for ONE query attempt — headers plus the body
+ * read. An explicit finite safety default, not a measurement-derived performance
+ * claim. It mirrors {@link GRAPH_MUTATION_DEFAULT_TIMEOUT_MS} because the two legs
+ * talk to the same host over the same transport.
+ */
+export const GRAPH_QUERY_DEFAULT_TIMEOUT_MS = 30_000;
 
 const SHA256_ETAG_RE = /^sha256:[0-9a-f]{64}$/;
 const FNV_ETAG_RE = /^fnv1a:[0-9a-f]{8}$/;
@@ -199,6 +208,17 @@ export interface SendGraphQueryOptions {
    * 600, …). Default: 150. Pass 0 for immediate retries (tests).
    */
   readonly retryDelayMs?: number;
+  /**
+   * Deadline for ONE attempt, covering the whole exchange — response headers AND
+   * the body read that follows them. A finite non-negative value overrides
+   * {@link GRAPH_QUERY_DEFAULT_TIMEOUT_MS}; `undefined`, non-finite and negative
+   * values use that finite default. An unbounded request is deliberately not
+   * expressible: `refreshBase` awaits this sender inside the mutation client's
+   * serialized queue, so a wedged read body stalls every later submit too. An
+   * expired attempt is a retryable transport failure, so the total wall clock is
+   * bounded by `(maxRetries + 1)` attempts plus the backoff between them.
+   */
+  readonly timeoutMs?: number;
 }
 
 const queryHeaders = (ifNoneMatch: string | undefined): Record<string, string> => {
@@ -215,12 +235,14 @@ const queryHeaders = (ifNoneMatch: string | undefined): Record<string, string> =
 async function fetchGraphQueryOnce(
   url: string,
   options: SendGraphQueryOptions,
-  skipQueryMethod = false,
+  skipQueryMethod: boolean,
+  signal: AbortSignal,
 ): Promise<{ readonly response: Response; readonly usedFallback: boolean }> {
   const fetchImpl = options.fetchImpl ?? fetch;
   const init = {
     headers: queryHeaders(options.ifNoneMatch),
     body: JSON.stringify({} satisfies Record<string, never>),
+    signal,
   };
 
   if (!skipQueryMethod) {
@@ -236,6 +258,57 @@ async function fetchGraphQueryOnce(
     headers: { ...init.headers, [GRAPH_QUERY_FALLBACK_HEADER]: '1' },
   });
   return { response, usedFallback: true };
+}
+
+/** One attempt's outcome plus whether it may retry regardless of the parsed status. */
+interface GraphQueryAttempt {
+  readonly response: GraphQueryResponse;
+  /**
+   * Transport and body-read failures retry unconditionally (the request never
+   * produced a server answer); a PARSED `error` outcome respects `maxRetries`.
+   */
+  readonly transportFailure: boolean;
+}
+
+/**
+ * One whole exchange: transport call, body read, and parse. Never throws — every
+ * failure maps to the response shape, so the only rejection the caller can see is
+ * the deadline itself.
+ */
+async function attemptGraphQuery(
+  url: string,
+  options: SendGraphQueryOptions,
+  skipQueryMethod: boolean,
+  signal: AbortSignal,
+  noteFallback: () => void,
+): Promise<GraphQueryAttempt> {
+  let response: Response;
+  try {
+    const once = await fetchGraphQueryOnce(url, options, skipQueryMethod, signal);
+    response = once.response;
+    // Recorded the moment it is known, not on the way out: an exchange that
+    // expires mid-body must not make the next attempt re-probe QUERY.
+    if (once.usedFallback) noteFallback();
+  } catch (error) {
+    return { response: { status: 'error', message: `request failed: ${messageOf(error)}` }, transportFailure: true };
+  }
+
+  let body: unknown = null;
+  if (response.status !== 304) {
+    try {
+      body = await response.json();
+    } catch (error) {
+      return {
+        response: {
+          status: 'error',
+          message: `server did not return JSON (HTTP ${response.status}): ${messageOf(error)}`,
+        },
+        transportFailure: true,
+      };
+    }
+  }
+
+  return { response: parseGraphQueryHttpResponse(response, body, options.ifNoneMatch), transportFailure: false };
 }
 
 function parseGraphQueryHttpResponse(response: Response, body: unknown, ifNoneMatch?: string): GraphQueryResponse {
@@ -282,12 +355,16 @@ function parseGraphQueryHttpResponse(response: Response, body: unknown, ifNoneMa
 export async function sendGraphQuery(url: string, options: SendGraphQueryOptions = {}): Promise<GraphQueryResponse> {
   const maxRetries = options.maxRetries ?? 2;
   const retryDelayMs = options.retryDelayMs ?? 150;
+  const timeoutMs = resolveExchangeTimeoutMs(options.timeoutMs, GRAPH_QUERY_DEFAULT_TIMEOUT_MS);
   let lastError: GraphQueryResponse = { status: 'error', message: 'request failed after retries' };
   // Once one attempt learned the host rejects QUERY (405/501/404 → POST
   // fallback), later attempts go straight to POST — re-probing QUERY on every
   // retry would double round trips against a host whose answer cannot change
   // mid-recovery.
   let knownFallback = false;
+  const noteFallback = (): void => {
+    knownFallback = true;
+  };
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (attempt > 0 && retryDelayMs > 0) {
@@ -295,35 +372,30 @@ export async function sendGraphQuery(url: string, options: SendGraphQueryOptions
       await new Promise((resolve) => setTimeout(resolve, retryDelayMs * 2 ** (attempt - 1)));
     }
 
-    let response: Response;
+    let attempted: GraphQueryAttempt;
     try {
-      const once = await fetchGraphQueryOnce(url, options, knownFallback);
-      response = once.response;
-      knownFallback ||= once.usedFallback;
+      // The deadline covers the WHOLE exchange, not the transport call: `fetch`
+      // settles on response HEADERS, so a deadline that cleared on it would leave
+      // `response.json()` unbounded and a wedged body would hold this sender —
+      // and, through `createGraphQueryRefreshBase`, the mutation client's
+      // serialized submit queue — forever.
+      attempted = await runWithExchangeDeadline(timeoutMs, `query request timed out after ${timeoutMs}ms`, (signal) =>
+        attemptGraphQuery(url, options, knownFallback, signal, noteFallback),
+      );
     } catch (error) {
       lastError = { status: 'error', message: `request failed: ${messageOf(error)}` };
       continue;
     }
 
-    let body: unknown = null;
-    if (response.status !== 304) {
-      try {
-        body = await response.json();
-      } catch (error) {
-        lastError = {
-          status: 'error',
-          message: `server did not return JSON (HTTP ${response.status}): ${messageOf(error)}`,
-        };
-        continue;
-      }
-    }
-
-    const parsed = parseGraphQueryHttpResponse(response, body, options.ifNoneMatch);
-    if (parsed.status === 'error' && attempt < maxRetries) {
-      lastError = parsed;
+    if (attempted.transportFailure) {
+      lastError = attempted.response;
       continue;
     }
-    return parsed;
+    if (attempted.response.status === 'error' && attempt < maxRetries) {
+      lastError = attempted.response;
+      continue;
+    }
+    return attempted.response;
   }
 
   return lastError;

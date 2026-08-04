@@ -539,6 +539,11 @@ const DEFAULT_CONSTANTS = [
   // override settles the stalled submit to the client's error response so the queue
   // can advance. No default graph-mutation queue entry may wait without a deadline.
   'GRAPH_MUTATION_DEFAULT_TIMEOUT_MS',
+  // Finite fail-safe for ONE graph query attempt — headers AND the body read that
+  // follows them. `createGraphQueryRefreshBase` awaits the read leg inside the
+  // mutation client's serialized queue, so an unbounded read body stalls the write
+  // leg too; a missing or invalid override falls back to this deadline.
+  'GRAPH_QUERY_DEFAULT_TIMEOUT_MS',
   'CANVAS_FALLBACK_WIDTH',
   'CANVAS_FALLBACK_HEIGHT',
   // Worker-blob twin of rawIndexF32 as an inlinable JS source string (Phase-0).

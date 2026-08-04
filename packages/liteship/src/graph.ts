@@ -62,6 +62,7 @@ export {
   parseGraphQueryEtagList,
   createGraphQueryRefreshBase,
   GRAPH_QUERY_FALLBACK_HEADER,
+  GRAPH_QUERY_DEFAULT_TIMEOUT_MS,
 } from '@liteship/core/graph';
 export type {
   GraphQueryRequest,

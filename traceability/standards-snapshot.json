@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:06aba41c",
+  "address": "fnv1a:155c1192",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -2297,6 +2297,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "packages/core/src/graph/document-graph.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/graph/exchange-deadline.ts",
       "level": "L1"
     },
     {

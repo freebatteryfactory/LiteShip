@@ -1364,6 +1364,10 @@
           "kind": "const"
         },
         {
+          "name": "GRAPH_QUERY_DEFAULT_TIMEOUT_MS",
+          "kind": "const"
+        },
+        {
           "name": "GRAPH_QUERY_FALLBACK_HEADER",
           "kind": "const"
         },
