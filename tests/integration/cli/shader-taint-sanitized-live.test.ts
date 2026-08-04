@@ -22,7 +22,10 @@
 // PROVES: INV-SHADER-CONTENT-INTEGRITY
 import { describe, it, expect, beforeAll } from 'vitest';
 import { scaledTimeout } from '../../../vitest.shared.js';
-import { buildRepoIRTaint, type TaintFacts } from '../../../packages/audit/src/repo-ir-taint.js';
+import { buildRepoIRTaint } from '../../../packages/audit/src/repo-ir-taint.js';
+// TaintFacts is OWNED and exported by @liteship/gauntlet; repo-ir-taint.ts only
+// imports it type-only, so it is not re-exported there.
+import type { TaintFacts } from '@liteship/gauntlet';
 import { LITESHIP_TAINT_REGISTRY } from '../../../packages/cli/src/internal/taint-policy.js';
 
 const SHADER_COMPILE_SINKS = new Set(['shaderSource', 'compileShader', 'createShaderModule']);

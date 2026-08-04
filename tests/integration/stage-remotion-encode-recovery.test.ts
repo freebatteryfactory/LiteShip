@@ -9,6 +9,8 @@ import {
   projectionKeys,
   sealGraph,
   sealNode,
+  StateName,
+  ThresholdValue,
   type CellMeta,
   type ComponentNode,
   type CompositeState,
@@ -33,8 +35,8 @@ function renderGraph(mobileOpacity = 0.25, desktopOpacity = 1): DocumentGraph {
     id: '' as ContentAddress,
     meta,
     name: 'hero',
-    thresholds: [0, 960],
-    states: ['mobile', 'desktop'],
+    thresholds: [ThresholdValue(0), ThresholdValue(960)],
+    states: [StateName('mobile'), StateName('desktop')],
   });
   const entity = sealNode<EntityNode>({
     _tag: 'DocGraphEntityNode',
@@ -63,7 +65,7 @@ function renderGraph(mobileOpacity = 0.25, desktopOpacity = 1): DocumentGraph {
       id: '' as ContentAddress,
       meta,
       entityRef: entity.id,
-      state,
+      state: StateName(state),
       bindings: { opacity },
     });
   return sealGraph({

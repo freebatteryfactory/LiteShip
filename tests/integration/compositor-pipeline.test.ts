@@ -11,6 +11,7 @@
 
 import { describe, test, expect, vi } from 'vitest';
 import { Boundary, Compositor, FrameBudget, defineBoundary, createCompositorStatePool } from '@liteship/core';
+import type { CompositorQuantizer, StateUnion } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -33,24 +34,36 @@ const colorBoundary = defineBoundary({
   ] as const,
 });
 
+/**
+ * A real {@link CompositorQuantizer} — the SYNCHRONOUS arm (`Quantizer` + a
+ * required `stateSync`) — plus the read counter this suite asserts on. The
+ * quantizer contract is satisfied honestly: no fabricated reactive `changes`
+ * field, and every state value is the boundary's own `StateUnion`.
+ */
+type SpiedQuantizer<B extends Boundary> = CompositorQuantizer<B> & {
+  _setState(state: StateUnion<B>): void;
+  readonly readCount: number;
+  resetReadCount(): void;
+};
+
 /** Quantizer with a spy on state reads to count recomputations. */
-function makeSpiedQuantizer(boundary: Boundary, initialState?: string) {
-  let currentState = initialState ?? (boundary.states[0] as string);
+function makeSpiedQuantizer<B extends Boundary>(boundary: B, initialState?: StateUnion<B>): SpiedQuantizer<B> {
+  let currentState: StateUnion<B> = initialState ?? boundary.states[0];
   let readCount = 0;
 
   return {
+    _tag: 'Quantizer',
     boundary,
     stateSync() {
       readCount++;
       return currentState;
     },
-    changes: null as any,
     evaluate(value: number) {
-      currentState = Boundary.evaluate(boundary, value) as string;
+      currentState = Boundary.evaluate(boundary, value);
       return currentState;
     },
-    _setState(s: string) {
-      currentState = s;
+    _setState(state) {
+      currentState = state;
     },
     get readCount() {
       return readCount;
@@ -227,7 +240,7 @@ describe('Compositor pipeline integration', () => {
 
   test('31+ quantizers fall back to recompute-all (DirtyFlags limit)', async () => {
     const compositor = Compositor.create();
-    const spies: ReturnType<typeof makeSpiedQuantizer>[] = [];
+    const spies: SpiedQuantizer<typeof widthBoundary>[] = [];
 
     for (let i = 0; i < 33; i++) {
       const q = makeSpiedQuantizer(widthBoundary, 'mobile');

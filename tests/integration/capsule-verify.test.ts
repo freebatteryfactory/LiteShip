@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { withSpawned } from '../../scripts/lib/spawn.js';
 import { classifyBenchSource } from '@liteship/core/harness';
+import type { CapsuleGateSummary } from '@liteship/command';
 import { compileManifestOnly, type IsolatedCapsules } from '../setup/isolated-capsules.js';
 import { runCapsuleGateScan } from '../../packages/cli/src/commands/capsule-verify.js';
 
@@ -17,7 +18,7 @@ const admitGeneratedCorpus = async () => ({
 /** Exercise freshness laws without recursively executing the generated corpus. */
 async function runFreshnessReceipt(
   deps: Omit<NonNullable<Parameters<typeof runCapsuleGateScan>[1]>, 'runGeneratedCorpus'> = {},
-): Promise<{ status: string; errors?: string[] }> {
+): Promise<CapsuleGateSummary> {
   return runCapsuleGateScan(process.cwd(), { ...deps, runGeneratedCorpus: admitGeneratedCorpus });
 }
 
@@ -181,7 +182,7 @@ describe('capsule-verify', () => {
       });
       expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('stale');
       expect(
-        (receipt.errors ?? []).some((e) => e.includes('stale: core.token-buffer')),
+        receipt.errors.some((e) => e.includes('stale: core.token-buffer')),
         `errors: ${JSON.stringify(receipt.errors)}`,
       ).toBe(true);
     },

@@ -85,7 +85,7 @@ describe('MCP http transport (spawned)', () => {
           const batchBody = JSON.parse(batchRes.body) as JsonRpcResponse[];
           expect(Array.isArray(batchBody)).toBe(true);
           expect(batchBody.length).toBe(1);
-          expect(batchBody[0].id).toBe(3);
+          expect(batchBody[0]?.id).toBe(3);
 
           // notification-only batch produces 204 No Content
           const notifBatchRes = await rpc(url, [{ jsonrpc: '2.0', method: 'tools/list', params: {} }]);

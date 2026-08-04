@@ -891,6 +891,82 @@ describe('(a17) generated capsule sources are type-admitted before execution', (
   });
 });
 
+describe('(a18) integration runtime sources are type-admitted before execution', () => {
+  // Canonical Node Vitest owns every integration SUITE.
+  const runtimeEntrypoints = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/integration/'))
+    .sort();
+  // Modules those suites IMPORT (the CLI capture helper today) — derived from
+  // the real module graph of the executing entrypoints, never a roster.
+  const importedModules = tsconfigTestsResolvedFiles(runtimeEntrypoints).filter(
+    (path) => path.startsWith('tests/integration/') && !path.endsWith('.test.ts'),
+  );
+  // Consumer fixture APPS: a `scripts/test-<slug>.ts` launcher registered as the
+  // owner of a BLOCKING check drives the whole app tree at
+  // `tests/integration/<slug>/` (driver + framework config) under tsx. The
+  // population is therefore derived from the check registry; a launcher whose
+  // slug names no tier directory contributes nothing.
+  const fixtureAppSources = CHECK_REGISTRY.filter((check) => check.authority === 'blocking')
+    .map((check) => /^scripts\/test-([a-z0-9-]+)\.ts$/u.exec(check.owner)?.[1])
+    .filter((slug): slug is string => slug !== undefined)
+    .flatMap((slug) =>
+      fg.sync(`tests/integration/${slug}/**/*.ts`, { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] }),
+    )
+    .map((path) => path.replaceAll('\\', '/'));
+  const runtimeSources = [...new Set([...runtimeEntrypoints, ...importedModules, ...fixtureAppSources])].sort();
+  const authoredSources = fg
+    .sync('tests/integration/**/*.ts', { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/integration/'));
+  const testCheck = CHECK_REGISTRY.find((check) => check.id === 'check/test');
+
+  it('derives the complete integration tier from the Node runtime, its module graph, and the blocking launchers', () => {
+    expect(testCheck?.authority, 'check/test must remain the BLOCKING owner of the integration suite corpus').toBe(
+      'blocking',
+    );
+    expect(
+      runtimeEntrypoints.length,
+      'the integration suite corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(42);
+    expect(
+      importedModules.length,
+      'the integration helper-module corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      fixtureAppSources.length,
+      'the registered consumer fixture-app corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(6);
+    expect(runtimeSources, 'tests/integration contains a source with no executable owner').toEqual(authoredSources);
+  });
+
+  it('directly admits every executable integration source through one future-proof tree root', () => {
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} integration sources; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/integration/') && entry.includes('*') && entry.endsWith('.ts'),
+      ),
+      'integration admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with integration admission removed exposes the complete executable tree', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/integration/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
 // --------------------------------------------------------------------------
 // (b) Coverage floors — the real gates cover a broad, non-trivial surface.
 // --------------------------------------------------------------------------

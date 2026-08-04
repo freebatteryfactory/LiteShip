@@ -32,7 +32,16 @@ import {
   PROJECTION_KEYS_SOURCE,
   defineBoundary,
 } from '@liteship/core';
-import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta, ContentAddress } from '@liteship/core';
+import type {
+  PolicyNode,
+  RuntimeSite,
+  CapTier,
+  CapSet,
+  CellMeta,
+  ContentAddress,
+  CompositorQuantizer,
+  StateUnion,
+} from '@liteship/core';
 import { adaptiveAttrs } from '@liteship/astro';
 import { applyBoundaryState, parseBoundary } from '../../packages/astro/src/runtime/boundary.js';
 
@@ -49,14 +58,19 @@ const widthBoundary = defineBoundary({
   ] as const,
 });
 
-function makeQuantizer(boundary: Boundary, initialState?: string) {
-  let currentState = initialState ?? (boundary.states[0] as string);
+/**
+ * A real {@link CompositorQuantizer} — the SYNCHRONOUS arm (`Quantizer` + a
+ * required `stateSync`), so the compositor drives the same contract a live
+ * quantizer satisfies rather than a stub with a fabricated reactive `changes`.
+ */
+function makeQuantizer<B extends Boundary>(boundary: B, initialState?: StateUnion<B>): CompositorQuantizer<B> {
+  let currentState: StateUnion<B> = initialState ?? boundary.states[0];
   return {
+    _tag: 'Quantizer',
     boundary,
     stateSync: () => currentState,
-    changes: null as never,
     evaluate(value: number) {
-      currentState = Boundary.evaluate(boundary, value) as string;
+      currentState = Boundary.evaluate(boundary, value);
       return currentState;
     },
   };

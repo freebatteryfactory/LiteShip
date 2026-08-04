@@ -53,6 +53,12 @@
     // must typecheck together, so a generator whose output drifts from the
     // production contract fails here rather than at runtime.
     "tests/generated/**/*.ts",
+    // The integration tier is one executable unit: the canonical Node suites,
+    // the helper modules they import, and the consumer fixture APPS driven by
+    // the blocking `scripts/test-<slug>.ts` launchers (driver + framework
+    // config). Admit the whole tree so an adapter contract drift fails
+    // typecheck before the build/serve integration runs.
+    "tests/integration/**/*.ts",
     // The runtime fuzz tier reaches coverage-report scripts through the
     // security-boundary corpus. Admit the repository-owned minimal Istanbul
     // declarations so those transitive script contracts stay strict.
@@ -125,7 +131,6 @@
     "tests/unit/assets/binary-fault-simulation.test.ts",
     "tests/unit/assets/binary-mcdc.test.ts",
     "tests/unit/assets/decoder-fault-injection.test.ts",
-    "tests/integration/assets-image-differential.test.ts",
     // The transition-conformance gate RUNNER proof (green over the native transports + red on
     // a forced divergence) — folds the shared runner through the lean gate exactly as the CI
     // gate script does, so a runner/law drift fails the typecheck.

@@ -12,15 +12,60 @@ import { describe, test, expect } from 'vitest';
 import { UIQuality, GenFrame, createTokenBuffer } from '@liteship/core';
 import type { UIQualityTier, UIFrame, ContentAddress } from '@liteship/core';
 import { LLMAdapter } from '@liteship/web';
-import type { LLMChunk } from '@liteship/web';
+import type { LLMChunk, LLMChunkType, ChunkParser, SSEMessage } from '@liteship/web';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeSSEMessage(data: string) {
-  return { id: '', event: '', data, retry: undefined };
+/**
+ * One decoded SSE message carrying an LLM provider payload. The stream client
+ * has already decoded the wire frame, so what the adapter consumes is a typed
+ * {@link SSEMessage} — the incremental `patch` arm, whose `data` is the
+ * provider's JSON text.
+ */
+function makeSSEMessage(data: string): SSEMessage {
+  return { type: 'patch', data };
 }
+
+const LLM_CHUNK_TYPES = ['text', 'tool-call-start', 'tool-call-delta', 'tool-call-end', 'done'] as const;
+
+function isChunkType(value: unknown): value is LLMChunkType {
+  return LLM_CHUNK_TYPES.some((kind) => kind === value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+/**
+ * The provider parser every pipeline below wires into `LLMAdapter.create`.
+ * Fail-closed: only the `patch` arm with a JSON payload naming a declared
+ * {@link LLMChunkType} is admitted, and each optional field is carried only
+ * when it holds its declared type. Anything else is dropped as `null` — the
+ * adapter's documented drop signal.
+ */
+const parseChunk: ChunkParser = (event) => {
+  if (event.type !== 'patch' || typeof event.data !== 'string') return null;
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(event.data);
+  } catch {
+    return null;
+  }
+  if (!isRecord(decoded)) return null;
+  const type = decoded['type'];
+  if (!isChunkType(type)) return null;
+  const content = decoded['content'];
+  const toolName = decoded['toolName'];
+  return {
+    type,
+    partial: decoded['partial'] === true,
+    ...(typeof content === 'string' ? { content } : {}),
+    ...(typeof toolName === 'string' ? { toolName } : {}),
+    ...('toolArgs' in decoded ? { toolArgs: decoded['toolArgs'] } : {}),
+  };
+};
 
 // ---------------------------------------------------------------------------
 // Integration: Token Buffer → ABR Tier → Frame Classification
@@ -33,9 +78,10 @@ describe('GenUI pipeline integration', () => {
     // Track tier changes
     let currentTier: UIQualityTier = 'skeleton';
 
-    const evaluator = UIQuality.make({
-      deviceTier: 'animations', // mid-range device
-    });
+    // The device tier is an argument of `evaluate`, not of `make` — the
+    // evaluator is stateful only in its hysteresis memory.
+    const evaluator = UIQuality.make();
+    const DEVICE_TIER = 'animations'; // mid-range device
 
     const scheduler = GenFrame.make({
       tokenBuffer: buf,
@@ -43,7 +89,7 @@ describe('GenUI pipeline integration', () => {
     });
 
     // Empty buffer → skeleton tier
-    currentTier = evaluator.evaluate(buf.occupancy);
+    currentTier = evaluator.evaluate(buf.occupancy, DEVICE_TIER);
     expect(currentTier).toBe('skeleton');
 
     // First tick is always a keyframe (even with empty buffer)
@@ -57,7 +103,7 @@ describe('GenUI pipeline integration', () => {
 
     // Push tokens to fill buffer partially (15 of 64 = ~23% occupancy)
     for (let i = 0; i < 15; i++) buf.push(`token${i}`);
-    currentTier = evaluator.evaluate(buf.occupancy);
+    currentTier = evaluator.evaluate(buf.occupancy, DEVICE_TIER);
     // With mid-range device (0.5), composite = 0.234 * 0.7 + 0.5 * 0.3 = 0.314
     // Should be text-only or styled
     expect(['text-only', 'styled']).toContain(currentTier);
@@ -72,7 +118,7 @@ describe('GenUI pipeline integration', () => {
 
     // Push more tokens to raise occupancy
     for (let i = 0; i < 50; i++) buf.push(`more${i}`);
-    const newTier = evaluator.evaluate(buf.occupancy);
+    const newTier = evaluator.evaluate(buf.occupancy, DEVICE_TIER);
 
     // Tier changed → next frame is keyframe
     if (newTier !== currentTier) {
@@ -143,24 +189,9 @@ describe('GenUI pipeline integration', () => {
       makeSSEMessage('{"type":"done"}'),
     ];
 
-    const parser = (event: (typeof events)[0]): LLMChunk | null => {
-      try {
-        const data = JSON.parse(event.data);
-        return {
-          type: data.type,
-          partial: data.partial ?? false,
-          content: data.content,
-          toolName: data.toolName,
-          toolArgs: data.toolArgs,
-        };
-      } catch {
-        return null;
-      }
-    };
-
     const adapter = LLMAdapter.create({
       source: events,
-      parser,
+      parser: parseChunk,
     });
 
     // Collect all emitted chunks
@@ -197,23 +228,9 @@ describe('GenUI pipeline integration', () => {
       makeSSEMessage('{"type":"done"}'),
     ];
 
-    const parser = (event: (typeof events)[0]): LLMChunk | null => {
-      try {
-        const data = JSON.parse(event.data);
-        return {
-          type: data.type,
-          partial: data.partial ?? false,
-          content: data.content,
-          toolName: data.toolName,
-        };
-      } catch {
-        return null;
-      }
-    };
-
     const adapter = LLMAdapter.create({
       source: events,
-      parser,
+      parser: parseChunk,
     });
 
     // Pipe text tokens into a real TokenBuffer
@@ -234,18 +251,9 @@ describe('GenUI pipeline integration', () => {
     const events = Array.from({ length: 20 }, (_, i) => makeSSEMessage(`{"type":"text","content":"token${i}"}`));
     events.push(makeSSEMessage('{"type":"done"}'));
 
-    const parser = (event: (typeof events)[0]): LLMChunk | null => {
-      try {
-        const data = JSON.parse(event.data);
-        return { type: data.type, partial: false, content: data.content };
-      } catch {
-        return null;
-      }
-    };
-
     const adapter = LLMAdapter.create({
       source: events,
-      parser,
+      parser: parseChunk,
     });
 
     // Wire: adapter → token buffer
@@ -257,8 +265,9 @@ describe('GenUI pipeline integration', () => {
     expect(buf.length).toBe(20);
 
     // Wire: buffer → ABR evaluator
-    const evaluator = UIQuality.make({ deviceTier: 'animations' });
-    let tier = evaluator.evaluate(buf.occupancy);
+    const evaluator = UIQuality.make();
+    const DEVICE_TIER = 'animations';
+    let tier = evaluator.evaluate(buf.occupancy, DEVICE_TIER);
 
     // Wire: tier + buffer → frame scheduler
     const scheduler = GenFrame.make({
@@ -270,7 +279,7 @@ describe('GenUI pipeline integration', () => {
     const allFrames: UIFrame[] = [];
     let iterations = 0;
     while (buf.length > 0 && iterations < 100) {
-      tier = evaluator.evaluate(buf.occupancy);
+      tier = evaluator.evaluate(buf.occupancy, DEVICE_TIER);
       const frame = scheduler.tick();
       if (frame) allFrames.push(frame);
       iterations++;

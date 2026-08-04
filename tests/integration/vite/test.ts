@@ -12,7 +12,7 @@
 
 import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { runPnpm } from '../../../scripts/support/pnpm-process.ts';
+import { runPnpm } from '../../../scripts/support/pnpm-process.js';
 
 // ---------------------------------------------------------------------------
 // Paths
