@@ -13,6 +13,12 @@ export interface ForbiddenImportClosureFinding extends ForbiddenImportFinding {
   readonly importer: string;
 }
 
+/** One static module edge — runtime or type-only — with the line that carries it. */
+export interface SourceModuleEdge {
+  readonly specifier: string;
+  readonly line: number;
+}
+
 function runtimeSpecifiers(path: string): readonly string[] {
   const source = readFileSync(path, 'utf8');
   const ast = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
@@ -41,29 +47,39 @@ function runtimeSpecifiers(path: string): readonly string[] {
   return specifiers;
 }
 
-function sourceSpecifiers(path: string): readonly string[] {
+function moduleEdges(path: string): readonly SourceModuleEdge[] {
   const source = readFileSync(path, 'utf8');
   const ast = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-  const specifiers: string[] = [];
+  const edges: SourceModuleEdge[] = [];
+  const record = (literal: ts.StringLiteral): void => {
+    edges.push({
+      specifier: literal.text,
+      line: ast.getLineAndCharacterOfPosition(literal.getStart(ast)).line + 1,
+    });
+  };
   const visit = (node: ts.Node): void => {
     if (
       (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
       node.moduleSpecifier !== undefined &&
       ts.isStringLiteral(node.moduleSpecifier)
     ) {
-      specifiers.push(node.moduleSpecifier.text);
+      record(node.moduleSpecifier);
     } else if (
       ts.isCallExpression(node) &&
       node.expression.kind === ts.SyntaxKind.ImportKeyword &&
       node.arguments.length === 1 &&
       ts.isStringLiteral(node.arguments[0]!)
     ) {
-      specifiers.push(node.arguments[0].text);
+      record(node.arguments[0]);
     }
     ts.forEachChild(node, visit);
   };
   visit(ast);
-  return specifiers;
+  return edges;
+}
+
+function sourceSpecifiers(path: string): readonly string[] {
+  return moduleEdges(path).map((edge) => edge.specifier);
 }
 
 /** Normalize one source path for deterministic receipts on Windows and POSIX. */
@@ -100,6 +116,34 @@ function resolveSourceImport(importer: string, specifier: string): string | null
   ];
   const source = candidates.find((candidate) => existsSync(candidate) && statSync(candidate).isFile());
   return source === undefined ? null : realpathSync.native(source);
+}
+
+/**
+ * Enumerate every static module edge of one source file, in source order.
+ *
+ * Unlike {@link sourceRuntimeImports} this keeps type-only edges: an
+ * architectural edge exists whether or not it survives erasure, and the line
+ * number lets a gate name the exact statement it rejects.
+ */
+export function sourceModuleEdges(root: string, entry: string): readonly SourceModuleEdge[] {
+  return moduleEdges(resolve(root, entry));
+}
+
+/**
+ * Resolve one RELATIVE specifier to the repo-relative source file it names.
+ *
+ * Returns `null` for a bare package specifier, for a specifier that resolves to
+ * no source file, and for one that escapes the repository root — so a caller
+ * reasoning about in-repo edges never has to reconstruct the resolution table.
+ */
+export function resolveRelativeSourcePath(root: string, importer: string, specifier: string): string | null {
+  if (!specifier.startsWith('.')) return null;
+  const rootPath = realpathSync.native(resolve(root));
+  const target = resolveSourceImport(resolve(rootPath, importer), specifier);
+  if (target === null) return null;
+  const rel = relative(rootPath, target);
+  if (rel === '' || rel === '..' || rel.startsWith(`..${sep}`)) return null;
+  return normalizeSourcePath(rel);
 }
 
 /** Recursively enumerate every TypeScript source file below a repo-owned directory. */

@@ -12,8 +12,9 @@
  * @module
  */
 
-import { createDenseStore, definePart, EntityId } from '../ecs/index.js';
-import type { DenseStore } from '../ecs/index.js';
+import { createDenseStore } from '../ecs/dense.js';
+import { definePart, EntityId } from '../ecs/part.js';
+import type { DenseStore } from '../ecs/dense.js';
 import { Plan } from '../authoring/plan.js';
 import { schema } from '../schema/constructors.js';
 

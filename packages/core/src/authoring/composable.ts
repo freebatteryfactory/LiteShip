@@ -10,12 +10,14 @@
 import type { ContentAddress } from '../schema/brands.js';
 import type { Token } from './token.js';
 import type { Style } from './style.js';
-import type { World } from '../ecs/index.js';
-import type { AdmittedPartValue, DenseStore, DenseStoreWriter, EntityId, Part } from '../ecs/index.js';
+import type { World } from '../ecs/world.js';
+import type { DenseStore, DenseStoreWriter } from '../ecs/dense.js';
+import type { AdmittedPartValue, EntityId, Part } from '../ecs/part.js';
 import { Token as TokenNS } from './token.js';
 import { Style as StyleNS } from './style.js';
 import { Boundary } from './boundary.js';
-import { admitPart, createDenseStore, definePart } from '../ecs/index.js';
+import { createDenseStore } from '../ecs/dense.js';
+import { admitPart, definePart } from '../ecs/part.js';
 import { contentAddressOf } from '../evidence/content-address.js';
 import { ValidationError } from '@liteship/error';
 import { schema } from '../schema/constructors.js';
