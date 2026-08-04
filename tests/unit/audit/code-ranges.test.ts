@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import { codeOnlyAST, commentsBlankedAST } from '@liteship/audit';
-import { codeOnly } from '../../../packages/gauntlet/src/gates/code-only.ts';
+import { codeOnly } from '../../../packages/gauntlet/src/gates/code-only.js';
 
 /**
  * The regex-POSITION keyword allowlist the lean char-machine carries

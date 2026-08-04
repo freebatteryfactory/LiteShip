@@ -233,9 +233,9 @@ describe('LEVEL 2 — observes the independent effect + surfaces the MC/DC gap',
     const mutants = generateConditionMutants(parse('r.ts', DECISION), { file: 'r.ts' });
     const emptyCoverage = makeCoverageMap([]);
     let calls = 0;
-    const counting: MutantTestRunner = (s) => {
+    const counting: MutantTestRunner = (s, coveringTests) => {
       calls += 1;
-      return strongRunner(s);
+      return strongRunner(s, coveringTests);
     };
     const verdicts = mutants.map((m) =>
       evaluateMutant(m, { runner: counting, coverage: emptyCoverage, originalSource: DECISION }),

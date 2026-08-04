@@ -72,7 +72,7 @@ describe('capability-link oracle — the dataflow proof', () => {
           .join('\n')}`,
       ).toEqual([]);
       // The symbol table self-assembled from the canonical modules covers every declared capability.
-      expect(facts.definedCapabilities.sort()).toEqual([...CAPABILITY_IDS].sort());
+      expect([...facts.definedCapabilities].sort()).toEqual([...CAPABILITY_IDS].sort());
       // Real-repo dataflow proof: the program closure grows with the repo, so the budget is
       // load-scaled like the sibling real-repo oracle (ir-parity-and-divergence).
     },

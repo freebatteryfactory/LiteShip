@@ -316,9 +316,9 @@ describe('LEVEL 2 — the engine kills adequate tests and surfaces inadequate on
     const mutants = generateMutants(parse('add.ts', ADD), { file: 'add.ts' });
     const emptyCoverage = makeCoverageMap([]);
     let runnerCalls = 0;
-    const countingRunner: MutantTestRunner = (src) => {
+    const countingRunner: MutantTestRunner = (src, coveringTests) => {
       runnerCalls += 1;
-      return strongValueRunner(src);
+      return strongValueRunner(src, coveringTests);
     };
     const verdicts = mutants.map((m) =>
       evaluateMutant(m, { runner: countingRunner, coverage: emptyCoverage, originalSource: ADD }),
