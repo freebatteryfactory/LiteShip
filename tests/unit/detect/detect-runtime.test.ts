@@ -15,7 +15,12 @@ import {
 } from '../../../packages/detect/src/tiers.js';
 import { Diagnostics } from '@liteship/core';
 
-type MockMediaQueryList = MediaQueryList & {
+// A real `MediaQueryList.matches` is readonly because the BROWSER owns the
+// transition; this mock stands in for the browser, so its `matches` is the one
+// field the test must be able to move before dispatching the change. Declaring
+// it mutable is what makes the media-change simulation expressible at all.
+type MockMediaQueryList = Omit<MediaQueryList, 'matches'> & {
+  matches: boolean;
   dispatchChange(): void;
 };
 

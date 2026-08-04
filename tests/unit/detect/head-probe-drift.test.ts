@@ -38,8 +38,34 @@ import type { GPUTier, HeadProbeCaps } from '../../../packages/detect/src/index.
 // classifyGPURenderer is internal to detect.ts (not on the package `.` surface);
 // import it directly for the drift comparison, matching the sibling test.
 import { classifyGPURenderer } from '../../../packages/detect/src/detect.js';
+import type { ExtendedDeviceCapabilities } from '../../../packages/detect/src/detect.js';
 
 const SCRIPT = emitDetectUpgradeScript();
+
+/**
+ * The ladders read only the five {@link HeadProbeCaps} primitives, but the
+ * canonical entrypoints this guard compares against (`capTierFromCapabilities`,
+ * `motionTierFromCapabilities`) take the full sweep capability record. Build the
+ * real record once, with every non-ladder field at a fixed conservative value, so
+ * ONE value flows through both paths — the delegation claim this file exists to
+ * prove — instead of a partial shape asserted into place.
+ */
+function sweepCapabilities(probe: HeadProbeCaps): ExtendedDeviceCapabilities {
+  return {
+    ...probe,
+    touchPrimary: false,
+    prefersColorScheme: 'light',
+    viewportWidth: 1440,
+    viewportHeight: 900,
+    devicePixelRatio: 1,
+    prefersContrast: 'no-preference',
+    forcedColors: false,
+    prefersReducedTransparency: false,
+    dynamicRange: 'standard',
+    colorGamut: 'srgb',
+    updateRate: 'fast',
+  };
+}
 
 /**
  * Drive the REAL emitted probe in jsdom with a fixed renderer + navigator +
@@ -177,13 +203,15 @@ describe('head-probe is a derived artifact of canonical @liteship/detect', () =>
           // witness (precedence may bump it above `tier` — that's canonical's
           // call, and the emitted probe must agree).
           const canonicalGpu = classifyGPURenderer(witness);
-          const expected = capTierFromCapabilities({
-            gpu: canonicalGpu,
-            cores: 8,
-            memory: 8,
-            webgpu: true,
-            prefersReducedMotion: false,
-          } as HeadProbeCaps);
+          const expected = capTierFromCapabilities(
+            sweepCapabilities({
+              gpu: canonicalGpu,
+              cores: 8,
+              memory: 8,
+              webgpu: true,
+              prefersReducedMotion: false,
+            }),
+          );
           const got = runEmittedProbe({
             renderer: witness,
             cores: 8,
@@ -207,11 +235,12 @@ describe('head-probe is a derived artifact of canonical @liteship/detect', () =>
         for (const memory of [2, 4, 8]) {
           for (const webgpu of [true, false]) {
             for (const prefersReducedMotion of [true, false]) {
-              const caps = { gpu, cores, memory, webgpu, prefersReducedMotion } as HeadProbeCaps;
+              const caps = sweepCapabilities({ gpu, cores, memory, webgpu, prefersReducedMotion });
               expect(capTierFromCapabilities(caps)).toBe(headProbeCapTier(caps));
-              // motionTierFromCapabilities reads a superset shape; the primitive
-              // fields are all the ladder consumes.
-              expect(motionTierFromCapabilities(caps as never)).toBe(headProbeMotionTier(caps));
+              // motionTierFromCapabilities reads the superset record; the five
+              // primitive fields are all the ladder consumes, and `caps` is one
+              // value satisfying both domains.
+              expect(motionTierFromCapabilities(caps)).toBe(headProbeMotionTier(caps));
             }
           }
         }
@@ -259,15 +288,15 @@ describe('head-probe is a derived artifact of canonical @liteship/detect', () =>
         fc.boolean(),
         fc.boolean(),
         (renderer, cores, memory, webgpu, reducedMotion) => {
-          const caps = {
+          const caps = sweepCapabilities({
             gpu: classifyGPURenderer(renderer),
             cores,
             memory,
             webgpu,
             prefersReducedMotion: reducedMotion,
-          } as HeadProbeCaps;
+          });
           const expectedTier = capTierFromCapabilities(caps);
-          const expectedMotion = motionTierFromCapabilities(caps as never);
+          const expectedMotion = motionTierFromCapabilities(caps);
           const got = runEmittedProbe({ renderer, cores, memory, webgpu, reducedMotion });
           expect(got.tier).toBe(expectedTier);
           expect(got.motion).toBe(expectedMotion);
@@ -299,13 +328,9 @@ describe('head-probe is a derived artifact of canonical @liteship/detect', () =>
       // discriminating capability tuple (cores/mem high, no reduced motion):
       // this tuple maps each distinct gpu tier to a distinct cap level, so an
       // emitted-classifier tier mismatch shows as a cap-level mismatch.
-      const expected = capTierFromCapabilities({
-        gpu: canonicalGpu,
-        cores: 8,
-        memory: 8,
-        webgpu: true,
-        prefersReducedMotion: false,
-      } as HeadProbeCaps);
+      const expected = capTierFromCapabilities(
+        sweepCapabilities({ gpu: canonicalGpu, cores: 8, memory: 8, webgpu: true, prefersReducedMotion: false }),
+      );
       const got = runEmittedProbe({ renderer, cores: 8, memory: 8, webgpu: true, reducedMotion: false });
       expect(got.tier).toBe(expected);
     }

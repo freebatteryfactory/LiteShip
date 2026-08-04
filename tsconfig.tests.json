@@ -112,6 +112,11 @@
     // capability contract. Admit the whole owned directory so a header or tier
     // contract drift fails typecheck before an edge request is served.
     "tests/unit/edge/**/*.test.ts",
+    // The detect suites hold the emitted head/provisional probes equivalent to
+    // the canonical ladders they are generated from. Admit the whole owned
+    // directory so a capability-shape drift fails typecheck before the emitted
+    // script and the runtime sweep are compared.
+    "tests/unit/detect/**/*.test.ts",
     // The shipped-example dogfood suites assert that the repository's own
     // examples still compose the public surfaces. Admit the whole tier so an
     // example contract drift fails typecheck before the dogfood executes.

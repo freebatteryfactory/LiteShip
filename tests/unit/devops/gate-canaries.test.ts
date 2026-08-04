@@ -1037,6 +1037,7 @@ describe('(a19) component runtime sources are type-admitted before execution', (
 const ADMITTED_UNIT_DIRECTORIES: ReadonlyArray<{ readonly dir: string; readonly floor: number }> = [
   { dir: 'audit', floor: 26 },
   { dir: 'create-liteship', floor: 1 },
+  { dir: 'detect', floor: 5 },
   { dir: 'edge', floor: 9 },
   { dir: 'examples', floor: 2 },
   { dir: 'genui', floor: 10 },

@@ -30,8 +30,27 @@ import {
   GPU_TIER_DEFAULT,
 } from '../../../packages/detect/src/index.js';
 import type { HeadProbeCaps } from '../../../packages/detect/src/index.js';
+import type { DeviceCapabilities } from '../../../packages/detect/src/detect.js';
 
 const SCRIPT = emitProvisionalDetectScript();
+
+/**
+ * The provisional ladder reads only the five {@link HeadProbeCaps} primitives,
+ * but canonical `capTierFromCapabilities` takes the full sweep capability
+ * record. Build the real record with every non-ladder field at a fixed
+ * conservative value, so the canonical side is a value the sweep could actually
+ * produce rather than a partial shape asserted into place.
+ */
+function sweepCapabilities(probe: HeadProbeCaps): DeviceCapabilities {
+  return {
+    ...probe,
+    touchPrimary: false,
+    prefersColorScheme: 'light',
+    viewportWidth: 1440,
+    viewportHeight: 900,
+    devicePixelRatio: 1,
+  };
+}
 
 /**
  * Drive the REAL emitted provisional script in jsdom with a fixed navigator +
@@ -80,13 +99,15 @@ describe('provisional detect script is a derived artifact of canonical @liteship
     for (const memory of [1, 2, 4, 8]) {
       for (const reducedMotion of [false, true]) {
         test(`provisional tier mirrors canonical for cores=${cores} mem=${memory} rm=${reducedMotion}`, () => {
-          const expected = capTierFromCapabilities({
-            gpu: GPU_TIER_DEFAULT,
-            cores,
-            memory,
-            webgpu: false,
-            prefersReducedMotion: reducedMotion,
-          } as HeadProbeCaps);
+          const expected = capTierFromCapabilities(
+            sweepCapabilities({
+              gpu: GPU_TIER_DEFAULT,
+              cores,
+              memory,
+              webgpu: false,
+              prefersReducedMotion: reducedMotion,
+            }),
+          );
           const got = runProvisional({ cores, memory, reducedMotion });
           expect(got.tier).toBe(expected);
           // The provisional flag must be set so the upgrade script knows to refine.
@@ -108,13 +129,15 @@ describe('provisional detect script is a derived artifact of canonical @liteship
     Object.defineProperty(navigator, 'deviceMemory', { configurable: true, value: undefined });
     try {
       new Function(SCRIPT)();
-      const expected = capTierFromCapabilities({
-        gpu: GPU_TIER_DEFAULT,
-        cores: 2,
-        memory: 4,
-        webgpu: false,
-        prefersReducedMotion: false,
-      } as HeadProbeCaps);
+      const expected = capTierFromCapabilities(
+        sweepCapabilities({
+          gpu: GPU_TIER_DEFAULT,
+          cores: 2,
+          memory: 4,
+          webgpu: false,
+          prefersReducedMotion: false,
+        }),
+      );
       expect(document.documentElement.getAttribute('data-liteship-tier')).toBe(expected);
     } finally {
       Object.defineProperty(window, 'matchMedia', { configurable: true, value: realMatchMedia });
