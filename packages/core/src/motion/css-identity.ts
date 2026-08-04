@@ -52,9 +52,18 @@ function slugPart(value: string, fallback: string): { readonly value: string; re
 /**
  * Derive a valid CSS identifier from semantic string parts.
  *
- * Safe ASCII parts preserve their established spelling. A lossy projection, or
- * `alwaysAddressed`, appends the short FNV-1a suffix over the original parts so
- * distinct authored identities do not collapse merely because their slugs do.
+ * Safe ASCII parts preserve their established spelling. A lossy projection, an
+ * ambiguous join, or `alwaysAddressed`, appends the short FNV-1a suffix over the
+ * original parts so distinct authored identities do not collapse merely because
+ * their slugs do.
+ *
+ * The address is skipped ONLY when the readable spelling DECODES back to the exact
+ * authored parts. Losslessness alone is not that guarantee, because the `-` join is
+ * itself lossy over parts that may contain `-`: `['a-b','c','d']` and
+ * `['a','b-c','d']` are both entirely lossless, both join to `a-b-c-d`, and the
+ * unaddressed form erased the component boundary that told them apart. The decode
+ * is a positive proof of injectivity rather than an enumeration of hazards, so a
+ * part shape nobody anticipated gets addressed instead of silently colliding.
  */
 export function cssIdentFor(
   prefix: 'liteship-motion-' | 'liteship-vt-',
@@ -65,7 +74,13 @@ export function cssIdentFor(
     throw ValidationError('cssIdentFor', 'identity parts must be a non-empty string array');
   }
   const slugs = parts.map((part) => slugPart(part, options.fallback));
-  const readable = `${prefix}${slugs.map((part) => part.value).join('-')}`;
-  if (options.alwaysAddressed !== true && slugs.every((part) => part.lossless)) return readable;
+  const joined = slugs.map((part) => part.value).join('-');
+  const readable = `${prefix}${joined}`;
+  const decoded = joined.split('-');
+  const recoversParts =
+    slugs.every((part) => part.lossless) &&
+    decoded.length === parts.length &&
+    decoded.every((piece, index) => piece === parts[index]);
+  if (options.alwaysAddressed !== true && recoversParts) return readable;
   return `${readable}-${fnv1a(JSON.stringify(parts)).slice('fnv1a:'.length)}`;
 }

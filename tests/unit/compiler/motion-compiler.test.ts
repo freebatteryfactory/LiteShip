@@ -4,6 +4,7 @@
  * @module
  */
 
+import fc from 'fast-check';
 import { describe, test, expect } from 'vitest';
 import {
   sealNode,
@@ -234,6 +235,88 @@ describe('MotionCompiler', () => {
     expect(hero.keyframes).toContain('@keyframes liteship-motion-hero-before-after');
     expect(footer.keyframes).toContain('@keyframes liteship-motion-footer-before-after');
     expect(hero.keyframes).not.toContain('@keyframes liteship-motion-footer-before-after');
+  });
+
+  /**
+   * The `@keyframes` name is `cssIdentFor('liteship-motion-', [target, fromState,
+   * toState])` with no `alwaysAddressed`, so the ALL-LOSSLESS path — every part a
+   * legal CSS ident already — ships the readable join with NO content address.
+   * A `-` is a legal ident character AND the join separator, so that path was not
+   * injective: `['a-b','c','d']` and `['a','b-c','d']` are both entirely lossless
+   * and both spell `liteship-motion-a-b-c-d`. Two different authored motions then
+   * emit the same `@keyframes` block name and the second silently overrides the
+   * first in the cascade.
+   *
+   * The existing injectivity property (view-transition-compile) only reaches the
+   * LOSSY case (its counterexample `ba/b` vs `ba-b`) and only the `alwaysAddressed`
+   * path. This one is generative over the all-lossless multi-part case on the live
+   * surface.
+   */
+  /**
+   * Every way of cutting `length` tokens into three non-empty consecutive runs.
+   * Each cut yields a DIFFERENT authored identity whose parts nevertheless join
+   * to the SAME `-` separated readable spelling, which is exactly the hazard.
+   */
+  const threeWayCuts = (length: number): readonly (readonly [number, number])[] => {
+    const cuts: (readonly [number, number])[] = [];
+    for (let first = 1; first < length; first += 1) {
+      for (let second = first + 1; second < length; second += 1) cuts.push([first, second]);
+    }
+    return cuts;
+  };
+
+  const identityAt = (tokens: readonly string[], cut: readonly [number, number]): readonly [string, string, string] => [
+    tokens.slice(0, cut[0]).join('-'),
+    tokens.slice(cut[0], cut[1]).join('-'),
+    tokens.slice(cut[1]).join('-'),
+  ];
+
+  /** Two DISTINCT three-part identities that share one readable slug join. */
+  const sameJoinIdentities = fc
+    .array(fc.constantFrom('a', 'b', 'c'), { minLength: 4, maxLength: 6 })
+    .chain((tokens) => {
+      const cuts = threeWayCuts(tokens.length);
+      return fc
+        .uniqueArray(fc.nat({ max: cuts.length - 1 }), { minLength: 2, maxLength: 2 })
+        .map(([left, right]) => [identityAt(tokens, cuts[left]!), identityAt(tokens, cuts[right]!)] as const);
+    });
+
+  const keyframeIdentOf = (target: string, fromState: string, toState: string): string => {
+    const plan = { ...revealCssPlan(target), target, fromState, toState };
+    const ident = MotionCompiler.compile({ plan }).keyframes.match(/^@keyframes\s+([^\s{]+)\s+\{/u)?.[1];
+    expect(ident, 'every compiled plan must emit a @keyframes prelude').toBeTypeOf('string');
+    return ident!;
+  };
+
+  test('the anchor pair: two all-lossless identities whose slug join coincides stay distinct', () => {
+    const left = keyframeIdentOf('a-b', 'c', 'd');
+    const right = keyframeIdentOf('a', 'b-c', 'd');
+    // Both readable spellings are `liteship-motion-a-b-c-d`; the address is what
+    // keeps the two authored identities apart.
+    expect(left).not.toBe(right);
+    expect(left.startsWith('liteship-motion-a-b-c-d')).toBe(true);
+    expect(right.startsWith('liteship-motion-a-b-c-d')).toBe(true);
+    // The established readable spelling of a decodable identity is unchanged —
+    // this is not "address everything".
+    expect(keyframeIdentOf('hero', 'before', 'after')).toBe('liteship-motion-hero-before-after');
+  });
+
+  test('all-lossless identities that share a slug join never collide on the @keyframes name', () => {
+    fc.assert(
+      fc.property(sameJoinIdentities, ([left, right]) => {
+        // ANTI-VACUITY: the generator must actually produce the hazard — two
+        // different authored identities, every part already a legal CSS ident
+        // (so the lossless shortcut is the live path), spelling one readable
+        // join. Without these the injectivity assertion below could pass on
+        // inputs that never exercised the defect.
+        expect(left).not.toEqual(right);
+        for (const part of [...left, ...right]) expect(part).toMatch(/^[A-Za-z0-9_][A-Za-z0-9_-]*$/u);
+        expect(left.join('-')).toBe(right.join('-'));
+
+        expect(keyframeIdentOf(...left)).not.toBe(keyframeIdentOf(...right));
+      }),
+      { seed: 0xc55117d, numRuns: 200 },
+    );
   });
 
   test('a hostile boundary name cannot escape its selector or terminate the keyframes prelude', () => {
