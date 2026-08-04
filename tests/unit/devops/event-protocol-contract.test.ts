@@ -50,7 +50,7 @@ describe('fleet event protocol projection', () => {
     const records = collectEventProtocol(root);
     fc.assert(
       fc.property(
-        fc.shuffledSubarray(records, { minLength: records.length, maxLength: records.length }),
+        fc.shuffledSubarray([...records], { minLength: records.length, maxLength: records.length }),
         (permutation) => {
           expect(renderEventProtocolDts(permutation)).toBe(renderEventProtocolDts(records));
           expect(renderWebEventProjection(permutation)).toBe(renderWebEventProjection(records));

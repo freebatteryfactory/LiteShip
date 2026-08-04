@@ -8,11 +8,14 @@ describe('composed coverage shard contract', () => {
     ).not.toThrow();
   });
 
+  // The case label is the FIRST column so `%s` names the defect under test.
+  // With the label second, every title read `rejects a node-shard-1,...
+  // receipt set` and the reason never reached the reported name.
   it.each([
-    [['node-shard-1', 'node-shard-2', 'node-shard-4'], 'missing shard'],
-    [['node-shard-1', 'node-shard-2', 'node-shard-3', 'node-shard-3'], 'duplicate shard'],
-    [['node-shard-1', 'node-shard-2', 'node-shard-3', 'node-shard-5'], 'foreign shard'],
-  ] as const)('rejects a %s receipt set', (shards) => {
+    ['missing shard', ['node-shard-1', 'node-shard-2', 'node-shard-4']],
+    ['duplicate shard', ['node-shard-1', 'node-shard-2', 'node-shard-3', 'node-shard-3']],
+    ['foreign shard', ['node-shard-1', 'node-shard-2', 'node-shard-3', 'node-shard-5']],
+  ] as const)('rejects a %s receipt set', (_reason, shards) => {
     expect(() => assertCompleteCoverageShards(shards, 4)).toThrow(/coverage shard/u);
   });
 });

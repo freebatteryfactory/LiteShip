@@ -6,6 +6,23 @@ import {
   validateGitHubChangeIntentTemplate,
 } from '../../../scripts/lib/github-change-intent-declaration.js';
 
+/**
+ * The nested agent-execution block is its own builder so a case that perturbs
+ * ONE execution field can rebuild it by spread instead of reaching back through
+ * the parent's `Record<string, unknown>` index signature.
+ */
+function executionDeclaration(): Record<string, unknown> {
+  return {
+    executionId: 'session-gh',
+    model: { provider: 'anthropic', id: 'claude-fable-5' },
+    toolScopes: ['read', 'write'],
+    budgets: { wallClockMs: null, tokens: null },
+    digests: { prompt: null, context: null, toolPolicy: null },
+    actionTrace: null,
+    autonomy: 'execute',
+  };
+}
+
 function declaration(visibility: 'internal' | 'public' | 'trust-boundary' = 'public'): Record<string, unknown> {
   return {
     sponsor: 'heyoub',
@@ -16,15 +33,7 @@ function declaration(visibility: 'internal' | 'public' | 'trust-boundary' = 'pub
     reversibility: { kind: 'reversible', rollback: 'Revert the facade projection.' },
     actorClass: 'agent',
     uncertainty: { level: 'medium', unknowns: ['browser host variation'] },
-    execution: {
-      executionId: 'session-gh',
-      model: { provider: 'anthropic', id: 'claude-fable-5' },
-      toolScopes: ['read', 'write'],
-      budgets: { wallClockMs: null, tokens: null },
-      digests: { prompt: null, context: null, toolPolicy: null },
-      actionTrace: null,
-      autonomy: 'execute',
-    },
+    execution: executionDeclaration(),
   };
 }
 
@@ -272,10 +281,11 @@ describe('GitHub ChangeIntent host adapter', () => {
   it('cold-refuses approve/release autonomy BEFORE the matrix — a PR-body classification is self-declared (PR #190 review)', () => {
     for (const autonomy of ['approve', 'release'] as const) {
       for (const actorClass of ['human', 'agent', 'automation'] as const) {
-        const payload = { ...declaration('internal'), actorClass } as Record<string, unknown> & {
-          execution: { autonomy: string };
+        const payload = {
+          ...declaration('internal'),
+          actorClass,
+          execution: { ...executionDeclaration(), autonomy },
         };
-        payload.execution = { ...(declaration('internal')['execution'] as Record<string, unknown>), autonomy } as never;
         expect(
           () =>
             validateGitHubChangeIntentDeclaration('pull_request', {

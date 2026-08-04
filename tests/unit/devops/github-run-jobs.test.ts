@@ -7,7 +7,7 @@ function response(body: unknown, ok = true): Response {
 
 describe('GitHub run jobs observation', () => {
   it('uses the exact attempt endpoint and preserves completed skipped jobs with unknown timestamps', async () => {
-    const fetchImpl = vi.fn(async () =>
+    const fetchImpl = vi.fn<typeof fetch>(async () =>
       response({
         total_count: 3,
         jobs: [
@@ -48,7 +48,7 @@ describe('GitHub run jobs observation', () => {
       runId: '123',
       runAttempt: '2',
       token: 'token',
-      fetchImpl: fetchImpl as typeof fetch,
+      fetchImpl,
     });
     expect(jobs).toEqual([
       {
@@ -76,7 +76,7 @@ describe('GitHub run jobs observation', () => {
         runId: '123',
         runAttempt: '1',
         token: 'token',
-        fetchImpl: vi.fn(async () =>
+        fetchImpl: vi.fn<typeof fetch>(async () =>
           response({
             total_count: 1,
             jobs: [
@@ -90,7 +90,7 @@ describe('GitHub run jobs observation', () => {
               },
             ],
           }),
-        ) as typeof fetch,
+        ),
       });
       expect(jobs[0]).toMatchObject({ conclusion, startedAt: started, completedAt: completed });
     },
@@ -111,7 +111,7 @@ describe('GitHub run jobs observation', () => {
         runId: '123',
         runAttempt: '2',
         token: 'token',
-        fetchImpl: vi.fn(async () => response({ total_count: 1, jobs: [job] })) as typeof fetch,
+        fetchImpl: vi.fn<typeof fetch>(async () => response({ total_count: 1, jobs: [job] })),
       }),
     ).rejects.toThrow(/foreign attempt/u);
     await expect(
@@ -120,7 +120,7 @@ describe('GitHub run jobs observation', () => {
         runId: '123',
         runAttempt: '1',
         token: 'token',
-        fetchImpl: vi.fn(async () => response({ total_count: 2, jobs: [job, job] })) as typeof fetch,
+        fetchImpl: vi.fn<typeof fetch>(async () => response({ total_count: 2, jobs: [job, job] })),
       }),
     ).rejects.toThrow(/duplicate/u);
   });
@@ -142,7 +142,7 @@ describe('GitHub run jobs observation', () => {
         runId: '123',
         runAttempt: '1',
         token: 'token',
-        fetchImpl: vi.fn(async () => response({ total_count: 1, jobs: [job] })) as typeof fetch,
+        fetchImpl: vi.fn<typeof fetch>(async () => response({ total_count: 1, jobs: [job] })),
       }),
     ).rejects.toThrow(/malformed/u);
   });
@@ -154,7 +154,7 @@ describe('GitHub run jobs observation', () => {
         runId: '123',
         runAttempt: '1',
         token: 'token',
-        fetchImpl: vi.fn(async () =>
+        fetchImpl: vi.fn<typeof fetch>(async () =>
           response({
             total_count: 1,
             jobs: [
@@ -168,7 +168,7 @@ describe('GitHub run jobs observation', () => {
               },
             ],
           }),
-        ) as typeof fetch,
+        ),
       }),
     ).rejects.toThrow(/malformed/u);
   });

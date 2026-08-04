@@ -41,7 +41,7 @@ async function liveSubjects() {
 
 function expandedScriptTargets(scriptName: string): ReadonlySet<string> {
   return new Set(
-    globSync(scriptQuotedTargets(scriptName), {
+    globSync([...scriptQuotedTargets(scriptName)], {
       cwd: REPO_ROOT,
       onlyFiles: true,
       unique: true,

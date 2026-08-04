@@ -123,6 +123,14 @@
     // directory so a capability-shape drift fails typecheck before the emitted
     // script and the runtime sweep are compared.
     "tests/unit/detect/**/*.test.ts",
+    // The devops suites are the repository's release, CI, and toolchain
+    // apparatus: the change-intent admission adapter, the delivery-metrics
+    // health projection, the local verification plan, the coverage-shard
+    // contract, the W1.11 tooling census, and the gate canaries themselves.
+    // Admit the whole owned directory so a script or evidence contract drift
+    // fails typecheck before the apparatus decides what ships. This supersedes
+    // the by-name `shipped-source-typecheck` entry W1.11 left behind.
+    "tests/unit/devops/**/*.test.ts",
     // The shipped-example dogfood suites assert that the repository's own
     // examples still compose the public surfaces. Admit the whole tier so an
     // example contract drift fails typecheck before the dogfood executes.
@@ -163,9 +171,7 @@
     "tests/unit/assets/analysis/projection-execution.test.ts",
     "tests/unit/assets/binary-fault-simulation.test.ts",
     "tests/unit/assets/binary-mcdc.test.ts",
-    "tests/unit/assets/decoder-fault-injection.test.ts",
-    // W1.11 shipped-source context derivation + parity/fail-closed laws.
-    "tests/unit/devops/shipped-source-typecheck.test.ts"
+    "tests/unit/assets/decoder-fault-injection.test.ts"
   ],
   "exclude": ["node_modules", "**/dist/**"]
 }

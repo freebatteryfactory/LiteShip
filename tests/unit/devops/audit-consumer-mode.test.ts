@@ -329,7 +329,7 @@ describe('consumer mode — surface checks resolve through discovered package ro
   function astroHostProfile(root: string): DevopsProfile {
     return {
       ...acmeBase(),
-      packageTopology: { '@acme/astro': { allowedInternalImports: [], kind: 'host' } },
+      packageTopology: { '@acme/astro': { allowedInternalImports: [], kind: 'host-adjacent' } },
       surfacePolicy: {
         astroPackage: '@acme/astro',
         astroClientDirectives: ['adaptive'],

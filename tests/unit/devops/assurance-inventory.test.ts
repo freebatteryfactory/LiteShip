@@ -357,6 +357,7 @@ describe('assurance inventory', () => {
           coveringTests: ['tests/unit/core/value.test.ts'],
           equivalentJustification: null,
           equivalentJustificationDigest: null,
+          inconclusiveReason: null,
           subsumedBy: [],
         },
       ],

@@ -1038,6 +1038,7 @@ const ADMITTED_UNIT_DIRECTORIES: ReadonlyArray<{ readonly dir: string; readonly 
   { dir: 'audit', floor: 26 },
   { dir: 'create-liteship', floor: 1 },
   { dir: 'detect', floor: 5 },
+  { dir: 'devops', floor: 115 },
   { dir: 'edge', floor: 9 },
   { dir: 'examples', floor: 2 },
   { dir: 'gauntlet', floor: 45 },

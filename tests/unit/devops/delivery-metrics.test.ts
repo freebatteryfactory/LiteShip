@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { IntegrityDigest } from '@liteship/core';
+// The benchmark-evidence authority this suite builds declares its digests as
+// `@liteship/canonical`'s IntegrityDigest, so the fixture mints them with THAT
+// constructor. `@liteship/core` re-anchors a same-named but nominally distinct
+// `_spine/core` brand; minting from core and handing the value to the bench
+// contract does not typecheck, and no assertion is used to pretend it does.
+import { IntegrityDigest } from '@liteship/canonical';
 import { PACKAGE_CATALOG } from '../../../scripts/package-catalog.js';
 import {
   admitVerifiedArtifactIdentity,

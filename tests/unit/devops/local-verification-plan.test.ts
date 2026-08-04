@@ -285,7 +285,7 @@ describe('local verification plan', () => {
       const partition = [...plan.registryChecks.selected, ...plan.registryChecks.excluded];
       expect(partition).toHaveLength(CHECK_REGISTRY.length);
       expect(new Set(partition.map((check) => check.id)).size).toBe(CHECK_REGISTRY.length);
-      expect(partition.map((check) => check.id).toSorted()).toEqual(CHECK_REGISTRY.map((check) => check.id).toSorted());
+      expect(partition.map((check) => check.id).sort()).toEqual(CHECK_REGISTRY.map((check) => check.id).sort());
 
       for (const check of partition) {
         const registered = CHECK_REGISTRY.find((candidate) => candidate.id === check.id);
@@ -300,7 +300,7 @@ describe('local verification plan', () => {
       }
 
       const selectedStepIds = plan.steps.flatMap((step) => (step.checkId === null ? [] : [step.checkId]));
-      expect(plan.registryChecks.selected.map((check) => check.id).toSorted()).toEqual(selectedStepIds.toSorted());
+      expect(plan.registryChecks.selected.map((check) => check.id).sort()).toEqual([...selectedStepIds].sort());
       expect(partition.some((check) => check.id === 'check-invariants')).toBe(false);
       expect(partition.some((check) => check.id === 'projections')).toBe(false);
       expect(partition.some((check) => check.id === 'ci-contract')).toBe(false);
