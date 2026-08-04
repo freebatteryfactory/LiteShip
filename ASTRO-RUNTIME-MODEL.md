@@ -47,12 +47,12 @@ These form the Astro host layer.
 
 ## Integration
 
-`integration()` is the Astro integration entry point: the host-level hook that registers transforms and rigs detection alongside Astro's lifecycle.
+`integration()` is the Astro integration entry point: the host-level hook that registers transforms and wires detection alongside Astro's lifecycle.
 
 It is responsible for:
 
 - registering the Vite plugin path that understands authored `@token` / `@theme` / `@style` / `@quantize` transforms
-- rigging client-side detection support
+- wiring client-side detection support
 - connecting Astro lifecycle behavior to LiteShip's assumptions
 
 Use it when the site itself is a LiteShip-aware Astro host.
@@ -63,7 +63,7 @@ Use it when the site itself is a LiteShip-aware Astro host.
 
 - **on by default:** `detect`, `stream`, `llm`, `gpu`, and the dev `inspector` (an Astro dev-toolbar app in `astro dev`).
 - **opt-in:** `workers` (`workers: { enabled: true }` — only the `client:worker` directive needs it) and `wasm`.
-- **auto-resolved:** initial state defaults from the server-resolved bearing, and the `liteship-compute` WASM artifact — shipped inside `@liteship/core` (0.2.1+) — resolves itself from `node_modules`; you don't thread either by hand.
+- **auto-resolved:** initial state defaults from the server-resolved state, and the `liteship-compute` WASM artifact — shipped inside `@liteship/core` (0.2.1+) — resolves itself from `node_modules`; you don't thread either by hand.
 - **dev watch (0.4.0):** the integration registers the convention primitive sources (`boundaries.ts` / `tokens.ts` / `themes.ts` / `styles.ts` and their `*.boundaries.ts`-style siblings) with Astro's `addWatchFile`, so editing a definition restarts the dev server and re-collects the boundary manifest even before a CSS `@quantize`/`@token` block imports it.
 
 So `integration()` with no arguments is the right call for a static-first site; reach into the config object only to turn something off (`{ gpu: { enabled: false } }`, `{ inspector: false }`) or to opt `workers`/`wasm` in. Don't re-enable what's already on.
@@ -202,7 +202,7 @@ And the compiled CSS the Vite plugin emits for `.hero` (from a paired `defineSty
 
 The directive's only runtime job is to evaluate `heroLayout` against the live viewport and write the resolved state to the adaptive's `data-liteship-state` attribute; the CSS attribute selectors do the visible work without round-tripping through JavaScript.
 
-For request-time SSR you can resolve an initial state on the server so first paint already reflects the right bearing:
+For request-time SSR you can resolve an initial state on the server so first paint already reflects the right state:
 
 ```ts
 // src/middleware.ts

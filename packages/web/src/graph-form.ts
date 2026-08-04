@@ -4,7 +4,7 @@
  * LiteShip owns the binding from form submit → host-projected ops → mutation
  * channel → structured outcome event. The host owns the form markup, the
  * domain projection, sealed node construction, and any UI that renders errors.
- * This is a rig primitive, not a data-grid, component kit, or future auto-form DSL.
+ * This is a binding primitive, not a data-grid, component kit, or future auto-form DSL.
  *
  * @module
  */

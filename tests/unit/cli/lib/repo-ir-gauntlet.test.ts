@@ -307,7 +307,7 @@ function fixtureRootManifest(): string {
 
 /** Lay a fixture tree under a fresh tmp root and return the absolute root path. */
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'liteship-rig-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-repo-ir-'));
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);
     mkdirSync(resolve(abs, '..'), { recursive: true });

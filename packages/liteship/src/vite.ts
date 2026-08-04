@@ -1,7 +1,7 @@
 /**
  * `liteship/vite` — the curated facade over `@liteship/vite`: LiteShip's Vite 8
  * plugin. The `plugin` (aliased `liteship`) that rewrites `@token` / `@theme` /
- * `@style` / `@quantize` at-rule blocks into native CSS and rigs HMR for
+ * `@style` / `@quantize` at-rule blocks into native CSS and wires HMR for
  * `@liteship/*` definitions, plus the standalone block parsers/compilers, the
  * virtual-module resolvers, the boundary/token/theme manifest collectors, the HTML
  * transform, and the generic primitive resolver. Curated named re-exports only —

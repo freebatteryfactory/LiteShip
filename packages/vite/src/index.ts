@@ -1,6 +1,6 @@
 /**
  * `@liteship/vite` — **LiteShip** Vite 8 plugin: turns `@token` / `@theme` /
- * `@style` / `@quantize` at-rule blocks into native CSS and **rigs** HMR for
+ * `@style` / `@quantize` at-rule blocks into native CSS and **wires** HMR for
  * `@liteship/*` definitions.
  *
  * The plugin hooks into Vite's `resolveId`, `load`, `transform`, and

@@ -3,8 +3,8 @@
  * projection hosted as islands and directives.
  *
  * Provides the Astro `Integration` that registers `@liteship/vite`,
- * injects client tier detection, **rigs** the `client:adaptive` directive,
- * and exposes `Adaptive` for shells with server-resolved bearings.
+ * injects client tier detection, **wires** the `client:adaptive` directive,
+ * and exposes `Adaptive` for shells with server-resolved named states.
  *
  * @example
  * ```ts

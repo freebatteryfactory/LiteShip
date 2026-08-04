@@ -6,7 +6,7 @@
  *
  *  - #90 adaptiveAttrs defaults `data-liteship-state` to the first state when
  *    `initialState` is omitted but a boundary is present (no flash of
- *    unstated content). LAW: a boundary-bearing adaptive is NEVER shipped
+ *    unstated content). LAW: a boundary-backed adaptive is NEVER shipped
  *    without a server state.
  *  - #91 resolveInitialState's ServerIslandContext is fully optional —
  *    callable with no context / partial context — and still resolves a
@@ -79,7 +79,7 @@ const arbBoundary = fc.uniqueArray(stateLabel, { minLength: 1, maxLength: 5 }).c
 // #90 — adaptiveAttrs default-state law
 // ---------------------------------------------------------------------------
 
-describe('LESSON (#90): a boundary-bearing adaptive always ships a server state', () => {
+describe('LESSON (#90): a boundary-backed adaptive always ships a server state', () => {
   test('PROPERTY: omitting initialState defaults data-liteship-state to states[0]', () => {
     fc.assert(
       fc.property(arbBoundary, (boundary) => {

@@ -1,7 +1,7 @@
 /**
- * `@liteship/quantizer` — **LiteShip** quantizer: **rigged** boundary evaluation,
- * live state, animated transitions between bearings, and motion-tier gating on
- * the working line.
+ * `@liteship/quantizer` — **LiteShip** quantizer: **wired** boundary evaluation,
+ * live state, animated transitions between named states, and motion-tier gating
+ * on the hot path.
  *
  * @module
  */

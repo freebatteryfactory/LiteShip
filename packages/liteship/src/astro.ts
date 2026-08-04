@@ -1,7 +1,7 @@
 /**
  * `liteship/astro` — the curated facade over `@liteship/astro`: LiteShip on
  * Astro 7. The `integration` (aliased `liteship`) that registers `@liteship/vite`,
- * injects client tier detection and rigs the `client:adaptive` directive, the
+ * injects client tier detection and wires the `client:adaptive` directive, the
  * `Adaptive` shell helpers (`adaptiveAttrs`), server-island initial-state
  * resolution, the middleware, the responsive-media host projection, the fetch
  * layer, the graph mutation/query route adapters, the docs-MCP route, and the

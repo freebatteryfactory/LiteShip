@@ -1,6 +1,6 @@
 /**
  * doctor — verdict aggregation + presentation. Pure: folds the per-check
- * bearings into one verdict, and renders the TTY summary string. No fs, no
+ * statuses into one verdict, and renders the TTY summary string. No fs, no
  * spawn, no process I/O (the caller decides where the string goes).
  *
  * @module

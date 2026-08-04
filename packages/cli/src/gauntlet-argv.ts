@@ -104,7 +104,7 @@ export function formatUnexpectedArgvReceipt(argv: readonly string[]): string {
       error: 'unexpected_argv',
       argv,
       timestamp: new Date(wallClock.now()).toISOString(),
-      hint: 'Gauntlet takes no positional bearings. Paste one command per line.',
+      hint: 'Gauntlet takes no positional arguments. Paste one command per line.',
     }) + '\n'
   );
 }

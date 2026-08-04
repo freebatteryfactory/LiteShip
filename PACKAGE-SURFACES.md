@@ -642,7 +642,7 @@ Reach for it when you need:
 - capsule inspection (`liteship capsule.inspect`)
 - release + gauntlet (`liteship ship`, `liteship verify`, `liteship gauntlet`)
 
-Entry: `pnpm exec liteship <verb>` in a LiteShip checkout. `liteship help` prints the chart.
+Entry: `pnpm exec liteship <verb>` in a LiteShip checkout. `liteship help` prints the command list.
 
 ---
 

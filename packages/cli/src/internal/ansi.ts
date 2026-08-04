@@ -112,7 +112,7 @@ export function color(name: ColorName, text: string, on: boolean = colorEnabled(
 }
 
 /**
- * Convenience glyph + color for the three bearings (`ok` / `warn` / `fail`).
+ * Convenience glyph + color for the three statuses (`ok` / `warn` / `fail`).
  * Returns a colored two-char glyph that pads to a stable visual width.
  */
 export function bearingGlyph(status: 'ok' | 'warn' | 'fail', on: boolean = colorEnabled()): string {

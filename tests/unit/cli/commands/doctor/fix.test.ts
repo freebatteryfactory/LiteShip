@@ -67,7 +67,7 @@ const hookWarn = (): DoctorCheck => ({
   id: 'git.hooks',
   label: 'git hooks',
   status: 'warn',
-  detail: 'pre-commit hook not rigged',
+  detail: 'pre-commit hook not installed',
   fixable: true,
 });
 

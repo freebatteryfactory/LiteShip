@@ -13,7 +13,7 @@ This file is the entry point for AI coding tools that read `AGENTS.md` (Codex, s
 
 LiteShip is built to be operated by agents, not just imported:
 
-- **CLI** — `liteship <verb>` is JSON-first (human-pretty in a TTY). `liteship help` prints the chart; `liteship describe --format=json` emits the machine-readable command catalog. See [`packages/cli/README.md`](./packages/cli/README.md).
+- **CLI** — `liteship <verb>` is JSON-first (human-pretty in a TTY). `liteship help` prints the command list; `liteship describe --format=json` emits the machine-readable command catalog. See [`packages/cli/README.md`](./packages/cli/README.md).
 - **MCP server** — `liteship mcp` (stdio) or `liteship mcp --http=:port` exposes the capsule / scene / asset tools to an MCP host. The authoritative tool catalog (and `tools/list`) lives in [`packages/mcp-server/README.md`](./packages/mcp-server/README.md). Reach for these before hand-rolling: inspecting capsules, compiling/rendering scenes, and analyzing assets are already tools.
 
 Public naming: LiteShip (product and engine), `@liteship/*` (packages). See [GLOSSARY.md](./GLOSSARY.md).

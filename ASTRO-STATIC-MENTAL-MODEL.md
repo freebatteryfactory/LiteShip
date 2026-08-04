@@ -2,7 +2,7 @@
 
 ## Purpose
 
-How to think with LiteShip when building visually rich Astro websites. LiteShip evaluates boundaries, casts styles, and keeps the working deck trim; you still install and import `@liteship/*` packages.
+How to think with LiteShip when building visually rich Astro websites. LiteShip evaluates boundaries, casts styles, and keeps the projected output current; you still install and import `@liteship/*` packages.
 
 Naming: [GLOSSARY.md](./GLOSSARY.md).
 
@@ -27,7 +27,7 @@ LiteShip is strongest when the site is visual, adaptive, media-aware, and mostly
 
 ## Core idea
 
-LiteShip partitions continuous signals into discrete visual bearings, with hysteresis at every threshold to prevent flicker.
+LiteShip partitions continuous signals into discrete visual states, with hysteresis at every threshold to prevent flicker.
 
 Reality is continuous:
 
@@ -144,7 +144,7 @@ Themes are not ad-hoc class switches. They are explicit token-space variants.
 
 ### 5. Styles
 
-Styles define what each named bearing casts: the properties projected when that state is active.
+Styles define what each named state casts: the properties projected when that state is active.
 
 A style is where the author says:
 
@@ -181,7 +181,7 @@ The same state can cast to multiple projection targets:
 - ARIA
 - AI / tool manifests
 
-A boundary is not "for CSS only." It is a shared semantic contract, one rigged partition that multiple runtimes consume.
+A boundary is not "for CSS only." It is a shared semantic contract, one wired partition that multiple runtimes consume.
 
 That means a single authored decision can drive:
 
