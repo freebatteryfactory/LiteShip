@@ -43,8 +43,12 @@ describe('liteship root Adaptive composition', () => {
   });
 
   test('Computed<T> remains reachable from the governed reactive expert subpath', async () => {
-    const value: Computed<number> = computed(() => 42);
+    // `computed(...)` returns the read-only Computed<T> view INTERSECTED with the
+    // owned-resource arm; the annotated binding is the reachability pin, and
+    // teardown goes through the verb's own return type.
+    const owned = computed(() => 42);
+    const value: Computed<number> = owned;
     expect(value.read()).toBe(42);
-    await value.dispose();
+    await owned.dispose();
   });
 });

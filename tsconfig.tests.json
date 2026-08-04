@@ -108,6 +108,10 @@
     // The scaffolder suite drives the published create-liteship template
     // contract. Admit the whole owned directory.
     "tests/unit/create-liteship/**/*.test.ts",
+    // The edge suites parse real Client-Hints headers into the public device
+    // capability contract. Admit the whole owned directory so a header or tier
+    // contract drift fails typecheck before an edge request is served.
+    "tests/unit/edge/**/*.test.ts",
     // The shipped-example dogfood suites assert that the repository's own
     // examples still compose the public surfaces. Admit the whole tier so an
     // example contract drift fails typecheck before the dogfood executes.
@@ -122,6 +126,14 @@
     // The shared spawn-host suite is the typed proof for the repository's one
     // process seam. Admit the whole owned directory.
     "tests/unit/lib/**/*.test.ts",
+    // The curated `liteship` facade suites are the consumer-facing composition
+    // root and its subpath/lifecycle contracts. Admit the whole owned directory
+    // so a facade drift fails typecheck before a consumer meets it.
+    "tests/unit/liteship/**/*.test.ts",
+    // The compositor worker suites own the structured message protocol shared
+    // by host and worker. Admit the whole owned directory so a wire-shape drift
+    // fails typecheck before the protocol executes.
+    "tests/unit/worker/**/*.test.ts",
     // The @liteship/core spine conformance guard: its type-level assignments
     // (Config.Shape ⇔ runtime, and the CompositeState / VideoConfig / CaptureResult
     // bidirectional pins) only bite if THIS project typechecks them. Listed here so

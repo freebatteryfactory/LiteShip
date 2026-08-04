@@ -70,7 +70,7 @@ describe('EdgeTier', () => {
   });
 
   test('tierDataAttributes serializes EXACTLY tierDataAttributesMap (string and map cannot drift)', () => {
-    const result = EdgeTier.detectTier({ 'sec-ch-ua-mobile': '?0', 'device-memory': '8' });
+    const result = EdgeTier.detectTier({ 'sec-ch-ua-mobile': '?0', 'sec-ch-device-memory': '8' });
     const map = EdgeTier.tierDataAttributesMap(result);
     const rebuilt = Object.entries(map)
       .map(([attr, val]) => `${attr}="${val}"`)

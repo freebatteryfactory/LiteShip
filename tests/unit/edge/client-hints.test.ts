@@ -213,11 +213,16 @@ describe('ClientHints', () => {
   });
 
   test('normalizes object maps with undefined entries and covers samsung plus desktop gpu heuristics', () => {
-    const mobileCaps = ClientHints.parseClientHints({
+    // A request map arrives in whatever casing the client sent, and the
+    // object-map path lowercases every key before lookup. `ClientHintsHeaders`
+    // names the canonical lowercase spellings, so the mixed-case fixture that
+    // PROVES that normalisation is typed as the raw header map it really is.
+    const mixedCaseHeaders: Readonly<Record<string, string | undefined>> = {
       'User-Agent': 'Mozilla/5.0 (Linux; Android 14; SM-S24 Ultra)',
       'sec-ch-dpr': undefined,
       ECT: '5g',
-    });
+    };
+    const mobileCaps = ClientHints.parseClientHints(mixedCaseHeaders);
     expect(mobileCaps.gpu).toBe(2);
     expect(mobileCaps.devicePixelRatio).toBe(1);
     expect(mobileCaps.connection?.effectiveType).toBe('4g');

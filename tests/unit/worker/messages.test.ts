@@ -4,7 +4,13 @@
 
 import { describe, test, expect } from 'vitest';
 import { Messages } from '@liteship/worker';
+import { StateName } from '@liteship/core';
 import { defineResolvedStateEnvelope } from '../../../packages/worker/src/messages.js';
+
+// `ResolvedStateEntry.state` is the branded `StateName` the protocol carries, not
+// a bare label; minting it through the public constructor keeps the fixture a
+// value the wire can actually hold.
+const TABLET = StateName('tablet');
 
 describe('Messages', () => {
   test('isToWorker returns true for valid ToWorkerMessage', () => {
@@ -46,10 +52,10 @@ describe('Messages', () => {
 
   test('builds the resolved-state transport envelope with the current wire shape', () => {
     expect(
-      defineResolvedStateEnvelope('apply-resolved-state', [{ name: 'layout', state: 'tablet', generation: 2 }], true),
+      defineResolvedStateEnvelope('apply-resolved-state', [{ name: 'layout', state: TABLET, generation: 2 }], true),
     ).toEqual({
       type: 'apply-resolved-state',
-      states: [{ name: 'layout', state: 'tablet', generation: 2 }],
+      states: [{ name: 'layout', state: TABLET, generation: 2 }],
       ack: true,
     });
   });

@@ -1037,10 +1037,13 @@ describe('(a19) component runtime sources are type-admitted before execution', (
 const ADMITTED_UNIT_DIRECTORIES: ReadonlyArray<{ readonly dir: string; readonly floor: number }> = [
   { dir: 'audit', floor: 26 },
   { dir: 'create-liteship', floor: 1 },
+  { dir: 'edge', floor: 9 },
   { dir: 'examples', floor: 2 },
   { dir: 'genui', floor: 10 },
   { dir: 'journey', floor: 2 },
   { dir: 'lib', floor: 1 },
+  { dir: 'liteship', floor: 12 },
+  { dir: 'worker', floor: 7 },
 ];
 
 describe('(a20) dependency-ordered unit directories are type-admitted before execution', () => {

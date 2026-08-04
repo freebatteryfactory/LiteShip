@@ -250,6 +250,9 @@ function runtimeModuleSpecifiers(source: ts.SourceFile): readonly string[] {
       ts.isCallExpression(node) &&
       node.expression.kind === ts.SyntaxKind.ImportKeyword &&
       node.arguments.length === 1 &&
+      // `length === 1` does not narrow the indexed read under
+      // noUncheckedIndexedAccess; the presence check is what makes it a Node.
+      node.arguments[0] !== undefined &&
       ts.isStringLiteral(node.arguments[0])
     ) {
       specifiers.push(node.arguments[0].text);
@@ -302,8 +305,21 @@ function transitiveHostEdges(
 }
 
 function sourceResolutionOptions(): ts.CompilerOptions {
-  const parsed = ts.getParsedCommandLineOfConfigFile(resolve(REPO_ROOT, 'tsconfig.tests.json'), {}, ts.sys);
-  if (parsed === undefined) throw new Error('tsconfig.tests.json could not be parsed');
+  // TypeScript reports an unreadable or invalid config through the host's
+  // unrecoverable-diagnostic sink, and `ts.sys` alone does not implement it — so
+  // a broken tsconfig would have called a missing method instead of failing this
+  // proof. The sink is collected and folded into the existing refusal, which now
+  // names WHY the parse failed.
+  const unrecoverable: ts.Diagnostic[] = [];
+  const host: ts.ParseConfigFileHost = {
+    ...ts.sys,
+    onUnRecoverableConfigFileDiagnostic: (diagnostic) => unrecoverable.push(diagnostic),
+  };
+  const parsed = ts.getParsedCommandLineOfConfigFile(resolve(REPO_ROOT, 'tsconfig.tests.json'), {}, host);
+  if (parsed === undefined) {
+    const detail = unrecoverable.map((d) => ts.flattenDiagnosticMessageText(d.messageText, ' ')).join('; ');
+    throw new Error(`tsconfig.tests.json could not be parsed${detail === '' ? '' : `: ${detail}`}`);
+  }
   return parsed.options;
 }
 
