@@ -99,6 +99,23 @@
     // Admit the complete owned directory so a future adapter proof cannot run
     // outside the tests project's compiler boundary.
     "tests/unit/remotion/**/*.test.ts",
+    // The scaffolder suite drives the published create-liteship template
+    // contract. Admit the whole owned directory.
+    "tests/unit/create-liteship/**/*.test.ts",
+    // The shipped-example dogfood suites assert that the repository's own
+    // examples still compose the public surfaces. Admit the whole tier so an
+    // example contract drift fails typecheck before the dogfood executes.
+    "tests/unit/examples/**/*.test.ts",
+    // Generated-UI suites consume the public @liteship/genui catalog, parser,
+    // validator, and render contracts. Admit the complete owned directory so
+    // catalog or fixture drift fails before any campaign executes.
+    "tests/unit/genui/**/*.test.ts",
+    // Installed-facade and package-author journeys assert the published
+    // manifest/runtime identity. Admit the whole owned directory.
+    "tests/unit/journey/**/*.test.ts",
+    // The shared spawn-host suite is the typed proof for the repository's one
+    // process seam. Admit the whole owned directory.
+    "tests/unit/lib/**/*.test.ts",
     // The @liteship/core spine conformance guard: its type-level assignments
     // (Config.Shape ⇔ runtime, and the CompositeState / VideoConfig / CaptureResult
     // bidirectional pins) only bite if THIS project typechecks them. Listed here so
@@ -122,12 +139,6 @@
     "tests/unit/meta/allocation-contracts.test.ts",
     "tests/unit/core/reactive-capture.test.ts",
     "tests/unit/core/reactive-model.test.ts",
-    // Wave 5 generated-UI assurance: shared valid/invalid generators, the
-    // validator decision table, fuzz/property campaigns, and benchmark subject
-    // all consume the public @liteship/genui contracts. Typecheck the packet so
-    // fixture or catalog drift fails before the runtime campaigns execute.
-    "tests/unit/genui/validation-fault-simulation.test.ts",
-    "tests/unit/genui/validation-mcdc.test.ts",
     // Wave 5 asset assurance: strict binary fixtures, audio properties,
     // parser fuzzing, fault simulation/injection, MC/DC, independent sharp
     // differential, and benchmark subject all consume the public asset API.

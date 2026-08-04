@@ -1018,6 +1018,80 @@ describe('(a19) component runtime sources are type-admitted before execution', (
   });
 });
 
+/**
+ * One row per `tests/unit` semantic-owner directory whose COMPLETE canonical
+ * Node population is admitted by `tsconfig.tests.json` through a single
+ * future-proof wildcard.
+ *
+ * `tests/unit` is the largest tier in the tree and is admitted in
+ * dependency-ordered slices, so this table is the ledger of the landed ones: a
+ * later slice cannot quietly drop an earlier directory's admission, and the
+ * by-name law below refuses the exact defect the widening exists to remove —
+ * an authored filename entry surviving underneath a wildcard that already
+ * owns it. The floor is the population measured when the directory landed; a
+ * directory may only ever grow.
+ *
+ * The five directories admitted before this table (`_spine`, `canonical`,
+ * `error`, `ecs`, `remotion`) keep their own canaries (a12)-(a16).
+ */
+const ADMITTED_UNIT_DIRECTORIES: ReadonlyArray<{ readonly dir: string; readonly floor: number }> = [
+  { dir: 'create-liteship', floor: 1 },
+  { dir: 'examples', floor: 2 },
+  { dir: 'genui', floor: 10 },
+  { dir: 'journey', floor: 2 },
+  { dir: 'lib', floor: 1 },
+];
+
+describe('(a20) dependency-ordered unit directories are type-admitted before execution', () => {
+  const runtimeUnitSources = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const rootFiles = tsconfigTestsRootFiles();
+
+  for (const { dir, floor } of ADMITTED_UNIT_DIRECTORIES) {
+    const prefix = `tests/unit/${dir}/`;
+    const runtimeSources = runtimeUnitSources.filter((path) => path.startsWith(prefix));
+    const admittedSources = rootFiles.filter((path) => path.startsWith(prefix));
+
+    it(`directly admits every canonical Node ${dir} suite through one future-proof directory root`, () => {
+      expect(runtimeSources.length, `the ${dir} unit corpus fell below its committed floor`).toBeGreaterThanOrEqual(
+        floor,
+      );
+      const admitted = new Set(admittedSources);
+      const missing = runtimeSources.filter((path) => !admitted.has(path));
+      expect(
+        admittedSources,
+        `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} runtime ${dir} suites; missing:\n${missing.join('\n')}`,
+      ).toEqual(runtimeSources);
+      expect(
+        includeEntries.some((entry) => entry.startsWith(prefix) && entry.includes('*') && entry.endsWith('.test.ts')),
+        `${dir} admission must be future-proof rather than an authored filename roster`,
+      ).toBe(true);
+    });
+
+    it(`a counterfeit config with ${dir} admission removed exposes the complete runtime corpus`, () => {
+      const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith(prefix));
+      const counterfeitAdmission = new Set(
+        fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+      );
+      expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+    });
+  }
+
+  it('no directory this table admits retains a by-name file admission', () => {
+    const superseded = includeEntries.filter(
+      (entry) =>
+        !entry.includes('*') && ADMITTED_UNIT_DIRECTORIES.some(({ dir }) => entry.startsWith(`tests/unit/${dir}/`)),
+    );
+    expect(
+      superseded,
+      'a wildcard already owns these directories; a surviving filename entry is the by-name admission W1.10 exists to remove',
+    ).toEqual([]);
+  });
+});
+
 // --------------------------------------------------------------------------
 // (b) Coverage floors — the real gates cover a broad, non-trivial surface.
 // --------------------------------------------------------------------------
