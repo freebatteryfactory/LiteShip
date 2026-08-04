@@ -58,17 +58,20 @@ function deterministicId<SlotNames extends readonly string[]>(
  * describe the consumer-facing API (verb grammar — `create` allocates a
  * content-addressed unit).
  */
-export function createComponent<
-  B extends Boundary,
-  const SN extends readonly [string, ...string[]] = readonly ['children'],
->(config: {
+export function createComponent<B extends Boundary, const SN extends string = 'children'>(config: {
   readonly name: string;
   readonly boundary?: B;
   readonly styles: Style<B>;
   /** Default: an implied single 'children' slot with defaultSlot 'children'. */
-  readonly slots?: { readonly [K in SN[number]]: SlotConfig };
-  readonly defaultSlot?: SN[number];
-}): ComponentDef<B, SN> {
+  readonly slots?: { readonly [K in SN]: SlotConfig };
+  /**
+   * `NoInfer` so the slot-name union comes from `slots` ALONE. Left inferring,
+   * `defaultSlot: 'content'` would narrow `SN` to `'content'` and reject the
+   * sibling `header` slot declared right beside it — and a `defaultSlot` naming
+   * a slot that does not exist would be accepted by widening instead of refused.
+   */
+  readonly defaultSlot?: NoInfer<SN>;
+}): ComponentDef<B, readonly SN[]> {
   // Normalize so an omitted `required` hashes identically to an explicit `false`.
   const slotsInput = (config.slots ?? { children: {} }) as Record<string, SlotConfig>;
   const slots = Object.fromEntries(
@@ -79,12 +82,12 @@ export function createComponent<
         ...(slot.description !== undefined ? { description: slot.description } : {}),
       },
     ]),
-  ) as { readonly [K in SN[number]]: SlotConfig };
-  const defaultSlot = config.defaultSlot ?? (config.slots === undefined ? ('children' as SN[number]) : undefined);
+  ) as { readonly [K in SN]: SlotConfig };
+  const defaultSlot = config.defaultSlot ?? (config.slots === undefined ? ('children' as SN) : undefined);
 
-  const id = deterministicId<SN>(config.name, config.boundary?.id, config.styles.id, slots, defaultSlot);
+  const id = deterministicId<readonly SN[]>(config.name, config.boundary?.id, config.styles.id, slots, defaultSlot);
 
-  const def: ComponentDef<B, SN> = {
+  const def: ComponentDef<B, readonly SN[]> = {
     _tag: 'ComponentDef',
     _version: 1,
     id,

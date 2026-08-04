@@ -180,7 +180,10 @@ describe('fromCSSCustomProperties — supported selector cascade', () => {
       html[data-theme="dark"] { --accent: blue; }
     `);
 
-    expect(result.themes[0]!.tokens.accent.dark).toBe('red !important');
+    // Every sibling law compares the whole variant map; this one reached one
+    // variant deep through an unguarded index. Comparing the map keeps the
+    // strong assertion first — a migration that drops `default` reds here too.
+    expect(result.themes[0]!.tokens.accent).toEqual({ default: 'red !important', dark: 'red !important' });
   });
 
   it('does not treat important text inside strings or functions as declaration priority', () => {

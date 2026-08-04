@@ -8,7 +8,7 @@ import {
   sealGraph,
   Stagger,
   Reveal,
-  type ContentAddress,
+  ContentAddress,
   type DocumentGraph,
 } from '@liteship/core';
 import { compileReveal, compileScrollTimeline, compileStagger } from '@liteship/compiler';
@@ -35,7 +35,7 @@ describe('@liteship/compiler error contract', () => {
       'id' | 'digest'
     >);
     try {
-      compileReveal(empty, 'deadbeef', minimalIntent);
+      compileReveal(empty, ContentAddress('fnv1a:deadbeef'), minimalIntent);
       expect.unreachable('expected throw');
     } catch (error) {
       expect(hasTag(error, 'ValidationError')).toBe(true);
@@ -56,7 +56,7 @@ describe('@liteship/compiler error contract', () => {
     );
     const corrupt = {
       ...lowered,
-      items: [{ ...lowered.items[0]!, transitionId: 'fnv1a:00000000' as ContentAddress }],
+      items: [{ ...lowered.items[0]!, transitionId: ContentAddress('fnv1a:00000000') }],
     };
 
     try {
@@ -83,7 +83,7 @@ describe('@liteship/compiler error contract', () => {
     const lowered = lowerScrollTimelineIntent(intent);
 
     try {
-      compileScrollTimeline(lowered.graph, 'fnv1a:00000000' as ContentAddress, intent);
+      compileScrollTimeline(lowered.graph, ContentAddress('fnv1a:00000000'), intent);
       expect.unreachable('expected throw');
     } catch (error) {
       expect(hasTag(error, 'ValidationError')).toBe(true);

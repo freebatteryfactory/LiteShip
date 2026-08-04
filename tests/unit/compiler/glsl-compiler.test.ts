@@ -94,7 +94,10 @@ describe('GLSLCompiler.compile', () => {
         [1, 'normal'],
       ] as const,
     });
-    const states: Record<string, Record<string, number>> = Object.create(null);
+    // `compile` keys `states` by the boundary's OWN state names, so the
+    // prototype-pollution fixture is typed by that same shape — a wide
+    // `Record<string, …>` would have hidden a state the boundary never declares.
+    const states: { __proto__: Record<string, number>; normal: Record<string, number> } = Object.create(null);
     states['__proto__'] = { blur: 1 };
     states['normal'] = { blur: 2 };
 
@@ -217,11 +220,15 @@ describe('GLSLCompiler.serialize', () => {
 
   test('omits inline comments when metadata comments are undefined', () => {
     const serialized = GLSLCompiler.serialize({
-      declarations: ['uniform int u_state;'],
+      declarations: 'uniform int u_state;',
       defines: [],
       uniforms: [{ name: 'u_state', type: 'int' }],
       uniformValues: { u_state: 0 },
-      comments: {},
+      // `GLSLCompileResult` has no top-level `comments` map — the optional
+      // inline comment lives per item on `GLSLUniform`/`GLSLDefine`. The fixture
+      // named a field the contract never had while omitting the REQUIRED
+      // `stateUniforms`, so it described a result `compile` cannot produce.
+      stateUniforms: {},
       bindUniforms: 'function bindUniforms() {}',
     });
 

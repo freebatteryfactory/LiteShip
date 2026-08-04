@@ -100,6 +100,10 @@ describe('dispatch()', () => {
     const input = { boundary: 'hero', durationMs: 420, easing: 'ease' } as const;
     const result = dispatch({ _tag: 'ViewTransitionCompiler', input });
     expect(result).toEqual({ target: 'view-transition', result: compileViewTransition(input) });
+    // `dispatch` returns a discriminated union; narrow on the discriminant so a
+    // future arm that stops carrying `raw` reds here.
+    expect(result.target, 'the view-transition arm must own the view-transition target').toBe('view-transition');
+    if (result.target !== 'view-transition') throw new Error('dispatch routed to the wrong arm');
     expect(result.result.raw).toMatch(/view-transition-name: liteship-vt-hero-[0-9a-f]{8}/u);
   });
 });

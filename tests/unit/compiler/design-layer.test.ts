@@ -599,13 +599,17 @@ describe('TokenCSSCompiler', () => {
   });
 
   test('compile() skips themed variant when value is undefined in the theme tokens map', () => {
-    const partialTheme = {
+    // The "value is undefined" case is AUTHORABLE: `defineTheme` requires the
+    // variant KEY, not a defined value, so the theme is really constructed
+    // rather than an object literal asserted into `Theme` through a
+    // hand-written `Record<'a' | 'b', string | undefined>`.
+    const partialTheme = defineTheme({
       name: 'partial',
       variants: ['a', 'b'] as const,
       tokens: {
-        primary: { a: '#f00' } as Record<'a' | 'b', string | undefined>,
+        primary: { a: '#f00', b: undefined },
       },
-    } as Theme;
+    });
 
     const token = defineToken({
       name: 'primary',

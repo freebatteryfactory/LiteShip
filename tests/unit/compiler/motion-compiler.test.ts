@@ -11,6 +11,7 @@ import {
   sealGraph,
   interpretTransition,
   interpretProgram,
+  StateName,
   type CellMeta,
   type ContentAddress,
   type DocumentGraph,
@@ -276,13 +277,29 @@ describe('MotionCompiler', () => {
     .array(fc.constantFrom('a', 'b', 'c'), { minLength: 4, maxLength: 6 })
     .chain((tokens) => {
       const cuts = threeWayCuts(tokens.length);
-      return fc
-        .uniqueArray(fc.nat({ max: cuts.length - 1 }), { minLength: 2, maxLength: 2 })
-        .map(([left, right]) => [identityAt(tokens, cuts[left]!), identityAt(tokens, cuts[right]!)] as const);
+      return fc.uniqueArray(fc.nat({ max: cuts.length - 1 }), { minLength: 2, maxLength: 2 }).map((picked) => {
+        // `uniqueArray` is typed `number[]`, so destructuring yields
+        // `number | undefined` under `noUncheckedIndexedAccess`. Resolve both
+        // cuts fail-closed rather than indexing with a possible `undefined`.
+        const leftCut = picked[0] === undefined ? undefined : cuts[picked[0]];
+        const rightCut = picked[1] === undefined ? undefined : cuts[picked[1]];
+        if (leftCut === undefined || rightCut === undefined) {
+          throw new Error('the generator must draw exactly two in-range three-way cuts');
+        }
+        return [identityAt(tokens, leftCut), identityAt(tokens, rightCut)] as const;
+      });
     });
 
   const keyframeIdentOf = (target: string, fromState: string, toState: string): string => {
-    const plan = { ...revealCssPlan(target), target, fromState, toState };
+    // `CssMotionPlan.fromState`/`toState` are branded `StateName`s. Minting them
+    // through the sanctioned constructor is what makes the perturbed plan a real
+    // plan; raw strings are not assignable and no assertion is used to pretend.
+    const plan = {
+      ...revealCssPlan(target),
+      target,
+      fromState: StateName(fromState),
+      toState: StateName(toState),
+    };
     const ident = MotionCompiler.compile({ plan }).keyframes.match(/^@keyframes\s+([^\s{]+)\s+\{/u)?.[1];
     expect(ident, 'every compiled plan must emit a @keyframes prelude').toBeTypeOf('string');
     return ident!;
@@ -680,7 +697,11 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
         { kind: 'step', transitionId: b },
       ],
     });
-    expect(par.diagnostics.some((d) => d.code === 'mixed-easing-overlap-approximated')).toBe(false);
+    // `mixed-easing-overlap-approximated` is RETIRED (#148) — it is not a member
+    // of the diagnostic-code union any more, so comparing against it could never
+    // be true and the old `.some(...) === false` passed vacuously forever. The
+    // comment's actual pin is "no diagnostic", so assert exactly that.
+    expect(par.diagnostics, 'a mixed-easing par lowers to the runtime floor with nothing to report').toEqual([]);
     const kinds = (par.runtime?.windows ?? []).map((w) => w.easing.kind);
     expect(kinds).toContain('spring');
     expect(kinds).toContain('ease');

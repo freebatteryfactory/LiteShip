@@ -107,6 +107,12 @@
     "tests/unit/audit/**/*.test.ts",
     // The scaffolder suite drives the published create-liteship template
     // contract. Admit the whole owned directory.
+    // The compiler suites are the design-layer lowering: tokens, styles, themes,
+    // components, GLSL/WGSL/ARIA/motion targets, the dispatch arm table, and the
+    // CSS-custom-property migrator. Admit the whole owned directory so an
+    // authoring or compile-result contract drift fails typecheck before any
+    // artifact is emitted.
+    "tests/unit/compiler/**/*.test.ts",
     "tests/unit/create-liteship/**/*.test.ts",
     // The edge suites parse real Client-Hints headers into the public device
     // capability contract. Admit the whole owned directory so a header or tier

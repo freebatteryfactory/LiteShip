@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { ARIACompiler } from '../../../packages/compiler/src/aria.js';
 import { NUMBER_RE, inferSyntax } from '../../../packages/compiler/src/css-syntax.js';
-import type { Theme } from '@liteship/core';
 import { defineBoundary, defineToken, defineTheme, defineStyle, createComponent } from '@liteship/core';
 import { CSSCompiler } from '../../../packages/compiler/src/css.js';
 import { ThemeCSSCompiler } from '../../../packages/compiler/src/theme-css.js';
@@ -88,23 +87,29 @@ describe('compiler branch coverage', () => {
   });
 
   test('ThemeCSSCompiler skips missing variant values and emits transitions only when meta is present', () => {
-    const themed = ThemeCSSCompiler.compile({
-      _tag: 'ThemeDef',
-      id: 'fnv1a:theme0001' as never,
-      name: 'brand',
-      variants: ['light', 'dark', 'contrast'],
-      tokens: {
-        accent: {
-          light: '#ffffff',
-          dark: '#111111',
+    // `ThemeCSSCompiler` skips a variant whose value is `undefined`
+    // (`theme-css.ts`: `if (value === undefined) continue`). That case is
+    // authorable: `defineTheme` requires the variant KEY to be present, not a
+    // defined value — so the fixture declares `contrast: undefined` and is a
+    // real, constructed `ThemeDef` rather than an object asserted into one.
+    const themed = ThemeCSSCompiler.compile(
+      defineTheme({
+        name: 'brand',
+        variants: ['light', 'dark', 'contrast'] as const,
+        tokens: {
+          accent: {
+            light: '#ffffff',
+            dark: '#111111',
+            contrast: undefined,
+          },
         },
-      },
-      meta: {
-        light: { label: 'Light', mode: 'light' },
-        dark: { label: 'Dark', mode: 'dark' },
-        contrast: { label: 'Contrast', mode: 'light' },
-      },
-    } as Theme);
+        meta: {
+          light: { label: 'Light', mode: 'light' },
+          dark: { label: 'Dark', mode: 'dark' },
+          contrast: { label: 'Contrast', mode: 'light' },
+        },
+      }),
+    );
 
     expect(themed.selectors).toContain('html[data-theme="light"]');
     expect(themed.selectors).toContain('html[data-theme="dark"]');
@@ -457,7 +462,10 @@ describe('compiler branch coverage', () => {
       name: 'hero-card',
       styles,
       slots: {
-        body: { accepts: ['text'] },
+        // `SlotConfig` is `{ required?, description? }`. The fixture previously
+        // declared an `accepts` field the contract has never had and nothing
+        // reads; the slot NAME is what this law exercises.
+        body: { description: 'text body' },
       },
     });
 
@@ -474,10 +482,15 @@ describe('compiler branch coverage', () => {
       startingStyle: '',
     });
 
-    const component = {
+    // A REAL component: `StyleCSSCompiler.compile` is mocked above, so the base
+    // layer output is `''` regardless of what the style holds — the law is that
+    // the component compiler SYNTHESIZES its own layer block when the base
+    // omits one. An object asserted into `Component` around a `{} as never`
+    // style could not have caught a change to what `compile` reads off it.
+    const component = createComponent({
       name: 'plain-card',
-      styles: {} as never,
-    } as Component;
+      styles: defineStyle({ base: { properties: {} } }),
+    });
 
     const compiled = ComponentCSSCompiler.compile(component);
 
@@ -664,21 +677,22 @@ describe('compiler branch coverage', () => {
   });
 
   test('ThemeCSSCompiler stringifies non-string values and skips transition output without meta', () => {
-    const compiled = ThemeCSSCompiler.compile({
-      _tag: 'ThemeDef',
-      id: 'fnv1a:theme0002' as never,
-      name: 'numbers',
-      variants: ['light', 'dark'],
-      tokens: {
-        radius: {
-          light: 12,
-          dark: 16,
+    const compiled = ThemeCSSCompiler.compile(
+      defineTheme({
+        name: 'numbers',
+        variants: ['light', 'dark'] as const,
+        tokens: {
+          radius: {
+            light: 12,
+            dark: 16,
+          },
+          contrast: {
+            light: undefined,
+            dark: true,
+          },
         },
-        contrast: {
-          dark: true,
-        },
-      },
-    } as Theme);
+      }),
+    );
 
     expect(compiled.selectors).toContain('--liteship-radius: 12;');
     expect(compiled.selectors).toContain('--liteship-radius: 16;');
