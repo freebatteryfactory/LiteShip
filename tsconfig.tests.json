@@ -149,6 +149,12 @@
     // root and its subpath/lifecycle contracts. Admit the whole owned directory
     // so a facade drift fails typecheck before a consumer meets it.
     "tests/unit/liteship/**/*.test.ts",
+    // The MCP server suites own the JSON-RPC wire boundary, the error-algebra
+    // consumption at that boundary, the transport dispatch, and the D5 view
+    // bridge driven against a mock host. Admit the whole owned directory so an
+    // envelope, transport, or bridge contract drift fails typecheck before a
+    // model-facing host speaks to it.
+    "tests/unit/mcp-server/**/*.test.ts",
     // The compositor worker suites own the structured message protocol shared
     // by host and worker. Admit the whole owned directory so a wire-shape drift
     // fails typecheck before the protocol executes.

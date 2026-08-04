@@ -25,7 +25,11 @@ function widgetParts(html = readAppResource(APP_URI).contents[0]!.text): { marku
 }
 
 let posted: Array<Record<string, unknown>>;
-let handler: ((event: { data: unknown; source: unknown }) => void) | undefined;
+// The bridge registers a real DOM `message` listener, so the capture holds the
+// DOM type. A bespoke `(event: { data; source }) => void` alias is not what
+// `addEventListener` yields, and asserting between the two is how a fixture
+// ends up delivering a plain object that no browser could ever dispatch.
+let handler: EventListener | undefined;
 let originalPostMessage: typeof window.postMessage;
 let originalAdd: typeof window.addEventListener;
 
@@ -37,9 +41,15 @@ function mount(): void {
   // window.parent === window in jsdom → parent.postMessage is window.postMessage.
   window.postMessage = ((msg: unknown) => posted.push(msg as Record<string, unknown>)) as typeof window.postMessage;
   originalAdd = window.addEventListener.bind(window);
-  window.addEventListener = ((type: string, h: EventListenerOrEventListenerObject, opts?: unknown) => {
-    if (type === 'message') handler = h as (event: { data: unknown; source: unknown }) => void;
-    return originalAdd(type as keyof WindowEventMap, h as EventListener, opts as boolean);
+  window.addEventListener = ((
+    type: string,
+    h: EventListenerOrEventListenerObject,
+    opts?: boolean | AddEventListenerOptions,
+  ) => {
+    // `addEventListener` admits both a function and a `handleEvent` object;
+    // normalise rather than assert the object arm away.
+    if (type === 'message') handler = typeof h === 'function' ? h : (event: Event) => h.handleEvent(event);
+    originalAdd(type, h, opts);
   }) as typeof window.addEventListener;
   new Function(script)();
   window.addEventListener = originalAdd; // restore; keep the captured handler
@@ -47,7 +57,22 @@ function mount(): void {
 
 /** Play the host: deliver a JSON-RPC message to the view's handler (source = parent, so it's trusted). */
 function host(data: unknown): void {
-  handler!({ data, source: window.parent });
+  handler!(new MessageEvent('message', { data, source: window.parent }));
+}
+
+/**
+ * Play a FOREIGN frame: a real, truthy `MessageEvent.source` that is not the
+ * parent. The bridge's guard is `if (event.source && event.source !== window.parent) return`,
+ * so `source: null` would be falsy and sail straight past it — the negative
+ * control needs a genuine other window, which an iframe supplies.
+ */
+function spoof(data: unknown): void {
+  const frame = document.createElement('iframe');
+  document.body.append(frame);
+  const foreign = frame.contentWindow;
+  expect(foreign, 'jsdom produced no contentWindow for the spoofing frame').not.toBeNull();
+  handler!(new MessageEvent('message', { data, source: foreign }));
+  frame.remove();
 }
 
 function toolResult(capsule: unknown): Record<string, unknown> {
@@ -64,7 +89,7 @@ beforeEach(() => {
   mount();
 });
 afterEach(() => {
-  if (handler) window.removeEventListener('message', handler as EventListener);
+  if (handler) window.removeEventListener('message', handler);
   window.postMessage = originalPostMessage;
 });
 
@@ -128,7 +153,7 @@ describe('D5 host-bridge — trust + no network', () => {
   });
 
   it('the view ignores messages whose source is not the parent host', () => {
-    handler!({ data: toolResult({ name: 'spoof', kind: 'x' }), source: {} });
+    spoof(toolResult({ name: 'spoof', kind: 'x' }));
     expect(document.getElementById('capsule-name')!.textContent).toBe('');
   });
 

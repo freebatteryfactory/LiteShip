@@ -40,6 +40,7 @@ import {
   type JsonRpcNotification,
   type JsonRpcRequest,
   type JsonRpcResponse,
+  type JsonRpcErrorResponse,
   errorResponse,
   successResponse,
   MethodNotFound,
@@ -134,8 +135,12 @@ export async function dispatch(msg: JsonRpcRequest | JsonRpcNotification): Promi
  *
  * Exported so the per-variant mapping is unit-testable without forcing a real
  * command handler to throw each variant through the dispatcher.
+ *
+ * Every arm — including `orElse` — returns `errorResponse(...)`, so the declared
+ * return is the error envelope itself, not the `JsonRpcResponse` union. A
+ * consumer therefore reads `.error` directly instead of re-asserting the shape.
  */
-export function errorFromTagged(id: JsonRpcId, err: LiteShipError): JsonRpcResponse {
+export function errorFromTagged(id: JsonRpcId, err: LiteShipError): JsonRpcErrorResponse {
   return matchTagOr(
     err,
     {

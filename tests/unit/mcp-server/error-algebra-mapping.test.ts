@@ -35,17 +35,34 @@ import {
   taggedError,
 } from '@liteship/error';
 import { dispatch, errorFromTagged } from '../../../packages/mcp-server/src/dispatch.js';
-import type { JsonRpcRequest } from '../../../packages/mcp-server/src/jsonrpc.js';
+import type { JsonRpcRequest, JsonRpcResponse } from '../../../packages/mcp-server/src/jsonrpc.js';
 
-/** Narrow a response to its error envelope (every case here is an error). */
-function err(r: { error?: { code: number; message: string; data?: unknown } } | null): {
+/** `data` rides the wire as JSON-RPC `unknown`; every arm here writes an object. */
+function isDiagnosticData(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+/**
+ * Narrow a response to its error envelope (every case here is an error).
+ *
+ * Fail-closed and positive: a success envelope or a missing/non-object `data`
+ * fails the law with a named reason rather than being asserted past, so a
+ * mapping that stops producing an error — or produces an opaque scalar `data` —
+ * reds here instead of throwing an unhelpful TypeError downstream.
+ */
+function err(r: JsonRpcResponse | null): {
   code: number;
   message: string;
   data: Record<string, unknown>;
 } {
-  expect(r).not.toBeNull();
-  expect(r!.error).toBeDefined();
-  return r!.error as { code: number; message: string; data: Record<string, unknown> };
+  expect(r, 'the mapping produced no response envelope').not.toBeNull();
+  if (r === null) throw new Error('no response envelope');
+  expect('error' in r, 'the mapping produced a SUCCESS envelope, not an error').toBe(true);
+  if (!('error' in r)) throw new Error('success envelope');
+  const { code, message, data } = r.error;
+  expect(isDiagnosticData(data), 'the error envelope carries no structured `data` object').toBe(true);
+  if (!isDiagnosticData(data)) throw new Error('non-object diagnostic data');
+  return { code, message, data };
 }
 
 describe('errorFromTagged — every LiteShip variant maps to a tag-specific JSON-RPC response', () => {
@@ -180,7 +197,7 @@ describe('dispatch catch — a tagged error thrown by a real handler is routed t
     // isTaggedError → errorFromTagged for a NON-Validation variant on the
     // real propagation path (not just the helper in isolation).
     const r = await dispatch(req('resources/read', { uri: 'liteship://does-not-exist' }));
-    const e = err(r as { error: { code: number; message: string; data: Record<string, unknown> } });
+    const e = err(r);
     expect(e.code).toBe(-32002);
     expect(e.data.uri).toBe('liteship://does-not-exist');
   });
@@ -189,6 +206,6 @@ describe('dispatch catch — a tagged error thrown by a real handler is routed t
     // tools/call with a bad name shape throws ValidationError → -32602; this
     // asserts the tagged path is taken (not the generic String(err) arm).
     const r = await dispatch(req('tools/call', { wrong: 'shape' }));
-    expect((r as { error: { code: number } }).error.code).toBe(-32602);
+    expect(err(r).code).toBe(-32602);
   });
 });
