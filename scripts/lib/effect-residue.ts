@@ -22,6 +22,7 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { commentsBlankedAST } from '../../packages/audit/src/code-ranges.js';
 import { getEnvironmentConfig } from '../../packages/vite/src/environments.js';
 
 export type EffectResidueKind = 'static-import' | 'dynamic-import' | 'require' | 'call-site' | 'manifest-dependency';
@@ -70,70 +71,36 @@ function isCommentLine(line: string): boolean {
 }
 
 /**
- * Remove inline comments without changing string contents. The effect-residue
- * classifier's string-context blindness is owner-rebutted and intentional:
- * residue-shaped text inside a string still reds. This helper closes only the
- * orthogonal `import(/* decoy *\/ 'effect')` evasion.
+ * Classify text whose COMMENTS are already blanked. Strings survive by design:
+ * the classifier's string-context blindness is owner-rebutted and intentional —
+ * residue-shaped text inside a string still reds.
  */
-function stripCommentsPreservingStrings(source: string): string {
-  const output = [...source];
-  let quote: "'" | '"' | '`' | null = null;
-  let escaped = false;
-  let lineComment = false;
-  let blockComment = false;
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index]!;
-    const next = source[index + 1];
-    if (lineComment) {
-      if (char === '\n' || char === '\r') lineComment = false;
-      else output[index] = ' ';
-      continue;
-    }
-    if (blockComment) {
-      output[index] = char === '\n' || char === '\r' ? char : ' ';
-      if (char === '*' && next === '/') {
-        output[index + 1] = ' ';
-        index += 1;
-        blockComment = false;
-      }
-      continue;
-    }
-    if (quote !== null) {
-      if (escaped) escaped = false;
-      else if (char === '\\') escaped = true;
-      else if (char === quote) quote = null;
-      continue;
-    }
-    if (char === "'" || char === '"' || char === '`') {
-      quote = char;
-    } else if (char === '/' && next === '/') {
-      output[index] = ' ';
-      output[index + 1] = ' ';
-      index += 1;
-      lineComment = true;
-    } else if (char === '/' && next === '*') {
-      output[index] = ' ';
-      output[index + 1] = ' ';
-      index += 1;
-      blockComment = true;
-    }
-  }
-  return output.join('');
+function classifyMaskedResidueLine(line: string): readonly EffectResidueKind[] {
+  if (isCommentLine(line)) return [];
+  const kinds: EffectResidueKind[] = [];
+  if (STATIC_IMPORT.test(line)) kinds.push('static-import');
+  if (DYNAMIC_IMPORT.test(line)) kinds.push('dynamic-import');
+  if (REQUIRE_CALL.test(line)) kinds.push('require');
+  if (CALL_SITE.test(line)) kinds.push('call-site');
+  return kinds;
 }
 
 /**
  * Classify one SOURCE line. Pure; comment lines never classify (prose about the
  * shed is history, not residue).
+ *
+ * Comment removal is delegated to the SOUND parser-backed masker
+ * ({@link commentsBlankedAST}) rather than a local character machine. The machine
+ * this replaced tracked quote/escape/line-comment/block-comment and had no
+ * regex-literal state, so a regex whose character class contains `/*` — the legal
+ * `/[/*]/` — opened a phantom block comment and blanked everything after it. That
+ * is a fail-OPEN hole (residue erased, scan green), the opposite direction from
+ * the sanctioned string-context rebuttal, and it is exactly the hazard the
+ * TypeScript parser resolves by construction.
  */
 export function classifyEffectResidueLine(line: string): readonly EffectResidueKind[] {
   if (isCommentLine(line)) return [];
-  const active = stripCommentsPreservingStrings(line);
-  const kinds: EffectResidueKind[] = [];
-  if (STATIC_IMPORT.test(active)) kinds.push('static-import');
-  if (DYNAMIC_IMPORT.test(active)) kinds.push('dynamic-import');
-  if (REQUIRE_CALL.test(active)) kinds.push('require');
-  if (CALL_SITE.test(active)) kinds.push('call-site');
-  return kinds;
+  return classifyMaskedResidueLine(commentsBlankedAST(line));
 }
 
 /**
@@ -330,11 +297,12 @@ export function scanEffectResidue(root: string, allowlist: ReadonlySet<string>):
     const source = readFileSync(absolute, 'utf8');
     const lines = source.split(/\r?\n/);
     // Comment state belongs to the whole file. Splitting first lets a block
-    // comment hide a residue payload on its closing line (`*/ 'effect')`).
-    const activeLines = stripCommentsPreservingStrings(source).split(/\r?\n/);
+    // comment hide a residue payload on its closing line (`*/ 'effect')`), and
+    // only a whole-file parse can tell a regex literal from a division.
+    const activeLines = commentsBlankedAST(source).split(/\r?\n/);
     let found = false;
     for (let index = 0; index < activeLines.length; index += 1) {
-      for (const kind of classifyEffectResidueLine(activeLines[index]!)) {
+      for (const kind of classifyMaskedResidueLine(activeLines[index]!)) {
         findings.push({ file, line: index + 1, kind, detail: lines[index]!.trim().slice(0, 120) });
         found = true;
       }
@@ -346,7 +314,7 @@ export function scanEffectResidue(root: string, allowlist: ReadonlySet<string>):
     // finding already reds the zero-findings law, so per-file dedup is sound.
     if (!found) {
       const collapsed = activeLines.join(' ').replace(/\s+/g, ' ');
-      for (const kind of classifyEffectResidueLine(collapsed)) {
+      for (const kind of classifyMaskedResidueLine(collapsed)) {
         findings.push({ file, line: 0, kind, detail: 'construct spans line boundaries (collapsed-source match)' });
       }
     }

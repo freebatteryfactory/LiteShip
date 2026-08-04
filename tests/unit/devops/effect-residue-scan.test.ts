@@ -141,6 +141,58 @@ describe('effect residue — full-scope scan', () => {
     }
   });
 
+  it('a regex character class carrying `/*` cannot blank the rest of the file (fail-OPEN regression)', () => {
+    // `/[/*]/` is a legal, ordinary regex. A comment stripper with quote/escape/
+    // line/block state but NO regex-literal state reads the `/*` inside the
+    // character class as the start of a block comment and blanks EVERY following
+    // character — so a file carrying both a real static import and a real call
+    // site scanned completely clean. That is fail OPEN, the opposite direction
+    // from the owner-sanctioned string-context rebuttal above, and it is why the
+    // masker is now the parser-backed @liteship/audit authority rather than a
+    // second hand-rolled machine.
+    const fixture = mkdtempSync(join(tmpdir(), 'liteship-effect-residue-regex-'));
+    try {
+      const app = join(fixture, 'packages', 'cli', 'fragments', 'example', 'app');
+      mkdirSync(app, { recursive: true });
+      writeFileSync(
+        join(app, 'main.ts'),
+        [
+          'const SPLIT = /[/*]/;',
+          "import { Effect } from 'effect';",
+          'export const run = () => Effect.runSync(SPLIT);',
+          '',
+        ].join('\n'),
+      );
+      writeFileSync(join(app, 'package.json'), JSON.stringify({ name: 'app' }));
+      writeFileSync(join(fixture, 'pnpm-workspace.yaml'), "packages:\n  - 'packages/*'\n");
+
+      // STRONG assertion first: the planted residue must be REPORTED, with both
+      // kinds on their real lines. A weaker "not empty" would pass on a scanner
+      // that saw only one of the two.
+      expect(scanEffectResidue(fixture, new Set()).findings).toEqual([
+        {
+          file: 'packages/cli/fragments/example/app/main.ts',
+          line: 2,
+          kind: 'static-import',
+          detail: "import { Effect } from 'effect';",
+        },
+        {
+          file: 'packages/cli/fragments/example/app/main.ts',
+          line: 3,
+          kind: 'call-site',
+          detail: 'export const run = () => Effect.runSync(SPLIT);',
+        },
+      ]);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+
+    // The same shape on ONE line, through the exported per-line classifier.
+    expect(classifyEffectResidueLine('const SPLIT = /[/*]/; Effect.runSync(SPLIT);')).toContain('call-site');
+    // …and a division that merely neighbours a comment is still a comment.
+    expect(classifyEffectResidueLine('const half = total / 2; /* Effect.runSync(x) */')).toEqual([]);
+  });
+
   it('an absent pnpm-workspace.yaml is a finding, not an omitted authority', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'liteship-effect-residue-no-workspace-'));
     try {
