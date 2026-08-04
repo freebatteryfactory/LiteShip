@@ -8,7 +8,17 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { sealNode, sealGraph, CanonicalCbor, AddressedDigest, projectionKeys, HLC, Receipt } from '@liteship/core';
+import {
+  sealNode,
+  sealGraph,
+  CanonicalCbor,
+  AddressedDigest,
+  projectionKeys,
+  HLC,
+  StateName,
+  ThresholdValue,
+  Receipt,
+} from '@liteship/core';
 import type {
   DocumentGraph,
   ComponentNode,
@@ -32,8 +42,8 @@ function buildGraph(): DocumentGraph {
     id: '' as ContentAddress,
     meta,
     name: 'card',
-    thresholds: [0, 768],
-    states: ['mobile', 'desktop'],
+    thresholds: [ThresholdValue(0), ThresholdValue(768)],
+    states: [StateName('mobile'), StateName('desktop')],
   });
 
   const entity = sealNode<EntityNode>({
@@ -64,7 +74,7 @@ function buildGraph(): DocumentGraph {
     id: '' as ContentAddress,
     meta,
     entityRef: entity.id,
-    state: 'mobile',
+    state: StateName('mobile'),
     bindings: { 'font-size': 14 },
   });
 
@@ -75,7 +85,7 @@ function buildGraph(): DocumentGraph {
     id: '' as ContentAddress,
     meta,
     entityRef: entity.id,
-    state: 'desktop',
+    state: StateName('desktop'),
     bindings: { 'font-size': 18 },
   });
 
@@ -235,8 +245,8 @@ describe('dualExport — one graph, two casts, one source (P4)', () => {
       id: '' as ContentAddress,
       meta,
       name: 'sidebar',
-      thresholds: [0],
-      states: ['mobile'],
+      thresholds: [ThresholdValue(0)],
+      states: [StateName('mobile')],
     });
     const unrelatedEntity = sealNode<EntityNode>({
       _tag: 'DocGraphEntityNode',
@@ -253,7 +263,7 @@ describe('dualExport — one graph, two casts, one source (P4)', () => {
       id: '' as ContentAddress,
       meta,
       entityRef: unrelatedEntity.id,
-      state: 'mobile',
+      state: StateName('mobile'),
       bindings: { 'font-size': 99 },
     });
     const noisy = sealGraph({
@@ -301,8 +311,8 @@ describe('dualExport — one graph, two casts, one source (P4)', () => {
       id: '' as ContentAddress,
       meta,
       name: 'card',
-      thresholds: [0],
-      states: ['only'],
+      thresholds: [ThresholdValue(0)],
+      states: [StateName('only')],
     });
     const flatEntity = sealNode<EntityNode>({
       _tag: 'DocGraphEntityNode',
@@ -330,7 +340,7 @@ describe('dualExport — one graph, two casts, one source (P4)', () => {
       id: '' as ContentAddress,
       meta,
       entityRef: flatEntity.id,
-      state: 'only',
+      state: StateName('only'),
       bindings: { 'font-size': 14 },
     });
     const flatGraph = sealGraph({

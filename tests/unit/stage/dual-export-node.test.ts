@@ -21,7 +21,16 @@
  */
 import { describe, test, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, projectionKeys, HLC } from '@liteship/core';
+import {
+  sealNode,
+  sealGraph,
+  AddressedDigest,
+  CanonicalCbor,
+  projectionKeys,
+  HLC,
+  StateName,
+  ThresholdValue,
+} from '@liteship/core';
 import type {
   DocumentGraph,
   ComponentNode,
@@ -47,8 +56,8 @@ function buildGraph(): DocumentGraph {
     id: '' as ContentAddress,
     meta,
     name: 'card',
-    thresholds: [0, 768],
-    states: ['mobile', 'desktop'],
+    thresholds: [ThresholdValue(0), ThresholdValue(768)],
+    states: [StateName('mobile'), StateName('desktop')],
   });
   const entity = sealNode<EntityNode>({
     _tag: 'DocGraphEntityNode',
@@ -76,7 +85,7 @@ function buildGraph(): DocumentGraph {
     id: '' as ContentAddress,
     meta,
     entityRef: entity.id,
-    state: 'mobile',
+    state: StateName('mobile'),
     bindings: { 'font-size': 14 },
   });
   const poseDesktop = sealNode<PoseNode>({
@@ -86,7 +95,7 @@ function buildGraph(): DocumentGraph {
     id: '' as ContentAddress,
     meta,
     entityRef: entity.id,
-    state: 'desktop',
+    state: StateName('desktop'),
     bindings: { 'font-size': 18 },
   });
   return sealGraph({

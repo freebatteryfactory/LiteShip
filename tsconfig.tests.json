@@ -161,6 +161,11 @@
     // envelope, transport, or bridge contract drift fails typecheck before a
     // model-facing host speaks to it.
     "tests/unit/mcp-server/**/*.test.ts",
+    // The stage suites own the render/export pipeline: the dual CSS+video export
+    // path, the Node export leg, and the ffmpeg frame encoder. Admit the whole
+    // owned directory so a DocumentGraph or encoder contract drift fails
+    // typecheck before a frame is written.
+    "tests/unit/stage/**/*.test.ts",
     // The compositor worker suites own the structured message protocol shared
     // by host and worker. Admit the whole owned directory so a wire-shape drift
     // fails typecheck before the protocol executes.

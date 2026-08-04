@@ -1049,6 +1049,7 @@ const ADMITTED_UNIT_DIRECTORIES: ReadonlyArray<{ readonly dir: string; readonly 
   { dir: 'lib', floor: 1 },
   { dir: 'liteship', floor: 12 },
   { dir: 'mcp-server', floor: 19 },
+  { dir: 'stage', floor: 6 },
   { dir: 'worker', floor: 7 },
 ];
 
