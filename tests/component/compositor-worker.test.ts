@@ -6,7 +6,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics } from '@liteship/core';
+import { Diagnostics, fnv1a, StateName } from '@liteship/core';
 import { CompositorWorker } from '@liteship/worker';
 import { prepareRegistrationsForTransfer } from '../../packages/worker/src/compositor-startup.js';
 import { MockWorker } from '../helpers/mock-worker.js';
@@ -67,6 +67,16 @@ afterEach(() => {
 /** Shorthand for threshold array expectations — matches the Float64Array runtime shape sent by prepareRegistrationForTransfer. */
 const f64 = (...values: number[]): Float64Array => Float64Array.from(values);
 
+// A worker registration's `id` is a `ContentAddress`, not a label: the protocol
+// keys quantizer identity by content address, and `fnv1a` is the repository's
+// one content-addressing kernel. Minting the fixture ids through it keeps each
+// boundary distinct and stable while making these suites drive the declared
+// identity type rather than a bare string.
+const BOUNDARY_1 = fnv1a('boundary-1');
+const BOUNDARY_2 = fnv1a('boundary-2');
+const BOUNDARY_WIDTH = fnv1a('boundary-width');
+const BOUNDARY_DENSITY = fnv1a('boundary-density');
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -84,15 +94,15 @@ describe('CompositorWorker', () => {
 
     // Should have sent an init message
     expect(worker.postedMessages.length).toBeGreaterThanOrEqual(1);
-    expect(worker.postedMessages[0].data).toEqual(expect.objectContaining({ type: 'init' }));
+    expect(worker.postedMessages[0]?.data).toEqual(expect.objectContaining({ type: 'init' }));
   });
 
   test('prepareRegistrationsForTransfer converts thresholds to Float64Array buffers', () => {
     const prepared = prepareRegistrationsForTransfer([
       {
         name: 'width',
-        boundaryId: 'boundary-1',
-        states: ['mobile', 'tablet', 'desktop'],
+        boundaryId: BOUNDARY_1,
+        states: [StateName('mobile'), StateName('tablet'), StateName('desktop')],
         thresholds: [0, 768, 1024],
       },
     ]);
@@ -128,7 +138,7 @@ describe('CompositorWorker', () => {
     const cw = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -151,7 +161,7 @@ describe('CompositorWorker', () => {
     await Promise.resolve();
 
     const msg = worker.postedMessages.at(-1);
-    expect(msg.data).toEqual(
+    expect(msg?.data).toEqual(
       expect.objectContaining({
         type: 'apply-updates',
         updates: [{ type: 'remove-quantizer', name: 'width' }],
@@ -170,7 +180,7 @@ describe('CompositorWorker', () => {
     await Promise.resolve();
 
     const msg = worker.postedMessages.at(-1);
-    expect(msg.data).toEqual(
+    expect(msg?.data).toEqual(
       expect.objectContaining({
         type: 'apply-updates',
         updates: [{ type: 'evaluate', name: 'width', value: 800 }],
@@ -189,7 +199,7 @@ describe('CompositorWorker', () => {
     await Promise.resolve();
 
     const msg = worker.postedMessages.at(-1);
-    expect(msg.data).toEqual(
+    expect(msg?.data).toEqual(
       expect.objectContaining({
         type: 'apply-updates',
         updates: [{ type: 'set-blend', name: 'width', weights: { mobile: 0.3, tablet: 0.7, desktop: 0 } }],
@@ -251,7 +261,7 @@ describe('CompositorWorker', () => {
 
     cw.evaluate('width', 800);
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -266,7 +276,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
             initialState: 'tablet',
@@ -283,7 +293,7 @@ describe('CompositorWorker', () => {
 
     cw.setBlendWeights('width', { mobile: 1 });
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -298,7 +308,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
             blendWeights: { mobile: 0.4, tablet: 0.6 },
@@ -313,7 +323,7 @@ describe('CompositorWorker', () => {
     const cw = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     const boundary = {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     } as const;
@@ -330,7 +340,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
           },
@@ -345,12 +355,12 @@ describe('CompositorWorker', () => {
     const worker = MockWorker.instances[0]!;
 
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 640, 960],
     });
@@ -364,7 +374,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 640, 960),
           },
@@ -428,7 +438,7 @@ describe('CompositorWorker', () => {
     const cw = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     const baseBoundary = {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     } as const;
@@ -439,7 +449,7 @@ describe('CompositorWorker', () => {
     worker.postedMessages.length = 0;
 
     cw.addQuantizer('width', {
-      id: 'boundary-2',
+      id: BOUNDARY_2,
       states: ['mobile', 'desktop'],
       thresholds: [0, 900],
     });
@@ -447,7 +457,7 @@ describe('CompositorWorker', () => {
     expect(worker.postedMessages.at(-1)?.data).toEqual({
       type: 'add-quantizer',
       name: 'width',
-      boundaryId: 'boundary-2',
+      boundaryId: BOUNDARY_2,
       states: ['mobile', 'desktop'],
       thresholds: f64(0, 900),
     });
@@ -458,7 +468,7 @@ describe('CompositorWorker', () => {
     const worker = MockWorker.instances[0]!;
 
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -475,7 +485,7 @@ describe('CompositorWorker', () => {
           registrations: [
             {
               name: 'width',
-              boundaryId: 'boundary-1',
+              boundaryId: BOUNDARY_1,
               states: ['mobile', 'tablet', 'desktop'],
               thresholds: f64(0, 768, 1024),
               initialState: 'tablet',
@@ -495,7 +505,7 @@ describe('CompositorWorker', () => {
     const worker = MockWorker.instances[0]!;
 
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -511,7 +521,7 @@ describe('CompositorWorker', () => {
           registrations: [
             {
               name: 'width',
-              boundaryId: 'boundary-1',
+              boundaryId: BOUNDARY_1,
               states: ['mobile', 'tablet', 'desktop'],
               thresholds: f64(0, 768, 1024),
             },
@@ -527,12 +537,12 @@ describe('CompositorWorker', () => {
     const worker = MockWorker.instances[0]!;
 
     cw.addQuantizer('width', {
-      id: 'boundary-width',
+      id: BOUNDARY_WIDTH,
       states: ['mobile', 'tablet'],
       thresholds: [640, 1024],
     });
     cw.addQuantizer('density', {
-      id: 'boundary-density',
+      id: BOUNDARY_DENSITY,
       states: ['cozy'],
       thresholds: [0, 100],
     });
@@ -549,13 +559,13 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-width',
+            boundaryId: BOUNDARY_WIDTH,
             states: ['mobile', 'tablet'],
             thresholds: f64(640, 1024),
           },
           {
             name: 'density',
-            boundaryId: 'boundary-density',
+            boundaryId: BOUNDARY_DENSITY,
             states: ['cozy'],
             thresholds: f64(0, 100),
           },
@@ -570,7 +580,7 @@ describe('CompositorWorker', () => {
     const worker = MockWorker.instances[0]!;
 
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -586,7 +596,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
             blendWeights: { mobile: 0.4, tablet: 0.6 },
@@ -601,7 +611,7 @@ describe('CompositorWorker', () => {
     const cw = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -673,7 +683,7 @@ describe('CompositorWorker', () => {
     const cw = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -812,7 +822,7 @@ describe('CompositorWorker', () => {
     const first = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     first.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -824,7 +834,7 @@ describe('CompositorWorker', () => {
     const resetSpy = vi.spyOn(warm.runtime, 'reset');
 
     warm.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -840,7 +850,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
             initialState: 'tablet',
@@ -856,7 +866,7 @@ describe('CompositorWorker', () => {
     const first = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     first.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -867,7 +877,7 @@ describe('CompositorWorker', () => {
     const resetSpy = vi.spyOn(warm.runtime, 'reset');
 
     warm.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -884,7 +894,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
             initialState: 'tablet',
@@ -900,7 +910,7 @@ describe('CompositorWorker', () => {
     const first = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     const snapshotBoundary = {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     } as const;
@@ -913,7 +923,7 @@ describe('CompositorWorker', () => {
     const resetSpy = vi.spyOn(warm.runtime, 'reset');
 
     warm.addQuantizer('width', {
-      id: 'boundary-2',
+      id: BOUNDARY_2,
       states: ['mobile', 'desktop'],
       thresholds: [0, 900],
     });
@@ -932,7 +942,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
           },
@@ -946,7 +956,7 @@ describe('CompositorWorker', () => {
     const first = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     first.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -957,7 +967,7 @@ describe('CompositorWorker', () => {
     const resetSpy = vi.spyOn(warm.runtime, 'reset');
 
     warm.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -974,7 +984,7 @@ describe('CompositorWorker', () => {
     const first = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     const boundary = {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     } as const;
@@ -1000,7 +1010,7 @@ describe('CompositorWorker', () => {
     const first = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     first.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -1020,7 +1030,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
           },
@@ -1034,7 +1044,7 @@ describe('CompositorWorker', () => {
     const first = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     const boundary = {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     } as const;
@@ -1058,7 +1068,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
             initialState: 'tablet',
@@ -1073,7 +1083,7 @@ describe('CompositorWorker', () => {
     const first = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     first.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -1093,7 +1103,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
             blendWeights: { mobile: 0, tablet: 1, desktop: 0 },
@@ -1109,7 +1119,7 @@ describe('CompositorWorker', () => {
     const worker = MockWorker.instances[0]!;
 
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -1124,7 +1134,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
             blendWeights: { mobile: 0.5, tablet: 0.5 },
@@ -1140,7 +1150,7 @@ describe('CompositorWorker', () => {
     const worker = MockWorker.instances[0]!;
 
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -1155,7 +1165,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
             blendWeights: { mobile: 0.6, tablet: 0.4 },
@@ -1171,7 +1181,7 @@ describe('CompositorWorker', () => {
     const worker = MockWorker.instances[0]!;
 
     cw.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -1186,7 +1196,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
             blendWeights: { mobile: 0.6, tablet: 0.4 },
@@ -1201,7 +1211,7 @@ describe('CompositorWorker', () => {
     const first = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     first.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -1212,7 +1222,7 @@ describe('CompositorWorker', () => {
     worker.postedMessages.length = 0;
 
     warm.addQuantizer('width', {
-      id: 'boundary-2',
+      id: BOUNDARY_2,
       states: ['mobile', 'desktop'],
       thresholds: [0, 900],
     });
@@ -1225,7 +1235,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-2',
+            boundaryId: BOUNDARY_2,
             states: ['mobile', 'desktop'],
             thresholds: f64(0, 900),
           },
@@ -1239,7 +1249,7 @@ describe('CompositorWorker', () => {
     const first = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     const snapshotBoundary = {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     } as const;
@@ -1253,7 +1263,7 @@ describe('CompositorWorker', () => {
     worker.postedMessages.length = 0;
 
     warm.addQuantizer('width', {
-      id: 'boundary-2',
+      id: BOUNDARY_2,
       states: ['mobile', 'desktop'],
       thresholds: [0, 900],
     });
@@ -1268,7 +1278,7 @@ describe('CompositorWorker', () => {
         registrations: [
           {
             name: 'width',
-            boundaryId: 'boundary-1',
+            boundaryId: BOUNDARY_1,
             states: ['mobile', 'tablet', 'desktop'],
             thresholds: f64(0, 768, 1024),
           },
@@ -1282,7 +1292,7 @@ describe('CompositorWorker', () => {
     const first = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     first.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -1309,7 +1319,7 @@ describe('CompositorWorker', () => {
     const first = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
     first.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -1340,7 +1350,7 @@ describe('CompositorWorker', () => {
 
     warm.evaluate('ghost', 12);
     warm.addQuantizer('width', {
-      id: 'boundary-1',
+      id: BOUNDARY_1,
       states: ['mobile', 'tablet', 'desktop'],
       thresholds: [0, 768, 1024],
     });
@@ -1444,11 +1454,11 @@ describe('CompositorWorker', () => {
       value: undefined,
     });
 
-    const processRecord = globalThis as typeof globalThis & {
-      process?: { once?: (event: string, fn: () => void) => void };
-    };
-    const originalProcess = processRecord.process;
-    processRecord.process = { once: exitSpy };
+    // `globalThis.process` is declared NON-optional `Process` by @types/node, so
+    // it cannot be re-declared or deleted through a widening intersection. Vitest's
+    // own global stub owns the slot instead: it installs the partial shape the
+    // compositor probes and `unstubAllGlobals` restores the real process.
+    vi.stubGlobal('process', { once: exitSpy });
 
     try {
       const { CompositorWorker: FreshCompositorWorker } =
@@ -1464,7 +1474,6 @@ describe('CompositorWorker', () => {
         configurable: true,
         value: originalAddEventListener,
       });
-      processRecord.process = originalProcess;
     }
   });
 
@@ -1504,9 +1513,9 @@ describe('CompositorWorker', () => {
       value: undefined,
     });
 
-    const processRecord = globalThis as typeof globalThis & { process?: unknown };
-    const originalProcess = processRecord.process;
-    processRecord.process = {};
+    // Same global-slot ownership as the `process.once` case above: the stub
+    // installs a process with no `once`, and `unstubAllGlobals` restores it.
+    vi.stubGlobal('process', {});
 
     try {
       const { CompositorWorker: FreshCompositorWorker } =
@@ -1517,11 +1526,6 @@ describe('CompositorWorker', () => {
         configurable: true,
         value: originalAddEventListener,
       });
-      if (originalProcess === undefined) {
-        delete processRecord.process;
-      } else {
-        processRecord.process = originalProcess;
-      }
       vi.unstubAllGlobals();
     }
   });
@@ -1581,7 +1585,7 @@ describe('CompositorWorker', () => {
       const first = CompositorWorker.create();
       const worker = MockWorker.instances[0]!;
       const boundary = {
-        id: 'boundary-1',
+        id: BOUNDARY_1,
         states: ['mobile', 'tablet', 'desktop'],
         thresholds: [0, 768, 1024],
       } as const;
@@ -1607,7 +1611,7 @@ describe('CompositorWorker', () => {
       const worker = MockWorker.instances[0]!;
 
       first.addQuantizer('width', {
-        id: 'boundary-1',
+        id: BOUNDARY_1,
         states: ['mobile', 'tablet', 'desktop'],
         thresholds: [0, 768, 1024],
       });
@@ -1618,7 +1622,7 @@ describe('CompositorWorker', () => {
       const resetSpy = vi.spyOn(warm.runtime, 'reset');
 
       warm.addQuantizer('width', {
-        id: 'boundary-1',
+        id: BOUNDARY_1,
         states: ['mobile', 'tablet', 'desktop'],
         thresholds: [0, 768, 1024],
       });
@@ -1635,7 +1639,7 @@ describe('CompositorWorker', () => {
           registrations: [
             {
               name: 'width',
-              boundaryId: 'boundary-1',
+              boundaryId: BOUNDARY_1,
               states: ['mobile', 'tablet', 'desktop'],
               thresholds: f64(0, 768, 1024),
               initialState: 'tablet',
@@ -1662,7 +1666,7 @@ describe('CompositorWorker', () => {
 
       expect(ackSpy).not.toHaveBeenCalled();
 
-      cw.bootstrapResolvedState([{ name: 'layout', state: 'tablet', generation: 2 }]);
+      cw.bootstrapResolvedState([{ name: 'layout', state: StateName('tablet'), generation: 2 }]);
       worker.simulateMessage({
         type: 'resolved-state-ack',
         generation: 2,
@@ -1686,7 +1690,7 @@ describe('CompositorWorker', () => {
 
       cw.onMetrics(metricsSpy);
       cw.addQuantizer('width', {
-        id: 'boundary-1',
+        id: BOUNDARY_1,
         states: ['mobile', 'tablet', 'desktop'],
         thresholds: [0, 768, 1024],
       });
@@ -1703,7 +1707,7 @@ describe('CompositorWorker', () => {
           registrations: [
             {
               name: 'width',
-              boundaryId: 'boundary-1',
+              boundaryId: BOUNDARY_1,
               states: ['mobile', 'tablet', 'desktop'],
               thresholds: f64(0, 768, 1024),
             },

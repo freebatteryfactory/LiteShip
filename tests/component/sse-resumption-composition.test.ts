@@ -185,7 +185,7 @@ describe('SSE + Resumption composition (docblock recipe)', () => {
     // The session persisted evt-42 before the connection dropped.
     Resumption.saveState(previousSessionState);
 
-    const fetchMock = vi.fn(async () => mockResponse({ patches: ['<p>43</p>', '<p>44</p>'] }));
+    const fetchMock = vi.fn<typeof fetch>(async () => mockResponse({ patches: ['<p>43</p>', '<p>44</p>'] }));
     vi.stubGlobal('fetch', fetchMock);
 
     const saved = Resumption.loadState(ARTIFACT_ID);
@@ -224,7 +224,7 @@ describe('SSE + Resumption composition (docblock recipe)', () => {
   });
 
   test('step 3 (no prior state): Resumption.resume falls back to a full snapshot', async () => {
-    const fetchMock = vi.fn(async () =>
+    const fetchMock = vi.fn<typeof fetch>(async () =>
       mockResponse({ html: '<main>fresh</main>', signals: null, lastEventId: 'evt-45' }),
     );
     vi.stubGlobal('fetch', fetchMock);

@@ -967,6 +967,57 @@ describe('(a18) integration runtime sources are type-admitted before execution',
   });
 });
 
+describe('(a19) component runtime sources are type-admitted before execution', () => {
+  // Canonical Node Vitest is the only executable owner of this tier.
+  const runtimeSources = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/component/'))
+    .sort();
+  const authoredSources = fg
+    .sync('tests/component/**/*.ts', { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/component/'));
+  const testCheck = CHECK_REGISTRY.find((check) => check.id === 'check/test');
+
+  it('derives the complete component tier from the blocking Node runtime owner', () => {
+    expect(testCheck?.authority, 'check/test must remain the BLOCKING owner of the component suite corpus').toBe(
+      'blocking',
+    );
+    expect(runtimeSources.length, 'the component suite corpus fell below its committed floor').toBeGreaterThanOrEqual(
+      14,
+    );
+    expect(runtimeSources, 'tests/component contains a source the canonical Node runtime does not execute').toEqual(
+      authoredSources,
+    );
+  });
+
+  it('directly admits every runtime-owned component source through one future-proof tree root', () => {
+    const admitted = new Set(admittedSources);
+    const missing = runtimeSources.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${runtimeSources.length} component sources; missing:\n${missing.join('\n')}`,
+    ).toEqual(runtimeSources);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/component/') && entry.includes('*') && entry.endsWith('.ts'),
+      ),
+      'component admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with component admission removed exposes the complete runtime-owned tree', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/component/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
 // --------------------------------------------------------------------------
 // (b) Coverage floors — the real gates cover a broad, non-trivial surface.
 // --------------------------------------------------------------------------

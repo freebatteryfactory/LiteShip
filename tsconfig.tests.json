@@ -59,6 +59,10 @@
     // config). Admit the whole tree so an adapter contract drift fails
     // typecheck before the build/serve integration runs.
     "tests/integration/**/*.ts",
+    // Component suites drive real workers, hosts, and DOM adapters against the
+    // public contracts. Admit the whole runtime tier so a protocol identity or
+    // capability drift fails typecheck before the composition executes.
+    "tests/component/**/*.test.ts",
     // The runtime fuzz tier reaches coverage-report scripts through the
     // security-boundary corpus. Admit the repository-owned minimal Istanbul
     // declarations so those transitive script contracts stay strict.

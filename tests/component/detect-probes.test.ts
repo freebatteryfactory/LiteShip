@@ -13,7 +13,7 @@ import {
   mockMatchMedia,
   mockWebGL,
   mockViewport,
-  type MockNavigatorOverrides,
+  type NavigatorOverrides,
 } from '../helpers/mock-browser.js';
 
 // ---------------------------------------------------------------------------
@@ -229,7 +229,7 @@ describe('detect()', () => {
 
   test('fills connection defaults when partial connection data is exposed', () => {
     restoreNav = mockNavigator({
-      connection: { effectiveType: '4g' } as MockNavigatorOverrides['connection'],
+      connection: { effectiveType: '4g' } as NavigatorOverrides['connection'],
     });
 
     const result = detect();

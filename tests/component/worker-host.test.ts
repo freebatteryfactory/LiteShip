@@ -7,12 +7,18 @@
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { WorkerHost } from '@liteship/worker';
+import { fnv1a } from '@liteship/core';
 import { MockWorker } from '../helpers/mock-worker.js';
 import { mockCanvas } from '../helpers/mock-dom.js';
 
 // ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
+
+// A quantizer registration's `id` is a `ContentAddress`, not a label; `fnv1a` is
+// the repository's one content-addressing kernel.
+const LAYOUT_BOUNDARY = fnv1a('layout');
+const TEST_BOUNDARY = fnv1a('b1');
 
 let restoreWorker: () => void;
 
@@ -266,7 +272,7 @@ describe('WorkerHost', () => {
     const firstReceived: any[] = [];
     firstHost.onState((state) => firstReceived.push(state));
     firstHost.compositor.addQuantizer('layout', {
-      id: 'layout',
+      id: LAYOUT_BOUNDARY,
       states: ['compact', 'comfortable', 'wide'],
       thresholds: [0, 640, 1024],
     });
@@ -296,7 +302,7 @@ describe('WorkerHost', () => {
     markCompositorReady();
     // Should be able to use compositor methods through the host
     host.compositor.addQuantizer('test', {
-      id: 'b1',
+      id: TEST_BOUNDARY,
       states: ['a', 'b'],
       thresholds: [0, 100],
     });
@@ -309,7 +315,7 @@ describe('WorkerHost', () => {
     const compositorWorker = markCompositorReady();
 
     host.compositor.addQuantizer('layout', {
-      id: 'layout',
+      id: LAYOUT_BOUNDARY,
       states: ['compact', 'comfortable', 'wide'],
       thresholds: [0, 640, 1024],
     });
@@ -332,7 +338,7 @@ describe('WorkerHost', () => {
         registrations: [
           {
             name: 'layout',
-            boundaryId: 'layout',
+            boundaryId: LAYOUT_BOUNDARY,
             states: ['compact', 'comfortable', 'wide'],
             thresholds: new Float64Array([0, 640, 1024]),
             initialState: 'comfortable',
