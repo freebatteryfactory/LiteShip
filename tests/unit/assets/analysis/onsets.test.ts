@@ -3,6 +3,14 @@ import { detectOnsets, OnsetProjection, defineAsset, AssetRegistry } from '@lite
 
 const registry = AssetRegistry.make([defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' })]);
 
+/**
+ * The projection invariants under test bind their input as `_i` — every one
+ * reads ONLY the output. An empty buffer is therefore a faithful stand-in for
+ * "the input is irrelevant here", and unlike `undefined` it is a value the
+ * declared `ArrayBuffer` input can actually hold.
+ */
+const UNREAD_INPUT = new ArrayBuffer(0);
+
 describe('OnsetProjection', () => {
   it('detectOnsets returns sample indices where energy rises sharply', () => {
     const sampleRate = 48000;
@@ -51,7 +59,7 @@ describe('OnsetProjection', () => {
     const cap = OnsetProjection(registry, 'intro-bed');
     const inv = cap.invariants.find((i) => i.name === 'onsets-ordered');
     expect(inv).toBeDefined();
-    expect(inv!.check(undefined, [10, 20, 15])).toBe(false);
-    expect(inv!.check(undefined, [10, 20, 30])).toBe(true);
+    expect(inv!.check(UNREAD_INPUT, [10, 20, 15])).toBe(false);
+    expect(inv!.check(UNREAD_INPUT, [10, 20, 30])).toBe(true);
   });
 });

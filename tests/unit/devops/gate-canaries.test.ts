@@ -1035,6 +1035,7 @@ describe('(a19) component runtime sources are type-admitted before execution', (
  * `error`, `ecs`, `remotion`) keep their own canaries (a12)-(a16).
  */
 const ADMITTED_UNIT_DIRECTORIES: ReadonlyArray<{ readonly dir: string; readonly floor: number }> = [
+  { dir: 'assets', floor: 14 },
   { dir: 'audit', floor: 26 },
   { dir: 'create-liteship', floor: 1 },
   { dir: 'detect', floor: 5 },

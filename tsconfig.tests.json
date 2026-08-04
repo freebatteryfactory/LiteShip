@@ -171,13 +171,14 @@
     "tests/unit/meta/allocation-contracts.test.ts",
     "tests/unit/core/reactive-capture.test.ts",
     "tests/unit/core/reactive-model.test.ts",
-    // Wave 5 asset assurance: strict binary fixtures, audio properties,
-    // parser fuzzing, fault simulation/injection, MC/DC, independent sharp
-    // differential, and benchmark subject all consume the public asset API.
-    "tests/unit/assets/analysis/projection-execution.test.ts",
-    "tests/unit/assets/binary-fault-simulation.test.ts",
-    "tests/unit/assets/binary-mcdc.test.ts",
-    "tests/unit/assets/decoder-fault-injection.test.ts"
+    // Wave 5 asset assurance — strict binary fixtures, audio properties, parser
+    // fuzzing, fault simulation/injection, MC/DC, the independent sharp
+    // differential, and the benchmark subject — all consume the public asset
+    // API, and so do the decoder and analysis-projection suites that sat beside
+    // them uncompiled. Admit the whole owned directory so a decoder or
+    // projection contract drift fails typecheck before any asset is read. This
+    // supersedes the four by-name entries Wave 5 left behind.
+    "tests/unit/assets/**/*.test.ts"
   ],
   "exclude": ["node_modules", "**/dist/**"]
 }

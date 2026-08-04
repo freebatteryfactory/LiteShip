@@ -3,6 +3,14 @@ import { computeWaveform, WaveformProjection, defineAsset, AssetRegistry } from 
 
 const registry = AssetRegistry.make([defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' })]);
 
+/**
+ * The projection invariants under test bind their input as `_i` — every one
+ * reads ONLY the output. An empty buffer is therefore a faithful stand-in for
+ * "the input is irrelevant here", and unlike `undefined` it is a value the
+ * declared `ArrayBuffer` input can actually hold.
+ */
+const UNREAD_INPUT = new ArrayBuffer(0);
+
 describe('WaveformProjection', () => {
   it('computeWaveform returns a normalized downsampled array', () => {
     const sampleRate = 48000;
@@ -76,9 +84,9 @@ describe('WaveformProjection', () => {
     const normInv = cap.invariants.find((i) => i.name === 'values-normalized');
     expect(binInv).toBeDefined();
     expect(normInv).toBeDefined();
-    expect(binInv!.check(undefined, [0, 0, 0])).toBe(false);
-    expect(binInv!.check(undefined, [0, 0, 0, 0])).toBe(true);
-    expect(normInv!.check(undefined, [0, 0.5, 1, 1.5])).toBe(false);
-    expect(normInv!.check(undefined, [0, 0.5, 1, 0.25])).toBe(true);
+    expect(binInv!.check(UNREAD_INPUT, [0, 0, 0])).toBe(false);
+    expect(binInv!.check(UNREAD_INPUT, [0, 0, 0, 0])).toBe(true);
+    expect(normInv!.check(UNREAD_INPUT, [0, 0.5, 1, 1.5])).toBe(false);
+    expect(normInv!.check(UNREAD_INPUT, [0, 0.5, 1, 0.25])).toBe(true);
   });
 });

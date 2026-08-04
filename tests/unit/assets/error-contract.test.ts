@@ -149,12 +149,12 @@ describe('audioDecoder teaching errors (#161, #162)', () => {
 
   it("no 'fmt ' chunk lists the chunks present and frames it as RIFF-but-not-WAV (#161)", async () => {
     const enc = new TextEncoder();
-    function u32le(n: number): Uint8Array {
+    function u32le(n: number): Uint8Array<ArrayBuffer> {
       const out = new Uint8Array(4);
       new DataView(out.buffer).setUint32(0, n, true);
       return out;
     }
-    function concat(...parts: Uint8Array[]): Uint8Array {
+    function concat(...parts: Uint8Array[]): Uint8Array<ArrayBuffer> {
       const total = parts.reduce((sum, p) => sum + p.byteLength, 0);
       const out = new Uint8Array(total);
       let off = 0;
@@ -164,7 +164,7 @@ describe('audioDecoder teaching errors (#161, #162)', () => {
       }
       return out;
     }
-    function chunk(id: string, payload: Uint8Array): Uint8Array {
+    function chunk(id: string, payload: Uint8Array): Uint8Array<ArrayBuffer> {
       return concat(enc.encode(id), u32le(payload.byteLength), payload);
     }
     // A valid RIFF carrying a LIST chunk but NO 'fmt ' — e.g. a metadata-only
@@ -179,12 +179,12 @@ describe('audioDecoder teaching errors (#161, #162)', () => {
 
   it('unsupported-format names the found format and enumerates supported combos', async () => {
     const enc = new TextEncoder();
-    function u32le(n: number): Uint8Array {
+    function u32le(n: number): Uint8Array<ArrayBuffer> {
       const out = new Uint8Array(4);
       new DataView(out.buffer).setUint32(0, n, true);
       return out;
     }
-    function concat(...parts: Uint8Array[]): Uint8Array {
+    function concat(...parts: Uint8Array[]): Uint8Array<ArrayBuffer> {
       const total = parts.reduce((sum, p) => sum + p.byteLength, 0);
       const out = new Uint8Array(total);
       let off = 0;
@@ -194,7 +194,7 @@ describe('audioDecoder teaching errors (#161, #162)', () => {
       }
       return out;
     }
-    function chunk(id: string, payload: Uint8Array): Uint8Array {
+    function chunk(id: string, payload: Uint8Array): Uint8Array<ArrayBuffer> {
       return concat(enc.encode(id), u32le(payload.byteLength), payload);
     }
     const fmtData = new Uint8Array(16);

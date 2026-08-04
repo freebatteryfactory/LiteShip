@@ -3,6 +3,14 @@ import { detectBeats, BeatMarkerProjection, defineAsset, AssetRegistry } from '@
 
 const registry = AssetRegistry.make([defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' })]);
 
+/**
+ * The projection invariants under test bind their input as `_i` — every one
+ * reads ONLY the output. An empty buffer is therefore a faithful stand-in for
+ * "the input is irrelevant here", and unlike `undefined` it is a value the
+ * declared `ArrayBuffer` input can actually hold.
+ */
+const UNREAD_INPUT = new ArrayBuffer(0);
+
 describe('BeatMarkerProjection', () => {
   it('detectBeats returns ordered beats for a synthetic 120bpm pulse', () => {
     const sampleRate = 48000;
@@ -66,12 +74,12 @@ describe('BeatMarkerProjection', () => {
     const bpmInv = cap.invariants.find((i) => i.name === 'bpm-in-range');
     expect(orderedInv).toBeDefined();
     expect(bpmInv).toBeDefined();
-    expect(orderedInv!.check(undefined, { bpm: 120, beats: [0, 100, 50] })).toBe(false);
-    expect(orderedInv!.check(undefined, { bpm: 120, beats: [0, 100, 200] })).toBe(true);
-    expect(bpmInv!.check(undefined, { bpm: 30, beats: [] })).toBe(false);
-    expect(bpmInv!.check(undefined, { bpm: 0, beats: [] })).toBe(true);
-    expect(bpmInv!.check(undefined, { bpm: 120, beats: [] })).toBe(false);
-    expect(bpmInv!.check(undefined, { bpm: 30, beats: [0] })).toBe(false);
-    expect(bpmInv!.check(undefined, { bpm: 120, beats: [0] })).toBe(true);
+    expect(orderedInv!.check(UNREAD_INPUT, { bpm: 120, beats: [0, 100, 50] })).toBe(false);
+    expect(orderedInv!.check(UNREAD_INPUT, { bpm: 120, beats: [0, 100, 200] })).toBe(true);
+    expect(bpmInv!.check(UNREAD_INPUT, { bpm: 30, beats: [] })).toBe(false);
+    expect(bpmInv!.check(UNREAD_INPUT, { bpm: 0, beats: [] })).toBe(true);
+    expect(bpmInv!.check(UNREAD_INPUT, { bpm: 120, beats: [] })).toBe(false);
+    expect(bpmInv!.check(UNREAD_INPUT, { bpm: 30, beats: [0] })).toBe(false);
+    expect(bpmInv!.check(UNREAD_INPUT, { bpm: 120, beats: [0] })).toBe(true);
   });
 });

@@ -16,7 +16,7 @@ function buildWav(opts: {
   data: Uint8Array;
   /** Optional padding bytes inserted between fmt and data (as a JUNK chunk). */
   preDataPadBytes?: number;
-}): Uint8Array {
+}): Uint8Array<ArrayBuffer> {
   const fmtData = new Uint8Array(16);
   const dv = new DataView(fmtData.buffer);
   dv.setUint16(0, opts.audioFormat, true);
@@ -30,7 +30,7 @@ function buildWav(opts: {
   const fmtChunk = chunk('fmt ', fmtData);
   const dataChunk = chunk('data', opts.data);
 
-  let body: Uint8Array;
+  let body: Uint8Array<ArrayBuffer>;
   if (opts.preDataPadBytes && opts.preDataPadBytes > 0) {
     const junkChunk = chunk('JUNK', new Uint8Array(opts.preDataPadBytes));
     body = concat(enc.encode('WAVE'), fmtChunk, junkChunk, dataChunk);
@@ -40,16 +40,16 @@ function buildWav(opts: {
   const riff = concat(enc.encode('RIFF'), u32le(body.byteLength), body);
   return riff;
 
-  function chunk(id: string, payload: Uint8Array): Uint8Array {
+  function chunk(id: string, payload: Uint8Array): Uint8Array<ArrayBuffer> {
     const padding = payload.byteLength % 2 === 0 ? new Uint8Array(0) : new Uint8Array(1);
     return concat(enc.encode(id), u32le(payload.byteLength), payload, padding);
   }
-  function u32le(n: number): Uint8Array {
+  function u32le(n: number): Uint8Array<ArrayBuffer> {
     const out = new Uint8Array(4);
     new DataView(out.buffer).setUint32(0, n, true);
     return out;
   }
-  function concat(...parts: Uint8Array[]): Uint8Array {
+  function concat(...parts: Uint8Array[]): Uint8Array<ArrayBuffer> {
     const total = parts.reduce((sum, p) => sum + p.byteLength, 0);
     const out = new Uint8Array(total);
     let off = 0;
