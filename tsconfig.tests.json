@@ -48,6 +48,11 @@
     // Registered benchmark scripts and the Node-runtime smoke suite share one
     // executable source tree; admit the complete tier, not a filename roster.
     "tests/bench/**/*.ts",
+    // Capsule-generated suites and their paired benchmarks are one
+    // generator-owned tier: the emitted test and bench for a capsule binding
+    // must typecheck together, so a generator whose output drifts from the
+    // production contract fails here rather than at runtime.
+    "tests/generated/**/*.ts",
     // The runtime fuzz tier reaches coverage-report scripts through the
     // security-boundary corpus. Admit the repository-owned minimal Istanbul
     // declarations so those transitive script contracts stay strict.

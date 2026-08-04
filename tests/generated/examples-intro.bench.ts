@@ -10,7 +10,7 @@ import { SceneRuntime } from '../../packages/scene/src/runtime.js';
 // (cap.budgets.p95Ms — read from the binding, the source of truth).
 const compiled = compileIntro();
 const declaredP95Ms = (intro as { budgets?: { p95Ms?: number } }).budgets?.p95Ms;
-let handle;
+let handle: SceneRuntime.Handle;
 
 bench(
   `examples.intro — per-frame tick (p95 vs declared budget ${declaredP95Ms ?? 'n/a'}ms)`,

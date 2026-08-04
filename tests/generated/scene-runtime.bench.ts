@@ -8,7 +8,7 @@ import { SceneRuntime } from '../../packages/scene/src/runtime.js';
 // and ticked one frame per iteration, so the loop measures the real ECS tick.
 const compiled = compileIntro();
 const dtMs = 1000 / (compiled as { fps: number }).fps;
-let handle;
+let handle: Awaited<ReturnType<typeof SceneRuntime.build>>;
 
 bench(
   `scene.runtime — tick() throughput`,

@@ -44,6 +44,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, ex
 import { resolve, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import fg from 'fast-glob';
+import { CHECK_REGISTRY } from '@liteship/command';
 import { benchScriptTargets } from '../../../scripts/bench/contract-coverage.js';
 import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 import { scaledTimeout, nodeTestInclude } from '../../../vitest.shared.js';
@@ -819,6 +820,74 @@ describe('(a16) Remotion unit evidence is type-admitted before execution', () =>
       fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
     );
     expect(runtimeSources.filter((path) => !counterfeitAdmission.has(path))).toEqual(runtimeSources);
+  });
+});
+
+describe('(a17) generated capsule sources are type-admitted before execution', () => {
+  // Canonical Node Vitest owns every generated capsule SUITE (root slug suites
+  // plus the deeper siteAdapter integration lane).
+  const runtimeTests = fg
+    .sync([...nodeTestInclude], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/generated/'))
+    .sort();
+  // capsule:compile writes each capsule as a `<slug>.test.ts` + `<slug>.bench.ts`
+  // PAIR at the tier root; a siteAdapter additionally emits
+  // `tests/generated/integration/<slug>.test.ts`, whose bench IS that root pair.
+  // The bench population is therefore DERIVED from the runtime-owned root suites
+  // — never an authored filename roster — and the pair is one admission unit.
+  const pairedBenches = runtimeTests
+    .filter((path) => path.split('/').length === 3)
+    .map((path) => path.replace(/\.test\.ts$/u, '.bench.ts'))
+    .sort();
+  const generatorOwned = [...new Set([...runtimeTests, ...pairedBenches])].sort();
+  const authoredSources = fg
+    .sync('tests/generated/**/*.ts', { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedSources = tsconfigTestsRootFiles().filter((path) => path.startsWith('tests/generated/'));
+  const capsuleCheck = CHECK_REGISTRY.find((check) => check.id === 'check/capsule-verify');
+
+  it('derives the complete generated tier from the Node runtime and the blocking capsule check', () => {
+    expect(
+      capsuleCheck?.authority,
+      'check/capsule-verify must remain the BLOCKING owner of the compiled capsule corpus',
+    ).toBe('blocking');
+    expect(
+      runtimeTests.length,
+      'the generated capsule suite corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(26);
+    expect(
+      pairedBenches.length,
+      'the generated capsule bench corpus fell below its committed floor',
+    ).toBeGreaterThanOrEqual(24);
+    const orphanSuites = pairedBenches.filter((path) => !existsSync(resolve(REPO, path)));
+    expect(orphanSuites, `generated suites whose paired bench is missing: ${orphanSuites.join(', ')}`).toEqual([]);
+    expect(generatorOwned, 'tests/generated contains a source with no generator owner').toEqual(authoredSources);
+  });
+
+  it('directly admits every generator-owned source through one future-proof tree root', () => {
+    const admitted = new Set(admittedSources);
+    const missing = generatorOwned.filter((path) => !admitted.has(path));
+    expect(
+      admittedSources,
+      `the tests typecheck project admits ${admittedSources.length}/${generatorOwned.length} generated sources; missing:\n${missing.join('\n')}`,
+    ).toEqual(generatorOwned);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/generated/') && entry.includes('*') && entry.endsWith('.ts'),
+      ),
+      'generated admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with generated admission removed exposes the complete generator-owned tree', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/generated/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(generatorOwned.filter((path) => !counterfeitAdmission.has(path))).toEqual(generatorOwned);
   });
 });
 

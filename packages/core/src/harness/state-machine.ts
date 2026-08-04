@@ -47,7 +47,7 @@ import { ${d.builderName} } from '${d.builderImport}';
 // and ticked one frame per iteration, so the loop measures the real ECS tick.
 const compiled = ${d.compileName}();
 const dtMs = 1000 / (compiled as { fps: number }).fps;
-let handle;
+let handle: Awaited<ReturnType<typeof ${d.builderName}.build>>;
 
 bench(
   \`${escapeBacktick(name)} — tick() throughput\`,

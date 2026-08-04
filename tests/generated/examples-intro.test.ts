@@ -32,15 +32,15 @@ describe('examples.intro', () => {
     ['_gain', GainPart],
     ['_intensity', IntensityPart],
     ['_blend', BlendPart],
-  ];
+  ] as const;
 
   // Snapshot one frame to a plain, ordered, content-addressable structure:
   // every entity's id + the durable output components present on it, plus the
   // SVG-egress frame. Sorted by entity id so authoring/iteration order never
   // forks the address.
-  const snapshotFrame = async (handle) => {
+  const snapshotFrame = async (handle: SceneRuntime.Handle) => {
     // World.query is synchronous — read the ticked FrameRange entities directly.
-    const rowsById = new Map(
+    const rowsById = new Map<string, { id: string; out: Record<string, unknown> }>(
       handle.world.query(FrameRangePart).map((e) => [String(e.id), { id: String(e.id), out: {} }]),
     );
     for (const [key, part] of FRAME_COMPONENTS) {

@@ -116,17 +116,15 @@ export function generatePolicyGate(
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 import { decode } from '${decodeImport}';
-import type { Schema } from '${decodeImport}';
 import { ${ctx.bindingName} } from '${ctx.bindingImport}';
 import { schemaToArbitrary } from '${arbitraryImport}';
 
 describe('${cap.name}', () => {
-  const cap = ${ctx.bindingName} as {
-    input: Schema<unknown>;
-    output: Schema<unknown>;
-    decide?: (subject: unknown) => { effect: 'allow' | 'deny'; reasons: ReadonlyArray<{ code: string; message: string }> };
-    invariants: ReadonlyArray<{ name: string; check: (subject: unknown, verdict: unknown) => boolean }>;
-  };
+  // The REAL binding at its REAL declared type. A structural re-assertion here
+  // (the old \`as { input: Schema<unknown>; ... }\`) claimed a shape the capsule
+  // never had, so subject/verdict drift compiled clean; reading the declaration
+  // directly makes that drift a typecheck failure.
+  const cap = ${ctx.bindingName};
   // capsule:compile resolved the subject schema as arbitrary-derivable + \`decide\`
   // present, so we sample the subject via the canonical walker and drive the REAL
   // decide. A regression in the walker throws at schemaToArbitrary and fails the
