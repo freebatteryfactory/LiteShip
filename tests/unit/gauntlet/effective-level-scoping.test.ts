@@ -85,6 +85,7 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
             coveringTests: ['tests/fixture.test.ts'],
             equivalentJustification: null,
             equivalentJustificationDigest: null,
+            inconclusiveReason: null,
             subsumedBy: [],
           },
         ],

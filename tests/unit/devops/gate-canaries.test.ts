@@ -1040,6 +1040,7 @@ const ADMITTED_UNIT_DIRECTORIES: ReadonlyArray<{ readonly dir: string; readonly 
   { dir: 'detect', floor: 5 },
   { dir: 'edge', floor: 9 },
   { dir: 'examples', floor: 2 },
+  { dir: 'gauntlet', floor: 45 },
   { dir: 'genui', floor: 10 },
   { dir: 'journey', floor: 2 },
   { dir: 'lib', floor: 1 },

@@ -20,7 +20,7 @@ import {
   parseQualifiedBenchDistribution,
   type QualifiedBenchDistribution,
 } from '../../../packages/gauntlet/src/gates/bench-subjects.js';
-import { buildBenchmarkSubjectFacts } from '../../../packages/audit/src/benchmark-subject-facts.ts';
+import { buildBenchmarkSubjectFacts } from '../../../packages/audit/src/benchmark-subject-facts.js';
 import {
   performanceContractsGate,
   PERFORMANCE_CONTRACTS_RULE_ID,

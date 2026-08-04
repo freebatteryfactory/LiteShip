@@ -10,20 +10,24 @@ import fc from 'fast-check';
 import { parseQualifiedBenchDistribution } from '@liteship/gauntlet';
 import { parseBenchmarkSubjectDistribution } from '../../../packages/audit/src/benchmark-subject-facts.js';
 
+// The sole subject is bound here rather than read back as `valid.subjects[0]`:
+// under noUncheckedIndexedAccess an indexed read is possibly-undefined, and the
+// perturbation table below reaches INTO it (`.origin`). One named binding is the
+// value both `valid` and every perturbation are built from.
+const validSubject = {
+  role: 'sut' as const,
+  origin: { kind: 'module' as const, specifier: '@liteship/core' },
+  symbol: 'Boundary.evaluate',
+  binding: 'Boundary.evaluate',
+};
+
 const valid = {
   name: 'boundary evaluate',
   file: 'tests/bench/core.bench.ts',
   inputSize: 3,
   shape: 'boundary-thresholds',
   replicates: 5,
-  subjects: [
-    {
-      role: 'sut' as const,
-      origin: { kind: 'module' as const, specifier: '@liteship/core' },
-      symbol: 'Boundary.evaluate',
-      binding: 'Boundary.evaluate',
-    },
-  ],
+  subjects: [validSubject],
   execution: { kind: 'callback' as const },
 };
 
@@ -35,12 +39,12 @@ describe('benchmark distribution parser ownership', () => {
 
   it.each([
     ['foreign top-level field', { ...valid, surprise: true }],
-    ['missing subject field', { ...valid, subjects: [{ ...valid.subjects[0], binding: undefined }] }],
+    ['missing subject field', { ...valid, subjects: [{ ...validSubject, binding: undefined }] }],
     [
       'foreign origin field',
       {
         ...valid,
-        subjects: [{ ...valid.subjects[0], origin: { ...valid.subjects[0].origin, path: 'wrong-owner' } }],
+        subjects: [{ ...validSubject, origin: { ...validSubject.origin, path: 'wrong-owner' } }],
       },
     ],
     ['fractional replicate count', { ...valid, replicates: 1.5 }],

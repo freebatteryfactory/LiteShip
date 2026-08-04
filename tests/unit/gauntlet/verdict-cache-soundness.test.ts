@@ -208,6 +208,7 @@ function mutationCtx(verdict: 'killed' | 'survived'): GateContext {
         coveringTests: ['tests/fixture.test.ts'],
         equivalentJustification: null,
         equivalentJustificationDigest: null,
+        inconclusiveReason: null,
         subsumedBy: [],
       },
     ],

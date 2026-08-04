@@ -112,6 +112,12 @@
     // capability contract. Admit the whole owned directory so a header or tier
     // contract drift fails typecheck before an edge request is served.
     "tests/unit/edge/**/*.test.ts",
+    // The gauntlet suites are the gate engine's own proofs: the evidence
+    // declaration law, the verdict-cache soundness keystone, the access
+    // manifest, and every shipping gate's fixtures. Admit the complete owned
+    // directory so a gate/context contract drift fails typecheck before the
+    // engine is trusted to judge the repository.
+    "tests/unit/gauntlet/**/*.test.ts",
     // The detect suites hold the emitted head/provisional probes equivalent to
     // the canonical ladders they are generated from. Admit the whole owned
     // directory so a capability-shape drift fails typecheck before the emitted
@@ -145,10 +151,9 @@
     // a future divergence between core.d.ts and the @liteship/core runtime fails the
     // typecheck rather than living as a dead assertion.
     "tests/unit/spine-conformance.test.ts",
-    // The cure-wave determinism + zero-alloc + perf-claim tests: typechecked here
-    // so their type-level contracts (RepoIR / GateVerdictKeyParts folds, the
-    // alloc-gate budget import, the gate surface) bite rather than rot.
-    "tests/unit/gauntlet/perf-claim-bench-gate.test.ts",
+    // The cure-wave determinism + zero-alloc tests: typechecked here so their
+    // type-level contracts (RepoIR / GateVerdictKeyParts folds, the alloc-gate
+    // budget import, the gate surface) bite rather than rot.
     "tests/unit/meta/allocation-contracts.test.ts",
     "tests/unit/core/reactive-capture.test.ts",
     "tests/unit/core/reactive-model.test.ts",
@@ -159,11 +164,6 @@
     "tests/unit/assets/binary-fault-simulation.test.ts",
     "tests/unit/assets/binary-mcdc.test.ts",
     "tests/unit/assets/decoder-fault-injection.test.ts",
-    // The transition-conformance gate RUNNER proof (green over the native transports + red on
-    // a forced divergence) — folds the shared runner through the lean gate exactly as the CI
-    // gate script does, so a runner/law drift fails the typecheck.
-    "tests/unit/gauntlet/transition-conformance-gate.test.ts",
-    "tests/unit/gauntlet/gate-access-manifest.test.ts",
     // W1.11 shipped-source context derivation + parity/fail-closed laws.
     "tests/unit/devops/shipped-source-typecheck.test.ts"
   ],

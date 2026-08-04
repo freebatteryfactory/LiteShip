@@ -60,6 +60,7 @@ import {
   NO_EVIDENCE_MARKER,
   type EvidenceChannel,
   type Gate,
+  type GateFactChannel,
   type GateContext,
   type Finding,
 } from '@liteship/gauntlet';
@@ -346,22 +347,19 @@ function allFilesObligation(gate: Gate, ctx: GateContext): 'allFiles' | undefine
 }
 
 /** A perturbation of one injected-fact channel — replace its value with a salted clone. */
-function perturbFact(base: GateContext, channel: EvidenceChannel): GateContext {
-  const value = (base as Record<string, unknown>)[channel];
+function perturbFact(base: GateContext, channel: GateFactChannel): GateContext {
+  const value = base[channel];
   // Salt the fact: wrap it so stableSerialize sees a structurally-different value. The
   // gate's evidenceDigest folds the fact via stableSerialize, so ANY structural change
   // flips the digest. We append a discriminating marker key the original lacked.
-  const salted =
-    value !== null && typeof value === 'object'
-      ? { ...(value as Record<string, unknown>), __evidence_law_salt__: 'perturbed' }
-      : value;
+  const salted = value !== null && typeof value === 'object' ? { ...value, __evidence_law_salt__: 'perturbed' } : value;
   const clone = cloneContext(base);
   Object.defineProperty(clone, channel, { enumerable: true, configurable: true, value: salted });
   return clone;
 }
 
 /** The channel named by an absent-access read marker (`<channel>:absent`), else undefined. */
-function absentReadChannel(read: string): EvidenceChannel | undefined {
+function absentReadChannel(read: string): GateFactChannel | undefined {
   if (!read.endsWith(ABSENT_SUFFIX)) return undefined;
   const channel = read.slice(0, -ABSENT_SUFFIX.length);
   return isFactChannel(channel) ? channel : undefined;
@@ -384,7 +382,7 @@ function absentReadChannel(read: string): EvidenceChannel | undefined {
  * → CAUGHT. Returns the undeclared marker (`<channel>:absent`) when the gate fails, else
  * undefined.
  */
-function absentObligation(gate: Gate, ctx: GateContext, channel: EvidenceChannel): string | undefined {
+function absentObligation(gate: Gate, ctx: GateContext, channel: GateFactChannel): string | undefined {
   if (gate.evidenceDigest === undefined) return `${channel}${ABSENT_SUFFIX}`;
   const absentKey = gateVerdictKey({
     toolchainDigest: 'tc',
@@ -413,7 +411,7 @@ function cloneContext(base: GateContext): GateContext {
     ...(base.ir !== undefined ? { ir: base.ir } : {}),
   };
   for (const ch of FACT_CHANNELS) {
-    const v = (base as Record<string, unknown>)[ch];
+    const v = base[ch];
     if (v !== undefined) Object.defineProperty(out, ch, { enumerable: true, configurable: true, value: v });
   }
   return out;
@@ -425,7 +423,7 @@ function cloneContext(base: GateContext): GateContext {
 // recorder/law forgot to instrument). cloneContext + perturbFact iterate exactly this set.
 
 /** True iff `read` names an injected-fact channel (vs a file read or an ir.* read). */
-function isFactChannel(read: string): read is EvidenceChannel {
+function isFactChannel(read: string): read is GateFactChannel {
   return (FACT_CHANNELS as readonly string[]).includes(read);
 }
 
@@ -1109,7 +1107,7 @@ function oldRecordingReads(base: GateContext, run: (ctx: GateContext) => void): 
   };
   // OLD: install a getter ONLY for PRESENT channels — the absence hole.
   for (const channel of FACT_CHANNELS) {
-    const value = (base as Record<string, unknown>)[channel];
+    const value = base[channel];
     if (value === undefined) continue; // ← the hole: an absent channel is never instrumented
     Object.defineProperty(context, channel, {
       enumerable: true,
@@ -1128,7 +1126,7 @@ describe('THE ABSENCE KEYSTONE — accessing an ABSENT channel is recorded as a 
   // The witness: the REAL absence-dependent supply-chain gate (supply-chain.ts:81). Its
   // `fold` branches on `facts?.lockfile === undefined` etc. — when supplyChain is ABSENT
   // it emits four "not-evidenced" findings, so its verdict DEPENDS on the absence.
-  const probeChannel: EvidenceChannel = 'supplyChain';
+  const probeChannel: GateFactChannel = 'supplyChain';
   // A context with EVERY fact channel absent (a bare memory context). The supply-chain
   // gate run over it ACCESSES `context.supplyChain` and finds it undefined.
   const absentCtx: GateContext = memoryContext({});
@@ -1181,7 +1179,7 @@ describe('THE ABSENCE KEYSTONE — accessing an ABSENT channel is recorded as a 
     // FAITHFULNESS: the instrumented absent channel reads exactly as the base (undefined),
     // so the gate's run output is identical with or without the recorder.
     const rec = recordingContext(absentCtx);
-    expect((rec.context as Record<string, unknown>)['supplyChain']).toBeUndefined();
+    expect(rec.context.supplyChain).toBeUndefined();
     const bare = supplyChainGate.run(absentCtx);
     const wrapped = supplyChainGate.run(rec.context);
     expect(JSON.stringify(wrapped)).toBe(JSON.stringify(bare));
@@ -1215,7 +1213,7 @@ describe('THE ABSENCE KEYSTONE — accessing an ABSENT channel is recorded as a 
     for (const channel of FACT_CHANNELS) {
       const rec = recordingContext(absentCtx);
       // A minimal probe: access exactly this channel (the recorder's getter fires).
-      void (rec.context as Record<string, unknown>)[channel];
+      void rec.context[channel];
       expect(rec.reads().has(`${channel}${ABSENT_SUFFIX}`), `channel "${channel}" absent-access must be recorded`).toBe(
         true,
       );
@@ -1233,7 +1231,7 @@ describe('THE ABSENCE KEYSTONE — accessing an ABSENT channel is recorded as a 
     // Touching each channel name on the wrapped context must fire the absent getter — i.e.
     // every name in FACT_CHANNELS is genuinely instrumented (no name silently uninstalled).
     for (const channel of FACT_CHANNELS) {
-      void (recorder.context as Record<string, unknown>)[channel];
+      void recorder.context[channel];
     }
     expect(recorder.reads().size).toBe(FACT_CHANNELS.length);
     expect(new Set(FACT_CHANNELS).size).toBe(FACT_CHANNELS.length); // no duplicate names
@@ -1269,8 +1267,8 @@ function keyFor(gateId: string, evidenceDigest: string | undefined): string {
 }
 
 /** The live fact value `channel` carries on `ctx` (its present fact, or undefined). */
-function factOf(ctx: GateContext, channel: EvidenceChannel): unknown {
-  return (ctx as Record<string, unknown>)[channel];
+function factOf(ctx: GateContext, channel: GateFactChannel): unknown {
+  return ctx[channel];
 }
 
 /**
@@ -1281,7 +1279,7 @@ function factOf(ctx: GateContext, channel: EvidenceChannel): unknown {
  * `undefined`); the PRESENT world is the gate's OWN green fixture (a real fact that yields a
  * clean, divergent verdict and folds to a real `ev:` digest), not a throwaway sentinel.
  */
-const ABSENCE_WITNESSES: readonly (readonly [Gate, EvidenceChannel])[] = [
+const ABSENCE_WITNESSES: readonly (readonly [Gate, GateFactChannel])[] = [
   [supplyChainGate, 'supplyChain'],
   [simulationDeterminismGate, 'simulation'],
   [fuzzCorpusGate, 'fuzzCorpus'],
@@ -1377,7 +1375,7 @@ describe('THE ABSENCE-IN-THE-KEY LAW — a gate that branches on absence keys it
   // each is pure (it folds `context.<channel>` via the absence-aware digest; no IR read), so the
   // absence obligation can be evaluated WITHOUT running the gate (several require an injected IR
   // to run). A gate left on the old absence-collapsing helper is CAUGHT by absentObligation here.
-  const FACT_CONSUMING_GATES: readonly (readonly [Gate, EvidenceChannel])[] = [
+  const FACT_CONSUMING_GATES: readonly (readonly [Gate, GateFactChannel])[] = [
     [supplyChainGate, 'supplyChain'],
     [simulationDeterminismGate, 'simulation'],
     [fuzzCorpusGate, 'fuzzCorpus'],
