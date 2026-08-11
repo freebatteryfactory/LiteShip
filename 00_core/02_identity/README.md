@@ -40,6 +40,7 @@ A draft revision may have byte-identical content and the same `RevisionId` as a 
 - Revision identity is content-addressed.
 - A path move may preserve both persistent identity and exact content.
 - Draft and committed revision references are not assignable.
+- A committed revision reference is exact over the revision it names, matching entity and world references. The broad default keeps heterogeneous populations inhabited; a relationship that must prove it commits to one specific revision instantiates the parameter and carries it through its public path.
 - Dense slots never cross the semantic boundary as identity.
 - Every public identity has one validated mint or decode route.
 - Reference kind is authority-bearing and cannot be erased by equal carrier bytes.

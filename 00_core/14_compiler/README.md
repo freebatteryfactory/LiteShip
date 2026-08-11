@@ -23,7 +23,9 @@ Own the complete compiler-arm registry, migration, faithful settlement, exact re
 - Legality propagation, structured rejection, and explicit production refusal.
 - Cost vectors, hard budgets, optimization objectives, backend profiles, and candidate selection.
 - Structured settlement reasons and decisions.
-- Compiler results, diagnostics, source maps, and proof references.
+- Compiler results, diagnostics, and proof references.
+- The one `SourceRelation` authority, stating how any generated representation relates to the revision it was authored from. `15_program` consumes this rather than declaring its own.
+- Canonical `ArtifactReference`, so downstream layers relate artifacts to producers and predecessors without hand-authoring structurally identical cousins.
 
 ## Does not own
 
@@ -226,7 +228,12 @@ Several authorities backed by one physical provider share one instance and one l
 - Cost-profile anti-vacuity and exact measured-body checks.
 - Pareto and objective selection determinism.
 - Reference planner agrees with assurance solver fixtures where the oracle applies.
-- Artifact and source-map identity.
+- Artifact references are exact over the artifact they name.
+- An artifact is exact over its identity, projection target, and source revision, and differing on any one axis produces an artifact that cannot stand in for the original.
+- The broad artifact form stays inhabited by several exact families, so one compilation's heterogeneous output remains representable.
+- An artifact carries exactly one source authority: a required `SourceRelation`, with neither a sibling source field nor the retired optional map.
+- Every source-relation arm commits to the exact revision it was authored from.
+- Identity-preserving and deliberately-unmappable arms carry no map key; the mapped arm requires a source-map reference rather than any addressed bytes; refusing to map requires a non-empty statement of what cannot be recovered.
 - Monotone qualification reaches a fixed point and is independent of traversal order.
 - A selected plan is grounded, closed, topologically constructible, and free of ungrounded construction cycles.
 - Plan identity is canonical: independent offers may be constructed concurrently without changing the plan address.
@@ -271,6 +278,9 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - one-source-relation-owns-its-revision
+  - source-relation-replaces-optional-source-map
+  - artifact-exact-with-broad-defaults-for-erased-catalogs
   - settlement-and-backend-orthogonal
   - exact-hole-requirements-derive-runtime-features
   - legality-before-cost

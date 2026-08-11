@@ -6,9 +6,13 @@
 //   No siblings -- realm children never import one another. Not hosts, because
 //                  no physical execution is two realms at once. Not targets,
 //                  because ecosystem usage is not semantic authority: Astro
-//                  using Vite does not put Vite above Astro, and the moment
-//                  cloudflare imports astro, deploying without Astro stops
-//                  being a thing the architecture can express.
+//                  using Vite does not put Vite above Astro.
+//
+// The sibling rule does not physically prevent anyone from later writing a
+// producer-neutral path by hand. What it prevents is subtler and worse: once
+// cloudflare imports astro, Astro-shaped authority becomes structurally normal,
+// the producer-neutral seam is never named, and deploying without Astro stops
+// being visible to the architecture rather than stopping being possible.
 //
 // An import this gate cannot classify is a violation. A denylist would have to
 // anticipate every future evasion; an allowlist only has to be told what is

@@ -24,6 +24,8 @@ const PROBES = [
   { file: 'probe-active.ts', expect: 'rejects', errors: 13, why: 'the C1-C5 witnesses, each a distinct A-versus-B identity' },
   { file: 'probe-h-adapted.ts', expect: 'rejects', errors: 9, why: 'H1-H3 witnesses at current arity, semantic not arity failures' },
   { file: 'probe-h-survivors.ts', expect: 'rejects', errors: 8, why: 'the survivors the provider-path fold closed' },
+  { file: 'probe-source-relation-positives.ts', expect: 'compiles', why: 'all three arms inhabited, exact artifacts coexist in the erased catalog' },
+  { file: 'probe-source-relation-negatives.ts', expect: 'rejects', errors: 7, why: 'each way the source-map ambiguity could return' },
 ];
 
 const known = new Set(PROBES.map((p) => p.file));

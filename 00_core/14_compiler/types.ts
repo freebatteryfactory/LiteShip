@@ -11,6 +11,7 @@
  */
 
 import type {
+  Address,
   Algebra,
   AnyHole,
   Assert,
@@ -35,7 +36,7 @@ import type {
 } from '../../types.js';
 import type { Diagnostic } from '../00_error/types.js';
 import type { ContentAddress, ContentDigest } from '../01_encoding/types.js';
-import type { CommitId, RevisionReference, SemanticLocation } from '../02_identity/types.js';
+import type { CommitId, RevisionId, RevisionReference, SemanticLocation } from '../02_identity/types.js';
 import type { SchemaId, SchemaReference } from '../03_schema/types.js';
 import type { DisposalFailure, OwnedResource } from '../05_lifecycle/types.js';
 import type {
@@ -77,6 +78,15 @@ export type RealizationCandidateId<Name extends string = string> = Brand<Name, '
  */
 export type GroundingId<Name extends string = string> = Brand<Name, 'liteship.grounding-id'>;
 export type CompilerReference<Id extends CompilerId = CompilerId> = Reference<'compiler', Id>;
+/**
+ * Reference to one immutable compiler output.
+ *
+ * Downstream layers relate artifacts to producers, predecessors, and required
+ * slots. Without one canonical alias each of them hand-authors
+ * `Reference<'artifact', Id>` and the architecture acquires a family of
+ * structurally identical cousins that no law can tell apart.
+ */
+export type ArtifactReference<Id extends ArtifactId = ArtifactId> = Reference<'artifact', Id>;
 export type ProjectionTargetReference<Id extends ProjectionTargetId = ProjectionTargetId> = Reference<'projection-target', Id>;
 export type RuntimeFeatureReference<Id extends RuntimeFeatureId = RuntimeFeatureId> = Reference<'runtime-feature', Id>;
 export type RealizationOfferReference<Id extends RealizationOfferId = RealizationOfferId> = Reference<
@@ -791,15 +801,73 @@ export interface CompilerArm<
   readonly proof: ContentAddress<'application/vnd.liteship.proof+cbor'>;
 }
 
-/** Immutable compiler output. */
-export interface Artifact {
-  readonly id: ArtifactId;
-  readonly target: ProjectionTargetReference;
-  readonly source: RevisionReference;
+/** Address of one emitted source map. */
+export type SourceMapAddress = ContentAddress<'application/vnd.liteship.source-map+json'>;
+
+/** Reference to one emitted source map. */
+export type SourceMapReference = Reference<'source-map', SourceMapAddress>;
+
+/**
+ * How a generated representation relates back to the revision it was authored
+ * from.
+ *
+ * This replaces an optional source-map field, which could not say which of
+ * several unrelated situations it meant: coordinates were preserved directly, a
+ * map exists, mapping is impossible for a stated reason, mapping failed, the
+ * producer does not support it, or someone forgot. Diagnostics that cannot
+ * reach source, and an artifact that quietly lost its ancestry, are the same
+ * failure this repository exists to make unrepresentable.
+ *
+ * The relation is self-contained: it owns the exact source revision. A product
+ * carrying both this and a sibling `source` field would have two source
+ * authorities and need a law forcing them to agree, which is the duplication
+ * the reset was for.
+ */
+export type SourceRelation<Revision extends RevisionId = RevisionId> = Algebra<{
+  /**
+   * The generated representation preserves the source relationship directly, so
+   * no map is needed. Carries no map key -- an identity-preserving relation with
+   * a map alongside it is describing something else.
+   */
+  'identity-preserving': {
+    readonly source: RevisionReference<Revision>;
+  };
+  /** The relationship is recovered through one required addressed source map. */
+  mapped: {
+    readonly source: RevisionReference<Revision>;
+    readonly map: SourceMapReference;
+  };
+  /**
+   * Mapping is impossible, and the producer says why. The limitations are
+   * non-empty because "deliberately unmappable, no reason given" is
+   * indistinguishable from having lost the relationship.
+   */
+  'deliberately-unmappable': {
+    readonly source: RevisionReference<Revision>;
+    readonly limitations: NonEmptyTuple<Diagnostic>;
+  };
+}>;
+
+/**
+ * Immutable compiler output.
+ *
+ * Exact over artifact identity, projection target, and source revision. The
+ * broad defaults keep heterogeneous erased populations inhabited -- one
+ * compilation legitimately yields artifacts of many identities. They are not an
+ * excuse on a path that promises one specific artifact came from one specific
+ * revision; such a path instantiates all three.
+ */
+export interface Artifact<
+  Id extends ArtifactId = ArtifactId,
+  Target extends ProjectionTargetId = ProjectionTargetId,
+  Revision extends RevisionId = RevisionId,
+> {
+  readonly id: Id;
+  readonly target: ProjectionTargetReference<Target>;
+  readonly relation: SourceRelation<Revision>;
   readonly address: ContentAddress;
   readonly digest: ContentDigest;
   readonly mediaType: string;
-  readonly sourceMap?: ContentAddress;
 }
 
 /** Evidence backing a claim that no lawful plan exists. */
@@ -1435,6 +1503,145 @@ export type ParetoExhaustionReportsClosedCandidatesNotInventedWork = Assert<
 /** Compile-time law: an unavailable oracle carries no unrelated Pareto frontier. */
 export type AnUnavailableOracleCarriesNoFrontier = Assert<
   Equal<'frontier' extends keyof CaseOf<IncompleteState, 'oracle-unavailable'> ? true : false, false>
+>;
+
+// ---------------------------------------------------------------------------
+// Artifact exactness and source truth
+// ---------------------------------------------------------------------------
+
+type ArtifactLawA = ArtifactId<'law.artifact.a'>;
+type ArtifactLawB = ArtifactId<'law.artifact.b'>;
+type ProjectionLawA = ProjectionTargetId<'law.projection.a'>;
+type ProjectionLawB = ProjectionTargetId<'law.projection.b'>;
+type ArtifactRevisionLawA = Address<
+  'liteship.content:application/vnd.liteship.revision+cbor',
+  'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+>;
+type ArtifactRevisionLawB = Address<
+  'liteship.content:application/vnd.liteship.revision+cbor',
+  'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+>;
+type ExactArtifactA = Artifact<ArtifactLawA, ProjectionLawA, ArtifactRevisionLawA>;
+
+/** Compile-time law: an artifact reference is exact over the artifact it names. */
+export type AnArtifactReferenceIsExactOverItsArtifact = Assert<
+  Equal<
+    [
+      ArtifactReference<ArtifactLawA> extends ArtifactReference<ArtifactLawB> ? true : false,
+      ArtifactReference<ArtifactLawA> extends ArtifactReference<ArtifactLawA> ? true : false,
+    ],
+    [false, true]
+  >
+>;
+
+/** Compile-time law: an artifact is exact over identity, projection target, and source revision. */
+export type AnArtifactIsExactOverItsThreeAxes = Assert<
+  Equal<
+    [ExactArtifactA['id'], ExactArtifactA['target'], ExactArtifactA['relation']],
+    [ArtifactLawA, ProjectionTargetReference<ProjectionLawA>, SourceRelation<ArtifactRevisionLawA>]
+  >
+>;
+
+/**
+ * Compile-time law: differing on any one axis produces an artifact that cannot
+ * stand in for the original. Field presence with the right broad brand is not
+ * correlation.
+ */
+export type ExactArtifactsAreNotInterchangeable = Assert<
+  Equal<
+    [
+      ExactArtifactA extends Artifact<ArtifactLawB, ProjectionLawA, ArtifactRevisionLawA> ? true : false,
+      ExactArtifactA extends Artifact<ArtifactLawA, ProjectionLawB, ArtifactRevisionLawA> ? true : false,
+      ExactArtifactA extends Artifact<ArtifactLawA, ProjectionLawA, ArtifactRevisionLawB> ? true : false,
+    ],
+    [false, false, false]
+  >
+>;
+
+/**
+ * Compile-time law: the broad form stays inhabited by exact families.
+ *
+ * One compilation legitimately yields artifacts of many identities, and
+ * `CompileOutcome` carries them as an erased catalog. Removing the defaults to
+ * force exactness everywhere would make that population unrepresentable, so
+ * this law guards the repair from its own overcorrection.
+ */
+export type ABroadArtifactCatalogAdmitsExactFamilies = Assert<
+  Equal<
+    [
+      ExactArtifactA extends Artifact ? true : false,
+      Artifact<ArtifactLawB, ProjectionLawB, ArtifactRevisionLawB> extends Artifact ? true : false,
+    ],
+    [true, true]
+  >
+>;
+
+/**
+ * Compile-time law: an artifact carries exactly one source authority.
+ *
+ * The relation is required, and neither the retired optional map nor a sibling
+ * source field may return. Two source facts would need a law forcing them to
+ * agree, which is the duplication this correction removes.
+ */
+export type AnArtifactCarriesOneSourceAuthority = Assert<
+  Equal<
+    [
+      'relation' extends keyof Artifact ? true : false,
+      'sourceMap' extends keyof Artifact ? true : false,
+      'source' extends keyof Artifact ? true : false,
+      undefined extends Artifact['relation'] ? true : false,
+    ],
+    [true, false, false, false]
+  >
+>;
+
+/** Compile-time law: every arm commits to the exact revision it was authored from. */
+export type EverySourceRelationArmCommitsToItsRevision = Assert<
+  Equal<
+    [
+      CaseOf<SourceRelation<ArtifactRevisionLawA>, 'identity-preserving'>['source'],
+      CaseOf<SourceRelation<ArtifactRevisionLawA>, 'mapped'>['source'],
+      CaseOf<SourceRelation<ArtifactRevisionLawA>, 'deliberately-unmappable'>['source'],
+    ],
+    [
+      RevisionReference<ArtifactRevisionLawA>,
+      RevisionReference<ArtifactRevisionLawA>,
+      RevisionReference<ArtifactRevisionLawA>,
+    ]
+  >
+>;
+
+/** Compile-time law: an identity-preserving relation carries no map. */
+export type AnIdentityPreservingRelationCarriesNoMap = Assert<
+  Equal<'map' extends keyof CaseOf<SourceRelation, 'identity-preserving'> ? true : false, false>
+>;
+
+/**
+ * Compile-time law: a mapped relation requires a source-map reference.
+ *
+ * The slot is a semantic reference kind, not a bare content address. Any
+ * addressed bytes would satisfy a broad address structurally -- a proof
+ * artifact, an image, a manifest -- and the relation would typecheck while
+ * pointing at something that cannot map anything.
+ */
+export type AMappedRelationRequiresAnAddressedSourceMap = Assert<
+  Equal<CaseOf<SourceRelation, 'mapped'>['map'], SourceMapReference>
+>;
+
+/** Compile-time law: a deliberately-unmappable relation carries no map. */
+export type AnUnmappableRelationCarriesNoMap = Assert<
+  Equal<'map' extends keyof CaseOf<SourceRelation, 'deliberately-unmappable'> ? true : false, false>
+>;
+
+/**
+ * Compile-time law: refusing to map requires saying what cannot be recovered.
+ *
+ * A possibly-empty list would let "deliberately unmappable, no reason" mean the
+ * same thing as having lost the relationship, which is the ambiguity the
+ * optional field had.
+ */
+export type AnUnmappableRelationRequiresItsLimitations = Assert<
+  Equal<CaseOf<SourceRelation, 'deliberately-unmappable'>['limitations'], NonEmptyTuple<Diagnostic>>
 >;
 
 /** Type summary consumed by the root core topology. */

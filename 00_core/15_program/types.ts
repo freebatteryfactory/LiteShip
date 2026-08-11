@@ -14,6 +14,7 @@ import type {
   Assert,
   Brand,
   Envelope,
+  Equal,
   IsNever,
   NonEmptyTuple,
   Reference,
@@ -27,6 +28,7 @@ import type {
   RequirementClosure,
   RuntimeFeatureReference,
   SettlementDecision,
+  SourceRelation,
 } from '../14_compiler/types.js';
 
 export type ProgramId<Name extends string = string> = Brand<Name, 'liteship.program-id'>;
@@ -96,7 +98,14 @@ export type ResidualProgram = Envelope<
     readonly requirements: RequirementClosure;
     readonly eligibleBackends: NonEmptyTuple<ExecutionBackend>;
     readonly features: readonly RuntimeFeatureReference[];
-    readonly sourceMap?: ContentAddress;
+    /**
+     * The same source-relation authority the compiler artifact carries, not a
+     * structurally similar local twin. A readable residual program that cannot
+     * say how it relates to the revision it came from cannot honour the
+     * debugging contract it promises, and previously had no authored revision
+     * at all -- only an optional map with nothing to correlate it against.
+     */
+    readonly relation: SourceRelation;
   }
 >;
 
@@ -200,6 +209,27 @@ export type ProgramEnvelopeRejectsTagShadow = Assert<
 /** Compile-time law: a compatible `_version` property is still rejected as reserved. */
 export type ProgramEnvelopeRejectsVersionShadow = Assert<
   IsNever<Envelope<'InvalidProgram', 1, { readonly _version: number }>>
+>;
+
+/**
+ * Compile-time law: a residual program carries the compiler's source-relation
+ * authority, required, with no surviving optional map.
+ *
+ * The equality is against the imported `SourceRelation` rather than a locally
+ * described shape. TypeScript cannot tell an import from a structurally
+ * identical local twin, so this law is a floor: a source-level check that the
+ * relation is declared once and imported here belongs in the verification
+ * harness, and later in the repository authority index.
+ */
+export type AResidualProgramCarriesTheCompilerSourceRelation = Assert<
+  Equal<
+    [
+      ResidualProgram['relation'],
+      'sourceMap' extends keyof ResidualProgram ? true : false,
+      undefined extends ResidualProgram['relation'] ? true : false,
+    ],
+    [SourceRelation, false, false]
+  >
 >;
 
 /** Type summary consumed by the root core topology. */

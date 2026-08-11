@@ -66,6 +66,7 @@ A likely useful form is a mixed image: dataflow tables plus kernel commands plus
 ## Laws
 
 - Readable program and packed images have one semantic source.
+- A residual program carries the compiler's `SourceRelation`, required, with no surviving optional source-map field. It previously had an optional map and no authored revision at all, so there was nothing for a map to be correlated against.
 - Every image names the exact source program address.
 - Logical memory meaning is separate from backend physical alignment.
 - Unknown format, layout, image, or opcode versions fail closed.

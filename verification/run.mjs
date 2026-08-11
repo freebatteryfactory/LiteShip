@@ -16,6 +16,7 @@ const LANES = [
   ['direction:self', 'gates/direction.selftest.mjs', 'the gate is capable of failing'],
   ['lanes', 'gates/lanes.mjs', 'declaration output, zero runtime'],
   ['probes', 'probes/run.mjs', 'positive and negative witnesses'],
+  ['bank:core-source', 'banks/core-source-relation.mjs', '19 mutations'],
   ['bank:root', 'banks/root.mjs', '16 mutations'],
   ['bank:v32', 'banks/v32.mjs', '10 mutations'],
   ['bank:hosts', 'banks/hosts.mjs', '82 mutations'],

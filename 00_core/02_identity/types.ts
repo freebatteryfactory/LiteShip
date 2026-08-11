@@ -57,8 +57,16 @@ export type EntityReference<Id extends EntityId = EntityId> = Reference<'entity'
 /** Reference to a state space. */
 export type WorldReference<Id extends WorldId = WorldId> = Reference<'world', Id>;
 
-/** Reference to one committed immutable revision. */
-export type RevisionReference = Reference<'revision', RevisionId>;
+/**
+ * Reference to one committed immutable revision.
+ *
+ * Exact over its revision identity, matching `EntityReference` and
+ * `WorldReference`. The broad default keeps heterogeneous populations
+ * inhabited; a relationship that must prove it commits to one specific
+ * revision instantiates the parameter and carries that identity through its
+ * public path.
+ */
+export type RevisionReference<Id extends RevisionId = RevisionId> = Reference<'revision', Id>;
 
 /**
  * Reference to an inspectable candidate revision that has not been committed.
@@ -103,6 +111,35 @@ export interface SlotBinding {
 /** Compile-time law: a draft reference cannot satisfy a committed revision reference. */
 export type DraftRevisionIsNotCommitted = Assert<
   Equal<DraftRevisionReference extends RevisionReference ? true : false, false>
+>;
+
+/** Two distinct committed revisions, written as literal carriers. */
+type CommittedRevisionLawA = Address<
+  'liteship.content:application/vnd.liteship.revision+cbor',
+  'sha256:1111111111111111111111111111111111111111111111111111111111111111'
+>;
+type CommittedRevisionLawB = Address<
+  'liteship.content:application/vnd.liteship.revision+cbor',
+  'sha256:2222222222222222222222222222222222222222222222222222222222222222'
+>;
+
+/**
+ * Compile-time law: a revision reference is exact over the revision it names,
+ * and two exact revisions are not interchangeable.
+ *
+ * The specimens are literal carriers rather than the alias compared against its
+ * own declaration. That version passes with the type parameter deleted, which
+ * is the only thing this law exists to catch.
+ */
+export type ARevisionReferenceIsExactOverItsRevision = Assert<
+  Equal<
+    [
+      RevisionReference<CommittedRevisionLawA> extends RevisionReference<CommittedRevisionLawB> ? true : false,
+      RevisionReference<CommittedRevisionLawA> extends RevisionReference<CommittedRevisionLawA> ? true : false,
+      RevisionReference<CommittedRevisionLawA> extends RevisionReference ? true : false,
+    ],
+    [false, true, true]
+  >
 >;
 
 /** Type summary consumed by the root core topology. */
