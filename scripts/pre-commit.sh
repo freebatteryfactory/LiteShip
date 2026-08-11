@@ -7,10 +7,9 @@ set -eu
 # lives with the tree it governs. This branch shares no history with the old
 # repository and deliberately does not inherit its gates.
 #
-# What is enforced here is only what can be checked with no toolchain present.
-# The real architecture gates -- import direction, sibling exclusion, envelope
-# census, mutation banks -- run from the verification harness and are wired in
-# when that harness lands. Until then this script must not imply they ran.
+# The fast structural gates run here. The mutation banks do not: 315 full-tree
+# compiles is a four-minute commit, which trains people to pass --no-verify. Run
+# `node verification/run.mjs` before publishing a round artifact.
 
 if git rev-parse --verify HEAD >/dev/null 2>&1; then
   against=HEAD
@@ -52,5 +51,21 @@ for f in $staged; do
       ;;
   esac
 done
+
+# Structural gates, when the harness has been installed. They read the working
+# tree rather than the index, so a partially staged commit is checked as it will
+# be seen after checkout. Skipped with a notice if `npm install` has not run --
+# an absent toolchain must announce itself, never pass silently.
+if [ -d verification/node_modules ]; then
+  for gate in envelope direction direction.selftest lanes; do
+    if ! node "verification/gates/$gate.mjs" >/dev/null 2>&1; then
+      echo "pre-commit: $gate gate failed -- run \`node verification/gates/$gate.mjs\`" >&2
+      status=1
+    fi
+  done
+else
+  echo "pre-commit: verification harness not installed, structural gates NOT run" >&2
+  echo "            (cd verification && npm install)" >&2
+fi
 
 exit $status
