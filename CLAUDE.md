@@ -25,9 +25,11 @@ The global architecture, root type ABI, and `00_core/` are confirmed and closed.
 
 `01_hosts/` is closed and independently ratified. The umbrella contract in `01_hosts/README.md` and `01_hosts/types.ts` is confirmed, and its child roster is sealed. All four children exist as specified architecture: `web/` across twelve numbered homes, `worker/` across seven, `edge/` across eleven, and `server/` across eleven — each home carrying only a README, a declaration surface, laws, and proof obligations.
 
-The current phase is a narrow correction inside `00_core/`, opened because the first layer downstream of it needed to state artifact ancestry and found the upstream contract unable to express it. Its scope is exactly: exact artifact identity, a canonical artifact reference, exact revision references, and one required source relation replacing an optional source-map field in both the compiler artifact and the residual program. Nothing else in core is open. This is the waterfall working — a downstream layer revealing a primitive that must be promoted upward — not a reopening of settled meaning.
+The narrow `00_core/` correction is closed at tag `core-source-truth`: exact artifact identity, a canonical artifact reference, exact revision references, and one required source relation replacing the optional source-map field in both the compiler artifact and the residual program. Nothing else in core is open.
 
-`02_targets/` does not exist and must not be created until that correction closes and its target denominator is approved.
+The current phase is `02_targets/`, beginning with the shared umbrella and architecture only. Target children — `astro/`, `vite/`, `cloudflare/`, `remotion/` — are not authored until the umbrella closes and each child's denominator is approved.
+
+The umbrella owns ecosystem-target, configuration, and composition identity; the relations that connect them; a production relation over the core artifact; the rejection-versus-failure altitude distinction; and the target facts that project into core's existing explanation. It owns none of: artifact identity, address, digest, ancestry grammar, a second source relation, a second explanation product, universal lifecycle phases, per-target payloads, or an exact child roster before the children exist.
 
 No runtime implementation of any kind is authorized anywhere: the entire repository receives its architecture — targets, wires, system, root composition — before any executable product code exists, and implementation opens only on Eassa's explicit authorization after whole-repository closure.
 

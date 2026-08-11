@@ -32,7 +32,7 @@ Every lane prints `PASS`/`FAIL` and exits non-zero on failure.
 | `gates/direction.selftest.mjs` | The direction gate can actually fail. Eight forbidden trees must be refused for their stated reason, and one lawful tree must pass. |
 | `gates/lanes.mjs` | Both declaration lanes type-check, differ by exactly the laws file, and emit zero JavaScript. |
 | `probes/run.mjs` | Lawful relationships still compile; forbidden ones still don't — at the expected error counts. |
-| `banks/*.mjs` | 315 mutations, each rewriting one exact span of the live tree, each required to die on a **named** law. |
+| `banks/*.mjs` | Every bank file in `banks/`, discovered rather than listed. Each mutation rewrites one exact span of the live tree and must die on a **named** law. The runner prints the total; this file deliberately does not, because a number written here is a second population that goes stale silently. |
 
 ## Two properties worth preserving
 

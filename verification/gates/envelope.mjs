@@ -56,11 +56,41 @@ for (const rel of files) {
   }
 }
 
+// One authority per nominal identity.
+//
+// TypeScript cannot tell an imported authority from a structurally identical
+// local twin, so provenance has to be checked on the source. The check is on
+// brand and reference tags rather than names: two homes may lawfully both
+// declare `ListenerId` when the brands are realm-scoped, because sibling
+// exclusion means those types can never meet. Two homes sharing one brand tag
+// is different -- the compiler sees a single type, and unrelated concepts
+// become silently interchangeable.
+const brands = new Map();
+for (const rel of files.filter((f) => f.endsWith('.ts'))) {
+  const src = readFileSync(join(REPO, rel), 'utf8');
+  for (const m of src.matchAll(/Brand<[^,>]+,\s*'([^']+)'|Reference<\s*'([^']+)'/g)) {
+    const tag = m[1] ?? m[2];
+    if (!brands.has(tag)) brands.set(tag, new Set());
+    brands.get(tag).add(rel);
+  }
+}
+const collisions = [...brands].filter(([, homes]) => homes.size > 1);
+
 const total = Object.values(laws).reduce((a, b) => a + b, 0);
 const split = TIERS.map(([t]) => `${laws[t]} ${t}`).filter((s) => !s.startsWith('0 ')).join(' + ');
 
 console.log(`files ${files.length} | lines ${lines} | READMEs ${readmes} | YAML ${yamlOk}/${readmes}`);
 console.log(`laws  ${total} = ${split}`);
 for (const f of failures) console.log(`  VIOLATION ${f}`);
-console.log(`${failures.length === 0 && yamlOk === readmes ? 'PASS' : 'FAIL'} envelope: ${failures.length} hygiene violation(s)`);
-process.exit(failures.length === 0 && yamlOk === readmes ? 0 : 1);
+
+// Reported, not enforced. These sit in already-ratified layers, and closing one
+// is a scoped correction with an owner's ruling behind it -- not something a
+// gate should decide by turning red mid-commit. Printed every run so it cannot
+// quietly become normal.
+for (const [tag, homes] of collisions) {
+  console.log(`  FINDING  brand '${tag}' is declared in ${homes.size} homes: ${[...homes].join(', ')}`);
+}
+
+const ok = failures.length === 0 && yamlOk === readmes;
+console.log(`${ok ? 'PASS' : 'FAIL'} envelope: ${failures.length} hygiene violation(s), ${collisions.length} open finding(s)`);
+process.exit(ok ? 0 : 1);

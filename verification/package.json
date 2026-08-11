@@ -4,9 +4,8 @@
   "type": "module",
   "description": "Falsification harness for the LiteShip architecture. Not part of the specification it checks.",
   "scripts": {
-    "gates": "node gates/direction.mjs && node gates/envelope.mjs",
-    "banks": "node banks/root.mjs && node banks/v32.mjs && node banks/hosts.mjs && node banks/web.mjs && node banks/hosts3.mjs",
-    "verify": "node run.mjs"
+    "verify": "node run.mjs",
+    "banks": "node run.mjs bank"
   },
   "devDependencies": {
     "typescript": "7.0.2",

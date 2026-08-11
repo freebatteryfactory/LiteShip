@@ -5,10 +5,19 @@
 // recompiling it three hundred times.
 
 import { execFileSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
+import { readdirSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+
+// Banks are discovered, not listed. A hand-maintained roster is a second
+// population that drifts from the first, and the version that silently runs
+// fewer banks is the one that still prints a total.
+const BANKS = readdirSync(join(HERE, 'banks'))
+  .filter((f) => f.endsWith('.mjs'))
+  .sort()
+  .map((f) => [`bank:${basename(f, '.mjs')}`, `banks/${f}`, 'mutations must die on a named law']);
 
 const LANES = [
   ['envelope', 'gates/envelope.mjs', 'census and hygiene'],
@@ -16,12 +25,7 @@ const LANES = [
   ['direction:self', 'gates/direction.selftest.mjs', 'the gate is capable of failing'],
   ['lanes', 'gates/lanes.mjs', 'declaration output, zero runtime'],
   ['probes', 'probes/run.mjs', 'positive and negative witnesses'],
-  ['bank:core-source', 'banks/core-source-relation.mjs', '19 mutations'],
-  ['bank:root', 'banks/root.mjs', '16 mutations'],
-  ['bank:v32', 'banks/v32.mjs', '10 mutations'],
-  ['bank:hosts', 'banks/hosts.mjs', '82 mutations'],
-  ['bank:web', 'banks/web.mjs', '115 mutations'],
-  ['bank:hosts3', 'banks/hosts3.mjs', '92 mutations'],
+  ...BANKS,
 ];
 
 const only = process.argv[2];
