@@ -1,0 +1,472 @@
+/**
+ * Scene meaning: coordinate spaces, transforms, hierarchy, geometry, materials,
+ * timelines, systems, family patches, and subscene composition.
+ *
+ * Authoring remains declarative. Compilation may lower a scene into persistent
+ * state, dense world planes, residual programs, shaders, DOM, SVG, video, or
+ * other egresses without making those physical forms the scene ontology.
+ *
+ * @module
+ */
+
+import type {
+  Algebra,
+  Assert,
+  Brand,
+  Equal,
+  NonEmptyTuple,
+  Reference,
+  RequirementRow,
+} from '../../types.js';
+import type { CanonicalValue, ContentAddress } from '../01_encoding/types.js';
+import type { EntityReference, RevisionReference, WorldReference } from '../02_identity/types.js';
+import type { EntityFieldReference, FieldReference, SchemaReference } from '../03_schema/types.js';
+import type { Timebase, Timecode } from '../04_time/types.js';
+import type { EvidenceReference } from '../06_evidence/types.js';
+import type { OperationInvocation, OperationReference } from '../07_operation/types.js';
+import type { RevisionPatch, SystemDefinition } from '../08_state/types.js';
+import type {
+  InterpolatorReference,
+  QuantizerReference,
+  StateName,
+} from '../09_quantization/types.js';
+
+export type SceneId<Name extends string = string> = Brand<Name, 'liteship.scene-id'>;
+export type CoordinateSpaceId<Name extends string = string> = Brand<Name, 'liteship.coordinate-space-id'>;
+export type GeometryId<Name extends string = string> = Brand<Name, 'liteship.geometry-id'>;
+export type MaterialId<Name extends string = string> = Brand<Name, 'liteship.material-id'>;
+export type TimelineId<Name extends string = string> = Brand<Name, 'liteship.timeline-id'>;
+export type TimelineKeyId<Name extends string = string> = Brand<Name, 'liteship.timeline-key-id'>;
+export type GeometryPointId<Name extends string = string> = Brand<Name, 'liteship.geometry-point-id'>;
+export type SceneReference<Id extends SceneId = SceneId> = Reference<'scene', Id>;
+export type GeometryReference<Id extends GeometryId = GeometryId> = Reference<'geometry', Id>;
+export type MaterialReference<Id extends MaterialId = MaterialId> = Reference<'material', Id>;
+export type TimelineReference<Id extends TimelineId = TimelineId> = Reference<'timeline', Id>;
+export type TimelineKeyReference<Id extends TimelineKeyId = TimelineKeyId> = Reference<'timeline-key', Id>;
+
+export type SpatialDimension = 2 | 3;
+export type SpatialHandedness = 'left-handed' | 'right-handed';
+export type SpatialAxisDirection = 'right' | 'left' | 'up' | 'down' | 'forward' | 'backward';
+export type SpatialUnit = 'unitless' | 'pixel' | 'point' | 'meter' | 'centimeter' | 'millimeter' | 'percent' | 'normalized';
+
+/** One named axis in a declared coordinate space. */
+export interface SpatialAxis {
+  readonly name: 'x' | 'y' | 'z';
+  readonly positive: SpatialAxisDirection;
+}
+
+/** Shared coordinate-space declaration independent from parent attachment. */
+interface CoordinateSpaceBase<
+  Id extends CoordinateSpaceId,
+  Dimension extends SpatialDimension,
+> {
+  readonly id: Id;
+  readonly dimension: Dimension;
+  readonly axes: Dimension extends 2
+    ? readonly [SpatialAxis, SpatialAxis]
+    : readonly [SpatialAxis, SpatialAxis, SpatialAxis];
+  readonly handedness?: Dimension extends 3 ? SpatialHandedness : never;
+  readonly unit: SpatialUnit;
+  readonly address: ContentAddress<'application/vnd.liteship.coordinate-space+cbor'>;
+}
+
+/** Explicit root or child coordinate system. No target may silently change axes or units. */
+export type CoordinateSpaceDefinition<
+  Id extends CoordinateSpaceId = CoordinateSpaceId,
+  Dimension extends SpatialDimension = SpatialDimension,
+  Parent extends CoordinateSpaceId | undefined = CoordinateSpaceId | undefined,
+> = CoordinateSpaceBase<Id, Dimension> &
+  (Parent extends CoordinateSpaceId
+    ? {
+        readonly parent: Parent;
+        /** Defines this space's origin and basis in its parent. */
+        readonly toParent: SpatialTransform<Id, Parent>;
+      }
+    : {
+        readonly parent?: undefined;
+        readonly toParent?: undefined;
+      });
+
+/** Typed points and vectors cannot cross coordinate spaces by assignment. */
+export type Point2<Space extends CoordinateSpaceId = CoordinateSpaceId> = Brand<
+  readonly [x: number, y: number],
+  readonly ['liteship.point2', Space]
+>;
+export type Vector2<Space extends CoordinateSpaceId = CoordinateSpaceId> = Brand<
+  readonly [x: number, y: number],
+  readonly ['liteship.vector2', Space]
+>;
+export type Point3<Space extends CoordinateSpaceId = CoordinateSpaceId> = Brand<
+  readonly [x: number, y: number, z: number],
+  readonly ['liteship.point3', Space]
+>;
+export type Vector3<Space extends CoordinateSpaceId = CoordinateSpaceId> = Brand<
+  readonly [x: number, y: number, z: number],
+  readonly ['liteship.vector3', Space]
+>;
+export type Quaternion<Space extends CoordinateSpaceId = CoordinateSpaceId> = Brand<
+  readonly [x: number, y: number, z: number, w: number],
+  readonly ['liteship.quaternion', Space]
+>;
+
+/** Fixed-size matrices used only as explicit authored escape hatches. */
+export type Matrix3 = readonly [
+  number, number, number,
+  number, number, number,
+  number, number, number,
+];
+export type Matrix4 = readonly [
+  number, number, number, number,
+  number, number, number, number,
+  number, number, number, number,
+  number, number, number, number,
+];
+
+/** Target-neutral color with an explicit color space and normalized channels. */
+export interface ColorValue {
+  readonly space: 'srgb' | 'linear-srgb' | 'display-p3';
+  readonly channels: readonly [red: number, green: number, blue: number];
+  readonly alpha: number;
+}
+
+/** Established compositing modes shared by compatible visual egresses. */
+export type BlendMode =
+  | 'normal'
+  | 'multiply'
+  | 'screen'
+  | 'overlay'
+  | 'darken'
+  | 'lighten'
+  | 'color-dodge'
+  | 'color-burn'
+  | 'hard-light'
+  | 'soft-light'
+  | 'difference'
+  | 'exclusion'
+  | 'hue'
+  | 'saturation'
+  | 'color'
+  | 'luminosity'
+  | 'plus-lighter';
+
+/** Ordered authored transform operations. Order is semantic. */
+export type SpatialTransformOperation = Algebra<{
+  translate2: { readonly value: readonly [number, number] };
+  translate3: { readonly value: readonly [number, number, number] };
+  rotate2: { readonly radians: number };
+  rotate3: { readonly quaternion: readonly [number, number, number, number] };
+  scale2: { readonly value: readonly [number, number] };
+  scale3: { readonly value: readonly [number, number, number] };
+  skew2: { readonly radians: readonly [number, number] };
+  origin2: { readonly value: readonly [number, number] };
+  origin3: { readonly value: readonly [number, number, number] };
+  perspective: { readonly distance: number };
+  matrix3: { readonly values: Matrix3 };
+  matrix4: { readonly values: Matrix4 };
+}>;
+
+/**
+ * One declared spatial conversion. Parent/child transforms and egress-space
+ * projections use the same composition law, while dimensional loss and
+ * invertibility remain explicit.
+ */
+export interface SpatialTransform<
+  From extends CoordinateSpaceId = CoordinateSpaceId,
+  To extends CoordinateSpaceId = CoordinateSpaceId,
+> {
+  readonly from: From;
+  readonly to: To;
+  readonly operations: readonly SpatialTransformOperation[];
+  readonly exact: boolean;
+  readonly invertible: boolean;
+  readonly tolerance?: number;
+  readonly address: ContentAddress<'application/vnd.liteship.spatial-transform+cbor'>;
+}
+
+/** Standard path commands in a geometry's declared local space. */
+export type PathCommand<Space extends CoordinateSpaceId = CoordinateSpaceId> = Algebra<{
+  move: { readonly to: Point2<Space> };
+  line: { readonly to: Point2<Space> };
+  quadratic: { readonly control: Point2<Space>; readonly to: Point2<Space> };
+  cubic: {
+    readonly control1: Point2<Space>;
+    readonly control2: Point2<Space>;
+    readonly to: Point2<Space>;
+  };
+  arc: {
+    readonly radius: Vector2<Space>;
+    readonly rotation: number;
+    readonly largeArc: boolean;
+    readonly sweep: boolean;
+    readonly to: Point2<Space>;
+  };
+  close: Record<never, never>;
+}>;
+
+/** Standard target-neutral geometry algebra. */
+export type GeometryValue<Space extends CoordinateSpaceId = CoordinateSpaceId> = Algebra<{
+  point: { readonly at: Point2<Space> | Point3<Space> };
+  line: { readonly from: Point2<Space> | Point3<Space>; readonly to: Point2<Space> | Point3<Space> };
+  rectangle: { readonly width: number; readonly height: number };
+  'rounded-rectangle': { readonly width: number; readonly height: number; readonly radius: number };
+  ellipse: { readonly radius: Vector2<Space> };
+  polyline: { readonly points: NonEmptyTuple<Point2<Space>> };
+  polygon: { readonly points: NonEmptyTuple<Point2<Space>> };
+  path: { readonly commands: NonEmptyTuple<PathCommand<Space>>; readonly closed: boolean };
+  mesh: {
+    readonly vertices: readonly (Point2<Space> | Point3<Space>)[];
+    readonly indices: readonly number[];
+    readonly dimension: 2 | 3;
+  };
+  text: {
+    readonly content: string;
+    readonly font?: ContentAddress<'application/vnd.liteship.font+cbor'>;
+  };
+  image: { readonly source: ContentAddress; readonly width: number; readonly height: number };
+}>;
+
+/** Spatial bounds required for culling, hit testing, and layout. */
+export type GeometryBounds<Space extends CoordinateSpaceId = CoordinateSpaceId> = Algebra<{
+  bounds2: { readonly minimum: Point2<Space>; readonly maximum: Point2<Space> };
+  bounds3: { readonly minimum: Point3<Space>; readonly maximum: Point3<Space> };
+}>;
+
+export type SceneEgress = 'html-css' | 'dom' | 'svg' | 'canvas' | 'glsl' | 'wgsl' | 'video' | 'accessibility';
+
+/** Interpolation support is explicit rather than inferred from geometry name. */
+export type GeometryInterpolation = Algebra<{
+  supported: { readonly interpolator: InterpolatorReference };
+  unsupported: { readonly reason: string };
+}>;
+
+/** Transform behavior for a geometry family. */
+export type GeometryTransformSupport = Algebra<{
+  standard: { readonly dimensions: NonEmptyTuple<SpatialDimension> };
+  adapter: { readonly adapter: Brand<string, 'liteship.geometry-transform-adapter'> };
+  unsupported: { readonly reason: string };
+}>;
+
+/** One faithful egress projection or an explicit fallback relationship. */
+export interface GeometryProjectionSupport {
+  readonly egress: SceneEgress;
+  readonly exact: boolean;
+  readonly tolerance?: number;
+  readonly fallback?: SceneEgress;
+}
+
+/** Capabilities every geometry definition must declare. */
+export interface GeometryCapabilities<Space extends CoordinateSpaceId = CoordinateSpaceId> {
+  readonly bounds: GeometryBounds<Space>;
+  readonly transform: GeometryTransformSupport;
+  readonly projections: NonEmptyTuple<GeometryProjectionSupport>;
+  readonly interpolation: GeometryInterpolation;
+}
+
+/** Addressed standard geometry definition. */
+export interface StandardGeometryDefinition<Space extends CoordinateSpaceId = CoordinateSpaceId> {
+  readonly kind: 'standard';
+  readonly id: GeometryId;
+  readonly space: Space;
+  readonly value: GeometryValue<Space>;
+  readonly capabilities: GeometryCapabilities<Space>;
+  readonly address: ContentAddress<'application/vnd.liteship.geometry+cbor'>;
+}
+
+/** Schema-backed extension with explicit support and refusal information. */
+export interface OpaqueGeometryDefinition<Space extends CoordinateSpaceId = CoordinateSpaceId> {
+  readonly kind: 'opaque';
+  readonly id: GeometryId;
+  readonly space: Space;
+  readonly schema: SchemaReference;
+  readonly value: CanonicalValue;
+  readonly capabilities: GeometryCapabilities<Space>;
+  readonly address: ContentAddress<'application/vnd.liteship.geometry+cbor'>;
+}
+
+export type GeometryDefinition<Space extends CoordinateSpaceId = CoordinateSpaceId> =
+  | StandardGeometryDefinition<Space>
+  | OpaqueGeometryDefinition<Space>;
+
+/** Standard target-neutral material vocabulary plus an explicit extension arm. */
+export type MaterialValue = Algebra<{
+  fill: { readonly color: ColorValue; readonly opacity?: number };
+  stroke: { readonly color: ColorValue; readonly width: number; readonly opacity?: number };
+  image: { readonly source: ContentAddress; readonly opacity?: number };
+  shader: { readonly source: ContentAddress; readonly parameters: CanonicalValue };
+  composite: { readonly layers: NonEmptyTuple<MaterialReference>; readonly blend: BlendMode };
+  opaque: { readonly schema: SchemaReference; readonly value: CanonicalValue };
+}>;
+
+/** Material remains target-neutral until projection. */
+export interface MaterialDefinition {
+  readonly id: MaterialId;
+  readonly value: MaterialValue;
+  readonly address: ContentAddress<'application/vnd.liteship.material+cbor'>;
+}
+
+/** One entity's scene-specific meaning. */
+export interface SceneEntity<
+  Local extends CoordinateSpaceId = CoordinateSpaceId,
+  Parent extends CoordinateSpaceId = CoordinateSpaceId,
+> {
+  readonly entity: EntityReference;
+  readonly parent?: EntityReference;
+  readonly transform: SpatialTransform<Local, Parent>;
+  readonly geometry?: GeometryReference;
+  readonly material?: MaterialReference;
+  readonly visible: boolean;
+  readonly stateDrivers?: readonly QuantizerReference[];
+}
+
+/** A key's interpolation applies from this key to the next key on its track. */
+export interface TimelineKey<Value = unknown, Base extends Timebase = Timebase> {
+  readonly id: TimelineKeyId;
+  readonly at: Timecode<Base>;
+  readonly value: Value;
+  readonly interpolatorToNext?: InterpolatorReference;
+}
+
+/** Scene timeline track families. */
+export type TimelineTrack<Base extends Timebase = Timebase> = Algebra<{
+  value: {
+    readonly target: EntityFieldReference;
+    readonly valueSchema: SchemaReference;
+    readonly keys: NonEmptyTuple<TimelineKey<unknown, Base>>;
+  };
+  state: {
+    readonly target: EntityFieldReference;
+    readonly quantizer: QuantizerReference;
+    readonly states: NonEmptyTuple<{ readonly at: Timecode<Base>; readonly state: StateName }>;
+  };
+  event: {
+    readonly operation: OperationReference;
+    readonly events: NonEmptyTuple<{ readonly at: Timecode<Base>; readonly invocation: OperationInvocation }>;
+  };
+  driver: {
+    readonly target: EntityFieldReference;
+    readonly source: EvidenceReference;
+    readonly quantizer?: QuantizerReference;
+  };
+}>;
+
+/** Semantic timeline independent from output frame rate. */
+export interface TimelineDefinition<Base extends Timebase = Timebase> {
+  readonly id: TimelineId;
+  readonly timebase: Base;
+  readonly tracks: readonly TimelineTrack<Base>[];
+  readonly address: ContentAddress<'application/vnd.liteship.timeline+cbor'>;
+}
+
+/** Addressed subscene instance with explicit typed local ports. */
+export interface SubsceneInstance<
+  Local extends CoordinateSpaceId = CoordinateSpaceId,
+  Parent extends CoordinateSpaceId = CoordinateSpaceId,
+> {
+  readonly scene: SceneReference;
+  readonly revision: RevisionReference;
+  readonly entity: EntityReference;
+  readonly transform: SpatialTransform<Local, Parent>;
+  readonly inputBindings: readonly {
+    readonly input: FieldReference;
+    readonly source: FieldReference | EvidenceReference;
+  }[];
+  readonly outputBindings: readonly {
+    readonly output: FieldReference;
+    readonly target: FieldReference;
+  }[];
+}
+
+/** Family-specific scene changes. */
+export type SceneChange = Algebra<{
+  'create-entity': { readonly entity: SceneEntity };
+  'delete-entity': { readonly entity: EntityReference };
+  reparent: {
+    readonly entity: EntityReference;
+    readonly parent?: EntityReference;
+    readonly transform: SpatialTransform;
+  };
+  'set-transform': { readonly entity: EntityReference; readonly transform: SpatialTransform };
+  'attach-geometry': { readonly entity: EntityReference; readonly geometry?: GeometryReference };
+  'attach-material': { readonly entity: EntityReference; readonly material?: MaterialReference };
+  'set-field': EntityFieldReference & { readonly value: CanonicalValue };
+  'insert-timeline-key': { readonly timeline: TimelineReference; readonly track: number; readonly key: TimelineKey };
+  'update-timeline-key': { readonly timeline: TimelineReference; readonly key: TimelineKey };
+  'remove-timeline-key': { readonly timeline: TimelineReference; readonly key: TimelineKeyReference };
+  'move-timeline-key': { readonly timeline: TimelineReference; readonly key: TimelineKeyReference; readonly at: Timecode };
+  'add-subscene': { readonly instance: SubsceneInstance };
+  'remove-subscene': { readonly entity: EntityReference };
+}>;
+
+/** Family-specific patch lowered into normalized state changes before commit. */
+export type ScenePatch = RevisionPatch<'scene', SceneChange>;
+
+/** Complete target-neutral scene definition. */
+export interface SceneDefinition<Requirements extends RequirementRow = readonly []> {
+  readonly id: SceneId;
+  readonly world: WorldReference;
+  readonly entities: readonly SceneEntity[];
+  readonly coordinateSpaces: NonEmptyTuple<CoordinateSpaceDefinition>;
+  readonly geometries: readonly GeometryDefinition[];
+  readonly materials: readonly MaterialDefinition[];
+  readonly timelines: readonly TimelineDefinition[];
+  readonly systems: readonly SystemDefinition<Requirements>[];
+  readonly subscenes: readonly SubsceneInstance[];
+  readonly address: ContentAddress<'application/vnd.liteship.scene+cbor'>;
+}
+
+type ScreenSpace = CoordinateSpaceId<'screen'>;
+type WorldSpace = CoordinateSpaceId<'world'>;
+type LocalSpace = CoordinateSpaceId<'local'>;
+type ChildSpaceDefinition = CoordinateSpaceDefinition<LocalSpace, 2, WorldSpace>;
+type IsRequired<Value, Key extends keyof Value> = {} extends Pick<Value, Key> ? false : true;
+
+/** Compile-time law: a child space must declare its parent transform. */
+export type SceneChildSpaceRequiresParentProjection = Assert<
+  Equal<IsRequired<ChildSpaceDefinition, 'toParent'>, true>
+>;
+
+/** Compile-time law: values from unrelated spaces are not assignable. */
+export type SceneRejectsImplicitSpaceConversion = Assert<
+  Equal<Point2<ScreenSpace> extends Point2<WorldSpace> ? true : false, false>
+>;
+
+/** Compile-time law: timeline interpolation is a typed shared reference, not a string. */
+export type SceneRejectsStringInterpolator = Assert<
+  Equal<string extends NonNullable<TimelineKey['interpolatorToNext']> ? true : false, false>
+>;
+
+type ValueTrackCase = Extract<TimelineTrack, { readonly _tag: 'value' }>;
+type StateTrackCase = Extract<TimelineTrack, { readonly _tag: 'state' }>;
+type DriverTrackCase = Extract<TimelineTrack, { readonly _tag: 'driver' }>;
+type TimelineFieldTarget =
+  | ValueTrackCase['target']
+  | StateTrackCase['target']
+  | DriverTrackCase['target'];
+
+/** Compile-time law: every field-writing track names both entity and schema field. */
+export type SceneTimelineFieldTracksBindEntity = Assert<
+  Equal<TimelineFieldTarget extends EntityFieldReference ? true : false, true>
+>;
+
+type ScreenGeometry = GeometryValue<ScreenSpace>;
+type WorldGeometry = GeometryValue<WorldSpace>;
+
+/** Compile-time law: geometry values retain their declared coordinate space. */
+export type SceneGeometryRejectsForeignSpace = Assert<
+  Equal<ScreenGeometry extends WorldGeometry ? true : false, false>
+>;
+
+/** Type summary consumed by the root core topology. */
+export interface SceneTypeSurface {
+  readonly scene: SceneDefinition;
+  readonly entity: SceneEntity;
+  readonly space: CoordinateSpaceDefinition;
+  readonly transform: SpatialTransform;
+  readonly geometry: GeometryDefinition;
+  readonly geometryProjection: GeometryProjectionSupport;
+  readonly material: MaterialDefinition;
+  readonly timeline: TimelineDefinition;
+  readonly fieldTarget: EntityFieldReference;
+  readonly patch: ScenePatch;
+  readonly subscene: SubsceneInstance;
+}

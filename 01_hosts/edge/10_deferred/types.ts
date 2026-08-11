@@ -1,0 +1,192 @@
+/**
+ * Deferred work: explicitly bounded post-response tasks.
+ *
+ * This home owns the deferred-work authority: task identity, request
+ * ancestry, the exact capability scope retained after the response, bounded
+ * lifetime, cancellation behavior, completion and failure evidence, and
+ * disposal. It must not smuggle an unbounded long-lived service model into
+ * edge — a deferred task is invocation-descended, capability-scoped, and
+ * finite by declaration.
+ *
+ * @module
+ */
+
+import type {
+  Algebra,
+  Assert,
+  Brand,
+  CaseOf,
+  Equal,
+  Hole,
+  NonEmptyTuple,
+  Reference,
+  RequirementRow,
+  Signature,
+  TagOf,
+} from '../../../types.js';
+import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
+import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { MonotonicNanoseconds } from '../../../00_core/04_time/types.js';
+import type { OperationInvocation } from '../../../00_core/07_operation/types.js';
+import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
+import type { EdgeGroundingDefinition, EdgeRealizationOffer } from '../00_bootstrap/types.js';
+import type { EdgeInvocationContext } from '../00_bootstrap/types.js';
+
+export type DeferredTaskId<Name extends string = string> = Brand<
+  Name,
+  'liteship.edge.deferred-task-id'
+>;
+export type DeferredTaskReference<Id extends DeferredTaskId = DeferredTaskId> = Reference<
+  'edge-deferred-task',
+  Id
+>;
+
+/**
+ * The actual lifetime bound of one deferred task: tied to the invocation's
+ * flush, or a declared deadline coordinate. A bound is a fact, not a boolean
+ * costume.
+ */
+export type DeferredBound = Algebra<{
+  untilFlush: {};
+  deadline: { readonly at: MonotonicNanoseconds };
+}>;
+
+/** The task outcome, phase-correct: completed with a receipt, failed, or cancelled. */
+export type DeferredOutcome = Algebra<{
+  pending: {};
+  completed: { readonly receipt: ContentAddress<'application/vnd.liteship.edge-deferred+cbor'> };
+  failed: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
+  cancelled: {};
+}>;
+
+/**
+ * One deferred task: descended from the exact invocation, holding an exact
+ * declared capability scope — never the whole realm — with a bounded
+ * lifetime and an owned lifecycle.
+ */
+export interface DeferredTask {
+  readonly id: DeferredTaskReference;
+  readonly ancestry: EdgeInvocationContext['address'];
+  readonly work: OperationInvocation;
+  readonly scope: RequirementRow;
+  readonly bound: DeferredBound;
+  readonly outcome: DeferredOutcome;
+  readonly cancel: Signature<DeferredTaskReference, DeferredTaskReference, NonEmptyTuple<Diagnostic>>;
+  readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
+}
+
+/** The complete enqueue request: ancestry, actual work, scope, and bound — no naked deferral. */
+export interface DeferredTaskRequest {
+  readonly ancestry: EdgeInvocationContext['address'];
+  readonly work: OperationInvocation;
+  readonly scope: RequirementRow;
+  readonly bound: DeferredBound;
+}
+
+/** The deferred-work provider: tasks are repeatable per-use resources. */
+export interface DeferredWorkAuthority {
+  readonly enqueue: Signature<DeferredTaskRequest, DeferredTask, NonEmptyTuple<Diagnostic>>;
+}
+
+/** Narrow intrinsic authority over the platform's post-response scheduling. */
+export interface DeferredFacility {
+  readonly admitted: true;
+}
+
+export type DeferredFacilityRequirement = Hole<'liteship.edge.deferred-facility', DeferredFacility>;
+export type DeferredWorkRequirement = Hole<'liteship.edge.deferred-work', DeferredWorkAuthority>;
+
+/** Intrinsic grounding: the post-response scheduling machinery, admitted narrowly. */
+export interface DeferredFacilityGrounding
+  extends EdgeGroundingDefinition<
+    readonly [DeferredFacilityRequirement],
+    unknown,
+    'intrinsic',
+    'unowned'
+  > {
+  readonly id: GroundingId<'liteship.edge.grounding.deferred-facility'>;
+}
+
+/** Constructing the deferred-work provider. */
+export interface DeferredWorkOffer
+  extends EdgeRealizationOffer<
+    readonly [DeferredWorkRequirement],
+    readonly [DeferredFacilityRequirement],
+    unknown,
+    unknown,
+    'owned'
+  > {
+  readonly id: RealizationOfferId<'liteship.edge.offer.deferred-work'>;
+  readonly locations: NonEmptyTuple<'request'>;
+  readonly backends: NonEmptyTuple<'javascript'>;
+}
+
+// ---------------------------------------------------------------------------
+// Laws
+//
+// That deferred work remains bounded and correctly attributed at runtime is
+// `system/assurance`; the work budget is empirical.
+// ---------------------------------------------------------------------------
+
+/**
+ * Compile-time law: a task descends from its exact invocation, carries
+ * actual work and an actual bound, and is owned. The bound arms are a real
+ * algebra — flush-tied or deadline-carrying — never a contentless flag.
+ */
+export type ATaskDescendsFromItsInvocation = Assert<
+  Equal<
+    [
+      DeferredTask['ancestry'],
+      DeferredTask['work'],
+      DeferredTask['bound'],
+      TagOf<DeferredBound>,
+      CaseOf<DeferredBound, 'deadline'>['at'],
+      DeferredTask['lifecycle'],
+    ],
+    [
+      EdgeInvocationContext['address'],
+      OperationInvocation,
+      DeferredBound,
+      'untilFlush' | 'deadline',
+      MonotonicNanoseconds,
+      CaseOf<RealizationLifecycle, 'owned'>,
+    ]
+  >
+>;
+
+/** Compile-time law: the outcome arms are phase-correct with completion receipts. */
+export type DeferredOutcomesArePhaseCorrect = Assert<
+  Equal<
+    [TagOf<DeferredOutcome>, CaseOf<DeferredOutcome, 'completed'>['receipt']],
+    [
+      'pending' | 'completed' | 'failed' | 'cancelled',
+      ContentAddress<'application/vnd.liteship.edge-deferred+cbor'>,
+    ]
+  >
+>;
+
+/** Compile-time law: enqueueing requires ancestry, work, scope, and bound together. */
+export type EnqueueingRequiresAncestryAndScope = Assert<
+  Equal<
+    [
+      DeferredWorkAuthority['enqueue'],
+      DeferredTaskRequest['work'],
+      DeferredTaskRequest['bound'],
+    ],
+    [
+      Signature<DeferredTaskRequest, DeferredTask, NonEmptyTuple<Diagnostic>>,
+      OperationInvocation,
+      DeferredBound,
+    ]
+  >
+>;
+
+/** Type summary consumed by the edge topology. */
+export interface EdgeDeferredTypeSurface {
+  readonly task: DeferredTask;
+  readonly bound: DeferredBound;
+  readonly outcome: DeferredOutcome;
+  readonly authority: DeferredWorkAuthority;
+  readonly facility: DeferredFacilityGrounding;
+  readonly deferredOffer: DeferredWorkOffer;
+}
