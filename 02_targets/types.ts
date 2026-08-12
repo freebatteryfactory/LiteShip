@@ -747,8 +747,97 @@ export type AComposedOutcomeHasParticipants = Assert<
   Equal<CaseOf<TargetCompositionOutcome, 'composed'>['participants'], NonEmptyTuple<TargetParticipation>>
 >;
 
+// ---------------------------------------------------------------------------
+// 8. The deployable application
+//
+// Deferred until a denominator earned its representation, which Cloudflare's
+// did. Four shapes were possible and the choice was not free: one artifact, a
+// non-empty set, an entry plus assets, or a manifest of references.
+//
+// One artifact cannot express a worker script beside the static files it
+// serves. A bare non-empty set loses which member is the entry, so a consumer
+// has to guess or a convention has to be invented. A manifest of references is
+// a second artifact vocabulary — the exact thing this home refuses everywhere
+// else. An entry plus assets is what remains, and it is what a deployment
+// actually consumes.
+
+/**
+ * What a composition hands to a deployment, whoever produced it.
+ *
+ * The producers live on the artifacts, and `ArtifactProducer` already covers
+ * both arms — so an application assembled by an ecosystem target and one
+ * assembled by hosts alone are the same type, and a consumer has nothing to
+ * branch on. That is the direct-mode acceptance test stated as a contract
+ * rather than promised in prose.
+ *
+ * `assets` may be empty. A worker with no static files is an ordinary
+ * deployment, not a degenerate one.
+ */
+export interface DeployableApplication {
+  readonly entry: ProducedArtifact;
+  readonly assets: readonly ProducedArtifact[];
+}
+
+/**
+ * Compile-time law: a deployable application is producer-agnostic.
+ *
+ * An application whose entry was produced by an ecosystem target and one whose
+ * entry was produced by a host-only composition are the same type. If this ever
+ * fails, a consumer has acquired something to branch on, and `withoutAstro`
+ * becomes expressible somewhere downstream.
+ */
+export type ADeployableApplicationIsProducerAgnostic = Assert<
+  Equal<
+    [
+      DeployableApplication['entry']['producer'] extends ArtifactProducer ? true : false,
+      'target' extends keyof DeployableApplication ? true : false,
+      'participation' extends keyof DeployableApplication ? true : false,
+      'composition' extends keyof DeployableApplication ? true : false,
+      'framework' extends keyof DeployableApplication ? true : false,
+    ],
+    [true, false, false, false, false]
+  >
+>;
+
+/**
+ * Compile-time law: the entry is singular and the assets are separate.
+ *
+ * A set with no distinguished entry forces a consumer to guess which member to
+ * run. A bare tuple of artifacts would be exactly that set.
+ */
+export type ADeployableApplicationHasOneEntry = Assert<
+  Equal<
+    [
+      Equal<DeployableApplication['entry'], ProducedArtifact>,
+      Equal<DeployableApplication['assets'], readonly ProducedArtifact[]>,
+      DeployableApplication extends readonly ProducedArtifact[] ? true : false,
+    ],
+    [true, true, false]
+  >
+>;
+
+/**
+ * Compile-time law: a deployable application restates no artifact facts.
+ *
+ * It binds produced artifacts and adds nothing. Address, digest, media type,
+ * and slot all live where they already lived; a manifest member here would be
+ * the second artifact vocabulary this home spent the whole umbrella refusing.
+ */
+export type ADeployableApplicationRestatesNothing = Assert<
+  Equal<
+    [
+      'address' extends keyof DeployableApplication ? true : false,
+      'digest' extends keyof DeployableApplication ? true : false,
+      'manifest' extends keyof DeployableApplication ? true : false,
+      'slot' extends keyof DeployableApplication ? true : false,
+    ],
+    [false, false, false, false]
+  >
+>;
+
 /** Type summary consumed by the root topology. */
 export interface TargetTypeSurface {
+  readonly deployable: DeployableApplication;
   readonly target: EcosystemTargetReference;
   readonly configuration: TargetConfigurationRevision;
   readonly composition: TargetCompositionReference;

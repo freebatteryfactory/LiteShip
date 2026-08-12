@@ -33,6 +33,10 @@ const PROBES = [
   // instead of moving a total. Verified red by removing the socket constraint:
   // five directives went unused immediately.
   { file: 'probe-astro-vite-negatives.ts', expect: 'compiles', why: 'nine cross-target negatives, each self-verifying via @ts-expect-error' },
+  // The umbrella's `direct-composition` arm was compiled in and never consumed.
+  // This is the first consumer that takes both producers, so it is the first
+  // evidence the claim was true rather than merely representable.
+  { file: 'probe-direct-deployment.ts', expect: 'compiles', why: 'framework-produced and host-only-produced applications enter one deployment path, no branch' },
 ];
 
 const known = new Set(PROBES.map((p) => p.file));

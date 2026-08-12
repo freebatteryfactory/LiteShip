@@ -1,6 +1,6 @@
 # Targets: Ecosystem Integration Surfaces
 
-Status: umbrella sealed at tag `targets-umbrella-seal`; `astro/` and `vite/` authored and their seam proved; roster not yet sealed; implementation absent
+Status: umbrella sealed at tag `targets-umbrella-seal`; `astro/`, `vite/`, and `cloudflare/` authored, their seam proved and direct mode exercised; roster not yet sealed; implementation absent
 
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
@@ -26,6 +26,7 @@ Core answers what a program means. Hosts answer how unresolved physical behaviou
 - The production relation over core's exact `Artifact`.
 - The producer choice, including the arm where no ecosystem target was involved at all.
 - The altitude distinction between rejection and failure.
+- The deployable application: one entry artifact plus its assets, producer-agnostic by construction.
 
 Every fact has exactly one owner. Participation owns target and configuration revision; the producer owns participation; production owns the artifact and the slot; **the outcome alone owns composition identity**. Nothing is carried twice, so there is no parity law anywhere in this home and nothing that can drift.
 
@@ -43,8 +44,8 @@ The composition outcome is what projects into core's existing `Explanation`. The
 - A universal lifecycle taxonomy, target context, plugin interface, or hook table.
 - Per-target payloads of any kind.
 - Any child's configuration shape, decoder, or admission.
-- An exact child roster. Two children now exist; the roster seals after `cloudflare/`, following the host pattern.
-- A deployable-application contract. Its representation is deferred until Cloudflare's denominator earns it.
+- An exact child roster. Three children now exist; the roster seals when Eassa declares the target layer closed, following the host pattern.
+- Deployment mechanics, platform resources, or credentials. `02_targets/cloudflare` owns the deployment relation; the umbrella owns only the application it consumes.
 
 ## Why children do not import one another
 
@@ -64,11 +65,19 @@ Two ways of writing the requirement were rejected first, both of which compile a
 
 One consequence was found by measurement rather than reasoning, and it generalises beyond this seam. **An exactness axis carried only inside a `Signature` input is unprovable.** The input is stored as `(input: Input) => void` and is therefore contravariant, so a supplier that accepts a broader request stays assignable and the broadening mutation survives. Every axis that must be exact is also a covariant member of the facility itself.
 
+## The deployment contract, and why it waited
+
+Its representation was deferred on the grounds that naming it early would pre-decide both its cardinality and its form. Cloudflare's denominator earned it, and the choice was not free. **One artifact** cannot express a worker script beside the static files it serves. **A bare non-empty set** loses which member is the entry, so a consumer guesses or a convention gets invented. **A manifest of references** is a second artifact vocabulary — the thing this home refuses everywhere else. **An entry plus assets** is what remains, and it is what a deployment actually consumes. `assets` may be empty; a worker with no static files is an ordinary deployment.
+
+The producers live on the artifacts, and `ArtifactProducer` already covers both arms — so an application assembled by an ecosystem target and one assembled by hosts alone are the same type, with nothing for a consumer to branch on.
+
 ## Direct mode is an acceptance test, not a feature
 
 A consumer of a produced artifact must not be able to ask which framework produced it. `ArtifactProducer` therefore carries an empty `direct-composition` arm — no target, no participation, no configuration, and no composition of its own — and `DirectProductionNeedsNoTargetContext` pins every one of those absences.
 
 The test the architecture must keep passing: a composition of hosts alone can produce what a framework-produced artifact would, and the consuming path does not branch. If anything resembling `withoutAstro`, `astro?: boolean`, or a separate direct route appears, the contract is in the wrong place.
+
+That test now runs. `02_targets/cloudflare/03_deployment` is the first consumer that takes both, and `verification/probes/probe-direct-deployment.ts` passes a framework-produced application and a host-only-produced application through **one function** into the same request type. Until that compiled, the arm was representable but unexercised.
 
 ## Laws
 
@@ -109,11 +118,12 @@ Deferred to system assurance and implementation, named here so they are not mist
 home:
   path: 02_targets
   title: "Targets: Ecosystem Integration Surfaces"
-  maturity: umbrella-sealed-two-children-authored
+  maturity: umbrella-sealed-three-children-authored
   implementation: absent
   child_homes:
   - astro
   - vite
+  - cloudflare
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
@@ -133,7 +143,7 @@ home:
   - no-universal-lifecycle-taxonomy
   - rejection-precedes-selection-failure-follows-it
   - one-explanation-envelope-owned-by-core
-  - deployment-contract-deferred-until-earned
+  - deployable-application-is-entry-plus-assets
   - no-child-roster-until-children-exist
   production_authority: false
 ```
