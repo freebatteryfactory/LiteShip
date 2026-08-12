@@ -13,11 +13,14 @@ import type {
   Algebra,
   Assert,
   Brand,
+  CaseOf,
   Equal,
   NonEmptyTuple,
   Reference,
   RequirementRow,
+  TagOf,
 } from '../../types.js';
+import type { Diagnostic } from '../00_error/types.js';
 import type { CanonicalValue, ContentAddress } from '../01_encoding/types.js';
 import type { EntityReference, RevisionReference, WorldReference } from '../02_identity/types.js';
 import type { EntityFieldReference, FieldReference, SchemaReference } from '../03_schema/types.js';
@@ -246,19 +249,53 @@ export type GeometryTransformSupport = Algebra<{
   unsupported: { readonly reason: string };
 }>;
 
-/** One faithful egress projection or an explicit fallback relationship. */
-export interface GeometryProjectionSupport {
+export type ToleranceProfileId<Name extends string = string> = Brand<Name, 'liteship.tolerance-profile-id'>;
+export type ToleranceProfileReference<Id extends ToleranceProfileId = ToleranceProfileId> = Reference<
+  'tolerance-profile',
+  Id
+>;
+
+/**
+ * How faithfully one subject reaches one egress.
+ *
+ * Four arms, because the predecessor shape — a boolean beside two optionals —
+ * admitted eight combinations and at least two of them meant nothing: an exact
+ * projection carrying an error bound, and an inexact projection carrying
+ * neither a bound nor an alternative. The second is indistinguishable from
+ * nobody having thought about it, which is precisely the state a fidelity
+ * declaration exists to rule out.
+ *
+ * The tolerance is an addressed profile rather than a bare number. `0.01`
+ * cannot say whether it means pixels, normalized geometry distance, channel
+ * error, or timing drift, and a bound whose units are folklore is not a bound.
+ */
+export type ProjectionFidelity = Algebra<{
+  exact: Record<never, never>;
+  approximate: { readonly tolerance: ToleranceProfileReference };
+  fallback: { readonly egress: SceneEgress; readonly reason: string };
+  unsupported: {
+    readonly diagnostics: NonEmptyTuple<Diagnostic>;
+    readonly remediation: string;
+  };
+}>;
+
+/**
+ * One declared egress and the fidelity reaching it.
+ *
+ * Shared by geometry and material rather than duplicated per subject: a second
+ * declaration of the same concept is a second vocabulary, and the compiler
+ * deriving an entity's effective disposition must compare like with like.
+ */
+export interface ProjectionSupport {
   readonly egress: SceneEgress;
-  readonly exact: boolean;
-  readonly tolerance?: number;
-  readonly fallback?: SceneEgress;
+  readonly fidelity: ProjectionFidelity;
 }
 
 /** Capabilities every geometry definition must declare. */
 export interface GeometryCapabilities<Space extends CoordinateSpaceId = CoordinateSpaceId> {
   readonly bounds: GeometryBounds<Space>;
   readonly transform: GeometryTransformSupport;
-  readonly projections: NonEmptyTuple<GeometryProjectionSupport>;
+  readonly projections: NonEmptyTuple<ProjectionSupport>;
   readonly interpolation: GeometryInterpolation;
 }
 
@@ -297,10 +334,25 @@ export type MaterialValue = Algebra<{
   opaque: { readonly schema: SchemaReference; readonly value: CanonicalValue };
 }>;
 
+/**
+ * Capabilities every material definition must declare.
+ *
+ * Material declares its own egress support because it genuinely decides it. A
+ * rectangle projects to SVG; the same rectangle wearing an opaque shader does
+ * not, and the geometry has no way to know. Leaving material silent meant an
+ * entity's effective projection was read off geometry alone and was optimistic
+ * exactly where it mattered — the composition, not the shape, is what reaches
+ * an egress.
+ */
+export interface MaterialCapabilities {
+  readonly projections: NonEmptyTuple<ProjectionSupport>;
+}
+
 /** Material remains target-neutral until projection. */
 export interface MaterialDefinition {
   readonly id: MaterialId;
   readonly value: MaterialValue;
+  readonly capabilities: MaterialCapabilities;
   readonly address: ContentAddress<'application/vnd.liteship.material+cbor'>;
 }
 
@@ -354,7 +406,51 @@ export interface TimelineDefinition<Base extends Timebase = Timebase> {
   readonly id: TimelineId;
   readonly timebase: Base;
   readonly tracks: readonly TimelineTrack<Base>[];
+  readonly markers: readonly SceneMarker<Base>[];
   readonly address: ContentAddress<'application/vnd.liteship.timeline+cbor'>;
+}
+
+export type SceneMarkerId<Name extends string = string> = Brand<Name, 'liteship.scene-marker-id'>;
+export type SceneMarkerReference<Id extends SceneMarkerId = SceneMarkerId> = Reference<
+  'scene-marker',
+  Id
+>;
+
+/**
+ * One authored point of interest on a timeline.
+ *
+ * Authored, not observed. A beat detected in an audio asset is a media-analysis
+ * product and belongs to `12_media` with the asset coordinate that produced it;
+ * a marker someone placed is scene meaning and survives the asset being
+ * replaced. Collapsing the two would make an authored cue vanish when its
+ * source file changed.
+ */
+export interface SceneMarker<Base extends Timebase = Timebase> {
+  readonly id: SceneMarkerId;
+  readonly at: Timecode<Base>;
+  readonly label?: string;
+}
+
+export type SceneEnvelopeId<Name extends string = string> = Brand<Name, 'liteship.scene-envelope-id'>;
+export type SceneEnvelopeReference<Id extends SceneEnvelopeId = SceneEnvelopeId> = Reference<
+  'scene-envelope',
+  Id
+>;
+
+/**
+ * One authored control curve over a timebase.
+ *
+ * The curve is scene meaning; the interpolation is not. `09_quantization`
+ * remains the interpolation authority and this envelope names one of its
+ * interpolators rather than describing a curve shape of its own — otherwise
+ * every home that wanted a curve would grow a private easing vocabulary and the
+ * quantization authority would become advisory.
+ */
+export interface AuthoredEnvelope<Value = number, Base extends Timebase = Timebase> {
+  readonly id: SceneEnvelopeId;
+  readonly keys: NonEmptyTuple<TimelineKey<Value, Base>>;
+  readonly interpolator: InterpolatorReference;
+  readonly address: ContentAddress<'application/vnd.liteship.scene-envelope+cbor'>;
 }
 
 /** Addressed subscene instance with explicit typed local ports. */
@@ -409,6 +505,7 @@ export interface SceneDefinition<Requirements extends RequirementRow = readonly 
   readonly geometries: readonly GeometryDefinition[];
   readonly materials: readonly MaterialDefinition[];
   readonly timelines: readonly TimelineDefinition[];
+  readonly envelopes: readonly AuthoredEnvelope[];
   readonly systems: readonly SystemDefinition<Requirements>[];
   readonly subscenes: readonly SubsceneInstance[];
   readonly address: ContentAddress<'application/vnd.liteship.scene+cbor'>;
@@ -456,6 +553,132 @@ export type SceneGeometryRejectsForeignSpace = Assert<
   Equal<ScreenGeometry extends WorldGeometry ? true : false, false>
 >;
 
+// ---------------------------------------------------------------------------
+// Projection-fidelity laws
+// ---------------------------------------------------------------------------
+
+/**
+ * Compile-time law: the four fidelity arms carry four different obligations.
+ *
+ * Each arm's key set is compared individually. The predecessor shape encoded
+ * this as one boolean and two optional members, and every incoherent
+ * combination it admitted was reachable without a single type complaining.
+ */
+export type AProjectionFidelitySeparatesItsFourArms = Assert<
+  Equal<
+    [
+      TagOf<ProjectionFidelity>,
+      keyof CaseOf<ProjectionFidelity, 'exact'>,
+      keyof CaseOf<ProjectionFidelity, 'approximate'>,
+      keyof CaseOf<ProjectionFidelity, 'fallback'>,
+      keyof CaseOf<ProjectionFidelity, 'unsupported'>,
+    ],
+    [
+      'exact' | 'approximate' | 'fallback' | 'unsupported',
+      '_tag',
+      '_tag' | 'tolerance',
+      '_tag' | 'egress' | 'reason',
+      '_tag' | 'diagnostics' | 'remediation',
+    ]
+  >
+>;
+
+/**
+ * Compile-time law: an exact projection carries no error bound, and an
+ * approximate one cannot be stated without a tolerance profile.
+ *
+ * These two were representable together in the predecessor shape, which is the
+ * whole reason the algebra exists.
+ */
+export type AnExactProjectionCarriesNoTolerance = Assert<
+  Equal<
+    [
+      'tolerance' extends keyof CaseOf<ProjectionFidelity, 'exact'> ? true : false,
+      CaseOf<ProjectionFidelity, 'approximate'>['tolerance'] extends ToleranceProfileReference
+        ? true
+        : false,
+      number extends CaseOf<ProjectionFidelity, 'approximate'>['tolerance'] ? true : false,
+    ],
+    [false, true, false]
+  >
+>;
+
+/**
+ * Compile-time law: an unsupported projection carries diagnostics and a
+ * remediation, and the diagnostic population cannot be empty.
+ *
+ * Silence is the failure mode. A subject that cannot reach an egress and says
+ * nothing about why is indistinguishable from one nobody asked about, and the
+ * export path would have no honest thing to report.
+ */
+export type AnUnsupportedProjectionCannotBeSilent = Assert<
+  Equal<
+    [
+      CaseOf<ProjectionFidelity, 'unsupported'>['diagnostics'] extends NonEmptyTuple<Diagnostic>
+        ? true
+        : false,
+      readonly Diagnostic[] extends CaseOf<ProjectionFidelity, 'unsupported'>['diagnostics']
+        ? true
+        : false,
+      'remediation' extends keyof CaseOf<ProjectionFidelity, 'unsupported'> ? true : false,
+    ],
+    [true, false, true]
+  >
+>;
+
+/**
+ * Compile-time law: geometry and material declare support through one shared
+ * vocabulary, and material genuinely declares it.
+ *
+ * Material silence is what made an entity's effective disposition readable off
+ * geometry alone. If this member is ever removed, the optimism returns and
+ * nothing else in the tree notices.
+ */
+export type GeometryAndMaterialDeclareSupportThroughOneVocabulary = Assert<
+  Equal<
+    [
+      GeometryCapabilities['projections'],
+      MaterialCapabilities['projections'],
+      MaterialDefinition['capabilities'] extends MaterialCapabilities ? true : false,
+    ],
+    [NonEmptyTuple<ProjectionSupport>, NonEmptyTuple<ProjectionSupport>, true]
+  >
+>;
+
+/**
+ * Compile-time law: an entity declares no egress roster of its own.
+ *
+ * The entity composes a geometry and a material; the compiler derives what that
+ * composition reaches. An entity that could declare its own support would let a
+ * composition claim an egress neither of its parts can reach — an authored
+ * override wearing the costume of a derivation.
+ */
+export type ASceneEntityDeclaresNoEgressRoster = Assert<
+  Equal<
+    [
+      'projections' extends keyof SceneEntity ? true : false,
+      'capabilities' extends keyof SceneEntity ? true : false,
+      'egress' extends keyof SceneEntity ? true : false,
+    ],
+    [false, false, false]
+  >
+>;
+
+/**
+ * Compile-time law: authored temporal meaning stays on the timeline, and the
+ * envelope defers interpolation to the quantization authority.
+ */
+export type AuthoredTemporalMeaningBelongsToTheScene = Assert<
+  Equal<
+    [
+      TimelineDefinition['markers'] extends readonly SceneMarker[] ? true : false,
+      AuthoredEnvelope['interpolator'] extends InterpolatorReference ? true : false,
+      AuthoredEnvelope['keys'] extends NonEmptyTuple<TimelineKey> ? true : false,
+    ],
+    [true, true, true]
+  >
+>;
+
 /** Type summary consumed by the root core topology. */
 export interface SceneTypeSurface {
   readonly scene: SceneDefinition;
@@ -463,7 +686,10 @@ export interface SceneTypeSurface {
   readonly space: CoordinateSpaceDefinition;
   readonly transform: SpatialTransform;
   readonly geometry: GeometryDefinition;
-  readonly geometryProjection: GeometryProjectionSupport;
+  readonly projection: ProjectionSupport;
+  readonly materialCapabilities: MaterialCapabilities;
+  readonly marker: SceneMarker;
+  readonly envelope: AuthoredEnvelope;
   readonly material: MaterialDefinition;
   readonly timeline: TimelineDefinition;
   readonly fieldTarget: EntityFieldReference;

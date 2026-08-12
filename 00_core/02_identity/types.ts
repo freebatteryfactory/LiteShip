@@ -72,8 +72,15 @@ export type RevisionReference<Id extends RevisionId = RevisionId> = Reference<'r
  * Reference to an inspectable candidate revision that has not been committed.
  * It intentionally carries the same RevisionId bytes as a committed revision,
  * while the reference kind prevents authority confusion.
+ *
+ * Exact over its revision identity for the same reason the committed reference
+ * is: a draft cut must prove it names one specific candidate revision, and a
+ * preview that may silently answer for a different draft is a preview of
+ * nothing in particular. Genericity here does not soften the kind distinction —
+ * `DraftRevisionIsNotCommitted` holds at every instantiation, and a draft
+ * reference remains unable to satisfy a committed one.
  */
-export type DraftRevisionReference = Reference<'draft-revision', RevisionId>;
+export type DraftRevisionReference<Id extends RevisionId = RevisionId> = Reference<'draft-revision', Id>;
 
 /** Reference to one family-specific patch. */
 export type PatchReference = Reference<'patch', PatchId>;
@@ -108,11 +115,6 @@ export interface SlotBinding {
   readonly slot: DenseSlot;
 }
 
-/** Compile-time law: a draft reference cannot satisfy a committed revision reference. */
-export type DraftRevisionIsNotCommitted = Assert<
-  Equal<DraftRevisionReference extends RevisionReference ? true : false, false>
->;
-
 /** Two distinct committed revisions, written as literal carriers. */
 type CommittedRevisionLawA = Address<
   'liteship.content:application/vnd.liteship.revision+cbor',
@@ -139,6 +141,54 @@ export type ARevisionReferenceIsExactOverItsRevision = Assert<
       RevisionReference<CommittedRevisionLawA> extends RevisionReference ? true : false,
     ],
     [false, true, true]
+  >
+>;
+
+/**
+ * Compile-time law: a draft reference is exact over the candidate revision it
+ * names, exactly as the committed reference is over its own.
+ *
+ * Written against literal carriers rather than the alias compared with itself,
+ * because the self-comparison passes with the type parameter deleted — which is
+ * the whole of what this law exists to catch.
+ */
+export type ADraftRevisionReferenceIsExactOverItsRevision = Assert<
+  Equal<
+    [
+      DraftRevisionReference<CommittedRevisionLawA> extends DraftRevisionReference<CommittedRevisionLawB>
+        ? true
+        : false,
+      DraftRevisionReference<CommittedRevisionLawA> extends DraftRevisionReference<CommittedRevisionLawA>
+        ? true
+        : false,
+      DraftRevisionReference<CommittedRevisionLawA> extends DraftRevisionReference ? true : false,
+    ],
+    [false, true, true]
+  >
+>;
+
+/**
+ * Compile-time law: a draft reference cannot satisfy a committed revision
+ * reference, and genericity does not open a door in either direction.
+ *
+ * The exact instantiations are checked beside the broad forms. Making the draft
+ * reference generic is precisely the kind of change that could have made one
+ * assignable to the other at some instantiation while the broad comparison went
+ * on reporting a clean separation.
+ */
+export type DraftRevisionIsNotCommitted = Assert<
+  Equal<
+    [
+      DraftRevisionReference extends RevisionReference ? true : false,
+      RevisionReference extends DraftRevisionReference ? true : false,
+      DraftRevisionReference<CommittedRevisionLawA> extends RevisionReference<CommittedRevisionLawA>
+        ? true
+        : false,
+      RevisionReference<CommittedRevisionLawA> extends DraftRevisionReference<CommittedRevisionLawA>
+        ? true
+        : false,
+    ],
+    [false, false, false, false]
   >
 >;
 

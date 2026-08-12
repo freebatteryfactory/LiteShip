@@ -1,6 +1,6 @@
 # Web: The Browser Host
 
-Status: architecture specified across twelve homes; implementation absent and unauthorized
+Status: architecture specified across thirteen homes; implementation absent and unauthorized
 
 Authority: This README for web-wide meaning and proof obligations; `types.ts` for the topology; each numbered home's `README.md` and `types.ts` for local authority
 
@@ -39,7 +39,7 @@ There is no universal trust ladder. Four structurally distinct families keep fou
 
 ## Topology
 
-Twelve numbered homes in dependency order, each one distinct physical authority:
+Thirteen numbered homes in dependency order, each one distinct physical authority:
 
 | Home | Authority | Status |
 | --- | --- | --- |
@@ -51,12 +51,15 @@ Twelve numbered homes in dependency order, each one distinct physical authority:
 | `05_evidence` | Browser probes and watchers | specified |
 | `06_transport` | Fetch/SSE/stream connections | physical profiles deferred |
 | `07_persistence` | Optional store offers over core ports | provisional |
-| `08_media` | Audio, devices, capture, codecs | profiles deferred; capture roster reserved |
-| `09_graphics` | Canvas, WebGL, WebGPU | physical profiles deferred |
+| `08_media` | Audio, devices, decode, encode, mux | physical profiles deferred |
+| `09_graphics` | Canvas, WebGL, WebGPU, frame readback | physical profiles deferred |
 | `10_execution` | Browser residual-program host | physical profiles deferred |
 | `11_island` | Activation and graph-cut joining | specified |
+| `12_capture` | Committed browser-composite capture | specified |
 
-`11_island` is last because activation composes region, security, events, evidence, transport, optional persistence, media, graphics, and execution — and that composition is a type fact, not a sentence: `IslandActivationOffer` requires the region manager, the commit-application authority, and the execution host by exact requirement row. The topology in `types.ts` follows core's ordered pattern — named entries in an exact tuple with position-by-position laws — so order, membership, and surface association are all mutation-breakable facts, lawful because all twelve directories physically exist.
+`11_island` is last because activation composes region, security, events, evidence, transport, optional persistence, media, graphics, and execution — and that composition is a type fact, not a sentence: `IslandActivationOffer` requires the region manager, the commit-application authority, and the execution host by exact requirement row. The topology in `types.ts` follows core's ordered pattern — named entries in an exact tuple with position-by-position laws — so order, membership, and surface association are all mutation-breakable facts, lawful because all thirteen directories physically exist.
+
+`12_capture` is after it for the same reason pointed the other way: it gathers physical outputs *after* they have been lawfully committed, composing the projection commit, the region boundary, and graphics resources without becoming the parent of any of them. It is the one home reaching a composition that spans DOM, canvas, and video at once, which is precisely why it may claim nothing about what that composition means.
 
 ## The capability composition
 
@@ -101,7 +104,7 @@ home:
   title: "Web: The Browser Host"
   maturity: architecture-specified
   implementation: absent
-  child_homes: 12
+  child_homes: 13
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:

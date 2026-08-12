@@ -14,6 +14,8 @@ Own the physical browser audio and media resources: `AudioContext` and worklets,
 
 ## Owns
 
+- Browser decoder, encoder, and mux authorities over exact profiles.
+- Codec admission as evidence: whether this browser accepts one exact configuration.
 - Media resource identity, kind, and owned lifetime.
 - The browser-side sample-clock transport, speaking core time.
 - The reserved capture authority.
@@ -33,6 +35,11 @@ The clock speaks the core sample coordinate — `SampleIndex` at a `SampleRate` 
 
 ## Laws
 
+- Decode and encode are operations, not resource kinds. Holding a `codec` resource is acquisition; this home previously had no operation anywhere that could be asked to produce a frame or a packet.
+- An unsupported configuration is an explicit refusal carrying diagnostics, never an absent provider. "This browser will not encode at this profile" and "no encoder was wired up" have different remediations.
+- An encode consumes a non-empty frame population, and its packets stay exact over the profile that produced them.
+- The browser default is `unclaimed`. WebCodecs may ignore hardware and software hints for any reason, so a generic provider has nothing to claim — which is different from having measured variation.
+- Encoder and muxer products are owned and dispose exactly once.
 - The sample clock speaks the sample coordinate, never monotonic time.
 - Retained custody is representable; a constructed resource is owned.
 - Providers split by clock: the audio runtime provider constructs clock-bearing instances — the clock lives inside the instance and carries no runtime identity of its own — while the generic media provider carries no clock by design. Both construct repeatable resources; an injected existing audio runtime enters as an application grounding, and generic injected values enter as admitted provider inputs, never a global injected-resource hole or a standalone clock hole.
@@ -59,6 +66,9 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - decode-and-encode-are-operations-not-resource-kinds
+  - refusal-is-explicit-never-an-absent-provider
+  - the-browser-default-is-unclaimed
   - browser-apis-never-define-the-semantic-media-model
   - injected-media-may-ground-created-media-is-offered
   - capture-roster-reserved-for-old-source-evidence

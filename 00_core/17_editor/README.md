@@ -14,6 +14,7 @@ Own semantic selection, revision-pinned working overlays, draft previews, histor
 
 ## Owns
 
+- Preview and counterfactual projection over exact draft cuts.
 - Editor session and selection identity.
 - Revision-pinned `SelectionSet` and selection resolution.
 - Working overlays whose entries bind operation invocation, family patch, and normalized change.
@@ -77,6 +78,8 @@ Approval is derived from `OperationPolicyDecision`, effects, reversibility, auth
 
 ## Laws
 
+- A working overlay's base is one exact cut, not a revision here and a time cut two members away.
+- A preview produces a draft cut and cannot hand back a committed one. The editor is the one place where that distinction is a one-member change away.
 - Committed revision remains authority.
 - Working overlays and previews are non-authoritative.
 - Draft references cannot satisfy committed revision contracts.
@@ -123,6 +126,7 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - preview-consumes-the-draft-cut
   - revision-dag-operation-history-overlay-snapshot-cursor
   - operation-to-patch-to-change-derivation
   - draft-reference-kind

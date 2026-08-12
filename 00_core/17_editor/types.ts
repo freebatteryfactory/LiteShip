@@ -19,7 +19,8 @@ import type {
   WorldReference,
 } from '../02_identity/types.js';
 import type { EntityFieldReference } from '../03_schema/types.js';
-import type { EditorPosition, TimeCut } from '../04_time/types.js';
+import type { EditorPosition } from '../04_time/types.js';
+import type { DraftSemanticCut, SemanticCut } from '../08_state/types.js';
 import type {
   OperationInvocation,
   OperationPolicyDecision,
@@ -66,22 +67,56 @@ export interface OverlayEntry {
   readonly diagnostics: readonly Diagnostic[];
 }
 
-/** Uncommitted operation sequence over an immutable base. */
+/**
+ * Uncommitted operation sequence over an immutable base.
+ *
+ * The base arrives as one exact cut. It previously carried a revision here and
+ * a time cut two members later, which meant the editor described its coordinate
+ * in loose parts while the runtime described the same coordinate as one object.
+ * A preview and a commit that disagree about what a coordinate *is* cannot be
+ * one program, whatever the READMEs claim.
+ */
 export interface WorkingOverlay {
   readonly session: EditorSessionReference;
-  readonly base: RevisionReference;
+  readonly base: SemanticCut;
   readonly entries: readonly OverlayEntry[];
-  readonly time: TimeCut;
 }
 
-/** Counterfactual branch compiled and executed without committing. */
+/**
+ * Counterfactual branch compiled and executed without committing.
+ *
+ * The result is a draft cut, not a bare draft revision. A preview names the
+ * world, the candidate revision, the moment, and the evidence it evaluated
+ * against — everything a rasterizer needs to draw it — and the draft reference
+ * kind is what keeps it from reaching a production slot.
+ */
 export interface PreviewBranch {
-  readonly base: RevisionReference;
+  readonly base: SemanticCut;
   readonly overlay: WorkingOverlay;
-  readonly result: DraftRevisionReference;
+  readonly result: DraftSemanticCut;
   readonly scene?: SceneReference;
   readonly diagnostics: readonly Diagnostic[];
 }
+
+/**
+ * Compile-time law: preview reaches a draft cut, and cannot quietly hand back a
+ * committed one.
+ *
+ * The editor is the one place where a draft becoming indistinguishable from a
+ * commit is a one-member change, so the distinction is checked rather than
+ * described.
+ */
+export type APreviewProducesADraftCut = Assert<
+  Equal<
+    [
+      PreviewBranch['result'] extends DraftSemanticCut ? true : false,
+      PreviewBranch['result'] extends SemanticCut ? true : false,
+      PreviewBranch['base'] extends SemanticCut ? true : false,
+      'time' extends keyof WorkingOverlay ? true : false,
+    ],
+    [true, false, true, false]
+  >
+>;
 
 /** Cursor projection over revision or operation history. */
 export interface HistoryCursor {

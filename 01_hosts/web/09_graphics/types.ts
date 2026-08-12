@@ -28,11 +28,13 @@ import type {
   NonEmptyTuple,
   OutputOf,
   Reference,
+  Result,
   Signature,
   TagOf,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
-import type { EvidenceUpdate } from '../../../00_core/06_evidence/types.js';
+import type { EvidenceUpdate, ReproducibilityClaim } from '../../../00_core/06_evidence/types.js';
+import type { MediaFrame, PhysicalFrame } from '../../../00_core/12_media/types.js';
 import type { CanonicalValue, ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type {
   GroundingId,
@@ -113,6 +115,77 @@ export interface GraphicsEgress {
   >;
 }
 
+// ---------------------------------------------------------------------------
+// Rasterization and readback
+// ---------------------------------------------------------------------------
+
+export type RasterProfileId<Name extends string = string> = Brand<Name, 'liteship.web.raster-profile-id'>;
+export type RasterProfileReference<Id extends RasterProfileId = RasterProfileId> = Reference<
+  'web-raster-profile',
+  Id
+>;
+
+/**
+ * Everything physical that decided what these pixels look like.
+ *
+ * A context kind is not a raster profile. `webgpu` says which API drew the
+ * frame and nothing about the font stack, colour space, device pixel ratio, or
+ * adapter that determined its bytes — and a reproducibility claim made against
+ * a label that coarse is a claim about nothing.
+ */
+export interface RasterProfile<Id extends RasterProfileId = RasterProfileId> {
+  readonly id: RasterProfileReference<Id>;
+  readonly context: GraphicsContextKind;
+  readonly configuration: ContentAddress<'application/vnd.liteship.web-raster-profile+cbor'>;
+  readonly reproducibility: ReproducibilityClaim<RasterProfileReference<Id>>;
+}
+
+/** The browser's physical frame payload. */
+export interface WebFramePayload {
+  readonly bytes: ContentAddress;
+}
+
+/** One physical frame as this host produces it. */
+export type WebPhysicalFrame<Profile extends RasterProfileId = RasterProfileId> = PhysicalFrame<
+  WebFramePayload,
+  MediaFrame,
+  RasterProfileReference<Profile>,
+  never
+>;
+
+/**
+ * A request to realize one semantic frame on one exact graphics resource.
+ *
+ * Either cut form is admissible. The editor must be able to rasterize and
+ * inspect a counterfactual without committing it to application reality —
+ * refusing draft-derived output at a production slot is publication authority
+ * and belongs with publication, not with rasterization physics.
+ */
+export interface RasterizationRequest<Profile extends RasterProfileId = RasterProfileId> {
+  readonly resource: GraphicsResourceReference;
+  readonly frame: MediaFrame;
+  readonly profile: RasterProfile<Profile>;
+}
+
+/**
+ * The readback authority: pixels, and the exact semantic frame they realize.
+ *
+ * This is where live presentation and export become the same evaluation. A
+ * readback that could produce a frame without naming the semantic frame it came
+ * from would leave the two paths agreeing only by whatever the renderer
+ * happened to do that day — which is the entire failure this home exists to
+ * make unrepresentable.
+ *
+ * It carries no codec, container, or bitrate decision. Those belong to the
+ * media home, and a readback that chose them would have quietly become an
+ * encoder.
+ */
+export interface GraphicsReadback {
+  readonly rasterize: <Profile extends RasterProfileId>(
+    request: RasterizationRequest<Profile>,
+  ) => Result<WebPhysicalFrame<Profile>, NonEmptyTuple<Diagnostic>>;
+}
+
 /** A complete acquisition request: kind, physical target, and configuration. */
 export interface GraphicsAcquisitionRequest {
   readonly kind: GraphicsContextKind;
@@ -134,6 +207,7 @@ export interface GraphicsAuthority {
   >;
   readonly adopt: Signature<WebGraphicsResource, WebGraphicsResource, NonEmptyTuple<Diagnostic>>;
   readonly egress: GraphicsEgress;
+  readonly readback: GraphicsReadback;
 }
 
 export type GpuAccessRequirement = Hole<'liteship.web.gpu-access', GpuAccess>;
@@ -229,11 +303,98 @@ export type InjectedContextCustodyIsRepresentable = Assert<
   Equal<WebGraphicsResource<'unowned'>['lifecycle'], CaseOf<RealizationLifecycle, 'unowned'>>
 >;
 
+type RasterLawProfileA = RasterProfileId<'liteship.web.graphics.law.profile-a'>;
+type RasterLawProfileB = RasterProfileId<'liteship.web.graphics.law.profile-b'>;
+
+/**
+ * Compile-time law: a rasterized frame names the exact semantic frame it
+ * realizes and the exact profile it was drawn under.
+ *
+ * This is the law that keeps live presentation and export the same evaluation.
+ * If the semantic frame could be dropped from the request, readback would
+ * become "whatever was on the surface when I asked", and there would be nothing
+ * left to compare an exported frame against.
+ */
+export type ARasterizedFrameNamesItsSemanticFrame = Assert<
+  Equal<
+    [
+      RasterizationRequest<RasterLawProfileA>['frame'] extends MediaFrame ? true : false,
+      RasterizationRequest<RasterLawProfileA>['resource'] extends GraphicsResourceReference
+        ? true
+        : false,
+      RasterizationRequest<RasterLawProfileA>['profile'] extends RasterProfile<RasterLawProfileA>
+        ? true
+        : false,
+      WebPhysicalFrame<RasterLawProfileB> extends WebPhysicalFrame<RasterLawProfileA> ? true : false,
+    ],
+    [true, true, true, false]
+  >
+>;
+
+/**
+ * Compile-time law: readback decides nothing about encoding.
+ *
+ * A capture that could choose a codec, a container, or a bitrate would have
+ * become an encoder wearing the graphics home's name, and the media home would
+ * be answering to it.
+ */
+export type ReadbackCarriesNoCodecDecision = Assert<
+  Equal<
+    [
+      'codec' extends keyof RasterizationRequest ? true : false,
+      'container' extends keyof RasterizationRequest ? true : false,
+      'bitrate' extends keyof RasterizationRequest ? true : false,
+      'profile' extends keyof RasterizationRequest ? true : false,
+    ],
+    [false, false, false, true]
+  >
+>;
+
+/**
+ * Compile-time law: a raster profile is more than a context kind, and its
+ * reproducibility claim is exact over its own reference.
+ */
+export type ARasterProfileIsMoreThanAContextKind = Assert<
+  Equal<
+    [
+      RasterProfile<RasterLawProfileA>['configuration'] extends ContentAddress<
+        'application/vnd.liteship.web-raster-profile+cbor'
+      >
+        ? true
+        : false,
+      RasterProfile<RasterLawProfileA>['reproducibility'] extends ReproducibilityClaim<
+        RasterProfileReference<RasterLawProfileA>
+      >
+        ? true
+        : false,
+      GraphicsContextKind extends RasterProfile<RasterLawProfileA> ? true : false,
+    ],
+    [true, true, false]
+  >
+>;
+
+/**
+ * Compile-time law: the provider carries readback beside egress.
+ *
+ * Applying output and reading it back are different directions across the same
+ * boundary, and a provider holding only the first can present forever and
+ * export nothing.
+ */
+export type TheProviderCarriesReadbackBesideEgress = Assert<
+  Equal<
+    [GraphicsAuthority['readback'], GraphicsAuthority['egress']],
+    [GraphicsReadback, GraphicsEgress]
+  >
+>;
+
 /** Type summary consumed by the web topology. */
 export interface WebGraphicsTypeSurface {
   readonly resource: WebGraphicsResource;
   readonly loss: GraphicsLoss;
   readonly egress: GraphicsEgress;
+  readonly readback: GraphicsReadback;
+  readonly rasterProfile: RasterProfile;
+  readonly physicalFrame: WebPhysicalFrame;
   readonly authority: GraphicsAuthority;
   readonly access: GpuAccessGrounding;
   readonly offer: GraphicsAuthorityOffer;

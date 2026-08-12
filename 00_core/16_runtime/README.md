@@ -14,6 +14,7 @@ Own transactional residual execution, dirty propagation, coherent write plans, b
 
 ## Owns
 
+- The binding between one exact semantic cut and the execution that departs from it.
 - The TypeScript semantic reference executor.
 - Transaction fold, source generations, dirty frontier, and topological scheduling.
 - Commit barriers and `RuntimeWritePlan`.
@@ -67,6 +68,9 @@ Fallback behavior is explicit and preserves the reference semantics or returns a
 
 ## Laws
 
+- An execution request names one departure coordinate and no sibling revision, time, world, or evidence member.
+- A runtime commit is the residual-path witness that a committed cut exists, and cannot witness a draft. A preview must be able to evaluate and rasterize; what it must never do is produce this object, because everything downstream reads it as proof that application reality moved.
+- A platform-native projection program binds the exact source revision and timebase without manufacturing a runtime cut for every displayed frame. A CSS view timeline is a sibling projection, not a transaction, and dragging it back through JavaScript for diagram symmetry would waste a battery the platform already paid for.
 - One transaction publishes one coherent cut.
 - TypeScript is the semantic reference.
 - Every optimized backend passes differential parity under its declared numeric contract.
@@ -114,6 +118,9 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - one-departure-coordinate-no-siblings
+  - the-runtime-commit-witnesses-only-committed-cuts
+  - platform-programs-are-not-per-frame-cuts
   - transactional-committed-cut
   - typescript-reference-runtime
   - general-kernel-abi

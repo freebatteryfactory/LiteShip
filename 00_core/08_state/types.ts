@@ -10,6 +10,7 @@
  */
 
 import type {
+  Address,
   Algebra,
   Assert,
   Brand,
@@ -29,6 +30,7 @@ import type { CanonicalValue, ContentAddress } from '../01_encoding/types.js';
 import type {
   ChangeId,
   CommitId,
+  DraftRevisionReference,
   EntityId,
   EntityReference,
   PatchId,
@@ -41,6 +43,7 @@ import type {
 } from '../02_identity/types.js';
 import type { EntityFieldReference, FieldReference, SchemaId, SchemaReference } from '../03_schema/types.js';
 import type { TimeCut } from '../04_time/types.js';
+import type { EvidenceCutId, EvidenceCutReference } from '../06_evidence/types.js';
 import type { OperationReference } from '../07_operation/types.js';
 
 export type ComponentId<Name extends string = string> = Brand<Name, 'liteship.component-id'>;
@@ -182,13 +185,96 @@ export interface ChangeSet {
   readonly operation?: OperationReference;
 }
 
-/** Accepted change set and coherent resulting revision. */
+// ---------------------------------------------------------------------------
+// The semantic cut
+// ---------------------------------------------------------------------------
+
+/**
+ * One exact evaluation coordinate: which world, which revision, which moment,
+ * which evidence population.
+ *
+ * This is the single object every materialized projection binds to. A web
+ * region, a scene rasterization, an accessibility projection, and a media
+ * encode are siblings precisely because they name one of these rather than each
+ * assembling a coordinate out of loose parts. Three co-carried members is how
+ * an axis goes exact in one consumer and broad in the next, which is the defect
+ * the host layer paid four folds to close.
+ *
+ * The time parameter is open above `TimeCut` so a media path can be exact over
+ * a frame/sample coordinate without media inventing a second cut vocabulary.
+ *
+ * The cut is addressed because it is immutable and compared: two projections
+ * agreeing that they realized the same moment is a claim about identity, not
+ * about field-by-field equality.
+ */
+export interface SemanticCut<
+  World extends WorldId = WorldId,
+  Revision extends RevisionId = RevisionId,
+  Evidence extends EvidenceCutId = EvidenceCutId,
+  Time extends TimeCut = TimeCut,
+> {
+  readonly world: WorldReference<World>;
+  readonly revision: RevisionReference<Revision>;
+  readonly time: Time;
+  readonly evidence: EvidenceCutReference<Evidence>;
+  readonly address: ContentAddress<'application/vnd.liteship.semantic-cut+cbor'>;
+}
+
+/**
+ * The same coordinate over a candidate revision that was never committed.
+ *
+ * A separate declaration rather than a union member or a flag, because the
+ * editor evaluates counterfactuals continuously and a preview that can be
+ * mistaken for a committed cut is how draft state reaches a production slot.
+ * The two forms are structurally identical apart from the reference kind, and
+ * that kind is the whole of the distinction — `ADraftCutCannotSatisfyACommittedCut`
+ * is what keeps it from being decorative.
+ */
+export interface DraftSemanticCut<
+  World extends WorldId = WorldId,
+  Revision extends RevisionId = RevisionId,
+  Evidence extends EvidenceCutId = EvidenceCutId,
+  Time extends TimeCut = TimeCut,
+> {
+  readonly world: WorldReference<World>;
+  readonly revision: DraftRevisionReference<Revision>;
+  readonly time: Time;
+  readonly evidence: EvidenceCutReference<Evidence>;
+  readonly address: ContentAddress<'application/vnd.liteship.semantic-cut+cbor'>;
+}
+
+/**
+ * Either cut form, for the paths that genuinely accept both.
+ *
+ * Graphics rasterization is the motivating consumer: the editor must be able to
+ * rasterize and inspect a counterfactual without committing it to application
+ * reality. Refusing draft-derived artifacts at a production slot is publication
+ * authority and lives with publication, not with rasterization physics.
+ */
+export type AnySemanticCut<
+  World extends WorldId = WorldId,
+  Revision extends RevisionId = RevisionId,
+  Evidence extends EvidenceCutId = EvidenceCutId,
+  Time extends TimeCut = TimeCut,
+> = SemanticCut<World, Revision, Evidence, Time> | DraftSemanticCut<World, Revision, Evidence, Time>;
+
+/**
+ * Accepted change set and the coherent cut it produced.
+ *
+ * The commit owns its cut once. An earlier shape carried `result` and `time`
+ * beside each other, which meant adding world and evidence would have produced
+ * four sibling coordinates and a parity law to keep them agreeing. The result
+ * revision is `commit.cut.revision`, the commit time is `commit.cut.time`, and
+ * there is nothing left to drift.
+ *
+ * `base` remains a sibling because it is a different fact: the revision this
+ * commit departed from, not the coordinate it arrived at.
+ */
 export interface Commit {
   readonly id: CommitId;
   readonly change: ChangeId;
   readonly base: RevisionReference;
-  readonly result: RevisionReference;
-  readonly time: TimeCut;
+  readonly cut: SemanticCut;
 }
 
 /** State-system authority declaration. */
@@ -293,6 +379,120 @@ export type SnapshotStoreRequirement = Hole<'liteship.state.snapshot-store', Sna
 export type ChangeLogRequirement = Hole<'liteship.state.change-log', ChangeLog>;
 export type BlobStoreRequirement = Hole<'liteship.state.blob-store', BlobStore>;
 
+// ---------------------------------------------------------------------------
+// Cut laws
+// ---------------------------------------------------------------------------
+
+type CutLawWorldA = WorldId<'liteship.law.world-a'>;
+type CutLawWorldB = WorldId<'liteship.law.world-b'>;
+// `RevisionId` is a content address, not a branded name, so the revision axis is
+// carried by literal address specimens exactly as `02_identity` carries its own.
+type CutLawRevisionA = Address<
+  'liteship.content:application/vnd.liteship.revision+cbor',
+  'sha256:3333333333333333333333333333333333333333333333333333333333333333'
+>;
+type CutLawRevisionB = Address<
+  'liteship.content:application/vnd.liteship.revision+cbor',
+  'sha256:4444444444444444444444444444444444444444444444444444444444444444'
+>;
+type CutLawEvidenceA = EvidenceCutId<'liteship.law.evidence-a'>;
+type CutLawEvidenceB = EvidenceCutId<'liteship.law.evidence-b'>;
+
+type CutLawA = SemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceA>;
+
+/**
+ * Compile-time law: the cut names all four axes and is addressed.
+ *
+ * Members are named one at a time. A whole-shape comparison stays green while
+ * an individual member blurs to `unknown`, and the member most likely to be
+ * quietly dropped is the world — a revision reference does not identify the
+ * world it belongs to, so a cut carrying revision alone would look complete and
+ * mean less than it claims.
+ */
+export type ASemanticCutNamesWorldRevisionTimeAndEvidence = Assert<
+  Equal<
+    [
+      CutLawA['world'],
+      CutLawA['revision'],
+      CutLawA['evidence'],
+      CutLawA['time'] extends TimeCut ? true : false,
+      CutLawA['address'],
+    ],
+    [
+      WorldReference<CutLawWorldA>,
+      RevisionReference<CutLawRevisionA>,
+      EvidenceCutReference<CutLawEvidenceA>,
+      true,
+      ContentAddress<'application/vnd.liteship.semantic-cut+cbor'>,
+    ]
+  >
+>;
+
+/**
+ * Compile-time law: the cut is exact on every axis independently.
+ *
+ * Each axis is varied alone, because a law that varies them together stays
+ * green when exactly one parameter stops being load-bearing.
+ */
+export type ASemanticCutIsExactOnEveryAxis = Assert<
+  Equal<
+    [
+      CutLawA extends SemanticCut<CutLawWorldB, CutLawRevisionA, CutLawEvidenceA> ? true : false,
+      CutLawA extends SemanticCut<CutLawWorldA, CutLawRevisionB, CutLawEvidenceA> ? true : false,
+      CutLawA extends SemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceB> ? true : false,
+      CutLawA extends SemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceA> ? true : false,
+      CutLawA extends SemanticCut ? true : false,
+    ],
+    [false, false, false, true, true]
+  >
+>;
+
+/**
+ * Compile-time law: a draft cut cannot satisfy a committed cut, in either
+ * direction, at the same instantiation.
+ *
+ * The two forms differ by one reference kind. That is enough, and this law
+ * exists because it is exactly the kind of distinction that survives review as
+ * a comment and dies silently in the types.
+ */
+export type ADraftCutCannotSatisfyACommittedCut = Assert<
+  Equal<
+    [
+      DraftSemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceA> extends CutLawA ? true : false,
+      CutLawA extends DraftSemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceA> ? true : false,
+      CutLawA extends AnySemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceA> ? true : false,
+      DraftSemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceA> extends AnySemanticCut<
+        CutLawWorldA,
+        CutLawRevisionA,
+        CutLawEvidenceA
+      >
+        ? true
+        : false,
+    ],
+    [false, false, true, true]
+  >
+>;
+
+/**
+ * Compile-time law: a commit carries its coordinate once.
+ *
+ * `result` and `time` are checked by name for absence. Their return would not
+ * break anything on the day it happened — it would reintroduce two facts that
+ * agree with the cut until the first time they do not, which is the shape this
+ * home removes on sight.
+ */
+export type ACommitCarriesTheCutAndNoSiblingCoordinate = Assert<
+  Equal<
+    [
+      Commit['cut'] extends SemanticCut ? true : false,
+      'result' extends keyof Commit ? true : false,
+      'time' extends keyof Commit ? true : false,
+      'base' extends keyof Commit ? true : false,
+    ],
+    [true, false, false, true]
+  >
+>;
+
 /** Type summary consumed by the root core topology. */
 export interface StateTypeSurface {
   readonly component: ComponentDefinition;
@@ -302,6 +502,8 @@ export interface StateTypeSurface {
   readonly patch: RevisionPatch<'state', StateChange>;
   readonly change: ChangeSet;
   readonly commit: Commit;
+  readonly cut: SemanticCut;
+  readonly draftCut: DraftSemanticCut;
   readonly system: SystemDefinition;
   readonly subworld: SubworldReference;
   readonly index: IndexPlan;

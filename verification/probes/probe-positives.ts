@@ -67,11 +67,14 @@ import type { ToolAuthority, ToolExecution, ToolId } from './01_hosts/server/07_
 import type {
   MediaJobId,
   MediaJobReference,
-  MediaJobRequest,
-  MediaOutputStream,
+  MediaPacketStream,
+  ServerEncodeJob,
+  ServerEncodeRequest,
   ServerMediaAuthority,
   ServerMediaJob,
+  ServerRenderRequest,
 } from './01_hosts/server/10_media/types.js';
+import type { EncodeProfileId } from './00_core/12_media/types.js';
 import type { SchemaId } from './00_core/03_schema/types.js';
 
 type OpA = OperationId<'liteship.positive.op-a'>;
@@ -89,6 +92,7 @@ type QueueA = QueueId<'liteship.positive.queue-a'>;
 type LayoutA = MemoryLayoutId<'liteship.positive.layout-a'>;
 type ContractA = SchemaId<'liteship.positive.contract-a'>;
 type JobA = MediaJobId<'liteship.positive.job-a'>;
+type EncodeA = EncodeProfileId<'liteship.positive.encode-a'>;
 
 // Worker: instance A closes instance A.
 declare const instanceA: WorkerInstance<InstA>;
@@ -224,17 +228,22 @@ declare const toolRequestA: import('./01_hosts/server/07_tool/types.js').ToolInv
 export const p20: Result<ToolExecution<ToolA>, NonEmptyTuple<Diagnostic>> = tools.invoke(toolRequestA);
 
 // Server (provider form): rendering the exact media request yields the job of
-// exactly that ancestry, whose stream remembers its job.
+// exactly that ancestry, and encoding its frames opens a packet stream that
+// remembers both the job and the profile the packets were produced under.
 declare const media: ServerMediaAuthority;
-declare const mediaRequestA: MediaJobRequest<ContractA, ToolA, RootA, RootA, JobA>;
+declare const mediaRequestA: ServerRenderRequest<ContractA, ToolA, RootA, JobA>;
 export const p26: Result<
-  ServerMediaJob<ContractA, ToolA, RootA, RootA, JobA>,
+  ServerMediaJob<ContractA, ToolA, RootA, JobA>,
   NonEmptyTuple<Diagnostic>
 > = media.render(mediaRequestA);
-declare const mediaJobA: ServerMediaJob<ContractA, ToolA, RootA, RootA, JobA>;
-export const p27: Signature<
-  MediaJobReference<JobA>,
-  MediaOutputStream<JobA>,
+declare const encodeRequestA: ServerEncodeRequest<EncodeA, ToolA, JobA>;
+export const p27: Result<
+  ServerEncodeJob<EncodeA, ToolA, JobA>,
   NonEmptyTuple<Diagnostic>
-> = mediaJobA.open;
-export const p28: MediaOutputStream<JobA>['job'] = ({} as MediaOutputStream<JobA>).job;
+> = media.encode(encodeRequestA);
+declare const encodeJobA: ServerEncodeJob<EncodeA, ToolA, JobA>;
+export const p28: Signature<
+  MediaJobReference<JobA>,
+  MediaPacketStream<JobA, EncodeA>,
+  NonEmptyTuple<Diagnostic>
+> = encodeJobA.open;

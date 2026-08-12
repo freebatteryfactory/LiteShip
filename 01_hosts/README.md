@@ -131,7 +131,7 @@ The shared contract and all four child architectures are specified. Concrete env
 
 ## Remaining work
 
-All four children are specified: web across twelve homes, worker across seven, edge across eleven, server across eleven. The host layer is architecturally complete. Continue the waterfall: targets, wires, system, and root composition, all architecture-only until the whole repository closes.
+All four children are specified: web across thirteen homes, worker across seven, edge across eleven, server across eleven. Web gained `12_capture` in the media I/O closure — a late home that gathers physical outputs after they are lawfully committed, composing the projection commit, the region boundary, and graphics resources without becoming the parent of any of them. The host layer is architecturally complete. Continue the waterfall: targets, wires, system, and root composition, all architecture-only until the whole repository closes.
 
 ## Machine-checkable projection
 

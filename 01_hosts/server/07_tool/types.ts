@@ -27,6 +27,7 @@ import type {
 import type { CanonicalValue, ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { SchemaId, SchemaReference } from '../../../00_core/03_schema/types.js';
+import type { ReproducibilityClaim } from '../../../00_core/06_evidence/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 import type { ChildProcessRequirement } from '../01_process/types.js';
@@ -36,17 +37,35 @@ export type ToolId<Name extends string = string> = Brand<Name, 'liteship.server.
 export type ToolReference<Id extends ToolId = ToolId> = Reference<'server-tool', Id>;
 export type ToolVersion = Brand<string, 'liteship.server.tool-version'>;
 
-/** Declared determinism of one tool profile. */
-export type ToolDeterminism = Algebra<{
-  deterministic: {};
-  nondeterministic: {};
-}>;
+export type ToolProfileId<Name extends string = string> = Brand<Name, 'liteship.server.tool-profile-id'>;
+export type ToolProfileReference<Id extends ToolProfileId = ToolProfileId> = Reference<
+  'server-tool-profile',
+  Id
+>;
 
-/** One admitted tool profile: exact identity, version, and determinism evidence. */
-export interface ToolProfile<Tool extends ToolId> {
+/**
+ * One admitted tool profile: exact identity, exact bytes, exact configuration,
+ * and an evidence-backed reproducibility claim.
+ *
+ * The predecessor shape carried a name, a version string, and a two-arm
+ * determinism algebra whose arms were both empty — a tool could assert
+ * determinism while naming no binary, no options, and no witness. Nothing
+ * downstream could tell a pinned static build from whatever happened to be on
+ * the PATH, which is the entire content of a reproducibility claim about a
+ * native encoder.
+ *
+ * The claim is parameterized over this profile's *reference*, not over the
+ * profile itself. A profile containing a claim parameterized by that same
+ * profile is a type that contains itself.
+ */
+export interface ToolProfile<Tool extends ToolId, Profile extends ToolProfileId = ToolProfileId> {
+  readonly id: ToolProfileReference<Profile>;
   readonly tool: ToolReference<Tool>;
   readonly version: ToolVersion;
-  readonly determinism: ToolDeterminism;
+  readonly executable: ContentAddress;
+  readonly options: ContentAddress<'application/vnd.liteship.server-tool-options+cbor'>;
+  readonly environment: ContentAddress<'application/vnd.liteship.server-tool-environment+cbor'>;
+  readonly reproducibility: ReproducibilityClaim<ToolProfileReference<Profile>>;
 }
 
 /** The sandbox scope one invocation runs under — declared, never ambient. */
@@ -178,7 +197,7 @@ export type AnInvocationCarriesContractsAndSandbox = Assert<
       ToolInvocationRequest<ToolId>['sandbox'],
       ToolExecution<ToolId<'liteship.server.tool.law.tool-a'>>['result'],
       CaseOf<ToolOutcome, 'produced'>['value'],
-      TagOf<ToolDeterminism>,
+      TagOf<ReproducibilityClaim<ToolProfileReference>>,
     ],
     [
       CanonicalValue,
@@ -189,8 +208,46 @@ export type AnInvocationCarriesContractsAndSandbox = Assert<
         NonEmptyTuple<Diagnostic>
       >,
       CanonicalValue,
-      'deterministic' | 'nondeterministic',
+      'unclaimed' | 'reproducible-under-profile' | 'observed-variable',
     ]
+  >
+>;
+
+/**
+ * Compile-time law: a tool profile names its bytes, its configuration, and its
+ * environment, and its reproducibility claim is exact over its own reference.
+ *
+ * Every member here is the answer to "reproducible under *what*". A profile
+ * that keeps the claim and loses the executable address still compiles and
+ * still says `reproducible-under-profile`, which is why they are checked one at
+ * a time rather than as a whole shape.
+ */
+export type AToolProfileIsExactAboutWhatItRan = Assert<
+  Equal<
+    [
+      ToolProfile<ToolId<'liteship.server.tool.law.tool-a'>>['executable'] extends ContentAddress
+        ? true
+        : false,
+      ToolProfile<ToolId<'liteship.server.tool.law.tool-a'>>['options'] extends ContentAddress<
+        'application/vnd.liteship.server-tool-options+cbor'
+      >
+        ? true
+        : false,
+      ToolProfile<ToolId<'liteship.server.tool.law.tool-a'>>['environment'] extends ContentAddress<
+        'application/vnd.liteship.server-tool-environment+cbor'
+      >
+        ? true
+        : false,
+      ToolProfile<
+        ToolId<'liteship.server.tool.law.tool-a'>,
+        ToolProfileId<'liteship.server.tool.law.profile-a'>
+      >['reproducibility'] extends ReproducibilityClaim<
+        ToolProfileReference<ToolProfileId<'liteship.server.tool.law.profile-a'>>
+      >
+        ? true
+        : false,
+    ],
+    [true, true, true, true]
   >
 >;
 

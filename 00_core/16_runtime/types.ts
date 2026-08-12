@@ -23,11 +23,11 @@ import type {
 } from '../../types.js';
 import type { Diagnostic } from '../00_error/types.js';
 import type { CanonicalValue, ContentAddress } from '../01_encoding/types.js';
-import type { CommitId, RevisionReference, TraceId } from '../02_identity/types.js';
+import type { CommitId, TraceId } from '../02_identity/types.js';
 import type { SchemaId, SchemaReference } from '../03_schema/types.js';
 import type { TimeCut, TransactionGeneration } from '../04_time/types.js';
 import type { OwnedResource } from '../05_lifecycle/types.js';
-import type { Commit, WorldRevision } from '../08_state/types.js';
+import type { Commit, DraftSemanticCut, SemanticCut, WorldRevision } from '../08_state/types.js';
 import type { ExecutionBackend } from '../14_compiler/types.js';
 import type {
   ExecutionImage,
@@ -150,19 +150,25 @@ export interface RuntimeCommit {
 /**
  * One execution request: everything a faithful transaction execution
  * consumes. The inspectable program and its packed image are both named, the
- * selected backend and driver are explicit, and the transactional coordinates
- * — base revision, generation, time cut, and input values — are the facts the
- * produced semantic commit must be manufactured from. Hosts supply the
- * physical driver; core owns what a lawful execution consumes and produces.
+ * selected backend and driver are explicit, and the coordinate this execution
+ * departs from is one exact `SemanticCut` — world, base revision, time, and the
+ * evidence population it evaluated against.
+ *
+ * That coordinate arrives as one object rather than as a base revision beside a
+ * time cut. The two were siblings here while the commit carried two more of its
+ * own, and adding world and evidence to both would have produced four
+ * coordinates and a parity law to keep them agreeing.
+ *
+ * Hosts supply the physical driver; core owns what a lawful execution consumes
+ * and produces.
  */
 export interface ExecutionRequest {
   readonly program: ContentAddress<'application/vnd.liteship.program+cbor'>;
   readonly image: ExecutionImage;
   readonly backend: ExecutionBackend;
   readonly driver: BackendId;
-  readonly baseRevision: RevisionReference;
+  readonly base: SemanticCut;
   readonly generation: TransactionGeneration;
-  readonly time: TimeCut;
   readonly inputs: CanonicalValue;
   readonly commands: readonly KernelCommand[];
 }
@@ -183,11 +189,49 @@ export type AnExecutorProducesTheRuntimeCommit = Assert<
   Equal<OutputOf<RuntimeExecutor['execute']>, RuntimeCommit>
 >;
 
+/**
+ * Compile-time law: an execution names one departure coordinate and no sibling
+ * revision or time.
+ *
+ * Their return is the whole failure this fold removed: two members that agree
+ * with the cut until the first execution where they do not.
+ */
+export type AnExecutionRequestNamesOneCut = Assert<
+  Equal<
+    [
+      ExecutionRequest['base'] extends SemanticCut ? true : false,
+      'baseRevision' extends keyof ExecutionRequest ? true : false,
+      'time' extends keyof ExecutionRequest ? true : false,
+      'world' extends keyof ExecutionRequest ? true : false,
+      'evidence' extends keyof ExecutionRequest ? true : false,
+    ],
+    [true, false, false, false, false]
+  >
+>;
+
+/**
+ * Compile-time law: the runtime commit is the residual-path witness that a
+ * committed cut exists, and it cannot witness a draft.
+ *
+ * A preview must be able to evaluate and rasterize without committing. What it
+ * must never be able to do is produce this object, because everything
+ * downstream reads it as proof that application reality moved.
+ */
+export type ARuntimeCommitWitnessesACommittedCut = Assert<
+  Equal<
+    [
+      RuntimeCommit['semantic']['cut'] extends SemanticCut ? true : false,
+      RuntimeCommit['semantic']['cut'] extends DraftSemanticCut ? true : false,
+    ],
+    [true, false]
+  >
+>;
+
 /** Compile-time law: an execution request carries its transactional coordinates. */
 export type AnExecutionRequestCarriesItsTransaction = Assert<
   Equal<
-    [ExecutionRequest['baseRevision'], ExecutionRequest['generation'], ExecutionRequest['driver']],
-    [RevisionReference, TransactionGeneration, BackendId]
+    [ExecutionRequest['base'], ExecutionRequest['generation'], ExecutionRequest['driver']],
+    [SemanticCut, TransactionGeneration, BackendId]
   >
 >;
 

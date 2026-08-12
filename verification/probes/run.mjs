@@ -37,6 +37,15 @@ const PROBES = [
   // This is the first consumer that takes both producers, so it is the first
   // evidence the claim was true rather than merely representable.
   { file: 'probe-direct-deployment.ts', expect: 'compiles', why: 'framework-produced and host-only-produced applications enter one deployment path, no branch' },
+  // The media fold's positive join. It crosses four homes that could not each
+  // have proved this alone: the cut reaches two sibling egresses, a graphics
+  // frame travels into an encoder that cannot name the graphics home, a draft
+  // cut rasterizes without becoming a commit, and all three export dispositions
+  // are inhabited including the honest refusal.
+  { file: 'probe-media-live-export.ts', expect: 'compiles', why: 'one cut, sibling egresses, rasterize-encode-mux across three homes, draft preview, all three dispositions' },
+  // Compiles rather than rejects, for the same reason the cross-target
+  // negatives do: each negative names its own site under `@ts-expect-error`.
+  { file: 'probe-media-negatives.ts', expect: 'compiles', why: 'fifteen media negatives, each self-verifying via @ts-expect-error' },
 ];
 
 const known = new Set(PROBES.map((p) => p.file));

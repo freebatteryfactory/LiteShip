@@ -14,6 +14,8 @@ Own immutable world revisions, normalized changes, transactions, typed relations
 
 ## Owns
 
+- The semantic cut: one exact world, revision, temporal coordinate, and evidence population, addressed.
+- The draft cut, which is the same coordinate over a candidate revision that was never committed.
 - Component and relation definitions.
 - World definitions, revisions, snapshots, and references.
 - Generic `RevisionPatch<Family, Change>` envelopes.
@@ -57,6 +59,10 @@ Core defines what must be stored and the compare-and-swap, snapshot, append, loa
 
 ## Laws
 
+- A cut names all four axes. A revision reference does not identify the world it belongs to, so a coordinate carrying revision alone looks complete and means less than it claims.
+- A cut is exact on every axis independently.
+- A draft cut cannot satisfy a committed cut in either direction. The two differ by one reference kind, and that kind is the whole distinction.
+- A commit carries its cut once. `result` and `time` are absent by law — their return would reintroduce members that agree with the cut until the first time they do not.
 - Committed revisions are immutable and content-addressed.
 - Drafts and forks never mutate their base.
 - Every patch names an exact base.
@@ -111,6 +117,9 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - one-cut-not-three-loose-coordinates
+  - the-commit-owns-its-cut-once
+  - draft-and-committed-cuts-stay-distinct
   - immutable-world-revisions
   - family-patch-to-normalized-change-to-commit
   - field-preconditions-bind-entity-and-schema-field

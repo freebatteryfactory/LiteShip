@@ -74,8 +74,9 @@ import type {
   WebExecutionTypeSurface,
 } from './10_execution/types.js';
 import type { IslandActivationOffer, WebIslandTypeSurface } from './11_island/types.js';
+import type { CaptureAuthorityOffer, WebCaptureTypeSurface } from './12_capture/types.js';
 
-/** The twelve web homes, in numbered dependency order. */
+/** The thirteen web homes, in numbered dependency order. */
 export type WebHomeName =
   | '00_bootstrap'
   | '01_region'
@@ -88,7 +89,8 @@ export type WebHomeName =
   | '08_media'
   | '09_graphics'
   | '10_execution'
-  | '11_island';
+  | '11_island'
+  | '12_capture';
 
 /** One owner and the semantic surface its local `types.ts` declares. */
 export interface WebTypeHome<Name extends WebHomeName, Surface> extends Named<Name> {
@@ -108,7 +110,8 @@ export type WebTypeTopology = Tuple<[
   WebTypeHome<'08_media', WebMediaTypeSurface>,
   WebTypeHome<'09_graphics', WebGraphicsTypeSurface>,
   WebTypeHome<'10_execution', WebExecutionTypeSurface>,
-  WebTypeHome<'11_island', WebIslandTypeSurface>
+  WebTypeHome<'11_island', WebIslandTypeSurface>,
+  WebTypeHome<'12_capture', WebCaptureTypeSurface>
 ]>;
 
 /** Select one owner surface by its source-home name. */
@@ -131,6 +134,7 @@ export interface WebTypeSurface {
   readonly graphics: WebGraphicsTypeSurface;
   readonly execution: WebExecutionTypeSurface;
   readonly island: WebIslandTypeSurface;
+  readonly capture: WebCaptureTypeSurface;
 }
 
 /**
@@ -166,6 +170,7 @@ export interface WebCapabilityTopology {
     readonly executionHost: ExecutionHostOffer;
     readonly preparation: PreparationOffer;
     readonly islandActivation: IslandActivationOffer;
+    readonly captureAuthority: CaptureAuthorityOffer;
   };
   readonly erased: RealizationCatalog;
 }
@@ -194,6 +199,7 @@ export type TheTopologyIsOrderedExactly = Assert<
       WebTypeTopology[9]['name'],
       WebTypeTopology[10]['name'],
       WebTypeTopology[11]['name'],
+      WebTypeTopology[12]['name'],
     ],
     [
       '00_bootstrap',
@@ -208,6 +214,7 @@ export type TheTopologyIsOrderedExactly = Assert<
       '09_graphics',
       '10_execution',
       '11_island',
+      '12_capture',
     ]
   >
 >;
@@ -233,6 +240,7 @@ export type EachHomeResolvesToItsOwnSurface = Assert<
       WebTypeAt<'09_graphics'>,
       WebTypeAt<'10_execution'>,
       WebTypeAt<'11_island'>,
+      WebTypeAt<'12_capture'>,
     ],
     [
       WebBootstrapTypeSurface,
@@ -247,6 +255,7 @@ export type EachHomeResolvesToItsOwnSurface = Assert<
       WebGraphicsTypeSurface,
       WebExecutionTypeSurface,
       WebIslandTypeSurface,
+      WebCaptureTypeSurface,
     ]
   >
 >;
@@ -286,6 +295,7 @@ export type TheOfferPopulationIsExact = Assert<
     | 'executionHost'
     | 'preparation'
     | 'islandActivation'
+    | 'captureAuthority'
   >
 >;
 

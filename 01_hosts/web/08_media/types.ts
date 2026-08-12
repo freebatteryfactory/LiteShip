@@ -20,6 +20,7 @@
  */
 
 import type {
+  Algebra,
   Assert,
   Brand,
   CaseOf,
@@ -29,12 +30,29 @@ import type {
   NonEmptyTuple,
   OutputOf,
   Reference,
+  Result,
   Signature,
   TagOf,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { MonotonicNanoseconds, SampleIndex } from '../../../00_core/04_time/types.js';
-import type { SampleRate } from '../../../00_core/12_media/types.js';
+import type { ReproducibilityClaim } from '../../../00_core/06_evidence/types.js';
+import type {
+  ContainerProfileId,
+  ContainerProfileReference,
+  DecodeProfileId,
+  DecodeProfileReference,
+  EncodeProfileId,
+  EncodeProfileReference,
+  MediaArtifact,
+  MediaAssetId,
+  MediaAssetReference,
+  MediaPacket,
+  MediaTrackConfiguration,
+  PhysicalFrame,
+  SampleRate,
+} from '../../../00_core/12_media/types.js';
 import type {
   GroundingId,
   RealizationLifecycle,
@@ -158,6 +176,124 @@ export interface MediaConstructionAuthority {
   >;
   readonly adopt: Signature<WebMediaResource, WebMediaResource, NonEmptyTuple<Diagnostic>>;
 }
+
+// ---------------------------------------------------------------------------
+// Codec admission, decode, encode, and mux
+// ---------------------------------------------------------------------------
+
+/**
+ * Whether this browser admits one exact codec configuration.
+ *
+ * An unsupported configuration is an explicit refusal carrying diagnostics, not
+ * an absent provider. The difference matters at runtime: "this browser will not
+ * encode AV1 at this profile" and "no encoder was wired up" have different
+ * remediations, and a missing provider cannot tell you which one happened.
+ */
+export type CodecSupport = Algebra<{
+  supported: {
+    readonly configuration: ContentAddress<'application/vnd.liteship.web-codec-configuration+cbor'>;
+  };
+  unsupported: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
+}>;
+
+/** The browser's physical media payload — pixels or samples, addressed. */
+export interface WebMediaPayload {
+  readonly bytes: ContentAddress;
+}
+
+/**
+ * The browser decoder: a real operation over an exact profile.
+ *
+ * Constructing a resource whose kind happens to be `codec` is acquisition, not
+ * decoding. A provider that only constructs can hold a decoder forever and
+ * never be asked to decode anything, which is the state this home shipped in.
+ */
+export interface WebDecoderAuthority {
+  readonly admit: Signature<DecodeProfileReference, CodecSupport, NonEmptyTuple<Diagnostic>>;
+  readonly decode: <Profile extends DecodeProfileId>(
+    request: WebDecodeRequest<Profile>,
+  ) => Result<WebDecodeProduct<Profile>, NonEmptyTuple<Diagnostic>>;
+}
+
+export interface WebDecodeRequest<Profile extends DecodeProfileId = DecodeProfileId> {
+  readonly profile: DecodeProfileReference<Profile>;
+  readonly source: ContentAddress;
+}
+
+export interface WebDecodeProduct<Profile extends DecodeProfileId = DecodeProfileId> {
+  readonly profile: DecodeProfileReference<Profile>;
+  readonly frames: readonly PhysicalFrame<WebMediaPayload>[];
+  readonly reproducibility: ReproducibilityClaim<DecodeProfileReference<Profile>>;
+}
+
+/**
+ * Encoding real frames in the browser.
+ *
+ * The frame population is generic so the frames a graphics readback produced
+ * can enter without erasure. This home sits above `09_graphics` in the
+ * waterfall and cannot name its payload type; the composition point imports
+ * both and proves the join, exactly as the target layer does.
+ */
+export interface WebEncodeRequest<
+  Profile extends EncodeProfileId = EncodeProfileId,
+  Frame extends PhysicalFrame = PhysicalFrame,
+> {
+  readonly profile: EncodeProfileReference<Profile>;
+  readonly tracks: MediaTrackConfiguration;
+  readonly frames: NonEmptyTuple<Frame>;
+}
+
+export interface WebEncodeProduct<
+  Profile extends EncodeProfileId = EncodeProfileId,
+  Frame extends PhysicalFrame = PhysicalFrame,
+> {
+  readonly profile: EncodeProfileReference<Profile>;
+  readonly frames: NonEmptyTuple<Frame>;
+  readonly packets: NonEmptyTuple<MediaPacket<Profile>>;
+  readonly reproducibility: ReproducibilityClaim<EncodeProfileReference<Profile>>;
+  readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
+}
+
+export interface WebEncoderAuthority {
+  readonly admit: Signature<EncodeProfileReference, CodecSupport, NonEmptyTuple<Diagnostic>>;
+  readonly encode: <Profile extends EncodeProfileId, Frame extends PhysicalFrame>(
+    request: WebEncodeRequest<Profile, Frame>,
+  ) => Result<WebEncodeProduct<Profile, Frame>, NonEmptyTuple<Diagnostic>>;
+}
+
+/** Finalizing packets into an addressed artifact in the browser. */
+export interface WebMuxRequest<
+  Profile extends EncodeProfileId = EncodeProfileId,
+  Container extends ContainerProfileId = ContainerProfileId,
+  Asset extends MediaAssetId = MediaAssetId,
+> {
+  readonly asset: MediaAssetReference<Asset>;
+  readonly container: ContainerProfileReference<Container>;
+  readonly packets: NonEmptyTuple<MediaPacket<Profile>>;
+}
+
+export interface WebMuxProduct<
+  Container extends ContainerProfileId = ContainerProfileId,
+  Asset extends MediaAssetId = MediaAssetId,
+> {
+  readonly artifact: MediaArtifact<Asset, Container>;
+  readonly reproducibility: ReproducibilityClaim<ContainerProfileReference<Container>>;
+  readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
+}
+
+export interface WebMuxAuthority {
+  readonly finalize: <
+    Profile extends EncodeProfileId,
+    Container extends ContainerProfileId,
+    Asset extends MediaAssetId,
+  >(
+    request: WebMuxRequest<Profile, Container, Asset>,
+  ) => Result<WebMuxProduct<Container, Asset>, NonEmptyTuple<Diagnostic>>;
+}
+
+export type WebDecoderRequirement = Hole<'liteship.web.decoder', WebDecoderAuthority>;
+export type WebEncoderRequirement = Hole<'liteship.web.encoder', WebEncoderAuthority>;
+export type WebMuxRequirement = Hole<'liteship.web.mux', WebMuxAuthority>;
 
 export type AudioFacilityRequirement = Hole<'liteship.web.audio-facility', AudioFacility>;
 export type AudioRuntimeRequirement = Hole<'liteship.web.audio-runtime', AudioRuntimeAuthority>;
@@ -319,8 +455,105 @@ export type OnlyTheAudioRuntimeSuppliesTheClock = Assert<
 >;
 
 /** Type summary consumed by the web topology. */
+type WebMediaLawEncodeA = EncodeProfileId<'liteship.web.media.law.encode-a'>;
+type WebMediaLawEncodeB = EncodeProfileId<'liteship.web.media.law.encode-b'>;
+
+/**
+ * Compile-time law: decode and encode are operations, not resource kinds.
+ *
+ * Holding a `codec` resource is not decoding, and the predecessor state of this
+ * home was exactly that: a construction authority over a kind string, with no
+ * operation anywhere that could be asked to produce a frame or a packet.
+ */
+export type DecodeAndEncodeAreOperationsNotResourceKinds = Assert<
+  Equal<
+    [
+      'decode' extends keyof WebDecoderAuthority ? true : false,
+      'encode' extends keyof WebEncoderAuthority ? true : false,
+      'finalize' extends keyof WebMuxAuthority ? true : false,
+      'decode' extends keyof MediaConstructionAuthority ? true : false,
+      'encode' extends keyof MediaConstructionAuthority ? true : false,
+    ],
+    [true, true, true, false, false]
+  >
+>;
+
+/**
+ * Compile-time law: an unsupported configuration is a refusal that says why.
+ *
+ * The unsupported arm cannot be silent, and support cannot be inferred from a
+ * provider merely existing.
+ */
+export type UnsupportedConfigurationIsARefusalNotAnAbsence = Assert<
+  Equal<
+    [
+      TagOf<CodecSupport>,
+      CaseOf<CodecSupport, 'unsupported'>['diagnostics'] extends NonEmptyTuple<Diagnostic>
+        ? true
+        : false,
+      readonly Diagnostic[] extends CaseOf<CodecSupport, 'unsupported'>['diagnostics'] ? true : false,
+    ],
+    ['supported' | 'unsupported', true, false]
+  >
+>;
+
+/**
+ * Compile-time law: an encode consumes a non-empty frame population, and its
+ * packets stay exact over the profile that produced them.
+ *
+ * Zero frames becoming a successful video is the failure this refuses, and it
+ * is one type-argument change away at all times.
+ */
+export type AnEncodeConsumesFramesAndKeepsItsProfile = Assert<
+  Equal<
+    [
+      WebEncodeRequest<WebMediaLawEncodeA>['frames'] extends NonEmptyTuple<PhysicalFrame>
+        ? true
+        : false,
+      readonly PhysicalFrame[] extends WebEncodeRequest<WebMediaLawEncodeA>['frames'] ? true : false,
+      WebEncodeProduct<WebMediaLawEncodeA>['packets'] extends NonEmptyTuple<
+        MediaPacket<WebMediaLawEncodeA>
+      >
+        ? true
+        : false,
+      WebEncodeProduct<WebMediaLawEncodeB> extends WebEncodeProduct<WebMediaLawEncodeA> ? true : false,
+    ],
+    [true, false, true, false]
+  >
+>;
+
+/**
+ * Compile-time law: the browser's reproducibility claim is the full three-arm
+ * grammar, so `unclaimed` remains available as the honest default.
+ *
+ * WebCodecs may ignore hardware and software hints for any reason, so a generic
+ * browser provider has nothing to claim. That is different from having measured
+ * variation, and collapsing the two would turn absent evidence into a finding.
+ */
+export type TheBrowserDefaultIsUnclaimedNotVariable = Assert<
+  Equal<
+    TagOf<WebEncodeProduct<WebMediaLawEncodeA>['reproducibility']>,
+    'unclaimed' | 'reproducible-under-profile' | 'observed-variable'
+  >
+>;
+
+/** Compile-time law: encoder and muxer products are owned and disposable. */
+export type CodecAndMuxerProductsAreOwned = Assert<
+  Equal<
+    [
+      WebEncodeProduct<WebMediaLawEncodeA>['lifecycle'],
+      WebMuxProduct['lifecycle'],
+    ],
+    [CaseOf<RealizationLifecycle, 'owned'>, CaseOf<RealizationLifecycle, 'owned'>]
+  >
+>;
+
 export interface WebMediaTypeSurface {
   readonly resource: WebMediaResource;
+  readonly decoder: WebDecoderAuthority;
+  readonly encoder: WebEncoderAuthority;
+  readonly mux: WebMuxAuthority;
+  readonly codecSupport: CodecSupport;
   readonly clock: SampleClockTransport;
   readonly instance: AudioRuntimeInstance;
   readonly audioRuntime: AudioRuntimeAuthority;

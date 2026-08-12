@@ -14,6 +14,8 @@ Own physical canvas, WebGL, and WebGPU: context and device acquisition, loss, re
 
 ## Owns
 
+- Frame readback: the physical frame realizing one exact semantic frame under one exact raster profile.
+- Raster profile identity and its reproducibility claim.
 - Graphics resource identity, the closed context-kind set, and owned lifetime.
 - Context and device loss as typed evidence.
 
@@ -28,6 +30,11 @@ The GPU capability probe is web evidence. The access facility is an intrinsic gr
 
 ## Laws
 
+- A rasterized frame names the exact semantic frame it realizes. This is the law that makes live presentation and export the same evaluation — without it the two paths agree only by whatever the renderer happened to do.
+- Either cut form may be rasterized. The editor must be able to draw a counterfactual without committing it; refusing draft-derived output at a production slot is publication authority, not rasterization physics.
+- Readback decides nothing about codecs, containers, or bitrates. A capture that chose them would have become an encoder wearing this home's name.
+- A raster profile is more than a context kind. `webgpu` says which API drew the frame and nothing about the font stack, colour space, device pixel ratio, or adapter that determined its bytes.
+- The provider carries readback beside egress. Applying output and reading it back are opposite directions across one boundary, and a provider holding only the first can present forever and export nothing.
 - Loss carries evidence and never a fabricated failure.
 - The physical context set is closed and declared.
 - The plan selects one graphics provider: it acquires repeatable resources against real physical targets, adopts injected precreated resources into the same lawful egress path, and carries the egress that applies committed outputs — a device without its egress is furniture.
@@ -56,6 +63,10 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - readback-names-its-semantic-frame
+  - draft-cuts-are-rasterizable
+  - a-context-kind-is-not-a-raster-profile
+  - readback-carries-no-codec-decision
   - probe-is-evidence-device-is-an-offer
   - loss-is-evidence-never-fabricated-failure
   - closed-context-kind-set

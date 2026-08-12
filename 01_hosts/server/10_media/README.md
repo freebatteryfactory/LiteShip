@@ -14,6 +14,8 @@ Own server-physical media resources: native decode, analysis, render, and encode
 
 ## Owns
 
+- Four distinct relationships: decode, render, encode, and mux.
+- Media packet streams bound to the exact job and encode profile that produced them.
 - The media job: bound to the exact source revision it renders — the job cannot forget which authored content it rendered — with core's sample position, the exact core `MediaFrame` contract being rendered, its exact named tool, the exact physical input stream and output destination it depends on (both root-correlated filesystem resources), determinism evidence (a witness address, or an explicit refusal to claim it), a job-exact bounded output stream, an output address, job-exact cancellation, and an owned lifecycle.
 - The complete job request: caller-carried job identity, source, position, the core frame contract, tool, physical input stream, and output destination together; no naked render and no output whose physical inputs were never named.
 - The threaded ancestry: rendering is correlated through the provider's generic operation — the job the public path returns speaks exactly the contract, tool, roots, and identity the request named, and the exact `FileStream` the filesystem provider returns enters the request without erasure or a cast. The upstream waterfall arrow composes; meaningful pixels and byte fidelity stay implementation assurance.
@@ -28,6 +30,12 @@ The reset's canonical failure was a scene render whose output was a flat color f
 
 ## Laws
 
+- A render job carries an actual non-empty frame population. A schema describing a frame is satisfied by a job that never received one, which is how a renderer emits a valid file containing none of the authored work.
+- Packets are media packets. Network framing cannot satisfy the stream, and the comparison is structural because the two are both bytes with metadata and only their members keep them apart.
+- A packet stream is exact over both its job and its profile, so packets encoded under one profile cannot be reported under another.
+- The mux stage owns the artifact claim, over the container rather than the encoder. Two runs may emit identical packets and different container bytes.
+- The media job carries the exact tool profile, not a bare tool reference.
+- Decode, render, encode, and mux are four operations and do not collapse into one uninspectable call.
 - A job binds its exact source revision, contract, tool, input, destination, and identity, and speaks the core coordinate — a job of another contract or identity is not this job.
 - Rendering threads the request ancestry through the provider's generic operation, and the output stream is job-exact.
 - The sample position is core's coordinate — index at a rate.
@@ -50,6 +58,10 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - four-relationships-not-one-render
+  - frames-not-a-schema-describing-frames
+  - media-packets-are-not-network-chunks
+  - the-container-owns-the-artifact-claim
   - jobs-bind-their-source-revision
   - render-threads-request-ancestry
   - exact-filesystem-streams-compose-without-erasure

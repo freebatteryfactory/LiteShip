@@ -14,6 +14,9 @@ Define target-neutral scene meaning, typed coordinate spaces, ordered transforms
 
 ## Owns
 
+- Projection fidelity: how faithfully one subject reaches one egress, and the tolerance profile bounding an approximation.
+- Material projection capability, declared beside geometry's.
+- Authored temporal meaning: timeline markers and authored control envelopes.
 - Scene, entity, geometry, material, timeline, key, point, and subscene identity.
 - Coordinate-space definitions and typed points, vectors, and transforms.
 - Exact or tolerant spatial projections.
@@ -96,6 +99,13 @@ A subscene is an addressed semantic world instance with local coordinates, local
 
 ## Laws
 
+- Fidelity is a four-arm algebra. The predecessor shape — a boolean beside two optionals — admitted eight combinations, two of them meaningless: an exact projection carrying an error bound, and an inexact one carrying neither a bound nor an alternative.
+- An approximate projection names an addressed tolerance profile, never a bare number. `0.01` cannot say whether it means pixels, normalized distance, channel error, or timing drift.
+- An unsupported projection carries a non-empty diagnostic population and a remediation. Silence is the failure mode this declaration exists to rule out.
+- Geometry and material both declare support, through one shared vocabulary. An opaque shader defeats an otherwise projectable geometry, and the geometry has no way to know.
+- A scene entity declares no egress roster of its own. The compiler derives what a composition reaches; an entity that could declare its own support would let a composition claim an egress neither of its parts can reach.
+- Authored markers and envelopes belong here; observed beats, onsets, and peaks belong to `12_media` with the asset coordinate that produced them. An authored cue must survive its source file being replaced.
+- An envelope names an interpolator from `09_quantization` rather than describing a curve shape, so no home grows a private easing vocabulary.
 - Scene meaning is renderer-neutral.
 - Coordinate conversion is explicit, typed, and exact or tolerance-labelled.
 - Transform order is semantic and cannot be reordered silently.
@@ -150,6 +160,11 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - fidelity-is-an-algebra-not-a-boolean
+  - tolerance-is-an-addressed-profile-not-a-number
+  - geometry-and-material-declare-the-compiler-derives
+  - entities-declare-no-egress-roster
+  - authored-markers-here-observed-analysis-in-media
   - renderer-neutral-scene-meaning
   - dedicated-typed-spatial-coordinate-algebra
   - explicit-exact-or-tolerant-space-projection
