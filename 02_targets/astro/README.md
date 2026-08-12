@@ -60,7 +60,7 @@ Whether any supplier actually converges is not a question this child may answer 
 
 ## Proof obligations
 
-Deferred to assurance and implementation, named here so they are not mistaken for compile-time claims:
+These are runtime claims, not unfinished work. A type cannot express any of them, so they are named here to mark the boundary of what compiling proves:
 
 - That a registered integration observes the ecosystem version its compatibility evidence claims.
 - That no secret-classified configuration field reaches browser-visible output.

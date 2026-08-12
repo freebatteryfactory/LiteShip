@@ -102,17 +102,12 @@ That test now runs. `02_targets/cloudflare/03_deployment` is the first consumer 
 
 ## Proof obligations
 
-Deferred to system assurance and implementation, named here so they are not mistaken for compile-time claims:
+These are runtime claims, not unfinished work. A type cannot express any of them, so they are named here to mark the boundary of what compiling proves:
 
 - That a runtime producer actually wrote the bytes the artifact addresses.
 - That two producers never race for one artifact slot in a live composition.
 - That target facts reach the rendered explanation intact.
 - That an artifact whose ancestry could not be resolved is distinguishable at runtime from one that legitimately resolved to nothing.
-
-## Open before children are authored
-
-- The minimum shared deployment contract, deferred until Cloudflare's denominator earns its representation. Whether it is one artifact, a non-empty set, an entry plus assets, or a manifest with references is not yet decided, and naming it now would pre-decide both.
-- Every promised cross-target join needs an assurance fixture over the real public surfaces before target closure — a requirement and a facility authored independently converge by luck until something proves otherwise.
 
 ```yaml
 home:
