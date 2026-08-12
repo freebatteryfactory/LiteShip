@@ -72,19 +72,19 @@ const TSCONFIG = JSON.parse(readFileSync(join(VERIFICATION, 'tsconfig.base.json'
  * `laws: false` reproduces the governed lane -- the declaration surface a
  * consumer would receive, with the compile-time assurance fixtures excluded.
  */
-export function stageWork(label, { laws = true, alsoInclude = [] } = {}) {
+export function stageWork(label, { laws = true, alsoInclude = [], root = REPO } = {}) {
   const work = mkdtempSync(join(os.tmpdir(), `liteship-${label}-`));
-  for (const r of presentRoots()) cpSync(join(REPO, r), join(work, r), { recursive: true });
-  cpSync(join(REPO, ROOT_GRAMMAR), join(work, ROOT_GRAMMAR));
-  if (laws) cpSync(join(REPO, ROOT_LAWS), join(work, ROOT_LAWS));
+  for (const r of presentRoots(root)) cpSync(join(root, r), join(work, r), { recursive: true });
+  cpSync(join(root, ROOT_GRAMMAR), join(work, ROOT_GRAMMAR));
+  if (laws && existsSync(join(root, ROOT_LAWS))) cpSync(join(root, ROOT_LAWS), join(work, ROOT_LAWS));
 
   // `alsoInclude` exists because a file dropped into the work root is NOT
   // compiled unless the config reaches it. A probe outside the include set
   // yields a clean exit that reads exactly like a passing lane.
   const include = [
     ROOT_GRAMMAR,
-    ...(laws ? [ROOT_LAWS] : []),
-    ...presentRoots().map((r) => `${r}/**/*.ts`),
+    ...(laws && existsSync(join(root, ROOT_LAWS)) ? [ROOT_LAWS] : []),
+    ...presentRoots(root).map((r) => `${r}/**/*.ts`),
     ...alsoInclude,
   ];
   writeFileSync(
@@ -133,11 +133,11 @@ export function lawNameAt(work, file, line) {
  * the bank telling you it has drifted off the source, which must never be
  * mistaken for a passing count.
  */
-export function runBank(name, mutations, { laws = true } = {}) {
+export function runBank(name, mutations, { laws = true, root = REPO } = {}) {
   // A broken baseline makes every mutation look caught, because every staged
   // compile fails for a reason that has nothing to do with the mutation. The
   // bank would report a perfect score against a tree that does not compile.
-  const baseline = stageWork(`${name}-baseline`, { laws });
+  const baseline = stageWork(`${name}-baseline`, { laws, root });
   const unmutated = runTsc(baseline);
   discard(baseline);
   if (!unmutated.ok) {
@@ -148,7 +148,7 @@ export function runBank(name, mutations, { laws = true } = {}) {
 
   const rows = [];
   for (const [label, file, from, to] of mutations) {
-    const work = stageWork(name, { laws });
+    const work = stageWork(name, { laws, root });
     const target = join(work, file);
     const src = readFileSync(target, 'utf8');
     const hits = src.split(from).length - 1;

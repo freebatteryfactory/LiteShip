@@ -22,7 +22,7 @@ Core answers what a program means. Hosts answer how unresolved physical behaviou
 - Target attempt identity and reference — the pre-selection coordinate, so a refusal need not borrow the identity of a composition it never became.
 - Slot claims, the pre-selection mirror of producers.
 - Artifact slot identity — what a composition requires something to fill.
-- The participation relation binding one target, one exact configuration revision, and one composition.
+- The participation relation binding one target to one exact configuration revision.
 - The production relation over core's exact `Artifact`.
 - The producer choice, including the arm where no ecosystem target was involved at all.
 - The altitude distinction between rejection and failure.
@@ -58,7 +58,7 @@ A child names what it needs in upstream vocabulary and exposes what it offers in
 
 ## Direct mode is an acceptance test, not a feature
 
-A consumer of a produced artifact must not be able to ask which framework produced it. `ArtifactProducer` therefore carries a `direct-composition` arm with no target reference at all, and `DirectProductionNeedsNoEcosystemTarget` pins its absence.
+A consumer of a produced artifact must not be able to ask which framework produced it. `ArtifactProducer` therefore carries an empty `direct-composition` arm — no target, no participation, no configuration, and no composition of its own — and `DirectProductionNeedsNoTargetContext` pins every one of those absences.
 
 The test the architecture must keep passing: a composition of hosts alone can produce what a framework-produced artifact would, and the consuming path does not branch. If anything resembling `withoutAstro`, `astro?: boolean`, or a separate direct route appears, the contract is in the wrong place.
 
@@ -77,7 +77,7 @@ The test the architecture must keep passing: a composition of hosts alone can pr
 - A produced artifact pins the exact slot it fills.
 - Target production reuses participation rather than restating its parts.
 - Production is expressible with no ecosystem target **and no target configuration**. The configuration absence matters as much as the target absence: a direct production required to name an ecosystem configuration is an ecosystem-shaped path wearing a different label.
-- An ambiguous-slot rejection can name every lawful producer kind, so a direct producer is describable in the conflict it participates in.
+- An ambiguous-slot rejection names every lawful *claimant* kind, so a direct candidate is describable in the conflict it took part in.
 - Failure names the participant and stops; the composition belongs to the outcome carrying it.
 - The umbrella carries no per-target member and no lifecycle phase. `payload`, `context`, and `hooks` are checked by name, because a junk drawer does not become constitutional by removing Astro from its label.
 - Rejection and failure stay distinct, and neither carries production.

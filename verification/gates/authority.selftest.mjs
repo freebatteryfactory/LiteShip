@@ -32,7 +32,8 @@ const LAWFUL = {
   // One owner, imported downstream.
   '00_core/14_compiler/types.ts': `export type SourceRelation = { readonly source: string };\n`,
   '00_core/15_program/types.ts':
-    `import type { SourceRelation } from '../14_compiler/types.js';\nexport type ResidualProgram = { readonly relation: SourceRelation };\n`,
+    `import type { SourceRelation } from '../14_compiler/types.js';\n` +
+    `export interface ResidualProgram {\n  readonly relation: SourceRelation;\n}\n`,
 };
 
 const FORBIDDEN = [
@@ -48,6 +49,26 @@ const FORBIDDEN = [
     '00_core/14_compiler/types.ts': `export type SourceRelation = { readonly source: string };\n`,
     '00_core/15_program/types.ts':
       `export type ResidualProgram = { readonly relation: { readonly source: string } };\n`,
+  }],
+  ['an import of the same name from the wrong owner', /imports 'SourceRelation' from 02_targets\/types.ts/, {
+    ...GRAMMAR,
+    '00_core/14_compiler/types.ts': `export type SourceRelation = { readonly source: string };\n`,
+    // Every governed file is called types.ts, so a filename comparison accepts
+    // this import happily.
+    '02_targets/types.ts': `export type Unrelated = string;\n`,
+    '00_core/15_program/types.ts':
+      `import type { SourceRelation } from '../../02_targets/types.js';\nexport type ResidualProgram = { readonly relation: SourceRelation };\n`,
+  }],
+  ['a lawful import kept while the member goes inline', /does not use it at the governed relationship/, {
+    ...GRAMMAR,
+    '00_core/14_compiler/types.ts': `export type SourceRelation = { readonly source: string };\n`,
+    // The import is real and the law below still references it, so both the
+    // name rule and the import rule are satisfied while the member that
+    // actually carries the contract has become a structural twin.
+    '00_core/15_program/types.ts':
+      `import type { SourceRelation } from '../14_compiler/types.js';\n` +
+      `export type ResidualProgram = { readonly relation: { readonly source: string } };\n` +
+      `export type ItIsStillReferenced = SourceRelation;\n`,
   }],
   ['a structurally identical exported twin', /'SourceRelation' is declared in 2 homes/, {
     ...GRAMMAR,

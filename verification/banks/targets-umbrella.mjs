@@ -220,6 +220,46 @@ ${line}
   ['a composed outcome admits no participants', T,
     `    readonly participants: NonEmptyTuple<TargetParticipation>;`,
     `    readonly participants: readonly TargetParticipation[];`],
+
+  // --- exactness promises that were previously undefended -----------------
+  ['the attempt reference alias stops reading its parameter', T,
+    `export type TargetAttemptReference<Id extends TargetAttemptId = TargetAttemptId> = Reference<
+  'target-attempt',
+  Id
+>;`,
+    `export type TargetAttemptReference<Id extends TargetAttemptId = TargetAttemptId> = Reference<
+  'target-attempt',
+  TargetAttemptId
+>;`],
+
+  ['the refused attempt widens on the public path', T,
+    `    readonly attempt: TargetAttemptReference<Attempt>;`,
+    `    readonly attempt: TargetAttemptReference;`],
+
+  ['the slot reference alias stops reading its parameter', T,
+    `export type ArtifactSlotReference<Id extends ArtifactSlotId = ArtifactSlotId> = Reference<
+  'artifact-slot',
+  Id
+>;`,
+    `export type ArtifactSlotReference<Id extends ArtifactSlotId = ArtifactSlotId> = Reference<
+  'artifact-slot',
+  ArtifactSlotId
+>;`],
+
+  ['an ecosystem claim broadens its participation', T,
+    `  'ecosystem-target-claim': { readonly participation: TargetParticipation<Target, Config, Revision> };`,
+    `  'ecosystem-target-claim': { readonly participation: TargetParticipation };`],
+
+  // --- reachability --------------------------------------------------------
+  ['the surface stops reaching the attempt', T,
+    `  readonly attempt: TargetAttemptReference;
+  readonly slot: ArtifactSlotReference;`,
+    `  readonly slot: ArtifactSlotReference;`],
+
+  ['the surface stops reaching the slot claim', T,
+    `  readonly claim: SlotClaim;
+`,
+    ``],
 ];
 
 process.exit(runBank('targets-umbrella', M).clean ? 0 : 1);

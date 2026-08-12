@@ -12,8 +12,9 @@
  * grammar, and the source relation already exist in `00_core`; restating any of
  * them here would give the architecture two artifact realities that agree by
  * coincidence. What is missing upstream, and therefore owned here, is the
- * relation: which ecosystem target produced an artifact, under which
- * configuration revision, inside which composition.
+ * relation: which ecosystem target produced an artifact, and under which
+ * configuration revision. The composition it happened inside is owned by the
+ * outcome that reports it, once, and by nothing else.
  *
  * Target children do not import one another. Astro genuinely uses Vite and
  * genuinely deploys through Cloudflare, so the exclusion is not the host
@@ -187,9 +188,9 @@ export interface TargetParticipation<
  * expressible.
  *
  * The target arm carries a whole `TargetParticipation` rather than a bare target
- * reference. Participation already owns the target, its exact configuration
- * revision, and the composition; restating any of those beside it would create
- * a second copy of a fact that has an owner. The direct arm carries neither a
+ * reference. Participation already owns the target and its exact configuration
+ * revision; restating either beside it would create a second copy of a fact
+ * that has an owner. Neither arm names a composition -- the outcome owns that. The direct arm carries neither a
  * target nor a target configuration, because a production with no ecosystem
  * target has no ecosystem configuration to have been produced under. Requiring
  * one would remove the framework from the room and leave its clipboard on the
@@ -223,8 +224,8 @@ export type ArtifactProducer<
  * it.
  *
  * It binds; it does not restate. Address, digest, media type, source revision,
- * and the source relation live on the artifact. Configuration and composition
- * live on the producer. Nothing here is a second copy of a fact that already has
+ * and the source relation live on the artifact. Configuration lives on the
+ * producer, and composition on the outcome. Nothing here is a second copy of a fact that already has
  * an owner, so there is no parity law to write and nothing to drift.
  */
 export interface ProducedArtifact<
@@ -376,6 +377,9 @@ type ConfigLawB = TargetConfigurationId<'law.config.b'>;
 type CompositionLawA = TargetCompositionId<'law.composition.a'>;
 type CompositionLawB = TargetCompositionId<'law.composition.b'>;
 type SlotLawA = ArtifactSlotId<'law.slot.a'>;
+type SlotLawB = ArtifactSlotId<'law.slot.b'>;
+type AttemptLawA = TargetAttemptId<'law.attempt.a'>;
+type AttemptLawB = TargetAttemptId<'law.attempt.b'>;
 type RevisionLawA = Address<
   'liteship.content:application/vnd.liteship.revision+cbor',
   'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
@@ -410,7 +414,7 @@ export type AnEcosystemTargetIsNotAProjectionTarget = Assert<
 
 /**
  * Compile-time law: participation binds an exact target, configuration
- * identity, configuration revision, and composition.
+ * identity, and configuration revision.
  *
  * The revision is checked, not merely parameterised. A generic that no law
  * reads is a generic that can be deleted without anything turning red.
@@ -479,6 +483,68 @@ export type AClaimIsNotAProducer = Assert<
   Equal<
     [SlotClaim extends ArtifactProducer ? true : false, ArtifactProducer extends SlotClaim ? true : false],
     [false, false]
+  >
+>;
+
+/**
+ * Compile-time law: an attempt reference is exact over the attempt it names.
+ *
+ * Compared against the literal reference form. Comparing the alias to itself
+ * passes when the alias stops reading its parameter, which is exactly how two
+ * distinct attempts become one.
+ */
+export type AnAttemptReferenceIsExactOverItsAttempt = Assert<
+  Equal<
+    [
+      TargetAttemptReference<AttemptLawA>,
+      TargetAttemptReference<AttemptLawA> extends TargetAttemptReference<AttemptLawB> ? true : false,
+    ],
+    [Reference<'target-attempt', AttemptLawA>, false]
+  >
+>;
+
+/** Compile-time law: the exact attempt survives the public refused path. */
+export type ARefusedOutcomePinsItsExactAttempt = Assert<
+  Equal<
+    CaseOf<TargetCompositionOutcome<TargetCompositionId, AttemptLawA>, 'refused'>['attempt'],
+    TargetAttemptReference<AttemptLawA>
+  >
+>;
+
+/**
+ * Compile-time law: a slot reference is exact over the slot it names.
+ *
+ * Also compared against the literal form. The production law reads the alias on
+ * both sides, so if the alias began ignoring its parameter both sides would
+ * broaden together and stay green while slot A became slot B.
+ */
+export type AnArtifactSlotReferenceIsExactOverItsSlot = Assert<
+  Equal<
+    [
+      ArtifactSlotReference<SlotLawA>,
+      ArtifactSlotReference<SlotLawA> extends ArtifactSlotReference<SlotLawB> ? true : false,
+    ],
+    [Reference<'artifact-slot', SlotLawA>, false]
+  >
+>;
+
+/**
+ * Compile-time law: an ecosystem claim carries the exact participation that
+ * made it, and two claims are not interchangeable.
+ *
+ * The pre-selection half of the proof already applied to production. Without
+ * it the claim's generics are decorative and a rejection could name a
+ * participation that never claimed anything.
+ */
+export type AnEcosystemClaimReusesExactParticipation = Assert<
+  Equal<
+    [
+      CaseOf<SlotClaim<TargetLawAstro, ConfigLawA, RevisionLawA>, 'ecosystem-target-claim'>['participation'],
+      SlotClaim<TargetLawAstro, ConfigLawA, RevisionLawA> extends SlotClaim<TargetLawVite, ConfigLawA, RevisionLawA>
+        ? true
+        : false,
+    ],
+    [LawParticipation, false]
   >
 >;
 
@@ -686,7 +752,9 @@ export interface TargetTypeSurface {
   readonly target: EcosystemTargetReference;
   readonly configuration: TargetConfigurationRevision;
   readonly composition: TargetCompositionReference;
+  readonly attempt: TargetAttemptReference;
   readonly slot: ArtifactSlotReference;
+  readonly claim: SlotClaim;
   readonly participation: TargetParticipation;
   readonly produced: ProducedArtifact;
   readonly producer: ArtifactProducer;
@@ -694,3 +762,17 @@ export interface TargetTypeSurface {
   readonly failure: TargetFailure;
   readonly outcome: TargetCompositionOutcome;
 }
+
+/**
+ * Compile-time law: every family this home owns is reachable from its surface.
+ *
+ * A declaration the topology summary does not name is correct and unreached,
+ * which the completion standard treats as incomplete. Attempt and claim were
+ * both stranded this way when they were introduced.
+ */
+export type TheSurfaceReachesEveryOwnedFamily = Assert<
+  Equal<
+    [TargetTypeSurface['attempt'], TargetTypeSurface['claim']],
+    [TargetAttemptReference, SlotClaim]
+  >
+>;

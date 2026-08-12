@@ -31,8 +31,8 @@
 // assurance. The rules here are narrow and should be described as narrow.
 
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { REPO, governedFiles } from '../harness.mjs';
+import { dirname, join, relative, resolve } from 'node:path';
+import { REPO, governedFiles, posix } from '../harness.mjs';
 
 const TAG = /Brand<[^,>]+,\s*'([^']+)'|Reference<\s*'([^']+)'/g;
 
@@ -63,9 +63,23 @@ const CANONICAL = [
   {
     name: 'SourceRelation',
     owner: '00_core/14_compiler/types.ts',
-    consumers: ['00_core/15_program/types.ts'],
+    // Each consumer must import the authority from the owner AND use it at the
+    // named relationship. Importing alone is not enough: a consumer can keep a
+    // lawful import that its compile-time law still references while writing
+    // the shape inline at the member that matters. TypeScript sees the inline
+    // product as equal, the import looks canonical, and the production contract
+    // has quietly become a twin.
+    consumers: [{ path: '00_core/15_program/types.ts', use: /readonly relation: SourceRelation;/ }],
   },
 ];
+
+/** The specifier a file imports `name` from, or null. */
+function importSpecifier(src, name) {
+  for (const [, names, from] of src.matchAll(/import type \{([^}]*)\} from '([^']+)'/g)) {
+    if (names.split(',').some((n) => n.trim() === name)) return from;
+  }
+  return null;
+}
 
 export function checkAuthority(root = REPO) {
   const violations = [];
@@ -114,21 +128,31 @@ export function checkAuthority(root = REPO) {
       violations.push(`'${name}' is not exported by its owner ${owner}`);
       continue;
     }
-    for (const consumer of consumers.filter((c) => present.has(c))) {
+    for (const { path: consumer, use } of consumers.filter((c) => present.has(c.path))) {
       const src = readFileSync(join(root, consumer), 'utf8');
       // A local declaration of any visibility, exported or not.
       if (new RegExp(`^(?:export )?(?:type|interface) ${name}\\b`, 'm').test(src)) {
         violations.push(`${consumer} declares its own '${name}' instead of importing the one in ${owner}`);
         continue;
       }
-      // The import must name it and must come from the owner. An inline copy of
-      // the shape leaves no import at all, which is what this catches.
-      const imports = [...src.matchAll(/import type \{([^}]*)\} from '([^']+)'/g)].some(
-        ([, names, from]) =>
-          names.split(',').some((n) => n.trim() === name) && owner.endsWith(from.replace(/^.*\//, '').replace(/\.js$/, '.ts')),
+
+      const specifier = importSpecifier(src, name);
+      if (specifier === null) {
+        violations.push(`${consumer} does not import '${name}' at all`);
+        continue;
+      }
+      // Resolve the specifier to a repository path and compare it exactly.
+      // Matching on the trailing filename would accept any file called
+      // `types.js`, which is every governed file in the tree.
+      const resolved = posix(
+        relative(root, resolve(dirname(join(root, consumer)), specifier.replace(/\.js$/, '.ts'))),
       );
-      if (!imports) {
-        violations.push(`${consumer} does not import '${name}' from ${owner}`);
+      if (resolved !== owner) {
+        violations.push(`${consumer} imports '${name}' from ${resolved}, not from its owner ${owner}`);
+        continue;
+      }
+      if (use && !use.test(src)) {
+        violations.push(`${consumer} imports '${name}' but does not use it at the governed relationship`);
       }
     }
   }
