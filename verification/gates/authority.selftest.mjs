@@ -36,6 +36,32 @@ const LAWFUL = {
     `export interface ResidualProgram {\n  readonly relation: SourceRelation;\n}\n`,
 };
 
+/**
+ * Lawful architecture whose comments quote the very things the rules look for.
+ *
+ * Stripping comments has to run in both directions. A gate that stopped reading
+ * prose as code but started reading it as a violation would be no better: this
+ * tree declares one authority, imports it, and uses it at the governed member,
+ * while its comments contain a block-quoted declaration and a brand tag
+ * belonging to another home. Before the strip, the block quote invented a
+ * private twin and the quoted tag claimed a second home for `listener-id`.
+ */
+const LAWFUL_COMMENTED = {
+  ...GRAMMAR,
+  '01_hosts/web/03_event/types.ts':
+    `export type ListenerId<Name extends string = string> = Brand<Name, 'liteship.web.listener-id'>;\n`,
+  '00_core/14_compiler/types.ts': `export type SourceRelation = { readonly source: string };\n`,
+  '00_core/15_program/types.ts':
+    `import type { SourceRelation } from '../14_compiler/types.js';\n` +
+    `/*\n` +
+    `An earlier draft wrote the shape locally:\n` +
+    `export type SourceRelation = { readonly source: string };\n` +
+    `and web's listener brand is Brand<Name, 'liteship.web.listener-id'>.\n` +
+    `Both are described here, and neither is declared here.\n` +
+    `*/\n` +
+    `export interface ResidualProgram {\n  readonly relation: SourceRelation;\n}\n`,
+};
+
 const FORBIDDEN = [
   ['a private local twin the name rule cannot see', /declares its own 'SourceRelation'/, {
     ...GRAMMAR,
@@ -70,6 +96,28 @@ const FORBIDDEN = [
       `export type ResidualProgram = { readonly relation: { readonly source: string } };\n` +
       `export type ItIsStillReferenced = SourceRelation;\n`,
   }],
+  // Comments are prose about the code, never the code. Before the source was
+  // stripped, each of these two passed: the rules matched raw characters, so a
+  // comment quoting the governed relationship answered a question about it.
+  ['a comment decoy standing in for the governed member', /does not use it at the governed relationship/, {
+    ...GRAMMAR,
+    '00_core/14_compiler/types.ts': `export type SourceRelation = { readonly source: string };\n`,
+    // Import lawful, authority referenced, and a comment that quotes the exact
+    // member the rule looks for -- while the member itself is a twin.
+    '00_core/15_program/types.ts':
+      `import type { SourceRelation } from '../14_compiler/types.js';\n` +
+      `/** The residual program: \`readonly relation: SourceRelation;\` */\n` +
+      `export type ResidualProgram = { readonly relation: { readonly source: string } };\n` +
+      `export type ItIsStillReferenced = SourceRelation;\n`,
+  }],
+  ['a commented-out import standing in for a real one', /does not import 'SourceRelation'/, {
+    ...GRAMMAR,
+    '00_core/14_compiler/types.ts': `export type SourceRelation = { readonly source: string };\n`,
+    // The specifier scan read this and resolved it to the correct owner.
+    '00_core/15_program/types.ts':
+      `// import type { SourceRelation } from '../14_compiler/types.js';\n` +
+      `export type ResidualProgram = { readonly relation: { readonly source: string } };\n`,
+  }],
   ['a structurally identical exported twin', /'SourceRelation' is declared in 2 homes/, {
     ...GRAMMAR,
     '00_core/14_compiler/types.ts': `export type SourceRelation = { readonly source: string };\n`,
@@ -97,15 +145,21 @@ const FORBIDDEN = [
 
 let failures = 0;
 
-const lawfulRoot = build(LAWFUL);
-const lawful = checkAuthority(lawfulRoot);
-rmSync(lawfulRoot, { recursive: true, force: true });
-if (lawful.length === 0) {
-  console.log('  [ok] lawful tree passes (realm-scoped brands share a name; one owner is imported)');
-} else {
-  console.log('  [!!] lawful tree REJECTED -- the gate refuses legal architecture');
-  for (const v of lawful) console.log(`       ${v}`);
-  failures++;
+const LAWFUL_CASES = [
+  ['lawful tree passes (realm-scoped brands share a name; one owner is imported)', LAWFUL],
+  ['lawful tree with comments quoting a twin declaration and a foreign tag passes', LAWFUL_COMMENTED],
+];
+
+for (const [label, files] of LAWFUL_CASES) {
+  const root = build(files);
+  const lawful = checkAuthority(root);
+  rmSync(root, { recursive: true, force: true });
+  if (lawful.length === 0) console.log(`  [ok] ${label}`);
+  else {
+    console.log(`  [!!] REJECTED -- ${label}`);
+    for (const v of lawful) console.log(`       ${v}`);
+    failures++;
+  }
 }
 
 for (const [name, expected, files] of FORBIDDEN) {
@@ -120,6 +174,6 @@ for (const [name, expected, files] of FORBIDDEN) {
   }
 }
 
-const total = FORBIDDEN.length + 1;
+const total = FORBIDDEN.length + LAWFUL_CASES.length;
 console.log(`${failures === 0 ? 'PASS' : 'FAIL'} authority self-test: ${total - failures}/${total} fixtures behaved`);
 process.exit(failures === 0 ? 0 : 1);

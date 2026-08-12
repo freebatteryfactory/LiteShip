@@ -7,7 +7,10 @@
 // the two are the same type. Provenance is not a property types can express, so
 // it is checked on the source.
 //
-// Two rules, both fail-closed:
+// Three rules, all fail-closed, and all read stripped source rather than raw
+// text. Each asks whether the code declares, imports, or uses something; raw
+// text answers only whether the characters appear, which prose can satisfy.
+// See `stripComments` for what that cost and why strings are kept.
 //
 //   Distinct tags   -- a brand or reference tag may be declared in one home.
 //                      Two homes sharing one tag are one type wearing two
@@ -28,7 +31,11 @@
 // What this gate does NOT catch: a structurally identical authority copied
 // under a different name. Finding those needs normalised structural comparison
 // across the whole tree, which belongs to the derived authority index in system
-// assurance. The rules here are narrow and should be described as narrow.
+// assurance. Nor does it parse: the pinned TypeScript 7 is the native port and
+// exposes no `createSourceFile` to JavaScript, so the rules are lexical over
+// stripped source. A second TypeScript held only for parsing would read the
+// tree with a different compiler than the one that proves it. The rules here
+// are narrow and should be described as narrow.
 
 import { readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -73,6 +80,75 @@ const CANONICAL = [
   },
 ];
 
+/**
+ * `src` with comment bodies blanked to spaces, newlines and length preserved.
+ *
+ * Every rule below asks whether the *code* declares, imports, or uses
+ * something. Run against raw text they ask a weaker question -- whether the
+ * characters appear anywhere -- and prose answers it. A commented-out
+ * `readonly relation: SourceRelation;` satisfied the use rule while the real
+ * member was an inline twin; a block-commented declaration invented a private
+ * twin that was not there; a doc comment quoting `Brand<Name, 'x'>` claimed a
+ * tag home. A comment must not be able to obtain architectural authority by
+ * quoting the thing it is describing.
+ *
+ * String literals are deliberately kept. Nominal tags and import specifiers are
+ * string literals, and the tag scan and specifier scan read them. Blanking is
+ * length- and line-preserving so `^`-anchored patterns still align.
+ *
+ * The parser is a character state machine rather than a regular expression
+ * because the delimiters nest: `//` inside a string opens no comment, and a
+ * quote inside a comment opens no string.
+ */
+function stripComments(src) {
+  let out = '';
+  for (let i = 0; i < src.length; ) {
+    const c = src[i];
+    const d = src[i + 1];
+    if (c === '/' && d === '/') {
+      while (i < src.length && src[i] !== '\n') {
+        out += ' ';
+        i++;
+      }
+      continue;
+    }
+    if (c === '/' && d === '*') {
+      out += '  ';
+      i += 2;
+      while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) {
+        out += src[i] === '\n' ? '\n' : ' ';
+        i++;
+      }
+      if (i < src.length) {
+        out += '  ';
+        i += 2;
+      }
+      continue;
+    }
+    if (c === "'" || c === '"' || c === '`') {
+      out += c;
+      i++;
+      while (i < src.length) {
+        if (src[i] === '\\') {
+          out += src[i] + (src[i + 1] ?? '');
+          i += 2;
+          continue;
+        }
+        out += src[i];
+        if (src[i] === c) {
+          i++;
+          break;
+        }
+        i++;
+      }
+      continue;
+    }
+    out += c;
+    i++;
+  }
+  return out;
+}
+
 /** The specifier a file imports `name` from, or null. */
 function importSpecifier(src, name) {
   for (const [, names, from] of src.matchAll(/import type \{([^}]*)\} from '([^']+)'/g)) {
@@ -87,7 +163,7 @@ export function checkAuthority(root = REPO) {
   const nameHomes = new Map();
 
   for (const rel of governedFiles(root)) {
-    const lines = readFileSync(join(root, rel), 'utf8').split('\n');
+    const lines = stripComments(readFileSync(join(root, rel), 'utf8')).split('\n');
     for (const m of lines.join('\n').matchAll(/Brand<[^,>]+,\s*'([^']+)'|Reference<\s*'([^']+)'/g)) {
       const tag = m[1] ?? m[2];
       if (!tagHomes.has(tag)) tagHomes.set(tag, new Set());
@@ -129,7 +205,7 @@ export function checkAuthority(root = REPO) {
       continue;
     }
     for (const { path: consumer, use } of consumers.filter((c) => present.has(c.path))) {
-      const src = readFileSync(join(root, consumer), 'utf8');
+      const src = stripComments(readFileSync(join(root, consumer), 'utf8'));
       // A local declaration of any visibility, exported or not.
       if (new RegExp(`^(?:export )?(?:type|interface) ${name}\\b`, 'm').test(src)) {
         violations.push(`${consumer} declares its own '${name}' instead of importing the one in ${owner}`);

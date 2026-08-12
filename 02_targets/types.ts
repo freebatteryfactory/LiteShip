@@ -642,7 +642,7 @@ export type AProducedArtifactRestatesNothing = Assert<
       'source' extends keyof ProducedArtifact ? true : false,
       'relation' extends keyof ProducedArtifact ? true : false,
       'sourceMap' extends keyof ProducedArtifact ? true : false,
-      // configuration and composition belong to the producer
+      // configuration belongs to the producer; composition belongs to the outcome
       'configuration' extends keyof ProducedArtifact ? true : false,
       'composition' extends keyof ProducedArtifact ? true : false,
     ],

@@ -1,6 +1,6 @@
 # Targets: Ecosystem Integration Surfaces
 
-Status: umbrella specified; children not authored; implementation absent
+Status: umbrella sealed at tag `targets-umbrella-seal`; children not authored; implementation absent
 
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
@@ -101,7 +101,7 @@ Deferred to system assurance and implementation, named here so they are not mist
 home:
   path: 02_targets
   title: "Targets: Ecosystem Integration Surfaces"
-  maturity: umbrella-specified-children-absent
+  maturity: umbrella-sealed-children-absent
   implementation: absent
   child_homes: []
   runtime_exports: false
