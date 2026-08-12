@@ -78,6 +78,7 @@ Approval is derived from `OperationPolicyDecision`, effects, reversibility, auth
 
 ## Laws
 
+- The overlay owns the base once. `PreviewBranch` restated it, which was two preview-base facts awaiting disagreement.
 - A working overlay's base is one exact cut, not a revision here and a time cut two members away.
 - A preview produces a draft cut and cannot hand back a committed one. The editor is the one place where that distinction is a one-member change away.
 - Committed revision remains authority.
@@ -126,6 +127,7 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - the-overlay-owns-the-base-once
   - preview-consumes-the-draft-cut
   - revision-dag-operation-history-overlay-snapshot-cursor
   - operation-to-patch-to-change-derivation

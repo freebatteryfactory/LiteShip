@@ -25,9 +25,9 @@ import type { Diagnostic } from '../00_error/types.js';
 import type { CanonicalValue, ContentAddress } from '../01_encoding/types.js';
 import type { CommitId, TraceId } from '../02_identity/types.js';
 import type { SchemaId, SchemaReference } from '../03_schema/types.js';
-import type { TimeCut, TransactionGeneration } from '../04_time/types.js';
+import type { TransactionGeneration } from '../04_time/types.js';
 import type { OwnedResource } from '../05_lifecycle/types.js';
-import type { Commit, DraftSemanticCut, SemanticCut, WorldRevision } from '../08_state/types.js';
+import type { Commit, DraftSemanticCut, SemanticCut } from '../08_state/types.js';
 import type { ExecutionBackend } from '../14_compiler/types.js';
 import type {
   ExecutionImage,
@@ -117,9 +117,8 @@ export type BackendRegistryRequirement = Hole<
 >;
 
 /** One coherent runtime transaction. */
-export interface RuntimeTransaction {
-  readonly time: TimeCut;
-  readonly base: WorldRevision;
+export interface RuntimeTransaction<Cut extends SemanticCut = SemanticCut> {
+  readonly base: Cut;
   readonly dirtySources: readonly SourceSlot[];
   readonly dirtyNodes: readonly NodeSlot[];
   readonly trace: TraceId;
@@ -140,9 +139,9 @@ export interface RuntimeWritePlan {
 }
 
 /** Completed transaction and resulting semantic commit. */
-export interface RuntimeCommit {
+export interface RuntimeCommit<Cut extends SemanticCut = SemanticCut> {
   readonly id: CommitId;
-  readonly semantic: Commit;
+  readonly semantic: Commit<Cut>;
   readonly writePlan: RuntimeWritePlan;
   readonly trace: TraceId;
 }
@@ -222,8 +221,9 @@ export type ARuntimeCommitWitnessesACommittedCut = Assert<
     [
       RuntimeCommit['semantic']['cut'] extends SemanticCut ? true : false,
       RuntimeCommit['semantic']['cut'] extends DraftSemanticCut ? true : false,
+      'time' extends keyof RuntimeTransaction ? true : false,
     ],
-    [true, false]
+    [true, false, false]
   >
 >;
 

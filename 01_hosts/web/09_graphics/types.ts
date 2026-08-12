@@ -34,7 +34,13 @@ import type {
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { EvidenceUpdate, ReproducibilityClaim } from '../../../00_core/06_evidence/types.js';
-import type { MediaFrame, PhysicalFrame } from '../../../00_core/12_media/types.js';
+import type {
+  MediaFrame,
+  MediaRepresentationId,
+  MediaSource,
+  MediaSourceId,
+  RasterizedFrame,
+} from '../../../00_core/12_media/types.js';
 import type { CanonicalValue, ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type {
   GroundingId,
@@ -140,18 +146,24 @@ export interface RasterProfile<Id extends RasterProfileId = RasterProfileId> {
   readonly reproducibility: ReproducibilityClaim<RasterProfileReference<Id>>;
 }
 
-/** The browser's physical frame payload. */
-export interface WebFramePayload {
-  readonly bytes: ContentAddress;
-}
-
-/** One physical frame as this host produces it. */
-export type WebPhysicalFrame<Profile extends RasterProfileId = RasterProfileId> = PhysicalFrame<
-  WebFramePayload,
-  MediaFrame,
-  RasterProfileReference<Profile>,
-  never
->;
+/**
+ * One rasterized frame as this host produces it.
+ *
+ * Exact over the semantic frame it realizes, not merely over a frame-shaped
+ * member. An earlier form fixed the semantic parameter to broad `MediaFrame`,
+ * which meant a request carrying frame A could lawfully return pixels whose
+ * provenance named frame B — both being assignable to the same broad type. The
+ * law read as "a frame member exists" while claiming to read "these pixels
+ * realize this exact frame".
+ *
+ * The payload is exact over its representation. Realm is not part of payload
+ * identity; origin lives in provenance.
+ */
+export type WebPhysicalFrame<
+  Representation extends MediaRepresentationId = MediaRepresentationId,
+  Frame extends MediaFrame = MediaFrame,
+  Profile extends RasterProfileId = RasterProfileId,
+> = RasterizedFrame<Representation, Frame, RasterProfileReference<Profile>>;
 
 /**
  * A request to realize one semantic frame on one exact graphics resource.
@@ -161,9 +173,12 @@ export type WebPhysicalFrame<Profile extends RasterProfileId = RasterProfileId> 
  * refusing draft-derived output at a production slot is publication authority
  * and belongs with publication, not with rasterization physics.
  */
-export interface RasterizationRequest<Profile extends RasterProfileId = RasterProfileId> {
+export interface RasterizationRequest<
+  Frame extends MediaFrame = MediaFrame,
+  Profile extends RasterProfileId = RasterProfileId,
+> {
   readonly resource: GraphicsResourceReference;
-  readonly frame: MediaFrame;
+  readonly frame: Frame;
   readonly profile: RasterProfile<Profile>;
 }
 
@@ -181,9 +196,32 @@ export interface RasterizationRequest<Profile extends RasterProfileId = RasterPr
  * encoder.
  */
 export interface GraphicsReadback {
-  readonly rasterize: <Profile extends RasterProfileId>(
-    request: RasterizationRequest<Profile>,
-  ) => Result<WebPhysicalFrame<Profile>, NonEmptyTuple<Diagnostic>>;
+  readonly rasterize: <
+    Representation extends MediaRepresentationId,
+    Frame extends MediaFrame,
+    Profile extends RasterProfileId,
+  >(
+    request: RasterizationRequest<Frame, Profile>,
+  ) => Result<WebPhysicalFrame<Representation, Frame, Profile>, NonEmptyTuple<Diagnostic>>;
+
+  /**
+   * A bounded source of rasterized frames for one exact profile.
+   *
+   * Long-form export pulls; it does not materialize. A five-minute render
+   * cannot exist in memory before encoding starts, and an operation returning
+   * every frame at once makes that the only shape available.
+   */
+  readonly rasterizeSequence: <
+    Representation extends MediaRepresentationId,
+    Frame extends MediaFrame,
+    Profile extends RasterProfileId,
+    Source extends MediaSourceId,
+  >(
+    request: RasterizationRequest<Frame, Profile>,
+  ) => Result<
+    MediaSource<WebPhysicalFrame<Representation, Frame, Profile>, Source>,
+    NonEmptyTuple<Diagnostic>
+  >;
 }
 
 /** A complete acquisition request: kind, physical target, and configuration. */
@@ -305,29 +343,58 @@ export type InjectedContextCustodyIsRepresentable = Assert<
 
 type RasterLawProfileA = RasterProfileId<'liteship.web.graphics.law.profile-a'>;
 type RasterLawProfileB = RasterProfileId<'liteship.web.graphics.law.profile-b'>;
+type RasterLawRepA = MediaRepresentationId<'liteship.web.graphics.law.representation-a'>;
+type RasterLawFrameA = MediaFrame<'liteship.web.graphics.law.state-a'>;
+type RasterLawFrameB = MediaFrame<'liteship.web.graphics.law.state-b'>;
 
 /**
- * Compile-time law: a rasterized frame names the exact semantic frame it
- * realizes and the exact profile it was drawn under.
+ * Compile-time law: a rasterized frame names the *exact* semantic frame it
+ * realizes, and a frame realizing another one cannot substitute.
  *
- * This is the law that keeps live presentation and export the same evaluation.
- * If the semantic frame could be dropped from the request, readback would
- * become "whatever was on the surface when I asked", and there would be nothing
- * left to compare an exported frame against.
+ * The second and third members are the whole law. An earlier form fixed the
+ * semantic parameter to broad `MediaFrame` and checked only that a frame-shaped
+ * member existed, so a request carrying frame A could return pixels whose
+ * provenance named frame B and nothing complained. Presence is not correlation.
  */
 export type ARasterizedFrameNamesItsSemanticFrame = Assert<
   Equal<
     [
-      RasterizationRequest<RasterLawProfileA>['frame'] extends MediaFrame ? true : false,
-      RasterizationRequest<RasterLawProfileA>['resource'] extends GraphicsResourceReference
+      RasterizationRequest<RasterLawFrameA, RasterLawProfileA>['frame'],
+      CaseOf<
+        WebPhysicalFrame<RasterLawRepA, RasterLawFrameA, RasterLawProfileA>['provenance'],
+        'rasterized'
+      >['frame'],
+      WebPhysicalFrame<RasterLawRepA, RasterLawFrameB, RasterLawProfileA> extends WebPhysicalFrame<
+        RasterLawRepA,
+        RasterLawFrameA,
+        RasterLawProfileA
+      >
         ? true
         : false,
-      RasterizationRequest<RasterLawProfileA>['profile'] extends RasterProfile<RasterLawProfileA>
+      WebPhysicalFrame<RasterLawRepA, RasterLawFrameA, RasterLawProfileB> extends WebPhysicalFrame<
+        RasterLawRepA,
+        RasterLawFrameA,
+        RasterLawProfileA
+      >
         ? true
         : false,
-      WebPhysicalFrame<RasterLawProfileB> extends WebPhysicalFrame<RasterLawProfileA> ? true : false,
     ],
-    [true, true, true, false]
+    [RasterLawFrameA, RasterLawFrameA, false, false]
+  >
+>;
+
+/**
+ * Compile-time law: a rasterized frame carries no coordinate of its own — the
+ * semantic frame it names owns it.
+ */
+export type ARasterizedFrameBorrowsNoCoordinate = Assert<
+  Equal<
+    [
+      'time' extends keyof WebPhysicalFrame ? true : false,
+      'at' extends keyof WebPhysicalFrame ? true : false,
+      'provenance' extends keyof WebPhysicalFrame ? true : false,
+    ],
+    [false, false, true]
   >
 >;
 
@@ -335,8 +402,7 @@ export type ARasterizedFrameNamesItsSemanticFrame = Assert<
  * Compile-time law: readback decides nothing about encoding.
  *
  * A capture that could choose a codec, a container, or a bitrate would have
- * become an encoder wearing the graphics home's name, and the media home would
- * be answering to it.
+ * become an encoder wearing the graphics home's name.
  */
 export type ReadbackCarriesNoCodecDecision = Assert<
   Equal<
@@ -374,16 +440,21 @@ export type ARasterProfileIsMoreThanAContextKind = Assert<
 >;
 
 /**
- * Compile-time law: the provider carries readback beside egress.
+ * Compile-time law: the provider carries readback beside egress, and readback
+ * offers a bounded sequence rather than only a single frame.
  *
- * Applying output and reading it back are different directions across the same
- * boundary, and a provider holding only the first can present forever and
- * export nothing.
+ * Long-form export pulls. A provider that can only hand back one frame at a
+ * time through a per-call operation forces the consumer to hold the whole
+ * render, which is the memory wall this fold exists to remove.
  */
 export type TheProviderCarriesReadbackBesideEgress = Assert<
   Equal<
-    [GraphicsAuthority['readback'], GraphicsAuthority['egress']],
-    [GraphicsReadback, GraphicsEgress]
+    [
+      GraphicsAuthority['readback'],
+      GraphicsAuthority['egress'],
+      'rasterizeSequence' extends keyof GraphicsReadback ? true : false,
+    ],
+    [GraphicsReadback, GraphicsEgress, true]
   >
 >;
 
@@ -395,6 +466,7 @@ export interface WebGraphicsTypeSurface {
   readonly readback: GraphicsReadback;
   readonly rasterProfile: RasterProfile;
   readonly physicalFrame: WebPhysicalFrame;
+  readonly frameSource: MediaSource<WebPhysicalFrame>;
   readonly authority: GraphicsAuthority;
   readonly access: GpuAccessGrounding;
   readonly offer: GraphicsAuthorityOffer;

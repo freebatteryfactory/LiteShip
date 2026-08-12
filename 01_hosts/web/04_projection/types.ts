@@ -44,6 +44,7 @@ import type {
 } from '../../../00_core/13_stream/types.js';
 import type { GroundingId, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { RuntimeCommit } from '../../../00_core/16_runtime/types.js';
+import type { SemanticCut } from '../../../00_core/08_state/types.js';
 import type { WebGroundingDefinition, WebRealizationOffer } from '../00_bootstrap/types.js';
 import type { SinkPolicyRequirement } from '../02_security/types.js';
 import type { EventAuthorityRequirement } from '../03_event/types.js';
@@ -109,8 +110,8 @@ export interface StructureNodeMapping {
  * revision — the semantic commit and the lease own the coordinates, and that
  * they agree is an assurance obligation over the erased values.
  */
-export interface ProjectionCommit {
-  readonly commit: RuntimeCommit;
+export interface ProjectionCommit<Cut extends SemanticCut = SemanticCut> {
+  readonly commit: RuntimeCommit<Cut>;
   readonly lease: RegionWriteAuthority;
   readonly families: readonly WebWriteFamily[];
   readonly preserved: RegionPreservationProfile;

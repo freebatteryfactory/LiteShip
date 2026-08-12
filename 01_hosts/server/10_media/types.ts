@@ -1,23 +1,22 @@
 /**
- * Server media: native decode, render, encode, and mux resources.
+ * Server media: native render, and the core codec sockets this host fills.
  *
- * This home owns server-physical media providers and job resources. Four
- * relationships live here and stay apart: decoding an admitted file into
- * physical frames, rendering an exact semantic cut into physical frames,
- * encoding actual frames into media packets under an exact profile, and
- * muxing those packets into an addressed media artifact.
+ * Two relationships live here. The first is server-physical frame production:
+ * turning one exact semantic cut into a bounded source of physical frames,
+ * under an exact render profile and an exact admitted tool profile. That
+ * operation belongs to the server and to no one else — web graphics cannot own
+ * it without making the offline path depend on a browser realm, and core cannot
+ * own it without choosing between ffmpeg, a rasterizer, and a headless browser.
  *
- * They are four operations because they make four different claims. Collapsing
- * them produced a single `render` that accepted a schema *describing* a frame
- * and emitted bytes framed as network chunks — a job that could be satisfied
- * without a frame ever existing, whose output could not be told from traffic.
+ * The second is the codec side, which this host does not redeclare: decode,
+ * encode, and mux are core's sockets, and the offer below provides them.
+ * `render` used to span all four, accepting a schema *describing* a frame and
+ * emitting bytes framed as network chunks — a job satisfiable without a frame
+ * ever existing, whose output could not be told from traffic.
  *
- * The ancestry is threaded, not merely present: each job carries the exact
- * profile, tool, roots, asset, and identity its request named, and the exact
- * `FileStream` the filesystem provider returns enters without erasure. It
- * consumes core scene, media, and casting meaning and composes with the tool
- * and filesystem homes — it never copies their semantics, and it never defines
- * the semantic media model.
+ * Sources are bounded and lossless. A five-minute render cannot exist in memory
+ * before encoding starts, and an operation returning every frame at once makes
+ * that the only shape available.
  *
  * @module
  */
@@ -38,29 +37,32 @@ import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { SchemaId, SchemaReference } from '../../../00_core/03_schema/types.js';
 import type { ReproducibilityClaim } from '../../../00_core/06_evidence/types.js';
-import type { SemanticCut } from '../../../00_core/08_state/types.js';
 import type {
-  ContainerProfileId,
+  CodecAdmission,
   ContainerProfileReference,
-  DecodeProfileId,
   DecodeProfileReference,
-  EncodeProfileId,
   EncodeProfileReference,
-  MediaArtifact,
-  MediaAssetId,
-  MediaAssetReference,
+  MediaCut,
+  MediaDecoderRequirement,
+  MediaEncoderRequirement,
   MediaFrame,
-  MediaPacket,
-  MediaTrackConfiguration,
-  PhysicalFrame,
+  MediaMuxRequirement,
+  MediaRepresentationId,
+  MediaSource,
+  MediaSourceId,
+  RasterizedFrame,
   SampleRate,
 } from '../../../00_core/12_media/types.js';
 import type { SampleIndex } from '../../../00_core/04_time/types.js';
-import type { RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
-import type { ServerRealizationOffer } from '../00_bootstrap/types.js';
+import type {
+  GroundingId,
+  RealizationLifecycle,
+  RealizationOfferId,
+} from '../../../00_core/14_compiler/types.js';
+import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 import type { FilesystemRequirement } from '../03_filesystem/types.js';
-import type { AdmittedPath, FilesystemRootId, FileStream } from '../03_filesystem/types.js';
-import type { ToolAuthorityRequirement, ToolId, ToolProfile } from '../07_tool/types.js';
+import type { AdmittedPath, FilesystemRootId } from '../03_filesystem/types.js';
+import type { ToolAuthorityRequirement, ToolId, ToolProfile, ToolProfileId } from '../07_tool/types.js';
 
 export type MediaJobId<Name extends string = string> = Brand<Name, 'liteship.server.media-job-id'>;
 export type MediaJobReference<Id extends MediaJobId = MediaJobId> = Reference<
@@ -74,263 +76,176 @@ export interface ServerSamplePosition {
   readonly rate: SampleRate;
 }
 
-/** Bounded media streaming shape — backpressure, never a numeric constant. */
-export interface MediaBufferBound {
-  readonly bounded: true;
-}
+export type RenderProfileId<Name extends string = string> = Brand<
+  Name,
+  'liteship.server.render-profile-id'
+>;
+export type RenderProfileReference<Id extends RenderProfileId = RenderProfileId> = Reference<
+  'server-render-profile',
+  Id
+>;
 
 /**
- * The server's physical frame payload: addressed pixel or sample bytes on the
- * filesystem side of the boundary.
+ * Everything physical that decided how semantic state became pixels here.
  *
- * Named here rather than in core because it is a server-physical fact. Core
- * owns the frame envelope and leaves the payload open precisely so a browser
- * `VideoFrame` and a native buffer can both inhabit it without either becoming
- * the semantic model.
+ * A render profile, not an encode profile. An earlier form used the encode
+ * profile as the physical-frame profile, which said nothing about the
+ * rasterizer, the font stack, or the colour pipeline that actually produced the
+ * bytes — and attached the reproducibility claim for rasterization to a
+ * description of the codec that would run afterwards.
+ *
+ * One stage, one profile, one claim.
  */
-export interface ServerFramePayload {
-  readonly bytes: ContentAddress;
+export interface ServerRenderProfile<Id extends RenderProfileId = RenderProfileId> {
+  readonly id: RenderProfileReference<Id>;
+  readonly configuration: ContentAddress<'application/vnd.liteship.server-render-profile+cbor'>;
+  readonly reproducibility: ReproducibilityClaim<RenderProfileReference<Id>>;
 }
 
-/** One physical frame as this host produces and consumes it. */
-export type ServerPhysicalFrame = PhysicalFrame<ServerFramePayload, MediaFrame, EncodeProfileReference>;
+/** One rasterized frame as this host produces it. */
+export type ServerPhysicalFrame<
+  Representation extends MediaRepresentationId = MediaRepresentationId,
+  Frame extends MediaFrame = MediaFrame,
+  Profile extends RenderProfileId = RenderProfileId,
+> = RasterizedFrame<Representation, Frame, RenderProfileReference<Profile>>;
 
 /**
- * One media packet stream: bound to the exact job that opened it and to the
- * exact encode profile its packets were produced under.
+ * Rendering one exact semantic cut into a bounded source of physical frames.
  *
- * The received values are media packets. They were previously the network
- * home's `ServerEncodedChunk`, which meant this stream could not distinguish an
- * access unit from a container segment from bytes off a socket — the media path
- * borrowing transport framing for its own output vocabulary.
- */
-export interface MediaPacketStream<Id extends MediaJobId, Profile extends EncodeProfileId> {
-  readonly job: MediaJobReference<Id>;
-  readonly buffer: MediaBufferBound;
-  readonly receive: Signature<
-    MediaBufferBound,
-    readonly MediaPacket<Profile>[],
-    NonEmptyTuple<Diagnostic>
-  >;
-  readonly close: Signature<MediaJobReference<Id>, MediaJobReference<Id>, NonEmptyTuple<Diagnostic>>;
-  readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
-}
-
-// ---------------------------------------------------------------------------
-// Decode
-// ---------------------------------------------------------------------------
-
-/** Decoding an admitted physical file into physical frames under an exact profile. */
-export interface ServerDecodeRequest<
-  Profile extends DecodeProfileId,
-  Tool extends ToolId,
-  In extends FilesystemRootId,
-  Id extends MediaJobId,
-> {
-  readonly job: MediaJobReference<Id>;
-  readonly profile: DecodeProfileReference<Profile>;
-  readonly tool: ToolProfile<Tool>;
-  readonly input: FileStream<In>;
-}
-
-export interface ServerDecodeJob<
-  Profile extends DecodeProfileId,
-  Tool extends ToolId,
-  In extends FilesystemRootId,
-  Id extends MediaJobId,
-> {
-  readonly id: MediaJobReference<Id>;
-  readonly profile: DecodeProfileReference<Profile>;
-  readonly tool: ToolProfile<Tool>;
-  readonly input: FileStream<In>;
-  readonly frames: readonly ServerPhysicalFrame[];
-  readonly reproducibility: ReproducibilityClaim<DecodeProfileReference<Profile>>;
-  readonly cancel: Signature<MediaJobReference<Id>, MediaJobReference<Id>, NonEmptyTuple<Diagnostic>>;
-  readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
-}
-
-// ---------------------------------------------------------------------------
-// Render
-// ---------------------------------------------------------------------------
-
-/**
- * Rendering one exact semantic cut into physical frames.
+ * The contract is the schema admitted frames obey; it may stay, because saying
+ * what shape a frame has is useful. What it may no longer do is stand in for
+ * the frames themselves, which is what let a flat-fill renderer satisfy this
+ * path with the authored scene missing from the pixels.
  *
- * The cut is the coordinate; the contract is the schema the admitted frames
- * obey. The contract may stay — it says what shape a frame has — but it can no
- * longer stand in for the frames themselves, which is what let a flat-fill
- * renderer satisfy this path with the authored scene missing from the pixels.
+ * There is no sample position beside the cut. The media cut already owns the
+ * frame and sample coordinate, and a sibling position is the same duplicate
+ * coordinate this fold removed everywhere else.
  */
 export interface ServerRenderRequest<
-  Contract extends SchemaId,
-  Tool extends ToolId,
-  Out extends FilesystemRootId,
-  Id extends MediaJobId,
+  Contract extends SchemaId = SchemaId,
+  Frame extends MediaFrame = MediaFrame,
+  Render extends RenderProfileId = RenderProfileId,
+  Tool extends ToolId = ToolId,
+  Profile extends ToolProfileId = ToolProfileId,
+  Out extends FilesystemRootId = FilesystemRootId,
+  Id extends MediaJobId = MediaJobId,
 > {
   readonly job: MediaJobReference<Id>;
   readonly source: ContentAddress<'application/vnd.liteship.program+cbor'>;
-  readonly cut: SemanticCut;
-  readonly position: ServerSamplePosition;
-  readonly contract: SchemaReference<Contract, MediaFrame>;
-  readonly tool: ToolProfile<Tool>;
+  readonly cut: MediaCut;
+  readonly contract: SchemaReference<Contract, Frame>;
+  readonly render: ServerRenderProfile<Render>;
+  readonly tool: ToolProfile<Tool, Profile>;
   readonly destination: AdmittedPath<Out>;
 }
 
-export interface ServerMediaJob<
-  Contract extends SchemaId,
-  Tool extends ToolId,
-  Out extends FilesystemRootId,
-  Id extends MediaJobId,
+/**
+ * One render job: the exact cut it rendered, the exact profiles it ran under,
+ * and a bounded source of the frames it produced.
+ */
+export interface ServerRenderJob<
+  Representation extends MediaRepresentationId = MediaRepresentationId,
+  Contract extends SchemaId = SchemaId,
+  Frame extends MediaFrame = MediaFrame,
+  Render extends RenderProfileId = RenderProfileId,
+  Tool extends ToolId = ToolId,
+  Profile extends ToolProfileId = ToolProfileId,
+  Out extends FilesystemRootId = FilesystemRootId,
+  Id extends MediaJobId = MediaJobId,
+  Source extends MediaSourceId = MediaSourceId,
 > {
   readonly id: MediaJobReference<Id>;
   readonly source: ContentAddress<'application/vnd.liteship.program+cbor'>;
-  readonly cut: SemanticCut;
-  readonly position: ServerSamplePosition;
-  readonly contract: SchemaReference<Contract, MediaFrame>;
-  readonly tool: ToolProfile<Tool>;
+  readonly cut: MediaCut;
+  readonly contract: SchemaReference<Contract, Frame>;
+  readonly render: ServerRenderProfile<Render>;
+  readonly tool: ToolProfile<Tool, Profile>;
   readonly destination: AdmittedPath<Out>;
-  readonly frames: NonEmptyTuple<ServerPhysicalFrame>;
+  readonly frames: MediaSource<ServerPhysicalFrame<Representation, Frame, Render>, Source>;
   readonly cancel: Signature<MediaJobReference<Id>, MediaJobReference<Id>, NonEmptyTuple<Diagnostic>>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
-// ---------------------------------------------------------------------------
-// Encode
-// ---------------------------------------------------------------------------
-
 /**
- * Encoding actual frames into packets under an exact profile.
+ * The server media provider.
  *
- * `frames` is a non-empty tuple of real frames. Zero frames cannot become a
- * successful encode, and no schema reference appears anywhere on this path.
- */
-export interface ServerEncodeRequest<
-  Profile extends EncodeProfileId,
-  Tool extends ToolId,
-  Id extends MediaJobId,
-> {
-  readonly job: MediaJobReference<Id>;
-  readonly profile: EncodeProfileReference<Profile>;
-  readonly tool: ToolProfile<Tool>;
-  readonly tracks: MediaTrackConfiguration;
-  readonly frames: NonEmptyTuple<ServerPhysicalFrame>;
-}
-
-export interface ServerEncodeJob<
-  Profile extends EncodeProfileId,
-  Tool extends ToolId,
-  Id extends MediaJobId,
-> {
-  readonly id: MediaJobReference<Id>;
-  readonly profile: EncodeProfileReference<Profile>;
-  readonly tool: ToolProfile<Tool>;
-  readonly tracks: MediaTrackConfiguration;
-  readonly frames: NonEmptyTuple<ServerPhysicalFrame>;
-  readonly open: Signature<
-    MediaJobReference<Id>,
-    MediaPacketStream<Id, Profile>,
-    NonEmptyTuple<Diagnostic>
-  >;
-  readonly reproducibility: ReproducibilityClaim<EncodeProfileReference<Profile>>;
-  readonly cancel: Signature<MediaJobReference<Id>, MediaJobReference<Id>, NonEmptyTuple<Diagnostic>>;
-  readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
-}
-
-// ---------------------------------------------------------------------------
-// Mux
-// ---------------------------------------------------------------------------
-
-/**
- * Muxing packets into an addressed artifact at an admitted destination.
- *
- * Separate from encode because the reproducibility subject is different. Two
- * runs may emit identical packets and different container bytes — muxer
- * metadata, ordering, and timestamps are the container's business — so the
- * claim that survives here is over the whole artifact, not the elementary
- * stream.
- */
-export interface ServerMuxRequest<
-  Profile extends EncodeProfileId,
-  Container extends ContainerProfileId,
-  Asset extends MediaAssetId,
-  Out extends FilesystemRootId,
-  Id extends MediaJobId,
-> {
-  readonly job: MediaJobReference<Id>;
-  readonly asset: MediaAssetReference<Asset>;
-  readonly container: ContainerProfileReference<Container>;
-  readonly packets: NonEmptyTuple<MediaPacket<Profile>>;
-  readonly destination: AdmittedPath<Out>;
-}
-
-export interface ServerMuxJob<
-  Profile extends EncodeProfileId,
-  Container extends ContainerProfileId,
-  Asset extends MediaAssetId,
-  Out extends FilesystemRootId,
-  Id extends MediaJobId,
-> {
-  readonly id: MediaJobReference<Id>;
-  readonly container: ContainerProfileReference<Container>;
-  readonly packets: NonEmptyTuple<MediaPacket<Profile>>;
-  readonly destination: AdmittedPath<Out>;
-  readonly artifact: MediaArtifact<Asset, Container>;
-  readonly reproducibility: ReproducibilityClaim<ContainerProfileReference<Container>>;
-  readonly receipt: ContentAddress<'application/vnd.liteship.server-media-output+cbor'>;
-  readonly cancel: Signature<MediaJobReference<Id>, MediaJobReference<Id>, NonEmptyTuple<Diagnostic>>;
-  readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
-}
-
-// ---------------------------------------------------------------------------
-// The provider
-// ---------------------------------------------------------------------------
-
-/**
- * The server media provider: four ancestry-correlated operations, each
- * returning a job that speaks exactly the profile, tool, roots, asset, and
- * identity its request named.
+ * It renders, and it fills core's codec sockets. It declares no decode, encode,
+ * or mux contract of its own — those live in `00_core/12_media`, and a server
+ * that redeclared them would be the second vocabulary this fold exists to
+ * remove.
  */
 export interface ServerMediaAuthority {
-  readonly decode: <
-    Profile extends DecodeProfileId,
-    Tool extends ToolId,
-    In extends FilesystemRootId,
-    Id extends MediaJobId,
-  >(
-    request: ServerDecodeRequest<Profile, Tool, In, Id>,
-  ) => Result<ServerDecodeJob<Profile, Tool, In, Id>, NonEmptyTuple<Diagnostic>>;
-
-  readonly render: <
+  readonly renderFrames: <
+    Representation extends MediaRepresentationId,
     Contract extends SchemaId,
+    Frame extends MediaFrame,
+    Render extends RenderProfileId,
     Tool extends ToolId,
+    Profile extends ToolProfileId,
     Out extends FilesystemRootId,
     Id extends MediaJobId,
+    Source extends MediaSourceId,
   >(
-    request: ServerRenderRequest<Contract, Tool, Out, Id>,
-  ) => Result<ServerMediaJob<Contract, Tool, Out, Id>, NonEmptyTuple<Diagnostic>>;
-
-  readonly encode: <Profile extends EncodeProfileId, Tool extends ToolId, Id extends MediaJobId>(
-    request: ServerEncodeRequest<Profile, Tool, Id>,
-  ) => Result<ServerEncodeJob<Profile, Tool, Id>, NonEmptyTuple<Diagnostic>>;
-
-  readonly finalize: <
-    Profile extends EncodeProfileId,
-    Container extends ContainerProfileId,
-    Asset extends MediaAssetId,
-    Out extends FilesystemRootId,
-    Id extends MediaJobId,
-  >(
-    request: ServerMuxRequest<Profile, Container, Asset, Out, Id>,
-  ) => Result<ServerMuxJob<Profile, Container, Asset, Out, Id>, NonEmptyTuple<Diagnostic>>;
+    request: ServerRenderRequest<Contract, Frame, Render, Tool, Profile, Out, Id>,
+  ) => Result<
+    ServerRenderJob<Representation, Contract, Frame, Render, Tool, Profile, Out, Id, Source>,
+    NonEmptyTuple<Diagnostic>
+  >;
 }
 
 export type ServerMediaRequirement = Hole<'liteship.server.media', ServerMediaAuthority>;
 
+/** Native codec admission: whether this machine's tools accept one profile. */
+export interface ServerCodecAdmission {
+  readonly admitDecode: Signature<
+    DecodeProfileReference,
+    CodecAdmission<DecodeProfileReference>,
+    NonEmptyTuple<Diagnostic>
+  >;
+  readonly admitEncode: Signature<
+    EncodeProfileReference,
+    CodecAdmission<EncodeProfileReference>,
+    NonEmptyTuple<Diagnostic>
+  >;
+  readonly admitContainer: Signature<
+    ContainerProfileReference,
+    CodecAdmission<ContainerProfileReference>,
+    NonEmptyTuple<Diagnostic>
+  >;
+}
+
+export type ServerCodecAdmissionRequirement = Hole<
+  'liteship.server.codec-admission',
+  ServerCodecAdmission
+>;
+
+/**
+ * Deployment grounding: which native codecs this machine admits.
+ *
+ * A deployment fact rather than an intrinsic one — the answer depends on which
+ * ffmpeg build was installed beside the process, which is exactly the kind of
+ * thing a deployment decides and a program discovers.
+ */
+export interface ServerCodecAdmissionGrounding
+  extends ServerGroundingDefinition<
+    readonly [ServerCodecAdmissionRequirement],
+    unknown,
+    'deployment',
+    'unowned'
+  > {
+  readonly id: GroundingId<'liteship.server.grounding.codec-admission'>;
+}
+
 /** Constructing the media provider over tools and scoped filesystem. */
 export interface ServerMediaOffer
   extends ServerRealizationOffer<
-    readonly [ServerMediaRequirement],
-    readonly [ToolAuthorityRequirement, FilesystemRequirement],
+    readonly [
+      ServerMediaRequirement,
+      MediaDecoderRequirement,
+      MediaEncoderRequirement,
+      MediaMuxRequirement,
+    ],
+    readonly [ToolAuthorityRequirement, FilesystemRequirement, ServerCodecAdmissionRequirement],
     unknown,
     unknown,
     'owned'
@@ -343,239 +258,234 @@ export interface ServerMediaOffer
 // ---------------------------------------------------------------------------
 // Laws
 //
-// That authored scene differences produce different semantic frames and
-// meaningful output — never a flat fill — is the fidelity obligation this
-// home exists to serve; it is proved at implementation, bound here by the
-// frame population and source-revision the types refuse to lose.
+// That authored scene differences produce different pixels — never a flat fill
+// — is the fidelity obligation this home exists to serve; it is proved at
+// implementation, bound here by the frame source and cut the types refuse to
+// lose.
 // ---------------------------------------------------------------------------
 
 type MediaLawContractA = SchemaId<'liteship.server.media.law.contract-a'>;
-type MediaLawContractB = SchemaId<'liteship.server.media.law.contract-b'>;
+type MediaLawFrameA = MediaFrame<'liteship.server.media.law.state-a'>;
+type MediaLawFrameB = MediaFrame<'liteship.server.media.law.state-b'>;
+type MediaLawRepA = MediaRepresentationId<'liteship.server.media.law.representation-a'>;
+type MediaLawRenderA = RenderProfileId<'liteship.server.media.law.render-a'>;
+type MediaLawRenderB = RenderProfileId<'liteship.server.media.law.render-b'>;
 type MediaLawToolA = ToolId<'liteship.server.media.law.tool-a'>;
+type MediaLawProfileA = ToolProfileId<'liteship.server.media.law.profile-a'>;
+type MediaLawProfileB = ToolProfileId<'liteship.server.media.law.profile-b'>;
 type MediaLawRootA = FilesystemRootId<'liteship.server.media.law.root-a'>;
 type MediaLawJobA = MediaJobId<'liteship.server.media.law.job-a'>;
-type MediaLawJobB = MediaJobId<'liteship.server.media.law.job-b'>;
-type MediaLawEncodeA = EncodeProfileId<'liteship.server.media.law.encode-a'>;
-type MediaLawEncodeB = EncodeProfileId<'liteship.server.media.law.encode-b'>;
-type MediaLawContainerA = ContainerProfileId<'liteship.server.media.law.container-a'>;
-type MediaLawAssetA = MediaAssetId<'liteship.server.media.law.asset-a'>;
+type MediaLawSourceA = MediaSourceId<'liteship.server.media.law.source-a'>;
 
-type RenderLawJobA = ServerMediaJob<MediaLawContractA, MediaLawToolA, MediaLawRootA, MediaLawJobA>;
+type RenderLawJobA = ServerRenderJob<
+  MediaLawRepA,
+  MediaLawContractA,
+  MediaLawFrameA,
+  MediaLawRenderA,
+  MediaLawToolA,
+  MediaLawProfileA,
+  MediaLawRootA,
+  MediaLawJobA,
+  MediaLawSourceA
+>;
 
 /**
- * Compile-time law: a render job binds its exact source revision, its exact
- * cut, its exact frame contract, its exact tool profile, its exact
- * destination, and an actual non-empty frame population — the physical
- * relationships, not merely a field census.
+ * Compile-time law: a render job produces a bounded frame source, not a tuple
+ * and not a schema.
  *
- * The frame member is the one that matters most. Its removal is a one-line
- * change that leaves every other member intact and returns this path to a
- * schema describing frames nobody produced.
+ * The source is what makes long-form work possible. A tuple here is the memory
+ * wall; a schema here is the flat-fill renderer that emitted a valid file
+ * containing none of the authored work.
  */
-export type AJobBindsItsSourceRevision = Assert<
+export type ARenderJobProducesABoundedFrameSource = Assert<
   Equal<
     [
+      Equal<
+        RenderLawJobA['frames'],
+        MediaSource<ServerPhysicalFrame<MediaLawRepA, MediaLawFrameA, MediaLawRenderA>, MediaLawSourceA>
+      >,
+      RenderLawJobA['frames'] extends readonly unknown[] ? true : false,
+      RenderLawJobA['frames'] extends SchemaReference ? true : false,
+    ],
+    [true, false, false]
+  >
+>;
+
+/**
+ * Compile-time law: a render job binds its exact cut, contract, render profile,
+ * tool profile, and destination, and carries no sample position beside the cut.
+ */
+export type ARenderJobBindsItsCutAndProfiles = Assert<
+  Equal<
+    [
+      // The job's own identity, the program revision it rendered, and the
+      // request's destination. All read as members: broadening any of them
+      // leaves its parameter either still used elsewhere or unused entirely, so
+      // substitutability and hygiene both fail to notice.
+      RenderLawJobA['id'],
       RenderLawJobA['source'],
+      ServerRenderRequest<
+        MediaLawContractA,
+        MediaLawFrameA,
+        MediaLawRenderA,
+        MediaLawToolA,
+        MediaLawProfileA,
+        MediaLawRootA,
+        MediaLawJobA
+      >['destination'],
+      RenderLawJobA['cut'] extends MediaCut ? true : false,
       RenderLawJobA['contract'],
+      RenderLawJobA['render'],
       RenderLawJobA['tool'],
       RenderLawJobA['destination'],
-      RenderLawJobA['frames'] extends NonEmptyTuple<ServerPhysicalFrame> ? true : false,
-      readonly ServerPhysicalFrame[] extends RenderLawJobA['frames'] ? true : false,
-      RenderLawJobA['cut'] extends SemanticCut ? true : false,
-      ServerMediaJob<MediaLawContractB, MediaLawToolA, MediaLawRootA, MediaLawJobA> extends RenderLawJobA
-        ? true
-        : false,
-      ServerMediaJob<MediaLawContractA, MediaLawToolA, MediaLawRootA, MediaLawJobB> extends RenderLawJobA
-        ? true
-        : false,
+      'position' extends keyof RenderLawJobA ? true : false,
     ],
     [
+      MediaJobReference<MediaLawJobA>,
       ContentAddress<'application/vnd.liteship.program+cbor'>,
-      SchemaReference<MediaLawContractA, MediaFrame>,
-      ToolProfile<MediaLawToolA>,
       AdmittedPath<MediaLawRootA>,
       true,
-      false,
-      true,
-      false,
+      SchemaReference<MediaLawContractA, MediaLawFrameA>,
+      ServerRenderProfile<MediaLawRenderA>,
+      ToolProfile<MediaLawToolA, MediaLawProfileA>,
+      AdmittedPath<MediaLawRootA>,
       false,
     ]
   >
 >;
 
 /**
- * Compile-time law: rendering is ancestry-correlated through the provider's
- * generic operation — a request naming contract A, tool A, root A, and job A
- * yields a job of exactly those identities.
+ * Compile-time law: the render profile is its own stage's profile, with its own
+ * reproducibility claim.
+ *
+ * Borrowing the encode profile here attached a claim about rasterization to a
+ * description of the codec that runs afterwards.
+ */
+export type TheRenderStageOwnsItsOwnProfile = Assert<
+  Equal<
+    [
+      // Read the profile off the frame's own provenance. Swapping the alias to
+      // an encode profile leaves the render parameter unused, and an unused
+      // parameter is a hygiene death no named law can attribute — the mutation
+      // would die on TS6196 and be refused rather than caught.
+      CaseOf<
+        ServerPhysicalFrame<MediaLawRepA, MediaLawFrameA, MediaLawRenderA>['provenance'],
+        'rasterized'
+      >['profile'],
+      ServerRenderProfile<MediaLawRenderA>['reproducibility'] extends ReproducibilityClaim<
+        RenderProfileReference<MediaLawRenderA>
+      >
+        ? true
+        : false,
+      TagOf<ServerRenderProfile<MediaLawRenderA>['reproducibility']>,
+      EncodeProfileReference extends RenderProfileReference ? true : false,
+    ],
+    [
+      RenderProfileReference<MediaLawRenderA>,
+      true,
+      'unclaimed' | 'reproducible-under-profile' | 'observed-variable',
+      false,
+    ]
+  >
+>;
+
+/**
+ * Compile-time law: rendering is ancestry-correlated, and every exactness axis
+ * survives the provider path.
+ *
+ * The frame, render profile, and tool profile are varied one at a time. A law
+ * that varies them together stays green when exactly one parameter stops being
+ * load-bearing — and the tool profile is the one that was erased before, so two
+ * admitted builds of the same binary were freely interchangeable.
  */
 export type RenderThreadsTheRequestAncestry = Assert<
   Equal<
     [
-      ServerMediaAuthority['render'] extends (
-        request: ServerRenderRequest<MediaLawContractA, MediaLawToolA, MediaLawRootA, MediaLawJobA>,
+      ServerMediaAuthority['renderFrames'] extends (
+        request: ServerRenderRequest<
+          MediaLawContractA,
+          MediaLawFrameA,
+          MediaLawRenderA,
+          MediaLawToolA,
+          MediaLawProfileA,
+          MediaLawRootA,
+          MediaLawJobA
+        >,
       ) => Result<RenderLawJobA, NonEmptyTuple<Diagnostic>>
         ? true
         : false,
-      ServerRenderRequest<MediaLawContractA, MediaLawToolA, MediaLawRootA, MediaLawJobA>['job'],
-      ServerRenderRequest<MediaLawContractA, MediaLawToolA, MediaLawRootA, MediaLawJobA>['tool'],
-    ],
-    [true, MediaJobReference<MediaLawJobA>, ToolProfile<MediaLawToolA>]
-  >
->;
-
-type DecodeLawProfileA = DecodeProfileId<'liteship.server.media.law.decode-a'>;
-
-/**
- * Compile-time law: decode binds the exact physical stream it was handed, on
- * both the request and the job it returns.
- *
- * Read as members rather than by varying the type argument: broadening
- * `FileStream<In>` to `FileStream` leaves `In` with no remaining use, and an
- * unused type parameter is a hygiene death the harness reports as
- * `CAUGHT-UNNAMED` and refuses to score. A law that can only be reached that
- * way is not a law.
- */
-export type ADecodeBindsItsPhysicalInput = Assert<
-  Equal<
-    [
-      ServerDecodeRequest<DecodeLawProfileA, MediaLawToolA, MediaLawRootA, MediaLawJobA>['input'],
-      ServerDecodeJob<DecodeLawProfileA, MediaLawToolA, MediaLawRootA, MediaLawJobA>['input'],
-      ServerDecodeJob<DecodeLawProfileA, MediaLawToolA, MediaLawRootA, MediaLawJobA>['tool'],
-      ServerDecodeJob<
-        DecodeLawProfileA,
+      ServerRenderJob<
+        MediaLawRepA,
+        MediaLawContractA,
+        MediaLawFrameB,
+        MediaLawRenderA,
         MediaLawToolA,
+        MediaLawProfileA,
         MediaLawRootA,
-        MediaLawJobA
-      >['reproducibility'] extends ReproducibilityClaim<DecodeProfileReference<DecodeLawProfileA>>
-        ? true
-        : false,
-    ],
-    [
-      FileStream<MediaLawRootA>,
-      FileStream<MediaLawRootA>,
-      ToolProfile<MediaLawToolA>,
-      true,
-    ]
-  >
->;
-
-/**
- * Compile-time law: an encode consumes real frames and opens a packet stream
- * exact over both its job and its profile.
- *
- * A stream of job B is not a stream of job A, and a stream of profile B is not
- * a stream of profile A. The second half is what stops packets encoded under
- * one profile from being reported under another.
- */
-export type AnEncodeConsumesFramesAndStreamsPackets = Assert<
-  Equal<
-    [
-      ServerEncodeRequest<MediaLawEncodeA, MediaLawToolA, MediaLawJobA>['frames'] extends NonEmptyTuple<
-        ServerPhysicalFrame
-      >
-        ? true
-        : false,
-      ServerEncodeJob<MediaLawEncodeA, MediaLawToolA, MediaLawJobA>['open'],
-      MediaPacketStream<MediaLawJobB, MediaLawEncodeA> extends MediaPacketStream<
         MediaLawJobA,
-        MediaLawEncodeA
-      >
+        MediaLawSourceA
+      > extends RenderLawJobA
         ? true
         : false,
-      MediaPacketStream<MediaLawJobA, MediaLawEncodeB> extends MediaPacketStream<
+      ServerRenderJob<
+        MediaLawRepA,
+        MediaLawContractA,
+        MediaLawFrameA,
+        MediaLawRenderB,
+        MediaLawToolA,
+        MediaLawProfileA,
+        MediaLawRootA,
         MediaLawJobA,
-        MediaLawEncodeA
-      >
+        MediaLawSourceA
+      > extends RenderLawJobA
         ? true
         : false,
-      // The `job` member is read directly. Substitutability alone stays exact
-      // while this member broadens, because `close` also carries the identity —
-      // so the stream keeps refusing a foreign job while its own report of
-      // which job it belongs to has quietly gone generic.
-      MediaPacketStream<MediaLawJobA, MediaLawEncodeA>['job'],
-    ],
-    [
-      true,
-      Signature<
-        MediaJobReference<MediaLawJobA>,
-        MediaPacketStream<MediaLawJobA, MediaLawEncodeA>,
-        NonEmptyTuple<Diagnostic>
-      >,
-      false,
-      false,
-      MediaJobReference<MediaLawJobA>,
-    ]
-  >
->;
-
-/**
- * Compile-time law: a packet stream yields media packets, and network framing
- * cannot satisfy it.
- *
- * The comparison is structural rather than a comment, because the two types are
- * both "bytes with some metadata" and only their members keep them apart.
- */
-export type APacketStreamYieldsMediaPacketsNotTransportFraming = Assert<
-  Equal<
-    [
-      MediaPacket<MediaLawEncodeA>['profile'],
-      MediaPacket<MediaLawEncodeA>['time'] extends { readonly sample: SampleIndex } ? true : false,
-      MediaPacket<MediaLawEncodeB> extends MediaPacket<MediaLawEncodeA> ? true : false,
-    ],
-    [EncodeProfileReference<MediaLawEncodeA>, true, false]
-  >
->;
-
-/**
- * Compile-time law: the mux stage owns the artifact, and its reproducibility
- * claim is over the container rather than the encoder.
- *
- * One stage, one profile, one claim. An encode claim satisfying a container
- * obligation is how identical packets become a promise about a file nobody
- * compared.
- */
-export type TheMuxStageOwnsTheArtifactClaim = Assert<
-  Equal<
-    [
-      ServerMuxJob<
-        MediaLawEncodeA,
-        MediaLawContainerA,
-        MediaLawAssetA,
+      ServerRenderJob<
+        MediaLawRepA,
+        MediaLawContractA,
+        MediaLawFrameA,
+        MediaLawRenderA,
+        MediaLawToolA,
+        MediaLawProfileB,
         MediaLawRootA,
-        MediaLawJobA
-      >['artifact'],
-      ServerMuxJob<
-        MediaLawEncodeA,
-        MediaLawContainerA,
-        MediaLawAssetA,
-        MediaLawRootA,
-        MediaLawJobA
-      >['reproducibility'],
-      TagOf<ReproducibilityClaim<ContainerProfileReference<MediaLawContainerA>>>,
+        MediaLawJobA,
+        MediaLawSourceA
+      > extends RenderLawJobA
+        ? true
+        : false,
     ],
-    [
-      MediaArtifact<MediaLawAssetA, MediaLawContainerA>,
-      ReproducibilityClaim<ContainerProfileReference<MediaLawContainerA>>,
-      'unclaimed' | 'reproducible-under-profile' | 'observed-variable',
-    ]
+    [true, false, false, false]
   >
 >;
 
 /**
- * Compile-time law: the four stages are four operations.
+ * Compile-time law: this host fills core's codec sockets and declares none of
+ * its own.
  *
- * Their collapse into one uninspectable call is the predecessor shape, and it
- * is a deletion away at all times.
+ * A server-local decode, encode, or mux contract would be a second vocabulary
+ * beside core's, which is the state this fold found and removed.
  */
-export type DecodeRenderEncodeAndMuxDoNotCollapse = Assert<
+export type TheServerFillsTheCoreCodecSockets = Assert<
   Equal<
     [
+      ServerMediaOffer['provides'],
       'decode' extends keyof ServerMediaAuthority ? true : false,
-      'render' extends keyof ServerMediaAuthority ? true : false,
       'encode' extends keyof ServerMediaAuthority ? true : false,
       'finalize' extends keyof ServerMediaAuthority ? true : false,
+      'renderFrames' extends keyof ServerMediaAuthority ? true : false,
     ],
-    [true, true, true, true]
+    [
+      readonly [
+        ServerMediaRequirement,
+        MediaDecoderRequirement,
+        MediaEncoderRequirement,
+        MediaMuxRequirement,
+      ],
+      false,
+      false,
+      false,
+      true,
+    ]
   >
 >;
 
@@ -584,28 +494,11 @@ export type ThePositionIsTheCoreCoordinate = Assert<
   Equal<[ServerSamplePosition['sample'], ServerSamplePosition['rate']], [SampleIndex, SampleRate]>
 >;
 
-/** Compile-time law: a mux job is receipted, cancellable job-exactly, and owned. */
+/** Compile-time law: a render job is cancellable job-exactly, and owned. */
 export type AJobIsReceiptedCancellableAndOwned = Assert<
   Equal<
+    [RenderLawJobA['lifecycle'], RenderLawJobA['cancel']],
     [
-      ServerMuxJob<
-        MediaLawEncodeA,
-        MediaLawContainerA,
-        MediaLawAssetA,
-        MediaLawRootA,
-        MediaLawJobA
-      >['receipt'],
-      ServerMuxJob<
-        MediaLawEncodeA,
-        MediaLawContainerA,
-        MediaLawAssetA,
-        MediaLawRootA,
-        MediaLawJobA
-      >['lifecycle'],
-      RenderLawJobA['cancel'],
-    ],
-    [
-      ContentAddress<'application/vnd.liteship.server-media-output+cbor'>,
       CaseOf<RealizationLifecycle, 'owned'>,
       Signature<MediaJobReference<MediaLawJobA>, MediaJobReference<MediaLawJobA>, NonEmptyTuple<Diagnostic>>,
     ]
@@ -614,18 +507,12 @@ export type AJobIsReceiptedCancellableAndOwned = Assert<
 
 /** Type summary consumed by the server topology. */
 export interface ServerMediaTypeSurface {
-  readonly decodeJob: ServerDecodeJob<DecodeProfileId, ToolId, FilesystemRootId, MediaJobId>;
-  readonly job: ServerMediaJob<SchemaId, ToolId, FilesystemRootId, MediaJobId>;
-  readonly encodeJob: ServerEncodeJob<EncodeProfileId, ToolId, MediaJobId>;
-  readonly muxJob: ServerMuxJob<
-    EncodeProfileId,
-    ContainerProfileId,
-    MediaAssetId,
-    FilesystemRootId,
-    MediaJobId
-  >;
-  readonly stream: MediaPacketStream<MediaJobId, EncodeProfileId>;
+  readonly renderProfile: ServerRenderProfile;
+  readonly job: ServerRenderJob;
   readonly frame: ServerPhysicalFrame;
+  readonly frameSource: MediaSource<ServerPhysicalFrame>;
+  readonly admission: ServerCodecAdmission;
+  readonly admissionGrounding: ServerCodecAdmissionGrounding;
   readonly position: ServerSamplePosition;
   readonly authority: ServerMediaAuthority;
   readonly mediaOffer: ServerMediaOffer;

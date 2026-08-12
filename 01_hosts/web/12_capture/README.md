@@ -14,6 +14,7 @@ Turn a committed browser composition into a physical frame, and say honestly whe
 
 ## Owns
 
+- The capture scope: which part of a committed composition was selected.
 - Browser-composite capture of an exact committed web surface.
 - The orchestration from committed web state to a physical captured frame.
 - Capture profile identity, and capture availability and permission as evidence.
@@ -40,7 +41,7 @@ A rasterized frame says: *these pixels realize this exact semantic frame, on thi
 
 A captured frame says: *these pixels came off this committed composition, under this capture profile.* That is evidence of nothing beyond itself.
 
-The type carries the distinction rather than the prose: a captured frame's semantic-frame parameter is `never`, so no capture can name the semantic frame it realizes. If it could, a capture would be admissible everywhere a rasterization is, and "this is what the scene means" would stop being distinguishable from "this is what the browser drew".
+The type carries the distinction rather than the prose: a captured frame's provenance is captured-only by construction, so there is no rasterized arm for a capture to inhabit and no way for one to name a semantic frame it realizes. If it could, a capture would be admissible everywhere a rasterization is, and "this is what the scene means" would stop being distinguishable from "this is what the browser drew".
 
 ## What the platform actually permits
 
@@ -50,7 +51,10 @@ Both facts are why this home exists and why it claims so little. Capture is a le
 
 ## Laws
 
-- A capture names a committed composition: a projection commit and a region boundary. Neither alone identifies which pixels.
+- The composition restates no boundary. `ProjectionCommit` already carries the region lease whose membership owns it, and a second writable boundary beside it is one fact with two owners. The scope is a different fact — capture may target less than the full region — and it gets an identity rather than a duplicate.
+- The intrinsic browser entrypoint is grounded; the owned, permission-sensitive session authority is constructed by an offer requiring it. Grounding admits what exists; an offer acquires what does not.
+- A captured frame's provenance is captured-only by construction. There is no rasterized arm to inhabit.
+- A capture names a committed composition: a projection commit and a capture scope. Neither alone identifies which pixels.
 - A captured frame carries host-captured provenance and can never carry rasterized provenance.
 - Availability is answered, not assumed, and refusal says which kind it is — permission-required and unavailable have different remediations.
 - Capture decides nothing about codecs, containers, or bitrates, and holds no scene or frame model of its own.
@@ -79,6 +83,8 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - capture-scope-is-not-a-second-boundary
+  - the-facility-is-grounded-the-authority-is-offered
   - capture-is-not-rasterization
   - a-capture-names-a-committed-composition
   - captured-frames-cannot-claim-a-semantic-frame

@@ -65,7 +65,11 @@ import type {
   ServerOperationOffer,
   ServerOperationTypeSurface,
 } from './09_operation/types.js';
-import type { ServerMediaOffer, ServerMediaTypeSurface } from './10_media/types.js';
+import type {
+  ServerCodecAdmissionGrounding,
+  ServerMediaOffer,
+  ServerMediaTypeSurface,
+} from './10_media/types.js';
 
 /** The eleven server homes, in numbered dependency order. */
 export type ServerHomeName =
@@ -121,6 +125,7 @@ export interface ServerCapabilityTopology {
     readonly networkFacility: ServerNetworkFacilityGrounding;
     readonly databaseEndpoint: DatabaseEndpointGrounding;
     readonly toolCatalog: ToolCatalogGrounding;
+    readonly codecAdmission: ServerCodecAdmissionGrounding;
     readonly schedulingFacility: ServerSchedulingGrounding;
     readonly operationCatalog: OperationCatalogGrounding;
   };
@@ -224,6 +229,7 @@ export type TheServerGroundingPopulationIsExact = Assert<
     | 'networkFacility'
     | 'databaseEndpoint'
     | 'toolCatalog'
+    | 'codecAdmission'
     | 'schedulingFacility'
     | 'operationCatalog'
   >

@@ -14,6 +14,7 @@ Own server-physical media resources: native decode, analysis, render, and encode
 
 ## Owns
 
+- `renderFrames`: one exact semantic cut into a bounded source of physical frames, under an exact render profile.
 - Four distinct relationships: decode, render, encode, and mux.
 - Media packet streams bound to the exact job and encode profile that produced them.
 - The media job: bound to the exact source revision it renders — the job cannot forget which authored content it rendered — with core's sample position, the exact core `MediaFrame` contract being rendered, its exact named tool, the exact physical input stream and output destination it depends on (both root-correlated filesystem resources), determinism evidence (a witness address, or an explicit refusal to claim it), a job-exact bounded output stream, an output address, job-exact cancellation, and an owned lifecycle.
@@ -30,6 +31,10 @@ The reset's canonical failure was a scene render whose output was a flat color f
 
 ## Laws
 
+- The render stage owns its own profile. Borrowing the encode profile attached a claim about rasterization to a description of the codec that runs afterwards. One stage, one profile, one claim.
+- The render request carries no sample position beside its cut. The media cut already owns the frame and sample coordinate.
+- This host fills core's decode, encode, and mux sockets and declares none of its own. A server-local codec contract would be a second vocabulary beside core's.
+- The job carries the exact admitted tool profile, not a bare tool reference — otherwise two admitted builds of the same binary, one pinned and one from the PATH, are freely interchangeable.
 - A render job carries an actual non-empty frame population. A schema describing a frame is satisfied by a job that never received one, which is how a renderer emits a valid file containing none of the authored work.
 - Packets are media packets. Network framing cannot satisfy the stream, and the comparison is structural because the two are both bytes with metadata and only their members keep them apart.
 - A packet stream is exact over both its job and its profile, so packets encoded under one profile cannot be reported under another.
@@ -58,6 +63,9 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - render-owns-its-own-profile
+  - no-sample-position-beside-the-cut
+  - the-server-fills-the-core-sockets
   - four-relationships-not-one-render
   - frames-not-a-schema-describing-frames
   - media-packets-are-not-network-chunks

@@ -74,7 +74,11 @@ import type {
   WebExecutionTypeSurface,
 } from './10_execution/types.js';
 import type { IslandActivationOffer, WebIslandTypeSurface } from './11_island/types.js';
-import type { CaptureAuthorityOffer, WebCaptureTypeSurface } from './12_capture/types.js';
+import type {
+  CaptureAuthorityOffer,
+  CaptureFacilityGrounding,
+  WebCaptureTypeSurface,
+} from './12_capture/types.js';
 
 /** The thirteen web homes, in numbered dependency order. */
 export type WebHomeName =
@@ -157,6 +161,7 @@ export interface WebCapabilityTopology {
     readonly injectedAudioRuntime: InjectedAudioRuntimeGrounding;
     readonly gpuAccess: GpuAccessGrounding;
     readonly schedulingFacility: SchedulingFacilityGrounding;
+    readonly captureFacility: CaptureFacilityGrounding;
   };
   readonly offers: {
     readonly regionAuthority: RegionAuthorityOffer;
@@ -276,6 +281,7 @@ export type TheGroundingPopulationIsExact = Assert<
     | 'audioFacility'
     | 'injectedAudioRuntime'
     | 'gpuAccess'
+    | 'captureFacility'
     | 'schedulingFacility'
   >
 >;

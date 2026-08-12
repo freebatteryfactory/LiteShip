@@ -1,207 +1,267 @@
 /**
- * The live/export join: one cut, sibling egresses, exact provenance.
+ * The live/export lineage: one cut, one frame, one actual output feeding the
+ * next actual input.
  *
- * Everything here is a relationship the architecture must keep legal, and each
- * one crosses a home boundary that no single home could have proved. Before
- * this file compiled, the media fold was approved and unproven — the same
- * position the Astro/Vite seam was in before its binding probe existed.
+ * The previous version of this file declared its values independently and
+ * asserted in a comment that they were related. It proved every local type was
+ * inhabitable and nothing about whether they compose — a laboratory specimen,
+ * the exact hazard flagged when the Astro seam was reviewed and then reproduced
+ * here one fold later.
+ *
+ * The rule this file now obeys: every value after the first is derived from the
+ * *returned type of a real public operation*, via `OkOf<ReturnType<…>>`. There
+ * is no `as`, no separately declared substitute, and no local lookalike. If a
+ * stage stops feeding the next, this file stops compiling.
  *
  * Expected: COMPILES.
  */
 
-import type { NonEmptyTuple, Result } from './types.js';
+import type { NonEmptyTuple, OkOf, OutputOf, Result } from './types.js';
 import type { Diagnostic } from './00_core/00_error/types.js';
 import type { EvidenceCutId } from './00_core/06_evidence/types.js';
 import type { DraftSemanticCut, SemanticCut } from './00_core/08_state/types.js';
 import type { RevisionId, WorldId } from './00_core/02_identity/types.js';
 import type { ProjectionFidelity } from './00_core/11_scene/types.js';
 import type {
+  AdmittedProfile,
   ContainerProfileId,
   EncodeProfileId,
+  EncodeProfileReference,
   MediaAssetId,
   MediaCut,
-  MediaExportDisposition,
+  MediaEncoderAuthority,
+  MediaExportDecision,
   MediaExportRequest,
   MediaFrame,
+  MediaMuxAuthority,
+  MediaRepresentationId,
+  MediaSourceId,
   MediaTimeCut,
-  PhysicalFrame,
+  MediaTrackId,
 } from './00_core/12_media/types.js';
 import type { RuntimeCommit } from './00_core/16_runtime/types.js';
 import type { PreviewBranch } from './00_core/17_editor/types.js';
 import type {
-  WebEncodeProduct,
-  WebEncodeRequest,
-  WebEncoderAuthority,
-  WebMuxAuthority,
-  WebMuxProduct,
-  WebMuxRequest,
-} from './01_hosts/web/08_media/types.js';
-import type {
   GraphicsReadback,
   RasterizationRequest,
   RasterProfileId,
-  WebPhysicalFrame,
 } from './01_hosts/web/09_graphics/types.js';
-import type {
-  CaptureAuthority,
-  CapturedFrame,
-  CaptureProfileId,
-  CaptureRequest,
-} from './01_hosts/web/12_capture/types.js';
+import type { CaptureAuthority, CaptureProfileId, CaptureRequest } from './01_hosts/web/12_capture/types.js';
 
 type WorldA = WorldId<'probe.media.world-a'>;
 type EvidenceA = EvidenceCutId<'probe.media.evidence-a'>;
+type CutA = SemanticCut<WorldA, RevisionId, EvidenceA, MediaTimeCut>;
+type FrameA = MediaFrame<'probe.media.state-a', CutA>;
+
+type RepA = MediaRepresentationId<'probe.media.representation-a'>;
 type RasterA = RasterProfileId<'probe.media.raster-a'>;
 type EncodeA = EncodeProfileId<'probe.media.encode-a'>;
 type ContainerA = ContainerProfileId<'probe.media.container-a'>;
 type AssetA = MediaAssetId<'probe.media.asset-a'>;
+type TrackA = MediaTrackId<'probe.media.track-a'>;
 type CaptureA = CaptureProfileId<'probe.media.capture-a'>;
+type FrameSourceA = MediaSourceId<'probe.media.frame-source-a'>;
+type PacketSourceA = MediaSourceId<'probe.media.packet-source-a'>;
 
 declare const readback: GraphicsReadback;
-declare const encoder: WebEncoderAuthority;
-declare const mux: WebMuxAuthority;
+declare const encoder: MediaEncoderAuthority;
+declare const mux: MediaMuxAuthority;
 declare const capture: CaptureAuthority;
 
 // ---------------------------------------------------------------------------
-// P1. One committed cut reaches two sibling egresses.
-//
-// The web presentation path and the semantic media path both name the same
-// object. Neither derives from the other, and neither assembles a coordinate of
-// its own — which is the whole content of "live and export share meaning and
-// time, not one physical renderer".
+// P1. One committed cut reaches two sibling egresses — and it is the same
+// object, not two values a comment claims are equal.
 // ---------------------------------------------------------------------------
 
-declare const committedCut: SemanticCut<WorldA, RevisionId, EvidenceA>;
-declare const runtimeCommit: RuntimeCommit;
+declare const runtimeCommit: RuntimeCommit<CutA>;
 
-/** The residual web path reaches the cut through the commit it already owned. */
-export const theWebPathReachesTheCut: SemanticCut = runtimeCommit.semantic.cut;
+/** The web path reaches the cut through the commit it already owned. */
+export const theWebPathReachesTheCut: CutA = runtimeCommit.semantic.cut;
 
-/** The media path names the same cut, refined to a media time coordinate. */
-declare const mediaCut: MediaCut<WorldA, RevisionId, EvidenceA>;
-export const theMediaPathReachesTheCut: MediaCut<WorldA, RevisionId, EvidenceA> = mediaCut;
+/** The media path names that same cut. Not a sibling of the same shape — that one. */
+export const theMediaPathReachesTheSameCut: MediaCut<WorldA, RevisionId, EvidenceA> =
+  theWebPathReachesTheCut;
 
-/** Both are cuts of the same world and evidence population. */
-export const bothSpeakOneWorld: WorldA = committedCut.world.id;
+/** And a semantic frame is evaluated at exactly it. */
+declare const frameA: MediaFrame<'probe.media.state-a', typeof theWebPathReachesTheCut>;
+export const theFrameSitsOnThatCut: CutA = frameA.cut;
 
 // ---------------------------------------------------------------------------
-// P2. Rasterize → encode → mux, across three homes, with no cast.
-//
-// `08_media` sits above `09_graphics` and cannot name its payload type. The
-// frames still travel without erasure because the encode request is generic
-// over the frame, and this file is the composition point that imports both.
+// P2. Rasterize → encode → mux, each stage consuming the previous stage's
+// actual return type.
 // ---------------------------------------------------------------------------
 
-declare const semanticFrame: MediaFrame;
-declare const rasterRequest: RasterizationRequest<RasterA>;
+declare const rasterRequest: RasterizationRequest<FrameA, RasterA>;
 
-/** Rasterization yields a frame that names the exact profile it was drawn under. */
-export const rasterized: Result<WebPhysicalFrame<RasterA>, NonEmptyTuple<Diagnostic>> =
-  readback.rasterize(rasterRequest);
+/** Stage 1: the frame source rasterization actually returns. */
+type RasterizedSource = OkOf<
+  ReturnType<typeof readback.rasterizeSequence<RepA, FrameA, RasterA, FrameSourceA>>
+>;
+export const rasterized: Result<RasterizedSource, NonEmptyTuple<Diagnostic>> =
+  readback.rasterizeSequence(rasterRequest);
 
-/** A graphics frame is a lawful physical frame for the media home. */
-declare const graphicsFrames: NonEmptyTuple<WebPhysicalFrame<RasterA>>;
-export const encodeRequest: WebEncodeRequest<EncodeA, WebPhysicalFrame<RasterA>> = {
-  profile: {} as WebEncodeRequest<EncodeA, WebPhysicalFrame<RasterA>>['profile'],
-  tracks: {} as WebEncodeRequest<EncodeA, WebPhysicalFrame<RasterA>>['tracks'],
-  frames: graphicsFrames,
+/**
+ * The unit a source yields, read through its actual `pull` output.
+ *
+ * Not `infer`: the unit lives behind `Signature`'s output slot, and inference
+ * through it silently resolves to `never` — which would have made every
+ * downstream stage accept anything while looking exact.
+ */
+/** The frames that source yields, read off the source rather than redeclared. */
+type RasterizedFrames = Extract<
+  OutputOf<RasterizedSource['pull']>,
+  { readonly _tag: 'produced' }
+>['units'][number];
+
+declare const admittedEncode: AdmittedProfile<EncodeProfileReference<EncodeA>>;
+declare const videoTrack: import('./00_core/12_media/types.js').MediaTrackContract<TrackA>;
+declare const rasterizedSource: RasterizedSource;
+
+/**
+ * Stage 2: the encode request consumes *that* source.
+ *
+ * `input.video` is the value stage 1 returned. Nothing else can inhabit it: a
+ * source of some other frame type, some other raster profile, or some other
+ * representation is not this type.
+ */
+export const encodeRequest: import('./00_core/12_media/types.js').MediaEncodeRequest<
+  'video-only',
+  RasterizedFrames,
+  never,
+  EncodeA,
+  TrackA
+> = {
+  profile: admittedEncode,
+  tracks: { _tag: 'video-only', video: videoTrack },
+  input: { _tag: 'video-only', video: rasterizedSource },
 };
 
-/** Encoding preserves both the profile and the exact frame type it consumed. */
-export const encoded: Result<
-  WebEncodeProduct<EncodeA, WebPhysicalFrame<RasterA>>,
-  NonEmptyTuple<Diagnostic>
-> = encoder.encode(encodeRequest);
+/** Stage 2 output: the packet source the encoder actually returns. */
+type EncodedProduct = OkOf<
+  ReturnType<
+    typeof encoder.encode<'video-only', RasterizedFrames, never, EncodeA, PacketSourceA, TrackA, MediaTrackId>
+  >
+>;
+export const encoded: Result<EncodedProduct, NonEmptyTuple<Diagnostic>> = encoder.encode(encodeRequest);
 
-/** Muxing those packets yields the artifact, exact over asset and container. */
-declare const muxRequest: WebMuxRequest<EncodeA, ContainerA, AssetA>;
-export const finalized: Result<WebMuxProduct<ContainerA, AssetA>, NonEmptyTuple<Diagnostic>> =
-  mux.finalize(muxRequest);
+declare const encodedProduct: EncodedProduct;
+declare const admittedContainer: AdmittedProfile<
+  import('./00_core/12_media/types.js').ContainerProfileReference<ContainerA>
+>;
+declare const assetA: import('./00_core/12_media/types.js').MediaAssetReference<AssetA>;
+
+/**
+ * Stage 3: the mux request consumes the encoder's actual packet source and the
+ * encoder's actual track configuration.
+ */
+export const muxRequest: import('./00_core/12_media/types.js').MediaMuxRequest<
+  'video-only',
+  EncodeA,
+  PacketSourceA,
+  ContainerA,
+  AssetA,
+  TrackA
+> = {
+  asset: assetA,
+  container: admittedContainer,
+  tracks: encodedProduct.tracks,
+  packets: encodedProduct.packets,
+};
+
+/** Stage 3 output: the artifact, still exact over asset, container, and track. */
+export const finalized: Result<
+  OkOf<
+    ReturnType<
+      typeof mux.finalize<'video-only', EncodeA, PacketSourceA, ContainerA, AssetA, TrackA, MediaTrackId>
+    >
+  >,
+  NonEmptyTuple<Diagnostic>
+> = mux.finalize(muxRequest);
 
 // ---------------------------------------------------------------------------
 // P3. A draft cut reaches editor preview and rasterization, and never becomes
 // a production commit.
-//
-// This is the case my first draft of the capture law would have made illegal.
-// Preview must be able to draw a counterfactual; what it must not do is produce
-// a runtime commit.
 // ---------------------------------------------------------------------------
 
 declare const preview: PreviewBranch;
-
-/** The preview's result is a draft cut, carrying a full coordinate. */
 export const previewCut: DraftSemanticCut = preview.result;
 
-/**
- * A frame over a draft cut is a lawful media frame — the editor is not a second
- * program. The draft cut is specialized to the media time coordinate for the
- * same reason the committed one is: a media frame is exact over a frame/sample
- * position, and a draft that spoke only the generic time cut would be a preview
- * of a moment no encoder could locate.
- */
 declare const draftMediaCut: DraftSemanticCut<WorldA, RevisionId, EvidenceA, MediaTimeCut>;
-declare const draftFrame: MediaFrame<unknown, typeof draftMediaCut>;
-export const aDraftFrameIsAFrame: MediaFrame<unknown, typeof draftMediaCut> = draftFrame;
+declare const draftFrame: MediaFrame<'probe.media.state-a', typeof draftMediaCut>;
 
-/** And it rasterizes, because refusing draft output is publication authority. */
-export const draftRasterization: RasterizationRequest<RasterA> = {
+/** A draft frame rasterizes: refusing draft output is publication authority. */
+export const draftRasterization: RasterizationRequest<typeof draftFrame, RasterA> = {
   resource: rasterRequest.resource,
   frame: draftFrame,
   profile: rasterRequest.profile,
 };
 
 // ---------------------------------------------------------------------------
-// P4. Browser-composite capture reaches the same encoder.
-//
-// Capture and rasterization produce the same envelope and make different
-// claims. Both are lawful encoder input; only one is a projection claim.
+// P4. Browser capture reaches the same encoder, through its own actual return.
 // ---------------------------------------------------------------------------
 
-declare const captureRequest: CaptureRequest<CaptureA>;
-export const captured: Result<CapturedFrame<CaptureA>, NonEmptyTuple<Diagnostic>> =
-  capture.capture(captureRequest);
+declare const captureRequest: CaptureRequest<CutA, CaptureA>;
 
-declare const capturedFrames: NonEmptyTuple<CapturedFrame<CaptureA>>;
-export const captureEncodes: WebEncodeRequest<EncodeA, CapturedFrame<CaptureA>> = {
-  profile: encodeRequest.profile,
-  tracks: encodeRequest.tracks,
-  frames: capturedFrames,
+type CapturedSource = OkOf<
+  ReturnType<typeof capture.captureSequence<RepA, CutA, CaptureA, FrameSourceA>>
+>;
+export const captured: Result<CapturedSource, NonEmptyTuple<Diagnostic>> =
+  capture.captureSequence(captureRequest);
+
+type CapturedFrames = Extract<
+  OutputOf<CapturedSource['pull']>,
+  { readonly _tag: 'produced' }
+>['units'][number];
+declare const capturedSource: CapturedSource;
+
+/** That captured source is lawful encoder input, with no cast and no adapter. */
+export const captureEncodes: import('./00_core/12_media/types.js').MediaEncodeRequest<
+  'video-only',
+  CapturedFrames,
+  never,
+  EncodeA,
+  TrackA
+> = {
+  profile: admittedEncode,
+  tracks: { _tag: 'video-only', video: videoTrack },
+  input: { _tag: 'video-only', video: capturedSource },
 };
 
-/** Both provenances inhabit the one physical-frame contract. */
-export const bothArePhysicalFrames: readonly PhysicalFrame[] = [
-  ...graphicsFrames,
-  ...capturedFrames,
-];
-
 // ---------------------------------------------------------------------------
-// P5. All three export dispositions are inhabited, including the honest
-// refusal for opaque DOM.
-//
-// The unavailable arm is the one that matters. A page region with no declared
-// media projection must be describable as exactly that — not omitted, not
-// represented by an empty frame, and not quietly answered with a screenshot.
+// P5. All three export dispositions are inhabited, each attached to a request
+// that names a real subject.
 // ---------------------------------------------------------------------------
 
 declare const fidelity: ProjectionFidelity;
 declare const diagnostics: NonEmptyTuple<Diagnostic>;
+declare const exportRequest: MediaExportRequest<
+  import('./00_core/11_scene/types.js').SceneReference,
+  MediaCut<WorldA, RevisionId, EvidenceA>,
+  AssetA
+>;
 
-export const semanticCast: MediaExportDisposition = {
-  _tag: 'semantic-projection',
-  fidelity,
-} as MediaExportDisposition;
+export const semanticCast: MediaExportDecision<
+  import('./00_core/11_scene/types.js').SceneReference,
+  MediaCut<WorldA, RevisionId, EvidenceA>,
+  AssetA
+> = { request: exportRequest, disposition: { _tag: 'semantic-projection', fidelity } };
 
-export const hostCapture: MediaExportDisposition<CaptureA> = {
-  _tag: 'host-capture',
-  profile: {} as CaptureA,
-} as MediaExportDisposition<CaptureA>;
+export const hostCapture: MediaExportDecision<
+  import('./00_core/11_scene/types.js').SceneReference,
+  MediaCut<WorldA, RevisionId, EvidenceA>,
+  AssetA,
+  CaptureA
+> = { request: exportRequest, disposition: { _tag: 'host-capture', profile: {} as CaptureA } };
 
-export const opaqueDomIsUnavailable: MediaExportDisposition = {
-  _tag: 'unavailable',
-  diagnostics,
-  remediation: 'declare a media egress on the subject, or capture the composition',
-} as MediaExportDisposition;
-
-/** Every export request carries exactly one of them. */
-declare const exportRequest: MediaExportRequest<AssetA, CaptureA>;
-export const oneDisposition: MediaExportDisposition<CaptureA> = exportRequest.disposition;
+export const opaqueDomIsUnavailable: MediaExportDecision<
+  import('./00_core/11_scene/types.js').SceneReference,
+  MediaCut<WorldA, RevisionId, EvidenceA>,
+  AssetA
+> = {
+  request: exportRequest,
+  disposition: {
+    _tag: 'unavailable',
+    diagnostics,
+    remediation: 'declare a media egress on the subject, or capture the composition',
+  },
+};

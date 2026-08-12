@@ -270,11 +270,11 @@ export type AnySemanticCut<
  * `base` remains a sibling because it is a different fact: the revision this
  * commit departed from, not the coordinate it arrived at.
  */
-export interface Commit {
+export interface Commit<Cut extends SemanticCut = SemanticCut> {
   readonly id: CommitId;
   readonly change: ChangeId;
   readonly base: RevisionReference;
-  readonly cut: SemanticCut;
+  readonly cut: Cut;
 }
 
 /** State-system authority declaration. */
@@ -484,12 +484,15 @@ export type ADraftCutCannotSatisfyACommittedCut = Assert<
 export type ACommitCarriesTheCutAndNoSiblingCoordinate = Assert<
   Equal<
     [
-      Commit['cut'] extends SemanticCut ? true : false,
+      Commit<CutLawA>['cut'],
+      Commit<CutLawA> extends Commit<SemanticCut<CutLawWorldB, CutLawRevisionA, CutLawEvidenceA>>
+        ? true
+        : false,
       'result' extends keyof Commit ? true : false,
       'time' extends keyof Commit ? true : false,
       'base' extends keyof Commit ? true : false,
     ],
-    [true, false, false, true]
+    [CutLawA, false, false, false, true]
   >
 >;
 

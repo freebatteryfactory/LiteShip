@@ -91,7 +91,6 @@ export interface WorkingOverlay {
  * kind is what keeps it from reaching a production slot.
  */
 export interface PreviewBranch {
-  readonly base: SemanticCut;
   readonly overlay: WorkingOverlay;
   readonly result: DraftSemanticCut;
   readonly scene?: SceneReference;
@@ -111,10 +110,10 @@ export type APreviewProducesADraftCut = Assert<
     [
       PreviewBranch['result'] extends DraftSemanticCut ? true : false,
       PreviewBranch['result'] extends SemanticCut ? true : false,
-      PreviewBranch['base'] extends SemanticCut ? true : false,
+      'base' extends keyof PreviewBranch ? true : false,
       'time' extends keyof WorkingOverlay ? true : false,
     ],
-    [true, false, true, false]
+    [true, false, false, false]
   >
 >;
 

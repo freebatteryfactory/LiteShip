@@ -20,10 +20,18 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // Observed at the ratified host-layer closure. A change means coverage moved.
 const PROBES = [
   { file: 'probe-positives.ts', expect: 'compiles', why: '28 lawful fixtures, including the provider-form paths' },
-  { file: 'probe-h-composition.ts', expect: 'compiles', why: 'exact filesystem stream composes into the media request' },
+  // The arrow moved sides in the media-lineage fold: decode became a core
+  // socket taking an addressed asset, so the filesystem now feeds media at the
+  // destination. Same relationship, opposite end of the operation.
+  { file: 'probe-h-composition.ts', expect: 'compiles', why: 'exact admitted path composes into the render request and survives onto the job' },
   { file: 'probe-active.ts', expect: 'rejects', errors: 13, why: 'the C1-C5 witnesses, each a distinct A-versus-B identity' },
-  { file: 'probe-h-adapted.ts', expect: 'rejects', errors: 9, why: 'H1-H3 witnesses at current arity, semantic not arity failures' },
-  { file: 'probe-h-survivors.ts', expect: 'rejects', errors: 8, why: 'the survivors the provider-path fold closed' },
+  // 9 -> 8: A6a and A6b named `open` and the stream it returned. The render
+  // job now returns a bounded frame source directly, so one witness over
+  // `frames` covers what two covered over a stream that no longer exists.
+  { file: 'probe-h-adapted.ts', expect: 'rejects', errors: 8, why: 'H1-H3 witnesses at current arity, semantic not arity failures' },
+  // 8 -> 7: S6a and S6b collapse for the same reason as A6a/A6b above, and S5b
+  // sharpened from a bare tool reference to an exact admitted tool profile.
+  { file: 'probe-h-survivors.ts', expect: 'rejects', errors: 7, why: 'the survivors the provider-path fold closed' },
   { file: 'probe-source-relation-positives.ts', expect: 'compiles', why: 'all three arms inhabited, exact artifacts coexist in the erased catalog' },
   { file: 'probe-source-relation-negatives.ts', expect: 'rejects', errors: 7, why: 'each way the source-map ambiguity could return' },
   { file: 'probe-astro-vite-binding.ts', expect: 'compiles', why: 'the real cross-target join: Vite\'s facility fills Astro\'s hole through BindingsFor, no casts' },
@@ -42,10 +50,17 @@ const PROBES = [
   // frame travels into an encoder that cannot name the graphics home, a draft
   // cut rasterizes without becoming a commit, and all three export dispositions
   // are inhabited including the honest refusal.
-  { file: 'probe-media-live-export.ts', expect: 'compiles', why: 'one cut, sibling egresses, rasterize-encode-mux across three homes, draft preview, all three dispositions' },
+  // Rebuilt as one connected lineage: every value after the first is derived
+  // from `OkOf<ReturnType<…>>` of a real public operation, with no casts and no
+  // separately declared substitutes. The previous version declared its values
+  // independently and asserted the relationship in a comment.
+  { file: 'probe-media-live-export.ts', expect: 'compiles', why: 'one cut, and one real output feeding the next real input through rasterize-encode-mux' },
   // Compiles rather than rejects, for the same reason the cross-target
   // negatives do: each negative names its own site under `@ts-expect-error`.
-  { file: 'probe-media-negatives.ts', expect: 'compiles', why: 'fifteen media negatives, each self-verifying via @ts-expect-error' },
+  // Tripwires, not semantic proof: a directive is satisfied by any error on its
+  // line. Every site here is also covered by a named mutation in the banks, and
+  // the count below is not a count of proved refusals.
+  { file: 'probe-media-negatives.ts', expect: 'compiles', why: 'twenty-four media tripwires, each self-verifying via @ts-expect-error, each backed by a named mutation' },
 ];
 
 const known = new Set(PROBES.map((p) => p.file));

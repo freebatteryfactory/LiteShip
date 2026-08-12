@@ -68,6 +68,8 @@ Fallback behavior is explicit and preserves the reference semantics or returns a
 
 ## Laws
 
+- `RuntimeCommit` is generic over the cut it witnesses, so `ProjectionCommit` and every capture composition below it inherit the exact coordinate rather than a same-shaped substitute.
+- A runtime transaction departs from one cut. Its loose `time` and `base: WorldRevision` retired for the same reason the commit's siblings did.
 - An execution request names one departure coordinate and no sibling revision, time, world, or evidence member.
 - A runtime commit is the residual-path witness that a committed cut exists, and cannot witness a draft. A preview must be able to evaluate and rasterize; what it must never do is produce this object, because everything downstream reads it as proof that application reality moved.
 - A platform-native projection program binds the exact source revision and timebase without manufacturing a runtime cut for every displayed frame. A CSS view timeline is a sibling projection, not a transaction, and dragging it back through JavaScript for diagram symmetry would waste a battery the platform already paid for.
@@ -118,6 +120,7 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - the-runtime-carrier-preserves-the-exact-cut
   - one-departure-coordinate-no-siblings
   - the-runtime-commit-witnesses-only-committed-cuts
   - platform-programs-are-not-per-frame-cuts

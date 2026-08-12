@@ -30,12 +30,11 @@ import type {
   CommittedResponse,
   ResponseFailure,
 } from './01_hosts/edge/09_response/types.js';
-import type { ToolId, ToolReference } from './01_hosts/server/07_tool/types.js';
+import type { ToolId, ToolProfile, ToolProfileId } from './01_hosts/server/07_tool/types.js';
+import type { MediaSourceId } from './00_core/12_media/types.js';
 import type {
   ServerMediaAuthority,
-  ServerMediaJob,
-  MediaJobId,
-  MediaJobReference,
+  ServerRenderJob,
 } from './01_hosts/server/10_media/types.js';
 import type { StatementRequest, StatementResource } from './01_hosts/server/05_database/types.js';
 
@@ -79,23 +78,53 @@ export const s4CrossRequestCommit: Result<CommittedResponse<EdgeRequestId>, Resp
 // S5 + S6: the media provider path does not thread contract, tool, or job.
 // ---------------------------------------------------------------------------
 
-type PublicMediaJob = OutputOf<ServerMediaAuthority['render']>;
+type PublicMediaJob = OutputOf<ServerMediaAuthority['renderFrames']>;
 
 /** S5a: a rendered job may claim a frame contract the request never named. */
 export const s5ForeignContract: PublicMediaJob['contract'] =
   {} as SchemaReference<SchemaId<'probe.survivor.contract-b'>, MediaFrame>;
 
-/** S5b: a rendered job may claim a tool the request never named. */
+/**
+ * S5b: a rendered job may claim a tool profile the request never named.
+ *
+ * The subject sharpened when the tool reference became a tool profile: the
+ * survivor is now two *admitted profiles of the same binary* — one pinned, one
+ * from the PATH — being interchangeable, which is the form that actually
+ * matters for a reproducibility claim.
+ */
 export const s5ForeignTool: PublicMediaJob['tool'] =
-  {} as ToolReference<ToolId<'probe.survivor.tool-b'>>;
+  {} as ToolProfile<ToolId<'probe.survivor.tool-b'>, ToolProfileId<'probe.survivor.profile-b'>>;
 
-/** S6a: a job specialized to A opens with a reference naming job B. */
-export const s6ForeignOpen: InputOf<ServerMediaJob['open']> =
-  {} as MediaJobReference<MediaJobId<'probe.survivor.job-b'>>;
-
-/** S6b: the output stream's job member admits any job identity. */
-export const s6ForeignStreamJob: OutputOf<ServerMediaJob['open']>['job'] =
-  {} as MediaJobReference<MediaJobId<'probe.survivor.job-b'>>;
+/**
+ * S6: the frame source a render job returns admits a source of another
+ * identity.
+ *
+ * S6a and S6b previously named `open` and the stream it returned. That pair
+ * moved when packet streaming became core's bounded source and the render job
+ * started returning a frame source directly — so one witness now covers what
+ * two did, over the member that actually carries the identity.
+ */
+export const s6ForeignFrameSource: ServerRenderJob<
+  never,
+  never,
+  never,
+  never,
+  never,
+  never,
+  never,
+  never,
+  MediaSourceId<'probe.survivor.source-a'>
+>['frames'] = {} as ServerRenderJob<
+  never,
+  never,
+  never,
+  never,
+  never,
+  never,
+  never,
+  never,
+  MediaSourceId<'probe.survivor.source-b'>
+>['frames'];
 
 // ---------------------------------------------------------------------------
 // S7 (recorded, NOT blocking): exact runtime deadline values share one type.

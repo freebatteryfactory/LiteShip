@@ -14,6 +14,10 @@ Define realm-neutral media assets, decode and encode requirements, format and co
 
 ## Owns
 
+- The bounded, ordered, lossless media source: ordered production, consumer credit, non-empty batches, explicit completion, cancellation, and failure.
+- Physical payload identity by *representation*, with origin left to provenance.
+- Three sockets — decode, encode, and mux — each total over an admitted profile.
+- The export request, and separately the decision about it.
 - Media asset identity and metadata.
 - Codec, track, packet, and container contracts, and the finished media artifact.
 - Sample, frame, beat, onset, peak, waveform, and analysis definitions.
@@ -41,6 +45,15 @@ Realtime and offline paths consume the same semantic media program and time coor
 
 ## Laws
 
+- A media source is lossless. `13_stream` owns push delivery and may lawfully drop oldest, drop newest, or coalesce — losing a stale UI event is recoverable. Losing frame 317 changes the movie, so there is no dropped arm here at all. Deliberate decimation is a media transformation with a receipt, never a consequence of a full buffer.
+- Encoding consumes a source and produces a source. A tuple at either end reintroduces the memory wall that made long-form rendering impossible: a five-minute render cannot exist in memory before encoding starts.
+- The encode input and the track configuration are selected by one shared tag, so an audio-only output cannot be requested with a video frame source, and an audio-video output cannot be requested with half its input.
+- A physical frame carries no coordinate of its own — provenance owns it. A rasterized frame's coordinate is its semantic frame's; a decoded frame's is its source's; a captured frame's is the capture's.
+- Provenance is specialized per frame kind rather than one union with arms a frame can never inhabit. Decoded frames needed an arm of their own rather than wearing a rasterized nametag that was never true.
+- Payload identity follows representation, not realm. Two hosts producing the same canonical bytes interoperate; that is a feature, and four realm-named wrappers around one structure were four comments on the same type.
+- Every codec operation consumes an *admitted* profile. That is what makes a total contract honest — a bare reference is a branded identity anyone can mint, so a total operation over it would promise output for codecs the host has never heard of. Totality means no compatibility-refusal arm after admission; it never means the physical work cannot fail, and every operation still returns a `Result`.
+- A packet names the source, track, and profile that produced it, and carries its own sequence. Without the track relation a mux can assemble a container whose roster its packets never had.
+- An export request names its subject, cut, and egress, and carries no disposition. A request holding its own answer is a decided plan wearing a request nametag, and it let a semantic-projection disposition exist while naming nothing at all.
 - Long-running sample coordinates do not use a 32-bit signed counter.
 - Frame/sample conversion is explicit and deterministic.
 - A semantic frame carries one cut and no sibling frame index, sample range, or time member.
@@ -94,6 +107,13 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - media-owns-lossless-sources-stream-owns-overload
+  - source-to-source-never-tuple-to-tuple
+  - input-correlated-to-tracks-by-one-tag
+  - provenance-owns-the-coordinate
+  - payload-identity-follows-representation-not-realm
+  - total-over-admitted-profiles-never-over-branded-strings
+  - the-request-names-the-subject-the-decision-answers-it
   - one-realtime-offline-media-program
   - sample-coordinate-authority
   - host-codecs-as-requirements

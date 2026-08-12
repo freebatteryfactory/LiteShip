@@ -111,7 +111,7 @@ const M = [
   // --- the commit owns it once ---------------------------------------------
   ['the commit reacquires a sibling result revision', ST,
     `  readonly base: RevisionReference;
-  readonly cut: SemanticCut;
+  readonly cut: Cut;
 }`,
     `  readonly base: RevisionReference;
   readonly cut: SemanticCut;
@@ -120,7 +120,7 @@ const M = [
 
   ['the commit reacquires a sibling time cut', ST,
     `  readonly base: RevisionReference;
-  readonly cut: SemanticCut;
+  readonly cut: Cut;
 }`,
     `  readonly base: RevisionReference;
   readonly cut: SemanticCut;
@@ -129,7 +129,7 @@ const M = [
 
   ['the commit loses its cut entirely', ST,
     `  readonly base: RevisionReference;
-  readonly cut: SemanticCut;
+  readonly cut: Cut;
 }`,
     `  readonly base: RevisionReference;
   readonly result: RevisionReference;
@@ -138,7 +138,7 @@ const M = [
 
   ['the commit accepts a draft cut', ST,
     `  readonly base: RevisionReference;
-  readonly cut: SemanticCut;
+  readonly cut: Cut;
 }`,
     `  readonly base: RevisionReference;
   readonly cut: DraftSemanticCut;

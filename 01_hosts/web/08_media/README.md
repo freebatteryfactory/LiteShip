@@ -14,6 +14,7 @@ Own the physical browser audio and media resources: `AudioContext` and worklets,
 
 ## Owns
 
+- Codec admission: whether this browser accepts one exact profile, and the witness that answer mints.
 - Browser decoder, encoder, and mux authorities over exact profiles.
 - Codec admission as evidence: whether this browser accepts one exact configuration.
 - Media resource identity, kind, and owned lifetime.
@@ -35,6 +36,9 @@ The clock speaks the core sample coordinate — `SampleIndex` at a `SampleRate` 
 
 ## Laws
 
+- This host *fills* core's decode, encode, and mux sockets rather than declaring neighbours of them. The predecessor state was three browser-local authorities shaped like core's and related to them only by comment, while the README claimed they had met. Identity, not similarity, is what makes that claim compile.
+- Admission mints the `AdmittedProfile` core requires. Without it, admission would answer a question nobody downstream could act on and core's operations would have to reopen a compatibility arm they were designed to close.
+- Admission is an intrinsic browser fact and is grounded; the owned, hardware-sensitive codec provider is constructed by an offer requiring it.
 - Decode and encode are operations, not resource kinds. Holding a `codec` resource is acquisition; this home previously had no operation anywhere that could be asked to produce a frame or a packet.
 - An unsupported configuration is an explicit refusal carrying diagnostics, never an absent provider. "This browser will not encode at this profile" and "no encoder was wired up" have different remediations.
 - An encode consumes a non-empty frame population, and its packets stay exact over the profile that produced them.
@@ -66,6 +70,9 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - the-browser-fills-the-core-sockets
+  - admission-mints-the-witness
+  - grounding-admits-offers-construct
   - decode-and-encode-are-operations-not-resource-kinds
   - refusal-is-explicit-never-an-absent-provider
   - the-browser-default-is-unclaimed

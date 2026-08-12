@@ -14,6 +14,7 @@ Own immutable world revisions, normalized changes, transactions, typed relations
 
 ## Owns
 
+- The cut as a *carried* fact: `Commit` is generic over it, so the exactness survives every downstream carrier.
 - The semantic cut: one exact world, revision, temporal coordinate, and evidence population, addressed.
 - The draft cut, which is the same coordinate over a candidate revision that was never committed.
 - Component and relation definitions.
@@ -59,6 +60,7 @@ Core defines what must be stored and the compare-and-swap, snapshot, append, loa
 
 ## Laws
 
+- A commit is exact over its cut. Carrying the broad form here would have erased an exact coordinate at the first public carrier and left every downstream projection agreeing only in shape — the defect class the host layer paid four folds to close, reappearing one tier up.
 - A cut names all four axes. A revision reference does not identify the world it belongs to, so a coordinate carrying revision alone looks complete and means less than it claims.
 - A cut is exact on every axis independently.
 - A draft cut cannot satisfy a committed cut in either direction. The two differ by one reference kind, and that kind is the whole distinction.
@@ -117,6 +119,7 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - the-commit-carries-the-exact-cut-not-its-broad-form
   - one-cut-not-three-loose-coordinates
   - the-commit-owns-its-cut-once
   - draft-and-committed-cuts-stay-distinct

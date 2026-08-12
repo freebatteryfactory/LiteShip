@@ -13,14 +13,15 @@
  *
  * Custody is representable both ways: an injected existing resource may be
  * grounded with retained or transferred custody, while a resource LiteShip
- * constructs is an offer materializing an owned lifetime. The exact capture
- * source roster is reserved for old-source mining.
+ * constructs is an offer materializing an owned lifetime.
+ *
+ * Codecs are not redeclared here. Decode, encode, and mux are core's sockets;
+ * this home admits profiles and provides those requirements.
  *
  * @module
  */
 
 import type {
-  Algebra,
   Assert,
   Brand,
   CaseOf,
@@ -30,27 +31,23 @@ import type {
   NonEmptyTuple,
   OutputOf,
   Reference,
-  Result,
   Signature,
   TagOf,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
-import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { MonotonicNanoseconds, SampleIndex } from '../../../00_core/04_time/types.js';
-import type { ReproducibilityClaim } from '../../../00_core/06_evidence/types.js';
 import type {
-  ContainerProfileId,
+  AdmittedProfile,
+  CodecAdmission,
   ContainerProfileReference,
-  DecodeProfileId,
   DecodeProfileReference,
-  EncodeProfileId,
   EncodeProfileReference,
-  MediaArtifact,
-  MediaAssetId,
-  MediaAssetReference,
-  MediaPacket,
-  MediaTrackConfiguration,
-  PhysicalFrame,
+  MediaDecoderAuthority,
+  MediaDecoderRequirement,
+  MediaEncoderAuthority,
+  MediaEncoderRequirement,
+  MediaMuxAuthority,
+  MediaMuxRequirement,
   SampleRate,
 } from '../../../00_core/12_media/types.js';
 import type {
@@ -178,122 +175,106 @@ export interface MediaConstructionAuthority {
 }
 
 // ---------------------------------------------------------------------------
-// Codec admission, decode, encode, and mux
+// Codec admission, and the core sockets this host fills
 // ---------------------------------------------------------------------------
 
 /**
  * Whether this browser admits one exact codec configuration.
  *
- * An unsupported configuration is an explicit refusal carrying diagnostics, not
- * an absent provider. The difference matters at runtime: "this browser will not
- * encode AV1 at this profile" and "no encoder was wired up" have different
- * remediations, and a missing provider cannot tell you which one happened.
+ * Admission is the host's job, and it is the reason core's decode, encode, and
+ * mux contracts can be total. The supported arm mints an `AdmittedProfile`, and
+ * only an admitted profile may enter a core operation — so "unsupported codec"
+ * is answered here, once, instead of becoming a refusal arm every downstream
+ * consumer has to destructure forever.
+ *
+ * Unsupported is an explicit refusal carrying diagnostics, never an absent
+ * provider. "This browser will not encode AV1 at this profile" and "no encoder
+ * was wired up" have different remediations, and a missing provider cannot say
+ * which one happened.
  */
-export type CodecSupport = Algebra<{
-  supported: {
-    readonly configuration: ContentAddress<'application/vnd.liteship.web-codec-configuration+cbor'>;
-  };
-  unsupported: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
-}>;
-
-/** The browser's physical media payload — pixels or samples, addressed. */
-export interface WebMediaPayload {
-  readonly bytes: ContentAddress;
+/**
+ * The browser's codec admission authority.
+ *
+ * Separate from the codec operations themselves because support is a runtime
+ * fact about this browser on this machine today, and it changes with available
+ * hardware. A provider that answered it by throwing would make refusal
+ * indistinguishable from failure.
+ */
+export interface WebCodecAdmission {
+  readonly admitDecode: Signature<
+    DecodeProfileReference,
+    CodecAdmission<DecodeProfileReference>,
+    NonEmptyTuple<Diagnostic>
+  >;
+  readonly admitEncode: Signature<
+    EncodeProfileReference,
+    CodecAdmission<EncodeProfileReference>,
+    NonEmptyTuple<Diagnostic>
+  >;
+  readonly admitContainer: Signature<
+    ContainerProfileReference,
+    CodecAdmission<ContainerProfileReference>,
+    NonEmptyTuple<Diagnostic>
+  >;
 }
+
+export type WebCodecAdmissionRequirement = Hole<'liteship.web.codec-admission', WebCodecAdmission>;
 
 /**
- * The browser decoder: a real operation over an exact profile.
+ * The browser's realization of core's decoder socket.
  *
- * Constructing a resource whose kind happens to be `codec` is acquisition, not
- * decoding. A provider that only constructs can hold a decoder forever and
- * never be asked to decode anything, which is the state this home shipped in.
+ * This is an alias, not a parallel contract. An earlier form declared a
+ * `WebDecoderAuthority` shaped like core's but unrelated to it, which left two
+ * vocabularies standing near each other while the README claimed they had met.
+ * A host that satisfies the core hole is the only thing that makes the claim
+ * true, and naming the core type is what makes the compiler agree.
  */
-export interface WebDecoderAuthority {
-  readonly admit: Signature<DecodeProfileReference, CodecSupport, NonEmptyTuple<Diagnostic>>;
-  readonly decode: <Profile extends DecodeProfileId>(
-    request: WebDecodeRequest<Profile>,
-  ) => Result<WebDecodeProduct<Profile>, NonEmptyTuple<Diagnostic>>;
-}
-
-export interface WebDecodeRequest<Profile extends DecodeProfileId = DecodeProfileId> {
-  readonly profile: DecodeProfileReference<Profile>;
-  readonly source: ContentAddress;
-}
-
-export interface WebDecodeProduct<Profile extends DecodeProfileId = DecodeProfileId> {
-  readonly profile: DecodeProfileReference<Profile>;
-  readonly frames: readonly PhysicalFrame<WebMediaPayload>[];
-  readonly reproducibility: ReproducibilityClaim<DecodeProfileReference<Profile>>;
-}
+export type WebDecoderAuthority = MediaDecoderAuthority;
+export type WebEncoderAuthority = MediaEncoderAuthority;
+export type WebMuxAuthority = MediaMuxAuthority;
 
 /**
- * Encoding real frames in the browser.
+ * The browser codec provider: admission plus the three core authorities.
  *
- * The frame population is generic so the frames a graphics readback produced
- * can enter without erasure. This home sits above `09_graphics` in the
- * waterfall and cannot name its payload type; the composition point imports
- * both and proves the join, exactly as the target layer does.
+ * The offer below provides core's requirements directly, so "host decoders and
+ * encoders satisfy typed core requirements" is a compiled relationship rather
+ * than a sentence in two READMEs.
  */
-export interface WebEncodeRequest<
-  Profile extends EncodeProfileId = EncodeProfileId,
-  Frame extends PhysicalFrame = PhysicalFrame,
-> {
-  readonly profile: EncodeProfileReference<Profile>;
-  readonly tracks: MediaTrackConfiguration;
-  readonly frames: NonEmptyTuple<Frame>;
-}
-
-export interface WebEncodeProduct<
-  Profile extends EncodeProfileId = EncodeProfileId,
-  Frame extends PhysicalFrame = PhysicalFrame,
-> {
-  readonly profile: EncodeProfileReference<Profile>;
-  readonly frames: NonEmptyTuple<Frame>;
-  readonly packets: NonEmptyTuple<MediaPacket<Profile>>;
-  readonly reproducibility: ReproducibilityClaim<EncodeProfileReference<Profile>>;
+export interface WebCodecFacility {
+  readonly admission: WebCodecAdmission;
+  readonly decoder: MediaDecoderAuthority;
+  readonly encoder: MediaEncoderAuthority;
+  readonly mux: MediaMuxAuthority;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
-export interface WebEncoderAuthority {
-  readonly admit: Signature<EncodeProfileReference, CodecSupport, NonEmptyTuple<Diagnostic>>;
-  readonly encode: <Profile extends EncodeProfileId, Frame extends PhysicalFrame>(
-    request: WebEncodeRequest<Profile, Frame>,
-  ) => Result<WebEncodeProduct<Profile, Frame>, NonEmptyTuple<Diagnostic>>;
+/** Grounding the narrow browser codec entrypoint — an intrinsic, unowned fact. */
+export interface CodecAdmissionGrounding
+  extends WebGroundingDefinition<
+    readonly [WebCodecAdmissionRequirement],
+    unknown,
+    'intrinsic',
+    'unowned'
+  > {
+  readonly id: GroundingId<'liteship.web.grounding.codec-admission'>;
 }
 
-/** Finalizing packets into an addressed artifact in the browser. */
-export interface WebMuxRequest<
-  Profile extends EncodeProfileId = EncodeProfileId,
-  Container extends ContainerProfileId = ContainerProfileId,
-  Asset extends MediaAssetId = MediaAssetId,
-> {
-  readonly asset: MediaAssetReference<Asset>;
-  readonly container: ContainerProfileReference<Container>;
-  readonly packets: NonEmptyTuple<MediaPacket<Profile>>;
+/**
+ * Constructing the codec provider over the admission facility.
+ *
+ * It provides core's three requirements. That is the convergence: core owns the
+ * socket shape, the browser owns the physics, and neither restates the other.
+ */
+export interface WebCodecOffer
+  extends WebRealizationOffer<
+    readonly [MediaDecoderRequirement, MediaEncoderRequirement, MediaMuxRequirement],
+    readonly [WebCodecAdmissionRequirement],
+    unknown,
+    unknown,
+    'owned'
+  > {
+  readonly id: RealizationOfferId<'liteship.web.offer.codec-facility'>;
 }
-
-export interface WebMuxProduct<
-  Container extends ContainerProfileId = ContainerProfileId,
-  Asset extends MediaAssetId = MediaAssetId,
-> {
-  readonly artifact: MediaArtifact<Asset, Container>;
-  readonly reproducibility: ReproducibilityClaim<ContainerProfileReference<Container>>;
-  readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
-}
-
-export interface WebMuxAuthority {
-  readonly finalize: <
-    Profile extends EncodeProfileId,
-    Container extends ContainerProfileId,
-    Asset extends MediaAssetId,
-  >(
-    request: WebMuxRequest<Profile, Container, Asset>,
-  ) => Result<WebMuxProduct<Container, Asset>, NonEmptyTuple<Diagnostic>>;
-}
-
-export type WebDecoderRequirement = Hole<'liteship.web.decoder', WebDecoderAuthority>;
-export type WebEncoderRequirement = Hole<'liteship.web.encoder', WebEncoderAuthority>;
-export type WebMuxRequirement = Hole<'liteship.web.mux', WebMuxAuthority>;
 
 export type AudioFacilityRequirement = Hole<'liteship.web.audio-facility', AudioFacility>;
 export type AudioRuntimeRequirement = Hole<'liteship.web.audio-runtime', AudioRuntimeAuthority>;
@@ -455,105 +436,122 @@ export type OnlyTheAudioRuntimeSuppliesTheClock = Assert<
 >;
 
 /** Type summary consumed by the web topology. */
-type WebMediaLawEncodeA = EncodeProfileId<'liteship.web.media.law.encode-a'>;
-type WebMediaLawEncodeB = EncodeProfileId<'liteship.web.media.law.encode-b'>;
-
 /**
- * Compile-time law: decode and encode are operations, not resource kinds.
+ * Compile-time law: this host fills core's sockets rather than declaring
+ * neighbours of them.
  *
- * Holding a `codec` resource is not decoding, and the predecessor state of this
- * home was exactly that: a construction authority over a kind string, with no
- * operation anywhere that could be asked to produce a frame or a packet.
+ * The predecessor state of this home was three browser-local authorities shaped
+ * like core's and related to them only by comment, while the README claimed
+ * they had met. Identity — not similarity — is what makes the claim compile.
  */
-export type DecodeAndEncodeAreOperationsNotResourceKinds = Assert<
+export type TheBrowserFillsTheCoreCodecSockets = Assert<
   Equal<
     [
-      'decode' extends keyof WebDecoderAuthority ? true : false,
-      'encode' extends keyof WebEncoderAuthority ? true : false,
-      'finalize' extends keyof WebMuxAuthority ? true : false,
-      'decode' extends keyof MediaConstructionAuthority ? true : false,
-      'encode' extends keyof MediaConstructionAuthority ? true : false,
+      Equal<WebDecoderAuthority, MediaDecoderAuthority>,
+      Equal<WebEncoderAuthority, MediaEncoderAuthority>,
+      Equal<WebMuxAuthority, MediaMuxAuthority>,
+      WebCodecFacility['decoder'] extends MediaDecoderAuthority ? true : false,
+      WebCodecFacility['encoder'] extends MediaEncoderAuthority ? true : false,
+      WebCodecFacility['mux'] extends MediaMuxAuthority ? true : false,
     ],
-    [true, true, true, false, false]
+    [true, true, true, true, true, true]
   >
 >;
 
 /**
- * Compile-time law: an unsupported configuration is a refusal that says why.
+ * Compile-time law: the codec offer provides core's requirements.
  *
- * The unsupported arm cannot be silent, and support cannot be inferred from a
- * provider merely existing.
+ * A provider that provided only browser-local requirements would leave the core
+ * holes unfilled forever while every lane stayed green.
  */
-export type UnsupportedConfigurationIsARefusalNotAnAbsence = Assert<
+export type TheCodecOfferProvidesTheCoreRequirements = Assert<
   Equal<
-    [
-      TagOf<CodecSupport>,
-      CaseOf<CodecSupport, 'unsupported'>['diagnostics'] extends NonEmptyTuple<Diagnostic>
-        ? true
-        : false,
-      readonly Diagnostic[] extends CaseOf<CodecSupport, 'unsupported'>['diagnostics'] ? true : false,
-    ],
-    ['supported' | 'unsupported', true, false]
+    WebCodecOffer['provides'],
+    readonly [MediaDecoderRequirement, MediaEncoderRequirement, MediaMuxRequirement]
   >
 >;
 
 /**
- * Compile-time law: an encode consumes a non-empty frame population, and its
- * packets stay exact over the profile that produced them.
+ * Compile-time law: admission mints the witness a core operation requires, and
+ * refusal says why.
  *
- * Zero frames becoming a successful video is the failure this refuses, and it
- * is one type-argument change away at all times.
+ * The supported arm carries an `AdmittedProfile`; without it, admission would
+ * answer a question nobody downstream could act on, and core's operations would
+ * have to reopen a compatibility arm they were designed to close.
  */
-export type AnEncodeConsumesFramesAndKeepsItsProfile = Assert<
+export type AdmissionMintsTheWitnessCoreRequires = Assert<
   Equal<
     [
-      WebEncodeRequest<WebMediaLawEncodeA>['frames'] extends NonEmptyTuple<PhysicalFrame>
-        ? true
-        : false,
-      readonly PhysicalFrame[] extends WebEncodeRequest<WebMediaLawEncodeA>['frames'] ? true : false,
-      WebEncodeProduct<WebMediaLawEncodeA>['packets'] extends NonEmptyTuple<
-        MediaPacket<WebMediaLawEncodeA>
+      TagOf<CodecAdmission<EncodeProfileReference>>,
+      CaseOf<CodecAdmission<EncodeProfileReference>, 'supported'>['admitted'] extends AdmittedProfile<
+        EncodeProfileReference
       >
         ? true
         : false,
-      WebEncodeProduct<WebMediaLawEncodeB> extends WebEncodeProduct<WebMediaLawEncodeA> ? true : false,
+      CaseOf<CodecAdmission<EncodeProfileReference>, 'unsupported'>['diagnostics'] extends NonEmptyTuple<
+        Diagnostic
+      >
+        ? true
+        : false,
+      readonly Diagnostic[] extends CaseOf<
+        CodecAdmission<EncodeProfileReference>,
+        'unsupported'
+      >['diagnostics']
+        ? true
+        : false,
     ],
-    [true, false, true, false]
+    ['supported' | 'unsupported', true, true, false]
   >
 >;
 
 /**
- * Compile-time law: the browser's reproducibility claim is the full three-arm
- * grammar, so `unclaimed` remains available as the honest default.
+ * Compile-time law: admission covers all three profile families.
  *
- * WebCodecs may ignore hardware and software hints for any reason, so a generic
- * browser provider has nothing to claim. That is different from having measured
- * variation, and collapsing the two would turn absent evidence into a finding.
+ * A container profile nobody admitted is the same hole as an unadmitted codec,
+ * one stage later — and the mux socket is total over admitted containers for
+ * exactly the same reason the encoder is.
  */
-export type TheBrowserDefaultIsUnclaimedNotVariable = Assert<
+export type AdmissionCoversDecodeEncodeAndContainer = Assert<
   Equal<
-    TagOf<WebEncodeProduct<WebMediaLawEncodeA>['reproducibility']>,
-    'unclaimed' | 'reproducible-under-profile' | 'observed-variable'
+    [
+      'admitDecode' extends keyof WebCodecAdmission ? true : false,
+      'admitEncode' extends keyof WebCodecAdmission ? true : false,
+      'admitContainer' extends keyof WebCodecAdmission ? true : false,
+    ],
+    [true, true, true]
   >
 >;
 
-/** Compile-time law: encoder and muxer products are owned and disposable. */
-export type CodecAndMuxerProductsAreOwned = Assert<
+/**
+ * Compile-time law: admission is an intrinsic browser fact; the codec provider
+ * is constructed.
+ *
+ * Grounding admits what already exists. An owned, permission- and
+ * hardware-sensitive provider is not something the page simply has, so it
+ * arrives through an offer that requires the intrinsic entrypoint.
+ */
+export type AdmissionIsGroundedAndTheProviderIsOffered = Assert<
   Equal<
     [
-      WebEncodeProduct<WebMediaLawEncodeA>['lifecycle'],
-      WebMuxProduct['lifecycle'],
+      CodecAdmissionGrounding['provides'],
+      WebCodecOffer['requires'],
+      WebCodecFacility['lifecycle'],
     ],
-    [CaseOf<RealizationLifecycle, 'owned'>, CaseOf<RealizationLifecycle, 'owned'>]
+    [
+      readonly [WebCodecAdmissionRequirement],
+      readonly [WebCodecAdmissionRequirement],
+      CaseOf<RealizationLifecycle, 'owned'>,
+    ]
   >
 >;
 
 export interface WebMediaTypeSurface {
   readonly resource: WebMediaResource;
-  readonly decoder: WebDecoderAuthority;
-  readonly encoder: WebEncoderAuthority;
-  readonly mux: WebMuxAuthority;
-  readonly codecSupport: CodecSupport;
+  readonly admission: WebCodecAdmission;
+  readonly codecFacility: WebCodecFacility;
+  readonly codecSupport: CodecAdmission<EncodeProfileReference>;
+  readonly codecGrounding: CodecAdmissionGrounding;
+  readonly codecOffer: WebCodecOffer;
   readonly clock: SampleClockTransport;
   readonly instance: AudioRuntimeInstance;
   readonly audioRuntime: AudioRuntimeAuthority;

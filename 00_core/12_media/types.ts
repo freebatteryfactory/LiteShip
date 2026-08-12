@@ -9,6 +9,7 @@
  */
 
 import type {
+  Address,
   Algebra,
   Assert,
   Brand,
@@ -17,16 +18,18 @@ import type {
   Hole,
   NonEmptyTuple,
   Reference,
+  Result,
+  Signature,
   TagOf,
 } from '../../types.js';
 import type { Diagnostic } from '../00_error/types.js';
 import type { CanonicalValue, ContentAddress, ContentDigest, MediaType } from '../01_encoding/types.js';
 import type { RevisionId, RevisionReference, WorldId } from '../02_identity/types.js';
 import type { SchemaReference } from '../03_schema/types.js';
-import type { FrameIndex, SampleIndex, TimeCut, Timecode } from '../04_time/types.js';
+import type { FrameIndex, SampleIndex, StreamSequence, Timebase, TimeCut, Timecode } from '../04_time/types.js';
 import type { EvidenceCutId, ReproducibilityClaim } from '../06_evidence/types.js';
 import type { AnySemanticCut } from '../08_state/types.js';
-import type { ProjectionFidelity } from '../11_scene/types.js';
+import type { ProjectionFidelity, SceneEgress, SceneReference } from '../11_scene/types.js';
 
 export type MediaAssetId<Name extends string = string> = Brand<Name, 'liteship.media-asset-id'>;
 export type MediaAssetReference<Id extends MediaAssetId = MediaAssetId> = Reference<'media-asset', Id>;
@@ -125,53 +128,244 @@ export interface MediaFrame<
   readonly address: ContentAddress<'application/vnd.liteship.media-frame+cbor'>;
 }
 
+// ---------------------------------------------------------------------------
+// Physical payload: representation, not realm
+// ---------------------------------------------------------------------------
+
+export type MediaRepresentationId<Name extends string = string> = Brand<
+  Name,
+  'liteship.media-representation-id'
+>;
+export type MediaRepresentationReference<
+  Id extends MediaRepresentationId = MediaRepresentationId,
+> = Reference<'media-representation', Id>;
+
 /**
- * How one physical frame's pixels came to exist.
+ * Where physical bytes live.
  *
- * Rasterization and host capture are not interchangeable provenance even when
- * both yield the same envelope. One says "these pixels realize this exact
- * semantic frame under this raster profile"; the other says "these pixels came
- * off this committed physical composition under this capture profile". Only the
- * first is evidence that a subject had a faithful projection.
+ * Addressed bytes are comparable and portable. A host resource is a live object
+ * that cannot be addressed without reading it out, and saying so is honest
+ * rather than pretending every payload is inspectable.
  */
-export type PhysicalFrameDerivation<Semantic, Profile, Composition> = Algebra<{
-  rasterized: { readonly frame: Semantic; readonly profile: Profile };
-  reused: {
-    readonly frame: Semantic;
-    readonly profile: Profile;
-    readonly from: ContentAddress<'application/vnd.liteship.physical-frame+cbor'>;
-  };
-  'host-captured': { readonly composition: Composition; readonly profile: Profile };
+export type PayloadLocation = Algebra<{
+  addressed: { readonly bytes: ContentAddress };
+  'host-resource': { readonly resource: ContentAddress };
 }>;
 
 /**
- * One physical frame: an opaque host payload, its coordinate, and where it came
- * from.
+ * One physical payload, exact over what its bytes *are*.
  *
- * The envelope is addressed separately from the payload because two frames may
- * hold byte-identical pixels and remain different frames. Reuse at coordinate N
- * from coordinate M does not make N into M, and an envelope keyed by its
- * payload would silently merge them.
+ * Identity follows representation, not origin. An earlier draft gave each realm
+ * its own payload type — browser bytes, capture bytes, server bytes — and all
+ * of them reduced to the same structure, so TypeScript treated four
+ * nominal-sounding names as one anonymous paper bag. Worse, had they been
+ * branded by realm, two hosts producing identical RGBA8 would have needed a
+ * conversion bridge between identical bytes because one was born near a
+ * browser.
+ *
+ * Origin lives in provenance, where it belongs.
  */
-export interface PhysicalFrame<
-  Payload = unknown,
-  Semantic = MediaFrame,
-  Profile = unknown,
-  Composition = unknown,
-> {
-  readonly payload: Payload;
-  readonly payloadAddress: ContentAddress;
-  readonly time: MediaTimeCut;
-  readonly derivation: PhysicalFrameDerivation<Semantic, Profile, Composition>;
-  readonly address: ContentAddress<'application/vnd.liteship.physical-frame+cbor'>;
+export interface PhysicalPayload<Representation extends MediaRepresentationId = MediaRepresentationId> {
+  readonly representation: MediaRepresentationReference<Representation>;
+  readonly location: PayloadLocation;
 }
 
 // ---------------------------------------------------------------------------
-// Formats, tracks, packets, and containers
+// Bounded media sources
+// ---------------------------------------------------------------------------
+
+export type MediaSourceId<Name extends string = string> = Brand<Name, 'liteship.media-source-id'>;
+export type MediaSourceReference<Id extends MediaSourceId = MediaSourceId> = Reference<
+  'media-source',
+  Id
+>;
+
+/**
+ * How much a consumer is willing to hold in flight.
+ *
+ * Credit, not a drop policy. `13_stream` owns overload behaviour for event
+ * delivery, and `drop-oldest`, `drop-newest`, and `coalesce` are all correct
+ * there. They are catastrophic here: an encoder queue that quietly discards
+ * frame 317 has not applied backpressure, it has changed the movie.
+ *
+ * Deliberate frame skipping, decimation, or resampling is a media
+ * transformation with timeline semantics and a receipt. It is never an
+ * incidental consequence of a full buffer.
+ */
+export interface MediaSourceCredit {
+  readonly bounded: true;
+}
+
+/**
+ * What one pull yields.
+ *
+ * There is no dropped arm, and that absence is the whole guarantee. A source
+ * either produced units, completed, was cancelled, or failed — losing units
+ * silently is unrepresentable.
+ */
+export type MediaBatch<Unit> = Algebra<{
+  produced: { readonly units: NonEmptyTuple<Unit> };
+  completed: Record<never, never>;
+  cancelled: Record<never, never>;
+  failed: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
+}>;
+
+/**
+ * One bounded, ordered, lossless media source.
+ *
+ * This is what makes long-form work possible. The predecessor shape required a
+ * non-empty tuple of every frame, which meant a five-minute render had to exist
+ * in memory before encoding could start — fine for a ten-second demo and a wall
+ * for anything the product actually exists to make.
+ *
+ * The unit is exact on the pull's *output*, which is covariant. An exact unit
+ * carried only in an input position would be contravariant and prove nothing.
+ */
+export interface MediaSource<Unit, Id extends MediaSourceId = MediaSourceId> {
+  readonly id: MediaSourceReference<Id>;
+  readonly credit: MediaSourceCredit;
+  readonly pull: Signature<MediaSourceCredit, MediaBatch<Unit>, NonEmptyTuple<Diagnostic>>;
+  // `cancel` takes no reference. Elsewhere a job's cancel is handed its own
+  // identity so a foreign job cannot cancel it, but a source *is* the receiver
+  // — and an identity in input position is contravariant, which would make an
+  // exact source unassignable to a broad one and quietly block every downstream
+  // composition this model exists to allow.
+  readonly cancel: Signature<void, MediaSourceReference<Id>, NonEmptyTuple<Diagnostic>>;
+}
+
+// ---------------------------------------------------------------------------
+// Physical frames and sample blocks, with provenance-owned coordinates
+// ---------------------------------------------------------------------------
+
+/**
+ * How a rasterized frame's pixels came to exist.
+ *
+ * The coordinate is not a member here — it lives on the semantic frame this
+ * provenance names. An earlier shape carried a free `time` beside the
+ * derivation, which reintroduced one layer down exactly the parity triangle the
+ * semantic frame had just shed: provenance says coordinate A, the sibling says
+ * B, and no law can say which is true.
+ */
+export type RasterizedProvenance<Frame extends MediaFrame, Profile> = Algebra<{
+  rasterized: { readonly frame: Frame; readonly profile: Profile };
+  reused: {
+    readonly frame: Frame;
+    readonly profile: Profile;
+    readonly from: ContentAddress<'application/vnd.liteship.physical-frame+cbor'>;
+  };
+}>;
+
+/** How a decoded frame came to exist. Its coordinate is the source's. */
+export type DecodedProvenance<
+  Asset extends MediaAssetId,
+  Profile extends DecodeProfileId,
+> = Algebra<{
+  decoded: {
+    readonly asset: MediaAssetReference<Asset>;
+    readonly profile: DecodeProfileReference<Profile>;
+    readonly at: MediaTimeCut;
+  };
+  reused: {
+    readonly asset: MediaAssetReference<Asset>;
+    readonly profile: DecodeProfileReference<Profile>;
+    readonly at: MediaTimeCut;
+    readonly from: ContentAddress<'application/vnd.liteship.physical-frame+cbor'>;
+  };
+}>;
+
+/** How a host-captured frame came to exist. Its coordinate is the capture's. */
+export type CapturedProvenance<Composition, Profile> = Algebra<{
+  'host-captured': {
+    readonly composition: Composition;
+    readonly profile: Profile;
+    readonly at: MediaTimeCut;
+  };
+  reused: {
+    readonly composition: Composition;
+    readonly profile: Profile;
+    readonly at: MediaTimeCut;
+    readonly from: ContentAddress<'application/vnd.liteship.physical-frame+cbor'>;
+  };
+}>;
+
+/**
+ * One physical frame: bytes and where they came from.
+ *
+ * The provenance parameter is specialized per frame kind rather than left as
+ * one union with arms a given frame can never inhabit. An earlier draft used
+ * `never` for a capture's semantic-frame parameter, which locked the trapdoor
+ * correctly but left consumers staring at branches that could not exist.
+ */
+export interface PhysicalFrame<
+  Representation extends MediaRepresentationId = MediaRepresentationId,
+  Provenance = unknown,
+> {
+  readonly payload: PhysicalPayload<Representation>;
+  readonly provenance: Provenance;
+  readonly address: ContentAddress<'application/vnd.liteship.physical-frame+cbor'>;
+}
+
+export type RasterizedFrame<
+  Representation extends MediaRepresentationId,
+  Frame extends MediaFrame,
+  Profile,
+> = PhysicalFrame<Representation, RasterizedProvenance<Frame, Profile>>;
+
+export type DecodedFrame<
+  Representation extends MediaRepresentationId,
+  Asset extends MediaAssetId,
+  Profile extends DecodeProfileId,
+> = PhysicalFrame<Representation, DecodedProvenance<Asset, Profile>>;
+
+export type CapturedFrame<
+  Representation extends MediaRepresentationId,
+  Composition,
+  Profile,
+> = PhysicalFrame<Representation, CapturedProvenance<Composition, Profile>>;
+
+/** How a block of audio samples came to exist. Its range is its coordinate. */
+export type SampleProvenance<
+  Asset extends MediaAssetId,
+  Profile extends DecodeProfileId,
+> = Algebra<{
+  decoded: {
+    readonly asset: MediaAssetReference<Asset>;
+    readonly profile: DecodeProfileReference<Profile>;
+    readonly range: SampleRange;
+  };
+  synthesized: { readonly cut: MediaCut; readonly range: SampleRange };
+  reused: {
+    readonly range: SampleRange;
+    readonly from: ContentAddress<'application/vnd.liteship.physical-sample-block+cbor'>;
+  };
+}>;
+
+/**
+ * One physical block of audio samples.
+ *
+ * Audio is a first-class input, not a track that video happens to carry. The
+ * predecessor encode path required video frames even for an audio-only output,
+ * which meant the track algebra could describe a product the operation surface
+ * had no legal way to produce.
+ */
+export interface PhysicalSampleBlock<
+  Representation extends MediaRepresentationId = MediaRepresentationId,
+  Provenance = unknown,
+> {
+  readonly payload: PhysicalPayload<Representation>;
+  readonly provenance: Provenance;
+  readonly address: ContentAddress<'application/vnd.liteship.physical-sample-block+cbor'>;
+}
+
+// ---------------------------------------------------------------------------
+// Codecs, tracks, packets, containers
 // ---------------------------------------------------------------------------
 
 export type MediaCodecId<Name extends string = string> = Brand<Name, 'liteship.media-codec-id'>;
 export type MediaCodecReference<Id extends MediaCodecId = MediaCodecId> = Reference<'media-codec', Id>;
+
+export type MediaTrackId<Name extends string = string> = Brand<Name, 'liteship.media-track-id'>;
+export type MediaTrackReference<Id extends MediaTrackId = MediaTrackId> = Reference<'media-track', Id>;
 
 export type DecodeProfileId<Name extends string = string> = Brand<Name, 'liteship.media-decode-profile-id'>;
 export type DecodeProfileReference<Id extends DecodeProfileId = DecodeProfileId> = Reference<
@@ -194,8 +388,41 @@ export type ContainerProfileReference<Id extends ContainerProfileId = ContainerP
   Id
 >;
 
+/**
+ * A profile a host has already admitted.
+ *
+ * This is what makes a total core operation honest. A contract accepting an
+ * arbitrary profile reference promises an output for every branded identity
+ * anyone can mint, including ones this browser has never heard of. A contract
+ * accepting an admitted profile is total over a domain the host has already
+ * agreed to, so there is no compatibility-refusal arm left to write.
+ *
+ * Physical failure remains entirely possible, and every operation still returns
+ * a `Result` — a device can be lost, input can be malformed, capacity can run
+ * out. "Total" here means no *compatibility* refusal after admission, never
+ * that the work cannot fail.
+ */
+export interface AdmittedProfile<Profile> {
+  readonly profile: Profile;
+  readonly admission: ContentAddress<'application/vnd.liteship.media-admission+cbor'>;
+}
+
+/**
+ * The outcome of asking a host whether it admits one exact profile.
+ *
+ * Core owns this because the supported arm mints the `AdmittedProfile` core's
+ * own operations require. Left to the hosts, each would declare a structurally
+ * identical outcome under a different name, and the admission witness would
+ * have two vocabularies before it had one consumer.
+ */
+export type CodecAdmission<Profile> = Algebra<{
+  supported: { readonly admitted: AdmittedProfile<Profile> };
+  unsupported: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
+}>;
+
 /** One elementary stream's contract. */
-export interface MediaTrackContract {
+export interface MediaTrackContract<Track extends MediaTrackId = MediaTrackId> {
+  readonly id: MediaTrackReference<Track>;
   readonly codec: MediaCodecReference;
   readonly mediaType: MediaType;
   readonly parameters: CanonicalValue;
@@ -205,26 +432,67 @@ export interface MediaTrackContract {
  * Which streams a media product actually carries.
  *
  * An algebra rather than two arrays, because arrays make "no video" and "video
- * we forgot to attach" the same value. A silent audio-only export and a broken
- * video export are different outcomes and must be different types.
+ * we forgot to attach" the same value.
  */
-export type MediaTrackConfiguration = Algebra<{
-  'video-only': { readonly video: MediaTrackContract };
-  'audio-only': { readonly audio: MediaTrackContract };
-  'audio-video': { readonly video: MediaTrackContract; readonly audio: MediaTrackContract };
+export type MediaTrackConfiguration<
+  Video extends MediaTrackId = MediaTrackId,
+  Audio extends MediaTrackId = MediaTrackId,
+> = Algebra<{
+  'video-only': { readonly video: MediaTrackContract<Video> };
+  'audio-only': { readonly audio: MediaTrackContract<Audio> };
+  'audio-video': {
+    readonly video: MediaTrackContract<Video>;
+    readonly audio: MediaTrackContract<Audio>;
+  };
+}>;
+
+/** The three lawful track shapes, as a tag anything correlated can name. */
+export type MediaTrackTag = TagOf<MediaTrackConfiguration>;
+
+/**
+ * The input population, correlated to the track shape by one shared tag.
+ *
+ * The same `Tag` parameter selects the arm here and the arm of the track
+ * configuration, so an audio-only output cannot be requested with a video frame
+ * source and an audio-video output cannot be requested with half its input.
+ * Two independent algebras standing near each other would have left the
+ * configuration describing a product no operation could legally produce.
+ */
+export type MediaInput<
+  VideoUnit,
+  AudioUnit,
+  VideoSource extends MediaSourceId = MediaSourceId,
+  AudioSource extends MediaSourceId = MediaSourceId,
+> = Algebra<{
+  'video-only': { readonly video: MediaSource<VideoUnit, VideoSource> };
+  'audio-only': { readonly audio: MediaSource<AudioUnit, AudioSource> };
+  'audio-video': {
+    readonly video: MediaSource<VideoUnit, VideoSource>;
+    readonly audio: MediaSource<AudioUnit, AudioSource>;
+    readonly timebase: Timebase;
+  };
 }>;
 
 /**
  * One encoded elementary-stream packet.
  *
- * This is deliberately not a transport frame. A socket's encoded chunk and a
- * video access unit have coincidentally similar payloads and entirely different
- * meanings, and a media path that borrows network framing for its output cannot
- * tell an H.264 access unit from arbitrary bytes that arrived over a wire.
+ * Deliberately not a transport frame. It names the packet source that produced
+ * it, the track it belongs to, and the profile it was encoded under, so an
+ * artifact cannot truthfully name its bytes while lying about what media those
+ * bytes contain. It does not name every source frame — that would be ancestry
+ * confetti; the encode job binds the input source once, and the packet points
+ * back at it.
  */
-export interface MediaPacket<Profile extends EncodeProfileId = EncodeProfileId> {
+export interface MediaPacket<
+  Profile extends EncodeProfileId = EncodeProfileId,
+  Source extends MediaSourceId = MediaSourceId,
+  Track extends MediaTrackId = MediaTrackId,
+> {
+  readonly source: MediaSourceReference<Source>;
+  readonly track: MediaTrackReference<Track>;
   readonly profile: EncodeProfileReference<Profile>;
-  readonly time: MediaTimeCut;
+  readonly sequence: StreamSequence;
+  readonly at: MediaTimeCut;
   readonly payload: ContentAddress;
   readonly sync: boolean;
 }
@@ -234,103 +502,177 @@ export interface MediaPacket<Profile extends EncodeProfileId = EncodeProfileId> 
  *
  * Asset identity is caller-carried — the caller decides what this artifact *is*
  * before it exists. Address and digest are producer-derived, because a caller
- * that could choose them could assert bytes it never produced.
+ * that could choose them could assert bytes it never produced. The track
+ * configuration is the exact one the mux consumed, so a container cannot
+ * manufacture a roster its packets never had.
  */
 export interface MediaArtifact<
+  Tag extends MediaTrackTag = MediaTrackTag,
   Asset extends MediaAssetId = MediaAssetId,
   Container extends ContainerProfileId = ContainerProfileId,
+  Video extends MediaTrackId = MediaTrackId,
+  Audio extends MediaTrackId = MediaTrackId,
 > {
   readonly asset: MediaAssetReference<Asset>;
   readonly container: ContainerProfileReference<Container>;
-  readonly tracks: MediaTrackConfiguration;
+  readonly tracks: CaseOf<MediaTrackConfiguration<Video, Audio>, Tag>;
+  readonly receipt: ContentAddress<'application/vnd.liteship.media-mux-receipt+cbor'>;
   readonly address: ContentAddress;
   readonly digest: ContentDigest;
 }
 
 // ---------------------------------------------------------------------------
-// Decode, encode, and mux requirements
+// The three sockets: decode, encode, mux
 // ---------------------------------------------------------------------------
 
 /**
- * What a decoder is asked for, and what it must answer with.
+ * Decoding an admitted source into a bounded frame or sample population.
  *
  * The shape is fixed here rather than left to a free supplier parameter. A
  * requirement generic over its own contract is satisfied by any host that
- * nominates itself, which compiles beautifully and proves nothing — the lesson
- * the target layer paid for at the Astro socket.
+ * nominates itself — the lesson the target layer paid for at the Astro socket.
  */
 export interface MediaDecodeRequest<
   Asset extends MediaAssetId = MediaAssetId,
+  Revision extends RevisionId = RevisionId,
   Profile extends DecodeProfileId = DecodeProfileId,
 > {
   readonly asset: MediaAssetReference<Asset>;
-  readonly profile: DecodeProfileReference<Profile>;
+  readonly revision: RevisionReference<Revision>;
+  readonly profile: AdmittedProfile<DecodeProfileReference<Profile>>;
   readonly range: FrameRange | SampleRange;
 }
 
-/** The decoded product: frames or samples, still bound to what produced them. */
 export interface MediaDecodeProduct<
+  Representation extends MediaRepresentationId = MediaRepresentationId,
   Asset extends MediaAssetId = MediaAssetId,
+  Revision extends RevisionId = RevisionId,
   Profile extends DecodeProfileId = DecodeProfileId,
-  Payload = unknown,
+  Source extends MediaSourceId = MediaSourceId,
 > {
   readonly asset: MediaAssetReference<Asset>;
+  readonly revision: RevisionReference<Revision>;
   readonly profile: DecodeProfileReference<Profile>;
-  readonly frames: readonly PhysicalFrame<Payload>[];
+  readonly frames: MediaSource<DecodedFrame<Representation, Asset, Profile>, Source>;
   readonly reproducibility: ReproducibilityClaim<DecodeProfileReference<Profile>>;
 }
 
 export interface MediaDecoderAuthority {
-  readonly decode: <Asset extends MediaAssetId, Profile extends DecodeProfileId>(
-    request: MediaDecodeRequest<Asset, Profile>,
-  ) => MediaDecodeProduct<Asset, Profile>;
+  readonly decode: <
+    Representation extends MediaRepresentationId,
+    Asset extends MediaAssetId,
+    Revision extends RevisionId,
+    Profile extends DecodeProfileId,
+    Source extends MediaSourceId,
+  >(
+    request: MediaDecodeRequest<Asset, Revision, Profile>,
+  ) => Result<
+    MediaDecodeProduct<Representation, Asset, Revision, Profile, Source>,
+    NonEmptyTuple<Diagnostic>
+  >;
 }
 
 /**
- * What an encoder is asked for.
+ * Encoding a track-correlated bounded source into a bounded packet source.
  *
- * The frame source is the frames themselves, not a schema describing them. A
- * contract saying what a frame looks like is satisfied by an encoder that never
- * received one, which is how a renderer emits a technically valid file
- * containing none of the authored work.
+ * The output is a source, not a tuple. An encoder that had to return every
+ * packet at once would have the same memory wall the frame tuple had, one stage
+ * later.
  */
 export interface MediaEncodeRequest<
-  Asset extends MediaAssetId = MediaAssetId,
+  Tag extends MediaTrackTag = MediaTrackTag,
+  VideoUnit = unknown,
+  AudioUnit = unknown,
   Profile extends EncodeProfileId = EncodeProfileId,
-  Container extends ContainerProfileId = ContainerProfileId,
-  Payload = unknown,
+  Video extends MediaTrackId = MediaTrackId,
+  Audio extends MediaTrackId = MediaTrackId,
 > {
-  readonly asset: MediaAssetReference<Asset>;
-  readonly profile: EncodeProfileReference<Profile>;
-  readonly container: ContainerProfileReference<Container>;
-  readonly tracks: MediaTrackConfiguration;
-  readonly frames: NonEmptyTuple<PhysicalFrame<Payload>>;
+  readonly profile: AdmittedProfile<EncodeProfileReference<Profile>>;
+  readonly tracks: CaseOf<MediaTrackConfiguration<Video, Audio>, Tag>;
+  readonly input: CaseOf<MediaInput<VideoUnit, AudioUnit>, Tag>;
 }
 
-/** Encoded packets, still naming the profile and frames that produced them. */
 export interface MediaEncodeProduct<
-  Asset extends MediaAssetId = MediaAssetId,
+  Tag extends MediaTrackTag = MediaTrackTag,
   Profile extends EncodeProfileId = EncodeProfileId,
-  Container extends ContainerProfileId = ContainerProfileId,
+  Packets extends MediaSourceId = MediaSourceId,
+  Video extends MediaTrackId = MediaTrackId,
+  Audio extends MediaTrackId = MediaTrackId,
 > {
-  readonly asset: MediaAssetReference<Asset>;
-  readonly packets: NonEmptyTuple<MediaPacket<Profile>>;
-  readonly artifact: MediaArtifact<Asset, Container>;
+  readonly profile: EncodeProfileReference<Profile>;
+  readonly tracks: CaseOf<MediaTrackConfiguration<Video, Audio>, Tag>;
+  readonly packets: MediaSource<MediaPacket<Profile, Packets>, Packets>;
   readonly reproducibility: ReproducibilityClaim<EncodeProfileReference<Profile>>;
 }
 
 export interface MediaEncoderAuthority {
   readonly encode: <
-    Asset extends MediaAssetId,
+    Tag extends MediaTrackTag,
+    VideoUnit,
+    AudioUnit,
     Profile extends EncodeProfileId,
-    Container extends ContainerProfileId,
+    Packets extends MediaSourceId,
+    Video extends MediaTrackId,
+    Audio extends MediaTrackId,
   >(
-    request: MediaEncodeRequest<Asset, Profile, Container>,
-  ) => MediaEncodeProduct<Asset, Profile, Container>;
+    request: MediaEncodeRequest<Tag, VideoUnit, AudioUnit, Profile, Video, Audio>,
+  ) => Result<
+    MediaEncodeProduct<Tag, Profile, Packets, Video, Audio>,
+    NonEmptyTuple<Diagnostic>
+  >;
+}
+
+/**
+ * Muxing a bounded packet source into an addressed artifact.
+ *
+ * A separate socket because the reproducibility subject is different. Two runs
+ * may emit identical packets and different container bytes — muxer metadata,
+ * ordering, and timestamps are the container's business — so the claim that
+ * survives here is over the whole artifact, not the elementary stream.
+ */
+export interface MediaMuxRequest<
+  Tag extends MediaTrackTag = MediaTrackTag,
+  Profile extends EncodeProfileId = EncodeProfileId,
+  Packets extends MediaSourceId = MediaSourceId,
+  Container extends ContainerProfileId = ContainerProfileId,
+  Asset extends MediaAssetId = MediaAssetId,
+  Video extends MediaTrackId = MediaTrackId,
+  Audio extends MediaTrackId = MediaTrackId,
+> {
+  readonly asset: MediaAssetReference<Asset>;
+  readonly container: AdmittedProfile<ContainerProfileReference<Container>>;
+  readonly tracks: CaseOf<MediaTrackConfiguration<Video, Audio>, Tag>;
+  readonly packets: MediaSource<MediaPacket<Profile, Packets>, Packets>;
+}
+
+export interface MediaMuxProduct<
+  Tag extends MediaTrackTag = MediaTrackTag,
+  Asset extends MediaAssetId = MediaAssetId,
+  Container extends ContainerProfileId = ContainerProfileId,
+  Video extends MediaTrackId = MediaTrackId,
+  Audio extends MediaTrackId = MediaTrackId,
+> {
+  readonly artifact: MediaArtifact<Tag, Asset, Container, Video, Audio>;
+  readonly reproducibility: ReproducibilityClaim<ContainerProfileReference<Container>>;
+}
+
+export interface MediaMuxAuthority {
+  readonly finalize: <
+    Tag extends MediaTrackTag,
+    Profile extends EncodeProfileId,
+    Packets extends MediaSourceId,
+    Container extends ContainerProfileId,
+    Asset extends MediaAssetId,
+    Video extends MediaTrackId,
+    Audio extends MediaTrackId,
+  >(
+    request: MediaMuxRequest<Tag, Profile, Packets, Container, Asset, Video, Audio>,
+  ) => Result<MediaMuxProduct<Tag, Asset, Container, Video, Audio>, NonEmptyTuple<Diagnostic>>;
 }
 
 export type MediaDecoderRequirement = Hole<'liteship.media.decoder', MediaDecoderAuthority>;
 export type MediaEncoderRequirement = Hole<'liteship.media.encoder', MediaEncoderAuthority>;
+export type MediaMuxRequirement = Hole<'liteship.media.mux', MediaMuxAuthority>;
 
 // ---------------------------------------------------------------------------
 // Analysis identity
@@ -356,34 +698,30 @@ export interface AnalysisProfile<Algorithm extends AnalysisAlgorithmId = Analysi
 }
 
 /**
- * One analysis result, bound to everything that determined it.
+ * One analysis result, exact over everything that determined it.
  *
- * The asset revision is named, not just the asset: an analysis of yesterday's
- * audio is not an analysis of today's, and a result that names only the asset
- * would be silently reused across a re-import.
+ * The asset revision is exact, not merely present: an analysis of yesterday's
+ * audio is not an analysis of today's, and a broad reference would let a
+ * re-import silently reuse the old answer.
  */
 export interface MediaAnalysisResult<
   Asset extends MediaAssetId = MediaAssetId,
+  Revision extends RevisionId = RevisionId,
   Algorithm extends AnalysisAlgorithmId = AnalysisAlgorithmId,
 > {
   readonly asset: MediaAssetReference<Asset>;
-  readonly revision: RevisionReference;
+  readonly revision: RevisionReference<Revision>;
   readonly profile: AnalysisProfile<Algorithm>;
   readonly value: MediaAnalysis;
   readonly cache: ContentAddress<'application/vnd.liteship.media-analysis-cache+cbor'>;
 }
 
 // ---------------------------------------------------------------------------
-// Export disposition
+// Export: the request, and the decision about it
 // ---------------------------------------------------------------------------
 
 /**
  * How one export request will be served.
- *
- * The disposition attaches to the request, not to a subject declaration. Only a
- * request has a population a law can quantify over — whether every semantic
- * subject in a scene is exportable is a claim about the whole scene and host
- * capability set, and no local declaration can honestly prove it.
  *
  * Host capture is a sibling arm rather than a fidelity value, because capture
  * reaches opaque DOM, third-party widgets, and foreign regions that declare no
@@ -399,18 +737,39 @@ export type MediaExportDisposition<CaptureProfile = unknown> = Algebra<{
   };
 }>;
 
-/** One export request and the single disposition it received. */
+/**
+ * What is being exported, at which coordinate, to which egress.
+ *
+ * A request carries no disposition. An earlier shape put the decision inside
+ * the request, which made it a decided plan wearing a request nametag — and
+ * left a semantic-projection disposition able to exist while naming no subject,
+ * no cut, and no egress at all. An adjective looking for a noun.
+ */
 export interface MediaExportRequest<
+  Subject = SceneReference,
+  Cut extends MediaCut = MediaCut,
+  Asset extends MediaAssetId = MediaAssetId,
+> {
+  readonly subject: Subject;
+  readonly cut: Cut;
+  readonly asset: MediaAssetReference<Asset>;
+  readonly egress: SceneEgress;
+}
+
+/** One request, and the single disposition it received. */
+export interface MediaExportDecision<
+  Subject = SceneReference,
+  Cut extends MediaCut = MediaCut,
   Asset extends MediaAssetId = MediaAssetId,
   CaptureProfile = unknown,
 > {
-  readonly asset: MediaAssetReference<Asset>;
+  readonly request: MediaExportRequest<Subject, Cut, Asset>;
   readonly disposition: MediaExportDisposition<CaptureProfile>;
 }
 
 /** Semantic media event suitable for timelines and streams. */
 export type MediaEvent = Algebra<{
-  analysis: { readonly asset: MediaAssetReference; readonly value: MediaAnalysis; readonly at: Timecode };
+  analysis: { readonly result: MediaAnalysisResult; readonly at: Timecode };
   frame: { readonly asset: MediaAssetReference; readonly value: MediaFrame };
   ended: { readonly asset: MediaAssetReference; readonly at: Timecode };
 }>;
@@ -418,6 +777,20 @@ export type MediaEvent = Algebra<{
 // ---------------------------------------------------------------------------
 // Laws
 // ---------------------------------------------------------------------------
+
+type MediaLawAssetA = MediaAssetId<'liteship.media.law.asset-a'>;
+type MediaLawRevisionA = Address<
+  'liteship.content:application/vnd.liteship.revision+cbor',
+  'sha256:5555555555555555555555555555555555555555555555555555555555555555'
+>;
+type MediaLawRepA = MediaRepresentationId<'liteship.media.law.representation-a'>;
+type MediaLawDecodeA = DecodeProfileId<'liteship.media.law.decode-a'>;
+type MediaLawEncodeA = EncodeProfileId<'liteship.media.law.encode-a'>;
+type MediaLawContainerA = ContainerProfileId<'liteship.media.law.container-a'>;
+type MediaLawTrackA = MediaTrackId<'liteship.media.law.track-a'>;
+type MediaLawTrackB = MediaTrackId<'liteship.media.law.track-b'>;
+type MediaLawSourceA = MediaSourceId<'liteship.media.law.source-a'>;
+type MediaLawAlgorithmA = AnalysisAlgorithmId<'liteship.media.law.algorithm-a'>;
 
 /**
  * Compile-time law: a media frame owns its coordinate once.
@@ -439,168 +812,425 @@ export type AMediaFrameCarriesTheCutAndNoSiblingCoordinate = Assert<
 >;
 
 /**
- * Compile-time law: semantic and physical derivation are different algebras
- * with different arms.
+ * Compile-time law: a physical frame carries no coordinate of its own.
  *
- * One shared `reused` notion would let pixel reuse be justified by evidence
- * about semantic dependencies, or the reverse. The two have different
- * predicates and different owners.
+ * The coordinate belongs to provenance — to the semantic frame a rasterization
+ * realizes, to the source coordinate a decode came from, to the capture
+ * coordinate a composite was taken at. A sibling `time` here is the parity
+ * triangle reincarnating one layer below where it was removed.
  */
-export type SemanticAndPhysicalReuseStayDistinct = Assert<
+export type APhysicalFrameCarriesNoCoordinateOfItsOwn = Assert<
   Equal<
     [
-      TagOf<SemanticFrameDerivation>,
-      TagOf<PhysicalFrameDerivation<MediaFrame, unknown, unknown>>,
-      keyof CaseOf<SemanticFrameDerivation, 'reused'>,
+      'time' extends keyof PhysicalFrame ? true : false,
+      'at' extends keyof PhysicalFrame ? true : false,
+      'cut' extends keyof PhysicalFrame ? true : false,
+      'provenance' extends keyof PhysicalFrame ? true : false,
+      'time' extends keyof PhysicalSampleBlock ? true : false,
+      'range' extends keyof PhysicalSampleBlock ? true : false,
     ],
-    [
-      'evaluated' | 'reused',
-      'rasterized' | 'reused' | 'host-captured',
-      '_tag' | 'from' | 'unchanged',
-    ]
+    [false, false, false, true, false, false]
   >
 >;
 
 /**
- * Compile-time law: rasterized provenance names the semantic frame it realizes,
- * and captured provenance cannot.
+ * Compile-time law: the three physical provenances are distinct populations,
+ * and none can inhabit another's arms.
  *
- * This is the law that makes live presentation and export the same evaluation.
- * If a rasterized frame could exist without naming its semantic frame, the two
- * paths would agree only by whatever the renderer happened to do.
+ * Specialized rather than one union with impossible branches. A rasterized
+ * frame cannot claim host capture; a captured frame cannot claim it realized a
+ * semantic frame; a decoded frame is neither, which is why it needed an arm of
+ * its own rather than borrowing a nametag that was never true.
  */
-export type RasterizedProvenanceNamesItsSemanticFrame = Assert<
+export type PhysicalProvenancesStayDistinct = Assert<
   Equal<
     [
-      'frame' extends keyof CaseOf<PhysicalFrameDerivation<MediaFrame, unknown, unknown>, 'rasterized'>
-        ? true
-        : false,
-      'frame' extends keyof CaseOf<PhysicalFrameDerivation<MediaFrame, unknown, unknown>, 'host-captured'>
-        ? true
-        : false,
-      'composition' extends keyof CaseOf<
-        PhysicalFrameDerivation<MediaFrame, unknown, unknown>,
-        'host-captured'
+      TagOf<RasterizedProvenance<MediaFrame, unknown>>,
+      TagOf<DecodedProvenance<MediaLawAssetA, MediaLawDecodeA>>,
+      TagOf<CapturedProvenance<unknown, unknown>>,
+      TagOf<SampleProvenance<MediaLawAssetA, MediaLawDecodeA>>,
+      // Semantic reuse must carry evidence that every relevant dependency is
+      // unchanged. Without it, `reused` degrades into "we did not recompute
+      // this", which is a scheduling note rather than a correctness claim.
+      CaseOf<SemanticFrameDerivation, 'reused'>['unchanged'] extends ContentAddress<
+        'application/vnd.liteship.media-reuse-evidence+cbor'
       >
         ? true
         : false,
     ],
-    [true, false, true]
-  >
->;
-
-/**
- * Compile-time law: a physical frame is addressed apart from its payload.
- *
- * Two frames holding byte-identical pixels stay two frames. An envelope keyed
- * by payload alone would merge a reused frame with the frame it reused from,
- * and the reuse invariant would become unstateable.
- */
-export type APhysicalFrameIsAddressedApartFromItsPayload = Assert<
-  Equal<
     [
-      Equal<PhysicalFrame['address'], PhysicalFrame['payloadAddress']>,
-      PhysicalFrame['time'] extends MediaTimeCut ? true : false,
-    ],
-    [false, true]
-  >
->;
-
-/**
- * Compile-time law: track configuration is an explicit choice of three, and no
- * arm can carry the stream it excludes.
- */
-export type TrackConfigurationIsExplicitNotAnEmptyArray = Assert<
-  Equal<
-    [
-      TagOf<MediaTrackConfiguration>,
-      'audio' extends keyof CaseOf<MediaTrackConfiguration, 'video-only'> ? true : false,
-      'video' extends keyof CaseOf<MediaTrackConfiguration, 'audio-only'> ? true : false,
-      keyof CaseOf<MediaTrackConfiguration, 'audio-video'>,
-    ],
-    ['video-only' | 'audio-only' | 'audio-video', false, false, '_tag' | 'video' | 'audio']
-  >
->;
-
-/**
- * Compile-time law: an encode request carries frames, not a description of
- * frames, and the population cannot be empty.
- *
- * Zero frames becoming a successful video is the exact failure the predecessor
- * shipped: a valid container holding none of the authored work.
- */
-export type AnEncodeRequestCarriesFramesNotASchema = Assert<
-  Equal<
-    [
-      MediaEncodeRequest['frames'] extends NonEmptyTuple<PhysicalFrame> ? true : false,
-      readonly PhysicalFrame[] extends MediaEncodeRequest['frames'] ? true : false,
-      MediaEncodeRequest extends { readonly frames: SchemaReference } ? true : false,
-    ],
-    [true, false, false]
-  >
->;
-
-/**
- * Compile-time law: artifact identity is caller-carried while its bytes are
- * producer-derived.
- */
-export type ArtifactBytesAreProducerDerived = Assert<
-  Equal<
-    [
-      MediaArtifact['asset'] extends MediaAssetReference ? true : false,
-      MediaArtifact['address'] extends ContentAddress ? true : false,
-      MediaArtifact['digest'] extends ContentDigest ? true : false,
-      MediaArtifact<
-        MediaAssetId<'liteship.media.law.asset-a'>,
-        ContainerProfileId<'liteship.media.law.container-a'>
-      >['container'],
-    ],
-    [
+      'rasterized' | 'reused',
+      'decoded' | 'reused',
+      'host-captured' | 'reused',
+      'decoded' | 'synthesized' | 'reused',
       true,
-      true,
-      true,
-      ContainerProfileReference<ContainerProfileId<'liteship.media.law.container-a'>>,
     ]
   >
 >;
 
 /**
- * Compile-time law: an analysis result names the revision, algorithm,
- * parameters, and coordinate system that determined it.
+ * Compile-time law: rasterized provenance names the exact semantic frame it
+ * realizes, and captured provenance names a composition instead.
  *
- * The README claimed all four for as long as the type carried none of them.
+ * This is the law that makes live presentation and export the same evaluation.
  */
-export type AnAnalysisResultNamesEverythingThatDeterminedIt = Assert<
+export type RasterizedProvenanceNamesItsSemanticFrame = Assert<
   Equal<
     [
-      MediaAnalysisResult['revision'] extends RevisionReference ? true : false,
-      MediaAnalysisResult['profile']['algorithm'] extends AnalysisAlgorithmReference ? true : false,
-      MediaAnalysisResult['profile']['parameters'] extends CanonicalValue ? true : false,
-      MediaAnalysisResult['profile']['coordinateSystem'] extends AnalysisCoordinateSystem ? true : false,
-      'cache' extends keyof MediaAnalysisResult ? true : false,
+      'frame' extends keyof CaseOf<RasterizedProvenance<MediaFrame, unknown>, 'rasterized'>
+        ? true
+        : false,
+      'frame' extends keyof CaseOf<CapturedProvenance<unknown, unknown>, 'host-captured'>
+        ? true
+        : false,
+      'composition' extends keyof CaseOf<CapturedProvenance<unknown, unknown>, 'host-captured'>
+        ? true
+        : false,
+      'asset' extends keyof CaseOf<DecodedProvenance<MediaLawAssetA, MediaLawDecodeA>, 'decoded'>
+        ? true
+        : false,
     ],
-    [true, true, true, true, true]
+    [true, false, true, true]
   >
 >;
 
 /**
- * Compile-time law: an export request carries exactly one disposition, and the
- * three arms answer three different questions.
+ * Compile-time law: a physical payload is exact over its representation, and
+ * realm is not part of its identity.
  *
- * `unavailable` cannot be silent, and host capture cannot present itself as a
- * fidelity claim — it holds a capture profile and no fidelity at all.
+ * Two hosts producing the same canonical representation interoperate, which is
+ * a feature. Four realm-named wrappers around one structure were four different
+ * comments on the same type.
  */
-export type AnExportRequestReceivesOneDisposition = Assert<
+export type APayloadIsExactOverItsRepresentation = Assert<
+  Equal<
+    [
+      PhysicalPayload<MediaLawRepA>['representation'],
+      PhysicalPayload<MediaLawRepA> extends PhysicalPayload<
+        MediaRepresentationId<'liteship.media.law.representation-b'>
+      >
+        ? true
+        : false,
+      TagOf<PayloadLocation>,
+    ],
+    [
+      MediaRepresentationReference<MediaLawRepA>,
+      false,
+      'addressed' | 'host-resource',
+    ]
+  >
+>;
+
+/**
+ * Compile-time law: a media source is bounded, ordered, and lossless.
+ *
+ * The absence of a dropped arm is the guarantee. `13_stream` may lawfully drop
+ * oldest, drop newest, or coalesce, because losing a stale UI event is
+ * recoverable; losing frame 317 changes the movie.
+ */
+export type AMediaSourceCannotSilentlyDropUnits = Assert<
+  Equal<
+    [
+      // Credit is a boolean bound, not a capacity with an overflow rule. A
+      // numeric policy here would let an encoder queue discard frame 317 and
+      // call it backpressure.
+      MediaSourceCredit['bounded'],
+      'overflow' extends keyof MediaSourceCredit ? true : false,
+      'capacity' extends keyof MediaSourceCredit ? true : false,
+      TagOf<MediaBatch<unknown>>,
+      CaseOf<MediaBatch<MediaLawRepA>, 'produced'>['units'] extends NonEmptyTuple<MediaLawRepA>
+        ? true
+        : false,
+      readonly MediaLawRepA[] extends CaseOf<MediaBatch<MediaLawRepA>, 'produced'>['units']
+        ? true
+        : false,
+      MediaSource<unknown, MediaLawSourceA>['credit'] extends MediaSourceCredit ? true : false,
+    ],
+    [true, false, false, 'produced' | 'completed' | 'cancelled' | 'failed', true, false, true]
+  >
+>;
+
+/**
+ * Compile-time law: a source is exact over its unit through the covariant
+ * output of its pull, and exact over its own identity.
+ *
+ * The unit carried only in an input position would be contravariant and would
+ * survive every broadening.
+ */
+export type AMediaSourceIsExactOverItsUnit = Assert<
+  Equal<
+    [
+      // Read the pull relationship itself. Substitutability alone survives the
+      // input and output being swapped — the unit is still "somewhere in the
+      // signature", and every downstream exactness claim quietly becomes
+      // contravariant.
+      Equal<
+        MediaSource<MediaLawRepA, MediaLawSourceA>['pull'],
+        Signature<MediaSourceCredit, MediaBatch<MediaLawRepA>, NonEmptyTuple<Diagnostic>>
+      >,
+      MediaSource<MediaLawRepA, MediaLawSourceA> extends MediaSource<
+        MediaRepresentationId<'liteship.media.law.representation-b'>,
+        MediaLawSourceA
+      >
+        ? true
+        : false,
+      MediaSource<MediaLawRepA, MediaLawSourceA> extends MediaSource<
+        MediaLawRepA,
+        MediaSourceId<'liteship.media.law.source-b'>
+      >
+        ? true
+        : false,
+      MediaSource<MediaLawRepA, MediaLawSourceA>['id'],
+    ],
+    [true, false, false, MediaSourceReference<MediaLawSourceA>]
+  >
+>;
+
+/**
+ * Compile-time law: the encode input and the track configuration are selected
+ * by one tag, so neither can describe a product the other cannot produce.
+ *
+ * Members are compared one at a time because a deferred indexed access over an
+ * `Extract` union resolves alone but not inside a tuple.
+ */
+export type EncodeInputIsCorrelatedToItsTracks = Assert<
+  Equal<
+    [
+      Equal<
+        MediaEncodeRequest<'audio-only', unknown, unknown, MediaLawEncodeA>['input'],
+        CaseOf<MediaInput<unknown, unknown>, 'audio-only'>
+      >,
+      Equal<
+        MediaEncodeRequest<'audio-only', unknown, unknown, MediaLawEncodeA>['tracks'],
+        CaseOf<MediaTrackConfiguration, 'audio-only'>
+      >,
+      'video' extends keyof CaseOf<MediaInput<unknown, unknown>, 'audio-only'> ? true : false,
+      'audio' extends keyof CaseOf<MediaInput<unknown, unknown>, 'video-only'> ? true : false,
+      TagOf<MediaInput<unknown, unknown>>,
+    ],
+    [true, true, false, false, MediaTrackTag]
+  >
+>;
+
+/**
+ * Compile-time law: encoding consumes a source and produces a source.
+ *
+ * Neither side is a tuple. A tuple at either end reintroduces the memory wall
+ * that made long-form rendering impossible, one stage apart.
+ */
+export type EncodingIsSourceToSourceNotTupleToTuple = Assert<
+  Equal<
+    [
+      // Decode too. Read as a member rather than by varying a type argument:
+      // collapsing the source to a tuple leaves the source parameter unused,
+      // and an unused parameter is a hygiene death no named law can attribute.
+      Equal<
+        MediaDecodeProduct<
+          MediaLawRepA,
+          MediaLawAssetA,
+          MediaLawRevisionA,
+          MediaLawDecodeA,
+          MediaLawSourceA
+        >['frames'],
+        MediaSource<DecodedFrame<MediaLawRepA, MediaLawAssetA, MediaLawDecodeA>, MediaLawSourceA>
+      >,
+      Equal<
+        MediaEncodeProduct<'video-only', MediaLawEncodeA, MediaLawSourceA>['packets'],
+        MediaSource<MediaPacket<MediaLawEncodeA, MediaLawSourceA>, MediaLawSourceA>
+      >,
+      MediaEncodeProduct<'video-only', MediaLawEncodeA, MediaLawSourceA>['packets'] extends readonly unknown[]
+        ? true
+        : false,
+      CaseOf<MediaInput<unknown, unknown>, 'video-only'>['video'] extends readonly unknown[]
+        ? true
+        : false,
+    ],
+    [true, true, false, false]
+  >
+>;
+
+/**
+ * Compile-time law: a packet names the source, track, and profile that produced
+ * it, and carries its own sequence.
+ *
+ * Without the track relation, a mux can assemble a container whose roster its
+ * packets never had — an artifact naming its bytes truthfully while lying about
+ * what media they contain.
+ */
+export type APacketNamesItsSourceTrackAndProfile = Assert<
+  Equal<
+    [
+      MediaPacket<MediaLawEncodeA, MediaLawSourceA, MediaLawTrackA>['source'],
+      MediaPacket<MediaLawEncodeA, MediaLawSourceA, MediaLawTrackA>['track'],
+      MediaPacket<MediaLawEncodeA, MediaLawSourceA, MediaLawTrackA>['profile'],
+      MediaPacket<MediaLawEncodeA, MediaLawSourceA, MediaLawTrackA>['sequence'] extends StreamSequence
+        ? true
+        : false,
+      MediaPacket<MediaLawEncodeA, MediaLawSourceA, MediaLawTrackB> extends MediaPacket<
+        MediaLawEncodeA,
+        MediaLawSourceA,
+        MediaLawTrackA
+      >
+        ? true
+        : false,
+    ],
+    [
+      MediaSourceReference<MediaLawSourceA>,
+      MediaTrackReference<MediaLawTrackA>,
+      EncodeProfileReference<MediaLawEncodeA>,
+      true,
+      false,
+    ]
+  >
+>;
+
+/**
+ * Compile-time law: the artifact's track configuration is the exact one the mux
+ * consumed, its bytes are producer-derived, and its identity is caller-carried.
+ */
+export type AnArtifactCannotManufactureItsRoster = Assert<
+  Equal<
+    [
+      Equal<
+        MediaArtifact<'audio-video', MediaLawAssetA, MediaLawContainerA, MediaLawTrackA, MediaLawTrackB>['tracks'],
+        CaseOf<MediaTrackConfiguration<MediaLawTrackA, MediaLawTrackB>, 'audio-video'>
+      >,
+      MediaArtifact['asset'] extends MediaAssetReference ? true : false,
+      MediaArtifact['address'] extends ContentAddress ? true : false,
+      MediaArtifact['digest'] extends ContentDigest ? true : false,
+      MediaArtifact<
+        'video-only',
+        MediaLawAssetA,
+        ContainerProfileId<'liteship.media.law.container-b'>
+      > extends MediaArtifact<'video-only', MediaLawAssetA, MediaLawContainerA>
+        ? true
+        : false,
+    ],
+    [true, true, true, true, false]
+  >
+>;
+
+/**
+ * Compile-time law: every codec operation consumes an admitted profile.
+ *
+ * This is what makes a total contract honest. A bare profile reference is a
+ * branded identity anyone can mint, so a total operation over it would promise
+ * output for codecs this host has never heard of. Admission is the host's
+ * answer; the core contract is total only over what was already admitted.
+ */
+export type CodecOperationsConsumeAdmittedProfiles = Assert<
+  Equal<
+    [
+      Equal<
+        MediaDecodeRequest<MediaLawAssetA, MediaLawRevisionA, MediaLawDecodeA>['profile'],
+        AdmittedProfile<DecodeProfileReference<MediaLawDecodeA>>
+      >,
+      Equal<
+        MediaEncodeRequest<'video-only', unknown, unknown, MediaLawEncodeA>['profile'],
+        AdmittedProfile<EncodeProfileReference<MediaLawEncodeA>>
+      >,
+      Equal<
+        MediaMuxRequest<
+          'video-only',
+          MediaLawEncodeA,
+          MediaLawSourceA,
+          MediaLawContainerA,
+          MediaLawAssetA
+        >['container'],
+        AdmittedProfile<ContainerProfileReference<MediaLawContainerA>>
+      >,
+      'admission' extends keyof AdmittedProfile<unknown> ? true : false,
+    ],
+    [true, true, true, true]
+  >
+>;
+
+/**
+ * Compile-time law: physical failure stays representable after admission.
+ *
+ * Totality means no compatibility-refusal arm, never that the work cannot fail.
+ * A device can be lost, input can be malformed, capacity can run out.
+ */
+export type AdmissionDoesNotMakePhysicalWorkInfallible = Assert<
+  Equal<
+    [
+      ReturnType<MediaDecoderAuthority['decode']> extends Result<unknown, NonEmptyTuple<Diagnostic>>
+        ? true
+        : false,
+      ReturnType<MediaEncoderAuthority['encode']> extends Result<unknown, NonEmptyTuple<Diagnostic>>
+        ? true
+        : false,
+      ReturnType<MediaMuxAuthority['finalize']> extends Result<unknown, NonEmptyTuple<Diagnostic>>
+        ? true
+        : false,
+    ],
+    [true, true, true]
+  >
+>;
+
+/**
+ * Compile-time law: an analysis result is exact over the revision, algorithm,
+ * parameters, and coordinate system that determined it, and events carry the
+ * result rather than a bare payload.
+ *
+ * The event arm mattered: carrying raw `MediaAnalysis` bypassed the whole
+ * identity the result exists to hold, so a strengthened result travelled the
+ * stream as an anonymous number array.
+ */
+export type AnAnalysisResultNamesEverythingThatDeterminedIt = Assert<
+  Equal<
+    [
+      MediaAnalysisResult<MediaLawAssetA, MediaLawRevisionA, MediaLawAlgorithmA>['revision'],
+      MediaAnalysisResult<MediaLawAssetA, MediaLawRevisionA, MediaLawAlgorithmA>['profile']['algorithm'],
+      MediaAnalysisResult['profile']['parameters'] extends CanonicalValue ? true : false,
+      MediaAnalysisResult['profile']['coordinateSystem'] extends AnalysisCoordinateSystem ? true : false,
+      'cache' extends keyof MediaAnalysisResult ? true : false,
+      CaseOf<MediaEvent, 'analysis'>['result'] extends MediaAnalysisResult ? true : false,
+    ],
+    [
+      RevisionReference<MediaLawRevisionA>,
+      AnalysisAlgorithmReference<MediaLawAlgorithmA>,
+      true,
+      true,
+      true,
+      true,
+    ]
+  >
+>;
+
+/**
+ * Compile-time law: an export request names its subject, cut, and egress, and
+ * carries no disposition.
+ *
+ * A request holding its own answer is a decided plan wearing a request nametag,
+ * and it let a semantic-projection disposition exist while naming nothing at
+ * all.
+ */
+export type AnExportRequestNamesItsSubjectAndCarriesNoAnswer = Assert<
+  Equal<
+    [
+      'subject' extends keyof MediaExportRequest ? true : false,
+      'cut' extends keyof MediaExportRequest ? true : false,
+      'egress' extends keyof MediaExportRequest ? true : false,
+      'disposition' extends keyof MediaExportRequest ? true : false,
+      MediaExportDecision['request'] extends MediaExportRequest ? true : false,
+      MediaExportDecision['disposition'] extends MediaExportDisposition ? true : false,
+    ],
+    [true, true, true, false, true, true]
+  >
+>;
+
+/**
+ * Compile-time law: the three export dispositions answer three different
+ * questions, and an unavailable one cannot be silent.
+ */
+export type AnExportDecisionCarriesOneDisposition = Assert<
   Equal<
     [
       TagOf<MediaExportDisposition>,
       keyof CaseOf<MediaExportDisposition, 'semantic-projection'>,
       keyof CaseOf<MediaExportDisposition, 'host-capture'>,
       keyof CaseOf<MediaExportDisposition, 'unavailable'>,
-      MediaExportRequest['disposition'] extends MediaExportDisposition ? true : false,
-      // The population must be non-empty, not merely present. A diagnostics
-      // member that accepts `[]` is silence wearing the name of an explanation,
-      // and `keyof` alone cannot tell the two apart.
       readonly Diagnostic[] extends CaseOf<MediaExportDisposition, 'unavailable'>['diagnostics']
         ? true
         : false,
@@ -610,26 +1240,23 @@ export type AnExportRequestReceivesOneDisposition = Assert<
       '_tag' | 'fidelity',
       '_tag' | 'profile',
       '_tag' | 'diagnostics' | 'remediation',
-      true,
       false,
     ]
   >
 >;
 
 /**
- * Compile-time law: decoder and encoder requirements are typed holes whose
+ * Compile-time law: decode, encode, and mux are three typed holes whose
  * contracts core fixes.
- *
- * The README claimed these for the entire life of the home while the type
- * surface imported no `Hole` at all.
  */
 export type CodecRequirementsAreTypedHoles = Assert<
   Equal<
     [
       MediaDecoderRequirement extends Hole<'liteship.media.decoder', MediaDecoderAuthority> ? true : false,
       MediaEncoderRequirement extends Hole<'liteship.media.encoder', MediaEncoderAuthority> ? true : false,
+      MediaMuxRequirement extends Hole<'liteship.media.mux', MediaMuxAuthority> ? true : false,
     ],
-    [true, true]
+    [true, true, true]
   >
 >;
 
@@ -642,12 +1269,21 @@ export interface MediaTypeSurface {
   readonly analysisResult: MediaAnalysisResult;
   readonly time: MediaTimeCut;
   readonly frame: MediaFrame;
+  readonly payload: PhysicalPayload;
   readonly physicalFrame: PhysicalFrame;
+  readonly sampleBlock: PhysicalSampleBlock;
+  readonly source: MediaSource<unknown>;
+  readonly batch: MediaBatch<unknown>;
+  readonly admitted: AdmittedProfile<unknown>;
+  readonly admission: CodecAdmission<unknown>;
   readonly track: MediaTrackConfiguration;
+  readonly input: MediaInput<unknown, unknown>;
   readonly packet: MediaPacket;
   readonly artifact: MediaArtifact;
   readonly decoder: MediaDecoderAuthority;
   readonly encoder: MediaEncoderAuthority;
-  readonly export: MediaExportRequest;
+  readonly mux: MediaMuxAuthority;
+  readonly exportRequest: MediaExportRequest;
+  readonly exportDecision: MediaExportDecision;
   readonly event: MediaEvent;
 }

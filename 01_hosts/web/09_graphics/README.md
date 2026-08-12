@@ -14,6 +14,7 @@ Own physical canvas, WebGL, and WebGPU: context and device acquisition, loss, re
 
 ## Owns
 
+- A bounded source of rasterized frames, so long-form export pulls rather than accumulates.
 - Frame readback: the physical frame realizing one exact semantic frame under one exact raster profile.
 - Raster profile identity and its reproducibility claim.
 - Graphics resource identity, the closed context-kind set, and owned lifetime.
@@ -30,6 +31,8 @@ The GPU capability probe is web evidence. The access facility is an intrinsic gr
 
 ## Laws
 
+- A rasterized frame names the *exact* semantic frame it realizes. An earlier form fixed that parameter to the broad `MediaFrame` and checked only that a frame-shaped member existed, so a request carrying frame A could return pixels whose provenance named frame B and nothing complained. Presence is not correlation.
+- Readback offers a sequence, not only a single frame. A provider that can only hand back one frame per call forces the consumer to hold the whole render.
 - A rasterized frame names the exact semantic frame it realizes. This is the law that makes live presentation and export the same evaluation — without it the two paths agree only by whatever the renderer happened to do.
 - Either cut form may be rasterized. The editor must be able to draw a counterfactual without committing it; refusing draft-derived output at a production slot is publication authority, not rasterization physics.
 - Readback decides nothing about codecs, containers, or bitrates. A capture that chose them would have become an encoder wearing this home's name.
@@ -63,6 +66,8 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - readback-names-the-exact-frame-not-a-frame-shaped-member
+  - readback-offers-a-bounded-sequence
   - readback-names-its-semantic-frame
   - draft-cuts-are-rasterizable
   - a-context-kind-is-not-a-raster-profile

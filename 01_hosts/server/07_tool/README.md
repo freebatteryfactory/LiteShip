@@ -25,6 +25,7 @@ Own native-tool provider authority: exact tool profiles with versions and determ
 
 ## Laws
 
+- The exact profile identity survives the provider path — request, execution, and the operation between them. Threading only the tool left two distinct admitted profiles of the same binary interchangeable at every consumer, which is the whole content of a reproducibility claim about a native encoder.
 - A tool profile names its bytes, its configuration, and its environment. The predecessor carried a name, a version string, and a two-arm determinism algebra whose arms were both empty — nothing could tell a pinned static build from whatever was on the PATH.
 - Reproducibility is the core evidence grammar over this profile's own reference. There is no local determinism type.
 - An invocation cannot claim another tool; invocation is tool-correlated.
@@ -48,6 +49,7 @@ home:
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:
+  - the-profile-identity-survives-the-provider-path
   - a-profile-names-its-bytes-not-just-its-name
   - reproducibility-comes-from-the-core-grammar
   - tool-correlated-invocations

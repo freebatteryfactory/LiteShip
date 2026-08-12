@@ -44,14 +44,19 @@ import type {
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { ReproducibilityClaim } from '../../../00_core/06_evidence/types.js';
-import type { MediaFrame, PhysicalFrame } from '../../../00_core/12_media/types.js';
+import type {
+  CapturedFrame,
+  MediaRepresentationId,
+  MediaSource,
+  MediaSourceId,
+} from '../../../00_core/12_media/types.js';
+import type { SemanticCut } from '../../../00_core/08_state/types.js';
 import type {
   GroundingId,
   RealizationLifecycle,
   RealizationOfferId,
 } from '../../../00_core/14_compiler/types.js';
 import type { WebGroundingDefinition, WebRealizationOffer } from '../00_bootstrap/types.js';
-import type { RegionBoundary } from '../01_region/types.js';
 import type { ProjectionCommit } from '../04_projection/types.js';
 import type { GraphicsResourceReference } from '../09_graphics/types.js';
 
@@ -94,85 +99,128 @@ export interface CaptureProfile<Id extends CaptureProfileId = CaptureProfileId> 
   readonly reproducibility: ReproducibilityClaim<CaptureProfileReference<Id>>;
 }
 
-/** The browser's captured payload — composite pixels, addressed. */
-export interface CapturePayload {
-  readonly bytes: ContentAddress;
-}
+export type CaptureScopeId<Name extends string = string> = Brand<Name, 'liteship.web.capture-scope-id'>;
+export type CaptureScopeReference<Id extends CaptureScopeId = CaptureScopeId> = Reference<
+  'web-capture-scope',
+  Id
+>;
 
 /**
  * The committed physical composition a capture came from.
  *
- * A projection commit and a region boundary, because "which pixels" is two
- * questions: which committed state, and which part of the page. Neither alone
- * identifies a composition.
+ * The commit is exact over the cut it applied, so a capture cannot claim pixels
+ * from a state the application never reached — and the boundary is *not*
+ * restated here. `ProjectionCommit` already carries the region lease whose
+ * membership owns the boundary, and a second writable boundary beside it is one
+ * fact with two owners awaiting disagreement.
+ *
+ * The scope is a different fact: capture may legitimately target less than the
+ * full committed region — one surface, one subarea — and that selection needs
+ * an identity of its own rather than a second boundary pretending to be the
+ * first.
  */
-export interface CapturedComposition {
-  readonly commit: ProjectionCommit;
-  readonly boundary: RegionBoundary;
+export interface CapturedComposition<Cut extends SemanticCut = SemanticCut> {
+  readonly commit: ProjectionCommit<Cut>;
+  readonly scope: CaptureScopeReference;
 }
 
-/** One captured frame: host-captured provenance, never rasterized. */
-export type CapturedFrame<Profile extends CaptureProfileId = CaptureProfileId> = PhysicalFrame<
-  CapturePayload,
-  never,
-  CaptureProfileReference<Profile>,
-  CapturedComposition
->;
+/**
+ * One captured frame.
+ *
+ * Its provenance is captured-only by construction — there is no rasterized arm
+ * to inhabit, so a capture cannot present itself as evidence that a subject had
+ * a faithful semantic projection. An earlier form achieved this by setting the
+ * semantic parameter to `never`, which locked the trapdoor correctly but left
+ * consumers destructuring branches that could not exist.
+ */
+export type WebCapturedFrame<
+  Representation extends MediaRepresentationId = MediaRepresentationId,
+  Cut extends SemanticCut = SemanticCut,
+  Profile extends CaptureProfileId = CaptureProfileId,
+> = CapturedFrame<Representation, CapturedComposition<Cut>, CaptureProfileReference<Profile>>;
 
 /**
  * A request to capture one committed composition.
  *
  * The commit is required and cannot be a draft. A preview may be rasterized —
- * that is the editor working — but pixels claimed off an uncommitted page are
- * a claim about a state the application never reached.
- *
- * A graphics resource may be named when the composition includes one, so the
- * capture can say which surfaces participated. Naming it does not make this a
- * readback; the pixels still come off the composite.
+ * that is the editor working — but pixels claimed off an uncommitted page are a
+ * claim about a state the application never reached.
  */
-export interface CaptureRequest<Profile extends CaptureProfileId = CaptureProfileId> {
-  readonly composition: CapturedComposition;
+export interface CaptureRequest<
+  Cut extends SemanticCut = SemanticCut,
+  Profile extends CaptureProfileId = CaptureProfileId,
+> {
+  readonly composition: CapturedComposition<Cut>;
   readonly profile: CaptureProfile<Profile>;
   readonly surfaces: readonly GraphicsResourceReference[];
 }
 
 /**
- * The capture authority: availability first, then pixels.
+ * The narrow browser capture entrypoint.
  *
- * Availability is a separate operation because permission is a runtime fact
- * that changes between sessions, and a provider that answered it by throwing
- * would make refusal indistinguishable from failure.
+ * Intrinsic and unowned: the page simply has it. It acquires nothing,
+ * negotiates no permission, and constructs no session — those are an offer's
+ * work, which is the already-sealed host rule this home has to obey like every
+ * other.
  */
-export interface CaptureAuthority {
+export interface CaptureFacility {
   readonly availability: Signature<
     CaptureProfileReference,
     CaptureAvailability,
     NonEmptyTuple<Diagnostic>
   >;
-  readonly capture: <Profile extends CaptureProfileId>(
-    request: CaptureRequest<Profile>,
-  ) => Result<CapturedFrame<Profile>, NonEmptyTuple<Diagnostic>>;
+}
+
+/**
+ * The owned capture session authority.
+ *
+ * Constructed rather than grounded, because it holds a permission-sensitive
+ * session with a lifetime. A frame source is offered beside the single capture
+ * so long recordings pull rather than accumulate.
+ */
+export interface CaptureAuthority {
+  readonly capture: <
+    Representation extends MediaRepresentationId,
+    Cut extends SemanticCut,
+    Profile extends CaptureProfileId,
+  >(
+    request: CaptureRequest<Cut, Profile>,
+  ) => Result<WebCapturedFrame<Representation, Cut, Profile>, NonEmptyTuple<Diagnostic>>;
+
+  readonly captureSequence: <
+    Representation extends MediaRepresentationId,
+    Cut extends SemanticCut,
+    Profile extends CaptureProfileId,
+    Source extends MediaSourceId,
+  >(
+    request: CaptureRequest<Cut, Profile>,
+  ) => Result<
+    MediaSource<WebCapturedFrame<Representation, Cut, Profile>, Source>,
+    NonEmptyTuple<Diagnostic>
+  >;
+
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
+export type CaptureFacilityRequirement = Hole<'liteship.web.capture-facility', CaptureFacility>;
 export type CaptureAuthorityRequirement = Hole<'liteship.web.capture-authority', CaptureAuthority>;
 
-/** Grounding the capture facility over an already-committed projection path. */
-export interface CaptureAuthorityGrounding
+/** Grounding the intrinsic browser capture entrypoint. */
+export interface CaptureFacilityGrounding
   extends WebGroundingDefinition<
-    readonly [CaptureAuthorityRequirement],
+    readonly [CaptureFacilityRequirement],
     unknown,
     'intrinsic',
-    'owned'
+    'unowned'
   > {
-  readonly id: GroundingId<'liteship.web.grounding.capture-authority'>;
+  readonly id: GroundingId<'liteship.web.grounding.capture-facility'>;
 }
 
-/** Constructing the capture provider. */
+/** Constructing the owned capture authority over that facility. */
 export interface CaptureAuthorityOffer
   extends WebRealizationOffer<
     readonly [CaptureAuthorityRequirement],
-    readonly [],
+    readonly [CaptureFacilityRequirement],
     unknown,
     unknown,
     'owned'
@@ -191,68 +239,66 @@ export interface CaptureAuthorityOffer
 
 type CaptureLawProfileA = CaptureProfileId<'liteship.web.capture.law.profile-a'>;
 type CaptureLawProfileB = CaptureProfileId<'liteship.web.capture.law.profile-b'>;
+type CaptureLawRepA = MediaRepresentationId<'liteship.web.capture.law.representation-a'>;
 
 /**
- * Compile-time law: a capture names a committed composition.
+ * Compile-time law: a capture names a committed composition, and restates no
+ * boundary of its own.
  *
- * The projection commit is what makes the pixels correspond to a state the
- * application actually reached. Its removal would make capture legal against a
- * page mid-write.
+ * The scope is a selection, not a second boundary. Restoring a writable
+ * `RegionBoundary` here would give one fact two owners — the lease already
+ * carries the committed one — and they would agree until the first capture
+ * where they did not.
  */
 export type ACaptureNamesACommittedComposition = Assert<
   Equal<
     [
-      CaptureRequest<CaptureLawProfileA>['composition'] extends CapturedComposition ? true : false,
+      CaptureRequest<SemanticCut, CaptureLawProfileA>['composition'] extends CapturedComposition
+        ? true
+        : false,
       CapturedComposition['commit'] extends ProjectionCommit ? true : false,
-      CapturedComposition['boundary'] extends RegionBoundary ? true : false,
+      CapturedComposition['scope'] extends CaptureScopeReference ? true : false,
+      'boundary' extends keyof CapturedComposition ? true : false,
     ],
-    [true, true, true]
+    [true, true, true, false]
   >
 >;
 
 /**
- * Compile-time law: a captured frame carries host-captured provenance and can
- * never carry rasterized provenance.
+ * Compile-time law: a captured frame's provenance is captured-only, and it is
+ * exact over the profile and composition it came from.
  *
- * The semantic-frame parameter is `never` precisely so no capture can claim to
- * realize one. A capture that could name a semantic frame would be admissible
- * everywhere a rasterization is, and the distinction between "this is what the
- * scene means" and "this is what the browser drew" would stop existing.
+ * There is no rasterized arm to inhabit. That is what stops a screenshot being
+ * offered as evidence of a faithful semantic projection.
  */
 export type ACapturedFrameCannotClaimASemanticFrame = Assert<
   Equal<
     [
-      // Read the rasterized arm's own member rather than testing the whole
-      // derivation union against one arm's shape. That test is false for any
-      // union and stays false with the semantic parameter fully restored — it
-      // passes while proving nothing, which is what the first draft of this law
-      // did. `never` here is the whole guarantee: the rasterized arm exists in
-      // the algebra but is uninhabitable for a capture.
-      CaseOf<CapturedFrame<CaptureLawProfileA>['derivation'], 'rasterized'>['frame'],
-      CaseOf<CapturedFrame<CaptureLawProfileA>['derivation'], 'reused'>['frame'],
-      MediaFrame extends CaseOf<
-        CapturedFrame<CaptureLawProfileA>['derivation'],
-        'rasterized'
-      >['frame']
-        ? true
-        : false,
-      'composition' extends keyof CaseOf<
-        CapturedFrame<CaptureLawProfileA>['derivation'],
+      TagOf<WebCapturedFrame<CaptureLawRepA, SemanticCut, CaptureLawProfileA>['provenance']>,
+      'frame' extends keyof CaseOf<
+        WebCapturedFrame<CaptureLawRepA, SemanticCut, CaptureLawProfileA>['provenance'],
         'host-captured'
       >
         ? true
         : false,
-      CapturedFrame<CaptureLawProfileB> extends CapturedFrame<CaptureLawProfileA> ? true : false,
+      WebCapturedFrame<CaptureLawRepA, SemanticCut, CaptureLawProfileB> extends WebCapturedFrame<
+        CaptureLawRepA,
+        SemanticCut,
+        CaptureLawProfileA
+      >
+        ? true
+        : false,
     ],
-    [never, never, false, true, false]
+    ['host-captured' | 'reused', false, false]
   >
 >;
 
 /**
- * Compile-time law: availability is a three-arm answer, and refusal says why.
+ * Compile-time law: availability is a three-arm answer, and refusal says which
+ * kind it is.
  *
- * Permission-required and unavailable are different outcomes with different
- * remediations — one is "ask the user again", the other is not.
+ * Permission-required and unavailable have different remediations — one is "ask
+ * the user again", the other is not.
  */
 export type CaptureAvailabilityIsAnsweredNotAssumed = Assert<
   Equal<
@@ -264,14 +310,17 @@ export type CaptureAvailabilityIsAnsweredNotAssumed = Assert<
       CaseOf<CaptureAvailability, 'unavailable'>['diagnostics'] extends NonEmptyTuple<Diagnostic>
         ? true
         : false,
+      readonly Diagnostic[] extends CaseOf<CaptureAvailability, 'unavailable'>['diagnostics']
+        ? true
+        : false,
     ],
-    ['available' | 'permission-required' | 'unavailable', true, true]
+    ['available' | 'permission-required' | 'unavailable', true, true, false]
   >
 >;
 
 /**
- * Compile-time law: capture decides nothing about encoding, and holds no
- * scene or media model of its own.
+ * Compile-time law: capture decides nothing about encoding, and holds no scene
+ * or frame model of its own.
  */
 export type CaptureCarriesNoCodecOrSceneAuthority = Assert<
   Equal<
@@ -286,9 +335,37 @@ export type CaptureCarriesNoCodecOrSceneAuthority = Assert<
 >;
 
 /**
+ * Compile-time law: the intrinsic facility is grounded and the owned authority
+ * is offered over it.
+ *
+ * Grounding admits what already exists; an offer constructs what does not. A
+ * permission-sensitive owned session is not something a page simply has, and
+ * declaring it intrinsic was the shortcut this law now refuses.
+ */
+export type TheFacilityIsGroundedAndTheAuthorityIsOffered = Assert<
+  Equal<
+    [
+      CaptureFacilityGrounding['provides'],
+      CaptureAuthorityOffer['provides'],
+      CaptureAuthorityOffer['requires'],
+      CaptureAuthority['lifecycle'],
+      'capture' extends keyof CaptureFacility ? true : false,
+      'captureSequence' extends keyof CaptureAuthority ? true : false,
+    ],
+    [
+      readonly [CaptureFacilityRequirement],
+      readonly [CaptureAuthorityRequirement],
+      readonly [CaptureFacilityRequirement],
+      CaseOf<RealizationLifecycle, 'owned'>,
+      false,
+      true,
+    ]
+  >
+>;
+
+/**
  * Compile-time law: a capture profile's reproducibility claim is exact over its
- * own reference, and the full grammar remains available so `unclaimed` is
- * sayable.
+ * own reference, and the full grammar stays available so `unclaimed` is sayable.
  */
 export type ACaptureProfileClaimsOnlyWhatItCanShow = Assert<
   Equal<
@@ -309,8 +386,9 @@ export interface WebCaptureTypeSurface {
   readonly availability: CaptureAvailability;
   readonly profile: CaptureProfile;
   readonly composition: CapturedComposition;
-  readonly frame: CapturedFrame;
+  readonly frame: WebCapturedFrame;
+  readonly facility: CaptureFacility;
   readonly authority: CaptureAuthority;
-  readonly grounding: CaptureAuthorityGrounding;
+  readonly grounding: CaptureFacilityGrounding;
   readonly offer: CaptureAuthorityOffer;
 }

@@ -66,15 +66,13 @@ import type { ServerOperationHandler } from './01_hosts/server/09_operation/type
 import type { ToolAuthority, ToolExecution, ToolId } from './01_hosts/server/07_tool/types.js';
 import type {
   MediaJobId,
-  MediaJobReference,
-  MediaPacketStream,
-  ServerEncodeJob,
-  ServerEncodeRequest,
+  RenderProfileId,
   ServerMediaAuthority,
-  ServerMediaJob,
+  ServerRenderJob,
   ServerRenderRequest,
 } from './01_hosts/server/10_media/types.js';
-import type { EncodeProfileId } from './00_core/12_media/types.js';
+import type { MediaRepresentationId, MediaSourceId } from './00_core/12_media/types.js';
+import type { ToolProfileId } from './01_hosts/server/07_tool/types.js';
 import type { SchemaId } from './00_core/03_schema/types.js';
 
 type OpA = OperationId<'liteship.positive.op-a'>;
@@ -92,7 +90,10 @@ type QueueA = QueueId<'liteship.positive.queue-a'>;
 type LayoutA = MemoryLayoutId<'liteship.positive.layout-a'>;
 type ContractA = SchemaId<'liteship.positive.contract-a'>;
 type JobA = MediaJobId<'liteship.positive.job-a'>;
-type EncodeA = EncodeProfileId<'liteship.positive.encode-a'>;
+type RenderA = RenderProfileId<'liteship.positive.render-a'>;
+type ProfileA = ToolProfileId<'liteship.positive.tool-profile-a'>;
+type RepA = MediaRepresentationId<'liteship.positive.representation-a'>;
+type SourceA = MediaSourceId<'liteship.positive.source-a'>;
 
 // Worker: instance A closes instance A.
 declare const instanceA: WorkerInstance<InstA>;
@@ -231,19 +232,31 @@ export const p20: Result<ToolExecution<ToolA>, NonEmptyTuple<Diagnostic>> = tool
 // exactly that ancestry, and encoding its frames opens a packet stream that
 // remembers both the job and the profile the packets were produced under.
 declare const media: ServerMediaAuthority;
-declare const mediaRequestA: ServerRenderRequest<ContractA, ToolA, RootA, JobA>;
+declare const mediaRequestA: ServerRenderRequest<
+  ContractA,
+  never,
+  RenderA,
+  ToolA,
+  ProfileA,
+  RootA,
+  JobA
+>;
 export const p26: Result<
-  ServerMediaJob<ContractA, ToolA, RootA, JobA>,
+  ServerRenderJob<RepA, ContractA, never, RenderA, ToolA, ProfileA, RootA, JobA, SourceA>,
   NonEmptyTuple<Diagnostic>
-> = media.render(mediaRequestA);
-declare const encodeRequestA: ServerEncodeRequest<EncodeA, ToolA, JobA>;
-export const p27: Result<
-  ServerEncodeJob<EncodeA, ToolA, JobA>,
-  NonEmptyTuple<Diagnostic>
-> = media.encode(encodeRequestA);
-declare const encodeJobA: ServerEncodeJob<EncodeA, ToolA, JobA>;
-export const p28: Signature<
-  MediaJobReference<JobA>,
-  MediaPacketStream<JobA, EncodeA>,
-  NonEmptyTuple<Diagnostic>
-> = encodeJobA.open;
+> = media.renderFrames(mediaRequestA);
+declare const renderJobA: ServerRenderJob<
+  RepA,
+  ContractA,
+  never,
+  RenderA,
+  ToolA,
+  ProfileA,
+  RootA,
+  JobA,
+  SourceA
+>;
+/** The job yields a bounded frame source exact over its own source identity. */
+export const p27: (typeof renderJobA)['frames'] = renderJobA.frames;
+/** And it still names the exact admitted tool profile it ran under. */
+export const p28: (typeof renderJobA)['tool'] = renderJobA.tool;

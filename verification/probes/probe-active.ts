@@ -10,7 +10,6 @@
 import type { Hole, InputOf, OutputOf, Result, NonEmptyTuple } from './types.js';
 import type { Diagnostic } from './00_core/00_error/types.js';
 import type { OperationId } from './00_core/07_operation/types.js';
-import type { SchemaId } from './00_core/03_schema/types.js';
 import type {
   MemoryLayoutId,
   SharedBufferId,
@@ -36,17 +35,10 @@ import type { OutboundRequestId } from './01_hosts/edge/05_network/types.js';
 import type { EdgeOperationHandler } from './01_hosts/edge/08_execution/types.js';
 import type { ResponseCommitAuthority, ResponsePlan } from './01_hosts/edge/09_response/types.js';
 import type { RevealedSecret, SecretConsumer, SecretId } from './01_hosts/server/02_secret/types.js';
-import type { FilesystemRootId } from './01_hosts/server/03_filesystem/types.js';
 import type { StatementRequest, StatementResource } from './01_hosts/server/05_database/types.js';
-import type { ToolId } from './01_hosts/server/07_tool/types.js';
 import type { ServerOperationHandler } from './01_hosts/server/09_operation/types.js';
-import type { DecodeProfileId, EncodeProfileId } from './00_core/12_media/types.js';
-import type {
-  MediaJobId,
-  ServerDecodeRequest,
-  ServerEncodeRequest,
-  ServerRenderRequest,
-} from './01_hosts/server/10_media/types.js';
+import type { MediaEncodeRequest, MediaSource } from './00_core/12_media/types.js';
+import type { ServerRenderRequest } from './01_hosts/server/10_media/types.js';
 
 type OpA = OperationId<'probe.active.op-a'>;
 type RowA = readonly [Hole<'probe.active.capability-a', { readonly use: () => void }>];
@@ -65,12 +57,6 @@ type RidA = OutboundRequestId<'probe.active.outbound-a'>;
 type RidB = OutboundRequestId<'probe.active.outbound-b'>;
 type SecA = SecretId<'probe.active.secret-a'>;
 type SecB = SecretId<'probe.active.secret-b'>;
-type ContractA = SchemaId<'probe.active.contract-a'>;
-type ToolA = ToolId<'probe.active.tool-a'>;
-type RootA = FilesystemRootId<'probe.active.root-a'>;
-type JobA = MediaJobId<'probe.active.job-a'>;
-type DecodeA = DecodeProfileId<'probe.active.decode-a'>;
-type EncodeA = EncodeProfileId<'probe.active.encode-a'>;
 
 // W01 (C3): request A's commit authority accepts a plan for request B.
 export const w01: Parameters<ResponseCommitAuthority<ReqA>['commit']>[0] =
@@ -131,12 +117,19 @@ export const w12: 'deadline' extends keyof StatementRequest
 // physical input now belongs to decode, the destination and contract to render,
 // and the frames to encode. One witness still covers it, and it now also
 // refuses the shape where an encode is satisfied without frames.
-export const w13: 'input' extends keyof ServerDecodeRequest<DecodeA, ToolA, RootA, JobA>
-  ? 'destination' extends keyof ServerRenderRequest<ContractA, ToolA, RootA, JobA>
-    ? 'contract' extends keyof ServerRenderRequest<ContractA, ToolA, RootA, JobA>
-      ? 'frames' extends keyof ServerEncodeRequest<EncodeA, ToolA, JobA>
-        ? never
+export const w13: 'destination' extends keyof ServerRenderRequest
+  ? 'contract' extends keyof ServerRenderRequest
+    ? 'render' extends keyof ServerRenderRequest
+      ? MediaEncodeRequest['input'] extends { readonly _tag: string }
+        ? CaseOfVideoInput extends MediaSource<unknown, never>
+          ? never
+          : never
         : true
       : true
     : true
   : true = true;
+
+type CaseOfVideoInput = Extract<
+  MediaEncodeRequest<'video-only', unknown, never>['input'],
+  { readonly _tag: 'video-only' }
+>['video'];

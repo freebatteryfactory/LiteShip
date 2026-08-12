@@ -78,8 +78,8 @@ export interface ToolSandbox {
  * One tool invocation request, correlated to the exact tool: input and
  * output contracts, sandbox, and the profile it targets.
  */
-export interface ToolInvocationRequest<Tool extends ToolId> {
-  readonly profile: ToolProfile<Tool>;
+export interface ToolInvocationRequest<Tool extends ToolId, Profile extends ToolProfileId = ToolProfileId> {
+  readonly profile: ToolProfile<Tool, Profile>;
   readonly input: SchemaReference<SchemaId, unknown>;
   readonly value: CanonicalValue;
   readonly output: SchemaReference<SchemaId, unknown>;
@@ -99,8 +99,8 @@ export type ToolOutcome = Algebra<{
  * One live tool execution: bound to the exact tool, cancellable, owned, and
  * receipted.
  */
-export interface ToolExecution<Tool extends ToolId> {
-  readonly profile: ToolProfile<Tool>;
+export interface ToolExecution<Tool extends ToolId, Profile extends ToolProfileId = ToolProfileId> {
+  readonly profile: ToolProfile<Tool, Profile>;
   readonly cancel: Signature<ToolReference<Tool>, ToolReference<Tool>, NonEmptyTuple<Diagnostic>>;
   readonly result: Signature<ToolReference<Tool>, ToolOutcome, NonEmptyTuple<Diagnostic>>;
   readonly receipt: ContentAddress<'application/vnd.liteship.server-tool-receipt+cbor'>;
@@ -112,9 +112,9 @@ export interface ToolExecution<Tool extends ToolId> {
  * an execution of A, provably not of B.
  */
 export interface ToolAuthority {
-  readonly invoke: <Tool extends ToolId>(
-    request: ToolInvocationRequest<Tool>,
-  ) => Result<ToolExecution<Tool>, NonEmptyTuple<Diagnostic>>;
+  readonly invoke: <Tool extends ToolId, Profile extends ToolProfileId>(
+    request: ToolInvocationRequest<Tool, Profile>,
+  ) => Result<ToolExecution<Tool, Profile>, NonEmptyTuple<Diagnostic>>;
 }
 
 /** The admitted tool roster beneath the provider. */
@@ -175,12 +175,44 @@ export type AnInvocationCannotClaimAnotherTool = Assert<
 /** Compile-time law: invocation is tool-correlated through the provider's generic operation. */
 export type InvocationIsToolCorrelated = Assert<
   Equal<
-    ToolAuthority['invoke'] extends (
-      request: ToolInvocationRequest<ToolId<'liteship.server.tool.law.tool-a'>>,
-    ) => Result<ToolExecution<ToolId<'liteship.server.tool.law.tool-a'>>, NonEmptyTuple<Diagnostic>>
-      ? true
-      : false,
-    true
+    [
+      ToolAuthority['invoke'] extends (
+        request: ToolInvocationRequest<
+          ToolId<'liteship.server.tool.law.tool-a'>,
+          ToolProfileId<'liteship.server.tool.law.profile-a'>
+        >,
+      ) => Result<
+        ToolExecution<
+          ToolId<'liteship.server.tool.law.tool-a'>,
+          ToolProfileId<'liteship.server.tool.law.profile-a'>
+        >,
+        NonEmptyTuple<Diagnostic>
+      >
+        ? true
+        : false,
+      // The profile identity must survive the provider path too. Threading only
+      // the tool leaves two distinct admitted profiles of the same binary — one
+      // pinned, one from the PATH — freely interchangeable at every consumer.
+      ToolExecution<
+        ToolId<'liteship.server.tool.law.tool-a'>,
+        ToolProfileId<'liteship.server.tool.law.profile-b'>
+      > extends ToolExecution<
+        ToolId<'liteship.server.tool.law.tool-a'>,
+        ToolProfileId<'liteship.server.tool.law.profile-a'>
+      >
+        ? true
+        : false,
+      ToolInvocationRequest<
+        ToolId<'liteship.server.tool.law.tool-a'>,
+        ToolProfileId<'liteship.server.tool.law.profile-b'>
+      > extends ToolInvocationRequest<
+        ToolId<'liteship.server.tool.law.tool-a'>,
+        ToolProfileId<'liteship.server.tool.law.profile-a'>
+      >
+        ? true
+        : false,
+    ],
+    [true, false, false]
   >
 >;
 

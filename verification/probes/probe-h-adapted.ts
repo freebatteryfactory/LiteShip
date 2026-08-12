@@ -7,7 +7,7 @@
  * Expected: every assertion in this file is red for its named relationship.
  */
 
-import type { InputOf, NonEmptyTuple, OutputOf, Result } from './types.js';
+import type { NonEmptyTuple, Result } from './types.js';
 import type { Diagnostic } from './00_core/00_error/types.js';
 import type { SchemaId } from './00_core/03_schema/types.js';
 import type {
@@ -30,13 +30,14 @@ import type {
   ResponseFailure,
 } from './01_hosts/edge/09_response/types.js';
 import type { FilesystemRootId } from './01_hosts/server/03_filesystem/types.js';
-import type { ToolId } from './01_hosts/server/07_tool/types.js';
+import type { ToolId, ToolProfileId } from './01_hosts/server/07_tool/types.js';
+import type { MediaSourceId } from './00_core/12_media/types.js';
 import type {
   MediaJobId,
-  MediaJobReference,
-  MediaJobRequest,
+  RenderProfileId,
   ServerMediaAuthority,
-  ServerMediaJob,
+  ServerRenderJob,
+  ServerRenderRequest,
 } from './01_hosts/server/10_media/types.js';
 
 type TaskA = WorkerTaskId<'probe.adapted.task-a'>;
@@ -99,24 +100,52 @@ export const a4: Result<ResponseCommitAuthority<ReqB>, ResponseFailure> =
 // ---------------------------------------------------------------------------
 
 declare const media: ServerMediaAuthority;
-declare const mediaRequestA: MediaJobRequest<ContractA, ToolA, RootA, RootA, JobA>;
+type RenderA = RenderProfileId<'probe.adapted.render-a'>;
+type ProfileA = ToolProfileId<'probe.adapted.profile-a'>;
+type SourceA = MediaSourceId<'probe.adapted.source-a'>;
+type SourceB = MediaSourceId<'probe.adapted.source-b'>;
+
+declare const renderRequestA: ServerRenderRequest<ContractA, never, RenderA, ToolA, ProfileA, RootA, JobA>;
 
 /** A5a: a request naming contract A cannot return a job claiming contract B. */
 export const a5a: Result<
-  ServerMediaJob<ContractB, ToolA, RootA, RootA, JobA>,
+  ServerRenderJob<never, ContractB, never, RenderA, ToolA, ProfileA, RootA, JobA, SourceA>,
   NonEmptyTuple<Diagnostic>
-> = media.render(mediaRequestA);
+> = media.renderFrames(renderRequestA);
 
 /** A5b: a request naming job A cannot return a job claiming identity B. */
 export const a5b: Result<
-  ServerMediaJob<ContractA, ToolA, RootA, RootA, JobB>,
+  ServerRenderJob<never, ContractA, never, RenderA, ToolA, ProfileA, RootA, JobB, SourceA>,
   NonEmptyTuple<Diagnostic>
-> = media.render(mediaRequestA);
+> = media.renderFrames(renderRequestA);
 
-declare const mediaJobA: ServerMediaJob<ContractA, ToolA, RootA, RootA, JobA>;
+declare const mediaJobA: ServerRenderJob<
+  never,
+  ContractA,
+  never,
+  RenderA,
+  ToolA,
+  ProfileA,
+  RootA,
+  JobA,
+  SourceA
+>;
 
-/** A6a: job A refuses to open with a reference naming job B. */
-export const a6a: InputOf<(typeof mediaJobA)['open']> = {} as MediaJobReference<JobB>;
-
-/** A6b: the output stream of job A cannot claim job B. */
-export const a6b: OutputOf<(typeof mediaJobA)['open']>['job'] = {} as MediaJobReference<JobB>;
+/**
+ * A6: the frame source of job A cannot be a source of another identity.
+ *
+ * A6a and A6b previously named `open` and its returned stream. They collapse to
+ * one witness over `frames` now that the render job returns a bounded source
+ * directly — same relationship, one member closer to where the identity lives.
+ */
+export const a6a: (typeof mediaJobA)['frames'] = {} as ServerRenderJob<
+  never,
+  ContractA,
+  never,
+  RenderA,
+  ToolA,
+  ProfileA,
+  RootA,
+  JobA,
+  SourceB
+>['frames'];
