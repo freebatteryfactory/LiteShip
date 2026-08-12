@@ -3,11 +3,30 @@
 // Written alongside the contract rather than after it. Each entry restores one
 // way the umbrella could grow back into the thing it refuses to be: a second
 // artifact vocabulary, a universal lifecycle, a context object with the label
-// filed off, or a fact duplicated into two places that then need a parity law.
+// filed off, a fact duplicated into two places, or a coordinate used at the
+// wrong altitude.
 
 import { runBank } from '../harness.mjs';
 
 const T = '02_targets/types.ts';
+
+const LUGGAGE = [
+  ['a named target member', `  readonly astro?: unknown;`],
+  ['an anonymous payload', `  readonly payload?: unknown;`],
+  ['a context bag', `  readonly context?: unknown;`],
+  ['a hook table', `  readonly hooks?: unknown;`],
+  ['a universal lifecycle phase', `  readonly phase?: 'configuration' | 'discovery' | 'transform' | 'render' | 'deploy';`],
+];
+
+const RESTATED = [
+  ['the content address', 'address'],
+  ['the digest', 'digest'],
+  ['the media type', 'mediaType'],
+  ['the source relation', 'relation'],
+  ['a source map', 'sourceMap'],
+  ['the configuration', 'configuration'],
+  ['the composition', 'composition'],
+];
 
 const M = [
   // --- identity ------------------------------------------------------------
@@ -22,49 +41,97 @@ const M = [
     `export type EcosystemTargetId<Name extends string = string> = Brand<Name, 'liteship.ecosystem-target-id'>;`,
     `export type EcosystemTargetId<Name extends string = string> = Brand<Name, 'liteship.projection-target-id'>;`],
 
+  ['the attempt identity collapses into the composition identity', T,
+    `export type TargetAttemptReference<Id extends TargetAttemptId = TargetAttemptId> = Reference<
+  'target-attempt',
+  Id
+>;`,
+    `export type TargetAttemptReference<Id extends TargetAttemptId = TargetAttemptId> = Reference<
+  'target-composition',
+  Id
+>;`],
+
   // --- participation exactness --------------------------------------------
-  ['participation decorrelates its composition', T,
-    `  readonly composition: TargetCompositionReference<Composition>;
+  ['participation decorrelates its configuration', T,
+    `  readonly configuration: TargetConfigurationRevision<Config, Revision>;
 }
 
 // ---------------------------------------------------------------------------
 // 4. Production`,
-    `  readonly composition: TargetCompositionReference;
+    `  readonly configuration: TargetConfigurationRevision;
 }
 
 // ---------------------------------------------------------------------------
 // 4. Production`],
 
-  ['participation decorrelates its configuration', T,
-    `  readonly configuration: TargetConfigurationRevision<Config, Revision>;`,
-    `  readonly configuration: TargetConfigurationRevision<Config>;`],
-
   ['the configuration revision widens back to broad', T,
     `  readonly revision: RevisionReference<Revision>;`,
     `  readonly revision: RevisionReference;`],
 
-  // --- the umbrella grows luggage -----------------------------------------
-  ...[
-    ['a named target member', `  readonly astro?: unknown;`],
-    ['an anonymous payload', `  readonly payload?: unknown;`],
-    ['a context bag', `  readonly context?: unknown;`],
-    ['a hook table', `  readonly hooks?: unknown;`],
-    ['a universal lifecycle phase', `  readonly phase?: 'configuration' | 'discovery' | 'transform' | 'render' | 'deploy';`],
-  ].map(([what, line]) => [`the umbrella grows ${what}`, T,
+  // --- composition ownership ----------------------------------------------
+  ['participation regains a composition of its own', T,
     `  readonly target: EcosystemTargetReference<Target>;
-  readonly configuration: TargetConfigurationRevision<Config, Revision>;`,
+  readonly configuration: TargetConfigurationRevision<Config, Revision>;
+}
+
+// ---------------------------------------------------------------------------
+// 4. Production`,
+    `  readonly target: EcosystemTargetReference<Target>;
+  readonly configuration: TargetConfigurationRevision<Config, Revision>;
+  readonly composition: TargetCompositionReference;
+}
+
+// ---------------------------------------------------------------------------
+// 4. Production`],
+
+  ['the direct arm regains a composition of its own', T,
+    `  'direct-composition': Record<never, never>;
+}>;
+
+/**
+ * The relation between one exact core artifact`,
+    `  'direct-composition': { readonly composition: TargetCompositionReference };
+}>;
+
+/**
+ * The relation between one exact core artifact`],
+
+  ['the direct arm acquires an ecosystem target', T,
+    `  'direct-composition': Record<never, never>;
+}>;
+
+/**
+ * The relation between one exact core artifact`,
+    `  'direct-composition': { readonly target: EcosystemTargetReference<Target> };
+}>;
+
+/**
+ * The relation between one exact core artifact`],
+
+  ['the outcome composition widens', T,
+    `  composed: {
+    readonly composition: TargetCompositionReference<Composition>;`,
+    `  composed: {
+    readonly composition: TargetCompositionReference;`],
+
+  // --- the umbrella grows luggage -----------------------------------------
+  ...LUGGAGE.map(([what, line]) => [`the umbrella grows ${what}`, T,
+    `  readonly target: EcosystemTargetReference<Target>;
+  readonly configuration: TargetConfigurationRevision<Config, Revision>;
+}
+
+// ---------------------------------------------------------------------------
+// 4. Production`,
     `  readonly target: EcosystemTargetReference<Target>;
 ${line}
-  readonly configuration: TargetConfigurationRevision<Config, Revision>;`]),
+  readonly configuration: TargetConfigurationRevision<Config, Revision>;
+}
+
+// ---------------------------------------------------------------------------
+// 4. Production`]),
 
   // --- second artifact vocabulary ------------------------------------------
-  ...[
-    ['the content address', 'address'],
-    ['the digest', 'digest'],
-    ['the media type', 'mediaType'],
-    ['the source relation', 'relation'],
-    ['a source map', 'sourceMap'],
-  ].map(([what, key]) => [`the production relation restates ${what}`, T,
+  ...RESTATED.map(([what, key]) => [`the production relation restates ${what}`, T,
     `  readonly artifact: Artifact<Id, Target, Revision>;
   readonly producer: Producer;`,
     `  readonly artifact: Artifact<Id, Target, Revision>;
@@ -77,90 +144,82 @@ ${line}
     `  readonly artifact: ArtifactSlotReference;
   readonly producer: Producer;`],
 
-  // --- duplicated facts ----------------------------------------------------
-  ['a sibling configuration returns beside the producer', T,
-    `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly producer: Producer;`,
-    `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly configuration: TargetConfigurationRevision;
-  readonly producer: Producer;`],
-
-  ['a sibling composition returns beside the producer', T,
-    `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly producer: Producer;`,
-    `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly composition: TargetCompositionReference;
-  readonly producer: Producer;`],
-
-  ['failure regains its duplicate composition', T,
-    `export interface TargetFailure<Target extends EcosystemTargetId = EcosystemTargetId> {
-  readonly target: EcosystemTargetReference<Target>;`,
-    `export interface TargetFailure<Target extends EcosystemTargetId = EcosystemTargetId> {
-  readonly target: EcosystemTargetReference<Target>;
-  readonly composition: TargetCompositionReference;`],
-
-  // --- slot exactness ------------------------------------------------------
   ['the artifact slot widens', T,
     `  readonly slot: ArtifactSlotReference<Slot>;`,
     `  readonly slot: ArtifactSlotReference;`],
 
-  // --- direct mode ---------------------------------------------------------
-  ['the direct arm acquires an ecosystem target', T,
-    `  'direct-composition': {
-    readonly composition: TargetCompositionReference<Composition>;
-  };`,
-    `  'direct-composition': {
-    readonly composition: TargetCompositionReference<Composition>;
-    readonly target: EcosystemTargetReference<Target>;
-  };`],
-
-  ['the direct arm acquires a target configuration', T,
-    `  'direct-composition': {
-    readonly composition: TargetCompositionReference<Composition>;
-  };`,
-    `  'direct-composition': {
-    readonly composition: TargetCompositionReference<Composition>;
-    readonly configuration: TargetConfigurationRevision<Config, Revision>;
-  };`],
-
   ['target production stops reusing exact participation', T,
     `  'ecosystem-target': {
-    readonly participation: TargetParticipation<Target, Config, Composition, Revision>;
+    readonly participation: TargetParticipation<Target, Config, Revision>;
   };`,
     `  'ecosystem-target': {
     readonly participation: TargetParticipation;
   };`],
 
-  // --- rejection and failure -----------------------------------------------
-  ['ambiguous claimants narrow back to ecosystem targets', T,
-    `    readonly claimants: NonEmptyTuple<ArtifactProducer>;`,
-    `    readonly claimants: NonEmptyTuple<EcosystemTargetReference>;`],
+  // --- altitude ------------------------------------------------------------
+  ['a refusal regains a selected composition', T,
+    `  refused: {
+    readonly attempt: TargetAttemptReference<Attempt>;
+    readonly rejection: TargetRejection;
+  };`,
+    `  refused: {
+    readonly attempt: TargetAttemptReference<Attempt>;
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly rejection: TargetRejection;
+  };`],
+
+  ['a refusal is identified by the composition it never became', T,
+    `  refused: {
+    readonly attempt: TargetAttemptReference<Attempt>;
+    readonly rejection: TargetRejection;
+  };`,
+    `  refused: {
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly rejection: TargetRejection;
+  };`],
+
+  ['slot claimants revert to post-selection producers', T,
+    `    readonly claimants: NonEmptyTuple<SlotClaim>;`,
+    `    readonly claimants: NonEmptyTuple<ArtifactProducer>;`],
+
+  ['failure narrows to a bare target reference', T,
+    `export interface TargetFailure<Participant extends TargetParticipation = TargetParticipation> {
+  readonly participation: Participant;`,
+    `export interface TargetFailure<Participant extends TargetParticipation = TargetParticipation> {
+  readonly participation: EcosystemTargetReference;`],
+
+  ['failure regains its duplicate composition', T,
+    `export interface TargetFailure<Participant extends TargetParticipation = TargetParticipation> {
+  readonly participation: Participant;`,
+    `export interface TargetFailure<Participant extends TargetParticipation = TargetParticipation> {
+  readonly participation: Participant;
+  readonly composition: TargetCompositionReference;`],
 
   ['a refused outcome carries production', T,
-    `    refused: {
-      readonly composition: TargetCompositionReference<Composition>;
-      readonly rejection: TargetRejection;
-    };`,
-    `    refused: {
-      readonly composition: TargetCompositionReference<Composition>;
-      readonly rejection: TargetRejection;
-      readonly produced: readonly ProducedArtifact[];
-    };`],
+    `  refused: {
+    readonly attempt: TargetAttemptReference<Attempt>;
+    readonly rejection: TargetRejection;
+  };`,
+    `  refused: {
+    readonly attempt: TargetAttemptReference<Attempt>;
+    readonly rejection: TargetRejection;
+    readonly produced: readonly ProducedArtifact[];
+  };`],
 
   ['a failed outcome reports a preselection rejection', T,
-    `    failed: {
-      readonly composition: TargetCompositionReference<Composition>;
-      readonly failure: TargetFailure;
-    };`,
-    `    failed: {
-      readonly composition: TargetCompositionReference<Composition>;
-      readonly rejection: TargetRejection;
-      readonly failure: TargetFailure;
-    };`],
+    `  failed: {
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly failure: TargetFailure;
+  };`,
+    `  failed: {
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly rejection: TargetRejection;
+    readonly failure: TargetFailure;
+  };`],
 
   ['a composed outcome admits no participants', T,
-    `      readonly participants: NonEmptyTuple<TargetParticipation>;`,
-    `      readonly participants: readonly TargetParticipation[];`],
+    `    readonly participants: NonEmptyTuple<TargetParticipation>;`,
+    `    readonly participants: readonly TargetParticipation[];`],
 ];
 
 process.exit(runBank('targets-umbrella', M).clean ? 0 : 1);

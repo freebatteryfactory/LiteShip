@@ -18,14 +18,20 @@ Core answers what a program means. Hosts answer how unresolved physical behaviou
 
 - Ecosystem target identity and reference.
 - Target configuration identity, and its relation to an exact revision.
-- Target composition identity and reference.
+- Target composition identity and reference — the identity of a *selected* composition.
+- Target attempt identity and reference — the pre-selection coordinate, so a refusal need not borrow the identity of a composition it never became.
+- Slot claims, the pre-selection mirror of producers.
 - Artifact slot identity — what a composition requires something to fill.
 - The participation relation binding one target, one exact configuration revision, and one composition.
 - The production relation over core's exact `Artifact`.
 - The producer choice, including the arm where no ecosystem target was involved at all.
 - The altitude distinction between rejection and failure.
 
-Every fact has exactly one owner. Participation owns target, configuration revision, and composition; the producer owns participation; production owns the artifact and the slot; the outcome owns the composition it reports on. Nothing is carried twice, so there is no parity law anywhere in this home and nothing that can drift.
+Every fact has exactly one owner. Participation owns target and configuration revision; the producer owns participation; production owns the artifact and the slot; **the outcome alone owns composition identity**. Nothing is carried twice, so there is no parity law anywhere in this home and nothing that can drift.
+
+Composition ownership is worth stating plainly, because the alternative was tried and rejected. Participation and the producer used to carry a composition of their own, which meant an outcome for composition A could hold participants stamped with composition B — exact local generics beside a broad public carrier, the same failure the host layer paid four folds to close. Threading the composition generic through both populations would have made the mismatch illegal. Removing the copy makes it **unrepresentable**, which is the stronger of the two and the smaller change.
+
+Selection is an altitude, not a flag. `TargetCompositionId` identifies a *selected* composition, so nothing that never reached selection may carry one: a refusal is identified by a `TargetAttemptId`, and slot claimants are `SlotClaim` values rather than `ArtifactProducer` values. A claim says what offered; a producer says what produced. Their payloads are identical, so only their tags keep them apart — and a law compares them structurally, because comments do not constrain the compiler.
 
 The composition outcome is what projects into core's existing `Explanation`. There is no separate facts product — an earlier draft had one, and it let a refused outcome sit beside a non-empty production array, which defeated the law forbidding exactly that. A wrapper that restates what it wraps is not an abstraction.
 
@@ -60,7 +66,13 @@ The test the architecture must keep passing: a composition of hosts alone can pr
 
 - An ecosystem target reference is exact over the target it names.
 - An ecosystem target is not a compiler projection target. The two meanings sit one tier apart under one English word, and the longer name exists to keep them apart.
-- Participation binds an exact target, configuration identity, configuration revision, and composition; differing on any axis produces a participation that cannot substitute. The revision is checked, not merely parameterised — a generic no law reads can be deleted without anything turning red.
+- Participation binds an exact target, configuration identity, and configuration revision; differing on any axis produces a participation that cannot substitute. The revision is checked, not merely parameterised — a generic no law reads can be deleted without anything turning red.
+- The outcome is the sole owner of composition identity: no participation, producer, produced artifact, or failure carries one.
+- An outcome pins the exact composition it reports on, and two compositions are not interchangeable.
+- Attempt and composition are distinct reference kinds, compared against literal kind strings rather than against their own aliases.
+- A refusal carries an attempt and never a selected composition.
+- A claim is not a producer. Their payloads are identical, so the law compares them structurally.
+- Failure carries the exact participation that failed, not merely its target.
 - A produced artifact binds core's artifact rather than restating it. Address, digest, media type, source revision, source relation, source map, configuration, and composition are absent by law — their presence would mean either a second artifact vocabulary or a second copy of a fact the producer already owns.
 - A produced artifact pins the exact slot it fills.
 - Target production reuses participation rather than restating its parts.
@@ -102,6 +114,9 @@ home:
   - ecosystem-target-is-not-a-projection-target
   - umbrella-names-participants-carries-no-payloads
   - every-fact-has-one-owner-no-parity-laws
+  - composition-owned-by-the-outcome-alone
+  - attempt-identity-is-not-composition-identity
+  - claims-precede-selection-producers-follow-it
   - producer-owns-participation-production-owns-artifact
   - direct-production-has-no-target-configuration
   - no-facts-wrapper-around-the-outcome

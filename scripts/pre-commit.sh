@@ -7,9 +7,11 @@ set -eu
 # lives with the tree it governs. This branch shares no history with the old
 # repository and deliberately does not inherit its gates.
 #
-# The fast structural gates run here. The mutation banks do not: 315 full-tree
-# compiles is a four-minute commit, which trains people to pass --no-verify. Run
-# `node verification/run.mjs` before publishing a round artifact.
+# The fast structural gates run here. The mutation banks do not: the full
+# population is hundreds of whole-tree compiles, and a multi-minute commit
+# trains people to pass --no-verify. Run `node verification/run.mjs` before
+# publishing a round artifact. No count is written here on purpose -- a number
+# in a comment is a second population that goes stale in silence.
 
 if git rev-parse --verify HEAD >/dev/null 2>&1; then
   against=HEAD

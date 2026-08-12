@@ -19,6 +19,16 @@
 //                      are realm-scoped and sibling exclusion means the two
 //                      never meet. An untagged structural type declared twice
 //                      has no such defence.
+//
+//   Canonical use   -- a declared authority is owned by one home and reached by
+//                      its consumers through an import from that home. This
+//                      catches the private and inline twins the name rule
+//                      cannot see.
+//
+// What this gate does NOT catch: a structurally identical authority copied
+// under a different name. Finding those needs normalised structural comparison
+// across the whole tree, which belongs to the derived authority index in system
+// assurance. The rules here are narrow and should be described as narrow.
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -41,6 +51,21 @@ function tagsOfDeclaration(lines, line) {
   }
   return new Set([...span.join('\n').matchAll(TAG)].map((m) => m[1] ?? m[2]));
 }
+
+/**
+ * Authorities whose single ownership is a stated architectural claim.
+ *
+ * `SourceRelation` is here because `00_core/15_program` says in its own law that
+ * TypeScript cannot distinguish the imported authority from a local twin, and
+ * that the check belongs in the harness. This is that check.
+ */
+const CANONICAL = [
+  {
+    name: 'SourceRelation',
+    owner: '00_core/14_compiler/types.ts',
+    consumers: ['00_core/15_program/types.ts'],
+  },
+];
 
 export function checkAuthority(root = REPO) {
   const violations = [];
@@ -78,6 +103,33 @@ export function checkAuthority(root = REPO) {
         `'${name}' is declared in ${decls.length} homes without distinct nominal tags: ` +
           decls.map((d) => d.rel).join(', '),
       );
+    }
+  }
+
+  const present = new Set(governedFiles(root));
+  for (const { name, owner, consumers } of CANONICAL) {
+    if (!present.has(owner)) continue;
+    const declaredIn = (nameHomes.get(name) ?? []).map((d) => d.rel);
+    if (!declaredIn.includes(owner)) {
+      violations.push(`'${name}' is not exported by its owner ${owner}`);
+      continue;
+    }
+    for (const consumer of consumers.filter((c) => present.has(c))) {
+      const src = readFileSync(join(root, consumer), 'utf8');
+      // A local declaration of any visibility, exported or not.
+      if (new RegExp(`^(?:export )?(?:type|interface) ${name}\\b`, 'm').test(src)) {
+        violations.push(`${consumer} declares its own '${name}' instead of importing the one in ${owner}`);
+        continue;
+      }
+      // The import must name it and must come from the owner. An inline copy of
+      // the shape leaves no import at all, which is what this catches.
+      const imports = [...src.matchAll(/import type \{([^}]*)\} from '([^']+)'/g)].some(
+        ([, names, from]) =>
+          names.split(',').some((n) => n.trim() === name) && owner.endsWith(from.replace(/^.*\//, '').replace(/\.js$/, '.ts')),
+      );
+      if (!imports) {
+        violations.push(`${consumer} does not import '${name}' from ${owner}`);
+      }
     }
   }
 

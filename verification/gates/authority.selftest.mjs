@@ -36,7 +36,20 @@ const LAWFUL = {
 };
 
 const FORBIDDEN = [
-  ['a structurally identical local twin of an imported authority', /'SourceRelation' is declared in 2 homes/, {
+  ['a private local twin the name rule cannot see', /declares its own 'SourceRelation'/, {
+    ...GRAMMAR,
+    '00_core/14_compiler/types.ts': `export type SourceRelation = { readonly source: string };\n`,
+    // Not exported, so the duplicate-name rule never sees it.
+    '00_core/15_program/types.ts':
+      `type SourceRelation = { readonly source: string };\nexport type ResidualProgram = { readonly relation: SourceRelation };\n`,
+  }],
+  ['the shape written inline instead of imported', /does not import 'SourceRelation'/, {
+    ...GRAMMAR,
+    '00_core/14_compiler/types.ts': `export type SourceRelation = { readonly source: string };\n`,
+    '00_core/15_program/types.ts':
+      `export type ResidualProgram = { readonly relation: { readonly source: string } };\n`,
+  }],
+  ['a structurally identical exported twin', /'SourceRelation' is declared in 2 homes/, {
     ...GRAMMAR,
     '00_core/14_compiler/types.ts': `export type SourceRelation = { readonly source: string };\n`,
     '00_core/15_program/types.ts':

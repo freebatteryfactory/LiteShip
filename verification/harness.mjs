@@ -134,6 +134,18 @@ export function lawNameAt(work, file, line) {
  * mistaken for a passing count.
  */
 export function runBank(name, mutations, { laws = true } = {}) {
+  // A broken baseline makes every mutation look caught, because every staged
+  // compile fails for a reason that has nothing to do with the mutation. The
+  // bank would report a perfect score against a tree that does not compile.
+  const baseline = stageWork(`${name}-baseline`, { laws });
+  const unmutated = runTsc(baseline);
+  discard(baseline);
+  if (!unmutated.ok) {
+    console.log(`FAIL ${name}: the unmutated tree does not compile -- every result would be meaningless`);
+    for (const e of unmutated.errors.slice(0, 5)) console.log(`       ${e}`);
+    return { name, caught: 0, total: mutations.length, clean: false, rows: [] };
+  }
+
   const rows = [];
   for (const [label, file, from, to] of mutations) {
     const work = stageWork(name, { laws });

@@ -80,12 +80,36 @@ export type TargetConfigurationId<Name extends string = string> = Brand<
 export type TargetConfigurationReference<Id extends TargetConfigurationId = TargetConfigurationId> =
   Reference<'target-configuration', Id>;
 
-/** Persistent identity of one selected combination of participating targets. */
+/**
+ * Persistent identity of one *selected* target-layer composition.
+ *
+ * Selected is the whole meaning. A composition exists once producers have been
+ * chosen and the stack is lawful; it is not the roster of targets someone
+ * considered. Anything that never reached selection must not carry this
+ * identity, or a rejected attempt ends up holding the identity of a composition
+ * it never became.
+ */
 export type TargetCompositionId<Name extends string = string> = Brand<Name, 'liteship.target-composition-id'>;
 
-/** Reference to one target composition. */
+/** Reference to one selected target composition. */
 export type TargetCompositionReference<Id extends TargetCompositionId = TargetCompositionId> = Reference<
   'target-composition',
+  Id
+>;
+
+/**
+ * Persistent identity of one attempt to compose a target stack.
+ *
+ * An attempt is the pre-selection coordinate. It exists as soon as something is
+ * evaluated and survives whether or not a composition is ever selected, which
+ * is what lets a refusal be identified without borrowing the identity of the
+ * composition it failed to become.
+ */
+export type TargetAttemptId<Name extends string = string> = Brand<Name, 'liteship.target-attempt-id'>;
+
+/** Reference to one composition attempt. */
+export type TargetAttemptReference<Id extends TargetAttemptId = TargetAttemptId> = Reference<
+  'target-attempt',
   Id
 >;
 
@@ -128,8 +152,13 @@ export interface TargetConfigurationRevision<
 // ---------------------------------------------------------------------------
 
 /**
- * One ecosystem target participating in one composition under one exact
- * configuration revision.
+ * One ecosystem target participating under one exact configuration revision.
+ *
+ * It does not name the composition it participates in. The outcome owns that
+ * identity, and a participation only ever appears inside one. Carrying a copy
+ * would let an outcome for composition A hold participants stamped with
+ * composition B -- an exact local generic beside a broad public carrier, which
+ * is the failure this project has now paid for twice.
  *
  * Carries references and relations only. It deliberately has no member into
  * which a child's private vocabulary could be poured -- no payload, no context,
@@ -139,12 +168,10 @@ export interface TargetConfigurationRevision<
 export interface TargetParticipation<
   Target extends EcosystemTargetId = EcosystemTargetId,
   Config extends TargetConfigurationId = TargetConfigurationId,
-  Composition extends TargetCompositionId = TargetCompositionId,
   Revision extends RevisionId = RevisionId,
 > {
   readonly target: EcosystemTargetReference<Target>;
   readonly configuration: TargetConfigurationRevision<Config, Revision>;
-  readonly composition: TargetCompositionReference<Composition>;
 }
 
 // ---------------------------------------------------------------------------
@@ -171,21 +198,24 @@ export interface TargetParticipation<
 export type ArtifactProducer<
   Target extends EcosystemTargetId = EcosystemTargetId,
   Config extends TargetConfigurationId = TargetConfigurationId,
-  Composition extends TargetCompositionId = TargetCompositionId,
   Revision extends RevisionId = RevisionId,
 > = Algebra<{
   /** An ecosystem target produced it, under one exact configuration revision. */
   'ecosystem-target': {
-    readonly participation: TargetParticipation<Target, Config, Composition, Revision>;
+    readonly participation: TargetParticipation<Target, Config, Revision>;
   };
   /**
    * A composition of upstream hosts produced it with no ecosystem target
    * involved. This arm is what makes direct mode fall out of the contract
    * instead of needing a branch in every consumer.
+   *
+   * It is empty, and that is the point. Direct production has no ecosystem
+   * target, no target configuration, and no composition of its own -- the
+   * composition it happened inside is owned by the outcome that reports it.
+   * Every member this arm could grow is a member a consumer would eventually
+   * branch on.
    */
-  'direct-composition': {
-    readonly composition: TargetCompositionReference<Composition>;
-  };
+  'direct-composition': Record<never, never>;
 }>;
 
 /**
@@ -223,6 +253,26 @@ export interface ProducedArtifact<
  * fail to be selected, and reporting it as a rejection rewrites history about
  * why the target was chosen.
  */
+/**
+ * A pre-selection offer to fill one required slot.
+ *
+ * The mirror of `ArtifactProducer` at the altitude below it. A claim says what
+ * offered; a producer says what produced. Keeping the two apart is what stops a
+ * refusal from being reported in the vocabulary of a success.
+ */
+export type SlotClaim<
+  Target extends EcosystemTargetId = EcosystemTargetId,
+  Config extends TargetConfigurationId = TargetConfigurationId,
+  Revision extends RevisionId = RevisionId,
+> = Algebra<{
+  // The tags say `claim`. Without that the arms would be structurally identical
+  // to `ArtifactProducer`, and two types with different meanings and one shape
+  // are interchangeable to the compiler no matter what the comments say -- the
+  // same defect as one brand in two homes, one altitude up.
+  'ecosystem-target-claim': { readonly participation: TargetParticipation<Target, Config, Revision> };
+  'direct-composition-claim': Record<never, never>;
+}>;
+
 export type TargetRejection = Algebra<{
   /** The configuration never decoded into something admissible. */
   'malformed-configuration': { readonly diagnostics: NonEmptyTuple<Diagnostic> };
@@ -231,15 +281,17 @@ export type TargetRejection = Algebra<{
   /** No participant offered what a required slot needs. */
   'unfilled-slot': { readonly slot: ArtifactSlotReference; readonly diagnostics: NonEmptyTuple<Diagnostic> };
   /**
-   * More than one producer claimed the same required slot.
+   * More than one candidate claimed the same required slot.
    *
-   * Claimants are producers, not ecosystem targets. A direct composition is a
-   * lawful producer, so a rejection that could only name framework targets
-   * would be unable to describe the ambiguity it was reporting.
+   * Claimants are claims, not producers. `ArtifactProducer` names who
+   * authoritatively produced an artifact instance, which is post-selection
+   * vocabulary; nothing has been selected at the point this rejection is
+   * raised, and using production vocabulary here would let a rejected
+   * candidate wear the coordinate of a producer that never produced anything.
    */
   'ambiguous-slot': {
     readonly slot: ArtifactSlotReference;
-    readonly claimants: NonEmptyTuple<ArtifactProducer>;
+    readonly claimants: NonEmptyTuple<SlotClaim>;
   };
 }>;
 
@@ -252,12 +304,14 @@ export type TargetRejection = Algebra<{
  * discovery, transform, render, deploy would force Remotion to locate itself
  * inside vocabulary invented for Vite.
  *
- * It names the participant and stops. The composition belongs to the outcome
- * that carries this failure, and a copy here would be a second fact to keep in
- * agreement.
+ * It carries the exact participation that failed, not merely its target. A
+ * failure that named only the target would lose the configuration revision on
+ * precisely the path where someone needs to know which configuration was in
+ * effect when it broke. The composition belongs to the outcome carrying this
+ * failure, and a copy here would be a second fact to keep in agreement.
  */
-export interface TargetFailure<Target extends EcosystemTargetId = EcosystemTargetId> {
-  readonly target: EcosystemTargetReference<Target>;
+export interface TargetFailure<Participant extends TargetParticipation = TargetParticipation> {
+  readonly participation: Participant;
   readonly diagnostics: NonEmptyTuple<Diagnostic>;
 }
 
@@ -269,22 +323,29 @@ export interface TargetFailure<Target extends EcosystemTargetId = EcosystemTarge
  * sort of" -- an outcome that could be simultaneously successful and empty is
  * the silent-degradation shape this layer exists to refuse.
  */
-export type TargetCompositionOutcome<Composition extends TargetCompositionId = TargetCompositionId> =
-  Algebra<{
-    composed: {
-      readonly composition: TargetCompositionReference<Composition>;
-      readonly participants: NonEmptyTuple<TargetParticipation>;
-      readonly produced: readonly ProducedArtifact[];
-    };
-    refused: {
-      readonly composition: TargetCompositionReference<Composition>;
-      readonly rejection: TargetRejection;
-    };
-    failed: {
-      readonly composition: TargetCompositionReference<Composition>;
-      readonly failure: TargetFailure;
-    };
-  }>;
+export type TargetCompositionOutcome<
+  Composition extends TargetCompositionId = TargetCompositionId,
+  Attempt extends TargetAttemptId = TargetAttemptId,
+> = Algebra<{
+  composed: {
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly participants: NonEmptyTuple<TargetParticipation>;
+    readonly produced: readonly ProducedArtifact[];
+  };
+  /**
+   * Nothing was selected, so there is no composition to name. It carries the
+   * attempt instead. Handing a refusal a selected-composition reference would
+   * give it the identity of something it never became.
+   */
+  refused: {
+    readonly attempt: TargetAttemptReference<Attempt>;
+    readonly rejection: TargetRejection;
+  };
+  failed: {
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly failure: TargetFailure;
+  };
+}>;
 
 // ---------------------------------------------------------------------------
 // 6. Explanation input
@@ -319,8 +380,12 @@ type RevisionLawA = Address<
   'liteship.content:application/vnd.liteship.revision+cbor',
   'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
 >;
-type LawParticipation = TargetParticipation<TargetLawAstro, ConfigLawA, CompositionLawA, RevisionLawA>;
-type LawTargetProducer = ArtifactProducer<TargetLawAstro, ConfigLawA, CompositionLawA, RevisionLawA>;
+type RevisionLawB = Address<
+  'liteship.content:application/vnd.liteship.revision+cbor',
+  'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+>;
+type LawParticipation = TargetParticipation<TargetLawAstro, ConfigLawA, RevisionLawA>;
+type LawTargetProducer = ArtifactProducer<TargetLawAstro, ConfigLawA, RevisionLawA>;
 
 /** Compile-time law: an ecosystem target reference is exact over the target it names. */
 export type AnEcosystemTargetReferenceIsExact = Assert<
@@ -356,42 +421,138 @@ export type ParticipationBindsItsExactRelations = Assert<
       LawParticipation['target'],
       LawParticipation['configuration']['configuration'],
       LawParticipation['configuration']['revision'],
-      LawParticipation['composition'],
     ],
     [
       EcosystemTargetReference<TargetLawAstro>,
       TargetConfigurationReference<ConfigLawA>,
       RevisionReference<RevisionLawA>,
-      TargetCompositionReference<CompositionLawA>,
     ]
   >
+>;
+
+/**
+ * Compile-time law: the outcome is the sole owner of composition identity.
+ *
+ * Neither a participation nor a producer names a composition. This is what
+ * makes the mismatch unrepresentable rather than merely forbidden: an outcome
+ * for composition A cannot hold participants stamped with composition B,
+ * because participants carry no such stamp. The alternative -- threading the
+ * composition generic through both populations -- would correlate two copies of
+ * a fact instead of leaving it with one owner.
+ */
+export type CompositionIsOwnedByTheOutcomeAlone = Assert<
+  Equal<
+    [
+      'composition' extends keyof TargetParticipation ? true : false,
+      'composition' extends keyof CaseOf<ArtifactProducer, 'direct-composition'> ? true : false,
+      'composition' extends keyof CaseOf<ArtifactProducer, 'ecosystem-target'> ? true : false,
+      'composition' extends keyof ProducedArtifact ? true : false,
+      'composition' extends keyof TargetFailure ? true : false,
+    ],
+    [false, false, false, false, false]
+  >
+>;
+
+/**
+ * Compile-time law: attempt and composition are distinct reference kinds.
+ *
+ * Compared against the literal kind strings rather than against the aliases.
+ * Comparing an alias to itself passes when the alias is edited, which is
+ * precisely how an attempt reference could quietly start naming the selected
+ * composition kind and take the rejection altitude down with it.
+ */
+export type AttemptAndCompositionAreDistinctKinds = Assert<
+  Equal<
+    [TargetAttemptReference<TargetAttemptId>, TargetCompositionReference<TargetCompositionId>],
+    [Reference<'target-attempt', TargetAttemptId>, Reference<'target-composition', TargetCompositionId>]
+  >
+>;
+
+/**
+ * Compile-time law: a claim is not a producer.
+ *
+ * Structural equality is the whole point. The two carry the same payload, so
+ * only their tags keep them apart, and a law that merely named `SlotClaim`
+ * would pass while claimants silently became post-selection producers.
+ */
+export type AClaimIsNotAProducer = Assert<
+  Equal<
+    [SlotClaim extends ArtifactProducer ? true : false, ArtifactProducer extends SlotClaim ? true : false],
+    [false, false]
+  >
+>;
+
+/**
+ * Compile-time law: an outcome pins the exact composition it reports on, and
+ * two compositions are not interchangeable.
+ *
+ * The counterpart to the previous law. Composition has exactly one owner, and
+ * this proves the owner actually holds it exactly rather than widening at the
+ * boundary where a consumer receives it.
+ */
+export type AnOutcomePinsItsExactComposition = Assert<
+  Equal<
+    [
+      CaseOf<TargetCompositionOutcome<CompositionLawA>, 'composed'>['composition'],
+      CaseOf<TargetCompositionOutcome<CompositionLawA>, 'failed'>['composition'],
+      TargetCompositionOutcome<CompositionLawA> extends TargetCompositionOutcome<CompositionLawB>
+        ? true
+        : false,
+    ],
+    [
+      TargetCompositionReference<CompositionLawA>,
+      TargetCompositionReference<CompositionLawA>,
+      false,
+    ]
+  >
+>;
+
+/**
+ * Compile-time law: a refusal carries an attempt, never a selected composition.
+ *
+ * Rejection happens before selection. A refused arm holding a
+ * `TargetCompositionReference` would give a rejected attempt the identity of a
+ * composition it never became -- the target-shaped version of handing a
+ * rejected compiler branch a candidate reference.
+ */
+export type ARefusalCarriesNoSelectedComposition = Assert<
+  Equal<
+    [
+      CaseOf<TargetCompositionOutcome, 'refused'>['attempt'],
+      'composition' extends keyof CaseOf<TargetCompositionOutcome, 'refused'> ? true : false,
+    ],
+    [TargetAttemptReference, false]
+  >
+>;
+
+/**
+ * Compile-time law: failure carries the exact participation that failed.
+ *
+ * Naming only the target would drop the configuration revision on exactly the
+ * path where someone needs to know which configuration was in effect when it
+ * broke.
+ */
+export type FailureCarriesExactParticipation = Assert<
+  Equal<TargetFailure<LawParticipation>['participation'], LawParticipation>
+>;
+
+/**
+ * Compile-time law: slot claimants are claims, not producers.
+ *
+ * Production vocabulary at a pre-selection altitude would let a rejected
+ * candidate wear the coordinate of a producer that never produced anything.
+ */
+export type ClaimantsAreClaimsNotProducers = Assert<
+  Equal<CaseOf<TargetRejection, 'ambiguous-slot'>['claimants'], NonEmptyTuple<SlotClaim>>
 >;
 
 /** Compile-time law: differing on any axis produces a participation that cannot substitute. */
 export type ParticipationsAreNotInterchangeable = Assert<
   Equal<
     [
-      TargetParticipation<TargetLawAstro, ConfigLawA, CompositionLawA> extends TargetParticipation<
-        TargetLawVite,
-        ConfigLawA,
-        CompositionLawA
-      >
-        ? true
-        : false,
-      TargetParticipation<TargetLawAstro, ConfigLawA, CompositionLawA> extends TargetParticipation<
-        TargetLawAstro,
-        ConfigLawB,
-        CompositionLawA
-      >
-        ? true
-        : false,
-      TargetParticipation<TargetLawAstro, ConfigLawA, CompositionLawA> extends TargetParticipation<
-        TargetLawAstro,
-        ConfigLawA,
-        CompositionLawB
-      >
-        ? true
-        : false,
+      LawParticipation extends TargetParticipation<TargetLawVite, ConfigLawA, RevisionLawA> ? true : false,
+      LawParticipation extends TargetParticipation<TargetLawAstro, ConfigLawB, RevisionLawA> ? true : false,
+      LawParticipation extends TargetParticipation<TargetLawAstro, ConfigLawA, RevisionLawB> ? true : false,
     ],
     [false, false, false]
   >
@@ -459,11 +620,6 @@ export type DirectProductionNeedsNoTargetContext = Assert<
     ],
     [false, false, false]
   >
->;
-
-/** Compile-time law: an ambiguous slot can name every lawful producer kind. */
-export type AnAmbiguousSlotNamesEveryProducerKind = Assert<
-  Equal<CaseOf<TargetRejection, 'ambiguous-slot'>['claimants'], NonEmptyTuple<ArtifactProducer>>
 >;
 
 /**
