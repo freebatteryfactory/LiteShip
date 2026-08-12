@@ -57,7 +57,7 @@ done
 # be seen after checkout. Skipped with a notice if `npm install` has not run --
 # an absent toolchain must announce itself, never pass silently.
 if [ -d verification/node_modules ]; then
-  for gate in envelope direction direction.selftest lanes; do
+  for gate in envelope direction direction.selftest authority authority.selftest lanes; do
     if ! node "verification/gates/$gate.mjs" >/dev/null 2>&1; then
       echo "pre-commit: $gate gate failed -- run \`node verification/gates/$gate.mjs\`" >&2
       status=1

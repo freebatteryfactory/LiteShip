@@ -24,6 +24,7 @@
  */
 
 import type {
+  Address,
   Algebra,
   Assert,
   Brand,
@@ -154,44 +155,58 @@ export interface TargetParticipation<
  * Who authoritatively produced one artifact instance.
  *
  * Not every producer is an ecosystem target. A plain edge or server composition
- * may lawfully produce the same deployable output without any application
- * framework involved, and the whole direct-mode requirement depends on that
- * remaining expressible. So the producer is a closed choice rather than a
- * target reference, and the consumer contract stays producer-neutral.
+ * may lawfully produce the same deployable output with no application framework
+ * involved, and the whole direct-mode requirement depends on that staying
+ * expressible.
+ *
+ * The target arm carries a whole `TargetParticipation` rather than a bare target
+ * reference. Participation already owns the target, its exact configuration
+ * revision, and the composition; restating any of those beside it would create
+ * a second copy of a fact that has an owner. The direct arm carries neither a
+ * target nor a target configuration, because a production with no ecosystem
+ * target has no ecosystem configuration to have been produced under. Requiring
+ * one would remove the framework from the room and leave its clipboard on the
+ * chair.
  */
-export type ArtifactProducer<Target extends EcosystemTargetId = EcosystemTargetId> = Algebra<{
-  /** An ecosystem target produced it. */
-  'ecosystem-target': { readonly target: EcosystemTargetReference<Target> };
+export type ArtifactProducer<
+  Target extends EcosystemTargetId = EcosystemTargetId,
+  Config extends TargetConfigurationId = TargetConfigurationId,
+  Composition extends TargetCompositionId = TargetCompositionId,
+  Revision extends RevisionId = RevisionId,
+> = Algebra<{
+  /** An ecosystem target produced it, under one exact configuration revision. */
+  'ecosystem-target': {
+    readonly participation: TargetParticipation<Target, Config, Composition, Revision>;
+  };
   /**
    * A composition of upstream hosts produced it with no ecosystem target
    * involved. This arm is what makes direct mode fall out of the contract
    * instead of needing a branch in every consumer.
    */
-  'direct-composition': { readonly composition: TargetCompositionReference };
+  'direct-composition': {
+    readonly composition: TargetCompositionReference<Composition>;
+  };
 }>;
 
 /**
- * The relation between one exact core artifact and the target production that
- * caused it.
+ * The relation between one exact core artifact and the production that caused
+ * it.
  *
  * It binds; it does not restate. Address, digest, media type, source revision,
- * and the source relation live on the artifact itself and appear nowhere here.
- * Two artifact vocabularies would need a law forcing them to agree, and that
- * law is the thing this repository exists to make unnecessary.
+ * and the source relation live on the artifact. Configuration and composition
+ * live on the producer. Nothing here is a second copy of a fact that already has
+ * an owner, so there is no parity law to write and nothing to drift.
  */
 export interface ProducedArtifact<
   Id extends ArtifactId = ArtifactId,
   Target extends ProjectionTargetId = ProjectionTargetId,
   Revision extends RevisionId = RevisionId,
-  Producer extends EcosystemTargetId = EcosystemTargetId,
-  Config extends TargetConfigurationId = TargetConfigurationId,
-  Composition extends TargetCompositionId = TargetCompositionId,
+  Producer extends ArtifactProducer = ArtifactProducer,
+  Slot extends ArtifactSlotId = ArtifactSlotId,
 > {
   readonly artifact: Artifact<Id, Target, Revision>;
-  readonly producer: ArtifactProducer<Producer>;
-  readonly configuration: TargetConfigurationRevision<Config>;
-  readonly composition: TargetCompositionReference<Composition>;
-  readonly slot: ArtifactSlotReference;
+  readonly producer: Producer;
+  readonly slot: ArtifactSlotReference<Slot>;
   /** Artifacts this one was derived from. Empty means it is a genesis artifact. */
   readonly predecessors: readonly ArtifactReference[];
 }
@@ -215,10 +230,16 @@ export type TargetRejection = Algebra<{
   incompatible: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
   /** No participant offered what a required slot needs. */
   'unfilled-slot': { readonly slot: ArtifactSlotReference; readonly diagnostics: NonEmptyTuple<Diagnostic> };
-  /** More than one participant claimed the same required slot. */
+  /**
+   * More than one producer claimed the same required slot.
+   *
+   * Claimants are producers, not ecosystem targets. A direct composition is a
+   * lawful producer, so a rejection that could only name framework targets
+   * would be unable to describe the ambiguity it was reporting.
+   */
   'ambiguous-slot': {
     readonly slot: ArtifactSlotReference;
-    readonly claimants: NonEmptyTuple<EcosystemTargetReference>;
+    readonly claimants: NonEmptyTuple<ArtifactProducer>;
   };
 }>;
 
@@ -230,10 +251,13 @@ export type TargetRejection = Algebra<{
  * belongs to the child that has phases. A shared list of configuration,
  * discovery, transform, render, deploy would force Remotion to locate itself
  * inside vocabulary invented for Vite.
+ *
+ * It names the participant and stops. The composition belongs to the outcome
+ * that carries this failure, and a copy here would be a second fact to keep in
+ * agreement.
  */
 export interface TargetFailure<Target extends EcosystemTargetId = EcosystemTargetId> {
   readonly target: EcosystemTargetReference<Target>;
-  readonly composition: TargetCompositionReference;
   readonly diagnostics: NonEmptyTuple<Diagnostic>;
 }
 
@@ -265,21 +289,20 @@ export type TargetCompositionOutcome<Composition extends TargetCompositionId = T
 // ---------------------------------------------------------------------------
 // 6. Explanation input
 // ---------------------------------------------------------------------------
-
-/**
- * Structured target facts, shaped to enter core's existing `Explanation`.
- *
- * There is no `TargetExplanation`. Core inspection already owns one explanation
- * envelope carrying subject, facts, settlement, artifacts, diagnostics, and next
- * actions, and a consumer should inherit one explanation system rather than a
- * fresh dialect from every layer of the waterfall.
- */
-export interface TargetFacts<Composition extends TargetCompositionId = TargetCompositionId> {
-  readonly composition: TargetCompositionReference<Composition>;
-  readonly participants: readonly TargetParticipation[];
-  readonly produced: readonly ProducedArtifact[];
-  readonly outcome: TargetCompositionOutcome<Composition>;
-}
+//
+// There is no `TargetFacts` product and no `TargetExplanation`.
+//
+// `TargetCompositionOutcome` is what projects into core's existing
+// `Explanation`, which already owns subject, facts, settlement, artifacts,
+// diagnostics, and next actions. A consumer should inherit one explanation
+// system rather than a fresh dialect from every layer of the waterfall.
+//
+// An earlier draft wrapped the outcome in a facts product carrying its own
+// composition, participants, and produced artifacts. That let a refused outcome
+// sit beside a non-empty production array: the law forbidding refusal to carry
+// production held, and the wrapper laundered it one object outward. A wrapper
+// that restates what it wraps is not an abstraction, and there is no additional
+// fact yet that would justify inventing the noun again.
 
 // ---------------------------------------------------------------------------
 // 7. Laws
@@ -291,6 +314,13 @@ type ConfigLawA = TargetConfigurationId<'law.config.a'>;
 type ConfigLawB = TargetConfigurationId<'law.config.b'>;
 type CompositionLawA = TargetCompositionId<'law.composition.a'>;
 type CompositionLawB = TargetCompositionId<'law.composition.b'>;
+type SlotLawA = ArtifactSlotId<'law.slot.a'>;
+type RevisionLawA = Address<
+  'liteship.content:application/vnd.liteship.revision+cbor',
+  'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+>;
+type LawParticipation = TargetParticipation<TargetLawAstro, ConfigLawA, CompositionLawA, RevisionLawA>;
+type LawTargetProducer = ArtifactProducer<TargetLawAstro, ConfigLawA, CompositionLawA, RevisionLawA>;
 
 /** Compile-time law: an ecosystem target reference is exact over the target it names. */
 export type AnEcosystemTargetReferenceIsExact = Assert<
@@ -313,17 +343,25 @@ export type AnEcosystemTargetIsNotAProjectionTarget = Assert<
   Equal<EcosystemTargetId<'x'> extends ProjectionTargetId<'x'> ? true : false, false>
 >;
 
-/** Compile-time law: participation binds one exact target, configuration revision, and composition. */
-export type ParticipationBindsItsExactTriple = Assert<
+/**
+ * Compile-time law: participation binds an exact target, configuration
+ * identity, configuration revision, and composition.
+ *
+ * The revision is checked, not merely parameterised. A generic that no law
+ * reads is a generic that can be deleted without anything turning red.
+ */
+export type ParticipationBindsItsExactRelations = Assert<
   Equal<
     [
-      TargetParticipation<TargetLawAstro, ConfigLawA, CompositionLawA>['target'],
-      TargetParticipation<TargetLawAstro, ConfigLawA, CompositionLawA>['configuration']['configuration'],
-      TargetParticipation<TargetLawAstro, ConfigLawA, CompositionLawA>['composition'],
+      LawParticipation['target'],
+      LawParticipation['configuration']['configuration'],
+      LawParticipation['configuration']['revision'],
+      LawParticipation['composition'],
     ],
     [
       EcosystemTargetReference<TargetLawAstro>,
       TargetConfigurationReference<ConfigLawA>,
+      RevisionReference<RevisionLawA>,
       TargetCompositionReference<CompositionLawA>,
     ]
   >
@@ -377,20 +415,65 @@ export type AProducedArtifactRestatesNothing = Assert<
       'source' extends keyof ProducedArtifact ? true : false,
       'relation' extends keyof ProducedArtifact ? true : false,
       'sourceMap' extends keyof ProducedArtifact ? true : false,
+      // configuration and composition belong to the producer
+      'configuration' extends keyof ProducedArtifact ? true : false,
+      'composition' extends keyof ProducedArtifact ? true : false,
     ],
-    [true, false, false, false, false, false, false]
+    [true, false, false, false, false, false, false, false, false]
+  >
+>;
+
+/** Compile-time law: a produced artifact pins the exact slot it fills. */
+export type AProducedArtifactPinsItsExactSlot = Assert<
+  Equal<
+    ProducedArtifact<ArtifactId, ProjectionTargetId, RevisionId, ArtifactProducer, SlotLawA>['slot'],
+    ArtifactSlotReference<SlotLawA>
   >
 >;
 
 /**
- * Compile-time law: production is expressible without any ecosystem target.
+ * Compile-time law: target production reuses participation rather than
+ * restating its parts.
+ */
+export type EcosystemProductionReusesExactParticipation = Assert<
+  Equal<CaseOf<LawTargetProducer, 'ecosystem-target'>['participation'], LawParticipation>
+>;
+
+/**
+ * Compile-time law: production is expressible with no ecosystem target and no
+ * target configuration.
  *
  * This is the direct-mode acceptance test as a type. A composition of hosts
  * alone can produce an artifact, so a consumer never needs to ask which
- * framework was involved, and no consumer needs a "without Astro" branch.
+ * framework was involved, and no consumer needs a "without Astro" branch. The
+ * configuration absence matters as much as the target absence: a direct
+ * production required to name an ecosystem configuration is still an
+ * ecosystem-shaped path wearing a different label.
  */
-export type DirectProductionNeedsNoEcosystemTarget = Assert<
-  Equal<'target' extends keyof CaseOf<ArtifactProducer, 'direct-composition'> ? true : false, false>
+export type DirectProductionNeedsNoTargetContext = Assert<
+  Equal<
+    [
+      'target' extends keyof CaseOf<ArtifactProducer, 'direct-composition'> ? true : false,
+      'participation' extends keyof CaseOf<ArtifactProducer, 'direct-composition'> ? true : false,
+      'configuration' extends keyof CaseOf<ArtifactProducer, 'direct-composition'> ? true : false,
+    ],
+    [false, false, false]
+  >
+>;
+
+/** Compile-time law: an ambiguous slot can name every lawful producer kind. */
+export type AnAmbiguousSlotNamesEveryProducerKind = Assert<
+  Equal<CaseOf<TargetRejection, 'ambiguous-slot'>['claimants'], NonEmptyTuple<ArtifactProducer>>
+>;
+
+/**
+ * Compile-time law: failure names the participant and stops.
+ *
+ * The composition belongs to the outcome carrying the failure. A copy here
+ * would be a second fact requiring a parity law nobody would remember to write.
+ */
+export type FailureDoesNotDuplicateComposition = Assert<
+  Equal<'composition' extends keyof TargetFailure ? true : false, false>
 >;
 
 /**
@@ -447,11 +530,11 @@ export interface TargetTypeSurface {
   readonly target: EcosystemTargetReference;
   readonly configuration: TargetConfigurationRevision;
   readonly composition: TargetCompositionReference;
+  readonly slot: ArtifactSlotReference;
   readonly participation: TargetParticipation;
   readonly produced: ProducedArtifact;
   readonly producer: ArtifactProducer;
   readonly rejection: TargetRejection;
   readonly failure: TargetFailure;
   readonly outcome: TargetCompositionOutcome;
-  readonly facts: TargetFacts;
 }

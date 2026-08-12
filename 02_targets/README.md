@@ -24,7 +24,10 @@ Core answers what a program means. Hosts answer how unresolved physical behaviou
 - The production relation over core's exact `Artifact`.
 - The producer choice, including the arm where no ecosystem target was involved at all.
 - The altitude distinction between rejection and failure.
-- Structured target facts shaped to enter core's existing `Explanation`.
+
+Every fact has exactly one owner. Participation owns target, configuration revision, and composition; the producer owns participation; production owns the artifact and the slot; the outcome owns the composition it reports on. Nothing is carried twice, so there is no parity law anywhere in this home and nothing that can drift.
+
+The composition outcome is what projects into core's existing `Explanation`. There is no separate facts product — an earlier draft had one, and it let a refused outcome sit beside a non-empty production array, which defeated the law forbidding exactly that. A wrapper that restates what it wraps is not an abstraction.
 
 ## Does not own
 
@@ -57,9 +60,13 @@ The test the architecture must keep passing: a composition of hosts alone can pr
 
 - An ecosystem target reference is exact over the target it names.
 - An ecosystem target is not a compiler projection target. The two meanings sit one tier apart under one English word, and the longer name exists to keep them apart.
-- Participation binds one exact target, configuration revision, and composition; differing on any axis produces a participation that cannot substitute.
-- A produced artifact binds core's artifact rather than restating it. Address, digest, media type, source revision, source relation, and source map are absent by law — their presence would mean a second artifact vocabulary.
-- Production is expressible with no ecosystem target involved.
+- Participation binds an exact target, configuration identity, configuration revision, and composition; differing on any axis produces a participation that cannot substitute. The revision is checked, not merely parameterised — a generic no law reads can be deleted without anything turning red.
+- A produced artifact binds core's artifact rather than restating it. Address, digest, media type, source revision, source relation, source map, configuration, and composition are absent by law — their presence would mean either a second artifact vocabulary or a second copy of a fact the producer already owns.
+- A produced artifact pins the exact slot it fills.
+- Target production reuses participation rather than restating its parts.
+- Production is expressible with no ecosystem target **and no target configuration**. The configuration absence matters as much as the target absence: a direct production required to name an ecosystem configuration is an ecosystem-shaped path wearing a different label.
+- An ambiguous-slot rejection can name every lawful producer kind, so a direct producer is describable in the conflict it participates in.
+- Failure names the participant and stops; the composition belongs to the outcome carrying it.
 - The umbrella carries no per-target member and no lifecycle phase. `payload`, `context`, and `hooks` are checked by name, because a junk drawer does not become constitutional by removing Astro from its label.
 - Rejection and failure stay distinct, and neither carries production.
 - A composed outcome has at least one participant.
@@ -94,6 +101,10 @@ home:
   - relation-over-core-artifact-never-a-second-artifact
   - ecosystem-target-is-not-a-projection-target
   - umbrella-names-participants-carries-no-payloads
+  - every-fact-has-one-owner-no-parity-laws
+  - producer-owns-participation-production-owns-artifact
+  - direct-production-has-no-target-configuration
+  - no-facts-wrapper-around-the-outcome
   - no-universal-lifecycle-taxonomy
   - rejection-precedes-selection-failure-follows-it
   - one-explanation-envelope-owned-by-core

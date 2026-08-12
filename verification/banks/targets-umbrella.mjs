@@ -2,8 +2,8 @@
 //
 // Written alongside the contract rather than after it. Each entry restores one
 // way the umbrella could grow back into the thing it refuses to be: a second
-// artifact vocabulary, a universal lifecycle, or a context object with the
-// label filed off.
+// artifact vocabulary, a universal lifecycle, a context object with the label
+// filed off, or a fact duplicated into two places that then need a parity law.
 
 import { runBank } from '../harness.mjs';
 
@@ -22,7 +22,7 @@ const M = [
     `export type EcosystemTargetId<Name extends string = string> = Brand<Name, 'liteship.ecosystem-target-id'>;`,
     `export type EcosystemTargetId<Name extends string = string> = Brand<Name, 'liteship.projection-target-id'>;`],
 
-  // --- participation -------------------------------------------------------
+  // --- participation exactness --------------------------------------------
   ['participation decorrelates its composition', T,
     `  readonly composition: TargetCompositionReference<Composition>;
 }
@@ -35,90 +35,107 @@ const M = [
 // ---------------------------------------------------------------------------
 // 4. Production`],
 
-  ['participation decorrelates its configuration revision', T,
+  ['participation decorrelates its configuration', T,
     `  readonly configuration: TargetConfigurationRevision<Config, Revision>;`,
-    `  readonly configuration: TargetConfigurationRevision;`],
+    `  readonly configuration: TargetConfigurationRevision<Config>;`],
+
+  ['the configuration revision widens back to broad', T,
+    `  readonly revision: RevisionReference<Revision>;`,
+    `  readonly revision: RevisionReference;`],
 
   // --- the umbrella grows luggage -----------------------------------------
-  ['the umbrella grows a named target member', T,
+  ...[
+    ['a named target member', `  readonly astro?: unknown;`],
+    ['an anonymous payload', `  readonly payload?: unknown;`],
+    ['a context bag', `  readonly context?: unknown;`],
+    ['a hook table', `  readonly hooks?: unknown;`],
+    ['a universal lifecycle phase', `  readonly phase?: 'configuration' | 'discovery' | 'transform' | 'render' | 'deploy';`],
+  ].map(([what, line]) => [`the umbrella grows ${what}`, T,
     `  readonly target: EcosystemTargetReference<Target>;
   readonly configuration: TargetConfigurationRevision<Config, Revision>;`,
     `  readonly target: EcosystemTargetReference<Target>;
-  readonly astro?: unknown;
-  readonly configuration: TargetConfigurationRevision<Config, Revision>;`],
-
-  ['the umbrella grows an anonymous payload', T,
-    `  readonly target: EcosystemTargetReference<Target>;
-  readonly configuration: TargetConfigurationRevision<Config, Revision>;`,
-    `  readonly target: EcosystemTargetReference<Target>;
-  readonly payload?: unknown;
-  readonly configuration: TargetConfigurationRevision<Config, Revision>;`],
-
-  ['the umbrella grows a context bag', T,
-    `  readonly target: EcosystemTargetReference<Target>;
-  readonly configuration: TargetConfigurationRevision<Config, Revision>;`,
-    `  readonly target: EcosystemTargetReference<Target>;
-  readonly context?: unknown;
-  readonly configuration: TargetConfigurationRevision<Config, Revision>;`],
-
-  ['the umbrella grows a hook table', T,
-    `  readonly target: EcosystemTargetReference<Target>;
-  readonly configuration: TargetConfigurationRevision<Config, Revision>;`,
-    `  readonly target: EcosystemTargetReference<Target>;
-  readonly hooks?: unknown;
-  readonly configuration: TargetConfigurationRevision<Config, Revision>;`],
-
-  ['the umbrella grows a universal lifecycle phase', T,
-    `  readonly target: EcosystemTargetReference<Target>;
-  readonly configuration: TargetConfigurationRevision<Config, Revision>;`,
-    `  readonly target: EcosystemTargetReference<Target>;
-  readonly phase?: 'configuration' | 'discovery' | 'transform' | 'render' | 'deploy';
-  readonly configuration: TargetConfigurationRevision<Config, Revision>;`],
+${line}
+  readonly configuration: TargetConfigurationRevision<Config, Revision>;`]),
 
   // --- second artifact vocabulary ------------------------------------------
-  ['the production relation restates the content address', T,
+  ...[
+    ['the content address', 'address'],
+    ['the digest', 'digest'],
+    ['the media type', 'mediaType'],
+    ['the source relation', 'relation'],
+    ['a source map', 'sourceMap'],
+  ].map(([what, key]) => [`the production relation restates ${what}`, T,
     `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly producer: ArtifactProducer<Producer>;`,
+  readonly producer: Producer;`,
     `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly address: ArtifactSlotReference;
-  readonly producer: ArtifactProducer<Producer>;`],
-
-  ['the production relation restates the digest', T,
-    `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly producer: ArtifactProducer<Producer>;`,
-    `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly digest: ArtifactSlotReference;
-  readonly producer: ArtifactProducer<Producer>;`],
-
-  ['the production relation restates the source relation', T,
-    `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly producer: ArtifactProducer<Producer>;`,
-    `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly relation: ArtifactSlotReference;
-  readonly producer: ArtifactProducer<Producer>;`],
-
-  ['the production relation reintroduces a source map', T,
-    `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly producer: ArtifactProducer<Producer>;`,
-    `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly sourceMap: ArtifactSlotReference;
-  readonly producer: ArtifactProducer<Producer>;`],
+  readonly ${key}: ArtifactSlotReference;
+  readonly producer: Producer;`]),
 
   ['the production relation stops binding a core artifact', T,
     `  readonly artifact: Artifact<Id, Target, Revision>;
-  readonly producer: ArtifactProducer<Producer>;`,
+  readonly producer: Producer;`,
     `  readonly artifact: ArtifactSlotReference;
-  readonly producer: ArtifactProducer<Producer>;`],
+  readonly producer: Producer;`],
+
+  // --- duplicated facts ----------------------------------------------------
+  ['a sibling configuration returns beside the producer', T,
+    `  readonly artifact: Artifact<Id, Target, Revision>;
+  readonly producer: Producer;`,
+    `  readonly artifact: Artifact<Id, Target, Revision>;
+  readonly configuration: TargetConfigurationRevision;
+  readonly producer: Producer;`],
+
+  ['a sibling composition returns beside the producer', T,
+    `  readonly artifact: Artifact<Id, Target, Revision>;
+  readonly producer: Producer;`,
+    `  readonly artifact: Artifact<Id, Target, Revision>;
+  readonly composition: TargetCompositionReference;
+  readonly producer: Producer;`],
+
+  ['failure regains its duplicate composition', T,
+    `export interface TargetFailure<Target extends EcosystemTargetId = EcosystemTargetId> {
+  readonly target: EcosystemTargetReference<Target>;`,
+    `export interface TargetFailure<Target extends EcosystemTargetId = EcosystemTargetId> {
+  readonly target: EcosystemTargetReference<Target>;
+  readonly composition: TargetCompositionReference;`],
+
+  // --- slot exactness ------------------------------------------------------
+  ['the artifact slot widens', T,
+    `  readonly slot: ArtifactSlotReference<Slot>;`,
+    `  readonly slot: ArtifactSlotReference;`],
 
   // --- direct mode ---------------------------------------------------------
   ['the direct arm acquires an ecosystem target', T,
-    `  'direct-composition': { readonly composition: TargetCompositionReference };`,
     `  'direct-composition': {
-    readonly composition: TargetCompositionReference;
-    readonly target: EcosystemTargetReference;
+    readonly composition: TargetCompositionReference<Composition>;
+  };`,
+    `  'direct-composition': {
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly target: EcosystemTargetReference<Target>;
   };`],
 
-  // --- phase correctness ---------------------------------------------------
+  ['the direct arm acquires a target configuration', T,
+    `  'direct-composition': {
+    readonly composition: TargetCompositionReference<Composition>;
+  };`,
+    `  'direct-composition': {
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly configuration: TargetConfigurationRevision<Config, Revision>;
+  };`],
+
+  ['target production stops reusing exact participation', T,
+    `  'ecosystem-target': {
+    readonly participation: TargetParticipation<Target, Config, Composition, Revision>;
+  };`,
+    `  'ecosystem-target': {
+    readonly participation: TargetParticipation;
+  };`],
+
+  // --- rejection and failure -----------------------------------------------
+  ['ambiguous claimants narrow back to ecosystem targets', T,
+    `    readonly claimants: NonEmptyTuple<ArtifactProducer>;`,
+    `    readonly claimants: NonEmptyTuple<EcosystemTargetReference>;`],
+
   ['a refused outcome carries production', T,
     `    refused: {
       readonly composition: TargetCompositionReference<Composition>;

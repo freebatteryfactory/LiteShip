@@ -36,6 +36,8 @@ A trusted HTML or element fragment is a separately typed payload carrying a `Tru
 
 An untrusted generated structure is admitted through a closed host catalog and a bounded semantic structure grammar. Its `GeneratedStructureAdmission` is a different reference kind from a trusted-fragment attestation. It can update only legal components, fields, content, hierarchy, and operation bindings. It never enters the trusted-fragment path.
 
+A **catalog component** here — `CatalogComponentId`, `CatalogComponentDefinition` — is an admission entry with props, a child grammar, and allowed operations. It is not a **state component** (`00_core/08_state`), which is schema-backed world state with a storage profile. Both were once named `ComponentId` and, worse, shared the brand `liteship.component-id`, which made them one type to the compiler: a state component identity assigned to a catalog component slot with no error. The names and brands are now distinct, and `verification/gates/authority.mjs` refuses any future tag shared across two homes.
+
 The type surface pins the exact payload membership of both stream arms and proves that their payload unions have no assignable overlap. Runtime implementation must still authenticate the corresponding private minting and decoding paths. Static arm separation is not treated as a substitute for runtime provenance.
 
 The successor stream roster therefore includes:

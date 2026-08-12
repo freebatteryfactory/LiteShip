@@ -34,7 +34,7 @@ import type { CanonicalValue, ContentAddress } from '../../../00_core/01_encodin
 import type { RevisionReference } from '../../../00_core/02_identity/types.js';
 import type {
   ComponentCatalogAddress,
-  ComponentId,
+  CatalogComponentId,
   GeneratedStructureAdmission,
   GeneratedStructurePatch,
   GeneratedStructureReference,
@@ -79,7 +79,7 @@ export type WebWriteFamily = Algebra<{
 export interface ComponentRendererCatalog {
   readonly catalog: ComponentCatalogAddress;
   readonly renderers: readonly {
-    readonly component: ComponentId;
+    readonly component: CatalogComponentId;
     readonly render: Signature<CanonicalValue, WebNodeReference, NonEmptyTuple<Diagnostic>>;
   }[];
 }

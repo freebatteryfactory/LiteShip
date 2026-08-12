@@ -23,6 +23,8 @@ const LANES = [
   ['envelope', 'gates/envelope.mjs', 'census and hygiene'],
   ['direction', 'gates/direction.mjs', 'waterfall and sibling exclusion'],
   ['direction:self', 'gates/direction.selftest.mjs', 'the gate is capable of failing'],
+  ['authority', 'gates/authority.mjs', 'one declaration per concept'],
+  ['authority:self', 'gates/authority.selftest.mjs', 'the gate is capable of failing'],
   ['lanes', 'gates/lanes.mjs', 'declaration output, zero runtime'],
   ['probes', 'probes/run.mjs', 'positive and negative witnesses'],
   ...BANKS,

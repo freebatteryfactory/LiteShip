@@ -101,7 +101,10 @@ export type TrustedFragmentPatch = RevisionPatch<'trusted-fragment', TrustedFrag
  */
 export type ComponentCatalogAddress = ContentAddress<'application/vnd.liteship.component-catalog+cbor'>;
 
-export type ComponentId<Name extends string = string> = Brand<Name, 'liteship.component-id'>;
+export type CatalogComponentId<Name extends string = string> = Brand<
+  Name,
+  'liteship.catalog-component-id'
+>;
 
 /** What a catalog component may contain. */
 export type ComponentChildGrammar = 'none' | 'structure' | 'text';
@@ -112,8 +115,8 @@ export type ComponentChildGrammar = 'none' | 'structure' | 'text';
  * meaning admission validates against; a physical renderer roster downstream
  * consumes the same catalog address and never authors a second meaning.
  */
-export interface ComponentDefinition {
-  readonly id: ComponentId;
+export interface CatalogComponentDefinition {
+  readonly id: CatalogComponentId;
   readonly props: SchemaReference;
   readonly children: ComponentChildGrammar;
   readonly operations: readonly OperationReference[];
@@ -121,14 +124,14 @@ export interface ComponentDefinition {
 
 /** The closed semantic component catalog one address commits to. */
 export interface ComponentCatalog {
-  readonly components: readonly ComponentDefinition[];
+  readonly components: readonly CatalogComponentDefinition[];
   readonly address: ComponentCatalogAddress;
 }
 
 /** Compile-time law: a component pins its props schema and admitted operations. */
 export type AComponentPinsItsPropsAndOperations = Assert<
   Equal<
-    [ComponentDefinition['props'], ComponentDefinition['operations'], ComponentCatalog['address']],
+    [CatalogComponentDefinition['props'], CatalogComponentDefinition['operations'], ComponentCatalog['address']],
     [SchemaReference, readonly OperationReference[], ComponentCatalogAddress]
   >
 >;
@@ -136,8 +139,8 @@ export type AComponentPinsItsPropsAndOperations = Assert<
 /** Compile-time law: the owner surface exposes the component catalog contract. */
 export type TheSurfaceReachesTheComponentCatalog = Assert<
   Equal<
-    [StreamTypeSurface['component'], StreamTypeSurface['componentCatalog']],
-    [ComponentDefinition, ComponentCatalog]
+    [StreamTypeSurface['catalogComponent'], StreamTypeSurface['componentCatalog']],
+    [CatalogComponentDefinition, ComponentCatalog]
   >
 >;
 
@@ -269,7 +272,7 @@ export type GeneratedAdmissionIsNotTrustedAttestation = Assert<
 export interface StreamTypeSurface {
   readonly event: StreamEvent;
   readonly payload: StreamPayload;
-  readonly component: ComponentDefinition;
+  readonly catalogComponent: CatalogComponentDefinition;
   readonly componentCatalog: ComponentCatalog;
   readonly trustedFragment: TrustedFragment;
   readonly trustedAttestation: TrustedFragmentAttestation;
