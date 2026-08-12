@@ -66,9 +66,7 @@ Every encoded artifact composes the root `Envelope` operator so the body cannot 
 
 The semantic contract is specified. Runtime implementation and algorithm defaults are absent. The default cryptographic digest is selected through interoperability and performance evidence without changing the algorithm-agile type surface.
 
-## Remaining work
-
-Implementation must qualify the canonical encoding, digest algorithms, streaming encoders where earned, and cross-language golden corpus. No unresolved semantic decision remains.
+Qualifying the canonical encoding, digest algorithms, streaming encoders where earned, and the cross-language golden corpus are implementation obligations this architecture already authorizes.
 
 ## Machine-checkable projection
 

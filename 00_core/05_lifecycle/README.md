@@ -66,9 +66,7 @@ Cancellation is observable through an explicit signal or requirement. Disposal b
 
 The lifecycle contract is specified. Runtime implementation is absent. The mature old `Lifetime` behavior is a direct behavior-port candidate, subject to source and test rereading during implementation.
 
-## Remaining work
-
-No unresolved semantic decision remains. Implementation must port and qualify the old behavior, then project it into each physical host resource.
+Porting and qualifying the old behaviour, then projecting it into each physical host resource, are implementation obligations this architecture already authorizes.
 
 ## Machine-checkable projection
 

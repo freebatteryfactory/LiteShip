@@ -835,6 +835,83 @@ export type ADeployableApplicationRestatesNothing = Assert<
   >
 >;
 
+/**
+ * Compile-time law (T15): the outcome projects into core's explanation and
+ * declares no explanation vocabulary of its own.
+ *
+ * This was a proof obligation stated in prose while nothing checked it. The
+ * risk is not that someone writes a bad explanation — it is that a second one
+ * appears, because a layer that grows a `facts` or `report` member has already
+ * stopped inheriting core's envelope, and every consumer downstream then has
+ * two dialects to reconcile.
+ *
+ * An earlier draft did exactly this: a facts product wrapping the outcome, which
+ * let a refused outcome sit beside a non-empty production array while the law
+ * forbidding that held one object inward. The names are checked because a
+ * wrapper is one member away at all times.
+ */
+export type TheOutcomeProjectsIntoTheOneExplanation = Assert<
+  Equal<
+    [
+      'explanation' extends keyof CaseOf<TargetCompositionOutcome, 'composed'> ? true : false,
+      'facts' extends keyof CaseOf<TargetCompositionOutcome, 'composed'> ? true : false,
+      'report' extends keyof CaseOf<TargetCompositionOutcome, 'composed'> ? true : false,
+      'rendered' extends keyof CaseOf<TargetCompositionOutcome, 'composed'> ? true : false,
+      // What a projection actually reads: the selected composition, its
+      // participants, and what they produced. All three present, none wrapped.
+      keyof CaseOf<TargetCompositionOutcome, 'composed'>,
+    ],
+    [
+      false,
+      false,
+      false,
+      false,
+      '_tag' | 'composition' | 'participants' | 'produced',
+    ]
+  >
+>;
+
+/**
+ * Compile-time law (T16): every product carries the identity of the phase it
+ * belongs to, and the two phases cannot be swapped.
+ *
+ * Rejection precedes selection and is identified by an attempt; failure follows
+ * selection and names the participation that failed. Phase correctness was
+ * asserted in prose while the only thing enforcing it was that nobody had tried
+ * the swap.
+ *
+ * Both directions are checked. A rejection acquiring a composition reference
+ * would give a refusal the identity of something it never became; a failure
+ * falling back to an attempt would lose the participant that actually failed,
+ * and a post-selection failure with no participant is indistinguishable from a
+ * pre-selection refusal.
+ */
+export type EveryProductCarriesItsPhaseIdentity = Assert<
+  Equal<
+    [
+      // Pre-selection: the refusal carries an attempt and no composition.
+      keyof CaseOf<TargetCompositionOutcome, 'refused'>,
+      // Post-selection: the failure carries the selected composition and the
+      // participation that failed, and never falls back to an attempt.
+      keyof CaseOf<TargetCompositionOutcome, 'failed'>,
+      TargetFailure['participation'] extends TargetParticipation ? true : false,
+      'attempt' extends keyof TargetFailure ? true : false,
+      // And the two identity kinds remain distinct populations, so no product
+      // can quietly change phase by swapping which reference it holds.
+      TargetAttemptReference extends TargetCompositionReference ? true : false,
+      TargetCompositionReference extends TargetAttemptReference ? true : false,
+    ],
+    [
+      '_tag' | 'attempt' | 'rejection',
+      '_tag' | 'composition' | 'failure',
+      true,
+      false,
+      false,
+      false,
+    ]
+  >
+>;
+
 /** Type summary consumed by the root topology. */
 export interface TargetTypeSurface {
   readonly deployable: DeployableApplication;

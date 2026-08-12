@@ -101,9 +101,7 @@ A likely useful form is a mixed image: dataflow tables plus kernel commands plus
 
 The semantic program, logical memory plan, physical layout distinction, image contract, numeric contracts, and bytecode policy are specified. Table encodings, widths, page sizes, reserves, and bytecode inclusion are empirical.
 
-## Remaining work
-
-Benchmarks must select physical layouts and capacity parameters for actual workload classes. Bytecode remains deferred until the readable interpreter and packed image establish measured need.
+Selecting physical layouts and capacity parameters for actual workload classes is empirical benchmarking work. This home owns no bytecode: introducing one would be an explicit architecture reopening justified by measured need against the readable interpreter and packed image, not an unstated obligation.
 
 ## Machine-checkable projection
 

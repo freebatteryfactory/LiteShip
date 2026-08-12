@@ -68,9 +68,7 @@ A `TimeProjection` carries the complete source and target timebases, including f
 
 The temporal algebra is specified. Host sources, serialization, clock implementations, and paved-road presets are absent.
 
-## Remaining work
-
-Implementation must qualify canonical composite-time encoding, precision, overflow behavior, and the default preset roster. These do not reopen the distinct-coordinate law.
+Qualifying canonical composite-time encoding, precision, overflow behaviour, and the default preset roster are implementation obligations. None of them reaches the distinct-coordinate law.
 
 ## Machine-checkable projection
 

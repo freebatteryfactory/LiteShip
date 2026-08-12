@@ -129,6 +129,7 @@ A subscene is an addressed semantic world instance with local coordinates, local
 
 ## Proof obligations
 
+- **Render-path purity.** Scene evaluation at a coordinate reads no ambient clock and no ambient randomness. Every temporal input arrives through the cut; anything a frame consulted that the cut does not name is a hidden input, and a hidden input makes every downstream reproducibility claim a guess. `00_core/12_media` states the same obligation from the media side.
 - Cross-space coordinate and geometry assignment, plus raw string interpolators, fail type fixtures.
 - A timeline field track without a persistent entity fails its type fixture; two entities sharing one schema remain independently targetable.
 - Transform composition and inverse laws where invertible.
@@ -145,9 +146,7 @@ A subscene is an addressed semantic world instance with local coordinates, local
 
 The scene roster, coordinate and transform contracts, geometry-support predicate, timeline families, shared interpolation ownership, subscene model, and patch family are specified. This is the only major core area with no mature old spatial algebra to port.
 
-## Remaining work
-
-The spatial contract is a specified clean-room hypothesis and must be pressure-tested with SVG, CSS, Canvas, WebGPU, video, editor, and accessibility fixtures before production authority. Exact standard geometry and material constructor spelling may refine under those proofs without reopening the laws above.
+The spatial contract is a clean-room hypothesis and carries no production authority until it has been pressure-tested with SVG, CSS, Canvas, WebGPU, video, editor, and accessibility fixtures. Exact standard geometry and material constructor spelling may refine under those proofs; the laws above do not.
 
 ## Machine-checkable projection
 

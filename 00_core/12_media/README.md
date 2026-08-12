@@ -79,6 +79,7 @@ Authoring constructor names are not architecture and are not listed. `render` is
 
 ## Proof obligations
 
+- **Render-path purity.** Evaluating a frame at a coordinate reads no ambient clock and no ambient randomness: no `Date.now`, no `performance.now`, no `Math.random`, no `requestAnimationFrame`, no locale or timezone read that was not named in the cut. This is why nothing external is needed for deterministic offline driving — `FrameIndex` means there is no clock to fake — and it is the obligation that makes semantic frame determinism true rather than merely declared. A type cannot see a function body, so it is stated here and proved by assurance.
 - Long-running counter and overflow tests.
 - Exact frame/sample conversion.
 - Analysis determinism and cache identity.
@@ -92,9 +93,7 @@ Authoring constructor names are not architecture and are not listed. `render` is
 
 The media semantics, codec requirements, frame envelopes, and export dispositions are specified. Physical codecs, analysis kernels, encoder paths, muxers, and device bindings are absent.
 
-## Remaining work
-
-Implementation must port and complete old media behavior, generalize DSP kernels, and qualify browser, worker, Wasm, native, and server paths.
+Porting and completing old media behaviour, generalizing DSP kernels, and qualifying browser, worker, Wasm, native, and server paths are implementation obligations this architecture already authorizes.
 
 ## Machine-checkable projection
 

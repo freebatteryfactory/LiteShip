@@ -76,9 +76,7 @@ Risk and approval are derived from the operation definition, business effects, r
 
 The operation and delegated-authority contracts are specified. Handler composition, policy engines, wire projections, and host bindings are absent.
 
-## Remaining work
-
-No unresolved semantic decision remains. Implementation must qualify policy integration, idempotency storage requirements, cancellation propagation, and protocol projections.
+Qualifying policy integration, idempotency storage requirements, cancellation propagation, and protocol projections are implementation obligations this architecture already authorizes.
 
 ## Machine-checkable projection
 

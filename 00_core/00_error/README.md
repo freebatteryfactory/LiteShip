@@ -65,9 +65,7 @@ A diagnostic carries the complete machine object. Default human rendering answer
 
 The semantic contract is specified. Runtime implementation, exported constructors, catalog storage, and renderers are absent. Production authority is not earned until the security and cross-projection proofs exist.
 
-## Remaining work
-
-No unresolved semantic decision remains. Implementation must port the old secure composer and result behavior, define the diagnostic family extension mechanism, and prove loading and rendering costs.
+Porting the old secure composer and result behaviour, defining the diagnostic-family extension mechanism, and measuring loading and rendering cost are implementation obligations this architecture already authorizes.
 
 ## Machine-checkable projection
 

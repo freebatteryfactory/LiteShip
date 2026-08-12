@@ -72,9 +72,7 @@ Collections reuse this proposition algebra rather than defining a second boolean
 
 The proposition and source algebras are specified. Physical source producers, evaluation engine, and source-planning cost model are absent.
 
-## Remaining work
-
-Implementation must determine subscription cancellation policy and source-cost measurements. The proposition semantics and reuse across collection predicates are not open.
+Determining subscription cancellation policy and measuring source cost are implementation obligations. Proposition semantics and reuse across collection predicates are settled here.
 
 ## Machine-checkable projection
 

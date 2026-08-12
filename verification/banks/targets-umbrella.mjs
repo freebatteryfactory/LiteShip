@@ -260,6 +260,71 @@ ${line}
     `  readonly claim: SlotClaim;
 `,
     ``],
+  // --- T15: one explanation envelope --------------------------------------
+  ['T15: the outcome grows an explanation product of its own', T,
+    `  composed: {
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly participants: NonEmptyTuple<TargetParticipation>;
+    readonly produced: readonly ProducedArtifact[];
+  };`,
+    `  composed: {
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly participants: NonEmptyTuple<TargetParticipation>;
+    readonly produced: readonly ProducedArtifact[];
+    readonly explanation: { readonly subject: string };
+  };`],
+
+  ['T15: the outcome grows a facts wrapper again', T,
+    `    readonly produced: readonly ProducedArtifact[];
+  };`,
+    `    readonly produced: readonly ProducedArtifact[];
+    readonly facts: { readonly produced: readonly ProducedArtifact[] };
+  };`],
+
+  ['T15: the composed arm loses what a projection reads', T,
+    `    readonly participants: NonEmptyTuple<TargetParticipation>;
+    readonly produced: readonly ProducedArtifact[];
+  };`,
+    `    readonly produced: readonly ProducedArtifact[];
+  };`],
+
+  // --- T16: phase correctness ----------------------------------------------
+  ['T16: a refusal acquires the composition it never became', T,
+    `  refused: {
+    readonly attempt: TargetAttemptReference<Attempt>;
+    readonly rejection: TargetRejection;
+  };`,
+    `  refused: {
+    readonly attempt: TargetAttemptReference<Attempt>;
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly rejection: TargetRejection;
+  };`],
+
+  ['T16: a refusal falls back to a selected composition', T,
+    `  refused: {
+    readonly attempt: TargetAttemptReference<Attempt>;
+    readonly rejection: TargetRejection;
+  };`,
+    `  refused: {
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly rejection: TargetRejection;
+  };`],
+
+  ['T16: a failure regresses to a pre-selection attempt', T,
+    `  failed: {
+    readonly composition: TargetCompositionReference<Composition>;
+    readonly failure: TargetFailure;
+  };`,
+    `  failed: {
+    readonly attempt: TargetAttemptReference<Attempt>;
+    readonly failure: TargetFailure;
+  };`],
+
+  ['T16: a failure stops naming the participant that failed', T,
+    `export interface TargetFailure<Participant extends TargetParticipation = TargetParticipation> {
+  readonly participation: Participant;`,
+    `export interface TargetFailure<Participant extends TargetParticipation = TargetParticipation> {
+  readonly attempt: TargetAttemptReference;`],
 ];
 
 process.exit(runBank('targets-umbrella', M).clean ? 0 : 1);

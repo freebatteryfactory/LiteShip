@@ -20,6 +20,7 @@ import type { DraftSemanticCut, SemanticCut } from './00_core/08_state/types.js'
 import type { RevisionId, WorldId } from './00_core/02_identity/types.js';
 import type {
   ContainerProfileId,
+  DecodeProfileId,
   EncodeProfileId,
   MediaAssetId,
   MediaFrame,
@@ -52,6 +53,7 @@ type ProfileA = ToolProfileId<'probe.neg.tool-profile-a'>;
 type ProfileB = ToolProfileId<'probe.neg.tool-profile-b'>;
 type SourceA = MediaSourceId<'probe.neg.source-a'>;
 type SourceB = MediaSourceId<'probe.neg.source-b'>;
+type DecodeA = DecodeProfileId<'probe.neg.decode-a'>;
 type TrackA = MediaTrackId<'probe.neg.track-a'>;
 type TrackB = MediaTrackId<'probe.neg.track-b'>;
 
@@ -163,7 +165,7 @@ export const n20: MediaSource<FrameA, SourceA> = sourceOtherUnit;
 // N21. An encode request cannot take a tuple where a source belongs.
 declare const frameTuple: NonEmptyTuple<WebPhysicalFrame<RepA, FrameA, RasterA>>;
 // @ts-expect-error — the input is a bounded source, never a materialized tuple
-export const n21: CaseOf<import('./00_core/12_media/types.js').MediaInput<WebPhysicalFrame<RepA, FrameA, RasterA>, never>, 'video-only'>['video'] = frameTuple;
+export const n21: CaseOf<import('./00_core/12_media/types.js').MediaTrackSources<WebPhysicalFrame<RepA, FrameA, RasterA>, never>, 'video-only'>['video'] = frameTuple;
 
 // N22. An artifact of container B is not an artifact of container A.
 declare const otherContainer: import('./00_core/12_media/types.js').MediaArtifact<
@@ -183,6 +185,16 @@ export const n23: import('./00_core/12_media/types.js').AdmittedProfile<import('
 // N24. An export request holds no disposition — the decision is a separate product.
 // @ts-expect-error — 'disposition' belongs to the decision, not the request
 export const n24: unknown = ({} as import('./00_core/12_media/types.js').MediaExportRequest).disposition;
+
+// N25. Decoding audio yields sample blocks, not frames. Before the decode
+// product was track-correlated, the track algebra could describe an audio-only
+// output while no decode path could legally produce one.
+declare const decodedFrames: MediaSource<
+  import('./00_core/12_media/types.js').DecodedFrame<RepA, AssetA, DecodeA>,
+  SourceA
+>;
+// @ts-expect-error — the audio arm carries sample blocks, never a frame source
+export const n25: CaseOf<import('./00_core/12_media/types.js').MediaDecodeProduct<'audio-only', RepA, AssetA, RevisionId, DecodeA, SourceA, SourceA>['output'], 'audio-only'>['audio'] = decodedFrames;
 
 // Referenced so the unused-symbol lane stays quiet about the specimens above.
 export type NegativeSpecimens = [Diagnostic, typeof committed];

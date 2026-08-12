@@ -71,9 +71,7 @@ Type ABI evidence is a `TypeAbiAttestation`, not a receipt. It asserts that an i
 
 The query, explanation, authority, and impact contracts are specified. The system compiler analysis, catalog builders, graph container, and wire renderers are absent.
 
-## Remaining work
-
-Implementation must build the compiler-derived Type ABI pipeline and runtime catalog joins. Explanation verbosity is a projection choice and does not alter the underlying structured object.
+Building the compiler-derived Type ABI pipeline and runtime catalogue joins are implementation obligations. Explanation verbosity is a projection choice and does not alter the underlying structured object.
 
 ## Machine-checkable projection
 

@@ -112,9 +112,7 @@ Approval is derived from `OperationPolicyDecision`, effects, reversibility, auth
 
 The five-layer model, overlay derivation, draft authority, selection contract, and human/agent flow are specified. Visual UX, widgets, and collaboration are absent.
 
-## Remaining work
-
-Implementation must pressure-test selection and history ergonomics in real scene, collection, and generated-structure editors. Replication remains deferred and must compose through family merge policies rather than reshape this baseline.
+Pressure-testing selection and history ergonomics in real scene, collection, and generated-structure editors is an implementation obligation. This home owns no replication: it would compose through family merge policies and would be an explicit architecture reopening, not a reshaping of this baseline.
 
 ## Machine-checkable projection
 

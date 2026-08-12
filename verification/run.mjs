@@ -25,6 +25,8 @@ const LANES = [
   ['direction:self', 'gates/direction.selftest.mjs', 'the gate is capable of failing'],
   ['authority', 'gates/authority.mjs', 'one declaration per concept'],
   ['authority:self', 'gates/authority.selftest.mjs', 'the gate is capable of failing'],
+  ['prose', 'gates/prose.mjs', 'no work stored in a heading'],
+  ['prose:self', 'gates/prose.selftest.mjs', 'the gate is capable of failing'],
   ['harness:self', 'harness.selftest.mjs', 'a red baseline refuses to score'],
   ['lanes', 'gates/lanes.mjs', 'declaration output, zero runtime'],
   ['probes', 'probes/run.mjs', 'positive and negative witnesses'],

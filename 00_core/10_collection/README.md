@@ -95,9 +95,7 @@ Join cardinality is explicit so output schema and optionality remain derivable.
 
 The relational algebra, truth semantics, revision relationship, patch family, and deterministic ordering rules are specified. Authoring helper spelling, execution engines, and index realization are absent.
 
-## Remaining work
-
-The authoring helpers must be tested against real TypeScript ergonomics, including direct field navigation and any optional symbolic callback form. Physical index and backend choices remain empirical.
+Testing the authoring helpers against real TypeScript ergonomics, including direct field navigation and any optional symbolic callback form, and selecting physical index and backend realizations, are implementation and empirical obligations.
 
 ## Machine-checkable projection
 

@@ -323,6 +323,12 @@ export type CapturedFrame<
   Profile,
 > = PhysicalFrame<Representation, CapturedProvenance<Composition, Profile>>;
 
+export type DecodedSampleBlock<
+  Representation extends MediaRepresentationId,
+  Asset extends MediaAssetId,
+  Profile extends DecodeProfileId,
+> = PhysicalSampleBlock<Representation, SampleProvenance<Asset, Profile>>;
+
 /** How a block of audio samples came to exist. Its range is its coordinate. */
 export type SampleProvenance<
   Asset extends MediaAssetId,
@@ -450,15 +456,20 @@ export type MediaTrackConfiguration<
 export type MediaTrackTag = TagOf<MediaTrackConfiguration>;
 
 /**
- * The input population, correlated to the track shape by one shared tag.
+ * A track-correlated set of bounded sources.
+ *
+ * Named for what it is rather than for one direction it travels. It is the
+ * encoder's input and the decoder's output, and giving each a private algebra
+ * of the same shape would have been two vocabularies for one fact — with the
+ * decode side the one that quietly stayed video-only.
  *
  * The same `Tag` parameter selects the arm here and the arm of the track
- * configuration, so an audio-only output cannot be requested with a video frame
- * source and an audio-video output cannot be requested with half its input.
- * Two independent algebras standing near each other would have left the
- * configuration describing a product no operation could legally produce.
+ * configuration, so an audio-only product cannot be described with a video
+ * frame source, and an audio-video product cannot be described with half its
+ * population. Two independent algebras standing near each other would have left
+ * the configuration describing something no operation could legally produce.
  */
-export type MediaInput<
+export type MediaTrackSources<
   VideoUnit,
   AudioUnit,
   VideoSource extends MediaSourceId = MediaSourceId,
@@ -543,31 +554,53 @@ export interface MediaDecodeRequest<
   readonly range: FrameRange | SampleRange;
 }
 
+/**
+ * What a decode yielded, correlated to the tracks it decoded.
+ *
+ * The output is the same track-correlated shape the encoder consumes, so
+ * decoding an audio asset produces sample blocks rather than a frame source
+ * that nothing could fill. An earlier form returned frames unconditionally,
+ * which meant the track algebra could describe an audio-only product while no
+ * decode path could legally produce one — the same gap on the input side that
+ * the encode correlation had just closed on the output side.
+ */
 export interface MediaDecodeProduct<
+  Tag extends MediaTrackTag = MediaTrackTag,
   Representation extends MediaRepresentationId = MediaRepresentationId,
   Asset extends MediaAssetId = MediaAssetId,
   Revision extends RevisionId = RevisionId,
   Profile extends DecodeProfileId = DecodeProfileId,
-  Source extends MediaSourceId = MediaSourceId,
+  Video extends MediaSourceId = MediaSourceId,
+  Audio extends MediaSourceId = MediaSourceId,
 > {
   readonly asset: MediaAssetReference<Asset>;
   readonly revision: RevisionReference<Revision>;
   readonly profile: DecodeProfileReference<Profile>;
-  readonly frames: MediaSource<DecodedFrame<Representation, Asset, Profile>, Source>;
+  readonly output: CaseOf<
+    MediaTrackSources<
+      DecodedFrame<Representation, Asset, Profile>,
+      DecodedSampleBlock<Representation, Asset, Profile>,
+      Video,
+      Audio
+    >,
+    Tag
+  >;
   readonly reproducibility: ReproducibilityClaim<DecodeProfileReference<Profile>>;
 }
 
 export interface MediaDecoderAuthority {
   readonly decode: <
+    Tag extends MediaTrackTag,
     Representation extends MediaRepresentationId,
     Asset extends MediaAssetId,
     Revision extends RevisionId,
     Profile extends DecodeProfileId,
-    Source extends MediaSourceId,
+    Video extends MediaSourceId,
+    Audio extends MediaSourceId,
   >(
     request: MediaDecodeRequest<Asset, Revision, Profile>,
   ) => Result<
-    MediaDecodeProduct<Representation, Asset, Revision, Profile, Source>,
+    MediaDecodeProduct<Tag, Representation, Asset, Revision, Profile, Video, Audio>,
     NonEmptyTuple<Diagnostic>
   >;
 }
@@ -589,7 +622,7 @@ export interface MediaEncodeRequest<
 > {
   readonly profile: AdmittedProfile<EncodeProfileReference<Profile>>;
   readonly tracks: CaseOf<MediaTrackConfiguration<Video, Audio>, Tag>;
-  readonly input: CaseOf<MediaInput<VideoUnit, AudioUnit>, Tag>;
+  readonly input: CaseOf<MediaTrackSources<VideoUnit, AudioUnit>, Tag>;
 }
 
 export interface MediaEncodeProduct<
@@ -998,15 +1031,15 @@ export type EncodeInputIsCorrelatedToItsTracks = Assert<
     [
       Equal<
         MediaEncodeRequest<'audio-only', unknown, unknown, MediaLawEncodeA>['input'],
-        CaseOf<MediaInput<unknown, unknown>, 'audio-only'>
+        CaseOf<MediaTrackSources<unknown, unknown>, 'audio-only'>
       >,
       Equal<
         MediaEncodeRequest<'audio-only', unknown, unknown, MediaLawEncodeA>['tracks'],
         CaseOf<MediaTrackConfiguration, 'audio-only'>
       >,
-      'video' extends keyof CaseOf<MediaInput<unknown, unknown>, 'audio-only'> ? true : false,
-      'audio' extends keyof CaseOf<MediaInput<unknown, unknown>, 'video-only'> ? true : false,
-      TagOf<MediaInput<unknown, unknown>>,
+      'video' extends keyof CaseOf<MediaTrackSources<unknown, unknown>, 'audio-only'> ? true : false,
+      'audio' extends keyof CaseOf<MediaTrackSources<unknown, unknown>, 'video-only'> ? true : false,
+      TagOf<MediaTrackSources<unknown, unknown>>,
     ],
     [true, true, false, false, MediaTrackTag]
   >
@@ -1021,18 +1054,43 @@ export type EncodeInputIsCorrelatedToItsTracks = Assert<
 export type EncodingIsSourceToSourceNotTupleToTuple = Assert<
   Equal<
     [
-      // Decode too. Read as a member rather than by varying a type argument:
-      // collapsing the source to a tuple leaves the source parameter unused,
-      // and an unused parameter is a hygiene death no named law can attribute.
+      // Decode too, and on the audio arm. Read as members rather than by
+      // varying a type argument: collapsing a source to a tuple leaves the
+      // source parameter unused, and an unused parameter is a hygiene death no
+      // named law can attribute.
       Equal<
-        MediaDecodeProduct<
-          MediaLawRepA,
-          MediaLawAssetA,
-          MediaLawRevisionA,
-          MediaLawDecodeA,
-          MediaLawSourceA
-        >['frames'],
+        CaseOf<
+          MediaDecodeProduct<
+            'video-only',
+            MediaLawRepA,
+            MediaLawAssetA,
+            MediaLawRevisionA,
+            MediaLawDecodeA,
+            MediaLawSourceA
+          >['output'],
+          'video-only'
+        >['video'],
         MediaSource<DecodedFrame<MediaLawRepA, MediaLawAssetA, MediaLawDecodeA>, MediaLawSourceA>
+      >,
+      // The audio arm yields sample blocks, not frames. Without this the track
+      // algebra could describe an audio-only product no decode could produce.
+      Equal<
+        CaseOf<
+          MediaDecodeProduct<
+            'audio-only',
+            MediaLawRepA,
+            MediaLawAssetA,
+            MediaLawRevisionA,
+            MediaLawDecodeA,
+            MediaLawSourceA,
+            MediaLawSourceA
+          >['output'],
+          'audio-only'
+        >['audio'],
+        MediaSource<
+          DecodedSampleBlock<MediaLawRepA, MediaLawAssetA, MediaLawDecodeA>,
+          MediaLawSourceA
+        >
       >,
       Equal<
         MediaEncodeProduct<'video-only', MediaLawEncodeA, MediaLawSourceA>['packets'],
@@ -1041,11 +1099,11 @@ export type EncodingIsSourceToSourceNotTupleToTuple = Assert<
       MediaEncodeProduct<'video-only', MediaLawEncodeA, MediaLawSourceA>['packets'] extends readonly unknown[]
         ? true
         : false,
-      CaseOf<MediaInput<unknown, unknown>, 'video-only'>['video'] extends readonly unknown[]
+      CaseOf<MediaTrackSources<unknown, unknown>, 'video-only'>['video'] extends readonly unknown[]
         ? true
         : false,
     ],
-    [true, true, false, false]
+    [true, true, true, false, false]
   >
 >;
 
@@ -1277,9 +1335,11 @@ export interface MediaTypeSurface {
   readonly admitted: AdmittedProfile<unknown>;
   readonly admission: CodecAdmission<unknown>;
   readonly track: MediaTrackConfiguration;
-  readonly input: MediaInput<unknown, unknown>;
+  readonly trackSources: MediaTrackSources<unknown, unknown>;
   readonly packet: MediaPacket;
   readonly artifact: MediaArtifact;
+  readonly decodeProduct: MediaDecodeProduct;
+  readonly sampleBlockOf: DecodedSampleBlock<MediaRepresentationId, MediaAssetId, DecodeProfileId>;
   readonly decoder: MediaDecoderAuthority;
   readonly encoder: MediaEncoderAuthority;
   readonly mux: MediaMuxAuthority;

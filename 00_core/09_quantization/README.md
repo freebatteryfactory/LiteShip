@@ -68,9 +68,7 @@ A scene may define where and when values change. It does not redefine how a name
 
 The quantization and interpolation semantics are specified. Runtime, compiler projections, numeric kernels, and authoring values are absent.
 
-## Remaining work
-
-Implementation must port the mature boundary behavior, define the standard interpolator catalog, and qualify numerical parity across TypeScript, Rust, Wasm, and GPU projections.
+Porting the mature boundary behaviour, defining the standard interpolator catalogue, and qualifying numerical parity across TypeScript, Rust, Wasm, and GPU projections are implementation obligations this architecture already authorizes.
 
 ## Machine-checkable projection
 

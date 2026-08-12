@@ -99,6 +99,8 @@ That test now runs. `02_targets/cloudflare/03_deployment` is the first consumer 
 - The umbrella carries no per-target member and no lifecycle phase. `payload`, `context`, and `hooks` are checked by name, because a junk drawer does not become constitutional by removing Astro from its label.
 - Rejection and failure stay distinct, and neither carries production.
 - A composed outcome has at least one participant.
+- The outcome projects into core's one `Explanation` and declares no explanation vocabulary of its own. `explanation`, `facts`, `report`, and `rendered` are checked by name, because a wrapper is one member away at all times — and an earlier draft's facts product let a refused outcome sit beside a non-empty production array while the law forbidding that held one object inward.
+- Every product carries the identity of the phase it belongs to. A refusal holds an attempt and no composition; a failure holds the selected composition and the participation that failed, and never falls back to an attempt. The two reference kinds stay distinct populations, so nothing changes phase by swapping which one it holds.
 
 ## Proof obligations
 
@@ -106,7 +108,6 @@ These are runtime claims, not unfinished work. A type cannot express any of them
 
 - That a runtime producer actually wrote the bytes the artifact addresses.
 - That two producers never race for one artifact slot in a live composition.
-- That target facts reach the rendered explanation intact.
 - That an artifact whose ancestry could not be resolved is distinguishable at runtime from one that legitimately resolved to nothing.
 
 ```yaml
@@ -138,6 +139,8 @@ home:
   - no-universal-lifecycle-taxonomy
   - rejection-precedes-selection-failure-follows-it
   - one-explanation-envelope-owned-by-core
+  - the-outcome-declares-no-explanation-of-its-own
+  - every-product-carries-its-phase-identity
   - deployable-application-is-entry-plus-assets
   - no-child-roster-until-children-exist
   production_authority: false

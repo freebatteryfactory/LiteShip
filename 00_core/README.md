@@ -1268,9 +1268,11 @@ Measurements still select:
 - optional bytecode value;
 - GPU reconciliation value.
 
-### Deferred algorithms
+### Outside this architecture
 
-The following are deliberately deferred without being architecturally forgotten:
+Core owns none of the following. Each is a decision nobody has made rather than
+a chore nobody has done, so adding one is an explicit architecture reopening
+with its own denominator — not an obligation waiting quietly in a list:
 
 - compact bytecode as a default execution form;
 - broad GPU reconciliation;

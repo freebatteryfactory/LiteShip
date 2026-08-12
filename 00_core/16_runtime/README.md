@@ -105,9 +105,7 @@ Fallback behavior is explicit and preserves the reference semantics or returns a
 
 The execution model and generalized kernel ABI are specified. Rust crate organization, command encoding, shared-memory strategy, backend implementations, and crossover thresholds are absent and empirical.
 
-## Remaining work
-
-Recruit and generalize the existing compute crate, remove fixed-buffer assumptions where inappropriate, build caller-owned batching, and establish representative backend profiles. GPU reconciliation remains ordered research after GPU-resident scene and collection workloads exist.
+Recruiting and generalizing the existing compute crate, removing inappropriate fixed-buffer assumptions, building caller-owned batching, and establishing representative backend profiles are implementation obligations. GPU reconciliation is research rather than architecture, and it is not the default execution model; making it one would be an explicit reopening.
 
 ## Machine-checkable projection
 

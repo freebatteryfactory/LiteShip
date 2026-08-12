@@ -263,9 +263,7 @@ The obligations concerning provenance, canonical ownership, erased-roster popula
 
 The compiler registry, requirement closure, planner contracts, cost model shape, and explanation are specified. Cost coefficients, profiles, calibration, and crossover thresholds are empirical.
 
-## Remaining work
-
-Implementation must build the fleet registry, migrate old compiler arms and adapters, define runtime feature records, and run real cross-backend profiles. No fixed hydration tier or second ranking mechanism should be introduced.
+Building the fleet registry, migrating old compiler arms and adapters, defining runtime feature records, and running real cross-backend profiles are implementation obligations. This home admits no fixed hydration tier and no second ranking mechanism.
 
 ## Machine-checkable projection
 

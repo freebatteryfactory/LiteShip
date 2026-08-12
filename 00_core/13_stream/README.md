@@ -103,9 +103,7 @@ Frame classes mean:
 
 The roster, trust boundary, shared envelope, generated-structure family, and control records are specified. Physical transports and domain patch implementations are absent.
 
-## Remaining work
-
-Implementation must finalize the minimal generated-structure operation set through real UI fixtures and port the old bounded buffer, replay, and admission behavior. No roster or security-boundary decision remains open.
+Finalizing the minimal generated-structure operation set through real UI fixtures, and porting the old bounded buffer, replay, and admission behaviour, are implementation obligations. The roster and the security boundary are settled here.
 
 ## Machine-checkable projection
 

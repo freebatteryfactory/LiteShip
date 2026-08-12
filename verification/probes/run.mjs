@@ -60,7 +60,7 @@ const PROBES = [
   // Tripwires, not semantic proof: a directive is satisfied by any error on its
   // line. Every site here is also covered by a named mutation in the banks, and
   // the count below is not a count of proved refusals.
-  { file: 'probe-media-negatives.ts', expect: 'compiles', why: 'twenty-four media tripwires, each self-verifying via @ts-expect-error, each backed by a named mutation' },
+  { file: 'probe-media-negatives.ts', expect: 'compiles', why: 'twenty-five media tripwires, each self-verifying via @ts-expect-error, each backed by a named mutation' },
 ];
 
 const known = new Set(PROBES.map((p) => p.file));

@@ -66,9 +66,7 @@ A draft revision may have byte-identical content and the same `RevisionId` as a 
 
 The semantic split and type laws are specified. Runtime constructors and the external `EntityId` carrier are absent. The carrier must be opaque, content-independent, interoperability-friendly, and provide at least 128 bits of identity space.
 
-## Remaining work
-
-Implementation must choose and qualify the external `EntityId` representation, canonical path encoding, and slot-map realization. These are compatibility and empirical choices, not changes to the semantic model.
+Choosing and qualifying the external `EntityId` representation, canonical path encoding, and slot-map realization are compatibility and empirical implementation choices. They do not reach the semantic model.
 
 ## Machine-checkable projection
 

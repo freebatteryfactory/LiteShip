@@ -198,9 +198,9 @@ const M = [
 
   ['the encode request decorrelates its input from its tracks', MD,
     `  readonly tracks: CaseOf<MediaTrackConfiguration<Video, Audio>, Tag>;
-  readonly input: CaseOf<MediaInput<VideoUnit, AudioUnit>, Tag>;`,
+  readonly input: CaseOf<MediaTrackSources<VideoUnit, AudioUnit>, Tag>;`,
     `  readonly tracks: CaseOf<MediaTrackConfiguration<Video, Audio>, Tag>;
-  readonly input: MediaInput<VideoUnit, AudioUnit>;`],
+  readonly input: MediaTrackSources<VideoUnit, AudioUnit>;`],
 
   // --- the memory wall -----------------------------------------------------
   ['the encoder returns a tuple of packets instead of a source', MD,
@@ -209,9 +209,23 @@ const M = [
     `  readonly packets: NonEmptyTuple<MediaPacket<Profile, Packets>>;
   readonly reproducibility: ReproducibilityClaim<EncodeProfileReference<Profile>>;`],
 
+  ['decode goes back to frames only, with no legal audio output', MD,
+    `  readonly output: CaseOf<
+    MediaTrackSources<
+      DecodedFrame<Representation, Asset, Profile>,
+      DecodedSampleBlock<Representation, Asset, Profile>,
+      Video,
+      Audio
+    >,
+    Tag
+  >;`,
+    `  readonly output: MediaSource<DecodedFrame<Representation, Asset, Profile>, Video>;`],
+
   ['the decoder returns a tuple of frames instead of a source', MD,
-    `  readonly frames: MediaSource<DecodedFrame<Representation, Asset, Profile>, Source>;`,
-    `  readonly frames: NonEmptyTuple<DecodedFrame<Representation, Asset, Profile>>;`],
+    `      DecodedFrame<Representation, Asset, Profile>,
+      DecodedSampleBlock<Representation, Asset, Profile>,`,
+    `      NonEmptyTuple<DecodedFrame<Representation, Asset, Profile>>,
+      DecodedSampleBlock<Representation, Asset, Profile>,`],
 
   // --- packets and artifacts -----------------------------------------------
   ['a packet stops naming the source that produced it', MD,
@@ -252,10 +266,10 @@ const M = [
   ['encode accepts a bare profile reference', MD,
     `  readonly profile: AdmittedProfile<EncodeProfileReference<Profile>>;
   readonly tracks: CaseOf<MediaTrackConfiguration<Video, Audio>, Tag>;
-  readonly input: CaseOf<MediaInput<VideoUnit, AudioUnit>, Tag>;`,
+  readonly input: CaseOf<MediaTrackSources<VideoUnit, AudioUnit>, Tag>;`,
     `  readonly profile: EncodeProfileReference<Profile>;
   readonly tracks: CaseOf<MediaTrackConfiguration<Video, Audio>, Tag>;
-  readonly input: CaseOf<MediaInput<VideoUnit, AudioUnit>, Tag>;`],
+  readonly input: CaseOf<MediaTrackSources<VideoUnit, AudioUnit>, Tag>;`],
 
   ['mux accepts a bare container reference', MD,
     `  readonly container: AdmittedProfile<ContainerProfileReference<Container>>;`,
