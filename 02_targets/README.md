@@ -1,6 +1,6 @@
 # Targets: Ecosystem Integration Surfaces
 
-Status: umbrella sealed at tag `targets-umbrella-seal`; children not authored; implementation absent
+Status: umbrella sealed at tag `targets-umbrella-seal`; `astro/` and `vite/` authored and their seam proved; roster not yet sealed; implementation absent
 
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
@@ -43,7 +43,7 @@ The composition outcome is what projects into core's existing `Explanation`. The
 - A universal lifecycle taxonomy, target context, plugin interface, or hook table.
 - Per-target payloads of any kind.
 - Any child's configuration shape, decoder, or admission.
-- An exact child roster. That is sealed after the children physically exist, following the host pattern.
+- An exact child roster. Two children now exist; the roster seals after `cloudflare/`, following the host pattern.
 - A deployable-application contract. Its representation is deferred until Cloudflare's denominator earns it.
 
 ## Why children do not import one another
@@ -55,6 +55,14 @@ The reason is that ecosystem usage and distribution dependency are not semantic 
 The exclusion does not physically prevent anyone from later writing a producer-neutral path by hand. It prevents something subtler — once one target imports another, that shape becomes structurally normal, the producer-neutral seam is never named, and the alternative stops being visible to the architecture rather than stopping being possible.
 
 A child names what it needs in upstream vocabulary and exposes what it offers independently. A later composition point imports both and proves the binding.
+
+## The first join, and what it cost to make it mean anything
+
+`astro/03_build` declares a build-facility hole; `vite/01_projection` exposes a facility; neither imports or names the other. `verification/probes/probe-astro-vite-binding.ts` imports both public surfaces and binds them through `BindingsFor`, with no casts and no local replica. That file compiling is the first evidence that relation-shaped composition works at all — before it, the model was approved and unproven.
+
+Two ways of writing the requirement were rejected first, both of which compile and neither of which proves anything. A **free** contract parameter lets any supplier satisfy the hole by nominating itself. A parameter constrained by the **broad** instantiation is the same failure wearing a constraint, since broadening is what the broad form permits. The requirement is therefore generic over the exact axes, with the supplier constrained by those: the parameter names *who* filled the socket, never *what the socket means*.
+
+One consequence was found by measurement rather than reasoning, and it generalises beyond this seam. **An exactness axis carried only inside a `Signature` input is unprovable.** The input is stored as `(input: Input) => void` and is therefore contravariant, so a supplier that accepts a broader request stays assignable and the broadening mutation survives. Every axis that must be exact is also a covariant member of the facility itself.
 
 ## Direct mode is an acceptance test, not a feature
 
@@ -101,9 +109,11 @@ Deferred to system assurance and implementation, named here so they are not mist
 home:
   path: 02_targets
   title: "Targets: Ecosystem Integration Surfaces"
-  maturity: umbrella-sealed-children-absent
+  maturity: umbrella-sealed-two-children-authored
   implementation: absent
-  child_homes: []
+  child_homes:
+  - astro
+  - vite
   runtime_exports: false
   dependency_authority: source-imports
   semantic_decisions:

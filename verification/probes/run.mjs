@@ -26,6 +26,13 @@ const PROBES = [
   { file: 'probe-h-survivors.ts', expect: 'rejects', errors: 8, why: 'the survivors the provider-path fold closed' },
   { file: 'probe-source-relation-positives.ts', expect: 'compiles', why: 'all three arms inhabited, exact artifacts coexist in the erased catalog' },
   { file: 'probe-source-relation-negatives.ts', expect: 'rejects', errors: 7, why: 'each way the source-map ambiguity could return' },
+  { file: 'probe-astro-vite-binding.ts', expect: 'compiles', why: 'the real cross-target join: Vite\'s facility fills Astro\'s hole through BindingsFor, no casts' },
+  // Compiles rather than rejects, on purpose. Every negative sits under
+  // `@ts-expect-error`, so the file is green only while all nine are still
+  // refused, and a directive that stops being needed names its own site
+  // instead of moving a total. Verified red by removing the socket constraint:
+  // five directives went unused immediately.
+  { file: 'probe-astro-vite-negatives.ts', expect: 'compiles', why: 'nine cross-target negatives, each self-verifying via @ts-expect-error' },
 ];
 
 const known = new Set(PROBES.map((p) => p.file));
