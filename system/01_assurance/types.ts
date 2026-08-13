@@ -164,9 +164,6 @@ export type FailureClassReference<Id extends FailureClassId = FailureClassId> = 
   Id
 >;
 
-/** How much authority a gate's refutation carries. */
-export type GateDisposition = 'blocking' | 'warning' | 'advisory';
-
 /**
  * What a gate covers, and what it deliberately does not.
  *
@@ -265,11 +262,18 @@ export type AssuranceAuthority<Snapshot extends WorkspaceSnapshotId = WorkspaceS
 // Findings and receipts
 // ---------------------------------------------------------------------------
 
-/** One reported conclusion about one subject, traceable to the gate that made it. */
+/**
+ * One reported conclusion about one subject, traceable to the gate that made it.
+ *
+ * It carries no disposition. A finding reports what happened; whether that
+ * mattered enough to stop an operation is a property of the invocation, and the
+ * run spec in `01_gauntlet` owns it. Keeping a copy here would restate a
+ * lookup — the same triangle this home is removing elsewhere — and would let two
+ * runs of one check produce findings that disagree about their own consequence.
+ */
 export interface Finding {
   readonly gate: GateReference;
   readonly subject: AssuranceSubject;
-  readonly disposition: GateDisposition;
   readonly outcome: GateOutcome;
   readonly diagnostics: readonly Diagnostic[];
   readonly remediation: readonly RemediationAction[];

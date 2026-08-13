@@ -42,6 +42,14 @@ A candidate must still be able to be unqualified: it is packed before it is judg
 
 The alternative is the ordinary industry arrangement, in which the same program produces a tarball and declares it fit. That arrangement has nowhere to record *why* it is fit, which means it has nothing to be wrong about.
 
+## Two axes, not one
+
+A result is exact over its snapshot and over its specification. The snapshot axis answers *was this evidence about the right revision*. The specification axis answers *was it about the right question*.
+
+The second is not redundant. A passing result means every check the run required was satisfied — so a run that required nothing passes too, and without this axis an editor invocation's result is assignable wherever a release-grade one is, carrying an honest `passed` tag the whole way to a published artifact. Which specification release requires is a decision the release program makes. What the type prevents is one run's answer being quoted for another run's question.
+
+The broad specification is not the union of all specifications. It is the case where nobody has said which run this was, and it does not satisfy a carrier that named one.
+
 ## Every stage consumes the previous stage's product, not a name for it
 
 A plan names a snapshot. A package receipt carries the plan. A candidate carries the receipt. A release receipt carries a qualified candidate. A publication plan carries the release receipt. A withdrawal carries the publication receipt.
@@ -83,6 +91,7 @@ A publication receipt's `published` population is separate from its plan's `dest
 - Release qualification's qualified arm carries the passed assurance arm exactly; the full algebra is not assignable into it.
 - One coordinate travels from the observation to the publication receipt, pinned at six stages against the type the producer emits.
 - No stage in that chain admits a product from another coordinate, and the matching coordinate is still accepted at every joint.
+- No stage admits a result from another specification either, and the broad specification does not satisfy a carrier that named one.
 - A release receipt requires a candidate whose qualification is in the qualified arm; a plain candidate is not assignable, a qualified one is still a candidate, and the refinement did not collapse to `never`.
 - A compatibility claim may be unknown, carries no predecessor in that arm, and its breaking arm carries a non-empty diagnostic population.
 - The three receipts are three populations; none substitutes for another, and the package receipt carries no destination.

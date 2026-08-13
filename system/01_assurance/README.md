@@ -16,7 +16,7 @@ Own the shared vocabulary for the facts TypeScript's assignability cannot decide
 
 - Assurance subjects: roots, homes, files, authorities, artifacts, and directed relations between them.
 - The assurance atomic predicate, and the proposition and decision instantiated from core's generics at it.
-- Gate identity, scope, disposition, and the failure classes a gate claims to detect.
+- Gate identity, scope, and the failure classes a gate claims to detect. Not consequence: what a run requires is the run's business, and `01_gauntlet` owns the specification that says so.
 - Gate qualification, the detection witness, and the qualified gate.
 - The gate outcome algebra, in which unknown cannot pass.
 - Earned assurance authority.
@@ -75,7 +75,7 @@ Not tidiness, and not package nostalgia.
 
 Acquisition needs a compiler lane, a filesystem, and source control. Evaluation needs none of those and runs anywhere the facts can be shipped. Fusing them drags the heaviest dependency in the repository into every context that merely wants to read a decision — an editor, a pre-commit path, a deployment check.
 
-The split also makes the lean/rich distinction expressible: `01_gauntlet` declares the evidence profile a gate requires, so a gate needing rich evidence under a lean run resolves to indeterminate — visible, and blocking if its disposition says so — rather than silently not running. Silently not running is how a checked repository becomes an unchecked one without anybody deciding to.
+The split also makes the lean/rich distinction expressible: `01_gauntlet` declares the evidence profile a gate requires, so a gate needing rich evidence under a lean run resolves to indeterminate — visible, and refused if the invocation required that check — rather than silently not running. Silently not running is how a checked repository becomes an unchecked one without anybody deciding to.
 
 ## Laws
 

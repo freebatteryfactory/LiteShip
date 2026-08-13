@@ -52,7 +52,11 @@ import type {
   WorkspaceSnapshotId,
   WorkspaceSnapshotReference,
 } from '../00_workspace/types.js';
-import type { AssuranceResult } from '../01_assurance/01_gauntlet/types.js';
+import type {
+  AssuranceResult,
+  AssuranceRunSpec,
+  AssuranceRunSpecId,
+} from '../01_assurance/01_gauntlet/types.js';
 
 // ---------------------------------------------------------------------------
 // Packaging
@@ -154,10 +158,21 @@ export type ReleaseCandidateReference<Id extends ReleaseCandidateId = ReleaseCan
  *
  * One member, not two. A qualification used to carry an authority and a receipt
  * side by side, and their agreement was prose.
+ *
+ * The specification is exact for the same reason the snapshot is. A passing
+ * result says every check the run *required* was satisfied — so a run that
+ * required nothing produces a passing result too, and without this axis an
+ * editor invocation's result is assignable wherever a release-grade one is.
+ * Which specification release requires is a decision the release program makes;
+ * what the type prevents is one run's answer being quoted for another's
+ * question.
  */
-export type ReleaseQualification<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = Algebra<{
+export type ReleaseQualification<
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
+> = Algebra<{
   unqualified: { readonly reason: string; readonly diagnostics: readonly Diagnostic[] };
-  qualified: { readonly result: CaseOf<AssuranceResult<Snapshot>, 'passed'> };
+  qualified: { readonly result: CaseOf<AssuranceResult<Snapshot, Spec>, 'passed'> };
 }>;
 
 /**
@@ -185,13 +200,14 @@ export type ReleaseQualification<Snapshot extends WorkspaceSnapshotId = Workspac
 export interface ReleaseCandidate<
   Id extends ReleaseCandidateId = ReleaseCandidateId,
   Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
 > {
   readonly candidate: ReleaseCandidateReference<Id>;
   readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
   readonly packaged: PackageReceipt<Snapshot>;
   readonly attestations: readonly TypeAbiAttestation[];
   readonly compatibility: CompatibilityClaim;
-  readonly qualification: ReleaseQualification<Snapshot>;
+  readonly qualification: ReleaseQualification<Snapshot, Spec>;
 }
 
 /**
@@ -210,9 +226,10 @@ export interface ReleaseCandidate<
 export type QualifiedReleaseCandidate<
   Id extends ReleaseCandidateId = ReleaseCandidateId,
   Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
 > = Refine<
-  ReleaseCandidate<Id, Snapshot>,
-  { readonly qualification: CaseOf<ReleaseQualification<Snapshot>, 'qualified'> }
+  ReleaseCandidate<Id, Snapshot, Spec>,
+  { readonly qualification: CaseOf<ReleaseQualification<Snapshot, Spec>, 'qualified'> }
 >;
 
 // ---------------------------------------------------------------------------
@@ -246,11 +263,12 @@ export interface PublicationDestination {
 export type ReleaseReceipt<
   Id extends ReleaseCandidateId = ReleaseCandidateId,
   Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
 > = Envelope<
   'LiteShipReleaseReceipt',
   1,
   {
-    readonly candidate: QualifiedReleaseCandidate<Id, Snapshot>;
+    readonly candidate: QualifiedReleaseCandidate<Id, Snapshot, Spec>;
     readonly address: ContentAddress<'application/vnd.liteship.release-receipt+cbor'>;
   }
 >;
@@ -267,8 +285,9 @@ export type ReleaseReceipt<
 export interface PublicationPlan<
   Id extends ReleaseCandidateId = ReleaseCandidateId,
   Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
 > {
-  readonly released: ReleaseReceipt<Id, Snapshot>;
+  readonly released: ReleaseReceipt<Id, Snapshot, Spec>;
   readonly destinations: NonEmptyTuple<PublicationDestination>;
 }
 
@@ -283,11 +302,12 @@ export interface PublicationPlan<
 export type PublicationReceipt<
   Id extends ReleaseCandidateId = ReleaseCandidateId,
   Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
 > = Envelope<
   'LiteShipPublicationReceipt',
   1,
   {
-    readonly plan: PublicationPlan<Id, Snapshot>;
+    readonly plan: PublicationPlan<Id, Snapshot, Spec>;
     readonly published: NonEmptyTuple<PublicationDestination>;
     readonly address: ContentAddress<'application/vnd.liteship.publication-receipt+cbor'>;
   }
@@ -308,8 +328,9 @@ export type PublicationReceipt<
 export interface Withdrawal<
   Id extends ReleaseCandidateId = ReleaseCandidateId,
   Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
 > {
-  readonly published: PublicationReceipt<Id, Snapshot>;
+  readonly published: PublicationReceipt<Id, Snapshot, Spec>;
   readonly destinations: NonEmptyTuple<PublicationDestination>;
   readonly reason: string;
   readonly diagnostics: readonly Diagnostic[];
@@ -434,6 +455,69 @@ export type NoStageInTheChainAdmitsAnotherCoordinate = Assert<
           : false,
       ],
       [false, false, false, false, false, true]
+    >
+  >
+>;
+
+type SpecLawA = AssuranceRunSpec<AssuranceRunSpecId<'law.spec.a'>>;
+type SpecLawB = AssuranceRunSpec<AssuranceRunSpecId<'law.spec.b'>>;
+
+/**
+ * No stage admits a result from another specification either.
+ *
+ * The snapshot axis answers "was this evidence about the right revision". This
+ * one answers "was it about the right question". A passing result means every
+ * check the run *required* was satisfied — so a run that required nothing also
+ * passes, and an editor invocation's result would otherwise be assignable
+ * wherever a release-grade one is, carrying an honest `passed` tag the whole way
+ * to a published artifact.
+ *
+ * Line four is the one that would be missed. The broad specification is not the
+ * union of all specifications; it is the case where nobody has said which run
+ * this was, and it must not satisfy a carrier that named one. Line five is the
+ * lawful control.
+ */
+export type NoStageInTheChainAdmitsAnotherSpecification = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        ReleaseQualification<SnapshotLawA, SpecLawB> extends ReleaseCandidate<
+          CandidateLawA,
+          SnapshotLawA,
+          SpecLawA
+        >['qualification']
+          ? true
+          : false,
+        QualifiedReleaseCandidate<CandidateLawA, SnapshotLawA, SpecLawB> extends ReleaseReceipt<
+          CandidateLawA,
+          SnapshotLawA,
+          SpecLawA
+        >['candidate']
+          ? true
+          : false,
+        ReleaseReceipt<CandidateLawA, SnapshotLawA, SpecLawB> extends PublicationPlan<
+          CandidateLawA,
+          SnapshotLawA,
+          SpecLawA
+        >['released']
+          ? true
+          : false,
+        ReleaseQualification<SnapshotLawA> extends ReleaseCandidate<
+          CandidateLawA,
+          SnapshotLawA,
+          SpecLawA
+        >['qualification']
+          ? true
+          : false,
+        ReleaseQualification<SnapshotLawA, SpecLawA> extends ReleaseCandidate<
+          CandidateLawA,
+          SnapshotLawA,
+          SpecLawA
+        >['qualification']
+          ? true
+          : false,
+      ],
+      [false, false, false, false, true]
     >
   >
 >;
