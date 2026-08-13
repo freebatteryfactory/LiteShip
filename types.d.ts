@@ -63,11 +63,62 @@ export type Equal<Left, Right> = (<Value>() => Value extends Left ? 1 : 2) exten
     : false
   : false;
 
-/** Compile-time assertion used by type proofs. */
+/**
+ * Compile-time assertion used by type proofs.
+ *
+ * The constraint rejects `false`, `boolean`, and `unknown` on its own. It does
+ * **not** reject `never` or `any`: `never` is assignable to every constraint,
+ * and `any` is assignable to `true`. So a law whose condition degenerates —
+ * because a projector was handed a value outside its domain, or a `CaseOf`
+ * named an arm that does not exist — passes silently.
+ *
+ * That hole cannot be closed inside this alias. A type alias evaluating to
+ * `never` is a valid alias; the error only ever comes from the generic
+ * constraint, so the degenerate value has to become literal `false` *before*
+ * `Assert` receives it. A guard parameter with a dependent default does not
+ * work either — TypeScript validates a default against its own constraint at
+ * the declaration, where the conditional is still unresolved.
+ *
+ * The remedy is therefore at the call site, and it is {@link IsExactlyTrue}.
+ * Use `Assert<IsExactlyTrue<Condition>>` wherever a condition could degenerate
+ * — which is any law that reads through a projector, an indexed access, or a
+ * `CaseOf`. The larger half of the remedy is upstream of that: the strict
+ * projectors below now constrain their inputs, so the most common way to reach
+ * `never` is a compile error at the point of misuse rather than a green law.
+ */
 export type Assert<Condition extends true> = Condition;
 
 /** Whether `Value` is exactly `never`. */
 export type IsNever<Value> = [Value] extends [never] ? true : false;
+
+/**
+ * Whether `Value` is `any`.
+ *
+ * `any` is assignable to and from everything, so it satisfies almost any
+ * assertion written about it. The `0 extends 1 & Value` form is the standard
+ * detection: the intersection collapses to `any` only for `any`, and `0`
+ * extends `any`.
+ */
+export type IsAny<Value> = 0 extends 1 & Value ? true : false;
+
+/**
+ * Whether `Value` is the literal `true`, and nothing else.
+ *
+ * A recognizer, deliberately open over its input: its whole job is to answer
+ * for values outside the domain it recognizes. It reports `false` for `never`,
+ * `any`, `unknown`, `boolean`, and `false` — every form that would otherwise
+ * satisfy or bypass {@link Assert}'s constraint — so a degenerate condition
+ * arrives at `Assert` as literal `false` and fails to compile.
+ */
+export type IsExactlyTrue<Value> = IsAny<Value> extends true
+  ? false
+  : [Value] extends [never]
+    ? false
+    : [Value] extends [true]
+      ? [true] extends [Value]
+        ? true
+        : false
+      : false;
 
 /** Keys whose properties are optional in an object shape. */
 export type OptionalKeys<Value extends object> = {
@@ -163,21 +214,39 @@ export type Brand<Carrier, Identity> = Carrier & {
 /** Alias emphasizing a brand as a validated refinement of a carrier. */
 export type Refined<Carrier, Identity> = Brand<Carrier, Identity>;
 
+/**
+ * Any root-branded value.
+ *
+ * `BrandWitness` holds both parameters in readonly properties, so it is
+ * covariant and every concrete brand is assignable to this one. It exists to
+ * give the two brand projectors a domain: recovering a carrier from something
+ * that was never branded is meaningless, and should say so at the call rather
+ * than resolve to `never` and feed a passing law.
+ */
+export type AnyBrand = Brand<unknown, unknown>;
+
 /** Recover the underlying carrier from a root-branded value. */
-export type BrandCarrier<Value> = Value extends {
+export type BrandCarrier<Value extends AnyBrand> = Value extends {
   readonly [BrandSlot]: BrandWitness<infer Carrier, unknown>;
 }
   ? Carrier
   : never;
 
 /** Recover the nominal identity from a root-branded value. */
-export type BrandIdentity<Value> = Value extends {
+export type BrandIdentity<Value extends AnyBrand> = Value extends {
   readonly [BrandSlot]: BrandWitness<unknown, infer Identity>;
 }
   ? Identity
   : never;
 
-/** Whether a type carries the root brand slot. */
+/**
+ * Whether a type carries the root brand slot.
+ *
+ * A recognizer, and deliberately open over its input — asking "is this
+ * branded?" about an unbranded value is the question, not a misuse. Contrast
+ * {@link BrandCarrier}, which answers a question that only exists once the
+ * answer here is yes.
+ */
 export type IsBranded<Value> = Value extends { readonly [BrandSlot]: BrandWitness<unknown, unknown> }
   ? true
   : false;
@@ -213,10 +282,14 @@ export interface Port<out Type, out Encoded = Type> {
 }
 
 /** The admitted/decoded side of a port-shaped value. */
-export type TypeOf<Value> = Value extends { readonly Type: infer Type } ? Type : never;
+export type TypeOf<Value extends Port<unknown, unknown>> = Value extends { readonly Type: infer Type }
+  ? Type
+  : never;
 
 /** The encoded/external side of a port-shaped value. */
-export type EncodedOf<Value> = Value extends { readonly Encoded: infer Encoded } ? Encoded : never;
+export type EncodedOf<Value extends Port<unknown, unknown>> = Value extends { readonly Encoded: infer Encoded }
+  ? Encoded
+  : never;
 
 /** A readonly tuple of port-shaped values. */
 export type PortTuple = readonly Port<unknown, unknown>[];
@@ -334,10 +407,10 @@ export type Hole<Name extends string, Contract> = Readonly<{
 export type AnyHole = Hole<string, unknown>;
 
 /** Read a hole's stable name. */
-export type HoleKey<Value> = Value extends Hole<infer Name, unknown> ? Name : never;
+export type HoleKey<Value extends AnyHole> = Value extends Hole<infer Name, unknown> ? Name : never;
 
 /** Read the contract a hole requires. */
-export type HoleContract<Value> = Value extends Hole<string, infer Contract> ? Contract : never;
+export type HoleContract<Value extends AnyHole> = Value extends Hole<string, infer Contract> ? Contract : never;
 
 /** A closed, ordered requirement tuple. Open arrays are intentionally excluded. */
 export type RequirementRow = readonly [] | readonly [AnyHole, ...AnyHole[]];
@@ -530,22 +603,37 @@ export type Signature<
 export type AnySignature = Signature<never, unknown, unknown, RequirementRow>;
 
 /** Input carried by a signature. */
-export type InputOf<Value> = Value extends Signature<infer Input, infer _Output, infer _Failure, infer _Requirements>
+export type InputOf<Value extends AnySignature> = Value extends Signature<
+  infer Input,
+  infer _Output,
+  infer _Failure,
+  infer _Requirements
+>
   ? Input
   : never;
 
 /** Output carried by a signature. */
-export type OutputOf<Value> = Value extends Signature<infer _Input, infer Output, infer _Failure, infer _Requirements>
+export type OutputOf<Value extends AnySignature> = Value extends Signature<
+  infer _Input,
+  infer Output,
+  infer _Failure,
+  infer _Requirements
+>
   ? Output
   : never;
 
 /** Failure algebra carried by a signature. */
-export type FailureOf<Value> = Value extends Signature<infer _Input, infer _Output, infer Failure, infer _Requirements>
+export type FailureOf<Value extends AnySignature> = Value extends Signature<
+  infer _Input,
+  infer _Output,
+  infer Failure,
+  infer _Requirements
+>
   ? Failure
   : never;
 
 /** Requirement tuple carried by a signature. */
-export type RequirementsOf<Value> = Value extends Signature<
+export type RequirementsOf<Value extends AnySignature> = Value extends Signature<
   infer _Input,
   infer _Output,
   infer _Failure,
