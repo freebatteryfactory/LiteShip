@@ -21,6 +21,7 @@ Answer, for every other system home, what repository this is: which revision, wh
 - Source revision identity and working-tree state.
 - Root metadata observation — the manifest, the pinned toolchain matrix, the compiler configuration, the lockfile.
 - The workspace snapshot: one immutable coordinate for the whole repository.
+- The observation request and the observation operation itself.
 - The filesystem and source-control capability holes, and the exact prerequisite row for taking a snapshot.
 
 ## Does not own
@@ -71,6 +72,18 @@ The distinction is load-bearing rather than tidy. Assurance evidence acquired fr
 
 Every axis is a type parameter and every parameter is read by a member. A generic no member consumes is decoration that survives its own deletion — this repository has shipped that defect four times and now checks for it by hand in every exactness law.
 
+## The snapshot identity is a threading token and nothing else
+
+`WorkspaceSnapshotId<'a'>` means exactly one thing:
+
+> Every product parameterized by this token concerns the same observation event.
+
+It is not the revision, not the workspace, not a digest, not uniqueness, and not the Git SHA. Deriving it from the revision would make the identity a second model of a field the snapshot already observes — the disease this home exists to prevent — and it would collapse two observations of one revision into one coordinate, which they are not: a clean tree and a modified tree at the same revision are different events with different evidentiary weight.
+
+The caller supplies the token in `WorkspaceObservationRequest`, and the returned snapshot carries it. That is not a design preference. TypeScript has no existential types, so no signature can say *returns a snapshot bearing some fresh identity*; the parameter is skolemized at the call site or exactness cannot leave the producer at all. This was the half still missing after the carrier was made exact one commit earlier: the snapshot was exact, the reference was exact, and the operation that creates both still returned the default instantiation, so every consumer received the broad form from the one place a snapshot actually comes from.
+
+What the type proves is threading. It does not prove the caller minted a fresh token, and it does not prove the tree matched the revision reported. Both are in the proof obligations below, where claims a type cannot carry belong.
+
 ## Laws
 
 - A snapshot is exact over both its workspace and its revision, and the broad form does not substitute for an exact one.
@@ -78,11 +91,16 @@ Every axis is a type parameter and every parameter is read by a member. A generi
 - Working-tree state is a two-arm algebra with no `dirty` member, and its modified path population is non-empty.
 - Observation requires both injected capabilities; the requirement row is an exact tuple and is not satisfiable empty.
 - A source-home observation carries digests and never contents, source, or text.
+- The observation operation returns the exact identity its request named, read off the output slot; the request is itself non-substitutable across identities, and the broad output does not satisfy an exact one.
+
+The last law is stated over the output slot on purpose. A `Signature`'s input is `(input: Input) => void`, a parameter position and therefore contravariant, so an exactness axis riding only on the input is not provable in the direction any consumer needs.
 
 ## Proof obligations
 
 Runtime and repository claims a type cannot express:
 
+- That the caller minted a token not already in use. The type proves that products agree about which observation they describe; it does not prove that two observations were given different tokens.
+- That the workspace actually observed is the one the request named.
 - That the recorded revision is the revision the digests were read from.
 - That every physically present top-level directory appears in the census, so an ungoverned root cannot be omitted rather than reported.
 - That a `clean` working tree was genuinely clean at read time, not merely clean when the check started.

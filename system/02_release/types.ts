@@ -10,12 +10,21 @@
  *
  * > A release candidate cannot qualify itself.
  *
- * `ReleaseQualification`'s qualified arm carries the *earned* arm of
- * `AssuranceAuthority`, not the whole algebra, so a candidate that produced a
- * tarball and felt optimistic has nowhere to put that optimism. Earned
- * authority in turn carries the snapshot it was earned over and the qualified
- * gates that earned it, so the chain from a published artifact back to a
- * demonstrated detection is unbroken and typed at every link.
+ * `ReleaseQualification`'s qualified arm carries the *passed* arm of
+ * `AssuranceResult`, not the whole algebra, so a candidate that produced a
+ * tarball and felt optimistic has nowhere to put that optimism.
+ *
+ * The second relation is newer and is what the chain laws at the bottom of this
+ * file exist for:
+ *
+ * > Every stage consumes the previous stage's product, not a name for it.
+ *
+ * A plan names a snapshot; a package receipt carries the plan; a candidate
+ * carries the receipt; a release receipt carries a *qualified* candidate; a
+ * publication plan carries the release receipt; a withdrawal carries the
+ * publication receipt. One coordinate threads all of it, and it is read from
+ * `WorkspaceObservation`'s output rather than restated here, so a producer that
+ * broadens breaks every stage below it.
  *
  * @module
  */
@@ -27,15 +36,22 @@ import type {
   CaseOf,
   Equal,
   Envelope,
+  IsExactlyTrue,
   NonEmptyTuple,
+  OutputOf,
   Reference,
+  Refine,
   TagOf,
   TypeAbiAddress,
   TypeAbiAttestation,
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { ContentAddress, ContentDigest, MediaType } from '../../00_core/01_encoding/types.js';
-import type { WorkspaceSnapshotId, WorkspaceSnapshotReference } from '../00_workspace/types.js';
+import type {
+  WorkspaceObservation,
+  WorkspaceSnapshotId,
+  WorkspaceSnapshotReference,
+} from '../00_workspace/types.js';
 import type { AssuranceResult } from '../01_assurance/01_gauntlet/types.js';
 
 // ---------------------------------------------------------------------------
@@ -90,8 +106,35 @@ export type CompatibilityClaim = Algebra<{
 }>;
 
 // ---------------------------------------------------------------------------
-// Candidates and qualification
+// The chain: plan, package, candidate, qualification
+//
+// Ordered causally rather than by kind. Each stage consumes the previous
+// stage's product, not a name for it, so ancestry is read off the type instead
+// of being asserted beside it.
 // ---------------------------------------------------------------------------
+
+/** What packaging intends to produce, before it has produced it. */
+export interface ReleasePlan<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> {
+  readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
+  readonly packages: NonEmptyTuple<PackageReference>;
+}
+
+/**
+ * What packaging produced, and the plan it produced it from.
+ *
+ * The plan is carried rather than referenced because the snapshot coordinate
+ * lives on it. A receipt holding a bare artifact population would be a product
+ * with no ancestry, which is the shape a candidate used to hold.
+ */
+export type PackageReceipt<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = Envelope<
+  'LiteShipPackageReceipt',
+  1,
+  {
+    readonly plan: ReleasePlan<Snapshot>;
+    readonly produced: NonEmptyTuple<PackedArtifact>;
+    readonly address: ContentAddress<'application/vnd.liteship.package-receipt+cbor'>;
+  }
+>;
 
 export type ReleaseCandidateId<Name extends string = string> = Brand<
   Name,
@@ -103,14 +146,14 @@ export type ReleaseCandidateReference<Id extends ReleaseCandidateId = ReleaseCan
 /**
  * Whether a candidate is allowed to ship.
  *
- * The qualified arm carries `CaseOf<AssuranceAuthority, 'earned'>` — the earned
- * arm specifically, never the full algebra. Widening it to `AssuranceAuthority`
- * would readmit `unearned` and restore self-qualification, which is why a law
- * below pins the exact arm rather than merely pinning that some authority is
+ * The qualified arm carries `CaseOf<AssuranceResult, 'passed'>` — the passed
+ * arm specifically, never the full algebra. Widening it to `AssuranceResult`
+ * would readmit `blocked` and restore self-qualification, which is why a law
+ * below pins the exact arm rather than merely pinning that some result is
  * present.
  *
- * The receipt travels beside the authority so a qualification names the run it
- * came from and is auditable after the fact.
+ * One member, not two. A qualification used to carry an authority and a receipt
+ * side by side, and their agreement was prose.
  */
 export type ReleaseQualification<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = Algebra<{
   unqualified: { readonly reason: string; readonly diagnostics: readonly Diagnostic[] };
@@ -121,10 +164,23 @@ export type ReleaseQualification<Snapshot extends WorkspaceSnapshotId = Workspac
  * One candidate: an exact snapshot, what was packed from it, and what the
  * surface claims.
  *
- * The snapshot is the same coordinate assurance earned its authority over. A
+ * The snapshot is the same coordinate assurance earned its result over. A
  * candidate built from one revision and qualified against another is the
  * failure this member exists to make visible, and it is why the working-tree
  * state lives on the snapshot rather than being asked for again here.
+ *
+ * `packaged` carries the packaging receipt, not a bare artifact population.
+ * That is a repair rather than a refinement: `packages: NonEmptyTuple<
+ * PackedArtifact>` let a candidate for snapshot A hold artifacts produced under
+ * a plan for snapshot B, because an artifact carries an address and a digest and
+ * no ancestry at all. The receipt carries its plan and the plan carries the
+ * coordinate, so the artifacts a candidate ships are now typed as the ones
+ * packaged from its own snapshot.
+ *
+ * `snapshot` remains beside it and is not a second fact. Both read the same
+ * parameter, so `packaged.plan.snapshot` and `snapshot` are the same type by
+ * construction and cannot be made to disagree; the member is the direct way to
+ * name the coordinate everyone downstream threads.
  */
 export interface ReleaseCandidate<
   Id extends ReleaseCandidateId = ReleaseCandidateId,
@@ -132,14 +188,35 @@ export interface ReleaseCandidate<
 > {
   readonly candidate: ReleaseCandidateReference<Id>;
   readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
-  readonly packages: NonEmptyTuple<PackedArtifact>;
+  readonly packaged: PackageReceipt<Snapshot>;
   readonly attestations: readonly TypeAbiAttestation[];
   readonly compatibility: CompatibilityClaim;
   readonly qualification: ReleaseQualification<Snapshot>;
 }
 
+/**
+ * A candidate whose qualification is in the qualified arm.
+ *
+ * Built with root's `Refine`, which rejects a change that is not a strict
+ * narrowing — so this cannot silently become an alias for the candidate it
+ * claims to constrain, and a law below pins that it did not resolve to `never`
+ * (a `never` candidate would satisfy every assertion written about it).
+ *
+ * This exists because `ReleaseCandidate` must be able to be unqualified: a
+ * candidate is packed before it is judged, and a grammar with no unqualified
+ * state forces packaging to lie. What must not be representable is a *release*
+ * of one, which is what the receipt below consumes.
+ */
+export type QualifiedReleaseCandidate<
+  Id extends ReleaseCandidateId = ReleaseCandidateId,
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+> = Refine<
+  ReleaseCandidate<Id, Snapshot>,
+  { readonly qualification: CaseOf<ReleaseQualification<Snapshot>, 'qualified'> }
+>;
+
 // ---------------------------------------------------------------------------
-// Plans
+// The chain continued: release, publication, withdrawal
 // ---------------------------------------------------------------------------
 
 /** Where one package is intended to go. */
@@ -148,22 +225,6 @@ export interface PublicationDestination {
   readonly package: PackageReference;
   readonly tag: string;
 }
-
-/** What packaging intends to produce, before it has produced it. */
-export interface ReleasePlan {
-  readonly snapshot: WorkspaceSnapshotReference;
-  readonly packages: NonEmptyTuple<PackageReference>;
-}
-
-/** What publication intends to send, and where. */
-export interface PublicationPlan<Id extends ReleaseCandidateId = ReleaseCandidateId> {
-  readonly candidate: ReleaseCandidateReference<Id>;
-  readonly destinations: NonEmptyTuple<PublicationDestination>;
-}
-
-// ---------------------------------------------------------------------------
-// Receipts
-// ---------------------------------------------------------------------------
 
 /**
  * Three receipts, because packaging, releasing, and publishing are three
@@ -174,31 +235,59 @@ export interface PublicationPlan<Id extends ReleaseCandidateId = ReleaseCandidat
  * swapping which reference it holds. A package receipt names no destination
  * because packaging reaches no registry; a publication receipt names one
  * because it did.
+ *
+ * A release receipt takes a *qualified* candidate. Previously it took
+ * `ReleaseCandidate<Id>`, whose `qualification` member could be sitting in the
+ * `unqualified` arm — so the type that exists to record that something shipped
+ * could record the shipping of something the apparatus had refused. The
+ * qualification law two sections down was true and was being applied one stage
+ * too early.
  */
-export type PackageReceipt = Envelope<
-  'LiteShipPackageReceipt',
-  1,
-  {
-    readonly plan: ReleasePlan;
-    readonly produced: NonEmptyTuple<PackedArtifact>;
-    readonly address: ContentAddress<'application/vnd.liteship.package-receipt+cbor'>;
-  }
->;
-
-export type ReleaseReceipt<Id extends ReleaseCandidateId = ReleaseCandidateId> = Envelope<
+export type ReleaseReceipt<
+  Id extends ReleaseCandidateId = ReleaseCandidateId,
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+> = Envelope<
   'LiteShipReleaseReceipt',
   1,
   {
-    readonly candidate: ReleaseCandidate<Id>;
+    readonly candidate: QualifiedReleaseCandidate<Id, Snapshot>;
     readonly address: ContentAddress<'application/vnd.liteship.release-receipt+cbor'>;
   }
 >;
 
-export type PublicationReceipt<Id extends ReleaseCandidateId = ReleaseCandidateId> = Envelope<
+/**
+ * What publication intends to send, and where.
+ *
+ * The released receipt is carried rather than a candidate reference. A
+ * reference names a candidate; the receipt is evidence that the candidate was
+ * released, and publishing something that was never released is the same defect
+ * one stage further down the chain. The candidate reference is still reachable
+ * through it, so nothing was lost by not writing it twice.
+ */
+export interface PublicationPlan<
+  Id extends ReleaseCandidateId = ReleaseCandidateId,
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+> {
+  readonly released: ReleaseReceipt<Id, Snapshot>;
+  readonly destinations: NonEmptyTuple<PublicationDestination>;
+}
+
+/**
+ * What publication actually sent.
+ *
+ * `published` is a separate population from the plan's `destinations` and is
+ * not a duplicate of it: a publication that reached two registries out of three
+ * is a real outcome, and a grammar in which intent and result are the same
+ * member cannot say so.
+ */
+export type PublicationReceipt<
+  Id extends ReleaseCandidateId = ReleaseCandidateId,
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+> = Envelope<
   'LiteShipPublicationReceipt',
   1,
   {
-    readonly candidate: ReleaseCandidateReference<Id>;
+    readonly plan: PublicationPlan<Id, Snapshot>;
     readonly published: NonEmptyTuple<PublicationDestination>;
     readonly address: ContentAddress<'application/vnd.liteship.publication-receipt+cbor'>;
   }
@@ -210,9 +299,17 @@ export type PublicationReceipt<Id extends ReleaseCandidateId = ReleaseCandidateI
  * Present because publication is the one system operation that is not
  * reversible by re-running it, and a vocabulary with no way to say "this went
  * out and should not have" forces the retraction into prose.
+ *
+ * It carries the publication receipt for the same reason every other stage
+ * carries its predecessor: withdrawing something that was never published was
+ * representable, and `destinations` is the subset being taken back, which may
+ * be smaller than the set that went out.
  */
-export interface Withdrawal<Id extends ReleaseCandidateId = ReleaseCandidateId> {
-  readonly candidate: ReleaseCandidateReference<Id>;
+export interface Withdrawal<
+  Id extends ReleaseCandidateId = ReleaseCandidateId,
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+> {
+  readonly published: PublicationReceipt<Id, Snapshot>;
   readonly destinations: NonEmptyTuple<PublicationDestination>;
   readonly reason: string;
   readonly diagnostics: readonly Diagnostic[];
@@ -246,47 +343,140 @@ export type AReleaseCannotQualifyItself = Assert<
 
 type SnapshotLawA = WorkspaceSnapshotId<'law.snapshot.a'>;
 type SnapshotLawB = WorkspaceSnapshotId<'law.snapshot.b'>;
+type CandidateLawA = ReleaseCandidateId<'law.candidate.a'>;
 
 /**
- * A candidate cannot be qualified by a result about a different snapshot.
+ * The coordinate as the public producer actually emits it.
  *
- * This is the relationship the whole home exists for, and until now it was
- * prose. `WorkspaceSnapshotReference` used to carry only the snapshot media
- * type, which resolves to one template literal identical for every snapshot
- * that will ever exist — so every consumer held the same erased type, two
- * references to different revisions were mutually assignable, and "the
- * candidate and the authority share one coordinate" was unenforceable. The same
- * file admitted as much thirty lines lower, in its proof obligations.
- *
- * One parameter now threads: the candidate's snapshot and its qualification's
- * snapshot are the same `Snapshot`, so a passing result for B cannot qualify a
- * candidate built from A. Line one is the negative that matters. Line two is
- * the lawful control — the correct pairing must still be constructible, or this
- * would be satisfied by a type nobody can build.
+ * Read from `WorkspaceObservation`'s output slot rather than written down as
+ * `WorkspaceSnapshotReference<SnapshotLawA>`, which is the difference between
+ * a chain law and five local ones. Writing the expected type by hand proves
+ * that the stages agree with *the author*; reading it from the operation proves
+ * they agree with the producer, so a producer that broadens breaks every stage
+ * below it here rather than silently handing out a wider carrier.
  */
-export type ACandidateCannotBeQualifiedByAnotherSnapshotsResult = Assert<
-  Equal<
-    [
-      ReleaseQualification<SnapshotLawB> extends ReleaseCandidate<
-        ReleaseCandidateId,
-        SnapshotLawA
-      >['qualification']
-        ? true
-        : false,
-      ReleaseQualification<SnapshotLawA> extends ReleaseCandidate<
-        ReleaseCandidateId,
-        SnapshotLawA
-      >['qualification']
-        ? true
-        : false,
-      ReleaseCandidate<ReleaseCandidateId, SnapshotLawA> extends ReleaseCandidate<
-        ReleaseCandidateId,
-        SnapshotLawB
-      >
-        ? true
-        : false,
-    ],
-    [false, true, false]
+type ObservedCoordinateA = OutputOf<WorkspaceObservation<SnapshotLawA>>['id'];
+
+/**
+ * One coordinate travels from the observation to the publication receipt.
+ *
+ * Six stages, each reading the previous stage's product, all pinned against the
+ * type the producer emits. This is the connected use the home was missing: the
+ * previous arrangement proved exactness at individual links, and links that each
+ * hold locally are exactly how a chain leaks — which is the defect the coordinate
+ * repair one commit ago was itself repairing, one layer up.
+ */
+export type TheReleaseChainCarriesOneCoordinateEndToEnd = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<ObservedCoordinateA, ReleasePlan<SnapshotLawA>['snapshot']>,
+        Equal<PackageReceipt<SnapshotLawA>['plan']['snapshot'], ObservedCoordinateA>,
+        Equal<ReleaseCandidate<CandidateLawA, SnapshotLawA>['packaged']['plan']['snapshot'], ObservedCoordinateA>,
+        Equal<
+          CaseOf<ReleaseQualification<SnapshotLawA>, 'qualified'>['result']['snapshot'],
+          ObservedCoordinateA
+        >,
+        Equal<ReleaseReceipt<CandidateLawA, SnapshotLawA>['candidate']['snapshot'], ObservedCoordinateA>,
+        Equal<
+          PublicationReceipt<CandidateLawA, SnapshotLawA>['plan']['released']['candidate']['snapshot'],
+          ObservedCoordinateA
+        >,
+      ],
+      [true, true, true, true, true, true]
+    >
+  >
+>;
+
+/**
+ * No stage in that chain admits a product from another coordinate.
+ *
+ * The positive law above would be satisfied by a chain in which every stage
+ * carried the broad reference, because the broad reference equals itself. These
+ * are the refusals, one per joint, and the last line is the lawful control: the
+ * matching coordinate must still be accepted, or the chain would be proved
+ * airtight by being unbuildable.
+ */
+export type NoStageInTheChainAdmitsAnotherCoordinate = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        ReleasePlan<SnapshotLawB> extends ReleasePlan<SnapshotLawA> ? true : false,
+        PackageReceipt<SnapshotLawB> extends ReleaseCandidate<
+          CandidateLawA,
+          SnapshotLawA
+        >['packaged']
+          ? true
+          : false,
+        ReleaseQualification<SnapshotLawB> extends ReleaseCandidate<
+          CandidateLawA,
+          SnapshotLawA
+        >['qualification']
+          ? true
+          : false,
+        QualifiedReleaseCandidate<CandidateLawA, SnapshotLawB> extends ReleaseReceipt<
+          CandidateLawA,
+          SnapshotLawA
+        >['candidate']
+          ? true
+          : false,
+        ReleaseReceipt<CandidateLawA, SnapshotLawB> extends PublicationPlan<
+          CandidateLawA,
+          SnapshotLawA
+        >['released']
+          ? true
+          : false,
+        QualifiedReleaseCandidate<CandidateLawA, SnapshotLawA> extends ReleaseReceipt<
+          CandidateLawA,
+          SnapshotLawA
+        >['candidate']
+          ? true
+          : false,
+      ],
+      [false, false, false, false, false, true]
+    >
+  >
+>;
+
+/**
+ * A release receipt requires a candidate that was actually qualified.
+ *
+ * Line one is the repair: a plain candidate, whose qualification may be sitting
+ * in the `unqualified` arm, is not a thing that can have been released. Line two
+ * keeps the refinement honest in the other direction — a qualified candidate is
+ * still a candidate, so nothing downstream has to special-case it. Line three
+ * pins the narrowed member.
+ *
+ * Line four is the one that is not decoration. `Refine` resolves to `never` when
+ * a change is not a strict narrowing, and `never` is assignable to everything —
+ * so a `QualifiedReleaseCandidate` that had quietly become `never` would satisfy
+ * lines one through three and every other assertion ever written about it. This
+ * repository has shipped that composition before.
+ */
+export type AReleaseReceiptRequiresAQualifiedCandidate = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        ReleaseCandidate<CandidateLawA, SnapshotLawA> extends ReleaseReceipt<
+          CandidateLawA,
+          SnapshotLawA
+        >['candidate']
+          ? true
+          : false,
+        QualifiedReleaseCandidate<CandidateLawA, SnapshotLawA> extends ReleaseCandidate<
+          CandidateLawA,
+          SnapshotLawA
+        >
+          ? true
+          : false,
+        Equal<
+          QualifiedReleaseCandidate<CandidateLawA, SnapshotLawA>['qualification'],
+          CaseOf<ReleaseQualification<SnapshotLawA>, 'qualified'>
+        >,
+        [QualifiedReleaseCandidate<CandidateLawA, SnapshotLawA>] extends [never] ? true : false,
+      ],
+      [false, true, true, false]
+    >
   >
 >;
 
@@ -331,11 +521,12 @@ export type ReleaseReceiptsCarryTheirPhase = Assert<
 >;
 
 /**
- * A candidate is exact over its identity.
+ * A candidate is exact over both of its axes.
  *
  * The third line is the anti-vacuity partner that catches the carrier dropping
  * the parameter, which is this repository's signature defect and has now been
- * committed four separate times.
+ * committed four separate times. The last line carries the snapshot axis, which
+ * the chain law proves at the joints and this one proves at the type.
  */
 export type AReleaseCandidateIsExactOverItsIdentity = Assert<
   Equal<
@@ -350,8 +541,14 @@ export type AReleaseCandidateIsExactOverItsIdentity = Assert<
       ReleaseReceipt<ReleaseCandidateId<'a'>> extends ReleaseReceipt<ReleaseCandidateId<'b'>>
         ? true
         : false,
+      ReleaseCandidate<CandidateLawA, SnapshotLawA> extends ReleaseCandidate<
+        CandidateLawA,
+        SnapshotLawB
+      >
+        ? true
+        : false,
     ],
-    [false, true, false, false]
+    [false, true, false, false, false]
   >
 >;
 
@@ -364,6 +561,7 @@ export interface ReleaseTypeSurface {
   readonly package: PackedArtifact;
   readonly compatibility: CompatibilityClaim;
   readonly candidate: ReleaseCandidate;
+  readonly qualifiedCandidate: QualifiedReleaseCandidate;
   readonly qualification: ReleaseQualification;
   readonly releasePlan: ReleasePlan;
   readonly publicationPlan: PublicationPlan;

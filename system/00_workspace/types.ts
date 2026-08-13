@@ -306,10 +306,56 @@ export type WorkspaceSourceControl = Hole<
  */
 export type WorkspaceObservationRequirements = readonly [WorkspaceFileSystem, WorkspaceSourceControl];
 
-/** Taking one snapshot, with its prerequisites named rather than assumed. */
-export type WorkspaceObservation = Signature<
-  WorkspaceReference,
-  WorkspaceSnapshot,
+/**
+ * What one observation is asked to do: observe this workspace, under this
+ * identity.
+ *
+ * The caller supplies the identity the resulting snapshot will carry. That is
+ * the only way an exact result can leave a producer at all — TypeScript has no
+ * existential types, so no signature can say "returns a snapshot bearing *some*
+ * fresh identity". The parameter is skolemized at the call site or it does not
+ * exist.
+ *
+ * Read the token narrowly. `WorkspaceSnapshotId<'a'>` means exactly one thing:
+ *
+ * > every product parameterized by this token concerns the same observation
+ * > event.
+ *
+ * It is not the revision, not the workspace, not a digest, not a uniqueness or
+ * freshness guarantee, and above all not the Git SHA. Deriving it from the
+ * revision would make the identity a second model of a field the snapshot
+ * already observes — the disease this home exists to prevent — and would
+ * collapse two observations of one revision into one coordinate, which they are
+ * not: a clean tree and a dirty tree at the same revision are different events.
+ *
+ * What the type proves is threading. It does not prove the caller minted a
+ * fresh token, and it does not prove the tree matched the revision reported.
+ * Those are runtime claims and the README lists them as such.
+ */
+export interface WorkspaceObservationRequest<
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Id extends WorkspaceId = WorkspaceId,
+> {
+  readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
+  readonly workspace: WorkspaceReference<Id>;
+}
+
+/**
+ * Taking one snapshot, with its prerequisites named rather than assumed.
+ *
+ * The identity appears in both positions deliberately. A `Signature`'s input
+ * slot is `(input: Input) => void` — a parameter position, therefore
+ * contravariant — so an exactness axis carried *only* by the input is not
+ * provable in the direction that matters, and a broadened producer survives the
+ * check. The output slot is an ordinary covariant property, and that is where
+ * the law below reads.
+ */
+export type WorkspaceObservation<
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Id extends WorkspaceId = WorkspaceId,
+> = Signature<
+  WorkspaceObservationRequest<Snapshot, Id>,
+  WorkspaceSnapshot<Snapshot, Id>,
   readonly Diagnostic[],
   WorkspaceObservationRequirements
 >;
@@ -385,6 +431,58 @@ export type AWorkspaceSnapshotReferenceIsExactOverItsSnapshot = Assert<
       WorkspaceSnapshotReference extends WorkspaceSnapshotReference<SnapshotLawA> ? true : false,
     ],
     [false, true, false]
+  >
+>;
+
+/**
+ * The public producer emits the exact identity it was asked for.
+ *
+ * This is the half that was still missing after the carrier was repaired. The
+ * snapshot was exact and proved so; the reference was made exact and proved so;
+ * and the operation that creates both still returned `WorkspaceSnapshot` at its
+ * default instantiation. Exactness therefore began *after* the public path, so
+ * every consumer received the broad form from the one place a snapshot actually
+ * comes from — the local law holding while the public path leaked, one layer
+ * further up than last time.
+ *
+ * Line one reads the output slot, so a producer that drops the parameter fails
+ * here. Line two pins the member downstream carriers actually hold. Line three
+ * is the anti-vacuity partner: without it the law passes when the signature
+ * stops threading, because everything is assignable to the default.
+ *
+ * Line four pins the input's *shape*, which catches an operation that stops
+ * taking a request at all. It does not catch a request that stops threading its
+ * identity, and the first draft of this law claimed it did:
+ * `Equal<InputOf<Observation<A>>, Request<A>>` compares an expression against
+ * the type it resolves to, so when `Request` drops the parameter both sides
+ * degrade together and the line stays true. Measured — the only thing that went
+ * red was `noUnusedLocals`, which is a real net and an accidental one.
+ *
+ * Line five is therefore the request's own exactness, stated as
+ * non-substitutability. Line six is the whole-signature witness, and it is
+ * carried by the output: a `Signature`'s input is a parameter position, so an
+ * axis riding only there is not provable in the direction anyone needs.
+ */
+export type ObservationProducesTheIdentityItWasAskedFor = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<OutputOf<WorkspaceObservation<SnapshotLawA>>, WorkspaceSnapshot<SnapshotLawA>>,
+        Equal<
+          OutputOf<WorkspaceObservation<SnapshotLawA>>['id'],
+          WorkspaceSnapshotReference<SnapshotLawA>
+        >,
+        OutputOf<WorkspaceObservation> extends OutputOf<WorkspaceObservation<SnapshotLawA>>
+          ? true
+          : false,
+        Equal<InputOf<WorkspaceObservation<SnapshotLawA>>, WorkspaceObservationRequest<SnapshotLawA>>,
+        WorkspaceObservationRequest<SnapshotLawA> extends WorkspaceObservationRequest<SnapshotLawB>
+          ? true
+          : false,
+        WorkspaceObservation<SnapshotLawA> extends WorkspaceObservation<SnapshotLawB> ? true : false,
+      ],
+      [true, true, false, true, false, false]
+    >
   >
 >;
 
@@ -525,5 +623,6 @@ export interface WorkspaceTypeSurface {
   readonly coverage: HomeCensusCoverage;
   readonly tree: WorkingTreeState;
   readonly rootMetadata: RootMetadataObservation;
+  readonly request: WorkspaceObservationRequest;
   readonly observation: WorkspaceObservation;
 }
