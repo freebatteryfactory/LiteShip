@@ -214,6 +214,39 @@ export type ABroadenedSupplierDoesNotFitTheSocket = Assert<
 >;
 
 /**
+ * Compile-time law: the surface reaches the requirement.
+ *
+ * The requirement was absent from `AstroBuildTypeSurface` — the only such gap
+ * in seventeen homes, and in the one home whose entire subject is a socket a
+ * sibling fills. A composition point cannot bind what a surface does not expose,
+ * so the relationship this child exists for was declared, law-covered, and
+ * unreachable from outside.
+ *
+ * Adding the member was not enough, and a canary said so: renaming it broke
+ * nothing, because nothing read it. This is what reads it. The right-hand side
+ * is written independently of the member, so a member that quietly widens fails
+ * here, and a member that is renamed fails at the indexed access.
+ *
+ * The same shape as `TheSurfaceReachesEveryOwnedFamily` in the target umbrella,
+ * which exists because attempt and claim were both stranded this way when they
+ * were introduced.
+ */
+export type TheBuildSurfaceReachesItsRequirement = Assert<
+  Equal<
+    [AstroBuildTypeSurface['requirement'], AstroBuildTypeSurface['facility']],
+    [
+      AstroBuildFacilityRequirement<
+        TargetParticipation,
+        ArtifactSlotDemands,
+        ArtifactProducer,
+        AstroBuildFacility<TargetParticipation, ArtifactSlotDemands, ArtifactProducer>
+      >,
+      AstroBuildFacility<TargetParticipation, ArtifactSlotDemands, ArtifactProducer>,
+    ]
+  >
+>;
+
+/**
  * Compile-time law: the produced disposition pins the exact producer.
  *
  * Without this the producer axis can widen and the only thing that dies is an
@@ -312,4 +345,19 @@ export interface AstroBuildTypeSurface {
   readonly request: AstroProjectionRequest<TargetParticipation, ArtifactSlotDemands>;
   readonly disposition: AstroProjectionDisposition;
   readonly facility: AstroBuildFacility<TargetParticipation, ArtifactSlotDemands, ArtifactProducer>;
+  /**
+   * The requirement, which was absent.
+   *
+   * This home's entire subject is a socket a sibling fills, and the type that
+   * *is* the socket-as-a-hole was the one thing the surface did not name — the
+   * only such gap in seventeen homes. A composition point cannot bind what a
+   * surface does not expose, so the relationship this child exists for was
+   * declared, law-covered, and unreachable from the outside.
+   */
+  readonly requirement: AstroBuildFacilityRequirement<
+    TargetParticipation,
+    ArtifactSlotDemands,
+    ArtifactProducer,
+    AstroBuildFacility<TargetParticipation, ArtifactSlotDemands, ArtifactProducer>
+  >;
 }

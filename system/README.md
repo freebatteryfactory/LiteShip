@@ -1,6 +1,6 @@
 # System: Unnumbered Control Plane
 
-Status: wire-independent foundation authored — `00_workspace/`, `01_assurance/` with `00_audit/` and `01_gauntlet/`, and `02_release/`; `03_programs/` and `04_bootstrap/` deferred until `02_wires/` exists; implementation absent
+Status: `00_workspace/`, `01_assurance/` with `00_audit/` and `01_gauntlet/`, and `02_release/` are authored. `03_programs/` and `04_bootstrap/` are named and unwritten. Product runtime implementation is absent; one repository-control implementation exists, `01_assurance/00_audit/zero-runtime.mjs`.
 
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
@@ -31,13 +31,13 @@ Both were removed at `fix(layout): remove shadow control-plane roots`. Their cap
 Two consequences are worth stating because they shaped the types here rather than merely embarrassing the previous arrangement:
 
 - The **TypeScript compiler configuration itself** had ended up inside `verification/`. It belonged to the repository root, which had claimed that authority in prose since the first commit and owned no bytes of it. It now lives at root, where the claim is true.
-- The reason `verification/` hand-rolled lexical scanners over stripped source is that the pinned native compiler lane does not expose the programmatic API its authority checks needed. That gap is real and is recorded in the root toolchain policy with a retirement trigger. `00_audit` answers it by requiring an interpreter capability that names its lane, not by writing a second parser.
+- The reason `verification/` hand-rolled lexical scanners over stripped source is a compiler-API gap, and the gap must be stated precisely because the looser version of it is false. TypeScript 7.0.2 ships `typescript/unstable/*`, including a `Checker`; what it does not ship is a *stable* programmatic API contract, and `unstable` is the vendor's own word. The retirement trigger is stability, not existence. `00_audit` answers the gap by requiring an interpreter capability that names the lane it read with, so an attestation carries that lane's fingerprint — not by writing a second parser with none of a parser's guarantees.
 
 ## Owns
 
 - Workspace identity, observation, and the immutable repository snapshot.
 - The assurance vocabulary, its acquisition child, and its evaluation child.
-- Distributable and release meaning, including the authority a shipment must consume.
+- Distributable and release meaning, including the passing assurance result a shipment must consume.
 
 ## Does not own
 
@@ -49,10 +49,14 @@ Two consequences are worth stating because they shaped the types here rather tha
 
 ## The population is three, and three is not the end
 
-`03_programs/` and `04_bootstrap/` are settled responsibilities with no folder yet.
+`03_programs/` and `04_bootstrap/` are named in the layout and have no folder yet.
 
-- `03_programs/` will own the typed system-program contract and the program population: `build`, `verify`, `doctor`, `audit`, `gauntlet`, `benchmark`, `docs`, `migrate`, `package`, `release`, `ship`. Eleven definitions in one authority, not eleven subfolders. A program projects through a wire, so its contract cannot be written honestly before wire contracts exist.
-- `04_bootstrap/` will own the semantic contract the root executable realizes: process capability requirements, registry composition, the invocation envelope, dispatch outcome, disposal, and the bootstrap receipt. It connects the generic CLI wire, so it has the same prerequisite. The physical entrypoint file stays at the root; this home owns only the contract that file satisfies.
+Both wait on the same thing, and the ground has moved since this was last written: `02_wires/` now exists, with its umbrella and the `direct` child authored. What is still missing is the CLI wire specifically, which is what a program projects through and what bootstrap connects. So the dependency is narrower than it was and it is still a dependency, not a schedule.
+
+- `03_programs/` will own the typed system-program contract and the program population: `build`, `verify`, `doctor`, `audit`, `gauntlet`, `benchmark`, `docs`, `migrate`, `package`, `release`, `ship`. Eleven definitions in one authority, not eleven subfolders. A program projects through a wire, so its contract cannot be written honestly before the CLI wire contract exists.
+
+  When `release` is written it must supply an **exact** `AssuranceRunSpec`, never the broad default. The broad form is an erased catalog shape that deliberately accepts results from several exact specifications, which is right for a catalog and wrong for a shipment. Nothing in the type prevents a program from defaulting; the program must not.
+- `04_bootstrap/` will own the semantic contract the root executable realizes: process capability requirements, registry composition, the invocation envelope, dispatch outcome, disposal, and the bootstrap receipt. It connects the CLI wire, so it has the same prerequisite. The physical entrypoint file stays at the root; this home owns only the contract that file satisfies.
 
 `SystemTypeTopology` therefore names three homes. Naming five would produce the inventory nothing can verify — the same shape `01_hosts` refused for as long as only one host physically existed.
 
@@ -64,15 +68,22 @@ Everything that genuinely exceeds assignability lives in `01_assurance/`, and no
 
 The compiler cannot decide which directory declared a structurally identical type, whether an authority was imported from its canonical owner or copied inline, whether a target imported a sibling, whether a README roster matches the physical directories, or whether a gate would have noticed the defect it guards. Those questions are real. They are not type checking, and the mistake was never asking them — it was answering them from a second root.
 
-## Laws
+## This file asserts nothing, and that is the right number
 
-- System consumes product architecture; no product home imports system.
-- Every system home observes an upstream authority rather than restating it.
-- Physical access is an injected capability hole, never ambient.
-- The system topology and its home-name union are one population, so a home added to one and not the other fails to compile.
-- Assurance has exactly two children: `00_audit` acquires, `01_gauntlet` evaluates.
-- A gate earns authority only through demonstrated detection.
-- A release consumes authority; it never issues its own.
+`system/types.ts` contains zero `Assert` declarations.
+
+This heading used to read **Laws** and list seven of them. Not one was in the file. Two were proof obligations wearing the wrong hat, two described types in child homes that assert them locally, two have since been deleted along with the vocabulary they were about, and one was a parity law that no longer has anything to compare.
+
+That last one is the interesting case, because it is the reason this file has nothing to assert. `SystemHomeName` is `SystemTypeTopology[number]['name']` — the name union is *derived from* the tuple rather than written beside it. A law checking that the two agree would be checking a derivation against itself. Five such laws were deleted when the topology was derived, and a parity law is a confession that a fact was written twice.
+
+A topology file whose whole job is to derive one population from one tuple has nothing left to be wrong about locally. Adding assertions to satisfy a heading would be decoration, and decoration that compiles is the most expensive kind.
+
+The local facts, such as they are:
+
+- The topology names three homes. Each entry carries the type surface its home exports, so a roster entry cannot outlive the home it names.
+- The name union, the lookup, and the ergonomic surface all derive from that one tuple.
+
+What the child homes assert about themselves is in their own READMEs, which is where a law belongs: next to the declaration it constrains.
 
 ## Proof obligations
 
@@ -81,11 +92,16 @@ These are runtime or repository claims. A type cannot express them, and naming t
 - That no product source file imports from `system/`, in any transitive path.
 - That the observed root census matches the roots the architecture declares, with every ungoverned root reported rather than skipped.
 - That a workspace snapshot's digests were read from the revision it names, on a working tree whose state it recorded honestly.
-- That a detection witness genuinely turned its gate red, rather than being asserted by the gate it qualifies.
-- That published artifacts correspond to the candidate whose qualification authorized them.
+- That a detection witness genuinely turned its check red, rather than being asserted by the check it demonstrates — and that its refusal came from the relationship the attribution witness names, rather than from syntax, an unresolved import, a module-format mismatch, or an unrelated rule firing.
+- That published artifacts correspond to the candidate whose passing result qualified them.
+- That no product home imports `system/`, which the first obligation states and no compiler configuration currently enforces. The import-boundary mechanism is being settled by canary rather than assumed.
 
 The obligations are `system/01_assurance` claims about the repository, which means this layer's own correctness is the one thing it cannot be the sole judge of. That is not a defect to engineer around; it is why the receipts are addressed and the authority names its snapshot.
 
-## Implementation boundary
+## Implementation
 
-Architecture only. No runtime implementation exists or is authorized anywhere in this layer, and none opens until the whole repository architecture closes and Eassa explicitly authorizes it.
+No product runtime implementation exists in this layer.
+
+One repository-control implementation does: `01_assurance/00_audit/zero-runtime.mjs`, which emits the project and rejects any file that is not `export {};`. It is deliberately `.mjs` so that it sits outside the population it audits, and it is the only executable byte in the repository. That number staying small is a thing to watch, not a rule to enforce — the previous arrangement reached forty-six tracked entries one reasonable file at a time.
+
+Everything else here waits on a dependency rather than on a decision: programs and bootstrap need the CLI wire contract, and the contracts they would satisfy cannot be written honestly before it.

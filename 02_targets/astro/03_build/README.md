@@ -55,6 +55,7 @@ A host-only composition does not need to pretend it can satisfy a build-tool fac
 - Every non-productive disposition explains itself with a non-empty diagnostic tuple.
 - The request carries the planned outcome whole and restates no planning facts.
 - The facility names no foreign ecosystem: no plugin handle, no hook payload, no ambient context.
+- The type surface reaches the requirement, checked against a type written independently of the member.
 
 ## Proof obligations
 

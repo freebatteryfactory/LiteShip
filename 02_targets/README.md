@@ -81,6 +81,26 @@ The test the architecture must keep passing: a composition of hosts alone can pr
 
 That test was run. `02_targets/cloudflare/03_deployment` is the first consumer that takes both, and a composition point passed a framework-produced application and a host-only-produced application through **one function** into the same request type. Until that compiled, the arm was representable but unexercised. Like the seam above, the proof is assurance awaiting `system/`.
 
+## The one place both children are visible
+
+Astro genuinely uses Vite. Neither may import the other, because ecosystem usage and distribution dependency are not semantic authority — the rule that saved this umbrella from the predecessor's Cloudflare package, which imported a framework sibling and lost its independent story entirely.
+
+The consequence is that the seam between them is a set of choices made twice. Astro declares a socket without naming who fills it; Vite declares a facility "taken without reference to any requester"; and until now nothing imported both, so whether the supplier actually fit the socket was an untested belief held by two files that had never met.
+
+The composition at the bottom of `types.ts` is that test. It owns no target semantics and declares no facility, request, or disposition of its own — a local replica would prove that a copy fits a socket, which is the defect `00_audit` exists to detect, committed by the proof. Every type in it is the real one, imported from the child that owns it.
+
+The positive case needs no assertion. `AstroBuildFacilityRequirement` constrains its fourth parameter to Astro's facility at exact axes, so naming Vite's facility as the filler either compiles or does not. It compiles.
+
+### It compiles by coincidence, and the coincidence is now checked
+
+Six choices had to be made independently on both sides, and every one happens to match: the slot-demand alias, the three request members, and the five disposition arms. `ViteProjectionRequest` and `AstroProjectionRequest` are structurally identical and separately declared. So is the disposition. So is the demand tuple.
+
+That is why the composition type-checks. Not derivation — coincidence. A deleted probe in the predecessor said so in its own header and called it luck.
+
+`TheAstroViteSeamAgreesByCoincidence` does not convert the coincidence into a derivation. Nothing can, short of coupling the siblings or hoisting the shared shape into this umbrella, and both are edits with consequences past this seam. What it does is make the luck legible: a unilateral change on either side turns red **here**, naming which of the six axes moved, instead of turning some later composition red with no indication of which choice diverged. Measured — widening Vite's slot demands, dropping a member from its request, adding a sixth disposition arm, and renaming a member on Astro's request each fire it.
+
+If it ever fires, the answer is not to patch the fixture. It is to decide whether the shared shape belongs here.
+
 ## Laws
 
 - An ecosystem target reference is exact over the target it names.
@@ -90,6 +110,8 @@ That test was run. `02_targets/cloudflare/03_deployment` is the first consumer t
 - An outcome pins the exact composition it reports on, and two compositions are not interchangeable.
 - Attempt and composition are distinct reference kinds, compared against literal kind strings rather than against their own aliases.
 - A refusal carries an attempt and never a selected composition.
+- The Astro socket, filled by the real Vite facility, binds that exact supplier through root's own binding calculus; a supplier broadening participation, slots, or producer does not fill it, and the lawful pairing still does.
+- The two children agree on the six shapes their seam depends on, checked here so a unilateral change names the axis that diverged.
 - A claim is not a producer. Their payloads are identical, so the law compares them structurally.
 - Failure carries the exact participation that failed, not merely its target.
 - A produced artifact binds core's artifact rather than restating it. Address, digest, media type, source revision, source relation, source map, configuration, and composition are absent by law — their presence would mean either a second artifact vocabulary or a second copy of a fact the producer already owns.

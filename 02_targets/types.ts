@@ -28,9 +28,14 @@ import type {
   Address,
   Algebra,
   Assert,
+  Binding,
+  BindingRow,
+  BindingsFor,
   Brand,
   CaseOf,
   Equal,
+  HoleContract,
+  IsExactlyTrue,
   NonEmptyTuple,
   Reference,
 } from '../types.js';
@@ -42,6 +47,20 @@ import type {
   ArtifactReference,
   ProjectionTargetId,
 } from '../00_core/14_compiler/types.js';
+import type { AstroTargetId } from './astro/00_integration/types.js';
+import type {
+  ArtifactSlotDemands,
+  AstroBuildFacility,
+  AstroBuildFacilityRequirement,
+  AstroProjectionDisposition,
+  AstroProjectionRequest,
+} from './astro/03_build/types.js';
+import type {
+  ViteBuildFacility,
+  ViteProjectionDisposition,
+  ViteProjectionRequest,
+  ViteSlotDemands,
+} from './vite/01_projection/types.js';
 
 // ---------------------------------------------------------------------------
 // 1. Identity
@@ -954,5 +973,203 @@ export type TheSurfaceReachesEveryOwnedFamily = Assert<
   Equal<
     [TargetTypeSurface['attempt'], TargetTypeSurface['claim']],
     [TargetAttemptReference, SlotClaim]
+  >
+>;
+
+
+// ---------------------------------------------------------------------------
+// The Astro/Vite composition
+//
+// This is the one place in the repository that may see both target children at
+// once, and the only place the relationship they were each authored around is
+// actually exercised.
+//
+// Astro's `03_build` declares a socket and a requirement without naming who
+// fills it. Vite's `01_projection` declares a facility "taken without reference
+// to any requester". Both are honest, both are law-covered locally, and until
+// now nothing imported both -- so whether the supplier actually fits the socket
+// was an untested belief held by two files that had never met.
+//
+// This composition owns no target semantics. It declares no facility, no
+// request, and no disposition of its own: a local replica of any of them would
+// prove that a copy fits a socket, which is the defect `00_audit` exists to
+// detect, committed by the proof. Every type below is the real one, imported
+// from the child that owns it.
+// ---------------------------------------------------------------------------
+
+/** One exact composition coordinate. Broad specimens satisfy every widening. */
+type CompositionParticipation = TargetParticipation<
+  AstroTargetId,
+  TargetConfigurationId<'astro.vite.composition'>,
+  RevisionId
+>;
+type CompositionDemands = readonly [ArtifactSlotReference];
+type CompositionProducer = CaseOf<ArtifactProducer, 'direct-composition'>;
+
+/** The supplier exactly as Vite declares it. */
+type ViteSupplier = ViteBuildFacility<
+  CompositionParticipation,
+  CompositionDemands,
+  CompositionProducer
+>;
+
+/**
+ * Astro's socket, filled by Vite's facility.
+ *
+ * This declaration *is* the proof. `AstroBuildFacilityRequirement` constrains
+ * its fourth parameter to `AstroBuildFacility<Participation, Demands,
+ * Producer>`, so if Vite's facility does not satisfy Astro's socket at these
+ * exact axes, `ViteSupplier` is not a legal type argument and this file does
+ * not compile. No assertion is required for the positive case; the constraint
+ * is the assertion.
+ */
+export type AstroBuildFilledByVite = AstroBuildFacilityRequirement<
+  CompositionParticipation,
+  CompositionDemands,
+  CompositionProducer,
+  ViteSupplier
+>;
+
+/** The prerequisite row a composition point would carry, and its bindings. */
+export type AstroViteRequirements = readonly [AstroBuildFilledByVite];
+export type AstroViteBindings = BindingsFor<AstroViteRequirements>;
+
+/**
+ * Compile-time law: the composition binds the exact supplier, through the real
+ * calculus.
+ *
+ * Line one reads the hole the way a consumer does, so a requirement that hands
+ * out a broadened stand-in fails here rather than at the first real bind. Lines
+ * two and three use root's actual `BindingsFor` rather than a description of
+ * it: a free `BindingRow` is not this row, which is the boundary defect
+ * `01_hosts` states as a law and the reason the requirement is a closed tuple.
+ */
+export type TheCompositionBindsTheExactSupplier = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<HoleContract<AstroBuildFilledByVite>, ViteSupplier>,
+        Equal<AstroViteBindings, readonly [Binding<AstroBuildFilledByVite>]>,
+        BindingRow extends AstroViteBindings ? true : false,
+        [AstroViteBindings] extends [never] ? true : false,
+      ],
+      [true, true, false, false]
+    >
+  >
+>;
+
+/**
+ * Compile-time law: a supplier that broadens any governed axis does not fit.
+ *
+ * Four axes, one line each, stated as the constraint the requirement's fourth
+ * parameter actually imposes. Each is a supplier that is perfectly well-formed
+ * on its own terms and wrong for *this* socket -- which is the only interesting
+ * kind of wrong, and the kind a fixture built from local replicas cannot
+ * produce.
+ *
+ * The last line is the lawful control. Without it the law would be satisfied by
+ * a socket nothing can fill, and an empty socket refuses everything including
+ * the right answer.
+ */
+export type ABroadenedSupplierDoesNotFillTheAstroSocket = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        ViteBuildFacility<
+          TargetParticipation,
+          CompositionDemands,
+          CompositionProducer
+        > extends AstroBuildFacility<
+          CompositionParticipation,
+          CompositionDemands,
+          CompositionProducer
+        >
+          ? true
+          : false,
+        ViteBuildFacility<
+          CompositionParticipation,
+          ViteSlotDemands,
+          CompositionProducer
+        > extends AstroBuildFacility<
+          CompositionParticipation,
+          CompositionDemands,
+          CompositionProducer
+        >
+          ? true
+          : false,
+        ViteBuildFacility<
+          CompositionParticipation,
+          CompositionDemands,
+          ArtifactProducer
+        > extends AstroBuildFacility<
+          CompositionParticipation,
+          CompositionDemands,
+          CompositionProducer
+        >
+          ? true
+          : false,
+        ViteBuildFacility<
+          TargetParticipation,
+          ViteSlotDemands,
+          ArtifactProducer
+        > extends AstroBuildFacility<
+          CompositionParticipation,
+          CompositionDemands,
+          CompositionProducer
+        >
+          ? true
+          : false,
+        ViteSupplier extends AstroBuildFacility<
+          CompositionParticipation,
+          CompositionDemands,
+          CompositionProducer
+        >
+          ? true
+          : false,
+      ],
+      [false, false, false, false, true]
+    >
+  >
+>;
+
+/**
+ * Compile-time law: the seam is a coincidence, and here is the coincidence.
+ *
+ * Astro and Vite may not import one another -- ecosystem usage is not semantic
+ * authority, and that rule is why the predecessor's Cloudflare package lost its
+ * independent story. The consequence is that six choices had to be made twice,
+ * independently, and every one of them happens to match: the slot-demand alias,
+ * the three request members, and the five disposition arms.
+ *
+ * That is why the composition above type-checks. Not derivation -- coincidence.
+ * A deleted probe in the predecessor said as much in its own header and called
+ * it luck.
+ *
+ * This law does not convert the coincidence into a derivation; nothing can,
+ * short of coupling the siblings or hoisting a shared vocabulary upward, and
+ * both are edits with consequences beyond this seam. What it does is make the
+ * luck *checked*: a unilateral change to either side turns this red here, at
+ * the seam, naming the axis that diverged -- instead of turning some later
+ * composition red with no indication of which of six choices moved.
+ *
+ * If this ever fires, the answer is not to patch the fixture. It is to decide
+ * whether the shared shape belongs in this umbrella.
+ */
+export type TheAstroViteSeamAgreesByCoincidence = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<ArtifactSlotDemands, ViteSlotDemands>,
+        Equal<
+          AstroProjectionRequest<CompositionParticipation, CompositionDemands>,
+          ViteProjectionRequest<CompositionParticipation, CompositionDemands>
+        >,
+        Equal<
+          AstroProjectionDisposition<CompositionProducer>,
+          ViteProjectionDisposition<CompositionProducer>
+        >,
+      ],
+      [true, true, true]
+    >
   >
 >;
