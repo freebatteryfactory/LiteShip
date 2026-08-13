@@ -57,10 +57,10 @@ The source waterfall is:
 
 - root `types.d.ts`: declaration-only global shape calculus and type ABI
 - `00_core/`: complete realm-neutral LiteShip semantics
-- `01_hosts/`: shared host realization contract with a sealed four-child roster; `web/` (thirteen homes), `worker/` (seven), `edge/` (eleven), and `server/` (eleven) all exist as specified architecture with no implementation
+- `01_hosts/`: shared host realization contract with an exact four-child roster; `web/` (thirteen homes), `worker/` (seven), `edge/` (eleven), and `server/` (eleven) all exist as specified architecture with no implementation
 - `02_targets/`: ecosystem lifecycle integrations
 - `02_wires/`: protocol and invocation projections
-- unnumbered `system/`: repository programs, assurance, workspace, packaging, and release
+- unnumbered `system/`: workspace, assurance, release, repository programs, and bootstrap. Its wire-independent homes exist — `00_workspace/`, `01_assurance/` with `00_audit/` and `01_gauntlet/`, `02_release/`. `03_programs/` and `04_bootstrap/` are deferred because both consume wire contracts; `SystemTypeTopology` names only the three that exist. Packaging is owned by `02_release`, and `package`/`release`/`ship` are three programs over that one authority. Workspace discovery is an authority in `00_workspace`, not a twelfth program
 
 The repository root is the `liteship` meta-package, canonical TypeScript toolchain authority, public export membrane, and tiny executable composition root.
 
@@ -284,7 +284,9 @@ A fenced YAML block may project checkable architecture metadata from the prose. 
 
 ## Verification
 
-No implementation command set is authoritative yet. Do not copy commands from the old repository or invent a root build workflow before `system/` and the root bootstrap are designed.
+The root owns its compiler configuration and nothing more: `package.json` pins the compiler and declares `typecheck` and `check`, `tsconfig.json` holds the strict posture, and `include` is `**/*.ts` so no directory can typecheck-exempt itself by being one the census forgot. That is using TypeScript, not a build workflow.
+
+Beyond it, no implementation command set is authoritative. Do not copy commands from the old repository or invent a root build workflow before `system/03_programs` and the root bootstrap are designed.
 
 The checked-in foundation must eventually satisfy the root-pinned toolchain matrix:
 

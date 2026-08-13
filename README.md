@@ -1,6 +1,6 @@
 # LiteShip Root Architecture and Type Foundation
 
-Status: Root architecture, Type ABI, and `00_core/` confirmed and closed; `01_hosts/` is the current design phase
+Status: Root architecture, Type ABI, `00_core/`, `01_hosts/`, and the three `02_targets/` children exist as architecture; `system/`'s wire-independent foundation is authored; `02_wires/` is next; implementation absent everywhere
 
 Authority: This README for architecture and intent; `types.d.ts` for the declaration-level shape calculus
 
@@ -56,7 +56,7 @@ The source tree answers where a concept is authored. It does not automatically d
 | `types.d.ts` | Global declaration calculus | Irreducible shape operators only |
 | `00_core/` | Complete realm-neutral LiteShip semantics | Meaning, schema, compilation, settlement, residual execution, operations, scenes, media, admission, revisions, causal records, operation receipts, explanation |
 | `01_hosts/` | Physical execution environments | Environment APIs, lifecycle, I/O, effects, and host realizations |
-| `02_targets/` | Ecosystem lifecycle integration | Astro, Vite, Cloudflare, Remotion, and future target translation |
+| `02_targets/` | Ecosystem lifecycle integration | Astro, Vite, and Cloudflare translation; a further child is an explicit architecture edit |
 | `02_wires/` | Protocol and invocation projection | Direct, HTTP, CLI, MCP, LSP/editor, browser, and future wire behavior |
 | `system/` | Repository control plane | Typed programs, workspace operation, assurance, packaging, and release |
 
@@ -624,7 +624,9 @@ Host type surfaces compose core types with environment-specific contracts. They 
 
 Targets attach upstream LiteShip capabilities to ecosystem lifecycles.
 
-Initial targets include Astro, Vite, Cloudflare, and Remotion.
+The target children are Astro, Vite, and Cloudflare. `TargetChildRoster` in `02_targets/types.ts` names exactly those three, so a fourth is an edit somebody makes on purpose rather than a folder that appears because a dependency did.
+
+An earlier draft of this section also named Remotion. No such target exists and none is planned for this phase: media rendering is core and host capability — `00_core/12_media` and `01_hosts/server/10_media` — and routing it through an ecosystem target would have made a capability the repository owns look like one it borrows.
 
 A target may own registration, build hooks, lifecycle translation, host configuration, generated artifacts, middleware attachment, directive registration, and ecosystem compatibility.
 
@@ -664,9 +666,10 @@ LiteShip's own system programs use this same wire. User applications can project
 
 `system/` operates on the repository and product architecture without becoming part of application runtime composition.
 
+Its responsibilities are workspace, assurance, release, repository programs, and bootstrap.
+
 It owns typed programs for:
 
-- workspace discovery;
 - build;
 - verify;
 - doctor;
@@ -678,6 +681,10 @@ It owns typed programs for:
 - packaging;
 - release;
 - shipping.
+
+Eleven, not twelve. This list previously opened with *workspace discovery*, and that entry has moved rather than vanished: `system/00_workspace` owns workspace identity, snapshots, root and source-home observation, revision and working-tree state, and toolchain references, and the programs above consume that authority. Discovery is a thing programs need, not a thing programs orchestrate. Exposing it later through `doctor`, an editor wire, or MCP is ordinary; making it a twelfth orchestration engine would have meant two places that answer "what repository is this", which is the defect the layer exists to prevent.
+
+Packaging likewise did not disappear from the responsibility list — it was absorbed. `system/02_release` owns distributable artifact identity, package manifests, candidates, qualification, attestations, publication plans, and receipts; `package`, `release`, and `ship` remain three distinct programs over that one authority. There is no separate packaging home waiting to hatch.
 
 It also owns assurance acquisition/evaluation composition, type ABI canonicalization, release attestations, and workspace governance.
 
@@ -804,7 +811,11 @@ This foundation and the attached `00_core/` architecture candidate intentionally
 
 Root and `00_core/` are confirmed and closed. Core semantic decisions are reopened only when a downstream proof creates a contradiction, an implementation shows a declared contract cannot be realized faithfully, an old-source oracle reveals an omitted capability, an empirical result invalidates a physical assumption, or Eassa reopens them explicitly.
 
-The current phase is `01_hosts/` closure QA, architecture only. The umbrella contract — including the grounding and admission boundary that distinguishes an authority a host admits from one it constructs — is confirmed and closed, and its child roster is sealed. All four children are specified: `web/` across thirteen numbered homes, `worker/` across seven, `edge/` across eleven, and `server/` across eleven. No runtime host implementation is authorized: every home in the repository receives its architecture before any executable product code exists, and implementation opens only when the whole repository architecture closes and Eassa explicitly authorizes it.
+The host layer is complete as architecture. The umbrella contract — including the grounding and admission boundary that distinguishes an authority a host admits from one it constructs — is confirmed and closed, and all four children are specified: `web/` across thirteen numbered homes, `worker/` across seven, `edge/` across eleven, and `server/` across eleven. `02_targets/` has its three children.
+
+The current work is `system/`'s wire-independent foundation — `00_workspace/`, `01_assurance/` with `00_audit/` and `01_gauntlet/`, and `02_release/` — followed by `02_wires/`, after which `system/03_programs/` and `system/04_bootstrap/` can be authored against real wire contracts rather than guessed ones. The order is the dependency, not a schedule: three system homes observe the repository and need no wire, and two consume wires and cannot honestly precede them.
+
+No runtime implementation is authorized anywhere: every home in the repository receives its architecture before any executable product code exists, and implementation opens only when the whole repository architecture closes and Eassa explicitly authorizes it.
 
 ## 18. Source basis
 
