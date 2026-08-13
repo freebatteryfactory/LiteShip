@@ -35,8 +35,8 @@ import type {
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { ContentAddress, ContentDigest, MediaType } from '../../00_core/01_encoding/types.js';
-import type { WorkspaceSnapshotReference } from '../00_workspace/types.js';
-import type { AssuranceAuthority, AssuranceReceipt } from '../01_assurance/types.js';
+import type { WorkspaceSnapshotId, WorkspaceSnapshotReference } from '../00_workspace/types.js';
+import type { AssuranceResult } from '../01_assurance/01_gauntlet/types.js';
 
 // ---------------------------------------------------------------------------
 // Packaging
@@ -112,12 +112,9 @@ export type ReleaseCandidateReference<Id extends ReleaseCandidateId = ReleaseCan
  * The receipt travels beside the authority so a qualification names the run it
  * came from and is auditable after the fact.
  */
-export type ReleaseQualification = Algebra<{
+export type ReleaseQualification<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = Algebra<{
   unqualified: { readonly reason: string; readonly diagnostics: readonly Diagnostic[] };
-  qualified: {
-    readonly authority: CaseOf<AssuranceAuthority, 'earned'>;
-    readonly receipt: AssuranceReceipt;
-  };
+  qualified: { readonly result: CaseOf<AssuranceResult<Snapshot>, 'passed'> };
 }>;
 
 /**
@@ -129,13 +126,16 @@ export type ReleaseQualification = Algebra<{
  * failure this member exists to make visible, and it is why the working-tree
  * state lives on the snapshot rather than being asked for again here.
  */
-export interface ReleaseCandidate<Id extends ReleaseCandidateId = ReleaseCandidateId> {
+export interface ReleaseCandidate<
+  Id extends ReleaseCandidateId = ReleaseCandidateId,
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+> {
   readonly candidate: ReleaseCandidateReference<Id>;
-  readonly snapshot: WorkspaceSnapshotReference;
+  readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
   readonly packages: NonEmptyTuple<PackedArtifact>;
   readonly attestations: readonly TypeAbiAttestation[];
   readonly compatibility: CompatibilityClaim;
-  readonly qualification: ReleaseQualification;
+  readonly qualification: ReleaseQualification<Snapshot>;
 }
 
 // ---------------------------------------------------------------------------
@@ -234,13 +234,59 @@ export interface Withdrawal<Id extends ReleaseCandidateId = ReleaseCandidateId> 
 export type AReleaseCannotQualifyItself = Assert<
   Equal<
     [
-      Equal<CaseOf<ReleaseQualification, 'qualified'>['authority'], CaseOf<AssuranceAuthority, 'earned'>>,
-      AssuranceAuthority extends CaseOf<ReleaseQualification, 'qualified'>['authority'] ? true : false,
-      'gates' extends keyof CaseOf<ReleaseQualification, 'qualified'>['authority'] ? true : false,
-      'snapshot' extends keyof CaseOf<ReleaseQualification, 'qualified'>['authority'] ? true : false,
+      Equal<CaseOf<ReleaseQualification, 'qualified'>['result'], CaseOf<AssuranceResult, 'passed'>>,
+      AssuranceResult extends CaseOf<ReleaseQualification, 'qualified'>['result'] ? true : false,
+      'authority' extends keyof CaseOf<ReleaseQualification, 'qualified'>['result'] ? true : false,
+      'snapshot' extends keyof CaseOf<ReleaseQualification, 'qualified'>['result'] ? true : false,
       Equal<TagOf<ReleaseQualification>, 'unqualified' | 'qualified'>,
     ],
     [true, false, true, true, true]
+  >
+>;
+
+type SnapshotLawA = WorkspaceSnapshotId<'law.snapshot.a'>;
+type SnapshotLawB = WorkspaceSnapshotId<'law.snapshot.b'>;
+
+/**
+ * A candidate cannot be qualified by a result about a different snapshot.
+ *
+ * This is the relationship the whole home exists for, and until now it was
+ * prose. `WorkspaceSnapshotReference` used to carry only the snapshot media
+ * type, which resolves to one template literal identical for every snapshot
+ * that will ever exist — so every consumer held the same erased type, two
+ * references to different revisions were mutually assignable, and "the
+ * candidate and the authority share one coordinate" was unenforceable. The same
+ * file admitted as much thirty lines lower, in its proof obligations.
+ *
+ * One parameter now threads: the candidate's snapshot and its qualification's
+ * snapshot are the same `Snapshot`, so a passing result for B cannot qualify a
+ * candidate built from A. Line one is the negative that matters. Line two is
+ * the lawful control — the correct pairing must still be constructible, or this
+ * would be satisfied by a type nobody can build.
+ */
+export type ACandidateCannotBeQualifiedByAnotherSnapshotsResult = Assert<
+  Equal<
+    [
+      ReleaseQualification<SnapshotLawB> extends ReleaseCandidate<
+        ReleaseCandidateId,
+        SnapshotLawA
+      >['qualification']
+        ? true
+        : false,
+      ReleaseQualification<SnapshotLawA> extends ReleaseCandidate<
+        ReleaseCandidateId,
+        SnapshotLawA
+      >['qualification']
+        ? true
+        : false,
+      ReleaseCandidate<ReleaseCandidateId, SnapshotLawA> extends ReleaseCandidate<
+        ReleaseCandidateId,
+        SnapshotLawB
+      >
+        ? true
+        : false,
+    ],
+    [false, true, false]
   >
 >;
 

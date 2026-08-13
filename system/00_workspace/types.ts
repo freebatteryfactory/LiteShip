@@ -229,9 +229,11 @@ export interface RootMetadataObservation {
  * A generic no member consumes is decoration that survives its own deletion.
  */
 export interface WorkspaceSnapshot<
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
   Id extends WorkspaceId = WorkspaceId,
   Revision extends SourceRevisionId = SourceRevisionId,
 > {
+  readonly id: WorkspaceSnapshotReference<Snapshot>;
   readonly workspace: WorkspaceReference<Id>;
   readonly revision: SourceRevisionReference<Revision>;
   readonly tree: WorkingTreeState;
@@ -242,11 +244,30 @@ export interface WorkspaceSnapshot<
   readonly address: ContentAddress<'application/vnd.liteship.workspace-snapshot+cbor'>;
 }
 
-/** Reference to a taken snapshot, for products that report on one. */
-export type WorkspaceSnapshotReference = Reference<
-  'workspace-snapshot',
-  ContentAddress<'application/vnd.liteship.workspace-snapshot+cbor'>
+/**
+ * Identity of one immutable repository observation.
+ *
+ * Separate from the snapshot's content address, and that separation is the
+ * whole repair. The address is `ContentAddress<'…workspace-snapshot+cbor'>`,
+ * which resolves to one template literal identical for every snapshot that will
+ * ever exist — so a reference carrying only the address is monomorphic, and two
+ * references to different revisions are mutually assignable. Every downstream
+ * product held that erased form while its README claimed the coordinate was
+ * exact.
+ *
+ * The workspace and the revision stay on the snapshot value, where they are
+ * observations rather than identity. Threading them through the reference would
+ * put the same two facts in two places and need a law to keep them agreeing.
+ * One identity threads; the observation stays with the observer.
+ */
+export type WorkspaceSnapshotId<Name extends string = string> = Brand<
+  Name,
+  'liteship.workspace-snapshot-id'
 >;
+
+/** Reference to a taken snapshot, exact over which one. */
+export type WorkspaceSnapshotReference<Id extends WorkspaceSnapshotId = WorkspaceSnapshotId> =
+  Reference<'workspace-snapshot', Id>;
 
 // ---------------------------------------------------------------------------
 // Capabilities
@@ -297,6 +318,8 @@ export type WorkspaceObservation = Signature<
 // Laws
 // ---------------------------------------------------------------------------
 
+type SnapshotLawA = WorkspaceSnapshotId<'a'>;
+type SnapshotLawB = WorkspaceSnapshotId<'b'>;
 type WorkspaceLawA = WorkspaceId<'a'>;
 type WorkspaceLawB = WorkspaceId<'b'>;
 type RevisionLawA = SourceRevisionId & { readonly __law?: 'a' };
@@ -315,17 +338,53 @@ type RevisionLawB = SourceRevisionId & { readonly __law?: 'b' };
 export type AWorkspaceSnapshotIsExactOverItsCoordinate = Assert<
   Equal<
     [
-      WorkspaceSnapshot<WorkspaceLawA> extends WorkspaceSnapshot<WorkspaceLawB> ? true : false,
-      WorkspaceSnapshot<WorkspaceLawA> extends WorkspaceSnapshot<WorkspaceLawA> ? true : false,
-      WorkspaceSnapshot extends WorkspaceSnapshot<WorkspaceLawA> ? true : false,
-      WorkspaceSnapshot<WorkspaceId, RevisionLawA> extends WorkspaceSnapshot<WorkspaceId, RevisionLawB>
+      WorkspaceSnapshot<SnapshotLawA> extends WorkspaceSnapshot<SnapshotLawB> ? true : false,
+      WorkspaceSnapshot<SnapshotLawA> extends WorkspaceSnapshot<SnapshotLawA> ? true : false,
+      WorkspaceSnapshot extends WorkspaceSnapshot<SnapshotLawA> ? true : false,
+      WorkspaceSnapshot<WorkspaceSnapshotId, WorkspaceLawA> extends WorkspaceSnapshot<
+        WorkspaceSnapshotId,
+        WorkspaceLawB
+      >
         ? true
         : false,
-      WorkspaceSnapshot<WorkspaceId, RevisionLawA> extends WorkspaceSnapshot<WorkspaceId, RevisionLawA>
+      WorkspaceSnapshot<WorkspaceSnapshotId, WorkspaceId, RevisionLawA> extends WorkspaceSnapshot<
+        WorkspaceSnapshotId,
+        WorkspaceId,
+        RevisionLawB
+      >
         ? true
         : false,
     ],
-    [false, true, false, false, true]
+    [false, true, false, false, false]
+  >
+>;
+
+/**
+ * The reference is exact too, which is the half that was missing.
+ *
+ * The snapshot was already exact over its axes and proved so. The reference
+ * every downstream product actually holds was `Reference<'workspace-snapshot',
+ * ContentAddress<'…+cbor'>>` — one type for every snapshot in existence, so two
+ * references to different revisions were mutually assignable and the whole
+ * "assurance earned this authority over the candidate's snapshot" chain rested
+ * on a coordinate the compiler could not tell apart.
+ *
+ * This is the *local law versus public path* defect in its purest form: the
+ * value proved exact by hand, the carrier every consumer holds handing over the
+ * broad form. The third line is the anti-vacuity partner.
+ */
+export type AWorkspaceSnapshotReferenceIsExactOverItsSnapshot = Assert<
+  Equal<
+    [
+      WorkspaceSnapshotReference<SnapshotLawA> extends WorkspaceSnapshotReference<SnapshotLawB>
+        ? true
+        : false,
+      WorkspaceSnapshotReference<SnapshotLawA> extends WorkspaceSnapshotReference<SnapshotLawA>
+        ? true
+        : false,
+      WorkspaceSnapshotReference extends WorkspaceSnapshotReference<SnapshotLawA> ? true : false,
+    ],
+    [false, true, false]
   >
 >;
 

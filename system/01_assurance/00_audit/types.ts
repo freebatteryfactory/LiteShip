@@ -49,7 +49,7 @@ import type {
   AuthorityReference,
   CanonicalImport,
 } from '../../../00_core/18_inspection/types.js';
-import type { WorkspaceSnapshotReference } from '../../00_workspace/types.js';
+import type { WorkspaceSnapshotId, WorkspaceSnapshotReference } from '../../00_workspace/types.js';
 import type { AssuranceFactName, AssuranceSubject, GateReference } from '../types.js';
 
 // ---------------------------------------------------------------------------
@@ -135,10 +135,14 @@ export type ProbeCoverage = Algebra<{
  * read source has to name the lane it read with, and the attestation it
  * produces carries that lane's fingerprint.
  */
-export type TypeProgramInterpreter = Hole<
+export type TypeProgramInterpreter<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = Hole<
   'liteship.system.audit.type-program',
   {
-    readonly surface: Signature<WorkspaceSnapshotReference, TypeAbiSurface, readonly Diagnostic[]>;
+    readonly surface: Signature<
+      WorkspaceSnapshotReference<Snapshot>,
+      TypeAbiSurface,
+      readonly Diagnostic[]
+    >;
     readonly attest: Signature<TypeAbiSurface, TypeAbiAttestation, readonly Diagnostic[]>;
   }
 >;
@@ -152,7 +156,10 @@ export type ImportResolver = Hole<
 >;
 
 /** The exact prerequisite row for one audit run. */
-export type AuditRequirements = readonly [TypeProgramInterpreter, ImportResolver];
+export type AuditRequirements<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = readonly [
+  TypeProgramInterpreter<Snapshot>,
+  ImportResolver,
+];
 
 // ---------------------------------------------------------------------------
 // Product
@@ -164,11 +171,11 @@ export type AuditRequirements = readonly [TypeProgramInterpreter, ImportResolver
  * Every member is a type owned upstream, assembled here. That is the whole
  * shape of this home: audit is a producer of other people's vocabulary.
  */
-export type AuditProduct = Envelope<
+export type AuditProduct<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = Envelope<
   'LiteShipAuditProduct',
   1,
   {
-    readonly snapshot: WorkspaceSnapshotReference;
+    readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
     readonly surfaces: readonly TypeAbiSurface[];
     readonly attestations: readonly TypeAbiAttestation[];
     readonly graph: AuthorityGraph;

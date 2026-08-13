@@ -24,16 +24,16 @@ import type {
   Brand,
   CaseOf,
   Equal,
-  Envelope,
   NonEmptyTuple,
   TagOf,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Evidence } from '../../../00_core/06_evidence/types.js';
-import type { WorkspaceSnapshotReference } from '../../00_workspace/types.js';
+import type { WorkspaceSnapshotId, WorkspaceSnapshotReference } from '../../00_workspace/types.js';
 import type {
   AssuranceAuthority,
+  AssuranceDegradation,
   AssuranceFactName,
   AssuranceProposition,
   Finding,
@@ -122,23 +122,42 @@ export type GauntletVerdict = Algebra<{
 }>;
 
 /**
- * The product of one gauntlet run.
+ * The one addressed product of one evaluation over one exact snapshot.
  *
- * `authority` is the umbrella's algebra, so a run that produced no qualified
- * gate yields `unearned` with a reason rather than a quietly absent member.
+ * This replaces two. `GauntletRun` and `AssuranceReceipt` both carried the
+ * snapshot, the evaluation population, verdict-shaped information, and the
+ * authority — two products of one act, obliged to agree, with nothing making
+ * them. That obligation was written in prose and enforced by nobody, which is
+ * the shape this repository keeps deleting.
+ *
+ * Authority lives in the `passed` arm and only there. It is not a member that
+ * happens to be `unearned` when things went badly; a blocked run has no
+ * authority to carry, and saying so structurally is what stops a consumer
+ * reading the member and asking politely whether it is earned.
+ *
+ * Both arms carry the exact snapshot, so a result cannot be quoted about a
+ * revision it never saw.
  */
-export type GauntletRun = Envelope<
-  'LiteShipGauntletRun',
-  1,
-  {
-    readonly snapshot: WorkspaceSnapshotReference;
+export type AssuranceResult<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = Algebra<{
+  passed: {
+    readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
     readonly profile: EvidenceProfile;
     readonly evaluations: readonly GateEvaluation[];
-    readonly verdict: GauntletVerdict;
-    readonly authority: AssuranceAuthority;
-    readonly address: ContentAddress<'application/vnd.liteship.gauntlet-run+cbor'>;
-  }
->;
+    readonly advisories: readonly Finding[];
+    readonly degradation: AssuranceDegradation;
+    readonly authority: CaseOf<AssuranceAuthority<Snapshot>, 'earned'>;
+    readonly address: ContentAddress<'application/vnd.liteship.assurance-result+cbor'>;
+  };
+  blocked: {
+    readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
+    readonly profile: EvidenceProfile;
+    readonly evaluations: readonly GateEvaluation[];
+    readonly blocking: NonEmptyTuple<GateEvaluation>;
+    readonly degradation: AssuranceDegradation;
+    readonly diagnostics: readonly Diagnostic[];
+    readonly address: ContentAddress<'application/vnd.liteship.assurance-result+cbor'>;
+  };
+}>;
 
 /** Identity of a consumer-supplied gate, so extension uses the same path. */
 export type ConsumerGateId<Name extends string = string> = Brand<Name, 'liteship.consumer-gate-id'>;
@@ -212,14 +231,14 @@ export type AGateDefinitionIsExactOverItsIdentity = Assert<
  * these appears the split has collapsed and the heaviest dependency in the
  * repository has followed evaluation everywhere it goes.
  */
-export type AGauntletRunAcquiresNothing = Assert<
+export type AnAssuranceResultAcquiresNothing = Assert<
   Equal<
     [
-      'surfaces' extends keyof GauntletRun ? true : false,
-      'graph' extends keyof GauntletRun ? true : false,
-      'probes' extends keyof GauntletRun ? true : false,
-      'interpreter' extends keyof GauntletRun ? true : false,
-      'files' extends keyof GauntletRun ? true : false,
+      'surfaces' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
+      'graph' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
+      'probes' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
+      'interpreter' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
+      'files' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
     ],
     [false, false, false, false, false]
   >
@@ -235,6 +254,6 @@ export interface GauntletTypeSurface {
   readonly evaluation: GateEvaluation;
   readonly profile: EvidenceProfile;
   readonly verdict: GauntletVerdict;
-  readonly run: GauntletRun;
+  readonly result: AssuranceResult;
   readonly consumerGate: ConsumerGateId;
 }

@@ -36,7 +36,6 @@ import type {
   Assert,
   Brand,
   CaseOf,
-  Envelope,
   Equal,
   NonEmptyTuple,
   Reference,
@@ -56,6 +55,7 @@ import type {
   RootName,
   SourceHomeReference,
   WorkspacePath,
+  WorkspaceSnapshotId,
   WorkspaceSnapshotReference,
 } from '../00_workspace/types.js';
 
@@ -253,10 +253,10 @@ export type GateOutcome = Algebra<{
  * fact about one revision of one workspace, and authority that outlives its
  * coordinate is the mechanism by which a release qualifies itself.
  */
-export type AssuranceAuthority = Algebra<{
+export type AssuranceAuthority<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = Algebra<{
   unearned: { readonly reason: string };
   earned: {
-    readonly snapshot: WorkspaceSnapshotReference;
+    readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
     readonly gates: NonEmptyTuple<QualifiedGate>;
   };
 }>;
@@ -289,25 +289,6 @@ export type AssuranceDegradation = Algebra<{
     readonly diagnostics: readonly Diagnostic[];
   };
 }>;
-
-/**
- * The product of one assurance run over one exact snapshot.
- *
- * An envelope because it is a durable artifact other homes consume: release
- * reads the authority, and a wire later projects the findings.
- */
-export type AssuranceReceipt = Envelope<
-  'LiteShipAssuranceReceipt',
-  1,
-  {
-    readonly snapshot: WorkspaceSnapshotReference;
-    readonly findings: readonly Finding[];
-    readonly qualification: readonly GateQualification[];
-    readonly authority: AssuranceAuthority;
-    readonly degradation: AssuranceDegradation;
-    readonly address: ContentAddress<'application/vnd.liteship.assurance-receipt+cbor'>;
-  }
->;
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -451,5 +432,4 @@ export interface AssuranceTypeSurface {
   readonly authority: AssuranceAuthority;
   readonly finding: Finding;
   readonly degradation: AssuranceDegradation;
-  readonly receipt: AssuranceReceipt;
 }
