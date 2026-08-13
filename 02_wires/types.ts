@@ -33,10 +33,13 @@ import type {
   CaseOf,
   DataPath,
   Equal,
+  Named,
   NonEmptyTuple,
   Reference,
   TagOf,
+  Tuple,
 } from '../types.js';
+import type { DirectWireTypeSurface } from './direct/types.js';
 import type { Diagnostic } from '../00_core/00_error/types.js';
 import type {
   IdempotencyKey,
@@ -297,11 +300,46 @@ export type ExposureIsStatedAndTheCallerIsNotPrivileged = Assert<
 >;
 
 // ---------------------------------------------------------------------------
+// Children
+// ---------------------------------------------------------------------------
+
+/**
+ * The children this layer currently has: one, and this one.
+ *
+ * A topology rather than a bare name tuple, and the difference is load-bearing.
+ * A roster written as `readonly ['direct']` claims a child exists and cannot
+ * detect whether it does — delete the child's `types.ts` and the umbrella still
+ * compiles, still asserting one child. Importing the child's surface makes the
+ * claim answerable by the compiler: the roster cannot outlive the thing it
+ * names.
+ *
+ * `http`, `browser`, `cli`, `mcp`, and `editor` are planned and absent. They
+ * are not listed here, because a name in this tuple is a promise the compiler
+ * checks and a name for an unwritten home is a promise nothing can keep.
+ */
+export type WireTypeTopology = Tuple<[WireTypeHome<'direct', DirectWireTypeSurface>]>;
+
+/** One child and the semantic surface its local `types.ts` declares. */
+export interface WireTypeHome<Name extends string, Surface> extends Named<Name> {
+  readonly Type: Surface;
+}
+
+/** The child names, derived from the topology. */
+export type WireChildName = WireTypeTopology[number]['name'];
+
+/** Select one child surface by its name. */
+export type WireTypeAt<Name extends WireChildName> = Extract<
+  WireTypeTopology[number],
+  { readonly name: Name }
+>['Type'];
+
+// ---------------------------------------------------------------------------
 // Surface
 // ---------------------------------------------------------------------------
 
 /** Type summary consumed by the root topology. */
 export interface WireTypeSurface {
+  readonly children: WireTypeTopology;
   readonly wire: WireReference;
   readonly definition: WireDefinition;
   readonly exposure: WireExposure;

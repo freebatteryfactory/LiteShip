@@ -11,7 +11,8 @@
  *
  * **The population here is three, and three is not the end.** `03_programs`
  * and `04_bootstrap` are settled responsibilities with no folder yet, because
- * both consume wire contracts and `02_wires/` does not exist. Naming them in
+ * both consume wire contracts and only `02_wires/direct/` is written so far.
+ * Naming them in
  * this topology before they exist would produce exactly the inventory nothing
  * can verify that `01_hosts` refused for as long as only one host was real. The
  * README states what is coming; the type states what is here.

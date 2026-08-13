@@ -1,6 +1,6 @@
 # Wires: Protocol and Invocation Projection
 
-Status: umbrella architecture specified; children not yet authored; implementation absent
+Status: umbrella and `direct/` specified; `http`, `browser`, `cli`, `mcp`, and `editor` not yet written; implementation absent
 
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
@@ -28,7 +28,7 @@ Core owns what an operation means. Hosts own the physical channel. Targets attac
 - Operation meaning, schema meaning, policy, or authority. `00_core/07_operation` owns the definition, the invocation, the policy decision, the outcome, and the receipt; a wire projects them and declares no copies.
 - The physical channel. Sockets, processes, streams, and stdio are host capabilities.
 - A lifecycle taxonomy, a middleware stack, a context object, or a hook table.
-- Any per-protocol payload. Those belong to the children, and the children do not exist yet.
+- Any per-protocol payload. Those belong to the children. `direct/` has none, because in-process invocation has no wire format.
 
 ## Three channels, because transports always collapse them
 
@@ -74,7 +74,11 @@ CLI grammar belongs to the CLI child. The root executable's bootstrap does not p
 
 The initial wire families are direct, HTTP, browser, CLI, MCP, and LSP/editor. Typed model and agent stream codecs join them when a real consumer earns one.
 
-**None of them exists yet, and this umbrella therefore declares no child roster.** For as long as no child is physically present, a roster union would be an inventory nothing can verify — the same defect as a law that cannot fail. `01_hosts` held that line while only `web/` was real, and `02_targets` only named `TargetChildRoster` once all three children existed. The roster lands here when the children do.
+**`direct/` exists; the other five are not written.** `WireTypeTopology` names exactly the one that does, and it names it by importing that child's surface rather than by listing a string. The distinction is the whole point: a roster written as `readonly ['direct']` asserts a child exists and cannot tell whether it does — delete the child's `types.ts` and the umbrella still compiles, still claiming one child. Importing the surface makes the claim answerable by the compiler.
+
+A name in that topology is a promise the compiler checks. A name for an unwritten home is a promise nothing can keep, so the five absent children are named in prose here and nowhere in a type.
+
+This paragraph previously said no children existed at all, and that was false from the moment `direct/` landed — written in the same session, hours apart. It is recorded rather than quietly corrected, because a README that describes a tree it does not match is the failure mode this layer's own laws exist to prevent one level down.
 
 Children will not import one another. Two protocols that both carry an operation share the umbrella and everything upstream of it; a shape common to HTTP and browser belongs here or in core, never in a sibling edge.
 

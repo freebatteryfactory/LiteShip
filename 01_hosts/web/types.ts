@@ -56,9 +56,11 @@ import type {
 import type {
   AudioFacilityGrounding,
   AudioRuntimeOffer,
+  CodecAdmissionGrounding,
   InjectedAudioRuntimeGrounding,
   MediaAuthorityOffer,
   SampleClockTransport,
+  WebCodecOffer,
   WebMediaTypeSurface,
 } from './08_media/types.js';
 import type {
@@ -143,6 +145,7 @@ export interface WebCapabilityTopology {
     readonly gpuAccess: GpuAccessGrounding;
     readonly schedulingFacility: SchedulingFacilityGrounding;
     readonly captureFacility: CaptureFacilityGrounding;
+    readonly codecAdmission: CodecAdmissionGrounding;
   };
   readonly offers: {
     readonly regionAuthority: RegionAuthorityOffer;
@@ -157,6 +160,7 @@ export interface WebCapabilityTopology {
     readonly preparation: PreparationOffer;
     readonly islandActivation: IslandActivationOffer;
     readonly captureAuthority: CaptureAuthorityOffer;
+    readonly codec: WebCodecOffer;
   };
   readonly erased: RealizationCatalog;
 }
@@ -241,7 +245,27 @@ export type EachHomeResolvesToItsOwnSurface = Assert<
   >
 >;
 
-/** Compile-time law: the grounding population is exact — a slot cannot silently vanish. */
+/**
+ * Compile-time law: the grounding population is exact — a slot cannot silently
+ * vanish.
+ *
+ * What it catches, verified: deleting a slot from the topology turns this red,
+ * and the compiler does not otherwise notice, because the deleted type stays
+ * imported by the identity law below.
+ *
+ * What it cannot catch, also verified: a capability that was never added. This
+ * law reads `keyof` off the topology and compares it against a list written
+ * beside it, so its source is the thing under test — it certifies whatever the
+ * topology happens to contain. `WebCodecOffer` and `CodecAdmissionGrounding`
+ * were declared in `08_media`, claimed in that home's README, covered by four
+ * laws asserting they fill core's codec sockets, and absent from this topology,
+ * while this law reported the population exact. The server child wired its
+ * equivalent; web did not; nothing could tell.
+ *
+ * Declared-versus-wired is therefore not a type fact. It is a comparison
+ * between what a home exports and what its parent composes, and it belongs to
+ * `system/01_assurance/00_audit`.
+ */
 export type TheGroundingPopulationIsExact = Assert<
   Equal<
     keyof WebCapabilityTopology['groundings'],
@@ -258,6 +282,7 @@ export type TheGroundingPopulationIsExact = Assert<
     | 'injectedAudioRuntime'
     | 'gpuAccess'
     | 'captureFacility'
+    | 'codecAdmission'
     | 'schedulingFacility'
   >
 >;
@@ -278,6 +303,7 @@ export type TheOfferPopulationIsExact = Assert<
     | 'preparation'
     | 'islandActivation'
     | 'captureAuthority'
+    | 'codec'
   >
 >;
 
@@ -299,6 +325,8 @@ export type EveryDeclarationPinsItsExactIdentity = Assert<
       ExecutionHostOffer['id'],
       PreparationOffer['id'],
       IslandActivationOffer['id'],
+      CaptureAuthorityOffer['id'],
+      WebCodecOffer['id'],
       RegionDiscoveryGrounding['id'],
       ApplicationMountGrounding['id'],
       InvocationMountGrounding['id'],
@@ -312,6 +340,8 @@ export type EveryDeclarationPinsItsExactIdentity = Assert<
       InjectedAudioRuntimeGrounding['id'],
       GpuAccessGrounding['id'],
       SchedulingFacilityGrounding['id'],
+      CaptureFacilityGrounding['id'],
+      CodecAdmissionGrounding['id'],
     ],
     [
       RealizationOfferId<'liteship.web.offer.region-authority'>,
@@ -325,6 +355,8 @@ export type EveryDeclarationPinsItsExactIdentity = Assert<
       RealizationOfferId<'liteship.web.offer.execution-host'>,
       RealizationOfferId<'liteship.web.offer.preparation'>,
       RealizationOfferId<'liteship.web.offer.island-activation'>,
+      RealizationOfferId<'liteship.web.offer.capture-authority'>,
+      RealizationOfferId<'liteship.web.offer.codec-facility'>,
       GroundingId<'liteship.web.grounding.region-discovery'>,
       GroundingId<'liteship.web.grounding.application-mount'>,
       GroundingId<'liteship.web.grounding.invocation-mount'>,
@@ -338,6 +370,8 @@ export type EveryDeclarationPinsItsExactIdentity = Assert<
       GroundingId<'liteship.web.grounding.injected-audio-runtime'>,
       GroundingId<'liteship.web.grounding.gpu-access'>,
       GroundingId<'liteship.web.grounding.scheduling-facility'>,
+      GroundingId<'liteship.web.grounding.capture-facility'>,
+      GroundingId<'liteship.web.grounding.codec-admission'>,
     ]
   >
 >;
