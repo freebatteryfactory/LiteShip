@@ -9,7 +9,7 @@
  */
 
 import type { Address, Algebra, Assert, Brand, Equal, Reference } from '../../types.js';
-import type { ContentAddress } from '../01_encoding/types.js';
+import type { ContentAddress, MediaTypeSyntax } from '../01_encoding/types.js';
 
 /** Persistent identity of a semantic entity across revisions and moves. */
 export type EntityId<Name extends string = string> = Brand<Name, 'liteship.entity-id'>;
@@ -92,7 +92,10 @@ export type ChangeReference = Reference<'change', ChangeId>;
 export type CommitReference = Reference<'commit', CommitId>;
 
 /** Reference to immutable content. */
-export type ContentReference<Type extends string = string> = Reference<'content', ContentAddress<Type>>;
+export type ContentReference<Type extends MediaTypeSyntax = MediaTypeSyntax> = Reference<
+  'content',
+  ContentAddress<Type>
+>;
 
 /** Exact semantic position used by editor, agent, patch, and explanation surfaces. */
 export interface SemanticLocation {
