@@ -50,7 +50,7 @@ import type {
   CanonicalImport,
 } from '../../../00_core/18_inspection/types.js';
 import type { WorkspaceSnapshotId, WorkspaceSnapshotReference } from '../../00_workspace/types.js';
-import type { AssuranceFactName, AssuranceSubject, GateReference } from '../types.js';
+import type { AssuranceFactName, AssuranceSubject } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Probes
@@ -65,11 +65,22 @@ export type AuditProbeReference<Id extends AuditProbeId = AuditProbeId> = Refere
 /**
  * One fact acquired about one subject.
  *
- * `consumers` is non-empty and required, which makes an orphan fact
- * unrepresentable. The rule it encodes — every produced fact has a consumer —
- * is the only defence against the failure mode acquisition always drifts into:
- * a growing pile of interesting measurements nobody reads, which looks like
- * thoroughness and costs like a subsystem.
+ * There is no `consumers` member. It was a non-empty tuple of gate references
+ * meant to make an orphan fact unrepresentable, and it was a reverse index
+ * embedded in the evidence product: a roster naming gates it had no relation to,
+ * free to name checks outside the run and to omit checks inside it. Its only
+ * reader was its own law.
+ *
+ * It also sat opposite `GateDefinition.reads`, deleted in the same commit — one
+ * relationship written from both directions and traversed from neither. The
+ * single remaining declaration is the check's proposition, which already names
+ * the facts and subjects it reasons about. A data-defined check cannot secretly
+ * read undeclared evidence, because there is no arbitrary body in which to hide
+ * the read.
+ *
+ * The rule that roster was reaching for — every produced fact has a consumer —
+ * is real and survives as an audit obligation rather than as a member that
+ * asserts itself.
  *
  * The value is `Evidence`, not a bare value, so a probe that ran and found
  * nothing, a probe that could not run, and a probe that failed remain three
@@ -80,7 +91,6 @@ export interface AcquiredFact<Value = ContentAddress> {
   readonly subject: AssuranceSubject;
   readonly value: Evidence<Value>;
   readonly probe: AuditProbeReference;
-  readonly consumers: NonEmptyTuple<GateReference>;
 }
 
 /**
@@ -228,20 +238,30 @@ export type TheInterpreterCanonicalizesThenAttests = Assert<
 >;
 
 /**
- * Every acquired fact names at least one consumer.
+ * An acquired fact carries no roster of who will read it.
  *
- * Line two is the one that survives review: making `consumers` a plain array
- * is a natural-looking edit that reintroduces the orphan fact, and only the
- * negative assertion catches it.
+ * The deleted member is checked by name, and so are the two spellings it would
+ * come back under. A reverse index inside an evidence product is a roster with
+ * no relation to what it names: free to list checks outside the run, free to
+ * omit checks inside it, and answerable to nothing. The relationship it claimed
+ * belongs to the check's proposition, which is the one place that says what a
+ * check reasons about.
+ *
+ * The last two lines pin what the fact does own, so this reads as a subtraction
+ * rather than as a shape nobody has looked at.
  */
-export type AnAcquiredFactNamesItsConsumers = Assert<
-  Equal<
-    [
-      Equal<AcquiredFact['consumers'], NonEmptyTuple<GateReference>>,
-      readonly GateReference[] extends AcquiredFact['consumers'] ? true : false,
-      undefined extends AcquiredFact['consumers'] ? true : false,
-    ],
-    [true, false, false]
+export type AnAcquiredFactCarriesNoConsumerRoster = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        'consumers' extends keyof AcquiredFact ? true : false,
+        'gates' extends keyof AcquiredFact ? true : false,
+        'readers' extends keyof AcquiredFact ? true : false,
+        Equal<AcquiredFact['value'], Evidence<ContentAddress>>,
+        Equal<AcquiredFact['probe'], AuditProbeReference>,
+      ],
+      [false, false, false, true, true]
+    >
   >
 >;
 

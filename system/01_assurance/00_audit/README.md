@@ -15,7 +15,7 @@ Read the repository and produce facts. Open the type program, walk the source ho
 ## Owns
 
 - Probe identity and reference.
-- The acquired fact, including the consumers it was acquired for.
+- The acquired fact: what was observed about which subject, by which probe.
 - The structural twin observation: two declarations that are structurally identical and differently sourced.
 - Probe coverage.
 - The type-program interpreter and import-resolver capability holes, and the exact audit prerequisite row.
@@ -25,7 +25,8 @@ Read the repository and produce facts. Open the type program, walk the source ho
 
 - `TypeAbiSurface` or `TypeAbiAttestation`. Root `types.d.ts` owns both; audit produces instances.
 - `AuthorityGraph`, `AuthorityRecord`, or `CanonicalImport`. `00_core/18_inspection` owns them; audit produces instances.
-- Any gate, verdict, finding, or authority. Those belong to `01_gauntlet` and the assurance umbrella, and their absence from the audit product is a law.
+- Any gate, finding, or conclusion. Those belong to `01_gauntlet` and the assurance umbrella, and their absence from the audit product is a law.
+- A roster of which checks will read a fact. See below.
 - A compiler. The interpreter is an injected capability naming its root-assigned lane.
 
 ## Audit decides nothing
@@ -42,9 +43,13 @@ It also makes the home's own most likely defect its subject matter. A local inte
 
 ## Every fact has a consumer
 
-`AcquiredFact.consumers` is required and non-empty, which makes an orphan fact unrepresentable.
+`AcquiredFact.consumers` was required and non-empty, and it is deleted.
 
-The rule it encodes is the only defence against the failure mode acquisition always drifts into: a growing pile of interesting measurements nobody reads. That pile looks like thoroughness, costs like a subsystem, and is how thirteen probes and fifteen mutation banks came to exist beside a set of laws that were never wired to most of them.
+The failure mode it aimed at is real: acquisition drifts into a growing pile of interesting measurements nobody reads, which looks like thoroughness, costs like a subsystem, and is how thirteen probes and fifteen mutation banks came to exist beside a set of laws that were never wired to most of them.
+
+But the member did not prevent it. A tuple of gate references inside an evidence product is a reverse index with no relation to what it names — free to list checks outside the run, free to omit checks inside it, answerable to nothing, and read by nobody but its own law. Opposite it sat `GateDefinition.reads`, the same relationship written from the other direction and traversed from neither.
+
+Both are gone. The one declaration of what a check reasons about is its proposition. Whether every acquired fact has a reader is now a proof obligation, which is where a claim that only a traversal can establish belongs.
 
 ## A probe that could not run stays visible
 
@@ -63,6 +68,7 @@ What must not happen again is the previous response to that gap. Lacking the API
 - An acquired fact names at least one consumer, as a non-empty population that cannot become a plain array.
 - The audit product's surfaces, attestations, and graph are structurally the upstream owners' types.
 - The audit product carries no verdict, findings, authority, outcome, or pass flag.
+- An acquired fact carries no roster of the checks that will read it, under that name or an obvious substitute.
 - Probe coverage distinguishes complete from partial, has no skipped arm, and fact values remain `Evidence`.
 
 ## Proof obligations

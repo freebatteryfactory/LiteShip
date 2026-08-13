@@ -33,11 +33,15 @@ That is what makes evaluation portable. A run consumes an audit product, which i
 
 ## A gate with no inputs is the pure vacuous gate
 
-`GateDefinition.reads` is non-empty because a gate that reads nothing decides nothing and cannot fail.
+`GateDefinition.claims` is non-empty because a check that claims nothing can never be disproven.
 
 That is not a theoretical concern in this repository. It is the exact shape of every vacuous law found here so far — a `keyof` over an empty population, a union tested against one arm, an exactness check read off an alias. All of them passed. None of them could have failed. A gate whose input population is empty is that defect with the subject changed.
 
-`GateDefinition.claims` is non-empty for the mirror reason. Qualification compares a claim to a witness; a gate that claims nothing can never be refuted, which makes it permanently unqualifiable rather than trivially trustworthy.
+That is not a theoretical concern. It is the shape of every vacuous law found here so far, with the subject changed.
+
+There was a `reads` member beside it, a non-empty tuple of fact names, and it is gone. It had zero consumers: nothing read it but the law asserting it was non-empty. Opposite it sat `AcquiredFact.consumers` in `00_audit`, the same relationship written from the other direction and traversed from neither. Two rosters, one relationship, no reader.
+
+The remaining declaration is the proposition, which already names the facts and subjects a check reasons about. A data-defined check cannot secretly read undeclared evidence, because there is no arbitrary body in which to hide the read — that is the durable idea, and it does not need a type-level `FactNamesOf<Proposition>` extractor to be true. Walking the proposition is something an implementation does. Building the extractor before a static consumer needs one would be apparatus arriving ahead of its reason.
 
 ## Consequence belongs to the invocation, not to the check
 
@@ -71,9 +75,15 @@ Informational positions contribute `never` and drop out of the union. An exact s
 
 Reading `unsatisfied` off a result is still available and always was: it is the positions whose evaluations are in a non-satisfied arm. Deriving it when explaining a result is a projection. Authoring it beside the evaluations was a second roster.
 
-## The verdict has no middle
+## The result has no middle, and no third population
 
-`GauntletVerdict` is `passed | blocked`. There is deliberately no `passed-with-warnings`.
+`AssuranceResult` is `passed | blocked`. There is deliberately no `passed-with-warnings`.
+
+The law that says so used to be about `GauntletVerdict`, a `passed | blocked` algebra carrying advisories and a blocking population — a strict subset of what the result already carried, produced by the same act, with nothing making the two agree. It had no consumer but its own law and the type surface: a conclusion declared twice, read once, composed by nothing. The type is gone and its negative moved to the result, which is worth more than it was.
+
+Two free populations went with it. `advisories: readonly Finding[]` on the passed arm could carry findings for gates the run never planned, and findings whose outcome disagreed with the evaluation population beside them. `AssuranceDegradation` carried a non-empty roster of gate references that could name anything at all — and it was a third statement of facts two types already own exactly: `GateOutcome.indeterminate` carries its blockers per gate, correlated with the evaluation that could not resolve, and audit's `ProbeCoverage.partial` carries the probes that could not run.
+
+Findings now live on the evaluation that produced them, and a `Finding` carries no gate and no outcome, because those are the enclosing evaluation's. What a run could not establish is the positions whose outcome is indeterminate. Both are projections of one population.
 
 That arm is how a blocking gate becomes a suggestion over time: the arm appears for one legitimate reason, then accumulates, and eventually the blocking population is empty and nobody decided that. Informational findings ride inside `passed`, where they are visible and require nothing. A blocking gate that refuted or could not resolve produces `blocked`, and `blocked` carries the evaluations that caused it, so a refusal names its causes rather than being a bare exit code.
 
@@ -91,8 +101,8 @@ Everything else about the deleted mutation infrastructure was implementation: th
 
 ## Laws
 
-- A gate reads a non-empty fact population and claims a non-empty failure-class population; neither may widen to a plain array.
-- The verdict is passed or blocked, with no middle arm, and blocked names the evaluations that blocked.
+- The result is passed or blocked, with no middle arm, no `degraded` tag, and no `degradation` or `advisories` member in either arm.
+- An evaluation owns its findings, and a finding restates neither the gate nor the outcome of the evaluation carrying it.
 - A gate definition and its evaluation are exact over gate identity, and the broad form does not substitute.
 - A claim and its proof are one population: fewer proofs than claims, and a proof of the wrong claim, are both refused.
 - The evaluated gate carries that correlated population, checked against a written-out tuple rather than against the mapping that produced it.

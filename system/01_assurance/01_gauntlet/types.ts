@@ -37,7 +37,6 @@ import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Evidence } from '../../../00_core/06_evidence/types.js';
 import type { WorkspaceSnapshotId, WorkspaceSnapshotReference } from '../../00_workspace/types.js';
 import type {
-  AssuranceDegradation,
   AssuranceFactName,
   AssuranceRunSpec,
   AssuranceRunSpecId,
@@ -68,6 +67,7 @@ export interface GateEvaluation<
   readonly gate: EvaluatedGate<Id, Revision>;
   readonly outcome: GateOutcome;
   readonly read: readonly { readonly fact: AssuranceFactName; readonly value: Evidence<ContentAddress> }[];
+  readonly findings: readonly Finding[];
 }
 
 /**
@@ -205,19 +205,14 @@ export type SatisfiedPlannedEvaluations<Checks extends NonEmptyTuple<PlannedChec
 // Verdict
 // ---------------------------------------------------------------------------
 
-/**
- * The conclusion of one gauntlet run.
- *
- * `blocked` carries the evaluations that blocked, so a refusal names its
- * causes and cannot be a bare exit code. There is no arm meaning "passed with
- * known problems": a blocking gate that refuted or could not resolve produces
- * `blocked`, and advisory findings ride along inside `passed` where they
- * belong.
- */
-export type GauntletVerdict = Algebra<{
-  passed: { readonly advisories: readonly Finding[] };
-  blocked: { readonly blocking: NonEmptyTuple<GateEvaluation>; readonly diagnostics: readonly Diagnostic[] };
-}>;
+// `GauntletVerdict` was declared here and is gone. It was `passed | blocked`
+// carrying advisories and a blocking population — a strict subset of what
+// `AssuranceResult` already carries, produced by the same act, with nothing
+// making the two agree. Grep found no consumer but its own law and the type
+// surface: a conclusion declared twice, read once, and composed by nothing.
+//
+// Its negative was worth more than it was, and moved to
+// `TheResultHasNoMiddleArm` below.
 
 /**
  * The one addressed product of one evaluation over one exact snapshot.
@@ -265,15 +260,12 @@ export type AssuranceResult<
     readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
     readonly spec: Spec;
     readonly evaluations: SatisfiedPlannedEvaluations<Spec['checks']>;
-    readonly advisories: readonly Finding[];
-    readonly degradation: AssuranceDegradation;
     readonly address: ContentAddress<'application/vnd.liteship.assurance-result+cbor'>;
   };
   blocked: {
     readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
     readonly spec: Spec;
     readonly evaluations: BlockedPlannedEvaluations<Spec['checks']>;
-    readonly degradation: AssuranceDegradation;
     readonly diagnostics: readonly Diagnostic[];
     readonly address: ContentAddress<'application/vnd.liteship.assurance-result+cbor'>;
   };
@@ -284,21 +276,29 @@ export type AssuranceResult<
 // ---------------------------------------------------------------------------
 
 /**
- * A verdict is passed or blocked, with nothing in between.
+ * A result is passed or blocked, with nothing in between.
  *
- * The absent third arm is the law. `passed-with-warnings` is the shape that
- * turns a blocking gate into a suggestion over time, and its absence is
- * checked rather than described.
+ * The absent third arm is the law, and it outlived the type it was written
+ * about. `passed-with-warnings` is the shape that turns a required check into a
+ * suggestion over time: the arm appears for one legitimate reason, accumulates,
+ * and eventually the required population is empty and nobody decided that.
+ *
+ * `degraded` is checked for the same reason and a sharper one — a `degradation`
+ * member was deleted from both arms in this commit, and a tag is the obvious
+ * place for it to reappear.
  */
-export type AVerdictHasNoMiddleArm = Assert<
+export type TheResultHasNoMiddleArm = Assert<
   Equal<
     [
-      Equal<TagOf<GauntletVerdict>, 'passed' | 'blocked'>,
-      'passed-with-warnings' extends TagOf<GauntletVerdict> ? true : false,
-      'degraded' extends TagOf<GauntletVerdict> ? true : false,
-      Equal<CaseOf<GauntletVerdict, 'blocked'>['blocking'], NonEmptyTuple<GateEvaluation>>,
+      Equal<TagOf<AssuranceResult>, 'passed' | 'blocked'>,
+      'passed-with-warnings' extends TagOf<AssuranceResult> ? true : false,
+      'degraded' extends TagOf<AssuranceResult> ? true : false,
+      'degradation' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
+      'advisories' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
+      'degradation' extends keyof CaseOf<AssuranceResult, 'blocked'> ? true : false,
+      Equal<GateEvaluation['findings'], readonly Finding[]>,
     ],
-    [true, false, false, true]
+    [true, false, false, false, false, false, true]
   >
 >;
 
@@ -636,6 +636,5 @@ export interface GauntletTypeSurface {
   readonly consequence: CheckConsequence;
   readonly plannedCheck: PlannedCheck;
   readonly spec: AssuranceRunSpec;
-  readonly verdict: GauntletVerdict;
   readonly result: AssuranceResult;
 }

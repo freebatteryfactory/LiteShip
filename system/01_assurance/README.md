@@ -22,7 +22,7 @@ Own the shared vocabulary for the facts TypeScript's assignability cannot decide
 - The evaluated gate and the demonstrated gate: a definition paired with where each of its claims' demonstrations stand.
 - The gate outcome algebra, in which unknown cannot pass.
 - The self-demonstration vocabulary: gate revision identity, specimen identity, witness roles, the four-role demonstration, and its outcome.
-- Findings and degradation.
+- Findings, which live inside the evaluation that produced them.
 - Exactly two children: `00_audit` acquires, `01_gauntlet` evaluates.
 
 ## Does not own
@@ -150,7 +150,8 @@ The split also makes the lean/rich distinction expressible: `01_gauntlet` declar
 Runtime and repository claims a type cannot express:
 
 - That a detection witness genuinely turned its gate red, rather than being asserted by the gate it qualifies.
-- That the mutation a witness names was applied to the subject the gate reads, and not to an unrelated file that happened to break the build.
+- That the mutation a witness names was applied to the subject the check reasons about, and not to an unrelated file that happened to break the build.
+- That every fact acquisition produces has a check that reads it. `AcquiredFact.consumers` and `GateDefinition.reads` were the two halves of this written as data, and both were rosters nobody traversed. Only walking the propositions of a run against the facts it acquired can establish it.
 - That a gate's declared scope matches the population it actually visited.
 - That findings are traceable to the acquired facts they concluded from.
 - That an attribution witness's refusal was caused by the relationship it names, rather than by syntax, an unresolved import, a module-format mismatch, or an unrelated rule firing. The type requires the claim to be made; only running the demonstration can confirm it.

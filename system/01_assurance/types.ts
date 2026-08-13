@@ -426,9 +426,20 @@ export type GateOrigin = 'repository' | 'consumer';
  * One gate: what it covers, what it reads, what it concludes, and what it
  * claims to catch.
  *
- * `reads` is non-empty because a gate with no inputs decides nothing and
- * cannot fail — the pure form of the vacuity this repository keeps rediscovering
- * in its own laws.
+ * There is no `reads` member. It was a `NonEmptyTuple<AssuranceFactName>`
+ * declaring which facts the check consumes, and it had exactly zero consumers:
+ * nothing read it but the law asserting it was non-empty. Beside it,
+ * `AcquiredFact.consumers` declared the same relationship from the other
+ * direction, and `GateEvaluation.read` records what was actually observed —
+ * three statements of one relationship, two of them aspirational.
+ *
+ * The remaining one is the proposition. It already names the facts and subjects
+ * the check reasons about; a data-defined check cannot secretly read undeclared
+ * evidence, because there is no arbitrary body in which to hide the read. That
+ * is the durable idea, and it does not require a type-level extractor to be
+ * true — walking the proposition is something an implementation does, and
+ * building a recursive `FactNamesOf<Proposition>` before a static consumer needs
+ * one would be apparatus arriving ahead of its reason.
  *
  * `claims` is non-empty because each claim carries its own proof, positionally.
  * A check that claims nothing can never be disproven, which makes it
@@ -456,7 +467,6 @@ export interface GateDefinition<
   readonly revision: GateRevisionReference<Revision>;
   readonly origin: GateOrigin;
   readonly scope: GateScope;
-  readonly reads: NonEmptyTuple<AssuranceFactName>;
   readonly proposition: AssuranceProposition;
   readonly claims: Claims;
   readonly requires: EvidenceProfile;
@@ -599,58 +609,71 @@ export interface AssuranceRunSpec<
 // ---------------------------------------------------------------------------
 
 /**
- * One reported conclusion about one subject, traceable to the gate that made it.
+ * One reported conclusion about one subject.
  *
- * It carries no disposition. A finding reports what happened; whether that
- * mattered enough to stop an operation is a property of the invocation, and the
- * run spec in `01_gauntlet` owns it. Keeping a copy here would restate a
- * lookup — the same triangle this home is removing elsewhere — and would let two
- * runs of one check produce findings that disagree about their own consequence.
+ * It carries no gate, no outcome, and no disposition, and all three absences are
+ * the same absence: a finding lives inside the evaluation that produced it, so
+ * the gate is the evaluation's gate and the outcome is the evaluation's outcome.
+ * Restating them here would let a finding disagree with the evaluation carrying
+ * it, which is a parallel roster wearing a smaller hat.
+ *
+ * What varies within one evaluation is the subject. A check over ninety-seven
+ * files produces one outcome and possibly several findings, one per file it has
+ * something to say about — so subject, diagnostics, and remediation are what a
+ * finding actually owns.
+ *
+ * Consequence is likewise not here. Whether a conclusion mattered enough to stop
+ * an operation is a property of the invocation, and the run specification owns
+ * it.
  */
 export interface Finding {
-  readonly gate: GateReference;
   readonly subject: AssuranceSubject;
-  readonly outcome: GateOutcome;
   readonly diagnostics: readonly Diagnostic[];
   readonly remediation: readonly RemediationAction[];
 }
 
-/**
- * What an assurance run could not establish.
- *
- * Required on the receipt rather than optional, because a degradation that is
- * absent when nothing degraded and absent when nobody looked is not a signal.
- */
-export type AssuranceDegradation = Algebra<{
-  none: Record<never, never>;
-  degraded: {
-    readonly gates: NonEmptyTuple<GateReference>;
-    readonly evidence: Evidence<never>;
-    readonly diagnostics: readonly Diagnostic[];
-  };
-}>;
+// `AssuranceDegradation` was declared here and is gone. It was `none | degraded`
+// carrying a free `NonEmptyTuple<GateReference>` — a roster of gates that could
+// name anything, including gates outside the specification the run executed and
+// gates unrelated to any evidence it recorded.
+//
+// It was also a third statement of facts two other types already own exactly.
+// `GateOutcome.indeterminate` carries `blockers`, per gate, correlated with the
+// evaluation that could not resolve; and audit's `ProbeCoverage.partial` carries
+// the probes that could not run. What a run could not establish is the positions
+// whose outcome is indeterminate, read off the evaluation population. That is a
+// projection, and it needed no type.
 
 // ---------------------------------------------------------------------------
 // Laws
 // ---------------------------------------------------------------------------
 
 /**
- * A gate reads something and claims something.
+ * A gate claims something, and does not declare what it reads.
  *
- * Both negative lines matter. Widening either population to a plain array
- * admits the empty case, and the empty case is a gate that cannot fail — which
- * is indistinguishable from a gate that never fires, and is exactly the state
- * every vacuous law in this repository has been in.
+ * The first two lines are what survives of a law that also pinned `reads`.
+ * Widening the claim population to a plain array admits the empty case, and a
+ * gate that claims nothing can never be disproven — indistinguishable from a
+ * gate that cannot fail, which is the state every vacuous law in this repository
+ * has been in.
+ *
+ * Lines three and four are the subtraction, checked by name because that is how
+ * it would come back: `reads` had zero consumers and sat opposite
+ * `AcquiredFact.consumers`, the same relationship written twice and read never.
+ * The proposition is the one declaration of what a check reasons about.
  */
-export type AGateReadsEvidenceAndClaimsDetection = Assert<
-  Equal<
-    [
-      Equal<GateDefinition['reads'], NonEmptyTuple<AssuranceFactName>>,
-      readonly AssuranceFactName[] extends GateDefinition['reads'] ? true : false,
-      Equal<GateDefinition['claims'], NonEmptyTuple<FailureClassReference>>,
-      readonly FailureClassReference[] extends GateDefinition['claims'] ? true : false,
-    ],
-    [true, false, true, false]
+export type AGateClaimsDetectionAndDeclaresNoReads = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<GateDefinition['claims'], NonEmptyTuple<FailureClassReference>>,
+        readonly FailureClassReference[] extends GateDefinition['claims'] ? true : false,
+        'reads' extends keyof GateDefinition ? true : false,
+        'facts' extends keyof GateDefinition ? true : false,
+        Equal<GateDefinition['proposition'], AssuranceProposition>,
+      ],
+      [true, false, false, false, true]
+    >
   >
 >;
 
@@ -860,6 +883,37 @@ export type UnknownNeverPassesAGate = Assert<
       Equal<TagOf<GateOutcome>, 'satisfied' | 'refuted' | 'indeterminate'>,
     ],
     [true, false, false, true, true]
+  >
+>;
+
+/**
+ * A finding restates nothing the evaluation carrying it already owns.
+ *
+ * A finding lives inside one evaluation, so the gate is that evaluation's gate
+ * and the outcome is that evaluation's outcome. Carrying copies would let a
+ * finding disagree with the evaluation containing it — a parallel roster in
+ * miniature, and the third one this commit removes.
+ *
+ * All four absences are checked by name, because each is one plausible-looking
+ * edit away: `gate` and `outcome` read as helpful denormalization, `disposition`
+ * and `severity` read as reporting convenience. Lines five through seven pin
+ * what a finding does own, so this is a subtraction rather than a shape nobody
+ * has looked at.
+ */
+export type AFindingRestatesNothingItsEvaluationOwns = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        'gate' extends keyof Finding ? true : false,
+        'outcome' extends keyof Finding ? true : false,
+        'disposition' extends keyof Finding ? true : false,
+        'severity' extends keyof Finding ? true : false,
+        Equal<Finding['subject'], AssuranceSubject>,
+        Equal<Finding['diagnostics'], readonly Diagnostic[]>,
+        Equal<Finding['remediation'], readonly RemediationAction[]>,
+      ],
+      [false, false, false, false, true, true, true]
+    >
   >
 >;
 
@@ -1081,5 +1135,4 @@ export interface AssuranceTypeSurface {
   readonly proof: DemonstrationOutcome;
   readonly outcome: GateOutcome;
   readonly finding: Finding;
-  readonly degradation: AssuranceDegradation;
 }
