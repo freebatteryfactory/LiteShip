@@ -578,7 +578,7 @@ It composes the root shape calculus into actual product semantics:
 - agent/editor/accessibility/shader/media projections;
 - explanation and authority discovery.
 
-The attached `00_core/README.md`, `00_core/types.ts`, and numbered core homes record the confirmed internal authority structure, type waterfall, runtime doctrine, proof obligations, and visible open seams. They are downstream of this root foundation and are confirmed and closed as architecture; implementation remains intentionally absent and unauthorized until its phase opens.
+The attached `00_core/README.md`, `00_core/types.ts`, and numbered core homes record the confirmed internal authority structure, type waterfall, runtime doctrine, proof obligations, and visible open seams. They are downstream of this root foundation and exist as architecture; implementation is intentionally absent. Nothing there is protected from correction — see §17.
 
 ### 8.1 Complete meaning, selective realization
 
@@ -795,7 +795,7 @@ The root type foundation is complete only when the eventual implementation prove
 27. `types.laws.ts` type-checks under the primary lane, declares no runtime values, and stays outside the Type ABI population, declaration emission, and the public export membrane, so fixture names never enter the addressed root surface.
 28. Every root law is non-vacuous: reversing the implementation a law guards makes that named law fail, and a shared guard is proven separately at each operator that claims to apply it.
 
-## 17. Phase boundary
+## 17. What is undecided, and what may be corrected
 
 This foundation and the attached `00_core/` architecture candidate intentionally do not decide:
 
@@ -809,13 +809,17 @@ This foundation and the attached `00_core/` architecture candidate intentionally
 - replication and merge algorithms;
 - compatibility packages and release versioning.
 
-Root and `00_core/` are confirmed and closed. Core semantic decisions are reopened only when a downstream proof creates a contradiction, an implementation shows a declared contract cannot be realized faithfully, an old-source oracle reveals an omitted capability, an empirical result invalidates a physical assumption, or Eassa reopens them explicitly.
+**Nothing above is protected from correction.** A commit records bytes; a tag is a bookmark; "type-checks" means TypeScript accepted this tree under one named configuration. No layer name, prior ruling, or tag creates a permission barrier. When evidence shows an authority is wrong or incomplete, correct that authority directly rather than working around it downstream.
 
-The host layer is complete as architecture. The umbrella contract — including the grounding and admission boundary that distinguishes an authority a host admits from one it constructs — is confirmed and closed, and all four children are specified: `web/` across thirteen numbered homes, `worker/` across seven, `edge/` across eleven, and `server/` across eleven. `02_targets/` has its three children.
+Evidence that warrants correcting core, or anything else: a downstream contract that cannot be expressed faithfully over it; compiler behaviour contradicting a written claim; an implementation showing a declared contract is unrealizable; an old-source oracle revealing an omitted capability; an empirical result invalidating a physical assumption; or a change in product intent.
 
-The current work is `system/`'s wire-independent foundation — `00_workspace/`, `01_assurance/` with `00_audit/` and `01_gauntlet/`, and `02_release/` — followed by `02_wires/`, after which `system/03_programs/` and `system/04_bootstrap/` can be authored against real wire contracts rather than guessed ones. The order is the dependency, not a schedule: three system homes observe the repository and need no wire, and two consume wires and cannot honestly precede them.
+Dependency direction is the one rule that does not bend — it is what makes this a waterfall rather than a graph.
 
-No runtime implementation is authorized anywhere: every home in the repository receives its architecture before any executable product code exists, and implementation opens only when the whole repository architecture closes and Eassa explicitly authorizes it.
+What exists as architecture: root, `00_core/` (nineteen homes), `01_hosts/` (four children — `web/` thirteen homes, `worker/` seven, `edge/` eleven, `server/` eleven), `02_targets/` (three children), `02_wires/` (umbrella and `direct/`), and `system/` (`00_workspace/`, `01_assurance/` with `00_audit/` and `01_gauntlet/`, `02_release/`).
+
+What is not yet written: the remaining wire children, `system/03_programs/`, and `system/04_bootstrap/`. The last two consume wire contracts, so writing them before the wires exist would mean guessing at a shape they must match. That is a dependency, not a schedule.
+
+No runtime implementation exists anywhere. Every home receives its architecture before any executable product code, so the shape settles while it is still cheap to change. Eassa decides when implementation starts.
 
 ## 18. Source basis
 
