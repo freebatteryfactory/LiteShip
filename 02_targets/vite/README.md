@@ -54,7 +54,7 @@ A third thing the ecosystem gives is bookkeeping that must not be mistaken for i
 
 This child exposes a facility in upstream vocabulary and stops. It does not import a requester's hole to claim conformance, and it declares no member shaped around one — a `framework`, `astro`, or `hooks` member would make the facility fillable only by the requester it was shaped around, which is a sibling import re-entering through the type system.
 
-Whether the facility converges with anyone's requirement is proved in `verification/`, which imports both public surfaces and acquires no semantic ownership by doing so.
+Whether the facility converges with anyone's requirement is proved by a composition point importing both public surfaces, which acquires no semantic ownership by doing so. That is assurance; its home is `system/`, which is not yet authored.
 
 ## Laws
 

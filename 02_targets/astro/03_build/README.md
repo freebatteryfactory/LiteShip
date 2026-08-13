@@ -23,7 +23,7 @@ State the one build facility this child needs, in already-closed upstream vocabu
 
 - Any supplier. This home names no ecosystem, no plugin, and no bundler.
 - Compiler algorithms, a compiler-arm roster, source maps, artifact identity, or output bytes.
-- Whether a given supplier converges. That is a question for a composition point importing both, and it is answered in `verification/`.
+- Whether a given supplier converges. That is a question for a composition point importing both, and it is assurance rather than architecture — its home is `system/`, which is not yet authored.
 
 ## Why the parameter is constrained, and by what
 

@@ -23,7 +23,7 @@ Project the complete core compiler fleet into the build lifecycle, and expose th
 
 - Any requester. Nothing here imports, names, or is shaped around a framework.
 - Compiler algorithms or arm semantics. Core owns those.
-- Whether the facility converges with anyone. `verification/` answers that.
+- Whether the facility converges with anyone. A composition point answers that, and it is assurance rather than architecture — its home is `system/`, which is not yet authored.
 
 ## Derived, because a hand-maintained list goes quiet
 

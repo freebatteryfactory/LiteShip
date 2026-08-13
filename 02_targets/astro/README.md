@@ -50,7 +50,7 @@ Astro genuinely uses Vite. That fact is expressed without importing Vite, naming
 
 Coexistence does not create ownership. "Astro uses Vite" does not put Vite above Astro, and the predecessor's one target that imported a sibling is precisely the one that lost its independent story.
 
-Whether any supplier actually converges is not a question this child may answer about itself. `verification/` imports both public surfaces and proves the binding, which it may do because it is not a target and acquires no semantic ownership by doing so.
+Whether any supplier actually converges is not a question this child may answer about itself. A composition point imports both public surfaces and proves the binding, which it may do because it is not a target and acquires no semantic ownership by doing so. That composition point is assurance; its home is `system/`, which is not yet authored.
 
 ## Laws
 

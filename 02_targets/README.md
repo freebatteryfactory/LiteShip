@@ -1,6 +1,6 @@
 # Targets: Ecosystem Integration Surfaces
 
-Status: umbrella sealed at tag `targets-umbrella-seal`; `astro/`, `vite/`, and `cloudflare/` authored, their seam proved and direct mode exercised; roster not yet sealed; implementation absent
+Status: `astro/`, `vite/`, and `cloudflare/` authored, their seam proved and direct mode exercised; implementation absent
 
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
@@ -44,7 +44,7 @@ The composition outcome is what projects into core's existing `Explanation`. The
 - A universal lifecycle taxonomy, target context, plugin interface, or hook table.
 - Per-target payloads of any kind.
 - Any child's configuration shape, decoder, or admission.
-- An exact child roster. Three children now exist; the roster seals when Eassa declares the target layer closed, following the host pattern.
+- Per-child internal topology. Each child owns its own home roster; this umbrella owns only which children exist, which is `TargetChildRoster`: `astro`, `vite`, `cloudflare`.
 - Deployment mechanics, platform resources, or credentials. `02_targets/cloudflare` owns the deployment relation; the umbrella owns only the application it consumes.
 
 ## Why children do not import one another
@@ -59,7 +59,9 @@ A child names what it needs in upstream vocabulary and exposes what it offers in
 
 ## The first join, and what it cost to make it mean anything
 
-`astro/03_build` declares a build-facility hole; `vite/01_projection` exposes a facility; neither imports or names the other. `verification/probes/probe-astro-vite-binding.ts` imports both public surfaces and binds them through `BindingsFor`, with no casts and no local replica. That file compiling is the first evidence that relation-shaped composition works at all — before it, the model was approved and unproven.
+`astro/03_build` declares a build-facility hole; `vite/01_projection` exposes a facility; neither imports or names the other. A composition point importing both public surfaces binds them through `BindingsFor`, with no casts and no local replica, and that it compiles is the first evidence relation-shaped composition works at all — before it, the model was approved and unproven.
+
+The composition point is assurance, not architecture, and assurance has no home yet. It was proved at tags `astro-vite-seam` through `media-live-export-closure`; the bootstrap harness that carried it was removed rather than allowed to become a permanent root, and the capability returns when `system/` is authored.
 
 Two ways of writing the requirement were rejected first, both of which compile and neither of which proves anything. A **free** contract parameter lets any supplier satisfy the hole by nominating itself. A parameter constrained by the **broad** instantiation is the same failure wearing a constraint, since broadening is what the broad form permits. The requirement is therefore generic over the exact axes, with the supplier constrained by those: the parameter names *who* filled the socket, never *what the socket means*.
 
@@ -77,7 +79,7 @@ A consumer of a produced artifact must not be able to ask which framework produc
 
 The test the architecture must keep passing: a composition of hosts alone can produce what a framework-produced artifact would, and the consuming path does not branch. If anything resembling `withoutAstro`, `astro?: boolean`, or a separate direct route appears, the contract is in the wrong place.
 
-That test now runs. `02_targets/cloudflare/03_deployment` is the first consumer that takes both, and `verification/probes/probe-direct-deployment.ts` passes a framework-produced application and a host-only-produced application through **one function** into the same request type. Until that compiled, the arm was representable but unexercised.
+That test was run. `02_targets/cloudflare/03_deployment` is the first consumer that takes both, and a composition point passed a framework-produced application and a host-only-produced application through **one function** into the same request type. Until that compiled, the arm was representable but unexercised. Like the seam above, the proof is assurance awaiting `system/`.
 
 ## Laws
 

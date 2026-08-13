@@ -42,7 +42,7 @@ That is a natural experiment with a clean result, and it is the whole argument f
 
 The umbrella has carried an empty `direct-composition` arm since it was sealed, on the claim that a composition of hosts alone can produce what a framework-produced artifact would and that the consuming path does not branch. Nothing had ever tested it — the arm was compiled in, but no consumer existed that took both.
 
-`03_deployment` is that consumer, and `verification/probes/probe-direct-deployment.ts` is the test. It builds one application from framework-produced artifacts and another from host-only-produced artifacts, then passes both through **one function** into the same request type. There is no member that function could read to decide, which is what the claim actually meant.
+`03_deployment` is that consumer, and a composition point importing both producers is the test. It builds one application from framework-produced artifacts and another from host-only-produced artifacts, then passes both through **one function** into the same request type. There is no member that function could read to decide, which is what the claim actually meant.
 
 ## The deployment contract it earned
 

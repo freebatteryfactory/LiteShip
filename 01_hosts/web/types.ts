@@ -1,11 +1,11 @@
 /**
  * Web host topology and capability composition.
  *
- * Twelve numbered homes in dependency order, each owning one distinct
+ * Thirteen numbered homes in dependency order, each owning one distinct
  * physical authority. The topology follows core's ordered pattern — named
  * entries in an exact tuple — so order, membership, and surface association
  * are all type-level facts a mutation can break, not a union pretending to be
- * a sequence. The roster is lawful because all twelve directories physically
+ * a sequence. The roster is lawful because all thirteen directories physically
  * exist in the same architecture fold.
  *
  * The capability topology composes every home's declared grounding slots and

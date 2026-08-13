@@ -27,7 +27,7 @@ Consume a deployable application — whoever produced it — together with an ad
 
 The umbrella has carried an empty `direct-composition` arm since it was sealed, on the claim that a composition of hosts alone can produce what a framework-produced artifact would, and that the consuming path does not branch. Nothing had ever tested it. The arm was compiled in, but no consumer existed that took both.
 
-This home is that consumer, and it consumes exactly one type. `verification/probes/probe-direct-deployment.ts` builds one application from framework-produced artifacts and another from host-only-produced artifacts, then passes both through **one function** into the same request type. There is no member the function could read to decide, which is what the claim actually meant.
+This home is that consumer, and it consumes exactly one type. A composition point builds one application from framework-produced artifacts and another from host-only-produced artifacts, then passes both through **one function** into the same request type. There is no member the function could read to decide, which is what the claim actually meant.
 
 The predecessor failed this precisely: its Cloudflare package required a framework sibling and shipped no direct entry at all.
 

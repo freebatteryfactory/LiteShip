@@ -58,6 +58,19 @@ import type {
  */
 export type EcosystemTargetId<Name extends string = string> = Brand<Name, 'liteship.ecosystem-target-id'>;
 
+/**
+ * The children this layer currently has: three, and these three.
+ *
+ * `02_targets/` contains exactly `astro/`, `vite/`, and `cloudflare/`. Saying so
+ * in a type means a fourth is an edit somebody makes on purpose rather than a
+ * folder that appears because a dependency did. The name union derives from the
+ * tuple so the population is written once.
+ */
+export type TargetChildRoster = readonly ['astro', 'vite', 'cloudflare'];
+
+/** The child names, derived from the roster. */
+export type TargetChildName = TargetChildRoster[number];
+
 /** Reference to one ecosystem integration. */
 export type EcosystemTargetReference<Id extends EcosystemTargetId = EcosystemTargetId> = Reference<
   'ecosystem-target',
@@ -914,6 +927,7 @@ export type EveryProductCarriesItsPhaseIdentity = Assert<
 
 /** Type summary consumed by the root topology. */
 export interface TargetTypeSurface {
+  readonly children: TargetChildRoster;
   readonly deployable: DeployableApplication;
   readonly target: EcosystemTargetReference;
   readonly configuration: TargetConfigurationRevision;
