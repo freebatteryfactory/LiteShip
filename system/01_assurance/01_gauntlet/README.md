@@ -1,4 +1,4 @@
-# Gauntlet: Evidence Evaluation and Earned Authority
+# Gauntlet: Evidence Evaluation
 
 Status: architecture specified; implementation absent
 
@@ -19,12 +19,13 @@ Read facts against the checks one invocation asked for, and produce one result r
 - The evidence profile distinction.
 - The run specification: which checks this invocation asked for, and which of them it requires.
 - The evaluation population derived from that specification, and the assurance result.
+- The evaluated gate: a definition at an exact revision, paired with where each of its claims' demonstrations stand.
 - Consumer gate identity, so extension arrives through the same path rather than beside it.
 
 ## Does not own
 
 - Any acquisition. No compiler lane, no filesystem, no source control appears here, and their absence from the run product is a law.
-- Gate identity, scope, qualification, outcome, or authority as *types* — those are the assurance umbrella's, shared with `00_audit`.
+- Gate identity, scope, outcome, findings, or the demonstration vocabulary as *types* — those are the assurance umbrella's, shared with `00_audit`.
 - Command parsing, exit codes, or output rendering. Those are the CLI wire's, and the wire does not exist yet.
 
 ## Gauntlet acquires nothing
@@ -65,7 +66,7 @@ Where the consequence is not a literal — the broad spec, where nobody has yet 
 
 `GauntletVerdict` is `passed | blocked`. There is deliberately no `passed-with-warnings`.
 
-That arm is how a blocking gate becomes a suggestion over time: the arm appears for one legitimate reason, then accumulates, and eventually the blocking population is empty and nobody decided that. Advisory findings ride inside `passed`, where they are visible and carry no authority. A blocking gate that refuted or could not resolve produces `blocked`, and `blocked` carries the evaluations that caused it, so a refusal names its causes rather than being a bare exit code.
+That arm is how a blocking gate becomes a suggestion over time: the arm appears for one legitimate reason, then accumulates, and eventually the blocking population is empty and nobody decided that. Informational findings ride inside `passed`, where they are visible and require nothing. A blocking gate that refuted or could not resolve produces `blocked`, and `blocked` carries the evaluations that caused it, so a refusal names its causes rather than being a bare exit code.
 
 ## Lean and rich are declared, not inferred
 
@@ -75,15 +76,19 @@ A gate declares the profile it requires. Under a lean run, a gate needing rich e
 
 ## The one idea that survived
 
-A gate cannot earn authority until evidence shows it detects the failure class it claims.
+A check is worth nothing until evidence shows it detects the failure class it claims.
 
-Everything else about the deleted mutation infrastructure was implementation: the runner, the fifteen banks, the five hundred and thirty-eight mutation entries, the temporary-directory staging, the generated tsconfig. Implementations are quarry. This relation is architecture, it lives in the assurance umbrella as `GateQualification` and `DetectionWitness`, and this home is where a definition binds its claim to its evaluation.
+Everything else about the deleted mutation infrastructure was implementation: the runner, the fifteen banks, the five hundred and thirty-eight mutation entries, the temporary-directory staging, the generated tsconfig. Implementations are quarry. This relation is architecture, the assurance umbrella owns its vocabulary, and this home is where a claim, its proof, and its evaluation become one population — bound to the exact rule revision, so editing a check invalidates its old demonstration by construction rather than by anybody remembering to.
 
 ## Laws
 
 - A gate reads a non-empty fact population and claims a non-empty failure-class population; neither may widen to a plain array.
 - The verdict is passed or blocked, with no middle arm, and blocked names the evaluations that blocked.
 - A gate definition and its evaluation are exact over gate identity, and the broad form does not substitute.
+- A claim and its proof are one population: fewer proofs than claims, and a proof of the wrong claim, are both refused.
+- The evaluated gate carries that correlated population, checked against a written-out tuple rather than against the mapping that produced it.
+- A required check in a passing result carries a gate whose every claim is demonstrated, not merely one whose proof evidence was acquired.
+- Proof is bound to the exact rule revision, read through the proof entries rather than through the definition beside them.
 - A gauntlet run carries no surfaces, graph, probes, interpreter, or files.
 - A result carries one evaluation per planned check, positionally; a shorter population, a repeated gate, and an unbounded array are all refused.
 - A passing result's required positions are pinned to the satisfied outcome; a merely existing evaluation cannot occupy one, and a satisfied one can.

@@ -344,10 +344,17 @@ export interface Withdrawal<
  * A release cannot qualify itself.
  *
  * Line one pins the exact arm. Line two is the mutation guard: widening the
- * member to the full algebra readmits `unearned`, and only a negative
- * assertion catches an edit that otherwise looks like a simplification.
- * Line three confirms the earned arm still carries its gates, so the chain to a
- * demonstrated detection cannot be cut at the far end instead.
+ * member to the full algebra readmits `blocked`, and only a negative assertion
+ * catches an edit that otherwise looks like a simplification.
+ *
+ * Line three used to assert that the result carried an `authority` member, on
+ * the theory that the chain to a demonstrated detection could otherwise be cut
+ * at the far end. That member is gone, and its absence is now the assertion. It
+ * carried the snapshot the result already carried and a gate population that had
+ * demonstrated something — a badge describing evidence, standing beside the
+ * evidence. The chain it was guarding is now carried by the passed arm itself:
+ * every required position holds a demonstrated gate, which is where a
+ * publication traces back to a demonstration.
  */
 export type AReleaseCannotQualifyItself = Assert<
   Equal<
@@ -356,9 +363,10 @@ export type AReleaseCannotQualifyItself = Assert<
       AssuranceResult extends CaseOf<ReleaseQualification, 'qualified'>['result'] ? true : false,
       'authority' extends keyof CaseOf<ReleaseQualification, 'qualified'>['result'] ? true : false,
       'snapshot' extends keyof CaseOf<ReleaseQualification, 'qualified'>['result'] ? true : false,
+      'evaluations' extends keyof CaseOf<ReleaseQualification, 'qualified'>['result'] ? true : false,
       Equal<TagOf<ReleaseQualification>, 'unqualified' | 'qualified'>,
     ],
-    [true, false, true, true, true]
+    [true, false, false, true, true, true]
   >
 >;
 

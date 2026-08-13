@@ -37,9 +37,12 @@ import type {
   Brand,
   CaseOf,
   Equal,
+  IsExactlyTrue,
   NonEmptyTuple,
   Reference,
+  Refine,
   TagOf,
+  TypeScriptToolchainFingerprint,
 } from '../../types.js';
 import type { Diagnostic, RemediationAction } from '../../00_core/00_error/types.js';
 import type { ContentAddress } from '../../00_core/01_encoding/types.js';
@@ -177,52 +180,186 @@ export interface GateScope {
   readonly excluded: readonly AssuranceSubject[];
 }
 
+// ---------------------------------------------------------------------------
+// Self-demonstration: proving a check can discriminate
+// ---------------------------------------------------------------------------
+
 /**
- * One demonstration that a gate detected an injected defect.
+ * Identity of one exact revision of a check's rule.
  *
- * This is the durable idea underneath the mutation banks that were deleted.
- * The banks were an implementation — five hundred and seventy-one scripts and
- * a bespoke runner — and implementations are quarry. What survives is the
- * relation they were groping at: a guard that has never been observed failing
- * is indistinguishable from a guard that cannot fail, and this repository has
- * written laws in both categories.
+ * Three identities stay distinct and this is the middle one. `GateId` is which
+ * conceptual check this is, and survives edits. This is the exact rule that was
+ * demonstrated, and does not: editing the rule mints a new revision, which
+ * invalidates the old proof by construction rather than by anybody remembering
+ * to. The third is the observed source location, which is a fact about one
+ * repository snapshot and lives on the definition.
+ *
+ * A threading token, read exactly as {@link WorkspaceSnapshotId} is. The content
+ * address of the rule text rides on the definition as an observation; it cannot
+ * carry exactness itself, because `ContentAddress<Type>` resolves to one
+ * template literal identical for every value of that media type.
  */
-export interface DetectionWitness {
-  readonly failureClass: FailureClassReference;
-  readonly mutation: ContentAddress;
-  readonly observed: 'refuted';
+export type GateRevisionId<Name extends string = string> = Brand<
+  Name,
+  'liteship.assurance-gate-revision-id'
+>;
+export type GateRevisionReference<Id extends GateRevisionId = GateRevisionId> = Reference<
+  'assurance-gate-revision',
+  Id
+>;
+
+/**
+ * A synthetic artifact a demonstration runs the check against.
+ *
+ * Deliberately not a `WorkspaceSnapshotReference`. A specimen is a fabricated
+ * world built to test whether the instrument can discriminate; the repository
+ * snapshot is the subject the instrument is later pointed at. Forcing one
+ * coordinate to mean both would make "this check was demonstrated" and "this
+ * check was run on your code" the same claim, and they are not remotely the
+ * same claim.
+ */
+export type SpecimenId<Name extends string = string> = Brand<
+  Name,
+  'liteship.assurance-specimen-id'
+>;
+export type SpecimenReference<Id extends SpecimenId = SpecimenId> = Reference<
+  'assurance-specimen',
+  Id
+>;
+
+/**
+ * What one witness is doing in a demonstration.
+ *
+ * Four roles, and a demonstration requires all four in named slots rather than
+ * in an array. An array of four witness values can hold four baselines and
+ * congratulate itself; the whole point of the roles is that each answers a
+ * different way the demonstration could be worthless.
+ *
+ * - `baseline`: the unmodified control was green, so the check is not red for
+ *   unrelated reasons.
+ * - `lawful`: a known-lawful neighbouring specimen was accepted, so the check is
+ *   not simply refusing everything near the defect.
+ * - `detection`: the injected failure class was refused.
+ * - `attribution`: the refusal came from the intended semantic relationship.
+ */
+export type WitnessRole = 'baseline' | 'lawful' | 'detection' | 'attribution';
+
+/** The outcome a role is allowed to have observed. */
+type RoleObservation<Role extends WitnessRole> = Role extends 'baseline' | 'lawful'
+  ? CaseOf<GateOutcome, 'satisfied'>
+  : CaseOf<GateOutcome, 'refuted'>;
+
+/**
+ * Why a refusal is the refusal that was claimed.
+ *
+ * `relationship` is the load-bearing member. Attribution's whole job is to
+ * separate "the check went red" from "the check went red *because of the
+ * relationship it claims to police*", and a nonzero exit code, a syntax error,
+ * an unresolved import, or an unrelated rule firing all produce the first
+ * without the second. A witness that cannot name the predicate it attributes the
+ * refusal to has not attributed anything.
+ *
+ * The finding travels with it so the attribution is auditable rather than
+ * asserted.
+ */
+export interface AttributedRefusal {
+  readonly finding: Finding;
+  readonly relationship: AssurancePredicate;
+}
+
+/** What a role beyond `attribution` carries: nothing extra. */
+type RoleAttribution<Role extends WitnessRole> = Role extends 'attribution'
+  ? AttributedRefusal
+  : Record<never, never>;
+
+/**
+ * One observation of one exact rule against one specimen, in one role.
+ *
+ * This replaces `DetectionWitness`, which carried a failure class, a mutation
+ * address, and the literal `'refuted'` — three facts with nothing binding them
+ * to the rule that did the refusing, the toolchain that ran it, or the claim it
+ * was supposed to be about.
+ *
+ * The interpreter fingerprint is root's, not a local twin. A demonstration under
+ * a different compiler is a different demonstration, and the repository already
+ * owns a type that says which one.
+ */
+export interface DemonstrationWitness<
+  Role extends WitnessRole = WitnessRole,
+  Class extends FailureClassId = FailureClassId,
+  Revision extends GateRevisionId = GateRevisionId,
+> {
+  readonly role: Role;
+  readonly revision: GateRevisionReference<Revision>;
+  readonly failureClass: FailureClassReference<Class>;
+  readonly specimen: SpecimenReference;
+  readonly interpreter: TypeScriptToolchainFingerprint;
+  readonly observed: RoleObservation<Role>;
+  readonly attribution: RoleAttribution<Role>;
 }
 
 /**
- * A gate that has earned the right to block.
+ * One demonstration that one check detects one failure class.
  *
- * `detects` and `witnesses` are both non-empty, so a qualified gate with no
- * demonstrated detection is unrepresentable rather than merely discouraged.
- * That is the whole point: the previous arrangement could and did produce
- * gates whose self-tests passed with the gate removed.
+ * Four named slots, each pinned to its own role literal, so the product cannot
+ * hold four baselines. This is what replaces the previous arrangement, in which
+ * `detects: NonEmptyTuple<FailureClassReference>` and
+ * `witnesses: NonEmptyTuple<DetectionWitness>` were two independent populations
+ * — probe-confirmed that a gate declaring it detects X while carrying a witness
+ * for Y was assignable. The claim and its evidence are now the same object.
  */
-export interface QualifiedGate<Id extends GateId = GateId> {
-  readonly gate: GateReference<Id>;
-  readonly detects: NonEmptyTuple<FailureClassReference>;
-  readonly witnesses: NonEmptyTuple<DetectionWitness>;
+export interface ClaimDemonstration<
+  Class extends FailureClassId = FailureClassId,
+  Revision extends GateRevisionId = GateRevisionId,
+> {
+  readonly failureClass: FailureClassReference<Class>;
+  readonly revision: GateRevisionReference<Revision>;
+  readonly baseline: DemonstrationWitness<'baseline', Class, Revision>;
+  readonly lawful: DemonstrationWitness<'lawful', Class, Revision>;
+  readonly detection: DemonstrationWitness<'detection', Class, Revision>;
+  readonly attribution: DemonstrationWitness<'attribution', Class, Revision>;
 }
 
 /**
- * Whether a gate has been shown to detect what it claims.
+ * How a completed self-demonstration came out.
  *
- * The `refuted` arm matters as much as the other two. A gate that was tested
- * and failed to notice its own failure class is a different and more dangerous
- * state than one nobody has tested, and collapsing them into a boolean loses
- * exactly the distinction worth acting on.
+ * `disproven` rather than `refuted`, deliberately. `GateOutcome.refuted` already
+ * means "this check evaluated the repository and found its proposition false",
+ * and reusing the word for "this check failed to notice the defect it claims to
+ * catch" would put two subjects under one term in a file whose entire job is
+ * keeping claims and evidence apart.
+ *
+ * There is no `untested` arm, and its absence is the point. Whether anyone has
+ * tried is not a property of the outcome — it is the difference between having
+ * this value and not having it, which is exactly what core's `Evidence` already
+ * expresses: `unavailable` when nobody produced a demonstration, `pending` while
+ * one runs, `ready` when it came out either way, `failed` when the demonstration
+ * machinery itself broke. The retired `GateQualification` had `untested` as an
+ * arm of the same algebra as `qualified`, which is a status badge riding on
+ * every evaluation. Reuse the absence language that exists; do not invent a
+ * second one.
  */
-export type GateQualification = Algebra<{
-  untested: Record<never, never>;
-  qualified: { readonly qualification: QualifiedGate };
-  refuted: {
-    readonly undetected: NonEmptyTuple<FailureClassReference>;
+export type DemonstrationOutcome<
+  Class extends FailureClassId = FailureClassId,
+  Revision extends GateRevisionId = GateRevisionId,
+> = Algebra<{
+  demonstrated: { readonly demonstration: ClaimDemonstration<Class, Revision> };
+  disproven: {
+    readonly failureClass: FailureClassReference<Class>;
+    readonly revision: GateRevisionReference<Revision>;
+    readonly observed: NonEmptyTuple<DemonstrationWitness>;
     readonly diagnostics: readonly Diagnostic[];
   };
 }>;
+
+/** A demonstration that was actually acquired and actually came out demonstrated. */
+export type DemonstratedProof<
+  Class extends FailureClassId = FailureClassId,
+  Revision extends GateRevisionId = GateRevisionId,
+> = Refine<
+  CaseOf<Evidence<DemonstrationOutcome<Class, Revision>>, 'ready'>,
+  { readonly value: CaseOf<DemonstrationOutcome<Class, Revision>, 'demonstrated'> }
+>;
 
 /**
  * The result of evaluating one gate, with unknown kept out of the pass arm.
@@ -238,23 +375,6 @@ export type GateOutcome = Algebra<{
   indeterminate: {
     readonly decision: AssuranceDecision & { readonly truth: 'unknown' };
     readonly blockers: NonEmptyTuple<DecisionBlocker<AssuranceSubject>>;
-  };
-}>;
-
-/**
- * Authority earned by qualified gates over an exact snapshot.
- *
- * The `earned` arm carries `QualifiedGate` values rather than gate references,
- * so authority cannot be claimed on behalf of a gate that never demonstrated
- * anything. It also carries the snapshot it was earned over: authority is a
- * fact about one revision of one workspace, and authority that outlives its
- * coordinate is the mechanism by which a release qualifies itself.
- */
-export type AssuranceAuthority<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = Algebra<{
-  unearned: { readonly reason: string };
-  earned: {
-    readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
-    readonly gates: NonEmptyTuple<QualifiedGate>;
   };
 }>;
 
@@ -341,42 +461,117 @@ export type UnknownNeverPassesAGate = Assert<
 >;
 
 /**
- * Authority cannot be earned without demonstrated detection.
+ * A demonstration requires all four roles, in named slots.
  *
- * The last two lines are the ones a mutation would otherwise slip past:
- * widening `gates` to bare references, or letting `witnesses` become a
- * possibly-empty array, both leave a gate able to claim authority it never
- * demonstrated, and both are ordinary-looking edits.
+ * Lines one through four are the roles. Line five is the one that makes the
+ * arrangement worth anything: each slot is pinned to its own role literal, so a
+ * product carrying four baselines is not assignable — which a
+ * `NonEmptyTuple<DemonstrationWitness>` would happily be, and which the retired
+ * `witnesses` array was.
+ *
+ * Lines six and seven pin the outcomes the roles are allowed to have observed.
+ * A `detection` witness reporting that the check was *satisfied* is the exact
+ * shape of a self-test that passes with the guard removed, which is the defect
+ * this whole apparatus exists for.
  */
-export type EarnedAuthorityRequiresQualifiedGates = Assert<
-  Equal<
-    [
-      Equal<CaseOf<AssuranceAuthority, 'earned'>['gates'], NonEmptyTuple<QualifiedGate>>,
-      readonly GateReference[] extends CaseOf<AssuranceAuthority, 'earned'>['gates'] ? true : false,
-      Equal<QualifiedGate['witnesses'], NonEmptyTuple<DetectionWitness>>,
-      readonly DetectionWitness[] extends QualifiedGate['witnesses'] ? true : false,
-      'snapshot' extends keyof CaseOf<AssuranceAuthority, 'earned'> ? true : false,
-    ],
-    [true, false, true, false, true]
+export type ADemonstrationRequiresAllFourRoles = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        'baseline' extends keyof ClaimDemonstration ? true : false,
+        'lawful' extends keyof ClaimDemonstration ? true : false,
+        'detection' extends keyof ClaimDemonstration ? true : false,
+        'attribution' extends keyof ClaimDemonstration ? true : false,
+        DemonstrationWitness<'baseline'> extends ClaimDemonstration['detection'] ? true : false,
+        Equal<ClaimDemonstration['detection']['observed'], CaseOf<GateOutcome, 'refuted'>>,
+        Equal<ClaimDemonstration['baseline']['observed'], CaseOf<GateOutcome, 'satisfied'>>,
+      ],
+      [true, true, true, true, false, true, true]
+    >
   >
 >;
 
 /**
- * Qualification keeps untested and refuted apart.
+ * Attribution names the relationship it attributes a refusal to.
  *
- * A boolean would merge them, and the merge loses the only distinction worth
- * acting on: nobody has checked this gate, versus this gate was checked and
- * did not notice.
+ * Without `relationship`, an attribution witness is a witness that the check
+ * went red, which every syntax error and unresolved import also produces. Line
+ * three is the anti-vacuity partner: the `attribution` slot must actually carry
+ * the payload, and lines four and five confirm the other roles do not — a shape
+ * where every role carried an `AttributedRefusal` would satisfy the first two
+ * lines while meaning nothing.
  */
-export type QualificationSeparatesUntestedFromRefuted = Assert<
-  Equal<
-    [
-      Equal<TagOf<GateQualification>, 'untested' | 'qualified' | 'refuted'>,
-      'qualified' extends keyof GateQualification ? true : false,
-      Equal<CaseOf<GateQualification, 'refuted'>['undetected'], NonEmptyTuple<FailureClassReference>>,
-      Equal<CaseOf<GateQualification, 'qualified'>['qualification'], QualifiedGate>,
-    ],
-    [true, false, true, true]
+export type AttributionNamesTheRelationshipItClaims = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        'relationship' extends keyof AttributedRefusal ? true : false,
+        Equal<AttributedRefusal['relationship'], AssurancePredicate>,
+        Equal<ClaimDemonstration['attribution']['attribution'], AttributedRefusal>,
+        Equal<ClaimDemonstration['baseline']['attribution'], Record<never, never>>,
+        Equal<ClaimDemonstration['detection']['attribution'], Record<never, never>>,
+      ],
+      [true, true, true, true, true]
+    >
+  >
+>;
+
+/**
+ * Untested is an absence, not an arm.
+ *
+ * The retired `GateQualification` was `untested | qualified | refuted` — one
+ * algebra mixing "has anybody looked" with "what did they find", which made a
+ * maturity badge that rode on every evaluation. Core's `Evidence` already
+ * separates those: not acquired, acquired and came out one way or the other,
+ * acquisition itself broke.
+ *
+ * Line three is the correction to the correction. Deleting the qualification
+ * algebra outright would have lost the distinction between *nobody tested this*
+ * and *this was tested and did not notice*, which is the more dangerous state
+ * and the one worth acting on. It survives as `disproven`, in the outcome, where
+ * it is evidence rather than status.
+ *
+ * Line five keeps the two subjects apart by name. `GateOutcome.refuted` means
+ * the check found the repository wanting; `disproven` means the check was found
+ * wanting. One word for both would be the vocabulary collapsing at exactly the
+ * point it matters.
+ */
+export type UntestedIsAnAbsenceRatherThanAnArm = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<TagOf<DemonstrationOutcome>, 'demonstrated' | 'disproven'>,
+        'untested' extends TagOf<DemonstrationOutcome> ? true : false,
+        'disproven' extends TagOf<DemonstrationOutcome> ? true : false,
+        Equal<TagOf<Evidence<DemonstrationOutcome>>, 'unavailable' | 'pending' | 'ready' | 'failed'>,
+        'refuted' extends TagOf<DemonstrationOutcome> ? true : false,
+        [DemonstratedProof] extends [never] ? true : false,
+        Equal<DemonstratedProof['value'], CaseOf<DemonstrationOutcome, 'demonstrated'>>,
+      ],
+      [true, false, true, true, false, false, true]
+    >
+  >
+>;
+
+/**
+ * A specimen is not a repository snapshot.
+ *
+ * Two brands, mutually unassignable, checked in both directions. The single
+ * coordinate that meant both would make "this check was demonstrated" and "this
+ * check was run on your code" the same claim, and a demonstration would have
+ * been able to present itself as an evaluation.
+ */
+export type ASpecimenIsNotARepositorySnapshot = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        SpecimenReference extends WorkspaceSnapshotReference ? true : false,
+        WorkspaceSnapshotReference extends SpecimenReference ? true : false,
+        Equal<DemonstrationWitness['specimen'], SpecimenReference>,
+        'snapshot' extends keyof DemonstrationWitness ? true : false,
+      ],
+      [false, false, true, false]
+    >
   >
 >;
 
@@ -430,10 +625,12 @@ export interface AssuranceTypeSurface {
   readonly decision: AssuranceDecision;
   readonly gate: GateReference;
   readonly scope: GateScope;
-  readonly qualification: GateQualification;
-  readonly witness: DetectionWitness;
+  readonly revision: GateRevisionReference;
+  readonly specimen: SpecimenReference;
+  readonly witness: DemonstrationWitness;
+  readonly demonstration: ClaimDemonstration;
+  readonly proof: DemonstrationOutcome;
   readonly outcome: GateOutcome;
-  readonly authority: AssuranceAuthority;
   readonly finding: Finding;
   readonly degradation: AssuranceDegradation;
 }
