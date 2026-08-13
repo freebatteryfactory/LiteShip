@@ -19,7 +19,9 @@ import type {
   NonEmptyTuple,
   Reference,
   Result,
+  OkOf,
   Signature,
+  SignatureResult,
   TagOf,
 } from '../../types.js';
 import type { Diagnostic } from '../00_error/types.js';
@@ -27,7 +29,7 @@ import type { CanonicalValue, ContentAddress, ContentDigest, MediaType } from '.
 import type { RevisionId, RevisionReference, WorldId } from '../02_identity/types.js';
 import type { SchemaReference } from '../03_schema/types.js';
 import type { FrameIndex, SampleIndex, StreamSequence, Timebase, TimeCut, Timecode } from '../04_time/types.js';
-import type { DisposalReceipt } from '../05_lifecycle/types.js';
+import type { CancellationReceipt, DisposalReceipt } from '../05_lifecycle/types.js';
 import type { EvidenceCutId, ReproducibilityClaim } from '../06_evidence/types.js';
 import type { AnySemanticCut } from '../08_state/types.js';
 import type { ProjectionFidelity, SceneEgress, SceneReference } from '../11_scene/types.js';
@@ -233,11 +235,18 @@ export interface MediaSource<Unit, Id extends MediaSourceId = MediaSourceId> {
   // composition this model exists to allow.
   //
   // Its output used to be the source's own reference, which kept `Id` covariant
-  // and said nothing. `DisposalReceipt` keeps the covariance and spends it: the
-  // outcome distinguishes a cancel that stopped a live source from one that
-  // arrived after the source had already completed, and that difference is
-  // exactly what a caller reconciling a pipeline needs.
-  readonly cancel: Signature<void, DisposalReceipt<MediaSourceReference<Id>>, NonEmptyTuple<Diagnostic>>;
+  // and said nothing. `CancellationReceipt` keeps the covariance and spends it
+  // on the distinction `MediaBatch` already makes four lines up: a cancel that
+  // stopped a live source, a cancel that repeated one already in effect, and a
+  // cancel that arrived after `completed` or `failed`. The third is the
+  // expensive one — for a long render it is the difference between "your export
+  // was stopped" and "your export finished, go collect it," and no caller can
+  // recover that from a success flag.
+  //
+  // Not `DisposalReceipt`. Cancelling a source does not release it; ownership
+  // and cancellation are different lifecycle facts, and `released` is simply
+  // false here.
+  readonly cancel: Signature<void, CancellationReceipt<MediaSourceReference<Id>>, NonEmptyTuple<Diagnostic>>;
 }
 
 // ---------------------------------------------------------------------------
@@ -997,6 +1006,38 @@ export type AMediaSourceCannotSilentlyDropUnits = Assert<
  * The unit carried only in an input position would be contravariant and would
  * survive every broadening.
  */
+/**
+ * Cancelling a source yields a cancellation receipt in the success arm.
+ *
+ * Read through the operation rather than off the declaration: `SignatureResult`
+ * places the output in `Ok` and the failure algebra in `Err`, and `OkOf`
+ * recovers the success payload. So this asserts that *executing* `cancel`
+ * produces a receipt naming this exact source — not merely that a member was
+ * typed a certain way.
+ *
+ * The second line is the one that would catch the mistake this member already
+ * made once. `cancel` briefly returned a `DisposalReceipt`, which is a truthful
+ * shape describing an untrue event: cancelling a source does not release it.
+ * The two receipts carry disjoint outcome tags, so the substitution fails here
+ * rather than surviving into a host that believes ownership ended.
+ */
+export type CancellingASourceYieldsACancellationReceipt = Assert<
+  Equal<
+    [
+      Equal<
+        OkOf<SignatureResult<MediaSource<PhysicalFrame, MediaSourceId<'law.src'>>['cancel']>>,
+        CancellationReceipt<MediaSourceReference<MediaSourceId<'law.src'>>>
+      >,
+      OkOf<
+        SignatureResult<MediaSource<PhysicalFrame, MediaSourceId<'law.src'>>['cancel']>
+      > extends DisposalReceipt<MediaSourceReference<MediaSourceId<'law.src'>>>
+        ? true
+        : false,
+    ],
+    [true, false]
+  >
+>;
+
 export type AMediaSourceIsExactOverItsUnit = Assert<
   Equal<
     [

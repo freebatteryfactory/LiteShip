@@ -7,7 +7,7 @@
  * @module
  */
 
-import type { Algebra, Assert, Equal, MaybePromise, Result } from '../../types.js';
+import type { Algebra, Assert, Equal, MaybePromise, Result, TagOf } from '../../types.js';
 import type { Diagnostic } from '../00_error/types.js';
 import type { MonotonicNanoseconds } from '../04_time/types.js';
 
@@ -49,28 +49,83 @@ export type DisposalOutcome = Algebra<{
 /**
  * The receipt one disposal produces.
  *
- * This exists because the alternative was measured and it was worse. Across the
- * repository, twenty-five disposal and cancellation operations used six
- * different return conventions: fourteen returned the exact reference they were
- * handed, four returned a projection of their own input, one returned an
- * unrelated layout address, one a transaction generation, and two a bare
- * boolean. None of them carried information the caller did not already have.
+ * The carrier shape exists because the alternative was measured and it was
+ * worse. Across the repository, twenty-five lifecycle-ending operations used
+ * six different return conventions: fourteen returned the exact reference they
+ * were handed, four a projection of their own input, one an unrelated layout
+ * address, one a transaction generation, and two a bare boolean. None carried
+ * information the caller did not already hold.
  *
  * The reason was not carelessness, and it is worth stating so the shape is not
  * "simplified" back later. A `Signature`'s input is contravariant. An operation
  * declared `Signature<Reference<Id>, void>` carries its identity only in an
  * input position, which inverts exactness — a broad supplier becomes assignable
  * where an exact one is required. Returning the reference was the cheapest way
- * to keep `Id` covariant, and it bought that at the cost of a return value that
- * says nothing.
+ * to keep `Id` covariant, and it bought that at the cost of a return that says
+ * nothing.
  *
  * The receipt keeps the covariance and spends it on something true: the subject
  * appears in an output position, and the outcome answers a question only the
- * disposer can answer.
+ * operation can answer.
+ *
+ * **This one is for disposal only.** See {@link CancellationReceipt} — the two
+ * are deliberately not one type.
  */
 export interface DisposalReceipt<Subject> {
   readonly subject: Subject;
   readonly outcome: DisposalOutcome;
+}
+
+/**
+ * What a cancellation request actually did.
+ *
+ * Cancellation is not disposal, and the arms are the evidence. Disposal ends
+ * ownership and is idempotent, so `released | already-released` covers it.
+ * Cancellation is a *request* against work that has its own terminal states,
+ * and it can meet three genuinely different situations.
+ *
+ * The third arm is the one that matters and the one a disposal outcome
+ * destroys. Cancelling something that already completed is not "already
+ * released" — it is the caller discovering that the work finished and the
+ * result exists. For a render, that is the difference between "your export was
+ * stopped" and "your export is done, go collect it." No caller can recover that
+ * from a success flag.
+ *
+ * The arms are read off the lifecycles that actually exist rather than
+ * invented: `MediaBatch` reports produced, completed, cancelled, and failed;
+ * `DeferredOutcome` reports pending, completed, failed, and cancelled. Both
+ * distinguish exactly these three answers to a cancel request.
+ */
+export type CancellationOutcome = Algebra<{
+  /** The subject was live; cancellation now applies to it. */
+  requested: Record<never, never>;
+  /** A prior cancellation already applied. */
+  'already-cancelled': Record<never, never>;
+  /**
+   * The subject reached a terminal state of its own — completed or failed —
+   * before this request arrived, so the request changed nothing.
+   */
+  'already-terminal': Record<never, never>;
+}>;
+
+/**
+ * The receipt one cancellation request produces.
+ *
+ * Structurally a sibling of {@link DisposalReceipt}, and deliberately not
+ * unified with it. Two interfaces sharing two readonly members is ordinary
+ * repetition, not a concept: a `LifecycleTransitionReceipt<Subject, Outcome>`
+ * would be a name for the fact that both carry a subject, which is not a fact
+ * worth naming. The outcomes are where the meaning lives and they do not
+ * generalize.
+ *
+ * They are also not interchangeable, and that is checked. The two outcome
+ * algebras carry disjoint tags, so a cancellation receipt cannot be handed to a
+ * consumer expecting a disposal one — which is the whole point of splitting
+ * them rather than reusing one convenient shape.
+ */
+export interface CancellationReceipt<Subject> {
+  readonly subject: Subject;
+  readonly outcome: CancellationOutcome;
 }
 
 /** Deterministic lifecycle state. */
@@ -158,6 +213,33 @@ export type ADisposalReceiptIsExactOverItsSubject = Assert<
   >
 >;
 
+/**
+ * Cancelling is not disposing, and the types say so.
+ *
+ * The first two lines are the substitutability check that matters: neither
+ * receipt can stand in for the other, at any subject. Without that, splitting
+ * the outcomes would be documentation rather than architecture — a consumer
+ * expecting to learn whether ownership ended could be handed a cancellation
+ * result and never notice.
+ *
+ * The last two lines are the anti-vacuity partners. The receipts differ only in
+ * their outcome member, so if either outcome algebra lost its distinguishing
+ * arms — collapsing both to a bare success — the first two lines would start
+ * passing for the wrong reason. Pinning the exact tag populations is what makes
+ * the separation load-bearing rather than nominal.
+ */
+export type ACancellationReceiptIsNotADisposalReceipt = Assert<
+  Equal<
+    [
+      CancellationReceipt<'a'> extends DisposalReceipt<'a'> ? true : false,
+      DisposalReceipt<'a'> extends CancellationReceipt<'a'> ? true : false,
+      Equal<TagOf<CancellationOutcome>, 'requested' | 'already-cancelled' | 'already-terminal'>,
+      Equal<TagOf<DisposalOutcome>, 'released' | 'already-released'>,
+    ],
+    [false, false, true, true]
+  >
+>;
+
 /** Type summary consumed by the root core topology. */
 export interface LifecycleTypeSurface {
   readonly lifetime: Lifetime;
@@ -167,6 +249,8 @@ export interface LifecycleTypeSurface {
   readonly cancellationSignal: CancellationSignal;
   readonly disposalOutcome: DisposalOutcome;
   readonly disposalReceipt: DisposalReceipt<unknown>;
+  readonly cancellationOutcome: CancellationOutcome;
+  readonly cancellationReceipt: CancellationReceipt<unknown>;
   readonly deadline: Deadline;
   readonly disposalFailure: DisposalFailure;
 }
