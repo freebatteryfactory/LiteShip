@@ -12,7 +12,7 @@
  * @module
  */
 
-import type { Named, Tuple } from '../types.js';
+import type { Named, Tuple, WithoutOrdinalPrefix } from '../types.js';
 import type { ErrorTypeSurface } from './00_error/types.js';
 import type { EncodingTypeSurface } from './01_encoding/types.js';
 import type { IdentityTypeSurface } from './02_identity/types.js';
@@ -33,30 +33,8 @@ import type { RuntimeTypeSurface } from './16_runtime/types.js';
 import type { EditorTypeSurface } from './17_editor/types.js';
 import type { InspectionTypeSurface } from './18_inspection/types.js';
 
-/** Stable source-home names in additive dependency order. */
-export type CoreHomeName =
-  | '00_error'
-  | '01_encoding'
-  | '02_identity'
-  | '03_schema'
-  | '04_time'
-  | '05_lifecycle'
-  | '06_evidence'
-  | '07_operation'
-  | '08_state'
-  | '09_quantization'
-  | '10_collection'
-  | '11_scene'
-  | '12_media'
-  | '13_stream'
-  | '14_compiler'
-  | '15_program'
-  | '16_runtime'
-  | '17_editor'
-  | '18_inspection';
-
 /** One owner and the semantic surface its local `types.ts` declares. */
-export interface CoreTypeHome<Name extends CoreHomeName, Surface> extends Named<Name> {
+export interface CoreTypeHome<Name extends string, Surface> extends Named<Name> {
   readonly Type: Surface;
 }
 
@@ -83,28 +61,27 @@ export type CoreTypeTopology = Tuple<[
   CoreTypeHome<'18_inspection', InspectionTypeSurface>
 ]>;
 
+/**
+ * Stable source-home names in additive dependency order.
+ *
+ * Derived from the topology, never written beside it. A hand-written union and
+ * a hand-written tuple are one fact twice, and this file had no law comparing
+ * them — nineteen names in each, checked by nothing.
+ */
+export type CoreHomeName = CoreTypeTopology[number]['name'];
+
 /** Select one owner surface by its source-home name. */
 export type CoreTypeAt<Name extends CoreHomeName> = Extract<CoreTypeTopology[number], { readonly name: Name }>['Type'];
 
-/** Name-indexed view used by assurance and agents, not by owner implementations. */
-export interface CoreTypeSurface {
-  readonly error: ErrorTypeSurface;
-  readonly encoding: EncodingTypeSurface;
-  readonly identity: IdentityTypeSurface;
-  readonly schema: SchemaTypeSurface;
-  readonly time: TimeTypeSurface;
-  readonly lifecycle: LifecycleTypeSurface;
-  readonly evidence: EvidenceTypeSurface;
-  readonly operation: OperationTypeSurface;
-  readonly state: StateTypeSurface;
-  readonly quantization: QuantizationTypeSurface;
-  readonly collection: CollectionTypeSurface;
-  readonly scene: SceneTypeSurface;
-  readonly media: MediaTypeSurface;
-  readonly stream: StreamTypeSurface;
-  readonly compiler: CompilerTypeSurface;
-  readonly program: ProgramTypeSurface;
-  readonly runtime: RuntimeTypeSurface;
-  readonly editor: EditorTypeSurface;
-  readonly inspection: InspectionTypeSurface;
-}
+/**
+ * Name-indexed view used by assurance and agents, not by owner implementations.
+ *
+ * Derived from the topology rather than written beside it. This file used to
+ * state its nineteen homes three times -- as a union, as a tuple, and as this
+ * interface -- with nothing checking that the three agreed, so adding a
+ * twentieth home meant editing three populations and any two of them could
+ * drift in silence.
+ */
+export type CoreTypeSurface = {
+  readonly [Home in CoreTypeTopology[number] as WithoutOrdinalPrefix<Home['name']>]: Home['Type'];
+};

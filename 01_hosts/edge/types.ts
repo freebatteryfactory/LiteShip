@@ -62,22 +62,8 @@ import type {
   EdgeDeferredTypeSurface,
 } from './10_deferred/types.js';
 
-/** The eleven edge homes, in numbered dependency order. */
-export type EdgeHomeName =
-  | '00_bootstrap'
-  | '01_request'
-  | '02_evidence'
-  | '03_policy'
-  | '04_settlement'
-  | '05_network'
-  | '06_cache'
-  | '07_storage'
-  | '08_execution'
-  | '09_response'
-  | '10_deferred';
-
 /** One owner and the semantic surface its local `types.ts` declares. */
-export interface EdgeTypeHome<Name extends EdgeHomeName, Surface> extends Named<Name> {
+export interface EdgeTypeHome<Name extends string, Surface> extends Named<Name> {
   readonly Type: Surface;
 }
 
@@ -95,6 +81,15 @@ export type EdgeTypeTopology = Tuple<[
   EdgeTypeHome<'09_response', EdgeResponseTypeSurface>,
   EdgeTypeHome<'10_deferred', EdgeDeferredTypeSurface>
 ]>;
+
+/**
+ * Stable source-home names in numbered dependency order.
+ *
+ * Derived from the topology. A hand-written union beside a hand-written tuple
+ * is one population twice, and the law that compared them was a confession
+ * rather than a proof.
+ */
+export type EdgeHomeName = EdgeTypeTopology[number]['name'];
 
 /** Select one owner surface by its source-home name. */
 export type EdgeTypeAt<Name extends EdgeHomeName> = Extract<
@@ -167,11 +162,6 @@ export type TheEdgeTopologyIsOrderedExactly = Assert<
       '10_deferred',
     ]
   >
->;
-
-/** Compile-time law: the roster and the tuple carry the same population. */
-export type TheEdgeRosterAndTupleAgree = Assert<
-  Equal<EdgeTypeTopology[number]['name'], EdgeHomeName>
 >;
 
 /** Compile-time law: every home resolves to its own surface. */

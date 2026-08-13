@@ -48,18 +48,8 @@ import type {
   WorkerSchedulingGrounding,
 } from './06_execution/types.js';
 
-/** The seven worker homes, in numbered dependency order. */
-export type WorkerHomeName =
-  | '00_bootstrap'
-  | '01_instance'
-  | '02_message'
-  | '03_transfer'
-  | '04_memory'
-  | '05_queue'
-  | '06_execution';
-
 /** One owner and the semantic surface its local `types.ts` declares. */
-export interface WorkerTypeHome<Name extends WorkerHomeName, Surface> extends Named<Name> {
+export interface WorkerTypeHome<Name extends string, Surface> extends Named<Name> {
   readonly Type: Surface;
 }
 
@@ -73,6 +63,15 @@ export type WorkerTypeTopology = Tuple<[
   WorkerTypeHome<'05_queue', WorkerQueueTypeSurface>,
   WorkerTypeHome<'06_execution', WorkerExecutionTypeSurface>
 ]>;
+
+/**
+ * Stable source-home names in numbered dependency order.
+ *
+ * Derived from the topology. A hand-written union beside a hand-written tuple
+ * is one population twice, and the law that compared them was a confession
+ * rather than a proof.
+ */
+export type WorkerHomeName = WorkerTypeTopology[number]['name'];
 
 /** Select one owner surface by its source-home name. */
 export type WorkerTypeAt<Name extends WorkerHomeName> = Extract<
@@ -126,11 +125,6 @@ export type TheWorkerTopologyIsOrderedExactly = Assert<
     ],
     ['00_bootstrap', '01_instance', '02_message', '03_transfer', '04_memory', '05_queue', '06_execution']
   >
->;
-
-/** Compile-time law: the roster and the tuple carry the same population. */
-export type TheWorkerRosterAndTupleAgree = Assert<
-  Equal<WorkerTypeTopology[number]['name'], WorkerHomeName>
 >;
 
 /** Compile-time law: every home resolves to its own surface — no swap can hide. */

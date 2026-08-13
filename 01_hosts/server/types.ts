@@ -71,22 +71,8 @@ import type {
   ServerMediaTypeSurface,
 } from './10_media/types.js';
 
-/** The eleven server homes, in numbered dependency order. */
-export type ServerHomeName =
-  | '00_bootstrap'
-  | '01_process'
-  | '02_secret'
-  | '03_filesystem'
-  | '04_network'
-  | '05_database'
-  | '06_service'
-  | '07_tool'
-  | '08_execution'
-  | '09_operation'
-  | '10_media';
-
 /** One owner and the semantic surface its local `types.ts` declares. */
-export interface ServerTypeHome<Name extends ServerHomeName, Surface> extends Named<Name> {
+export interface ServerTypeHome<Name extends string, Surface> extends Named<Name> {
   readonly Type: Surface;
 }
 
@@ -104,6 +90,15 @@ export type ServerTypeTopology = Tuple<[
   ServerTypeHome<'09_operation', ServerOperationTypeSurface>,
   ServerTypeHome<'10_media', ServerMediaTypeSurface>
 ]>;
+
+/**
+ * Stable source-home names in numbered dependency order.
+ *
+ * Derived from the topology. A hand-written union beside a hand-written tuple
+ * is one population twice, and the law that compared them was a confession
+ * rather than a proof.
+ */
+export type ServerHomeName = ServerTypeTopology[number]['name'];
 
 /** Select one owner surface by its source-home name. */
 export type ServerTypeAt<Name extends ServerHomeName> = Extract<
@@ -178,11 +173,6 @@ export type TheServerTopologyIsOrderedExactly = Assert<
       '10_media',
     ]
   >
->;
-
-/** Compile-time law: the roster and the tuple carry the same population. */
-export type TheServerRosterAndTupleAgree = Assert<
-  Equal<ServerTypeTopology[number]['name'], ServerHomeName>
 >;
 
 /** Compile-time law: every home resolves to its own surface. */

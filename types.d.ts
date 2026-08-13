@@ -817,6 +817,22 @@ export interface Issue<out Code extends string = string, out Detail = unknown> {
 /** A stable key/value entry whose tuple order can participate in canonical data. */
 export type Entry<Key extends PropertyKey, Value> = readonly [key: Key, value: Value];
 
+/**
+ * A source-home name with its ordinal prefix removed.
+ *
+ * Numbered homes are named `00_error`, `01_encoding`, and so on: the ordinal
+ * carries dependency order in the filesystem, and the remainder is the concept.
+ * An ergonomic view wants the concept alone, and deriving it is what stops a
+ * topology from needing a second hand-written map from `'00_error'` to
+ * `'error'` — one more population to keep in sync with the first.
+ *
+ * Unnumbered names pass through unchanged, so one operator serves the numbered
+ * homes and the named children (`astro`, `direct`) alike.
+ */
+export type WithoutOrdinalPrefix<Name extends string> = Name extends `${number}${number}_${infer Rest}`
+  ? Rest
+  : Name;
+
 /** Map named values into an ergonomic name-indexed object. */
 export type IndexByName<Values extends readonly (Named<PropertyKey> & { readonly value: unknown })[]> = {
   readonly [Value in Values[number] as Value['name']]: Value['value'];

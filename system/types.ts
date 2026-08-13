@@ -25,7 +25,7 @@
  * @module
  */
 
-import type { Assert, Equal, Named, Tuple } from '../types.js';
+import type { Named, Tuple, WithoutOrdinalPrefix } from '../types.js';
 import type { WorkspaceTypeSurface } from './00_workspace/types.js';
 import type { AssuranceTypeSurface } from './01_assurance/types.js';
 import type { ReleaseTypeSurface } from './02_release/types.js';
@@ -37,10 +37,7 @@ import type { ReleaseTypeSurface } from './02_release/types.js';
  * Assurance consumes workspace snapshots. Release consumes assurance authority.
  * The order is the dependency, not a schedule.
  */
-export type SystemHomeName = '00_workspace' | '01_assurance' | '02_release';
-
-/** One owner and the semantic surface its local `types.ts` declares. */
-export interface SystemTypeHome<Name extends SystemHomeName, Surface> extends Named<Name> {
+export interface SystemTypeHome<Name extends string, Surface> extends Named<Name> {
   readonly Type: Surface;
 }
 
@@ -51,6 +48,16 @@ export type SystemTypeTopology = Tuple<[
   SystemTypeHome<'02_release', ReleaseTypeSurface>
 ]>;
 
+/**
+ * The system homes that physically exist, in dependency order.
+ *
+ * Derived from the topology. It used to be a hand-written union beside the
+ * tuple, guarded by a parity law — a confession that the population was written
+ * twice, in a file authored the same day the repository deleted a folder for
+ * exactly that habit.
+ */
+export type SystemHomeName = SystemTypeTopology[number]['name'];
+
 /** Select one owner surface by its source-home name. */
 export type SystemTypeAt<Name extends SystemHomeName> = Extract<
   SystemTypeTopology[number],
@@ -58,30 +65,7 @@ export type SystemTypeAt<Name extends SystemHomeName> = Extract<
 >['Type'];
 
 /** Name-indexed view used by assurance and agents, not by owner implementations. */
-export interface SystemTypeSurface {
-  readonly workspace: WorkspaceTypeSurface;
-  readonly assurance: AssuranceTypeSurface;
-  readonly release: ReleaseTypeSurface;
-}
+export type SystemTypeSurface = {
+  readonly [Home in SystemTypeTopology[number] as WithoutOrdinalPrefix<Home['name']>]: Home['Type'];
+};
 
-/**
- * The topology and the home-name union are one population.
- *
- * Without this, the union and the tuple drift: a home added to one and not the
- * other compiles perfectly and leaves `SystemTypeAt` silently unable to select
- * it. The last line is the anti-vacuity partner — `Extract` over a name that
- * belongs to no entry yields `never`, so a lookup that resolves to `never`
- * proves the two sides disagree.
- */
-export type TheSystemTopologyMatchesItsHomeNames = Assert<
-  Equal<
-    [
-      Equal<SystemTypeTopology[number]['name'], SystemHomeName>,
-      Equal<SystemTypeTopology['length'], 3>,
-      [SystemTypeAt<'00_workspace'>] extends [never] ? true : false,
-      [SystemTypeAt<'01_assurance'>] extends [never] ? true : false,
-      [SystemTypeAt<'02_release'>] extends [never] ? true : false,
-    ],
-    [true, true, false, false, false]
-  >
->;

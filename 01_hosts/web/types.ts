@@ -18,7 +18,7 @@
  * @module
  */
 
-import type { Assert, Equal, Named, Tuple } from '../../types.js';
+import type { Assert, Equal, Named, Tuple, WithoutOrdinalPrefix } from '../../types.js';
 import type { GroundingId, RealizationOfferId } from '../../00_core/14_compiler/types.js';
 import type { RealizationCatalog } from '../types.js';
 import type { WebBootstrapTypeSurface } from './00_bootstrap/types.js';
@@ -80,24 +80,8 @@ import type {
   WebCaptureTypeSurface,
 } from './12_capture/types.js';
 
-/** The thirteen web homes, in numbered dependency order. */
-export type WebHomeName =
-  | '00_bootstrap'
-  | '01_region'
-  | '02_security'
-  | '03_event'
-  | '04_projection'
-  | '05_evidence'
-  | '06_transport'
-  | '07_persistence'
-  | '08_media'
-  | '09_graphics'
-  | '10_execution'
-  | '11_island'
-  | '12_capture';
-
 /** One owner and the semantic surface its local `types.ts` declares. */
-export interface WebTypeHome<Name extends WebHomeName, Surface> extends Named<Name> {
+export interface WebTypeHome<Name extends string, Surface> extends Named<Name> {
   readonly Type: Surface;
 }
 
@@ -118,6 +102,15 @@ export type WebTypeTopology = Tuple<[
   WebTypeHome<'12_capture', WebCaptureTypeSurface>
 ]>;
 
+/**
+ * Stable source-home names in numbered dependency order.
+ *
+ * Derived from the topology. A hand-written union beside a hand-written tuple
+ * is one population twice, and the law that compared them was a confession
+ * rather than a proof.
+ */
+export type WebHomeName = WebTypeTopology[number]['name'];
+
 /** Select one owner surface by its source-home name. */
 export type WebTypeAt<Name extends WebHomeName> = Extract<
   WebTypeTopology[number],
@@ -125,20 +118,8 @@ export type WebTypeAt<Name extends WebHomeName> = Extract<
 >['Type'];
 
 /** Name-indexed view used by assurance and agents, not by owner implementations. */
-export interface WebTypeSurface {
-  readonly bootstrap: WebBootstrapTypeSurface;
-  readonly region: WebRegionTypeSurface;
-  readonly security: WebSecurityTypeSurface;
-  readonly event: WebEventTypeSurface;
-  readonly projection: WebProjectionTypeSurface;
-  readonly evidence: WebEvidenceTypeSurface;
-  readonly transport: WebTransportTypeSurface;
-  readonly persistence: WebPersistenceTypeSurface;
-  readonly media: WebMediaTypeSurface;
-  readonly graphics: WebGraphicsTypeSurface;
-  readonly execution: WebExecutionTypeSurface;
-  readonly island: WebIslandTypeSurface;
-  readonly capture: WebCaptureTypeSurface;
+export type WebTypeSurface = {
+  readonly [Home in WebTypeTopology[number] as WithoutOrdinalPrefix<Home['name']>]: Home['Type'];
 }
 
 /**
@@ -222,11 +203,6 @@ export type TheTopologyIsOrderedExactly = Assert<
       '12_capture',
     ]
   >
->;
-
-/** Compile-time law: the roster and the tuple carry the same population. */
-export type TheRosterAndTheTupleAgree = Assert<
-  Equal<WebTypeTopology[number]['name'], WebHomeName>
 >;
 
 /** Compile-time law: every home resolves to its own surface — no swap can hide anywhere. */
