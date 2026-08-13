@@ -27,6 +27,7 @@ import type { CanonicalValue, ContentAddress, ContentDigest, MediaType } from '.
 import type { RevisionId, RevisionReference, WorldId } from '../02_identity/types.js';
 import type { SchemaReference } from '../03_schema/types.js';
 import type { FrameIndex, SampleIndex, StreamSequence, Timebase, TimeCut, Timecode } from '../04_time/types.js';
+import type { DisposalReceipt } from '../05_lifecycle/types.js';
 import type { EvidenceCutId, ReproducibilityClaim } from '../06_evidence/types.js';
 import type { AnySemanticCut } from '../08_state/types.js';
 import type { ProjectionFidelity, SceneEgress, SceneReference } from '../11_scene/types.js';
@@ -230,7 +231,13 @@ export interface MediaSource<Unit, Id extends MediaSourceId = MediaSourceId> {
   // — and an identity in input position is contravariant, which would make an
   // exact source unassignable to a broad one and quietly block every downstream
   // composition this model exists to allow.
-  readonly cancel: Signature<void, MediaSourceReference<Id>, NonEmptyTuple<Diagnostic>>;
+  //
+  // Its output used to be the source's own reference, which kept `Id` covariant
+  // and said nothing. `DisposalReceipt` keeps the covariance and spends it: the
+  // outcome distinguishes a cancel that stopped a live source from one that
+  // arrived after the source had already completed, and that difference is
+  // exactly what a caller reconciling a pipeline needs.
+  readonly cancel: Signature<void, DisposalReceipt<MediaSourceReference<Id>>, NonEmptyTuple<Diagnostic>>;
 }
 
 // ---------------------------------------------------------------------------
