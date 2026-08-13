@@ -5,8 +5,10 @@
   "type": "module",
   "description": "LiteShip: a compiler-checked specification. Declaration-only; no runtime exports.",
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json",
-    "check": "tsc -p tsconfig.json"
+    "check:types": "tsc -p tsconfig.json",
+    "check:zero-runtime": "node system/01_assurance/00_audit/zero-runtime.mjs",
+    "typecheck": "npm run check:types",
+    "check": "npm run check:types && npm run check:zero-runtime"
   },
   "devDependencies": {
     "typescript": "7.0.2"
