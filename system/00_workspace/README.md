@@ -43,7 +43,7 @@ Concretely, that is why `RootMetadataObservation` holds an `Evidence<TypeScriptT
 
 `RootCensusEntry` has three arms and one deliberate absence.
 
-`governed` is declared and present. `reserved` is declared and not yet present — lawful, and the state `02_wires/` is in today; naming a home before authoring it is how the waterfall stays legible. `ungoverned` is present and declared nowhere, which is the state `verification/` and `scripts/` were in for their entire existence.
+`governed` is declared and present. `reserved` is declared and not yet present — lawful, and the state `system/03_programs/` is in today; naming a home before authoring it is how the waterfall stays legible. `ungoverned` is present and declared nowhere, which is the state `verification/` and `scripts/` were in for their entire existence.
 
 The failure that produced them was not a missing rule. `AGENTS.md` already forbade a `scripts/` directory, in prose, before either existed. The failure was that *undeclared* had no representation anywhere in the system, so the observation had nowhere to land and therefore landed nowhere. No report was ever wrong, because no report ever mentioned them.
 
@@ -92,27 +92,3 @@ Runtime and repository claims a type cannot express:
 ## Implementation boundary
 
 Architecture only. No implementation exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: system/00_workspace
-  title: "Workspace: Repository and Project Context"
-  maturity: architecture-specified
-  implementation: absent
-  child_homes: []
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - workspace-observes-never-restates
-  - snapshot-is-a-repository-cut
-  - census-represents-ungoverned-roots
-  - no-exemption-arm-in-the-census
-  - working-tree-state-is-an-algebra-not-a-boolean
-  - unreadable-is-evidence-never-omission
-  - digests-not-contents
-  - physical-access-is-an-injected-hole
-  - no-root-name-union-competing-with-the-tree
-  production_authority: false
-```

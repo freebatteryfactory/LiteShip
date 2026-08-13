@@ -103,35 +103,3 @@ Runtime claims a type cannot express:
 ## Implementation boundary
 
 Architecture only. No implementation exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_wires
-  title: "Wires: Protocol and Invocation Projection"
-  maturity: umbrella-specified-children-absent
-  implementation: absent
-  child_homes: []
-  planned_children:
-  - direct
-  - http
-  - browser
-  - cli
-  - mcp
-  - editor
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - three-channels-never-collapsed
-  - an-undelivered-answer-carries-its-receipt
-  - a-refusal-is-not-an-operation-failure
-  - no-error-arm-bad-news-is-a-completed-crossing
-  - exact-over-the-operation-projected
-  - a-wire-declares-no-operation-semantics
-  - exposure-states-its-complement
-  - the-caller-distinction-unlocks-nothing
-  - no-child-roster-until-children-exist
-  - no-sibling-wire-imports
-  production_authority: false
-```

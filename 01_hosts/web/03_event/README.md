@@ -50,21 +50,3 @@ Both are implementation-fixture obligations.
 ## Implementation boundary
 
 Specified. No addEventListener call, no dispatch code, no disposal machinery exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/03_event
-  title: "Web Events and Listener Lifetime"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - events-project-to-evidence-or-operations-never-free-functions
-  - handlers-derive-from-admitted-operation-bindings
-  - listeners-are-owned-and-disposed-once
-  - no-second-evidence-algebra
-  production_authority: false
-```

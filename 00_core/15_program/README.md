@@ -102,27 +102,3 @@ A likely useful form is a mixed image: dataflow tables plus kernel commands plus
 The semantic program, logical memory plan, physical layout distinction, image contract, numeric contracts, and bytecode policy are specified. Table encodings, widths, page sizes, reserves, and bytecode inclusion are empirical.
 
 Selecting physical layouts and capacity parameters for actual workload classes is empirical benchmarking work. This home owns no bytecode: introducing one would be an explicit architecture reopening justified by measured need against the readable interpreter and packed image, not an unstated obligation.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/15_program
-  title: "Residual Programs, Memory Plans, and Execution Images"
-  maturity: specified-with-empirical-layouts
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - envelope-versioned-carriers
-  - compatible-reserved-key-shadow-fixtures
-  - readable-program-is-authority
-  - memory-plan-separate-from-memory-layout
-  - backend-specific-execution-images
-  - bytecode-evidence-earned
-  empirical_contracts:
-  - packed-layout
-  - capacity-policy-parameters
-  - bytecode-crossover
-  production_authority: false
-```

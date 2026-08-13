@@ -46,21 +46,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/vite/03_graph
-  title: "Vite Module Graph and Hot Updates"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - ordering-is-core-sequence-not-timestamp
-  - updates-commit-to-source-and-configuration
-  - graphs-are-per-environment
-  - stale-is-rejected-and-explained
-  production_authority: false
-```

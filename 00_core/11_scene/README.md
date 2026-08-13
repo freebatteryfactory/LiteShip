@@ -147,32 +147,3 @@ A subscene is an addressed semantic world instance with local coordinates, local
 The scene roster, coordinate and transform contracts, geometry-support predicate, timeline families, shared interpolation ownership, subscene model, and patch family are specified. This is the only major core area with no mature old spatial algebra to port.
 
 The spatial contract is a clean-room hypothesis and carries no production authority until it has been pressure-tested with SVG, CSS, Canvas, WebGPU, video, editor, and accessibility fixtures. Exact standard geometry and material constructor spelling may refine under those proofs; the laws above do not.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/11_scene
-  title: "Scenes, Spatial Coordinates, and Timelines"
-  maturity: specified-hypothesis
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - fidelity-is-an-algebra-not-a-boolean
-  - tolerance-is-an-addressed-profile-not-a-number
-  - geometry-and-material-declare-the-compiler-derives
-  - entities-declare-no-egress-roster
-  - authored-markers-here-observed-analysis-in-media
-  - renderer-neutral-scene-meaning
-  - dedicated-typed-spatial-coordinate-algebra
-  - explicit-exact-or-tolerant-space-projection
-  - ordered-transform-composition
-  - parent-transform-owns-origin-and-basis
-  - timeline-field-tracks-bind-entity-and-schema-field
-  - geometry-support-requires-bounds-transform-egress-and-interpolation
-  - one-interpolator-authority
-  - addressed-subscenes
-  highest_risk_proof_area: spatial-algebra
-  production_authority: false
-```

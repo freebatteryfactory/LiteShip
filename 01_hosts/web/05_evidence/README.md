@@ -39,26 +39,8 @@ The settled split: pure ladders and classification live in core; `matchMedia`, c
 - Every promised browser source has a real producer, and no producer asserts a source core never declared — the population check, both directions.
 - The browser classifier's relationship to the request classifier holds as declared.
 
-Both are `system/assurance` obligations.
+Both are `system/01_assurance` obligations.
 
 ## Implementation boundary
 
 Specified. No matchMedia call, probe, or watcher code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/05_evidence
-  title: "Web Evidence Producers"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - producers-bind-core-sources-never-local-names
-  - probes-own-nothing-watchers-own-subscriptions
-  - css-settled-facts-gain-no-gratuitous-producers
-  - evidence-never-grants-authorization
-  production_authority: false
-```

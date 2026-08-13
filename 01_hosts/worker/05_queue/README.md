@@ -38,30 +38,8 @@ One queue has exactly one producer endpoint and one consumer endpoint, each pinn
 
 - SPSC role exclusivity and atomic-order correctness hold at runtime.
 
-`system/assurance`; slot width, capacity, polling, and batching thresholds are empirical lanes.
+`system/01_assurance`; slot width, capacity, polling, and batching thresholds are empirical lanes.
 
 ## Implementation boundary
 
 Specified with physical profiles deferred. No ring-buffer or atomics code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/worker/05_queue
-  title: "Worker Bounded Queues"
-  maturity: specified-with-physical-profiles-deferred
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - one-producer-one-consumer-role-pinned
-  - payload-correlated-construction
-  - stale-batches-refused-by-generation
-  - overflow-policy-shape-without-constants
-  empirical_contracts:
-  - queue-capacity
-  - slot-width
-  - polling-and-batching-thresholds
-  production_authority: false
-```

@@ -41,21 +41,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/astro/06_development
-  title: "Astro Development Evidence"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - no-production-authority-in-development
-  - admitted-paths-never-raw
-  - stale-is-its-own-altitude
-  - declarations-name-their-sources
-  production_authority: false
-```

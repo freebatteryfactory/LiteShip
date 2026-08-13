@@ -47,22 +47,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/astro/00_integration
-  title: "Astro Integration Identity"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - identity-instantiated-never-redeclared
-  - compatibility-is-evidence-not-constant
-  - absent-evidence-is-not-support
-  - degradation-states-its-limits
-  - four-compatibility-altitudes
-  production_authority: false
-```

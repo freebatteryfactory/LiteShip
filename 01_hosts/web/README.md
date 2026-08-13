@@ -63,9 +63,9 @@ Thirteen numbered homes in dependency order, each one distinct physical authorit
 
 ## The capability composition
 
-Every home instantiates the closed host calculus rather than narrating it. Thirteen grounding slots enter the web boundary — discovery, application mount, invocation mount, sink policy, renderer catalog, event facility, probe facility, transport facility, database facility, audio facility, injected audio runtime, GPU access, scheduling — each pinned to its allowed origin and exact identity, twenty-four pinned capability declarations in all. Eleven offers construct everything else — region authority, event authority, commit application, transport authority, store, audio runtime, media authority, graphics authority, execution host, preparation, island activation — each a `WebRealizationOffer` with a pinned distinct identity, structurally unable to advertise a realm, a server or worker backend, platform-settled html-css, or a settlement location outside local, live, and remote.
+Every home instantiates the closed host calculus rather than narrating it. Fifteen grounding slots enter the web boundary — discovery, application mount, invocation mount, sink policy, renderer catalog, event facility, probe facility, transport facility, database facility, audio facility, injected audio runtime, GPU access, scheduling — each pinned to its allowed origin and exact identity, twenty-eight pinned capability declarations in all. Thirteen offers construct everything else — region authority, event authority, commit application, transport authority, store, audio runtime, media authority, graphics authority, execution host, preparation, island activation — each a `WebRealizationOffer` with a pinned distinct identity, structurally unable to advertise a realm, a server or worker backend, platform-settled html-css, or a settlement location outside local, live, and remote.
 
-Three altitudes stay distinct throughout, and multiplicity is honest: a requirement hole names a capability or provider authority, never a repeatable resource instance. Dynamic per-use resources — memberships, subscriptions, connections, watchers, media and graphics resources, islands — are created through typed operations on their providers with their own identity and lifecycle, so two islands or two regions are two values, not one deduplicated hole. Transaction-scoped leases are issued per commit by persistent membership, never frozen inside a provider. Offer inputs are classified — plan-bound configuration content-addressed by the selected step, invocation-bound input through an explicit slot, per-use input on the provider's operation — so no meaningful input vanishes between the plan and the physical act. `WebCapabilityTopology` composes the exact population into one inspectable surface with population laws on both sides, and the erased catalog of offer and grounding descriptors derives from it — a derivation whose faithfulness is a `system/assurance` obligation.
+Three altitudes stay distinct throughout, and multiplicity is honest: a requirement hole names a capability or provider authority, never a repeatable resource instance. Dynamic per-use resources — memberships, subscriptions, connections, watchers, media and graphics resources, islands — are created through typed operations on their providers with their own identity and lifecycle, so two islands or two regions are two values, not one deduplicated hole. Transaction-scoped leases are issued per commit by persistent membership, never frozen inside a provider. Offer inputs are classified — plan-bound configuration content-addressed by the selected step, invocation-bound input through an explicit slot, per-use input on the provider's operation — so no meaningful input vanishes between the plan and the physical act. `WebCapabilityTopology` composes the exact population into one inspectable surface with population laws on both sides, and the erased catalog of offer and grounding descriptors derives from it — a derivation whose faithfulness is a `system/01_assurance` obligation.
 
 ## Does not own
 
@@ -90,31 +90,8 @@ Retired old defects that do not return: generic browser engines living under a t
 - Every physical write routes through sink policy and a region write authority.
 - The web capability population reconciles against the capability port ledger before implementation, and old source is read line by line before any port.
 
-The first three are `system/assurance`; the last is the implementation-gate protocol.
+The first three are `system/01_assurance`; the last is the implementation-gate protocol.
 
 ## Implementation boundary
 
 The complete web architecture is specified. Every implementation — DOM code, listeners, drivers, contexts, databases, workers, activation — is absent and unauthorized until the whole repository architecture closes and Eassa explicitly authorizes implementation.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web
-  title: "Web: The Browser Host"
-  maturity: architecture-specified
-  implementation: absent
-  child_homes: 13
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - raw-globals-beneath-bootstrap
-  - narrow-admitted-capabilities-never-a-window-context
-  - one-writer-per-region-per-transaction
-  - four-trust-families-no-ladder
-  - grounding-by-causation-and-custody-not-noun
-  - physical-state-crosses-only-through-declared-bridges
-  - inactivity-is-lawful-failure-stays-phase-correct
-  - roster-checked-against-physical-tree
-  production_authority: false
-```

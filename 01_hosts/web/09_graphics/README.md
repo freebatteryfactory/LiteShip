@@ -54,30 +54,3 @@ The first is assurance; the second is an implementation fixture.
 ## Implementation boundary
 
 Specified with physical profiles deferred: WebGPU thresholds and backend crossover points are empirical and measured. No context acquisition or rendering code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/09_graphics
-  title: "Web Graphics"
-  maturity: specified-with-physical-profiles-deferred
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - readback-names-the-exact-frame-not-a-frame-shaped-member
-  - readback-offers-a-bounded-sequence
-  - readback-names-its-semantic-frame
-  - draft-cuts-are-rasterizable
-  - a-context-kind-is-not-a-raster-profile
-  - readback-carries-no-codec-decision
-  - probe-is-evidence-device-is-an-offer
-  - loss-is-evidence-never-fabricated-failure
-  - closed-context-kind-set
-  - gpu-reconciliation-stays-research
-  empirical_contracts:
-  - webgpu-thresholds
-  - backend-crossover
-  production_authority: false
-```

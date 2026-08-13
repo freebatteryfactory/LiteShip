@@ -31,25 +31,8 @@ Own optional edge-physical providers realizing lawful subsets of core's revision
 
 - Provider semantics agree with the selected upstream ports at runtime.
 
-`system/assurance`; batching is empirical.
+`system/01_assurance`; batching is empirical.
 
 ## Implementation boundary
 
 Provisional and specified. No KV, R2-like, or storage driver code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/edge/07_storage
-  title: "Edge Storage"
-  maturity: provisional
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - exact-binding-rows-for-core-ports
-  - closed-store-port-union
-  - deployment-bound-providers
-  production_authority: false
-```

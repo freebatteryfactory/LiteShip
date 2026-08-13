@@ -67,20 +67,3 @@ A draft revision may have byte-identical content and the same `RevisionId` as a 
 The semantic split and type laws are specified. Runtime constructors and the external `EntityId` carrier are absent. The carrier must be opaque, content-independent, interoperability-friendly, and provide at least 128 bits of identity space.
 
 Choosing and qualifying the external `EntityId` representation, canonical path encoding, and slot-map realization are compatibility and empirical implementation choices. They do not reach the semantic model.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/02_identity
-  title: "Identity and References"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - entity-revision-path-separation
-  - draft-authority-is-reference-kind
-  - dense-slot-is-local
-  production_authority: false
-```

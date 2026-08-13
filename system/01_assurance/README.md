@@ -47,7 +47,7 @@ What is genuinely new is the idea of a gate that must earn its authority. That i
 
 `DetectionWitness`, `QualifiedGate`, and `GateQualification` carry the one durable idea from the deleted harness.
 
-Five hundred and seventy-one mutation scripts and a bespoke runner were an implementation, and implementations are quarry. The relation they were reaching for is this:
+Five hundred and thirty-eight mutation entries and a bespoke runner were an implementation, and implementations are quarry. The relation they were reaching for is this:
 
 > A guard that has never been observed failing is indistinguishable from a guard that cannot fail.
 
@@ -98,30 +98,3 @@ Runtime and repository claims a type cannot express:
 ## Implementation boundary
 
 Architecture only. No implementation exists or is authorized. The deleted harness is quarry in Git history, not a port target: relocating it here would move the corpse and call it architecture.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: system/01_assurance
-  title: "Assurance: Claims About the Repository Itself"
-  maturity: umbrella-and-children-specified
-  implementation: absent
-  child_homes:
-  - 00_audit
-  - 01_gauntlet
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - assurance-contributes-an-atom-never-a-second-logic
-  - core-owns-evidence-decision-proposition-truth
-  - inspection-owns-the-authority-graph-assurance-produces-it
-  - a-gate-earns-authority-through-demonstrated-detection
-  - untested-and-refuted-are-not-one-boolean
-  - unknown-never-passes-a-gate
-  - a-gate-states-its-complement
-  - audit-acquires-gauntlet-evaluates
-  - no-facts-wrapper
-  - the-deleted-harness-is-quarry-not-a-port-target
-  production_authority: false
-```

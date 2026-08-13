@@ -69,21 +69,3 @@ A scene may define where and when values change. It does not redefine how a name
 The quantization and interpolation semantics are specified. Runtime, compiler projections, numeric kernels, and authoring values are absent.
 
 Porting the mature boundary behaviour, defining the standard interpolator catalogue, and qualifying numerical parity across TypeScript, Rust, Wasm, and GPU projections are implementation obligations this architecture already authorizes.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/09_quantization
-  title: "Quantization and Reconstruction"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - named-state-quantization
-  - one-interpolation-owner
-  - reconstruction-is-endpoints-plus-progress
-  - quality-cannot-weaken-invariants
-  production_authority: false
-```

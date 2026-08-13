@@ -31,24 +31,4 @@ Own physical network providers: decoder-correlated outbound connections, listene
 
 - Every connect and listen consults the allowlist on the shipping path.
 
-`system/assurance`; timeouts, socket buffers, and reuse are empirical.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/server/04_network
-  title: "Server Network"
-  maturity: specified-with-physical-profiles-deferred
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - decoder-correlated-connecting
-  - endpoint-admission-for-connect-and-listen
-  - listeners-accept-per-use-connections
-  empirical_contracts:
-  - timeouts-and-buffers
-  - connection-reuse
-  production_authority: false
-```
+`system/01_assurance`; timeouts, socket buffers, and reuse are empirical.

@@ -41,25 +41,8 @@ One envelope enters the realm, written by the parent and admitted here — never
 - Raw realm globals are captured only beneath this boundary; no ambient reads exist outside it.
 - Every target-generated artifact enters through this canonical bootstrap.
 
-Both are `system/assurance` obligations.
+Both are `system/01_assurance` obligations.
 
 ## Implementation boundary
 
 Specified. No worker global capture or entry-decoding code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/worker/00_bootstrap
-  title: "Worker Bootstrap"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - one-envelope-one-entry
-  - narrow-initial-placement-profile
-  - raw-globals-beneath-bootstrap
-  production_authority: false
-```

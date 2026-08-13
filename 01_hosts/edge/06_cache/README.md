@@ -34,28 +34,8 @@ Own edge cache provider authority: canonical keys, declared variation, private p
 
 - Variation is complete; private data cannot cross partitions; poisoning defenses hold.
 
-`system/assurance`; TTLs, stale windows, and cardinality limits are empirical.
+`system/01_assurance`; TTLs, stale windows, and cardinality limits are empirical.
 
 ## Implementation boundary
 
 Specified with physical profiles deferred. No cache driver code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/edge/06_cache
-  title: "Edge Cache"
-  maturity: specified-with-physical-profiles-deferred
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - keys-derive-from-canonical-inputs-and-declared-variation
-  - closed-variation-vocabulary
-  - private-partitions-by-policy
-  empirical_contracts:
-  - ttls-and-stale-windows
-  - key-cardinality-limits
-  production_authority: false
-```

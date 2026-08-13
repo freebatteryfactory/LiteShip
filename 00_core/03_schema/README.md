@@ -96,24 +96,3 @@ An unrelated schema field cannot satisfy the hop, and recursion never depends on
 The schema algebra, typed reference model, explicit recursive-hop contract, and projection obligations are specified. Runtime constructors, eager field-object materialization, field-reference composition, decoder, encoder, and projectors are absent.
 
 Qualifying field-object allocation cost, named-reference resolution and composition, the certified opaque-adapter process, and the exact metadata each projection consumes are implementation obligations this architecture already authorizes.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/03_schema
-  title: "Schema and Typed Field References"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - finite-closed-schema-graph
-  - direct-schema-field-navigation-with-collision-safe-fields-view
-  - explicit-compatible-field-composition-across-named-references
-  - field-reference-is-schema-path-and-address
-  - no-public-schema-any
-  - named-recursion-not-ambient-laziness
-  - faithful-projection-or-refusal
-  production_authority: false
-```

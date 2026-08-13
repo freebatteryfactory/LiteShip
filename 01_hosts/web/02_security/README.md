@@ -42,26 +42,8 @@ Sanitization happens at more than one boundary and this home is only one of them
 - Every physical write actually routes through the policy; no write path bypasses it.
 - The deployed policy population matches the deployment-grounded declaration.
 
-Both are `system/assurance` obligations.
+Both are `system/01_assurance` obligations.
 
 ## Implementation boundary
 
 Specified. No sanitizer, Trusted Types registration, or DOM policy code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/02_security
-  title: "Web Sink Policy"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - fail-closed-allowlists-never-denylists
-  - text-and-markup-are-distinct-sinks
-  - trusted-content-still-passes-physical-policy
-  - no-universal-trust-ladder
-  production_authority: false
-```

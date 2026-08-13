@@ -50,21 +50,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/vite/01_projection
-  title: "Vite Fleet Projection"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - projection-is-derived-never-listed
-  - unsupported-is-explicit-with-evidence
-  - the-facility-names-no-requester
-  - exactness-axes-live-in-covariant-position
-  production_authority: false
-```

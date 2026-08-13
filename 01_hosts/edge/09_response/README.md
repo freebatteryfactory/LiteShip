@@ -36,26 +36,8 @@ Own the exact physical response and the only edge response-commit authority: pla
 - Exactly one response is physically written per invocation, and policy is applied on the shipping path.
 - `response-commit-request-agreement`: the grant answers only the request its own invocation admitted. The nonconforming witness is genuine — inside invocation A's realization, a grant call naming request B's reference compiles, because request references are data and no local generic law can distinguish the invocation's own reference from a smuggled one; the runtime provider must refuse it.
 
-Both `system/assurance`; buffering-versus-streaming crossover is empirical.
+Both `system/01_assurance`; buffering-versus-streaming crossover is empirical.
 
 ## Implementation boundary
 
 Specified. No response writer or streaming code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/edge/09_response
-  title: "Edge Response"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - one-commit-authority-one-written-response
-  - plan-and-committed-are-distinct-types
-  - plans-name-request-and-policy
-  - requirement-carries-request-correlated-grant-not-broad-authority
-  production_authority: false
-```

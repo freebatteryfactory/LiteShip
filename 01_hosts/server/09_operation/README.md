@@ -31,21 +31,4 @@ Own trusted server-physical operation-handler realization: exact bindings to cor
 
 - Handlers use the canonical operation catalog and exact schemas; authorization is checked on the shipping path.
 
-`system/assurance`.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/server/09_operation
-  title: "Server Operations"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - handlers-bind-exact-core-operations
-  - wires-project-never-restate
-  - authority-checked-never-assumed
-  production_authority: false
-```
+`system/01_assurance`.

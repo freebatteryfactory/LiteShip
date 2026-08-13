@@ -50,21 +50,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/cloudflare/03_deployment
-  title: "Cloudflare Deployment"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - the-deployment-consumes-the-umbrella-application
-  - no-provenance-questions-in-a-deployment
-  - refusal-precedes-failure-follows
-  - exact-participation-and-configuration
-  production_authority: false
-```

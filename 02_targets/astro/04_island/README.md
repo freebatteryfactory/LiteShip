@@ -47,21 +47,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/astro/04_island
-  title: "Astro Island Preparation"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - web-owns-activation-astro-owns-translation
-  - ancestry-is-a-member-not-a-lookup
-  - exact-configuration-per-entry
-  - unresolved-ancestry-refuses-loudly
-  production_authority: false
-```

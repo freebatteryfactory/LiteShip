@@ -32,21 +32,4 @@ Own scoped filesystem-provider authority: deployment-admitted roots, root-correl
 
 - Path admission resists traversal, symlink confusion, and race conditions appropriate to the implementation.
 
-`system/assurance`; buffer sizes and watch strategy are empirical.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/server/03_filesystem
-  title: "Server Filesystem"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - paths-are-root-correlated-admissions
-  - raw-strings-are-never-authority
-  - atomic-write-and-replace
-  production_authority: false
-```
+`system/01_assurance`; buffer sizes and watch strategy are empirical.

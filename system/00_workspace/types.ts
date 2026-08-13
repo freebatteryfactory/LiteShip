@@ -60,7 +60,8 @@ export type WorkspacePath = Brand<string, 'liteship.workspace-path'>;
  * The name of one top-level directory in the repository.
  *
  * Deliberately not a union of the current roots. The population changes when
- * architecture is authored — `02_wires/` is coming, `system/` just arrived —
+ * architecture is authored — `system/03_programs/` is coming, `02_wires/direct/`
+ * just arrived —
  * and a union edited on every such change is a second roster competing with
  * the physical tree. Governance is expressed by {@link RootCensusEntry}, which
  * compares declaration against observation instead of asserting either.
@@ -103,7 +104,7 @@ export type RootCensusEntry = Algebra<{
    * Declared by the architecture and not yet physically present.
    *
    * Lawful: `system/` was named in the layout long before it existed, and
-   * `02_wires/` is in that state today. Naming a home before authoring it is
+   * `system/03_programs/` is in that state today. Naming a home before authoring it is
    * how the waterfall stays legible. Building its responsibilities elsewhere
    * in the meantime is what went wrong.
    */

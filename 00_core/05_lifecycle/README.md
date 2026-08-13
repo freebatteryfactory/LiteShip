@@ -67,20 +67,3 @@ Cancellation is observable through an explicit signal or requirement. Disposal b
 The lifecycle contract is specified. Runtime implementation is absent. The mature old `Lifetime` behavior is a direct behavior-port candidate, subject to source and test rereading during implementation.
 
 Porting and qualifying the old behaviour, then projecting it into each physical host resource, are implementation obligations this architecture already authorizes.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/05_lifecycle
-  title: "Lifecycle and Cancellation"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - owned-value-is-disposable
-  - exactly-once-lifo-disposal
-  - synchronous-close-asynchronous-completion
-  production_authority: false
-```

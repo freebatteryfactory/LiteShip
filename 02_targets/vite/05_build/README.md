@@ -53,21 +53,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/vite/05_build
-  title: "Vite Build Products"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - one-slot-one-producer
-  - no-second-manifest-derivation
-  - source-map-disposition-is-stated
-  - a-broken-build-reports-no-slots
-  production_authority: false
-```

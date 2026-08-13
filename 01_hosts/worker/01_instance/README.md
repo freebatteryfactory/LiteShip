@@ -38,25 +38,8 @@ Readiness is not activity. A crash carries diagnostics; a close carries its rece
 - Disposal happens exactly once per live instance.
 - Crash, withdrawal, and termination produce correct evidence at runtime and are distinguishable from close.
 
-Both are `system/assurance` obligations.
+Both are `system/01_assurance` obligations.
 
 ## Implementation boundary
 
 Specified. No lifecycle, signal, or close code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/worker/01_instance
-  title: "Worker Instance"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - seven-phase-correct-lifecycle-arms
-  - close-is-worker-authored-termination-is-observed
-  - instance-names-its-exact-entry
-  production_authority: false
-```

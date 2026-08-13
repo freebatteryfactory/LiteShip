@@ -72,32 +72,3 @@ Whether the facility converges with anyone's requirement is proved by a composit
 ## Implementation boundary
 
 Specified. No plugin code, no hook handlers, no runtime exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/vite
-  title: "Vite Target"
-  maturity: specified
-  implementation: absent
-  child_homes:
-  - 00_integration
-  - 01_projection
-  - 02_module
-  - 03_graph
-  - 04_asset
-  - 05_build
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - no-sibling-target-imports
-  - the-facility-names-no-requester
-  - environment-scope-is-required-not-default
-  - projection-is-derived-never-listed
-  - specifier-is-not-identity
-  - ordering-is-core-sequence-not-timestamp
-  - one-slot-one-producer
-  - reference-ids-are-handles-not-identity
-  production_authority: false
-```

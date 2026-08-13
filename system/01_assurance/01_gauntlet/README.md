@@ -56,7 +56,7 @@ A gate declares the profile it requires. Under a lean run, a gate needing rich e
 
 A gate cannot earn authority until evidence shows it detects the failure class it claims.
 
-Everything else about the deleted mutation infrastructure was implementation: the runner, the fifteen banks, the five hundred and seventy-one scripts, the temporary-directory staging, the generated tsconfig. Implementations are quarry. This relation is architecture, it lives in the assurance umbrella as `GateQualification` and `DetectionWitness`, and this home is where a definition binds its claim to its evaluation.
+Everything else about the deleted mutation infrastructure was implementation: the runner, the fifteen banks, the five hundred and thirty-eight mutation entries, the temporary-directory staging, the generated tsconfig. Implementations are quarry. This relation is architecture, it lives in the assurance umbrella as `GateQualification` and `DetectionWitness`, and this home is where a definition binds its claim to its evaluation.
 
 ## Laws
 
@@ -78,25 +78,3 @@ Runtime and repository claims a type cannot express:
 ## Implementation boundary
 
 Architecture only. No implementation exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: system/01_assurance/01_gauntlet
-  title: "Gauntlet: Evidence Evaluation and Earned Authority"
-  maturity: architecture-specified
-  implementation: absent
-  child_homes: []
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - gauntlet-evaluates-and-acquires-nothing
-  - a-gate-with-no-inputs-is-the-vacuous-gate
-  - a-gate-claims-a-failure-class-or-is-unqualifiable
-  - the-verdict-has-no-passed-with-warnings-arm
-  - lean-and-rich-are-declared-not-inferred
-  - missing-evidence-is-indeterminate-never-skipped
-  - consumer-gates-use-the-same-path
-  production_authority: false
-```

@@ -34,25 +34,8 @@ Own the only place raw edge globals and environment bindings exist: realm identi
 
 - No ambient environment read exists outside this boundary.
 
-`system/assurance`.
+`system/01_assurance`.
 
 ## Implementation boundary
 
 Specified. No platform-context capture or binding-decoding code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/edge/00_bootstrap
-  title: "Edge Bootstrap"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - request-is-the-only-settlement-location
-  - deployment-configuration-is-admitted-never-raw
-  - invocation-is-the-lifetime-unit
-  production_authority: false
-```

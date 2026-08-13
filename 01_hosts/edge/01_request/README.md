@@ -33,25 +33,8 @@ Own the exact physical incoming request: identity, closed method vocabulary, adm
 
 - Raw request fields are admitted through canonical decoders; one-shot behavior is honored at runtime.
 
-`system/assurance`; body buffering thresholds are empirical.
+`system/01_assurance`; body buffering thresholds are empirical.
 
 ## Implementation boundary
 
 Specified. No request parsing or body streaming code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/edge/01_request
-  title: "Edge Request"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - admitted-fields-never-raw-wire-bytes
-  - one-shot-body-with-declared-cloning
-  - closed-method-vocabulary
-  production_authority: false
-```

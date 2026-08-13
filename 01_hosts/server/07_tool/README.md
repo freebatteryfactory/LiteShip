@@ -36,24 +36,4 @@ Own native-tool provider authority: exact tool profiles with versions and determ
 
 - Sandbox scopes are honored; determinism claims hold at runtime.
 
-`system/assurance`; spawn-versus-pool crossover is empirical.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/server/07_tool
-  title: "Server Native Tools"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - the-profile-identity-survives-the-provider-path
-  - a-profile-names-its-bytes-not-just-its-name
-  - reproducibility-comes-from-the-core-grammar
-  - tool-correlated-invocations
-  - declared-sandbox-never-ambient
-  - physical-contract-not-semantic-domain
-  production_authority: false
-```
+`system/01_assurance`; spawn-versus-pool crossover is empirical.

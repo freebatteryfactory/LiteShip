@@ -33,26 +33,4 @@ Own database-provider authority: exact database identity, per-use connections, p
 
 - Transaction, isolation, commit, rollback, cancellation, and connection lifecycle match the selected contract.
 
-`system/assurance`; pool sizes, timeouts, and statement batching are empirical.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/server/05_database
-  title: "Server Database"
-  maturity: specified-with-physical-profiles-deferred
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - provider-connection-lease-are-distinct-altitudes
-  - leases-are-per-generation
-  - exact-binding-rows-for-core-ports
-  - credentials-via-secret-provider
-  empirical_contracts:
-  - pool-sizes
-  - transaction-timeouts
-  - statement-batching
-  production_authority: false
-```
+`system/01_assurance`; pool sizes, timeouts, and statement batching are empirical.

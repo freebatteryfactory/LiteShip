@@ -31,21 +31,4 @@ Own long-lived service authority: repeatable supervised service resources with c
 
 - Readiness, drain, restart, and shutdown behavior match the declared lifecycle at runtime.
 
-`system/assurance`; intervals and backoff are empirical.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/server/06_service
-  title: "Server Services"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - services-are-repeatable-supervised-resources
-  - phase-correct-health-with-evidence
-  - no-di-container-no-global-singletons
-  production_authority: false
-```
+`system/01_assurance`; intervals and backoff are empirical.

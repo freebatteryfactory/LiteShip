@@ -33,25 +33,8 @@ Own edge-physical security and response policy: origin allowlist, credential and
 
 - The policy is actually applied on the shipping path; private data cannot cross partitions.
 
-`system/assurance`.
+`system/01_assurance`.
 
 ## Implementation boundary
 
 Specified. No header emission or policy evaluation code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/edge/03_policy
-  title: "Edge Policy"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - allowlist-never-denylist
-  - refusals-name-their-policy-address
-  - policy-is-deployment-admitted
-  production_authority: false
-```

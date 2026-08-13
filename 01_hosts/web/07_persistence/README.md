@@ -45,21 +45,3 @@ Both are assurance-and-implementation territory when a concrete provider exists.
 ## Implementation boundary
 
 Provisional. No IndexedDB code, no database schema, no driver exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/07_persistence
-  title: "Web Persistence"
-  maturity: provisional-physical-realization
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - four-owner-imported-ports-exact-subsets-only
-  - no-mandatory-default-store
-  - island-correctness-never-coupled-to-browser-storage
-  - no-local-first-replication-here
-  production_authority: false
-```

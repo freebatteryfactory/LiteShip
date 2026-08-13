@@ -32,25 +32,8 @@ Own explicitly bounded post-response work: task identity, request ancestry, reta
 
 - Deferred work remains bounded and correctly attributed at runtime.
 
-`system/assurance`; the work budget is empirical.
+`system/01_assurance`; the work budget is empirical.
 
 ## Implementation boundary
 
 Specified. No waitUntil-style or scheduling code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/edge/10_deferred
-  title: "Edge Deferred Work"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - tasks-descend-from-their-invocation
-  - declared-capability-scope-never-the-realm
-  - bounded-by-declaration
-  production_authority: false
-```

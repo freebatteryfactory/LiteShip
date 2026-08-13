@@ -67,23 +67,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/astro/03_build
-  title: "Astro Build Facility Requirement"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - astro-owns-the-socket-shape
-  - supplier-parameter-names-who-not-what
-  - exactness-axes-live-in-covariant-position
-  - five-disposition-altitudes
-  - planned-outcome-enters-whole
-  - no-foreign-vocabulary-in-the-contract
-  production_authority: false
-```

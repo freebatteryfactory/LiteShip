@@ -71,25 +71,3 @@ These are runtime claims, not unfinished work. A type cannot express any of them
 ## Implementation boundary
 
 Specified. No capture code, no permission flow, and no runtime exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/12_capture
-  title: "Web Composite Capture"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - capture-scope-is-not-a-second-boundary
-  - the-facility-is-grounded-the-authority-is-offered
-  - capture-is-not-rasterization
-  - a-capture-names-a-committed-composition
-  - captured-frames-cannot-claim-a-semantic-frame
-  - availability-is-evidence-not-a-static-capability
-  - no-codec-or-scene-authority-in-capture
-  - capture-claims-no-reproducibility-by-default
-  production_authority: false
-```

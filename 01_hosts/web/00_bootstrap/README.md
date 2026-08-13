@@ -46,26 +46,8 @@ Origins follow the umbrella algebra. Intrinsic: a facility already present in th
 - Every admitted value genuinely entered through its declared origin.
 - Only the bootstrap mints grounding instances.
 
-All four are `system/assurance` obligations; TypeScript cannot see an ambient read.
+All four are `system/01_assurance` obligations; TypeScript cannot see an ambient read.
 
 ## Implementation boundary
 
 Specified. No capture code, no admission implementation, no browser API calls exist or are authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/00_bootstrap
-  title: "Web Bootstrap and Grounding"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - raw-globals-beneath-bootstrap-only
-  - narrow-admitted-capabilities-never-a-window-context
-  - grounding-slots-pinned-to-the-web-realm
-  - no-ambient-reads-above-the-boundary
-  production_authority: false
-```

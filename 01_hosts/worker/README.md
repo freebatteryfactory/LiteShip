@@ -38,7 +38,7 @@ Conditional graphics and media homes are deliberately absent: no worker-physical
 
 ## The capability composition
 
-Six grounding slots enter the worker boundary — realm scope, bootstrap envelope, message facility, transfer facility, shared-memory facility, scheduling facility — each pinned to its allowed origin, exact custody, and exact identity. Five offers construct everything else — messaging authority, transfer authority, shared-memory authority, queue authority, execution host — each a `WorkerRealizationOffer` structurally unable to advertise another realm, a webgpu/server/host-native backend, or a settlement location outside local and live. Eleven pinned capability declarations in all. Channels, tickets, buffers, views, queues, and execution sessions are repeatable per-use resources from their providers with their own identity and lifecycle — never requirement holes. `WorkerCapabilityTopology` composes the exact population with population laws on both sides and carries its erased catalog, whose faithful derivation is a `system/assurance` obligation.
+Six grounding slots enter the worker boundary — realm scope, bootstrap envelope, message facility, transfer facility, shared-memory facility, scheduling facility — each pinned to its allowed origin, exact custody, and exact identity. Five offers construct everything else — messaging authority, transfer authority, shared-memory authority, queue authority, execution host — each a `WorkerRealizationOffer` structurally unable to advertise another realm, a webgpu/server/host-native backend, or a settlement location outside local and live. Eleven pinned capability declarations in all. Channels, tickets, buffers, views, queues, and execution sessions are repeatable per-use resources from their providers with their own identity and lifecycle — never requirement holes. `WorkerCapabilityTopology` composes the exact population with population laws on both sides and carries its erased catalog, whose faithful derivation is a `system/01_assurance` obligation.
 
 ## Does not own
 
@@ -62,30 +62,8 @@ Residual-program meaning, compiler placement, settlement semantics, operation/sc
 - Every target-generated worker artifact enters through the canonical bootstrap.
 - Parity against the reference backend on the shipping path; end-to-end cost counts startup, transfer, synchronization, commit, and disposal.
 
-The first four are `system/assurance`; the last is the implementation-gate protocol. Batch sizes, capacities, padding, wait policy, startup thresholds, and crossovers are empirical lanes.
+The first four are `system/01_assurance`; the last is the implementation-gate protocol. Batch sizes, capacities, padding, wait policy, startup thresholds, and crossovers are empirical lanes.
 
 ## Implementation boundary
 
 The complete worker architecture is specified. Every implementation — worker spawn, message loop, ring buffer, transfer, execution — is absent and unauthorized until the whole repository architecture closes and Eassa explicitly authorizes implementation.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/worker
-  title: "Worker: The Isolated-Execution Host"
-  maturity: architecture-specified
-  implementation: absent
-  child_homes: 7
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - single-bootstrap-isolated-session-contract
-  - construction-is-parent-side-entry-is-realm-side
-  - raw-globals-beneath-bootstrap
-  - custody-modes-are-copy-move-share
-  - one-producer-one-consumer-per-queue
-  - executor-is-core-owned-results-leave-as-commits
-  - no-worker-family-union-profiles-earn-themselves
-  production_authority: false
-```

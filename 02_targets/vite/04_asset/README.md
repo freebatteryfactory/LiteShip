@@ -51,21 +51,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/vite/04_asset
-  title: "Vite Asset Emission"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - assets-stay-in-the-module-graph
-  - reference-ids-are-handles-not-identity
-  - ancestry-and-relation-are-required
-  - disclosure-is-carried-not-inferred
-  production_authority: false
-```

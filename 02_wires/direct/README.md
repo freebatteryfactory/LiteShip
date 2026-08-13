@@ -58,23 +58,3 @@ Runtime claims a type cannot express:
 ## Implementation boundary
 
 Architecture only. No implementation exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_wires/direct
-  title: "Direct Wire: In-Process Invocation"
-  maturity: architecture-specified
-  implementation: absent
-  child_homes: []
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - children-narrow-the-umbrella-never-fork-it
-  - in-process-cannot-fail-to-decode
-  - in-process-cannot-lose-an-answer
-  - the-narrowest-child-is-the-umbrella-honesty-test
-  - no-local-type-beyond-the-narrowings
-  production_authority: false
-```

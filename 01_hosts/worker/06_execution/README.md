@@ -17,7 +17,7 @@ Realize the exact core runtime-execution contract inside the isolated realm: law
 - The worker execution host: `BoundWorkerDriver` roster (backend and driver kind provably agreeing, distributively) and core's exact `RuntimeExecutor`.
 - The scheduling facility: `ExecutionRequest → ExecutionRequest`, phase-correct — scheduling can never claim execution happened.
 - Constructible, cancellable, result-bearing execution sessions as per-use owned resources — the host begins them task-correlated: the caller names the exact task identity in the session request, the session the public path returns carries exactly that identity, and session A's cancel and result accept only session A.
-- The result envelope: naming the exact session that produced it and the transaction generation it answers, with the full `RuntimeCommit` and the channel carrying it home. That the named generation equals the executed request's and the named channel is the physically used one stays `system/assurance`.
+- The result envelope: naming the exact session that produced it and the transaction generation it answers, with the full `RuntimeCommit` and the channel carrying it home. That the named generation equals the executed request's and the named channel is the physically used one stays `system/01_assurance`.
 
 ## Does not own
 
@@ -43,26 +43,3 @@ The local backend set is derived as exactly javascript and wasm. The host binds 
 - End-to-end cost counts startup, transfer, synchronization, commit, and disposal — never only the inner kernel.
 
 Both are implementation-phase obligations; crossover thresholds are empirical.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/worker/06_execution
-  title: "Worker Execution"
-  maturity: specified-with-physical-profiles-deferred
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - backends-exactly-javascript-and-wasm
-  - driver-kind-provably-matches-backend
-  - scheduling-before-execution
-  - begin-is-task-correlated-caller-carried
-  - results-leave-as-commits-on-named-channels
-  empirical_contracts:
-  - js-wasm-crossover
-  - startup-thresholds
-  - scheduling-quantum
-  production_authority: false
-```

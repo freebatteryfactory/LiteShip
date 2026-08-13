@@ -51,23 +51,3 @@ The first is assurance; the second is an implementation fixture.
 ## Implementation boundary
 
 Specified with physical profiles deferred: backend crossover profiles are empirical. No scheduler, driver, or execution code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/10_execution
-  title: "Web Execution Host"
-  maturity: specified-with-physical-profiles-deferred
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - browser-backends-derived-trusted-execution-excluded
-  - committed-plans-cross-the-seam-never-loose-writes
-  - no-second-scheduler-or-residual-format
-  - worker-composition-declared-downstream-never-predeclared
-  empirical_contracts:
-  - backend-crossover-profiles
-  production_authority: false
-```

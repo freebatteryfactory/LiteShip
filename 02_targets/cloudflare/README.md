@@ -71,30 +71,3 @@ The umbrella deliberately deferred the deployable-application shape until a deno
 ## Implementation boundary
 
 Specified. No adapter code, no deployment client, no runtime exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/cloudflare
-  title: "Cloudflare Target"
-  maturity: specified
-  implementation: absent
-  child_homes:
-  - 00_integration
-  - 01_configuration
-  - 02_binding
-  - 03_deployment
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - no-sibling-target-imports
-  - registration-names-no-framework
-  - no-provenance-questions-in-a-deployment
-  - bindings-are-groundings-not-a-resource-model
-  - deployable-application-is-entry-plus-assets
-  - compatibility-date-is-required
-  - refusal-precedes-failure-follows
-  - no-secrets-in-a-binding
-  production_authority: false
-```

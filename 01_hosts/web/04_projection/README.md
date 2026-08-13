@@ -50,29 +50,8 @@ The preserved hostile-input discipline for generated structures: iterative walki
 - A forged structural lookalike never reaches the renderer.
 - Faithful payload reachability: every admitted change reaches its physical target or the commit refuses.
 
-The forgery claim is `system/assurance`; the rest are implementation fixtures. The exact morph algorithm is old-source implementation evidence, mined at implementation time.
+The forgery claim is `system/01_assurance`; the rest are implementation fixtures. The exact morph algorithm is old-source implementation evidence, mined at implementation time.
 
 ## Implementation boundary
 
 Specified with the morph algorithm explicitly empirical. No DOM construction, morphing, or rendering code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/04_projection
-  title: "Web Projection and Physical Application"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - three-write-families-three-routes
-  - foreign-output-is-not-writable
-  - trusted-fragments-are-attested-patches-never-raw-markup
-  - generated-structures-carry-admission-or-never-render
-  - one-commit-one-transaction-one-authority
-  empirical_contracts:
-  - morph-algorithm
-  production_authority: false
-```

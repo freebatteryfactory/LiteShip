@@ -45,29 +45,8 @@ The plan selects a persistent `TransportAuthority`, an offer requiring the intri
 - One unified transport serves every declared carrier; no second special transport exists.
 - Reconnection resumes without loss or duplication from the acknowledged position.
 
-The first is `system/assurance` over the transport population; the second is an implementation fixture.
+The first is `system/01_assurance` over the transport population; the second is an implementation fixture.
 
 ## Implementation boundary
 
 Specified with physical profiles deferred: reconnection constants, buffer sizes, and heartbeat intervals are empirical. No fetch, EventSource, or stream code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/06_transport
-  title: "Web Transport"
-  maturity: specified-with-physical-profiles-deferred
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - one-unified-transport-with-typed-carriers
-  - connections-are-owned-and-bounded
-  - resumption-speaks-the-core-sequence
-  empirical_contracts:
-  - reconnection-constants
-  - buffer-sizes
-  - heartbeat-intervals
-  production_authority: false
-```

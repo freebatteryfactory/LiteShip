@@ -50,21 +50,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/cloudflare/00_integration
-  title: "Cloudflare Adapter Identity"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - identity-instantiated-never-redeclared
-  - registration-names-no-framework
-  - compatibility-is-evidence-not-constant
-  - absent-evidence-is-not-support
-  production_authority: false
-```

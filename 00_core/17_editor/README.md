@@ -113,26 +113,3 @@ Approval is derived from `OperationPolicyDecision`, effects, reversibility, auth
 The five-layer model, overlay derivation, draft authority, selection contract, and human/agent flow are specified. Visual UX, widgets, and collaboration are absent.
 
 Pressure-testing selection and history ergonomics in real scene, collection, and generated-structure editors is an implementation obligation. This home owns no replication: it would compose through family merge policies and would be an explicit architecture reopening, not a reshaping of this baseline.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/17_editor
-  title: "Editor and Agent Control"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - the-overlay-owns-the-base-once
-  - preview-consumes-the-draft-cut
-  - revision-dag-operation-history-overlay-snapshot-cursor
-  - operation-to-patch-to-change-derivation
-  - draft-reference-kind
-  - revision-pinned-semantic-selection
-  - invocation-is-proposal-operation-owner
-  - operation-derived-approval
-  - shared-human-agent-operation-language
-  production_authority: false
-```

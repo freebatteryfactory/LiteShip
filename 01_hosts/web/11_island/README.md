@@ -53,22 +53,3 @@ All three are assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No activation code, no mount handling, no runtime joining exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/11_island
-  title: "Web Islands"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - activation-is-an-offer-inactivity-is-not-failure
-  - islands-join-exact-programs-at-exact-revisions
-  - one-committed-generation-across-siblings
-  - islands-write-through-region-authority
-  - no-competing-local-world
-  production_authority: false
-```

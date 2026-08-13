@@ -22,7 +22,7 @@ That rule is the whole reason the layer exists as a layer rather than as tooling
 
 ## What this home cost before it existed
 
-`system/` was named in the layout from the beginning and authored last. In the gap, its responsibilities were built anyway — under a root `verification/` directory that grew to fifty-one entries with its own `package.json`, its own TypeScript installation, a runner, fifteen mutation banks, gates, gate self-tests, and thirteen probes, plus a `scripts/` directory holding a pre-commit shim.
+`system/` was named in the layout from the beginning and authored last. In the gap, its responsibilities were built anyway — under a root `verification/` directory that grew to forty-six tracked entries with its own `package.json`, its own TypeScript installation, a runner, fifteen mutation banks, gates, gate self-tests, and twelve probes, plus a `scripts/` directory holding a pre-commit shim.
 
 Both sat outside the governed roots, so every census the repository ran on itself ignored them. `AGENTS.md` had forbidden a `scripts/` directory in prose before either existed, and prose does not run. The repository spent five hundred and eighty laws ensuring every fact had exactly one owner while the machinery enforcing that rule had none.
 
@@ -89,35 +89,3 @@ The obligations are `system/01_assurance` claims about the repository, which mea
 ## Implementation boundary
 
 Architecture only. No runtime implementation exists or is authorized anywhere in this layer, and none opens until the whole repository architecture closes and Eassa explicitly authorizes it.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: system
-  title: "System: Unnumbered Control Plane"
-  maturity: wire-independent-foundation-authored
-  implementation: absent
-  child_homes:
-  - 00_workspace
-  - 01_assurance
-  - 02_release
-  deferred_homes:
-  - 03_programs
-  - 04_bootstrap
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - system-is-orthogonal-not-a-waterfall-rung
-  - product-never-depends-on-system
-  - every-system-home-observes-an-upstream-owner
-  - no-topology-entry-for-an-absent-home
-  - workspace-discovery-is-an-authority-not-a-program
-  - assurance-is-where-typescript-stops
-  - audit-acquires-gauntlet-evaluates
-  - authority-is-earned-through-demonstrated-detection
-  - release-consumes-authority-never-issues-it
-  - physical-access-is-an-injected-hole
-  - no-replacement-top-level-tooling-root
-  production_authority: false
-```

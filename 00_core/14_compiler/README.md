@@ -257,61 +257,10 @@ Several authorities backed by one physical provider share one instance and one l
 - A realization instance disposes its provider exactly once no matter how many authorities it backs.
 - Pre-candidate rejection and post-selection failure remain semantically distinct; neither absorbs the other's cases.
 
-The obligations concerning provenance, canonical ownership, erased-roster population and membership, and cross-object ancestry agreement are `system/assurance` claims; those concerning runtime behaviour — disposal, concurrency, admission at activation — belong to implementation fixtures. Neither set is a type law: TypeScript proves shape at the declaration boundary and nothing beyond it, so no positional count is kept here for a later edit to silently invalidate.
+The obligations concerning provenance, canonical ownership, erased-roster population and membership, and cross-object ancestry agreement are `system/01_assurance` claims; those concerning runtime behaviour — disposal, concurrency, admission at activation — belong to implementation fixtures. Neither set is a type law: TypeScript proves shape at the declaration boundary and nothing beyond it, so no positional count is kept here for a later edit to silently invalidate.
 
 ## Implementation boundary
 
 The compiler registry, requirement closure, planner contracts, cost model shape, and explanation are specified. Cost coefficients, profiles, calibration, and crossover thresholds are empirical.
 
 Building the fleet registry, migrating old compiler arms and adapters, defining runtime feature records, and running real cross-backend profiles are implementation obligations. This home admits no fixed hydration tier and no second ranking mechanism.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/14_compiler
-  title: "Compiler, Settlement, and Realization Planning"
-  maturity: specified-with-empirical-profiles
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - one-source-relation-owns-its-revision
-  - source-relation-replaces-optional-source-map
-  - artifact-exact-with-broad-defaults-for-erased-catalogs
-  - settlement-and-backend-orthogonal
-  - exact-hole-requirements-derive-runtime-features
-  - legality-before-cost
-  - pareto-plus-explicit-objective
-  - optimizer-is-not-quantizer
-  - offer-plan-candidate-altitudes
-  - offer-is-recipe-step-is-application
-  - requirement-discharge-is-branch-local
-  - atomic-provision-with-non-empty-satisfies
-  - residual-demand-distinct-from-branch-worklist
-  - monotone-qualification-fixed-point
-  - grounded-roots-are-declared-slot-references
-  - grounding-states-declared-selected-admitted-never-share-a-name
-  - satisfier-is-grounded-or-realized
-  - failure-names-the-step-post-instance-failure-names-the-provider
-  - settlement-lives-inside-the-plan
-  - settlement-decisions-name-their-subjects
-  - plans-commit-to-exact-source-and-catalog
-  - global-selection-is-an-explained-decision
-  - objective-owned-by-the-lowest-cost-reason-at-both-altitudes
-  - unlawful-alternatives-explained-never-named-as-candidates
-  - lowest-cost-frontiers-are-non-empty
-  - no-fallback-arm-failure-phases-keep-their-homes
-  - refusals-carry-no-production-authority-under-any-name
-  - forbidden-keys-tested-by-absence-not-expected-type
-  - sealed-failure-channel-hosts-type-the-cause
-  - one-lifecycle-arm-across-offer-materialization-and-instance
-  - unsatisfiable-requires-a-proof-incomplete-reports-a-bound
-  - incomplete-state-is-arm-specific
-  - rejection-precedes-candidacy-failure-follows-selection
-  - one-provider-one-lifetime
-  empirical_contracts:
-  - backend-profile
-  - runtime-calibration
-  production_authority: false
-```

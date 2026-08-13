@@ -48,22 +48,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/astro/02_authoring
-  title: "Astro Authoring Translation"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - one-activation-relationship-not-nine-spellings
-  - the-compiler-chooses-backends
-  - core-owns-the-proposition
-  - refusal-is-explicit
-  - no-payload-drawer
-  production_authority: false
-```

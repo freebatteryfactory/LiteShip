@@ -47,21 +47,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/cloudflare/01_configuration
-  title: "Cloudflare Configuration Admission"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - raw-is-not-admitted
-  - compatibility-date-is-required
-  - routes-are-opaque-here
-  - admission-failure-carries-no-value
-  production_authority: false
-```

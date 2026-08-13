@@ -69,21 +69,3 @@ A `TimeProjection` carries the complete source and target timebases, including f
 The temporal algebra is specified. Host sources, serialization, clock implementations, and paved-road presets are absent.
 
 Qualifying canonical composite-time encoding, precision, overflow behaviour, and the default preset roster are implementation obligations. None of them reaches the distinct-coordinate law.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/04_time
-  title: "Temporal Coordinates"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - distinct-temporal-coordinate-kinds
-  - one-time-cut-per-transaction
-  - hlc-keeps-standard-meaning
-  - explicit-exact-or-tolerant-projection
-  production_authority: false
-```

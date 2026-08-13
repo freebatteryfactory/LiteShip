@@ -26,7 +26,7 @@ Own what crossing the boundary does to ownership: the three custody modes, trans
 
 ## The honesty boundary
 
-TypeScript has no linear types. The architecture makes sender-after-move misuse unrepresentable where types can — mode-exact tickets, mode-correlated consummation, move-only detachment — and explicitly detectable where aliases and runtime detachment exceed the type system. That remainder is named `system/assurance`, not papered over.
+TypeScript has no linear types. The architecture makes sender-after-move misuse unrepresentable where types can — mode-exact tickets, mode-correlated consummation, move-only detachment — and explicitly detectable where aliases and runtime detachment exceed the type system. That remainder is named `system/01_assurance`, not papered over.
 
 ## Laws
 
@@ -40,26 +40,8 @@ TypeScript has no linear types. The architecture makes sender-after-move misuse 
 - Sender custody actually changes after a move.
 - Runtime detachment and revocation are honored on the shipping path.
 
-Both are `system/assurance` obligations.
+Both are `system/01_assurance` obligations.
 
 ## Implementation boundary
 
 Specified. No structured-clone or transfer-list code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/worker/03_transfer
-  title: "Worker Transfer and Custody"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - custody-modes-copy-move-share
-  - mode-pinned-tickets-and-receipts
-  - only-a-move-detaches
-  - no-read-only-views-until-proven
-  production_authority: false
-```

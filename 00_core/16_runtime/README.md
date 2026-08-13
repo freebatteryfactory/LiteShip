@@ -106,32 +106,3 @@ Fallback behavior is explicit and preserves the reference semantics or returns a
 The execution model and generalized kernel ABI are specified. Rust crate organization, command encoding, shared-memory strategy, backend implementations, and crossover thresholds are absent and empirical.
 
 Recruiting and generalizing the existing compute crate, removing inappropriate fixed-buffer assumptions, building caller-owned batching, and establishing representative backend profiles are implementation obligations. GPU reconciliation is research rather than architecture, and it is not the default execution model; making it one would be an explicit reopening.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/16_runtime
-  title: "Runtime and General Compute Kernels"
-  maturity: specified-with-empirical-crossover
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - the-runtime-carrier-preserves-the-exact-cut
-  - one-departure-coordinate-no-siblings
-  - the-runtime-commit-witnesses-only-committed-cuts
-  - platform-programs-are-not-per-frame-cuts
-  - transactional-committed-cut
-  - typescript-reference-runtime
-  - general-kernel-abi
-  - schema-typed-runtime-output-through-commit
-  - optimized-backends-have-no-semantic-authority
-  empirical_contracts:
-  - backend-profile
-  - bridge-inclusive-crossover
-  - allocation-proof
-  deferred_research:
-  - broad-gpu-reconciliation
-  production_authority: false
-```

@@ -32,21 +32,4 @@ Own secret-provider authority: opaque references that never carry material, iden
 
 - Material never leaks into logs, receipts, addresses, or generated artifacts; revealed material is disposed exactly once.
 
-`system/assurance`.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/server/02_secret
-  title: "Server Secrets"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - opaque-references-in-broad-contexts
-  - identity-correlated-revelation
-  - no-serialization-surface-on-revealed-secrets
-  production_authority: false
-```
+`system/01_assurance`.

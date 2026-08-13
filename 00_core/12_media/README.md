@@ -94,35 +94,3 @@ Authoring constructor names are not architecture and are not listed. `render` is
 The media semantics, codec requirements, frame envelopes, and export dispositions are specified. Physical codecs, analysis kernels, encoder paths, muxers, and device bindings are absent.
 
 Porting and completing old media behaviour, generalizing DSP kernels, and qualifying browser, worker, Wasm, native, and server paths are implementation obligations this architecture already authorizes.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/12_media
-  title: "Media and Audio/Visual Time"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - media-owns-lossless-sources-stream-owns-overload
-  - source-to-source-never-tuple-to-tuple
-  - input-correlated-to-tracks-by-one-tag
-  - provenance-owns-the-coordinate
-  - payload-identity-follows-representation-not-realm
-  - total-over-admitted-profiles-never-over-branded-strings
-  - the-request-names-the-subject-the-decision-answers-it
-  - one-realtime-offline-media-program
-  - sample-coordinate-authority
-  - host-codecs-as-requirements
-  - a-frame-owns-one-cut-and-no-sibling-coordinate
-  - semantic-and-physical-reuse-stay-distinct
-  - rasterized-provenance-names-its-semantic-frame
-  - track-configuration-is-explicit-never-an-empty-array
-  - frames-not-a-schema-describing-frames
-  - artifact-bytes-are-producer-derived
-  - authored-markers-belong-to-the-scene
-  - export-disposition-attaches-to-the-request
-  production_authority: false
-```

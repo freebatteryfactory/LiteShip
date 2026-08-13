@@ -73,25 +73,3 @@ Collections reuse this proposition algebra rather than defining a second boolean
 The proposition and source algebras are specified. Physical source producers, evaluation engine, and source-planning cost model are absent.
 
 Determining subscription cancellation policy and measuring source cost are implementation obligations. Proposition semantics and reuse across collection predicates are settled here.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/06_evidence
-  title: "Evidence, Truth, and Propositions"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - observations-carry-failure-not-just-value
-  - a-cut-is-addressed-and-exact
-  - claims-name-profile-references-never-profile-products
-  - unclaimed-is-the-honest-default
-  - pending-is-not-unknown
-  - strong-kleene-proposition-algebra
-  - blockers-and-failures-survive-visible-settlement
-  - collections-reuse-propositions
-  production_authority: false
-```

@@ -33,21 +33,4 @@ Own the only place raw process globals and the environment map exist: realm iden
 
 - No ambient `process.env`, filesystem, network, or global read exists outside this boundary.
 
-`system/assurance`.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/server/00_bootstrap
-  title: "Server Bootstrap"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - host-native-is-a-server-backend
-  - configuration-is-admitted-never-raw-env
-  - raw-process-globals-beneath-bootstrap
-  production_authority: false
-```
+`system/01_assurance`.

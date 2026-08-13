@@ -96,26 +96,3 @@ Join cardinality is explicit so output schema and optionality remain derivable.
 The relational algebra, truth semantics, revision relationship, patch family, and deterministic ordering rules are specified. Authoring helper spelling, execution engines, and index realization are absent.
 
 Testing the authoring helpers against real TypeScript ergonomics, including direct field navigation and any optional symbolic callback form, and selecting physical index and backend realizations, are implementation and empirical obligations.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/10_collection
-  title: "Collections and Relational Expressions"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - rows-live-in-world-revisions
-  - typed-relational-expression-tree
-  - query-fields-restricted-to-declared-row-roots
-  - predicates-reuse-strong-kleene
-  - deterministic-content-addressed-collation-and-row-key-tie-break
-  - family-specific-collection-patch
-  product_surface_validation:
-  - direct-schema-field-navigation
-  - optional-symbolic-callback-lowering
-  production_authority: false
-```

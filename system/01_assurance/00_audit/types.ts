@@ -124,8 +124,10 @@ export type ProbeCoverage = Algebra<{
  *
  * The root toolchain policy assigns roles, and `semantic-abi` and
  * `analysis-api` may live on a different lane than `primary-check` for as long
- * as the native compiler withholds the programmatic API. That is a stated
- * root policy with a retirement trigger. What must not happen again is the
+ * as the native compiler exposes no *stable* programmatic API. Precision
+ * matters here because the looser claim is false: 7.0.2 ships
+ * `typescript/unstable/*` including a `Checker`, and `unstable` is the vendor's
+ * own word. The retirement trigger is stability, not existence. What must not happen again is the
  * previous response to the gap: hand-rolled lexical scanning over stripped
  * comments, which is a second parser with none of a parser's guarantees.
  *
@@ -197,8 +199,9 @@ export type AuditProduct = Envelope<
  * either operation flips, the pipeline stops connecting and the third line goes
  * false independently of the first two.
  *
- * `SignaturesConnect` had no consumer anywhere in the repository before this.
- * A root operator with no caller is a claim nobody tested.
+ * `SignaturesConnect` is consumed by `ComposeSignatures` in the root calculus and
+ * tested directly in `types.laws.ts`. This is its first consumer in an authored
+ * home, which is a weaker and truer claim than the one that stood here.
  */
 export type TheInterpreterCanonicalizesThenAttests = Assert<
   IsExactlyTrue<

@@ -47,21 +47,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/cloudflare/02_binding
-  title: "Cloudflare Platform Bindings"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - bindings-are-groundings-not-a-resource-model
-  - necessity-is-carried-not-inferred
-  - no-secrets-in-a-binding
-  - unsatisfied-is-explicit
-  production_authority: false
-```

@@ -32,21 +32,4 @@ Own the admitted host-process authority â€” identity, stdio resources, signals â
 
 - Resource limits and scoped environments are honored at runtime.
 
-`system/assurance`; concurrency and pool sizes are empirical.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/server/01_process
-  title: "Server Process"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - children-are-configuration-scoped-owned-resources
-  - phase-correct-exits-with-evidence
-  - closed-signal-vocabulary
-  production_authority: false
-```
+`system/01_assurance`; concurrency and pool sizes are empirical.

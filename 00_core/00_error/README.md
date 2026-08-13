@@ -66,21 +66,3 @@ A diagnostic carries the complete machine object. Default human rendering answer
 The semantic contract is specified. Runtime implementation, exported constructors, catalog storage, and renderers are absent. Production authority is not earned until the security and cross-projection proofs exist.
 
 Porting the old secure composer and result behaviour, defining the diagnostic-family extension mechanism, and measuring loading and rendering cost are implementation obligations this architecture already authorizes.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/00_error
-  title: "Errors and Diagnostics"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - one-result-shape
-  - tagged-errors-not-subclasses
-  - expected-failure-as-data
-  - structured-remediation
-  production_authority: false
-```

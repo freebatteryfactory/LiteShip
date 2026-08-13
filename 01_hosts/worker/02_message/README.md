@@ -44,21 +44,3 @@ This is an implementation fixture; batch sizes and buffering thresholds are empi
 ## Implementation boundary
 
 Specified. No postMessage, MessageChannel, or decode code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/worker/02_message
-  title: "Worker Messaging"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - decoder-correlated-channel-opening
-  - one-parent-one-worker-endpoint-per-channel
-  - envelopes-carry-core-families-never-redefine-them
-  - channels-are-bounded-owned-resources
-  production_authority: false
-```

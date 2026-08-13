@@ -52,7 +52,7 @@ The rule it encodes is the only defence against the failure mode acquisition alw
 
 ## The interpreter must name its lane
 
-The root toolchain policy assigns roles, and `semantic-abi` and `analysis-api` may sit on a different lane than `primary-check` for as long as the native compiler withholds the programmatic API. That is a stated root policy with an explicit retirement trigger.
+The root toolchain policy assigns roles, and `semantic-abi` and `analysis-api` may sit on a different lane than `primary-check` for as long as the native compiler exposes no *stable* programmatic API — 7.0.2 ships `typescript/unstable/*`, including a `Checker`, and unstable is the vendor's own word. That is a stated root policy with an explicit retirement trigger.
 
 What must not happen again is the previous response to that gap. Lacking the API, the deleted harness hand-rolled lexical scanners over comment-stripped source — a second parser with none of a parser's guarantees, checking claims about type identity by matching text. Requiring `TypeProgramInterpreter` as a hole means an implementation that wants to read source has to name the lane it read with, and the attestation it produces carries that lane's fingerprint.
 
@@ -78,24 +78,3 @@ Runtime and repository claims a type cannot express:
 ## Implementation boundary
 
 Architecture only. No implementation exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: system/01_assurance/00_audit
-  title: "Audit: Evidence Acquisition"
-  maturity: architecture-specified
-  implementation: absent
-  child_homes: []
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - audit-acquires-and-decides-nothing
-  - audit-produces-upstream-vocabulary-never-a-twin
-  - every-produced-fact-names-a-consumer
-  - unrun-probes-remain-visible
-  - the-interpreter-names-its-root-assigned-lane
-  - no-second-parser-over-stripped-source
-  production_authority: false
-```

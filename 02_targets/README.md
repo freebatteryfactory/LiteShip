@@ -1,6 +1,6 @@
 # Targets: Ecosystem Integration Surfaces
 
-Status: `astro/`, `vite/`, and `cloudflare/` authored, their seam proved and direct mode exercised; implementation absent
+Status: `astro/`, `vite/`, and `cloudflare/` authored; the Astro/Vite seam and direct mode were proved by probes that lived in the deleted `verification/` tree and have no replacement in this repository; implementation absent
 
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
@@ -111,39 +111,3 @@ These are runtime claims, not unfinished work. A type cannot express any of them
 - That a runtime producer actually wrote the bytes the artifact addresses.
 - That two producers never race for one artifact slot in a live composition.
 - That an artifact whose ancestry could not be resolved is distinguishable at runtime from one that legitimately resolved to nothing.
-
-```yaml
-home:
-  path: 02_targets
-  title: "Targets: Ecosystem Integration Surfaces"
-  maturity: umbrella-sealed-three-children-authored
-  implementation: absent
-  child_homes:
-  - astro
-  - vite
-  - cloudflare
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - coexistence-does-not-create-ownership
-  - no-sibling-target-imports
-  - direct-mode-falls-out-not-branched
-  - relation-over-core-artifact-never-a-second-artifact
-  - ecosystem-target-is-not-a-projection-target
-  - umbrella-names-participants-carries-no-payloads
-  - every-fact-has-one-owner-no-parity-laws
-  - composition-owned-by-the-outcome-alone
-  - attempt-identity-is-not-composition-identity
-  - claims-precede-selection-producers-follow-it
-  - producer-owns-participation-production-owns-artifact
-  - direct-production-has-no-target-configuration
-  - no-facts-wrapper-around-the-outcome
-  - no-universal-lifecycle-taxonomy
-  - rejection-precedes-selection-failure-follows-it
-  - one-explanation-envelope-owned-by-core
-  - the-outcome-declares-no-explanation-of-its-own
-  - every-product-carries-its-phase-identity
-  - deployable-application-is-entry-plus-assets
-  - no-child-roster-until-children-exist
-  production_authority: false
-```

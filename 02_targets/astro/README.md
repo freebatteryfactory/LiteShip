@@ -70,33 +70,3 @@ These are runtime claims, not unfinished work. A type cannot express any of them
 ## Implementation boundary
 
 Specified. No integration code, no hook handlers, no runtime exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/astro
-  title: "Astro Target"
-  maturity: specified
-  implementation: absent
-  child_homes:
-  - 00_integration
-  - 01_configuration
-  - 02_authoring
-  - 03_build
-  - 04_island
-  - 05_server
-  - 06_development
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - no-sibling-target-imports
-  - the-application-owns-the-route
-  - the-compiler-chooses-backends
-  - astro-owns-the-socket-shape
-  - no-generic-artifact-home
-  - no-transport-policy-in-a-target
-  - web-owns-activation-astro-owns-translation
-  - no-production-authority-in-development
-  production_authority: false
-```

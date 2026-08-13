@@ -81,26 +81,3 @@ Runtime and repository claims a type cannot express:
 ## Implementation boundary
 
 Architecture only. No implementation exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: system/02_release
-  title: "Release: Distributable Meaning and Earned Qualification"
-  maturity: architecture-specified
-  implementation: absent
-  child_homes: []
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - a-release-cannot-qualify-itself
-  - qualification-carries-the-earned-arm-not-the-algebra
-  - candidate-and-authority-share-one-snapshot
-  - compatibility-is-claimed-over-the-type-abi-not-the-version
-  - a-compatibility-claim-may-be-unknown
-  - packaging-releasing-publishing-are-three-receipts
-  - withdrawal-is-representable
-  - no-second-artifact-vocabulary
-  production_authority: false
-```

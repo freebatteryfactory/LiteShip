@@ -32,25 +32,8 @@ Physically realize core's request-time settlement decisions: bind exact request 
 - Earlier faithful settlements are never recomputed on the shipping path.
 - `settlement-input-population-agreement`: the plan, decision, and evidence values are heterogeneous erased core populations — that the supplied decision belongs to the named plan and the evidence rows are the ones the decision was waiting for cannot be a local generic law. Its nonconforming witness is a settlement request pairing plan A's reference with a decision derived from plan B; the assurance census must refuse it.
 
-Both `system/assurance`.
+Both `system/01_assurance`.
 
 ## Implementation boundary
 
 Specified. No settlement evaluation code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/edge/04_settlement
-  title: "Edge Request Settlement"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - realizes-core-decisions-never-decides
-  - both-outcomes-carry-receipts
-  - no-recomputation-of-earlier-settlement
-  production_authority: false
-```

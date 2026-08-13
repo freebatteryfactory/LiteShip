@@ -72,21 +72,3 @@ Type ABI evidence is a `TypeAbiAttestation`, not a receipt. It asserts that an i
 The query, explanation, authority, and impact contracts are specified. The system compiler analysis, catalog builders, graph container, and wire renderers are absent.
 
 Building the compiler-derived Type ABI pipeline and runtime catalogue joins are implementation obligations. Explanation verbosity is a projection choice and does not alter the underlying structured object.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/18_inspection
-  title: "Inspection, Explanation, and Authority Discovery"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - compiler-derived-type-authority
-  - joined-type-and-runtime-authority-graph
-  - one-canonical-owner-and-import
-  - type-abi-attestation-not-receipt
-  production_authority: false
-```

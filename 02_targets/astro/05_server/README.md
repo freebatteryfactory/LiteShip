@@ -50,22 +50,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/astro/05_server
-  title: "Astro Server Attachment"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - the-application-owns-the-route
-  - attach-do-not-rewrite-authorities
-  - no-transport-policy-in-a-target
-  - receipts-not-responses
-  - no-second-dispatcher
-  production_authority: false
-```

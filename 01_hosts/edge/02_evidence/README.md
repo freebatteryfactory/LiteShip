@@ -33,25 +33,8 @@ Own the physical request-time evidence producers — Client Hints and other admi
 - The conservative edge/web classifier relation holds in implementation.
 - Advisory hints never confer authorization.
 
-All `system/assurance`.
+All `system/01_assurance`.
 
 ## Implementation boundary
 
 Specified. No header-parsing or hint-decoding code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/edge/02_evidence
-  title: "Edge Request Evidence"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - producers-name-exact-core-sources-no-defaults
-  - request-lifetime-evidence
-  - hints-never-authorize
-  production_authority: false
-```

@@ -51,21 +51,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/vite/02_module
-  title: "Vite Module Identity"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - specifier-is-not-identity
-  - identity-reads-configuration-source-and-environment
-  - empty-and-unresolved-are-different
-  - locations-are-handles-not-identity
-  production_authority: false
-```

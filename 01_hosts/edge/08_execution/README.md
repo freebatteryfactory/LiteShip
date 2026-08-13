@@ -36,24 +36,4 @@ Edge executes authoritative operations when the plan lawfully supplies exact aut
 
 - Parity with the reference backend; handlers use the canonical operation catalog; advisory hints never authorize.
 
-`system/assurance`; request budgets and js/wasm crossover are empirical.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/edge/08_execution
-  title: "Edge Execution"
-  maturity: specified-with-physical-profiles-deferred
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - operation-correlated-handler-binding
-  - request-scoped-policy-bound-execution
-  - authority-from-capabilities-not-placement
-  empirical_contracts:
-  - request-budgets
-  - js-wasm-crossover
-  production_authority: false
-```
+`system/01_assurance`; request budgets and js/wasm crossover are empirical.

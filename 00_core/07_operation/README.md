@@ -77,22 +77,3 @@ Risk and approval are derived from the operation definition, business effects, r
 The operation and delegated-authority contracts are specified. Handler composition, policy engines, wire projections, and host bindings are absent.
 
 Qualifying policy integration, idempotency storage requirements, cancellation propagation, and protocol projections are implementation obligations this architecture already authorizes.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/07_operation
-  title: "Operations and Delegated Authority"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - operation-is-delegated-business-effect
-  - uniquely-named-multidimensional-resource-budget
-  - exact-requirements
-  - approval-derived-from-operation-policy
-  - one-operation-model-many-wires
-  production_authority: false
-```

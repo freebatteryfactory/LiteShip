@@ -123,41 +123,10 @@ The capability catalog contains the actual erased grounding and offer descriptor
 - Unavailable resources surface as evidence, and no code path converts them into missing bindings or admission failures.
 - Host-local hole names do not collide with any upstream owner's names.
 
-The obligations concerning provenance, origin genuineness, boundary population, minting authority, and descriptor agreement are `system/assurance` claims; those concerning runtime behaviour — custody, disposal, evidence handling — belong to implementation fixtures. Neither set is a type law, and no positional count is kept here for a later edit to silently invalidate.
+The obligations concerning provenance, origin genuineness, boundary population, minting authority, and descriptor agreement are `system/01_assurance` claims; those concerning runtime behaviour — custody, disposal, evidence handling — belong to implementation fixtures. Neither set is a type law, and no positional count is kept here for a later edit to silently invalidate.
 
 ## Implementation boundary
 
 The shared contract and all four child architectures are specified. Concrete environment APIs, physical capability implementations, and every runtime behavior remain absent and unauthorized until the whole repository architecture closes and implementation is explicitly authorized.
 
 The host layer is architecturally complete and no implementation exists or is authorized. The waterfall continues downstream — targets, wires, system, and root composition — architecture-only until the whole repository closes.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts
-  title: "Hosts: Physical Execution Environments"
-  maturity: umbrella-confirmed-closed
-  implementation: absent
-  child_homes:
-  - web
-  - worker
-  - edge
-  - server
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - hosts-realize-never-reinterpret
-  - exact-binding-boundaries-not-free-binding-rows
-  - grounding-admits-offers-construct
-  - grounding-is-not-an-offer-with-an-empty-row
-  - admission-has-no-prerequisites-and-its-own-failure-algebra
-  - grounding-states-declared-selected-admitted-never-share-a-name
-  - grounding-roots-are-slot-references-not-asserted-names
-  - custody-transfer-may-ground-lifetime-creation-never-does
-  - build-is-not-a-host-realm
-  - one-provider-one-lifetime
-  - unavailable-resource-is-evidence-not-missing-binding
-  - no-host-roster-until-homes-exist
-  production_authority: false
-```

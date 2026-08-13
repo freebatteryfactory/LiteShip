@@ -105,30 +105,3 @@ Core defines what must be stored and the compare-and-swap, snapshot, append, loa
 The semantic model, conformance contract, persistence ports, and index-plan contract are specified. The production in-memory data structure and physical indexes are empirical choices.
 
 Selecting sparse persistent structures, paged tables, relation indexes, snapshot cadence, and dense projection thresholds is empirical benchmarking work. This home owns no replication: a replication architecture would compose through family patch and conflict semantics and would be an explicit architecture reopening, not an unstated obligation.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 00_core/08_state
-  title: "Revisioned State and World Algebra"
-  maturity: specified-with-empirical-realizations
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - the-commit-carries-the-exact-cut-not-its-broad-form
-  - one-cut-not-three-loose-coordinates
-  - the-commit-owns-its-cut-once
-  - draft-and-committed-cuts-stay-distinct
-  - immutable-world-revisions
-  - family-patch-to-normalized-change-to-commit
-  - field-preconditions-bind-entity-and-schema-field
-  - one-world-algebra-several-realizations
-  - durable-persistence-through-host-ports
-  - addressed-subworlds
-  empirical_contracts:
-  - in-memory-revision-conformance
-  - relation-index-plan
-  production_authority: false
-```

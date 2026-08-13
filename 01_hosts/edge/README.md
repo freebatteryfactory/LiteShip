@@ -63,30 +63,8 @@ DOM and browser events — web. Worker execution semantics — worker. Filesyste
 - The policy is applied on the shipping path; exactly one response is written.
 - Deferred work remains bounded and attributed; target-generated bindings cannot bypass canonical bootstrap.
 
-All `system/assurance`. Body buffering, TTLs, stale windows, timeouts, retries, streaming crossover, and budgets are empirical lanes.
+All `system/01_assurance`. Body buffering, TTLs, stale windows, timeouts, retries, streaming crossover, and budgets are empirical lanes.
 
 ## Implementation boundary
 
 The complete edge architecture is specified. Every implementation — request handler, cache driver, response pipeline, deferred runner — is absent and unauthorized until the whole repository architecture closes and Eassa explicitly authorizes implementation.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/edge
-  title: "Edge: The Request-Time Host"
-  maturity: architecture-specified
-  implementation: absent
-  child_homes: 11
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - one-invocation-plus-admitted-deployment-providers
-  - edge-may-be-authoritative-with-exact-capabilities
-  - request-location-pin-on-every-offer
-  - one-shot-body-with-declared-cloning
-  - fail-closed-policy-with-addressed-refusals
-  - plan-and-committed-response-are-distinct-types
-  - deferred-work-is-bounded-and-invocation-descended
-  production_authority: false
-```

@@ -33,24 +33,4 @@ Realize the exact core runtime-execution contract on the server: javascript, was
 
 - Native and wasm drivers preserve reference semantics; end-to-end cost is complete.
 
-`system/assurance` and empirical lanes.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/server/08_execution
-  title: "Server Execution"
-  maturity: specified-with-physical-profiles-deferred
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - backends-javascript-wasm-host-native
-  - driver-kind-provably-matches-backend
-  - scheduling-before-execution
-  empirical_contracts:
-  - js-wasm-native-crossover
-  - memory-reserves
-  production_authority: false
-```
+`system/01_assurance` and empirical lanes.

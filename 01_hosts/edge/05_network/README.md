@@ -33,28 +33,8 @@ Own physical outbound network resources: decoder-correlated connection opening, 
 
 - Every open consults the policy on the shipping path.
 
-`system/assurance`; timeouts, retries, and connection reuse are empirical.
+`system/01_assurance`; timeouts, retries, and connection reuse are empirical.
 
 ## Implementation boundary
 
 Specified with physical profiles deferred. No fetch or socket code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/edge/05_network
-  title: "Edge Network"
-  maturity: specified-with-physical-profiles-deferred
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - decoder-correlated-opening
-  - policy-required-for-networking
-  - connections-are-bounded-owned-resources
-  empirical_contracts:
-  - timeouts-and-retries
-  - connection-reuse
-  production_authority: false
-```

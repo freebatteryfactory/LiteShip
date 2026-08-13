@@ -62,23 +62,3 @@ The first and third are assurance-with-fixtures territory; the second is behavio
 ## Implementation boundary
 
 Specified. No DOM observation, claiming, or mutation code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/01_region
-  title: "Web Regions and Write Authority"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - one-writer-per-region-per-transaction
-  - regions-coexist-by-exclusion-never-racing
-  - custody-transitions-explicit-and-revision-pinned
-  - foreign-regions-are-opaque-boundaries
-  - semantic-addresses-never-raw-selectors
-  - preservation-is-physical-not-automatically-semantic
-  production_authority: false
-```

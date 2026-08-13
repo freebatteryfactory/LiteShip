@@ -58,30 +58,3 @@ Both are assurance obligations at their respective phases.
 ## Implementation boundary
 
 Specified with physical profiles deferred: codec support, worklet scheduling, and capture availability are empirical. No AudioContext creation, device access, or codec code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/web/08_media
-  title: "Web Media"
-  maturity: specified-with-physical-profiles-deferred
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - the-browser-fills-the-core-sockets
-  - admission-mints-the-witness
-  - grounding-admits-offers-construct
-  - decode-and-encode-are-operations-not-resource-kinds
-  - refusal-is-explicit-never-an-absent-provider
-  - the-browser-default-is-unclaimed
-  - browser-apis-never-define-the-semantic-media-model
-  - injected-media-may-ground-created-media-is-offered
-  - capture-roster-reserved-for-old-source-evidence
-  - media-resources-owned-and-disposed-once
-  empirical_contracts:
-  - codec-support
-  - capture-availability
-  production_authority: false
-```

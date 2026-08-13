@@ -38,7 +38,7 @@ Eleven numbered homes in dependency order:
 
 ## The capability composition
 
-Ten grounding slots — process entry, configuration, process facility, secret source, filesystem root, network facility, database endpoint, tool catalog, scheduling facility, operation catalog — and ten offers — child process, secret provider, filesystem provider, network authority, database provider, service authority, tool authority, execution host, operation handler, media authority. Twenty pinned capability declarations, each with exact identity, origin, custody, and placement: realm exactly `server`, locations `local | live`, backends `javascript | wasm | host-native`. Children, revealed secrets, handles, connections, leases, services, tool executions, sessions, handlers, and media jobs are per-use resources from their providers. `ServerCapabilityTopology` composes the exact population with population laws on both sides and carries its erased catalog.
+Eleven grounding slots — process entry, configuration, process facility, secret source, filesystem root, network facility, database endpoint, tool catalog, scheduling facility, operation catalog — and ten offers — child process, secret provider, filesystem provider, network authority, database provider, service authority, tool authority, execution host, operation handler, media authority. Twenty-one pinned capability declarations, each with exact identity, origin, custody, and placement: realm exactly `server`, locations `local | live`, backends `javascript | wasm | host-native`. Children, revealed secrets, handles, connections, leases, services, tool executions, sessions, handlers, and media jobs are per-use resources from their providers. `ServerCapabilityTopology` composes the exact population with population laws on both sides and carries its erased catalog.
 
 ## Does not own
 
@@ -63,30 +63,8 @@ Schema, operation, stream, state, scene, media, compiler meaning — core. HTTP/
 - Handlers use the canonical operation catalog; every promised capability has a producer; disposal happens exactly once.
 - Execution and media preserve reference semantics and source revision; end-to-end cost is complete.
 
-All `system/assurance`. Pool sizes, timeouts, batching, backoff, concurrency, and crossovers are empirical lanes.
+All `system/01_assurance`. Pool sizes, timeouts, batching, backoff, concurrency, and crossovers are empirical lanes.
 
 ## Implementation boundary
 
 The complete server architecture is specified. Every implementation — process runner, database pool, filesystem driver, native tool, HTTP listener — is absent and unauthorized until the whole repository architecture closes and Eassa explicitly authorizes implementation.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 01_hosts/server
-  title: "Server: The Trusted General-Purpose Host"
-  maturity: architecture-specified
-  implementation: absent
-  child_homes: 11
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - capability-host-not-application-runtime
-  - trusted-describes-breadth-not-automatic-authority
-  - realizations-pin-their-actual-lifecycle
-  - secrets-have-no-serialization-surface
-  - paths-are-root-correlated
-  - leases-are-per-generation-never-long-lived
-  - handlers-bind-exact-core-operations
-  production_authority: false
-```

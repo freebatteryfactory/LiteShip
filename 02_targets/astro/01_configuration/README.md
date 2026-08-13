@@ -43,22 +43,3 @@ Assurance-and-implementation territory.
 ## Implementation boundary
 
 Specified. No code exists or is authorized.
-
-## Machine-checkable projection
-
-```yaml
-home:
-  path: 02_targets/astro/01_configuration
-  title: "Astro Configuration Admission"
-  maturity: specified
-  implementation: absent
-  runtime_exports: false
-  dependency_authority: source-imports
-  semantic_decisions:
-  - raw-is-not-admitted
-  - disclosure-is-carried-not-inferred
-  - admission-failure-carries-no-value
-  - exact-configuration-revision
-  - origin-survives-merging
-  production_authority: false
-```
