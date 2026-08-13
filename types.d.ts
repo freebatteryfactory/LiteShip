@@ -142,9 +142,35 @@ export type Coproduct<Cases extends readonly object[]> = Cases[number];
  * A tagged data case. Behavior is supplied by functions rather than inheritance.
  * A field product may not restate the reserved `_tag` discriminant.
  */
-export type Tagged<Tag extends string, Fields extends object = {}> = '_tag' extends keyof Fields
-  ? never
-  : Simplify<Readonly<{ _tag: Tag }> & Readonly<Fields>>;
+/**
+ * Whether any member of `Body` carries any of the reserved keys.
+ *
+ * `keyof (A | B)` is the **intersection** of their keys, so the direct form
+ * `'_tag' extends keyof Body` goes blind the moment `Body` is a union: a key
+ * present in only one arm is not in the intersection, the guard sees nothing,
+ * and the reserved key survives into the result. Verified against this repo's
+ * own compiler — `Tagged<'red', { readonly a: 1 } | { readonly _tag: string }>`
+ * was not `never`, and the type it produced genuinely carried a `_tag` from the
+ * body.
+ *
+ * The naked type parameter in each conditional makes it distribute: once over
+ * every member of `Body`, and once over every reserved key. Any pair that
+ * matches contributes `true` to the result union, so the caller's
+ * `[...] extends [never]` test is false whenever *any* member shadows *any*
+ * reserved key. The bracket is load-bearing on the caller's side too — a bare
+ * `X extends never` distributes and answers for each member separately.
+ */
+type ShadowsReservedKey<Body, Reserved extends PropertyKey> = Body extends unknown
+  ? Reserved extends keyof Body
+    ? true
+    : never
+  : never;
+
+export type Tagged<Tag extends string, Fields extends object = {}> = [
+  ShadowsReservedKey<Fields, '_tag'>,
+] extends [never]
+  ? Simplify<Readonly<{ _tag: Tag }> & Readonly<Fields>>
+  : never;
 
 /** The literal discriminant carried by a tagged case or tagged algebra. */
 export type TagOf<Value> = Value extends { readonly _tag: infer Tag extends string } ? Tag : never;
@@ -746,7 +772,7 @@ export type Envelope<
   Tag extends string,
   Version extends string | number,
   Body extends object,
-> = Extract<keyof Body, EnvelopeReservedKey> extends never
+> = [ShadowsReservedKey<Body, EnvelopeReservedKey>] extends [never]
   ? Simplify<Readonly<{ _tag: Tag; _version: Version }> & Readonly<Body>>
   : never;
 
