@@ -1,0 +1,14 @@
+{
+  "name": "liteship",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "LiteShip: a compiler-checked specification. Declaration-only; no runtime exports.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}
