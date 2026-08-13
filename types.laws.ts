@@ -221,8 +221,35 @@ export type RefineRejectsWidening = Assert<
   IsNever<Refine<{ readonly a: string }, { a: string | number }>>
 >;
 
-export type RefineRejectsPresenceLawWeakening = Assert<
-  IsNever<Refine<{ readonly a: string }, { a?: string }>>
+/**
+ * A refinement must actually refine.
+ *
+ * Both fixtures were measured **accepted** before the operator was corrected.
+ * The first is a change identical to what it replaces. The second is subtler
+ * and is the reason this law exists: a caller asking to make a required member
+ * optional, where the upstream value already admits `undefined` so the widening
+ * arm sees nothing wrong. It was accepted, and the result still had `a`
+ * required — the caller was told yes and given nothing.
+ *
+ * This replaces `RefineRejectsPresenceLawWeakening`, which was deleted rather
+ * than repaired. That law asserted `IsNever<Refine<{readonly a: string}, {a?:
+ * string}>>` and passed — but not for the reason its name gave. Under
+ * `exactOptionalPropertyTypes`, `{a?: string}` indexes to `string | undefined`,
+ * which is not assignable to `string`, so the *widening* arm rejected it. It
+ * was `RefineRejectsWidening` with a different fixture and a misleading name,
+ * and it is why `exactOptionalPropertyTypes` measured as load-bearing for
+ * nothing in this repository.
+ *
+ * Presence itself was never at risk: `Refine`'s result maps homomorphically
+ * over `keyof Upstream`, so modifiers come from the upstream authority by
+ * construction. `RefinePreservesUpstreamModifiers` below is the law that proves
+ * that, and it proves it positively — an optional upstream member stays
+ * optional even when the change declares it required.
+ */
+export type RefineRejectsANoOpChange = Assert<IsNever<Refine<{ readonly a: string }, { a: string }>>>;
+
+export type RefineRejectsAPresenceOnlyChangeThatCannotTakeEffect = Assert<
+  IsNever<Refine<{ readonly a: string | undefined }, { a?: string }>>
 >;
 
 export type RefinePreservesUpstreamModifiers = Assert<

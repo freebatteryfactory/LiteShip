@@ -377,18 +377,43 @@ export type Extend<Upstream extends object, Local extends object> = [SharedKeys<
 export type InvalidRefinementKeys<Upstream extends object, Changes extends object> =
   | Exclude<keyof Changes, keyof Upstream>
   | {
-      readonly [Key in keyof Changes & keyof Upstream]-?: Changes[Key] extends Upstream[Key]
-        ? never
+      readonly [Key in keyof Changes & keyof Upstream]: Changes[Key] extends Upstream[Key]
+        ? Upstream[Key] extends Changes[Key]
+          ? Key
+          : never
         : Key;
     }[keyof Changes & keyof Upstream];
 
 /**
  * Deliberately narrow a subset of an existing shape.
  *
- * The result maps over the upstream shape, so required/optional and
- * readonly/mutable member modifiers remain owned by the upstream authority.
- * A widening, unrelated key, or attempted presence-law change resolves to
- * `never` instead of silently weakening the inherited contract.
+ * The result maps over `keyof Upstream`, and because `Upstream` is a naked type
+ * parameter that mapping is **homomorphic** — required/optional and
+ * readonly/mutable modifiers are carried over from the upstream authority by
+ * construction. A change cannot alter presence, because presence is not read
+ * from `Changes` at all.
+ *
+ * That is worth stating precisely, because the guard that claimed to enforce it
+ * did not. `InvalidRefinementKeys` carried a `-?` modifier whose stated job was
+ * defending the presence law; its mapping is constrained by
+ * `keyof Changes & keyof Upstream` rather than by a single naked parameter, so
+ * the mapping is non-homomorphic and the modifier was a no-op. It has been
+ * removed. Presence was never at risk, and the law named after it was passing
+ * for a different reason — it was catching the same widening its sibling
+ * already caught.
+ *
+ * The rule that *was* missing is that a refinement must actually refine.
+ * Measured before the change: `Refine<{ req: string }, { req: string }>` was
+ * accepted, and so was `Refine<{ a: string | undefined }, { a?: string }>` —
+ * the second being a caller asking to change presence, being told yes, and
+ * receiving a shape where `a` is still required. A declaration that claims to
+ * narrow and narrows nothing is the defect class this whole operator exists to
+ * prevent, committed by the operator.
+ *
+ * So a key is invalid when its change is not assignable to the upstream type
+ * (widening or unrelated) **or** when the two are mutually assignable (no
+ * narrowing occurred). Only a strict narrowing survives. An unrelated key is
+ * invalid as before.
  */
 export type Refine<Upstream extends object, Changes extends object> = [
   InvalidRefinementKeys<Upstream, Changes>,
