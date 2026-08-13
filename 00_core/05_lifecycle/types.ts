@@ -49,24 +49,18 @@ export type DisposalOutcome = Algebra<{
 /**
  * The receipt one disposal produces.
  *
- * The carrier shape exists because the alternative was measured and it was
- * worse. Across the repository, twenty-five lifecycle-ending operations used
- * six different return conventions: fourteen returned the exact reference they
- * were handed, four a projection of their own input, one an unrelated layout
- * address, one a transaction generation, and two a bare boolean. None carried
- * information the caller did not already hold.
+ * The carrier shape answers a variance constraint, and the reason is worth
+ * stating so it is not "simplified" away later. A `Signature`'s input is
+ * contravariant. An operation declared `Signature<Reference<Id>, void>` carries
+ * its identity only in an input position, which inverts exactness — a broad
+ * supplier becomes assignable where an exact one is required. Returning the
+ * subject keeps `Id` covariant.
  *
- * The reason was not carelessness, and it is worth stating so the shape is not
- * "simplified" back later. A `Signature`'s input is contravariant. An operation
- * declared `Signature<Reference<Id>, void>` carries its identity only in an
- * input position, which inverts exactness — a broad supplier becomes assignable
- * where an exact one is required. Returning the reference was the cheapest way
- * to keep `Id` covariant, and it bought that at the cost of a return that says
- * nothing.
- *
- * The receipt keeps the covariance and spends it on something true: the subject
- * appears in an output position, and the outcome answers a question only the
- * operation can answer.
+ * The temptation, having discovered that, is to return the caller's own
+ * reference: it satisfies the variance and costs nothing to write. It also says
+ * nothing. The receipt keeps the covariance and spends it on something true —
+ * the subject appears in an output position, and the outcome answers a question
+ * only the operation can answer.
  *
  * **This one is for disposal only.** See {@link CancellationReceipt} — the two
  * are deliberately not one type.
@@ -81,29 +75,37 @@ export interface DisposalReceipt<Subject> {
  *
  * Cancellation is not disposal, and the arms are the evidence. Disposal ends
  * ownership and is idempotent, so `released | already-released` covers it.
- * Cancellation is a *request* against work that has its own terminal states,
+ * Cancellation is a *request* against work that has terminal states of its own,
  * and it can meet three genuinely different situations.
  *
- * The third arm is the one that matters and the one a disposal outcome
- * destroys. Cancelling something that already completed is not "already
- * released" — it is the caller discovering that the work finished and the
- * result exists. For a render, that is the difference between "your export was
- * stopped" and "your export is done, go collect it." No caller can recover that
- * from a success flag.
+ * This answers exactly one question: **did this request newly apply, repeat an
+ * existing one, or arrive too late.** It does not report what the subject
+ * became. A terminal subject already owns its own outcome — completed, failed,
+ * or otherwise — and copying that here would be a second place for the same
+ * fact to be stated and to drift.
  *
- * The arms are read off the lifecycles that actually exist rather than
- * invented: `MediaBatch` reports produced, completed, cancelled, and failed;
- * `DeferredOutcome` reports pending, completed, failed, and cancelled. Both
- * distinguish exactly these three answers to a cancel request.
+ * The third arm is the one a disposal outcome destroys. A request arriving
+ * after the subject finished on its own is not "already released": nothing was
+ * released, and the caller now has to go read the subject's terminal result to
+ * find out what happened. That is a different action from the one an
+ * `already-requested` answer implies, and no success flag distinguishes them.
  */
 export type CancellationOutcome = Algebra<{
-  /** The subject was live; cancellation now applies to it. */
+  /** The subject was live; this request now applies to it. */
   requested: Record<never, never>;
-  /** A prior cancellation already applied. */
-  'already-cancelled': Record<never, never>;
   /**
-   * The subject reached a terminal state of its own — completed or failed —
-   * before this request arrived, so the request changed nothing.
+   * A cancellation request already existed for this subject.
+   *
+   * Named for the request, not the subject's state. Cooperative cancellation
+   * means a request has been raised, not that the work has finished unwinding —
+   * `already-cancelled` would claim the stronger thing, and the subject's own
+   * lifecycle is what answers that.
+   */
+  'already-requested': Record<never, never>;
+  /**
+   * The subject reached a terminal state of its own before this request
+   * arrived, so the request changed nothing. Which terminal state it reached is
+   * the subject's to report, not this receipt's.
    */
   'already-terminal': Record<never, never>;
 }>;
@@ -233,10 +235,36 @@ export type ACancellationReceiptIsNotADisposalReceipt = Assert<
     [
       CancellationReceipt<'a'> extends DisposalReceipt<'a'> ? true : false,
       DisposalReceipt<'a'> extends CancellationReceipt<'a'> ? true : false,
-      Equal<TagOf<CancellationOutcome>, 'requested' | 'already-cancelled' | 'already-terminal'>,
+      Equal<TagOf<CancellationOutcome>, 'requested' | 'already-requested' | 'already-terminal'>,
       Equal<TagOf<DisposalOutcome>, 'released' | 'already-released'>,
     ],
     [false, false, true, true]
+  >
+>;
+
+/**
+ * A cancellation receipt names the exact subject it answers for.
+ *
+ * The sibling law above proves the two receipts are not interchangeable, and
+ * the media law proves `cancel` returns this shape — but neither proves this
+ * type still reads its `Subject` parameter. Both would survive `subject` being
+ * retyped to `unknown`, because both compare against `CancellationReceipt<X>`
+ * and that expected side broadens through the same alias. A law whose source is
+ * its subject certifies the defect instead of catching it, which is the trap
+ * this repository has now found in three separate places.
+ *
+ * So this reads the relationship directly. The last line is the anti-vacuity
+ * partner: without it, widening `subject` leaves the first three lines intact.
+ */
+export type ACancellationReceiptIsExactOverItsSubject = Assert<
+  Equal<
+    [
+      CancellationReceipt<'a'> extends CancellationReceipt<'b'> ? true : false,
+      CancellationReceipt<'a'> extends CancellationReceipt<string> ? true : false,
+      CancellationReceipt<string> extends CancellationReceipt<'a'> ? true : false,
+      CancellationReceipt<unknown> extends CancellationReceipt<'a'> ? true : false,
+    ],
+    [false, true, false, false]
   >
 >;
 
