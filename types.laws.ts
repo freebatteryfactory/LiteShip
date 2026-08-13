@@ -37,6 +37,7 @@ import type {
   ContextOf,
   Envelope,
   Equal,
+  Executor,
   ErrOf,
   Extend,
   FailureOf,
@@ -100,9 +101,24 @@ interface LabelledPort extends Port<string | number, Uint8Array> {
 }
 
 type Produce = Signature<string, number, 'produce-failed', readonly [HoleA]>;
-type Consume = Signature<number, boolean, 'consume-failed', readonly [HoleB]>;
+/**
+ * `Consume`'s input is deliberately **wider** than `Produce`'s output.
+ *
+ * It used to accept exactly `number`, which is what `Produce` emits. That made
+ * the connection symmetric, and a symmetric fixture cannot test a directional
+ * operator: `[OutputOf<Left>] extends [InputOf<Right>]` and its reverse both
+ * answered `true`, so reversing `SignaturesConnect` survived the whole law
+ * suite. `Disconnected` did not help either — its input is unrelated, so both
+ * directions answered `false` there too.
+ *
+ * With `number | string` accepted here, the forward reading holds and the
+ * reverse does not, which is what makes the connection laws below discriminate.
+ * A pipeline is connected when the producer's output *fits into* the consumer's
+ * input, not when the two are equal.
+ */
+type Consume = Signature<number | string, boolean, 'consume-failed', readonly [HoleB]>;
 /** Input does not accept `Produce`'s output, so the pipeline is disconnected. */
-type Disconnected = Signature<string, boolean, 'unrelated', readonly []>;
+type Disconnected = Signature<boolean, boolean, 'unrelated', readonly []>;
 
 // ---------------------------------------------------------------------------
 // Obligation 4 — tagged algebras discriminate, reject reserved tags, and derive
@@ -317,6 +333,24 @@ export type IncompatibleCapabilitiesAreNamedSeparately = Assert<
   >
 >;
 
+/**
+ * A supplied capability narrower than the required contract is compatible.
+ *
+ * The law above cannot prove this. Its fixture supplies `boolean` where
+ * `string` is required — mutually non-assignable, so the check answers the same
+ * either way and reversing the operator survives it. Compatibility is
+ * directional: the supplier must satisfy the requirement, not the reverse. A
+ * host offering exactly `'literal'` where a `string` is asked for is lawful,
+ * and a host offering `string` where `'literal'` is required is not.
+ *
+ * `HoleA` requires `string`; this context supplies `'literal'`, which is
+ * strictly narrower. Forward, nothing is incompatible. Reversed, `'a'` would be
+ * reported and this law turns red.
+ */
+export type ANarrowerSuppliedCapabilitySatisfiesAWiderRequirement = Assert<
+  IsNever<IncompatibleRequirementKeys<readonly [HoleA], { readonly a: 'literal' }>>
+>;
+
 export type ASatisfiedContextIsAccepted = Assert<
   Equal<RequirementsSatisfied<readonly [HoleA, HoleB], { readonly a: string; readonly b: number }>, true>
 >;
@@ -388,6 +422,30 @@ export type ComposingUnionsFailuresAndMergesRequirements = Assert<
   Equal<
     ComposeSignatures<Produce, Consume>,
     Signature<string, boolean, 'produce-failed' | 'consume-failed', readonly [HoleA, HoleB]>
+  >
+>;
+
+/**
+ * Executing a signature consumes its input and yields its result, with the
+ * output in the success arm and the failure algebra in the failure arm.
+ *
+ * `SignatureResult` is `Result<OutputOf<V>, FailureOf<V>>`, and both arms of
+ * `Result` carry one payload each, so swapping the arguments produces a
+ * perfectly valid type that means the opposite. Nothing tested it — neither
+ * `SignatureResult` nor `Executor` had a single consumer anywhere in the
+ * repository.
+ *
+ * The claim is proved through `Executor` rather than by reading
+ * `SignatureResult` directly, because that is where the relationship is
+ * actually used: an executor takes the signature's input and returns its
+ * result. `Produce` emits `number` and fails with `'produce-failed'`, two
+ * unrelated types, so a swap turns this red rather than merely reordering
+ * equals.
+ */
+export type ExecutingASignatureConsumesItsInputAndYieldsItsResult = Assert<
+  Equal<
+    [Parameters<Executor<Produce>>[0], Awaited<ReturnType<Executor<Produce>>>],
+    [string, Result<number, 'produce-failed'>]
   >
 >;
 
