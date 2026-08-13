@@ -58,7 +58,6 @@ import type {
   RootName,
   SourceHomeReference,
   WorkspacePath,
-  WorkspaceSnapshotId,
   WorkspaceSnapshotReference,
 } from '../00_workspace/types.js';
 
@@ -188,16 +187,30 @@ export interface GateScope {
  * Identity of one exact revision of a check's rule.
  *
  * Three identities stay distinct and this is the middle one. `GateId` is which
- * conceptual check this is, and survives edits. This is the exact rule that was
- * demonstrated, and does not: editing the rule mints a new revision, which
- * invalidates the old proof by construction rather than by anybody remembering
- * to. The third is the observed source location, which is a fact about one
- * repository snapshot and lives on the definition.
+ * conceptual check this is, and survives edits. This is one particular
+ * observation of the rule, and does not. The third is the observed source
+ * location — a fact about one repository snapshot — which lives on the
+ * definition beside its content address.
  *
- * A threading token, read exactly as {@link WorkspaceSnapshotId} is. The content
- * address of the rule text rides on the definition as an observation; it cannot
- * carry exactness itself, because `ContentAddress<Type>` resolves to one
- * template literal identical for every value of that media type.
+ * An opaque threading token, read exactly as `WorkspaceSnapshotId` is. What it
+ * proves is this and only this:
+ *
+ * > this proof, this run specification, and this evaluation concern the same
+ * > exact definition observation.
+ *
+ * It does not prove that the token changes when the rule's bytes change. Nothing
+ * in a type system mints a token, so "editing the rule invalidates its old
+ * proof" is a property of whatever mints them — and an earlier draft of this
+ * comment asserted it as a property of the declaration, which is the same
+ * overclaim the snapshot token was carefully written to avoid, made one file
+ * over and four days later.
+ *
+ * The definition carries a `ContentAddress` of the rule text as a runtime
+ * observation. That address cannot carry the exactness either:
+ * `ContentAddress<Type>` resolves to one template literal identical for every
+ * value of that media type, which is the erasure this repository has now
+ * repaired twice. Binding token to address to bytes is an audit obligation and
+ * the README lists it as one.
  */
 export type GateRevisionId<Name extends string = string> = Brand<
   Name,
@@ -379,6 +392,209 @@ export type GateOutcome = Algebra<{
 }>;
 
 // ---------------------------------------------------------------------------
+// Evidence profiles
+// ---------------------------------------------------------------------------
+
+/**
+ * How much evidence a run had available.
+ *
+ * `lean` is a pre-commit or editor context where the compiler lane is not
+ * worth paying for; `rich` is a full audit. The distinction is declared rather
+ * than inferred so that a gate needing rich evidence under a lean run resolves
+ * to indeterminate — visible, and refused if the invocation required that
+ * check — instead of silently not running. Silently not running is how a checked
+ * repository becomes an unchecked one without anybody deciding to.
+ */
+export type EvidenceProfile = 'lean' | 'rich';
+
+// ---------------------------------------------------------------------------
+// Gate definitions
+// ---------------------------------------------------------------------------
+
+/**
+ * Where a check came from.
+ *
+ * A member on the one definition, replacing `ConsumerGateId` — a second brand
+ * over the same carrier, which `GateDefinition<Id extends GateId>` could not be
+ * instantiated with. The promise that consumer gates travel the same path as
+ * repository gates was not weakly enforced; it was impossible, and the type that
+ * existed to make extension first-class prevented it.
+ */
+export type GateOrigin = 'repository' | 'consumer';
+
+/**
+ * One gate: what it covers, what it reads, what it concludes, and what it
+ * claims to catch.
+ *
+ * `reads` is non-empty because a gate with no inputs decides nothing and
+ * cannot fail — the pure form of the vacuity this repository keeps rediscovering
+ * in its own laws.
+ *
+ * `claims` is non-empty because each claim carries its own proof, positionally.
+ * A check that claims nothing can never be disproven, which makes it
+ * permanently undemonstrable rather than trivially trustworthy.
+ *
+ * There is no `disposition` member. A definition used to declare itself
+ * `blocking`, `warning`, or `advisory` for all time, which made a factual check
+ * permanently managerial — and it is wrong on its face, because the same check
+ * is required by release, shown in an editor, and merely informative in a
+ * diagnostic view. What a check *is* does not change; what an invocation
+ * *requires* does. Consequence therefore lives on {@link AssuranceRunSpec}, as
+ * ordinary operation input.
+ *
+ * `requires` stays, and is not the same kind of thing. An evidence profile is a
+ * factual prerequisite of the check — it says what the check needs in order to
+ * decide at all — rather than a standing claim about what should happen when it
+ * decides against you.
+ */
+export interface GateDefinition<
+  Id extends GateId = GateId,
+  Revision extends GateRevisionId = GateRevisionId,
+  Claims extends NonEmptyTuple<FailureClassReference> = NonEmptyTuple<FailureClassReference>,
+> {
+  readonly gate: GateReference<Id>;
+  readonly revision: GateRevisionReference<Revision>;
+  readonly origin: GateOrigin;
+  readonly scope: GateScope;
+  readonly reads: NonEmptyTuple<AssuranceFactName>;
+  readonly proposition: AssuranceProposition;
+  readonly claims: Claims;
+  readonly requires: EvidenceProfile;
+  readonly address: ContentAddress<'application/vnd.liteship.gate-definition+cbor'>;
+  readonly source: WorkspacePath;
+}
+
+/**
+ * One proof entry per declared claim, positionally.
+ *
+ * The claim population is a type parameter for exactly this reason. Previously
+ * `detects` and `witnesses` were two independent non-empty tuples with nothing
+ * relating a position in one to a position in the other — probe-confirmed that a
+ * gate declaring it detects X while carrying a witness for Y was assignable. A
+ * homomorphic mapping over the claim tuple makes the two the same population by
+ * construction, and the per-position `infer` makes entry two the proof of claim
+ * two.
+ *
+ * Each entry is `Evidence`-wrapped so that *nobody has demonstrated this yet*,
+ * *a demonstration is running*, *a demonstration came out*, and *the
+ * demonstration machinery broke* stay four distinct states rather than
+ * collapsing into a status word.
+ */
+export type ClaimProofs<
+  Claims extends NonEmptyTuple<FailureClassReference>,
+  Revision extends GateRevisionId = GateRevisionId,
+> = {
+  readonly [Position in keyof Claims]: Claims[Position] extends FailureClassReference<infer Class>
+    ? Evidence<DemonstrationOutcome<Class, Revision>>
+    : never;
+};
+
+/** The same population, with every claim actually demonstrated. */
+export type DemonstratedClaimProofs<
+  Claims extends NonEmptyTuple<FailureClassReference>,
+  Revision extends GateRevisionId = GateRevisionId,
+> = {
+  readonly [Position in keyof Claims]: Claims[Position] extends FailureClassReference<infer Class>
+    ? DemonstratedProof<Class, Revision>
+    : never;
+};
+
+/**
+ * A check as an evaluation used it: the exact rule, and where its proof stands.
+ *
+ * The proofs are bound to the definition's revision, not to its `GateId`. That
+ * is the whole reason the revision exists: a check demonstrated last month does
+ * not carry that demonstration into a rule nobody has tested — *provided
+ * whatever mints revisions mints a fresh one when the rule changes*. The type
+ * holds the two together and performs no minting, and that qualifier is not
+ * decoration.
+ */
+export interface EvaluatedGate<
+  Id extends GateId = GateId,
+  Revision extends GateRevisionId = GateRevisionId,
+  Claims extends NonEmptyTuple<FailureClassReference> = NonEmptyTuple<FailureClassReference>,
+> {
+  readonly definition: GateDefinition<Id, Revision, Claims>;
+  readonly proofs: ClaimProofs<Claims, Revision>;
+}
+
+/** A check whose every declared claim has a demonstration behind it. */
+export type DemonstratedGate<
+  Id extends GateId = GateId,
+  Revision extends GateRevisionId = GateRevisionId,
+  Claims extends NonEmptyTuple<FailureClassReference> = NonEmptyTuple<FailureClassReference>,
+> = Refine<
+  EvaluatedGate<Id, Revision, Claims>,
+  { readonly proofs: DemonstratedClaimProofs<Claims, Revision> }
+>;
+
+// ---------------------------------------------------------------------------
+// The run specification
+// ---------------------------------------------------------------------------
+
+/**
+ * What this invocation does with a check's answer.
+ *
+ * Two arms, not three, and deliberately not `blocking | warning | advisory`
+ * under new spelling. The retired triple was a standing property of a check;
+ * this is a property of one invocation, and an invocation either needs an answer
+ * to proceed or wants to hear it. Severity of a *finding* is a diagnostic
+ * concern and stays on `Diagnostic`, where a whole vocabulary for it already
+ * exists.
+ */
+export type CheckConsequence = 'required' | 'informational';
+
+/**
+ * One entry in a run spec: which exact check, and what this run does with it.
+ *
+ * The revision is named alongside the gate, and carrying only the gate was not
+ * enough. `GateId` survives edits — that is what makes it the same check across
+ * time — so a plan naming only the gate lets a proof concern revision A while
+ * the run executes revision B, with the type seeing agreement precisely where
+ * the instrument changed. Persistent identity is for discovery and continuity;
+ * it is not proof identity.
+ */
+export interface PlannedCheck<
+  Id extends GateId = GateId,
+  Revision extends GateRevisionId = GateRevisionId,
+> {
+  readonly gate: GateReference<Id>;
+  readonly revision: GateRevisionReference<Revision>;
+  readonly consequence: CheckConsequence;
+}
+
+export type AssuranceRunSpecId<Name extends string = string> = Brand<
+  Name,
+  'liteship.assurance-run-spec-id'
+>;
+export type AssuranceRunSpecReference<Id extends AssuranceRunSpecId = AssuranceRunSpecId> =
+  Reference<'assurance-run-spec', Id>;
+
+/**
+ * What one assurance invocation asks for.
+ *
+ * Ordinary operation input, not a policy document and not a governance plan.
+ * Publishing has stricter prerequisites than showing repository diagnostics, so
+ * the two invocations name different check populations and different
+ * consequences. That is a function argument, not an approval department.
+ *
+ * The check population is a type parameter rather than a plain member because a
+ * result is required to carry one evaluation *per planned check*, and that
+ * correspondence is only expressible if the population's arity is in the type.
+ * A result whose evaluation count is merely non-empty says "something ran" where
+ * the question was "did what was requested run" — and the difference between
+ * those two is the whole reason the deleted control plane's reports read clean.
+ */
+export interface AssuranceRunSpec<
+  Id extends AssuranceRunSpecId = AssuranceRunSpecId,
+  Checks extends NonEmptyTuple<PlannedCheck> = NonEmptyTuple<PlannedCheck>,
+> {
+  readonly spec: AssuranceRunSpecReference<Id>;
+  readonly checks: Checks;
+  readonly profile: EvidenceProfile;
+}
+
+// ---------------------------------------------------------------------------
 // Findings and receipts
 // ---------------------------------------------------------------------------
 
@@ -419,6 +635,193 @@ export type AssuranceDegradation = Algebra<{
 // ---------------------------------------------------------------------------
 
 /**
+ * A gate reads something and claims something.
+ *
+ * Both negative lines matter. Widening either population to a plain array
+ * admits the empty case, and the empty case is a gate that cannot fail — which
+ * is indistinguishable from a gate that never fires, and is exactly the state
+ * every vacuous law in this repository has been in.
+ */
+export type AGateReadsEvidenceAndClaimsDetection = Assert<
+  Equal<
+    [
+      Equal<GateDefinition['reads'], NonEmptyTuple<AssuranceFactName>>,
+      readonly AssuranceFactName[] extends GateDefinition['reads'] ? true : false,
+      Equal<GateDefinition['claims'], NonEmptyTuple<FailureClassReference>>,
+      readonly FailureClassReference[] extends GateDefinition['claims'] ? true : false,
+    ],
+    [true, false, true, false]
+  >
+>;
+
+type GateLawA = GateId<'law.gate.a'>;
+type ClassLawA = FailureClassId<'law.class.a'>;
+type ClassLawB = FailureClassId<'law.class.b'>;
+type ClaimsLawAB = readonly [FailureClassReference<ClassLawA>, FailureClassReference<ClassLawB>];
+
+/**
+ * A claim and its proof are one population.
+ *
+ * Line one is the correspondence: two claims, two proofs, the second about the
+ * second claim. Lines two and three are what the retired arrangement admitted
+ * and this does not — a proof population shorter than the claim population, and
+ * a proof of claim A standing in for a proof of claim B. That second one was not
+ * hypothetical: `detects: [X]` carrying `witnesses: [WitnessForY]` was
+ * assignable, probe-confirmed, which made the qualification claim decorative.
+ *
+ * Line four pins that a demonstrated population is strictly narrower than a
+ * merely acquired one, and line five that it did not collapse to `never` on the
+ * way — `Refine` returns `never` for a change that narrows nothing, and a
+ * `never` inside a tuple position would make lines two and three false for
+ * entirely the wrong reason.
+ */
+export type AClaimAndItsProofAreOnePopulation = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          ClaimProofs<ClaimsLawAB>,
+          readonly [Evidence<DemonstrationOutcome<ClassLawA>>, Evidence<DemonstrationOutcome<ClassLawB>>]
+        >,
+        readonly [Evidence<DemonstrationOutcome<ClassLawA>>] extends ClaimProofs<ClaimsLawAB>
+          ? true
+          : false,
+        readonly [
+          Evidence<DemonstrationOutcome<ClassLawA>>,
+          Evidence<DemonstrationOutcome<ClassLawA>>,
+        ] extends ClaimProofs<ClaimsLawAB>
+          ? true
+          : false,
+        DemonstratedClaimProofs<ClaimsLawAB> extends ClaimProofs<ClaimsLawAB> ? true : false,
+        ClaimProofs<ClaimsLawAB> extends DemonstratedClaimProofs<ClaimsLawAB> ? true : false,
+      ],
+      [true, false, false, true, false]
+    >
+  >
+>;
+
+type RevisionLawOne = GateRevisionId<'law.revision.1'>;
+type RevisionLawTwo = GateRevisionId<'law.revision.2'>;
+
+/**
+ * The evaluated gate actually carries that correlated population.
+ *
+ * Written out concretely and pinned against the member, because the law above
+ * proves `ClaimProofs` behaves correctly as an *operator* and — measured — that
+ * was not enough twice over.
+ *
+ * Widening `proofs` to `NonEmptyTuple<Evidence<DemonstrationOutcome>>` compiled
+ * clean with every operator law still green: the proof population and the claim
+ * population were two independent tuples again, which is the exact arrangement
+ * this commit exists to delete, restored in the carrier while the operator that
+ * forbids it sat unused beside it.
+ *
+ * Dropping the revision from `proofs` also compiled clean, and that one is
+ * subtler. `ProofIsBoundToTheExactRule` still passed, because the *definition*
+ * threads the revision and the law was reading it there — a law that fires, over
+ * an operator that is correct, which cannot distinguish the case it is named
+ * after from a different one. Lines one and two read the revision through the
+ * proof entries, where the claim actually lives.
+ */
+export type TheEvaluatedGateCarriesTheCorrelatedProofs = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          EvaluatedGate<GateLawA, RevisionLawOne, ClaimsLawAB>['proofs'],
+          readonly [
+            Evidence<DemonstrationOutcome<ClassLawA, RevisionLawOne>>,
+            Evidence<DemonstrationOutcome<ClassLawB, RevisionLawOne>>,
+          ]
+        >,
+        Equal<
+          DemonstratedGate<GateLawA, RevisionLawOne, ClaimsLawAB>['proofs'],
+          readonly [
+            DemonstratedProof<ClassLawA, RevisionLawOne>,
+            DemonstratedProof<ClassLawB, RevisionLawOne>,
+          ]
+        >,
+        NonEmptyTuple<Evidence<DemonstrationOutcome>> extends EvaluatedGate<
+          GateLawA,
+          RevisionLawOne,
+          ClaimsLawAB
+        >['proofs']
+          ? true
+          : false,
+        EvaluatedGate<GateLawA, RevisionLawTwo, ClaimsLawAB>['proofs'] extends EvaluatedGate<
+          GateLawA,
+          RevisionLawOne,
+          ClaimsLawAB
+        >['proofs']
+          ? true
+          : false,
+      ],
+      [true, true, false, false]
+    >
+  >
+>;
+
+/**
+ * Proof is bound to the exact rule, not to the check's name.
+ *
+ * A gate keeps its `GateId` across edits — that is what makes it the same check.
+ * The revision does not, and the proofs are threaded from it, so an edited rule
+ * cannot inherit the demonstration of the rule it replaced. Line three is the
+ * anti-vacuity partner for the definition dropping the parameter.
+ */
+export type ProofIsBoundToTheExactRule = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        EvaluatedGate<GateLawA, GateRevisionId<'r1'>> extends EvaluatedGate<
+          GateLawA,
+          GateRevisionId<'r2'>
+        >
+          ? true
+          : false,
+        EvaluatedGate<GateLawA, GateRevisionId<'r1'>> extends EvaluatedGate<
+          GateLawA,
+          GateRevisionId<'r1'>
+        >
+          ? true
+          : false,
+        EvaluatedGate<GateLawA> extends EvaluatedGate<GateLawA, GateRevisionId<'r1'>> ? true : false,
+        Equal<
+          GateDefinition<GateLawA, GateRevisionId<'r1'>>['revision'],
+          GateRevisionReference<GateRevisionId<'r1'>>
+        >,
+        Equal<CaseOf<DemonstrationOutcome<ClassLawA>, 'demonstrated'>['demonstration'], ClaimDemonstration<ClassLawA>>,
+      ],
+      [false, true, false, true, true]
+    >
+  >
+>;
+
+/**
+ * No standing consequence lives on a check or on what it reports.
+ *
+ * A definition used to declare itself blocking for all time, and a finding
+ * carried a copy of that declaration. Both are gone: consequence belongs to the
+ * invocation. The names are checked explicitly because this is exactly how the
+ * boundary re-erodes — one convenience member at a time, each individually
+ * reasonable — and because `severity` is the obvious next spelling.
+ */
+export type NoStandingConsequenceLivesOnACheckOrItsFindings = Assert<
+  Equal<
+    [
+      'disposition' extends keyof GateDefinition ? true : false,
+      'severity' extends keyof GateDefinition ? true : false,
+      'blocking' extends keyof GateDefinition ? true : false,
+      'disposition' extends keyof Finding ? true : false,
+      'severity' extends keyof Finding ? true : false,
+      Equal<CheckConsequence, 'required' | 'informational'>,
+      Equal<PlannedCheck['consequence'], CheckConsequence>,
+    ],
+    [false, false, false, false, false, true, true]
+  >
+>;
+
+/**
  * Assurance contributes an atom to core's logic and does not fork it.
  *
  * The first line is the identity. The rest are the ones that make it bite: a
@@ -457,6 +860,44 @@ export type UnknownNeverPassesAGate = Assert<
       Equal<TagOf<GateOutcome>, 'satisfied' | 'refuted' | 'indeterminate'>,
     ],
     [true, false, false, true, true]
+  >
+>;
+
+/**
+ * One gate identity, with where the check came from as a member.
+ *
+ * `ConsumerGateId` was a second brand over the same carrier, so
+ * `GateDefinition<Id extends GateId>` could not be instantiated with one. The
+ * promise that consumer gates travel the same path as repository gates was not
+ * weakly enforced — it was impossible, and the type that existed to make
+ * extension first-class was the thing preventing it.
+ *
+ * This law is deliberately modest about what it proves. Lines one through three
+ * pin that origin is a required member of the one definition with exactly two
+ * arms; line four is the anti-vacuity partner, since a member typed `string`
+ * would satisfy a looser check. Nothing here can assert the *absence* of a
+ * second identity brand — a type system has no way to say "no such declaration
+ * exists elsewhere". That is a sole-ownership question, it belongs to the
+ * repository audit, and the README carries it as an obligation rather than this
+ * file pretending otherwise.
+ *
+ * Origin is a member and not a type parameter on purpose. Two definitions from
+ * different origins are the same type travelling the same path, which is the
+ * entire point; if it were a parameter, "the same path" would be two paths
+ * again with better manners.
+ */
+export type OneGateIdentityWithOriginOnTheDefinition = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        'origin' extends keyof GateDefinition ? true : false,
+        Equal<GateDefinition['origin'], GateOrigin>,
+        Equal<GateOrigin, 'repository' | 'consumer'>,
+        string extends GateDefinition['origin'] ? true : false,
+        undefined extends GateDefinition['origin'] ? true : false,
+      ],
+      [true, true, true, false, false]
+    >
   >
 >;
 
@@ -624,6 +1065,14 @@ export interface AssuranceTypeSurface {
   readonly proposition: AssuranceProposition;
   readonly decision: AssuranceDecision;
   readonly gate: GateReference;
+  readonly origin: GateOrigin;
+  readonly definition: GateDefinition;
+  readonly plannedCheck: PlannedCheck;
+  readonly spec: AssuranceRunSpec;
+  readonly evaluated: EvaluatedGate;
+  readonly demonstrated: DemonstratedGate;
+  readonly profile: EvidenceProfile;
+  readonly consequence: CheckConsequence;
   readonly scope: GateScope;
   readonly revision: GateRevisionReference;
   readonly specimen: SpecimenReference;

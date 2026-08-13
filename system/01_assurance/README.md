@@ -16,7 +16,10 @@ Own the shared vocabulary for the facts TypeScript's assignability cannot decide
 
 - Assurance subjects: roots, homes, files, authorities, artifacts, and directed relations between them.
 - The assurance atomic predicate, and the proposition and decision instantiated from core's generics at it.
-- Gate identity, scope, and the failure classes a gate claims to detect. Not consequence: what a run requires is the run's business, and `01_gauntlet` owns the specification that says so.
+- Gate identity, gate origin, scope, and the failure classes a gate claims to detect.
+- The gate definition itself, at an exact revision, and the evidence profile it requires.
+- The planned check and the run specification: which exact checks an invocation asked for, and which of them it requires.
+- The evaluated gate and the demonstrated gate: a definition paired with where each of its claims' demonstrations stand.
 - The gate outcome algebra, in which unknown cannot pass.
 - The self-demonstration vocabulary: gate revision identity, specimen identity, witness roles, the four-role demonstration, and its outcome.
 - Findings and degradation.
@@ -29,6 +32,18 @@ Own the shared vocabulary for the facts TypeScript's assignability cannot decide
 - `TypeAbiSurface`, `TypeAbiAttestation`, `TypeAbiCoverage`, or the toolchain matrix. Root `types.d.ts` owns them.
 - A facts product. `Explanation` already carries facts, and `02_targets` recorded what a wrapper that restates what it wraps costs.
 - Any repository program, command, or runner. That is `system/03_programs`, which does not exist yet.
+
+## Ordinary operation input lives where both children can reach it
+
+The gate definition, the planned check, and the run specification were authored in `01_gauntlet` and moved here.
+
+Not for tidiness. Audit acquires the evidence the requested checks ask about, so it needs the exact definitions and propositions a run named. Audit cannot import gauntlet — they are siblings, and sibling authority import is the defect this whole home exists to detect. Waiting until audit implementation would have produced the obvious workaround, which is a relay: gauntlet re-exporting, or the umbrella re-exporting gauntlet, either of which puts ownership somewhere the declaration is not.
+
+The split is by what a thing *is*, not by who happened to write it first:
+
+- Input vocabulary is here: definitions, planned checks, specifications, claim identities, specimen identities, and the demonstration vocabulary.
+- Evaluation products are `01_gauntlet`'s: the gate evaluation, its satisfied and unsatisfied refinements, the positional mappings, and the assurance result.
+- Acquisition products are `00_audit`'s: acquired facts, the interpreter and resolver requirements, the audit product, and probe coverage.
 
 ## Subtraction is the design
 
@@ -68,6 +83,20 @@ Four different ways a self-test can be worthless:
 An array of four witness values can hold four baselines and congratulate itself. Named slots pinned to role literals cannot.
 
 `attribution` is the one that resists being faked. A nonzero exit code, a syntax error, an unresolved import, and an unrelated rule firing all produce a red check; none of them can produce an `AssurancePredicate` naming the relationship the check polices. That is a type-level bar, not a full one — proof obligations below carry what remains.
+
+## One gate identity, with origin as a member
+
+`ConsumerGateId` was a second brand over the same carrier, so `GateDefinition<Id extends GateId>` could not be instantiated with one. The promise that consumer gates travel the same path as repository gates was not weakly enforced — it was impossible, and the type that existed to make extension first-class was the thing preventing it.
+
+It is now `origin: repository | consumer` on the one definition. Origin is a member and not a type parameter on purpose: two definitions from different origins are the same type travelling the same path, which is the entire point. As a parameter it would be two paths again with better manners.
+
+The law here is modest, and says so. It pins that origin is required, has exactly two arms, and has not widened to `string`. It cannot assert that no second identity brand exists anywhere — a type system has no way to say *no such declaration exists elsewhere*. That is a sole-ownership question and it belongs to the repository audit; it appears below as an obligation rather than being quietly implied here.
+
+## A planned check names the exact revision, not just the gate
+
+`GateId` survives edits. That is what makes a check the same check across time, and it is exactly why a plan naming only the gate is not enough: proof could concern revision A while the run executed revision B, both sharing one `GateId`, with the type seeing agreement precisely where the instrument changed.
+
+So `PlannedCheck` carries the revision alongside the gate, and the evaluation, the proofs, and the repository result all thread it. Persistent identity is for discovery and continuity. It is not proof identity.
 
 ## A specimen is not a snapshot
 
@@ -126,6 +155,8 @@ Runtime and repository claims a type cannot express:
 - That findings are traceable to the acquired facts they concluded from.
 - That an attribution witness's refusal was caused by the relationship it names, rather than by syntax, an unresolved import, a module-format mismatch, or an unrelated rule firing. The type requires the claim to be made; only running the demonstration can confirm it.
 - That a specimen was built to exercise the failure class the witness names.
+- That a gate revision token corresponds to the definition bytes its content address names, and that a fresh token is minted when those bytes change. The type threads the token; it does not mint one, and nothing in it makes a stale token impossible.
+- That no second gate-identity brand has been declared anywhere in the repository. Origin on the one definition removes the reason to declare one; only a sole-ownership audit can confirm nobody did.
 
 ## Implementation boundary
 

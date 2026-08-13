@@ -52,11 +52,8 @@ import type {
   WorkspaceSnapshotId,
   WorkspaceSnapshotReference,
 } from '../00_workspace/types.js';
-import type {
-  AssuranceResult,
-  AssuranceRunSpec,
-  AssuranceRunSpecId,
-} from '../01_assurance/01_gauntlet/types.js';
+import type { AssuranceRunSpec, AssuranceRunSpecId } from '../01_assurance/types.js';
+import type { AssuranceResult } from '../01_assurance/01_gauntlet/types.js';
 
 // ---------------------------------------------------------------------------
 // Packaging

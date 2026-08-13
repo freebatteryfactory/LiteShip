@@ -14,18 +14,15 @@ Read facts against the checks one invocation asked for, and produce one result r
 
 ## Owns
 
-- The gate definition: scope, the facts it reads, its proposition, the failure classes it claims, and the evidence profile it requires. Not its consequence.
 - The gate evaluation, including the facts actually read.
-- The evidence profile distinction.
-- The run specification: which checks this invocation asked for, and which of them it requires.
-- The evaluation population derived from that specification, and the assurance result.
-- The evaluated gate: a definition at an exact revision, paired with where each of its claims' demonstrations stand.
-- Consumer gate identity, so extension arrives through the same path rather than beside it.
+- The satisfied and unsatisfied refinements of an evaluation.
+- The three positional mappings from a specification's check tuple to an evaluation population.
+- The assurance result.
 
 ## Does not own
 
 - Any acquisition. No compiler lane, no filesystem, no source control appears here, and their absence from the run product is a law.
-- Gate identity, scope, outcome, findings, or the demonstration vocabulary as *types* — those are the assurance umbrella's, shared with `00_audit`.
+- Gate identity, definitions, planned checks, run specifications, scope, outcome, findings, or the demonstration vocabulary. Those are the assurance umbrella's, because `00_audit` needs the same input vocabulary and cannot import a sibling to get it.
 - Command parsing, exit codes, or output rendering. Those are the CLI wire's, and the wire does not exist yet.
 
 ## Gauntlet acquires nothing
@@ -62,6 +59,18 @@ A homomorphic mapping over the spec's check tuple preserves arity, so a three-ch
 
 Where the consequence is not a literal — the broad spec, where nobody has yet said what this run requires — no position is pinned. That is correct permissiveness, not a hole: a type should not invent an answer nobody has given.
 
+## The blocked arm has one population, not two
+
+A blocked result used to carry `evaluations`, derived positionally from the specification, *and* `unsatisfied`, a free non-empty tuple of unsatisfied evaluations, with nothing relating them.
+
+So the type could say: every required planned check was satisfied, one unplanned gate came out unsatisfied, result blocked. It could block on an informational check. It could block on the same foreign gate repeated. It could name a gate absent from the specification entirely. The exact positional population said what ran, and a curated roster beside it decided what that meant — which is the pattern the specification work existed to delete, surviving one member to the left of where it was deleted.
+
+The remedy is not a law relating the two populations. There is one population. `BlockedPlannedEvaluations` is a union over the positions a run is *allowed* to be blocked by: for each planned check whose consequence admits `required`, the tuple in which that position holds an unsatisfied evaluation and every other holds its ordinary planned one.
+
+Informational positions contribute `never` and drop out of the union. An exact specification with no required check therefore has an **uninhabitable** blocked arm — a diagnostic run cannot report itself blocked no matter what it observed. That could not be stated at all under the previous shape.
+
+Reading `unsatisfied` off a result is still available and always was: it is the positions whose evaluations are in a non-satisfied arm. Deriving it when explaining a result is a projection. Authoring it beside the evaluations was a second roster.
+
 ## The verdict has no middle
 
 `GauntletVerdict` is `passed | blocked`. There is deliberately no `passed-with-warnings`.
@@ -91,6 +100,7 @@ Everything else about the deleted mutation infrastructure was implementation: th
 - Proof is bound to the exact rule revision, read through the proof entries rather than through the definition beside them.
 - A gauntlet run carries no surfaces, graph, probes, interpreter, or files.
 - A result carries one evaluation per planned check, positionally; a shorter population, a repeated gate, and an unbounded array are all refused.
+- Only a required check can block a run: an all-satisfied population, a foreign gate, and an unbounded unsatisfied roster are all refused, and an exact all-informational specification cannot inhabit the blocked arm at all.
 - A passing result's required positions are pinned to the satisfied outcome; a merely existing evaluation cannot occupy one, and a satisfied one can.
 - A result is exact over its specification as well as its snapshot, and the broad specification does not substitute for a named one.
 - The arms of the result actually carry those mapped populations, checked against written-out tuples rather than against the mapping that produced them.
@@ -107,6 +117,7 @@ Runtime and repository claims a type cannot express:
 - That the evaluations a result carries were produced by running the checks its specification named, in that order.
 - That a consumer-supplied gate travels the same evaluation path as a repository gate, with no privileged internal route.
 - That the specification a result names is the one the caller supplied, rather than one the run assembled for itself.
+- That a governed release path supplies an exact specification rather than the broad default. The broad form is an erased catalog shape — it deliberately accepts results from several exact specifications — and that is correct for a catalog and wrong for release. Nothing in the type prevents a program from defaulting; the program must not.
 - That an evaluation's recorded facts are the ones present in the audit product it names.
 
 ## Implementation boundary
