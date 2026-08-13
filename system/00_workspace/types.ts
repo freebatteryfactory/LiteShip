@@ -24,7 +24,11 @@ import type {
   ContextOf,
   Equal,
   Hole,
+  HoleContract,
+  InputOf,
+  IsExactlyTrue,
   NonEmptyTuple,
+  OutputOf,
   Reference,
   RequirementRow,
   Signature,
@@ -258,16 +262,16 @@ export type WorkspaceSnapshotReference = Reference<
 export type WorkspaceFileSystem = Hole<
   'liteship.system.workspace.file-system',
   {
-    readonly readDigest: Signature<ContentDigest, WorkspacePath, readonly Diagnostic[]>;
-    readonly listDirectory: Signature<readonly WorkspacePath[], WorkspacePath, readonly Diagnostic[]>;
+    readonly readDigest: Signature<WorkspacePath, ContentDigest, readonly Diagnostic[]>;
+    readonly listDirectory: Signature<WorkspacePath, readonly WorkspacePath[], readonly Diagnostic[]>;
   }
 >;
 
 export type WorkspaceSourceControl = Hole<
   'liteship.system.workspace.source-control',
   {
-    readonly revision: Signature<SourceRevisionId, WorkspaceReference, readonly Diagnostic[]>;
-    readonly workingTree: Signature<WorkingTreeState, WorkspaceReference, readonly Diagnostic[]>;
+    readonly revision: Signature<WorkspaceReference, SourceRevisionId, readonly Diagnostic[]>;
+    readonly workingTree: Signature<WorkspaceReference, WorkingTreeState, readonly Diagnostic[]>;
   }
 >;
 
@@ -384,6 +388,45 @@ export type ObservingTheWorkspaceRequiresInjectedCapabilities = Assert<
       keyof ContextOf<WorkspaceObservationRequirements> extends never ? true : false,
     ],
     [true, true, false, false]
+  >
+>;
+
+/**
+ * Every capability consumes its subject and produces its observation.
+ *
+ * All four of these were declared backwards — `readDigest` said "give me a
+ * digest and I will return a path." Both orders are legal `Signature`
+ * instantiations, so the compiler accepted it and the only thing asserting the
+ * intended reading was the member name.
+ *
+ * The law pins each end as an **ordered pair**, which is the shape a reversal
+ * breaks: swapping input and output turns `[WorkspacePath, ContentDigest]` into
+ * `[ContentDigest, WorkspacePath]` and the tuple stops matching. Pinning the
+ * input alone would not catch it, because a reversed operation still has *an*
+ * input.
+ */
+export type WorkspaceCapabilitiesConsumeSubjectsAndProduceObservations = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        [InputOf<HoleContract<WorkspaceFileSystem>['readDigest']>, OutputOf<HoleContract<WorkspaceFileSystem>['readDigest']>],
+        [
+          InputOf<HoleContract<WorkspaceFileSystem>['listDirectory']>,
+          OutputOf<HoleContract<WorkspaceFileSystem>['listDirectory']>,
+        ],
+        [InputOf<HoleContract<WorkspaceSourceControl>['revision']>, OutputOf<HoleContract<WorkspaceSourceControl>['revision']>],
+        [
+          InputOf<HoleContract<WorkspaceSourceControl>['workingTree']>,
+          OutputOf<HoleContract<WorkspaceSourceControl>['workingTree']>,
+        ],
+      ],
+      [
+        [WorkspacePath, ContentDigest],
+        [WorkspacePath, readonly WorkspacePath[]],
+        [WorkspaceReference, SourceRevisionId],
+        [WorkspaceReference, WorkingTreeState],
+      ]
+    >
   >
 >;
 

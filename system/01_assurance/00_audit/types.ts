@@ -29,7 +29,12 @@ import type {
   Equal,
   Envelope,
   Hole,
+  HoleContract,
+  InputOf,
+  IsExactlyTrue,
   NonEmptyTuple,
+  OutputOf,
+  SignaturesConnect,
   Reference,
   Signature,
   TagOf,
@@ -131,8 +136,8 @@ export type ProbeCoverage = Algebra<{
 export type TypeProgramInterpreter = Hole<
   'liteship.system.audit.type-program',
   {
-    readonly surface: Signature<TypeAbiSurface, WorkspaceSnapshotReference, readonly Diagnostic[]>;
-    readonly attest: Signature<TypeAbiAttestation, TypeAbiSurface, readonly Diagnostic[]>;
+    readonly surface: Signature<WorkspaceSnapshotReference, TypeAbiSurface, readonly Diagnostic[]>;
+    readonly attest: Signature<TypeAbiSurface, TypeAbiAttestation, readonly Diagnostic[]>;
   }
 >;
 
@@ -175,6 +180,42 @@ export type AuditProduct = Envelope<
 // ---------------------------------------------------------------------------
 // Laws
 // ---------------------------------------------------------------------------
+
+/**
+ * The interpreter's two operations compose, in that order.
+ *
+ * Both were declared backwards: `surface` said "give me a surface and I will
+ * return a snapshot reference", `attest` said "give me an attestation and I
+ * will return a surface." Both are legal `Signature` instantiations, so nothing
+ * objected.
+ *
+ * The first two lines pin each end as an ordered pair, which is what a reversal
+ * breaks. The third is the one that is not restatement: `SignaturesConnect`
+ * asks whether `surface`'s output can actually feed `attest`'s input — a real
+ * composition question, and the reason this pair exists at all. A snapshot is
+ * canonicalized into a surface, and that surface is what gets attested. If
+ * either operation flips, the pipeline stops connecting and the third line goes
+ * false independently of the first two.
+ *
+ * `SignaturesConnect` had no consumer anywhere in the repository before this.
+ * A root operator with no caller is a claim nobody tested.
+ */
+export type TheInterpreterCanonicalizesThenAttests = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        [InputOf<HoleContract<TypeProgramInterpreter>['surface']>, OutputOf<HoleContract<TypeProgramInterpreter>['surface']>],
+        [InputOf<HoleContract<TypeProgramInterpreter>['attest']>, OutputOf<HoleContract<TypeProgramInterpreter>['attest']>],
+        SignaturesConnect<HoleContract<TypeProgramInterpreter>['surface'], HoleContract<TypeProgramInterpreter>['attest']>,
+      ],
+      [
+        [WorkspaceSnapshotReference, TypeAbiSurface],
+        [TypeAbiSurface, TypeAbiAttestation],
+        true,
+      ]
+    >
+  >
+>;
 
 /**
  * Every acquired fact names at least one consumer.
