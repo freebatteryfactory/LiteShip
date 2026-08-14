@@ -41,9 +41,12 @@ import type {
   AssuranceRunSpec,
   AssuranceRunSpecId,
   CheckConsequence,
+  DemonstratedClaimProofs,
   DemonstratedGate,
   EvaluatedGate,
   EvidenceProfile,
+  FailureClassId,
+  FailureClassReference,
   Finding,
   GateDefinition,
   GateId,
@@ -63,8 +66,9 @@ import type {
 export interface GateEvaluation<
   Id extends GateId = GateId,
   Revision extends GateRevisionId = GateRevisionId,
+  Claims extends NonEmptyTuple<FailureClassReference> = NonEmptyTuple<FailureClassReference>,
 > {
-  readonly gate: EvaluatedGate<Id, Revision>;
+  readonly gate: EvaluatedGate<Id, Revision, Claims>;
   readonly outcome: GateOutcome;
   readonly read: readonly { readonly fact: AssuranceFactName; readonly value: Evidence<ContentAddress> }[];
   readonly findings: readonly Finding[];
@@ -80,11 +84,12 @@ export interface GateEvaluation<
 export type SatisfiedEvaluation<
   Id extends GateId = GateId,
   Revision extends GateRevisionId = GateRevisionId,
+  Claims extends NonEmptyTuple<FailureClassReference> = NonEmptyTuple<FailureClassReference>,
 > = Refine<
-  GateEvaluation<Id, Revision>,
+  GateEvaluation<Id, Revision, Claims>,
   {
     readonly outcome: CaseOf<GateOutcome, 'satisfied'>;
-    readonly gate: DemonstratedGate<Id, Revision>;
+    readonly gate: DemonstratedGate<Id, Revision, Claims>;
   }
 >;
 
@@ -92,8 +97,9 @@ export type SatisfiedEvaluation<
 export type UnsatisfiedEvaluation<
   Id extends GateId = GateId,
   Revision extends GateRevisionId = GateRevisionId,
+  Claims extends NonEmptyTuple<FailureClassReference> = NonEmptyTuple<FailureClassReference>,
 > = Refine<
-  GateEvaluation<Id, Revision>,
+  GateEvaluation<Id, Revision, Claims>,
   { readonly outcome: Exclude<GateOutcome, CaseOf<GateOutcome, 'satisfied'>> }
 >;
 
@@ -110,9 +116,10 @@ export type UnsatisfiedEvaluation<
 export type PlannedEvaluations<Checks extends NonEmptyTuple<PlannedCheck>> = {
   readonly [Position in keyof Checks]: Checks[Position] extends PlannedCheck<
     infer Id,
-    infer Revision
+    infer Revision,
+    infer Claims
   >
-    ? GateEvaluation<Id, Revision>
+    ? GateEvaluation<Id, Revision, Claims>
     : never;
 };
 
@@ -132,16 +139,18 @@ export type PlannedEvaluations<Checks extends NonEmptyTuple<PlannedCheck>> = {
  */
 type SatisfiedEvaluationOf<Check extends PlannedCheck> = Check extends PlannedCheck<
   infer Id,
-  infer Revision
+  infer Revision,
+  infer Claims
 >
-  ? SatisfiedEvaluation<Id, Revision>
+  ? SatisfiedEvaluation<Id, Revision, Claims>
   : never;
 
 type UnsatisfiedEvaluationOf<Check extends PlannedCheck> = Check extends PlannedCheck<
   infer Id,
-  infer Revision
+  infer Revision,
+  infer Claims
 >
-  ? UnsatisfiedEvaluation<Id, Revision>
+  ? UnsatisfiedEvaluation<Id, Revision, Claims>
   : never;
 
 /**
@@ -453,6 +462,60 @@ export type ARequiredCheckCarriesADemonstratedGate = Assert<
         [SatisfiedEvaluation<GateLawA>] extends [never] ? true : false,
       ],
       [false, true, true, true, false]
+    >
+  >
+>;
+
+type ClaimsLawXY = readonly [
+  FailureClassReference<FailureClassId<'law.class.x'>>,
+  FailureClassReference<FailureClassId<'law.class.y'>>,
+];
+type ClaimsLawW = readonly [FailureClassReference<FailureClassId<'law.class.w'>>];
+type ClaimedCheckXY = Refine<
+  PlannedCheck<GateLawA, RevisionLawOne, ClaimsLawXY>,
+  { readonly consequence: 'required' }
+>;
+
+/** The proofs a passing result demands at the position that check occupies. */
+type DemandedProofsXY = SatisfiedPlannedEvaluations<
+  readonly [ClaimedCheckXY]
+>[0]['gate']['proofs'];
+
+/**
+ * Compile-time law: the exact claim population survives all the way to the
+ * passing result.
+ *
+ * This is the law whose absence let the whole demonstration apparatus be
+ * bypassed. `ClaimProofs` correlates a gate's claims with its proofs
+ * positionally, and `TheEvaluatedGateCarriesTheCorrelatedProofs` proves that
+ * mapping correct — but it proves it at a literal fixture, and every carrier
+ * downstream instantiated `EvaluatedGate<Id, Revision>` with the claim
+ * population left at its broad default. Both members then widened together: a
+ * gate declaring three claims and carrying one proof for an unrelated failure
+ * class satisfied `DemonstratedGate`, and could occupy a required position in a
+ * passing result that release consumes.
+ *
+ * That is this repository's signature defect — a relationship proved by hand
+ * beside the carrier that hands consumers the broad form — committed at the one
+ * place where the consequence is a shipment.
+ *
+ * Line one is the fact: the population the run planned is the population the
+ * result demands. Line two is what makes it a measurement rather than a
+ * restatement — a foreign class of the same arity is refused, so the law
+ * distinguishes this population from a neighbouring one instead of merely
+ * observing that some population arrived. Line three is the anti-vacuity
+ * partner, because a projector that silently resolved to `never` would satisfy
+ * both of the others.
+ */
+export type TheExactClaimPopulationReachesThePassingResult = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<DemandedProofsXY, DemonstratedClaimProofs<ClaimsLawXY, RevisionLawOne>>,
+        Equal<DemandedProofsXY, DemonstratedClaimProofs<ClaimsLawW, RevisionLawOne>>,
+        [DemandedProofsXY] extends [never] ? true : false,
+      ],
+      [true, false, false]
     >
   >
 >;

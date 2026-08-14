@@ -61,6 +61,18 @@ A homomorphic mapping over the spec's check tuple preserves arity, so a three-ch
 
 Where the consequence is not a literal — the broad spec, where nobody has yet said what this run requires — no position is pinned. That is correct permissiveness, not a hole: a type should not invent an answer nobody has given.
 
+## The claim population reaches the result, which it did not before
+
+A planned check names three things now: the gate, the exact revision, and the claim population that revision declares.
+
+The third was missing, and its absence disconnected the entire demonstration apparatus from the only place it matters. `ClaimProofs` correlates a gate's declared claims with its proofs by position, and a law proves that mapping correct — at a hand-written fixture. Every carrier downstream instantiated `EvaluatedGate` with the claim population left at its broad default, so both the definition's `claims` and the proof tuple widened together. A gate declaring three failure classes while carrying a single proof for a fourth, unrelated one satisfied `DemonstratedGate`, occupied a required position in a `passed` result, and reached release.
+
+So the apparatus built to stop a check from certifying itself could be walked around by not naming a population — and nothing in six hundred laws said otherwise, because the one law on the subject read the operator rather than the carrier.
+
+Nothing at the type level can compute a claim population from a `GateRevisionId`; there is no registry to look it up in. So the plan states what it requires the named revision to declare, and the evaluation has to satisfy the plan and the definition at once. That is not the claim population written twice — the definition owns it, this states an expectation, and the compiler reconciles them. A fact written twice and read from neither side is the thing this repository deletes; a stated expectation that must reconcile is the opposite.
+
+`TheExactClaimPopulationReachesThePassingResult` proves it, and refuses a foreign population of the same arity so the law distinguishes this population rather than observing that some population arrived.
+
 ## The blocked arm has one population, not two
 
 A blocked result used to carry `evaluations`, derived positionally from the specification, *and* `unsatisfied`, a free non-empty tuple of unsatisfied evaluations, with nothing relating them.

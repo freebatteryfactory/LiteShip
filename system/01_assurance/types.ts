@@ -563,13 +563,29 @@ export type CheckConsequence = 'required' | 'informational';
  * the run executes revision B, with the type seeing agreement precisely where
  * the instrument changed. Persistent identity is for discovery and continuity;
  * it is not proof identity.
+ *
+ * The claim population is named for the same reason one step further out. A
+ * revision determines its claims, but nothing at the type level can compute
+ * them from a `GateRevisionId` — there is no registry to look them up in. So a
+ * plan that names only gate and revision hands every downstream carrier the
+ * broad `NonEmptyTuple<FailureClassReference>`, and the correlation between
+ * what a check claims and what it proved survives only inside `ClaimProofs`,
+ * where no result ever reads it.
+ *
+ * That is not a second owner of the claim population. The definition owns it;
+ * this states what the run requires the named revision to declare, and the
+ * evaluation has to satisfy both at once or it does not typecheck. A stated
+ * expectation the compiler reconciles is the opposite of a fact written twice
+ * and traversed from neither side.
  */
 export interface PlannedCheck<
   Id extends GateId = GateId,
   Revision extends GateRevisionId = GateRevisionId,
+  Claims extends NonEmptyTuple<FailureClassReference> = NonEmptyTuple<FailureClassReference>,
 > {
   readonly gate: GateReference<Id>;
   readonly revision: GateRevisionReference<Revision>;
+  readonly claims: Claims;
   readonly consequence: CheckConsequence;
 }
 
