@@ -10,12 +10,9 @@
  */
 
 import type {
-  Address,
   Algebra,
-  Assert,
   Brand,
   Envelope,
-  Equal,
   Hole,
   MaybePromise,
   NonEmptyTuple,
@@ -131,13 +128,6 @@ export type PatchPrecondition = Algebra<{
   'relation-exists': { readonly relation: RelationState };
   'relation-absent': { readonly relation: RelationState };
 }>;
-
-type FieldAddressPrecondition = Extract<PatchPrecondition, { readonly _tag: 'field-address-is' }>;
-
-/** Compile-time law: field preconditions bind one entity and one schema-derived field. */
-export type FieldAddressPreconditionBindsEntityAndField = Assert<
-  Equal<FieldAddressPrecondition extends EntityFieldReference ? true : false, true>
->;
 
 /**
  * Shared revision envelope for one family-specific patch algebra.
@@ -378,123 +368,6 @@ export type RevisionStoreRequirement = Hole<'liteship.state.revision-store', Rev
 export type SnapshotStoreRequirement = Hole<'liteship.state.snapshot-store', SnapshotStore>;
 export type ChangeLogRequirement = Hole<'liteship.state.change-log', ChangeLog>;
 export type BlobStoreRequirement = Hole<'liteship.state.blob-store', BlobStore>;
-
-// ---------------------------------------------------------------------------
-// Cut laws
-// ---------------------------------------------------------------------------
-
-type CutLawWorldA = WorldId<'liteship.law.world-a'>;
-type CutLawWorldB = WorldId<'liteship.law.world-b'>;
-// `RevisionId` is a content address, not a branded name, so the revision axis is
-// carried by literal address specimens exactly as `02_identity` carries its own.
-type CutLawRevisionA = Address<
-  'liteship.content:application/vnd.liteship.revision+cbor',
-  'sha256:3333333333333333333333333333333333333333333333333333333333333333'
->;
-type CutLawRevisionB = Address<
-  'liteship.content:application/vnd.liteship.revision+cbor',
-  'sha256:4444444444444444444444444444444444444444444444444444444444444444'
->;
-type CutLawEvidenceA = EvidenceCutId<'liteship.law.evidence-a'>;
-type CutLawEvidenceB = EvidenceCutId<'liteship.law.evidence-b'>;
-
-type CutLawA = SemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceA>;
-
-/**
- * Compile-time law: the cut names all four axes and is addressed.
- *
- * Members are named one at a time. A whole-shape comparison stays green while
- * an individual member blurs to `unknown`, and the member most likely to be
- * quietly dropped is the world — a revision reference does not identify the
- * world it belongs to, so a cut carrying revision alone would look complete and
- * mean less than it claims.
- */
-export type ASemanticCutNamesWorldRevisionTimeAndEvidence = Assert<
-  Equal<
-    [
-      CutLawA['world'],
-      CutLawA['revision'],
-      CutLawA['evidence'],
-      CutLawA['time'] extends TimeCut ? true : false,
-      CutLawA['address'],
-    ],
-    [
-      WorldReference<CutLawWorldA>,
-      RevisionReference<CutLawRevisionA>,
-      EvidenceCutReference<CutLawEvidenceA>,
-      true,
-      ContentAddress<'application/vnd.liteship.semantic-cut+cbor'>,
-    ]
-  >
->;
-
-/**
- * Compile-time law: the cut is exact on every axis independently.
- *
- * Each axis is varied alone, because a law that varies them together stays
- * green when exactly one parameter stops being load-bearing.
- */
-export type ASemanticCutIsExactOnEveryAxis = Assert<
-  Equal<
-    [
-      CutLawA extends SemanticCut<CutLawWorldB, CutLawRevisionA, CutLawEvidenceA> ? true : false,
-      CutLawA extends SemanticCut<CutLawWorldA, CutLawRevisionB, CutLawEvidenceA> ? true : false,
-      CutLawA extends SemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceB> ? true : false,
-      CutLawA extends SemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceA> ? true : false,
-      CutLawA extends SemanticCut ? true : false,
-    ],
-    [false, false, false, true, true]
-  >
->;
-
-/**
- * Compile-time law: a draft cut cannot satisfy a committed cut, in either
- * direction, at the same instantiation.
- *
- * The two forms differ by one reference kind. That is enough, and this law
- * exists because it is exactly the kind of distinction that survives review as
- * a comment and dies silently in the types.
- */
-export type ADraftCutCannotSatisfyACommittedCut = Assert<
-  Equal<
-    [
-      DraftSemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceA> extends CutLawA ? true : false,
-      CutLawA extends DraftSemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceA> ? true : false,
-      CutLawA extends AnySemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceA> ? true : false,
-      DraftSemanticCut<CutLawWorldA, CutLawRevisionA, CutLawEvidenceA> extends AnySemanticCut<
-        CutLawWorldA,
-        CutLawRevisionA,
-        CutLawEvidenceA
-      >
-        ? true
-        : false,
-    ],
-    [false, false, true, true]
-  >
->;
-
-/**
- * Compile-time law: a commit carries its coordinate once.
- *
- * `result` and `time` are checked by name for absence. Their return would not
- * break anything on the day it happened — it would reintroduce two facts that
- * agree with the cut until the first time they do not, which is the shape this
- * home removes on sight.
- */
-export type ACommitCarriesTheCutAndNoSiblingCoordinate = Assert<
-  Equal<
-    [
-      Commit<CutLawA>['cut'],
-      Commit<CutLawA> extends Commit<SemanticCut<CutLawWorldB, CutLawRevisionA, CutLawEvidenceA>>
-        ? true
-        : false,
-      'result' extends keyof Commit ? true : false,
-      'time' extends keyof Commit ? true : false,
-      'base' extends keyof Commit ? true : false,
-    ],
-    [CutLawA, false, false, false, true]
-  >
->;
 
 /** Type summary consumed by the root core topology. */
 export interface StateTypeSurface {

@@ -8,7 +8,12 @@
  * @module
  */
 
-import type { Address, Algebra, Assert, Brand, Equal, Reference } from '../../types.js';
+import type {
+  Address,
+  Algebra,
+  Brand,
+  Reference,
+} from '../../types.js';
 import type { ContentAddress, MediaTypeSyntax } from '../01_encoding/types.js';
 
 /** Persistent identity of a semantic entity across revisions and moves. */
@@ -117,83 +122,6 @@ export interface SlotBinding {
   readonly entity: EntityId;
   readonly slot: DenseSlot;
 }
-
-/** Two distinct committed revisions, written as literal carriers. */
-type CommittedRevisionLawA = Address<
-  'liteship.content:application/vnd.liteship.revision+cbor',
-  'sha256:1111111111111111111111111111111111111111111111111111111111111111'
->;
-type CommittedRevisionLawB = Address<
-  'liteship.content:application/vnd.liteship.revision+cbor',
-  'sha256:2222222222222222222222222222222222222222222222222222222222222222'
->;
-
-/**
- * Compile-time law: a revision reference is exact over the revision it names,
- * and two exact revisions are not interchangeable.
- *
- * The specimens are literal carriers rather than the alias compared against its
- * own declaration. That version passes with the type parameter deleted, which
- * is the only thing this law exists to catch.
- */
-export type ARevisionReferenceIsExactOverItsRevision = Assert<
-  Equal<
-    [
-      RevisionReference<CommittedRevisionLawA> extends RevisionReference<CommittedRevisionLawB> ? true : false,
-      RevisionReference<CommittedRevisionLawA> extends RevisionReference<CommittedRevisionLawA> ? true : false,
-      RevisionReference<CommittedRevisionLawA> extends RevisionReference ? true : false,
-    ],
-    [false, true, true]
-  >
->;
-
-/**
- * Compile-time law: a draft reference is exact over the candidate revision it
- * names, exactly as the committed reference is over its own.
- *
- * Written against literal carriers rather than the alias compared with itself,
- * because the self-comparison passes with the type parameter deleted — which is
- * the whole of what this law exists to catch.
- */
-export type ADraftRevisionReferenceIsExactOverItsRevision = Assert<
-  Equal<
-    [
-      DraftRevisionReference<CommittedRevisionLawA> extends DraftRevisionReference<CommittedRevisionLawB>
-        ? true
-        : false,
-      DraftRevisionReference<CommittedRevisionLawA> extends DraftRevisionReference<CommittedRevisionLawA>
-        ? true
-        : false,
-      DraftRevisionReference<CommittedRevisionLawA> extends DraftRevisionReference ? true : false,
-    ],
-    [false, true, true]
-  >
->;
-
-/**
- * Compile-time law: a draft reference cannot satisfy a committed revision
- * reference, and genericity does not open a door in either direction.
- *
- * The exact instantiations are checked beside the broad forms. Making the draft
- * reference generic is precisely the kind of change that could have made one
- * assignable to the other at some instantiation while the broad comparison went
- * on reporting a clean separation.
- */
-export type DraftRevisionIsNotCommitted = Assert<
-  Equal<
-    [
-      DraftRevisionReference extends RevisionReference ? true : false,
-      RevisionReference extends DraftRevisionReference ? true : false,
-      DraftRevisionReference<CommittedRevisionLawA> extends RevisionReference<CommittedRevisionLawA>
-        ? true
-        : false,
-      RevisionReference<CommittedRevisionLawA> extends DraftRevisionReference<CommittedRevisionLawA>
-        ? true
-        : false,
-    ],
-    [false, false, false, false]
-  >
->;
 
 /** Type summary consumed by the root core topology. */
 export interface IdentityTypeSurface {

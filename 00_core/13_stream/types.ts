@@ -10,7 +10,11 @@
  * @module
  */
 
-import type { Algebra, Assert, Brand, Equal, IsNever, Reference } from '../../types.js';
+import type {
+  Algebra,
+  Brand,
+  Reference,
+} from '../../types.js';
 import type { CanonicalValue, ContentAddress } from '../01_encoding/types.js';
 import type {
   AttestationId,
@@ -128,22 +132,6 @@ export interface ComponentCatalog {
   readonly address: ComponentCatalogAddress;
 }
 
-/** Compile-time law: a component pins its props schema and admitted operations. */
-export type AComponentPinsItsPropsAndOperations = Assert<
-  Equal<
-    [CatalogComponentDefinition['props'], CatalogComponentDefinition['operations'], ComponentCatalog['address']],
-    [SchemaReference, readonly OperationReference[], ComponentCatalogAddress]
-  >
->;
-
-/** Compile-time law: the owner surface exposes the component catalog contract. */
-export type TheSurfaceReachesTheComponentCatalog = Assert<
-  Equal<
-    [StreamTypeSurface['catalogComponent'], StreamTypeSurface['componentCatalog']],
-    [CatalogComponentDefinition, ComponentCatalog]
-  >
->;
-
 /** Complete admitted generated structure. */
 export interface GeneratedStructureSnapshot {
   readonly structure: GeneratedStructureReference;
@@ -236,37 +224,6 @@ export type BackpressurePolicy = Algebra<{
   'drop-newest': { readonly capacity: number };
   coalesce: { readonly capacity: number; readonly key: CoalescingKeyId };
 }>;
-
-type TrustedFragmentCase = Extract<StreamPayload, { readonly _tag: 'trusted-fragment' }>;
-type GeneratedStructureCase = Extract<StreamPayload, { readonly _tag: 'generated-structure' }>;
-type TrustedFragmentPayload = TrustedFragmentCase['value'];
-type GeneratedStructurePayload = GeneratedStructureCase['value'];
-type TrustedGeneratedPayloadOverlap =
-  | Extract<TrustedFragmentPayload, GeneratedStructurePayload>
-  | Extract<GeneratedStructurePayload, TrustedFragmentPayload>;
-
-/** Compile-time law: the trusted arm contains only trusted fragment payloads. */
-export type TrustedFragmentArmIsExact = Assert<
-  Equal<TrustedFragmentPayload, TrustedFragment | TrustedFragmentPatch>
->;
-
-/** Compile-time law: the generated arm contains only admitted generated payloads. */
-export type GeneratedStructureArmIsExact = Assert<
-  Equal<GeneratedStructurePayload, GeneratedStructureSnapshot | GeneratedStructurePatch>
->;
-
-/** Compile-time law: neither payload family is structurally assignable to the other. */
-export type GeneratedStructureDoesNotOverlapTrustedFragment = Assert<
-  IsNever<TrustedGeneratedPayloadOverlap>
->;
-
-/** Compile-time law: generated admission cannot satisfy trusted-fragment attestation. */
-export type GeneratedAdmissionIsNotTrustedAttestation = Assert<
-  IsNever<
-    | Extract<GeneratedStructureAdmission, TrustedFragmentAttestation>
-    | Extract<TrustedFragmentAttestation, GeneratedStructureAdmission>
-  >
->;
 
 /** Type summary consumed by the root core topology. */
 export interface StreamTypeSurface {

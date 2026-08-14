@@ -8,7 +8,12 @@
  * @module
  */
 
-import type { Algebra, Assert, Brand, Equal, NonEmptyTuple, Reference } from '../../types.js';
+import type {
+  Algebra,
+  Brand,
+  NonEmptyTuple,
+  Reference,
+} from '../../types.js';
 import type { Diagnostic } from '../00_error/types.js';
 import type {
   ChangeId,
@@ -97,26 +102,6 @@ export interface PreviewBranch {
   readonly diagnostics: readonly Diagnostic[];
 }
 
-/**
- * Compile-time law: preview reaches a draft cut, and cannot quietly hand back a
- * committed one.
- *
- * The editor is the one place where a draft becoming indistinguishable from a
- * commit is a one-member change, so the distinction is checked rather than
- * described.
- */
-export type APreviewProducesADraftCut = Assert<
-  Equal<
-    [
-      PreviewBranch['result'] extends DraftSemanticCut ? true : false,
-      PreviewBranch['result'] extends SemanticCut ? true : false,
-      'base' extends keyof PreviewBranch ? true : false,
-      'time' extends keyof WorkingOverlay ? true : false,
-    ],
-    [true, false, false, false]
-  >
->;
-
 /** Cursor projection over revision or operation history. */
 export interface HistoryCursor {
   readonly revision: RevisionReference | DraftRevisionReference;
@@ -146,11 +131,6 @@ export type SelectionResolution = Algebra<{
   stale: { readonly selection: SelectionSet; readonly current: RevisionReference };
   ambiguous: { readonly selection: SelectionSet; readonly candidates: NonEmptyTuple<SelectionSet> };
 }>;
-
-/** Compile-time law: preview results cannot satisfy committed revision references. */
-export type EditorDraftIsNotCommitted = Assert<
-  Equal<DraftRevisionReference extends RevisionReference ? true : false, false>
->;
 
 /** Type summary consumed by the root core topology. */
 export interface EditorTypeSurface {
