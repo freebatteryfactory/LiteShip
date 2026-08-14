@@ -11,13 +11,79 @@
  * @module
  */
 
-import type { Address, Assert, Binding, CaseOf, Equal, FailureOf, Hole, IsNever, NonEmptyTuple, OutputOf, RequirementsOf, TagOf } from '../../types.js';
+import type {
+  Address,
+  Assert,
+  Binding,
+  CaseOf,
+  Equal,
+  FailureOf,
+  Hole,
+  IsExactlyTrue,
+  IsNever,
+  NonEmptyTuple,
+  OutputOf,
+  RequirementsOf,
+  TagOf,
+} from '../../types.js';
 import type { Diagnostic } from '../00_error/types.js';
 import type { ContentAddress } from '../01_encoding/types.js';
 import type { CommitId, RevisionReference, SemanticLocation } from '../02_identity/types.js';
 import type { SchemaReference } from '../03_schema/types.js';
 import type { EvidenceRealm } from '../06_evidence/types.js';
-import type { Artifact, ArtifactId, ArtifactReference, ClosedRealizationPlan, CompileOutcome, CompilerTypeSurface, ExecutionBackend, GroundingReference, IncompleteState, InvocationSlotId, NonEmptyRequirementRow, OptimizationObjective, PlacementConstraint, PreparationDisposition, PreparedWork, ProjectionTargetId, ProjectionTargetReference, RealizationCandidate, RealizationCandidateReference, RealizationCatalogAddress, RealizationDecision, RealizationFailure, RealizationInstance, RealizationInstanceId, RealizationInstanceReference, RealizationLifecycle, RealizationOffer, RealizationOfferDescriptor, RealizationPlan, RealizationRejection, RealizationSelectionReason, RealizationStep, RealizationStepReference, RequirementClosure, RequirementId, RequirementSatisfaction, RequirementSatisfier, RuntimeFeatureDefinition, SelectedGrounding, SettlementCandidate, SettlementCandidateReference, SettlementDecision, SettlementReason, SourceMapReference, SourceRelation, SpeculativeCandidate, StepInputBinding, UnsatisfiabilityProof } from './types.js';
+import type {
+  Artifact,
+  ArtifactId,
+  ArtifactReference,
+  ClosedRealizationPlan,
+  CompileOutcome,
+  CompilerTypeSurface,
+  ExecutionBackend,
+  GroundingReference,
+  IncompleteState,
+  InvocationSlotId,
+  MigrationAdapter,
+  MigrationProduct,
+  MigrationSourceFormatId,
+  NonEmptyRequirementRow,
+  OptimizationObjective,
+  PlacementConstraint,
+  PreparationDisposition,
+  PreparedWork,
+  ProjectionTargetId,
+  ProjectionTargetReference,
+  RealizationCandidate,
+  RealizationCandidateReference,
+  RealizationCatalogAddress,
+  RealizationDecision,
+  RealizationFailure,
+  RealizationInstance,
+  RealizationInstanceId,
+  RealizationInstanceReference,
+  RealizationLifecycle,
+  RealizationOffer,
+  RealizationOfferDescriptor,
+  RealizationPlan,
+  RealizationRejection,
+  RealizationSelectionReason,
+  RealizationStep,
+  RealizationStepReference,
+  RequirementClosure,
+  RequirementId,
+  RequirementSatisfaction,
+  RequirementSatisfier,
+  RuntimeFeatureDefinition,
+  SelectedGrounding,
+  SettlementCandidate,
+  SettlementCandidateReference,
+  SettlementDecision,
+  SettlementReason,
+  SourceMapReference,
+  SourceRelation,
+  SpeculativeCandidate,
+  StepInputBinding,
+  UnsatisfiabilityProof,
+} from './types.js';
 
 /** Compile-time law: an empty residual row cannot claim that runtime is required. */
 export type EmptyRequirementClosureHasNoRuntime = Assert<
@@ -813,4 +879,47 @@ export type AnUnmappableRelationCarriesNoMap = Assert<
  */
 export type AnUnmappableRelationRequiresItsLimitations = Assert<
   Equal<CaseOf<SourceRelation, 'deliberately-unmappable'>['limitations'], NonEmptyTuple<Diagnostic>>
+>;
+
+type MigrationLawFormatA = MigrationSourceFormatId<'law.migration.format.a'>;
+type MigrationLawFormatB = MigrationSourceFormatId<'law.migration.format.b'>;
+
+/**
+ * Compile-time law: a migration carries its product and its diagnostics
+ * together, and is exact over the format it reads.
+ *
+ * `migrate` produced `Signature<Input, Output, readonly Diagnostic[]>`, which
+ * says a migration either produced a product or failed with diagnostics. The
+ * outcome it could not say is the common one: produced a product *and* lost
+ * something. The predecessor's tests pin exactly that case — an unresolvable
+ * `var()` reference is reported and the token is still emitted — and a failure
+ * channel would have discarded the migration to deliver a note about it.
+ *
+ * Line one is the envelope. Line two refuses the shape it replaced, so the
+ * bare output cannot come back as the signature's success type. Line three is
+ * the format exactness, and line four is its anti-vacuity partner. Line five
+ * pins that severity is `Diagnostic`'s and not a migration-local second
+ * vocabulary.
+ */
+export type AMigrationCarriesItsProductAndItsDiagnostics = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          OutputOf<MigrationAdapter<MigrationLawFormatA, string, number>['migrate']>,
+          MigrationProduct<number>
+        >,
+        Equal<
+          OutputOf<MigrationAdapter<MigrationLawFormatA, string, number>['migrate']>,
+          number
+        >,
+        MigrationAdapter<MigrationLawFormatA> extends MigrationAdapter<MigrationLawFormatB>
+          ? true
+          : false,
+        MigrationAdapter extends MigrationAdapter<MigrationLawFormatA> ? true : false,
+        Equal<MigrationProduct['diagnostics'], readonly Diagnostic[]>,
+      ],
+      [true, false, false, false, true]
+    >
+  >
 >;

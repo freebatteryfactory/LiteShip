@@ -911,12 +911,59 @@ export type CompileResult<
 > = Result<CompileOutcome<Declared, Residual>, readonly Diagnostic[]>;
 
 /** Foreign representation to LiteShip meaning. */
-export interface MigrationAdapter<Input = unknown, Output = unknown> {
+/**
+ * What one migration produced, and everything it had to say while producing it.
+ *
+ * The product and its diagnostics arrive together, and that is the whole point
+ * of the type. `migrate` was `Signature<Input, Output, readonly Diagnostic[]>`,
+ * which can express *produced a product* or *failed with diagnostics* and
+ * cannot express **produced a product and lost something on the way** — the
+ * single most common outcome a real migration has.
+ *
+ * The predecessor got this right and its tests pin it: a Tailwind
+ * `var()`/`calc()` reference it cannot resolve is reported *and* the token is
+ * still emitted verbatim, because a lossy conversion is a successful
+ * conversion that a human needs to know about. Routing that warning through a
+ * failure channel would have thrown away the migration to report a note about
+ * it.
+ *
+ * Severity is `Diagnostic`'s, not a second vocabulary: `warning` is
+ * lossy-but-kept, `error` is source meaning that could not be represented and
+ * was dropped. `00_core/00_error` already owns that distinction and a
+ * migration-local copy would be the same fact twice.
+ */
+export interface MigrationProduct<Output = unknown> {
+  readonly produced: Output;
+  readonly diagnostics: readonly Diagnostic[];
+}
+
+/**
+ * Identity of one source format a migration reads.
+ *
+ * Branded rather than a free `string`. The predecessor had no format identity
+ * at all — an adapter was selected by importing its function by name, which is
+ * genuinely typo-proof and is not a defect. But this repository's adapters are
+ * *values* in a population, and a population keyed by free strings is the shape
+ * every other identity here refuses.
+ *
+ * The taxonomy of formats is not declared. Which formats exist is a fact about
+ * what has been written, not a closed union this home is entitled to decide.
+ */
+export type MigrationSourceFormatId<Name extends string = string> = Brand<
+  Name,
+  'liteship.migration-source-format-id'
+>;
+
+export interface MigrationAdapter<
+  Format extends MigrationSourceFormatId = MigrationSourceFormatId,
+  Input = unknown,
+  Output = unknown,
+> {
   readonly id: MigrationAdapterId;
-  readonly sourceFormat: string;
+  readonly sourceFormat: Format;
   readonly inputSchema: SchemaReference<SchemaId, Input>;
   readonly outputSchema: SchemaReference<SchemaId, Output>;
-  readonly migrate: Signature<Input, Output, readonly Diagnostic[]>;
+  readonly migrate: Signature<Input, MigrationProduct<Output>, readonly Diagnostic[]>;
 }
 
 /** Type summary consumed by the root core topology. */
