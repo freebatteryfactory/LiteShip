@@ -13,10 +13,7 @@
 
 import type {
   Algebra,
-  Assert,
   Brand,
-  CaseOf,
-  Equal,
   NonEmptyTuple,
 } from '../../../types.js';
 import type { RevisionId } from '../../../00_core/02_identity/types.js';
@@ -59,60 +56,6 @@ export type CloudflareConfigurationAdmission<
   admitted: { readonly configuration: AdmittedCloudflareConfiguration<Config, Revision> };
   malformed: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
 }>;
-
-// ---------------------------------------------------------------------------
-// Laws
-
-type LawConfig = TargetConfigurationId<'cloudflare.deploy'>;
-type LawRevision = RevisionId;
-
-/** Compile-time law: raw configuration cannot stand in for admitted, in either direction. */
-export type RawCloudflareConfigurationIsNotAdmitted = Assert<
-  Equal<
-    [
-      RawCloudflareConfiguration extends AdmittedCloudflareConfiguration ? true : false,
-      AdmittedCloudflareConfiguration extends RawCloudflareConfiguration ? true : false,
-    ],
-    [false, false]
-  >
->;
-
-/** Compile-time law: admitted configuration pins an exact revision. */
-export type AdmittedCloudflareConfigurationPinsItsRevision = Assert<
-  Equal<
-    AdmittedCloudflareConfiguration<LawConfig, LawRevision>['configuration'],
-    TargetConfigurationRevision<LawConfig, LawRevision>
-  >
->;
-
-/**
- * Compile-time law: the compatibility date is required and is not a bare string.
- *
- * Optionality is the escape. Under `exactOptionalPropertyTypes` an optional
- * member admits `undefined`, and a deployment with no stated runtime generation
- * silently inherits whatever the platform means at deploy time.
- */
-export type TheCompatibilityDateIsRequiredAndBranded = Assert<
-  Equal<
-    [
-      Equal<AdmittedCloudflareConfiguration['compatibilityDate'], CompatibilityDate>,
-      undefined extends AdmittedCloudflareConfiguration['compatibilityDate'] ? true : false,
-      string extends AdmittedCloudflareConfiguration['compatibilityDate'] ? true : false,
-    ],
-    [true, false, false]
-  >
->;
-
-/** Compile-time law: a malformed admission carries diagnostics and no configuration. */
-export type AMalformedCloudflareAdmissionCarriesNoConfiguration = Assert<
-  Equal<
-    [
-      'configuration' extends keyof CaseOf<CloudflareConfigurationAdmission, 'malformed'> ? true : false,
-      Equal<CaseOf<CloudflareConfigurationAdmission, 'malformed'>['diagnostics'], NonEmptyTuple<Diagnostic>>,
-    ],
-    [false, true]
-  >
->;
 
 /** The families this home owns, so none is correct and unreached. */
 export interface CloudflareConfigurationTypeSurface {

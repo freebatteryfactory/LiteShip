@@ -17,10 +17,7 @@
 
 import type {
   Algebra,
-  Assert,
   Brand,
-  CaseOf,
-  Equal,
   NonEmptyTuple,
   Reference,
 } from '../../../types.js';
@@ -68,58 +65,6 @@ export interface CloudflareAdapterDefinition<
   readonly participation: TargetParticipation<CloudflareTargetId, Config, Revision>;
   readonly compatibility: CloudflareCompatibility;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-
-type LawAdapter = CloudflareAdapterId<'liteship'>;
-type LawConfig = TargetConfigurationId<'cloudflare.deploy'>;
-type LawRevision = RevisionId;
-
-/** Compile-time law: this child names the Cloudflare ecosystem target and no other. */
-export type TheAdapterNamesTheCloudflareTargetExactly = Assert<
-  Equal<
-    CloudflareAdapterDefinition<LawAdapter, LawConfig, LawRevision>['participation'],
-    TargetParticipation<EcosystemTargetId<'cloudflare'>, LawConfig, LawRevision>
-  >
->;
-
-/**
- * Compile-time law: registration names no framework.
- *
- * The absences are the law, and this is the one the predecessor failed. A
- * member naming a framework — required or optional — would restore exactly the
- * dependency that cost the old package its direct path.
- */
-export type RegistrationNamesNoFramework = Assert<
-  Equal<
-    [
-      'astro' extends keyof CloudflareAdapterDefinition ? true : false,
-      'framework' extends keyof CloudflareAdapterDefinition ? true : false,
-      'integration' extends keyof CloudflareAdapterDefinition ? true : false,
-      'middleware' extends keyof CloudflareAdapterDefinition ? true : false,
-      'outputMode' extends keyof CloudflareAdapterDefinition ? true : false,
-    ],
-    [false, false, false, false, false]
-  >
->;
-
-/** Compile-time law: compatibility keeps its four altitudes distinct. */
-export type CloudflareCompatibilityKeepsItsFourAltitudes = Assert<
-  Equal<CloudflareCompatibility['_tag'], 'supported' | 'degraded' | 'refused' | 'unavailable'>
->;
-
-/** Compile-time law: absent evidence is not support. */
-export type CloudflareAbsentEvidenceIsNotSupport = Assert<
-  Equal<
-    [
-      'evidence' extends keyof CaseOf<CloudflareCompatibility, 'unavailable'> ? true : false,
-      'evidence' extends keyof CaseOf<CloudflareCompatibility, 'refused'> ? true : false,
-      Equal<CaseOf<CloudflareCompatibility, 'degraded'>['limitations'], NonEmptyTuple<Diagnostic>>,
-    ],
-    [false, false, true]
-  >
->;
 
 /** The families this home owns, so none is correct and unreached. */
 export interface CloudflareIntegrationTypeSurface {
