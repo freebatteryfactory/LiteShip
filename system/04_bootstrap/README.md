@@ -34,30 +34,35 @@ Each entry is exact over its own name — `SystemProgram<'release'>`, not `Syste
 
 That last refinement exists because of a specific near-miss. The wire topology named its children by surface, which meant a deleted child broke the import, and it looked sufficient. It was not: pointing `http` at `DirectWireTypeSurface` compiled, and only an unused-import warning noticed. A mis-wired entry is the likelier defect of the two — a child gets deleted deliberately and loudly, while an entry gets copy-pasted and edited in one of its two positions. It is checked here before anyone has had the chance to make it.
 
-## Disposal is unconditional
+## Disposal is unconditional, and names what was held
 
 Every arm of `DispatchOutcome` carries a `DisposalReceipt`.
 
-A dispatch that never found its program still acquired the capabilities the entry point bound. So did a dispatch that could not start at all. An entry point that releases only on the success path is the defect that appears as a leaked handle three hours into a CI run, and it is invisible in every test that passes.
+A dispatch that could not start still acquired the capabilities the entry point bound. An entry point that releases only on the success path is the defect that appears as a leaked handle three hours into a CI run, and it is invisible in every test that passes.
 
-Three arms rather than two, and the third is the one worth arguing about. `unregistered` exists because the registry is total over the roster while a *runtime* lookup can still receive a name that failed to resolve at the wire — and reporting that as a program failure blames the program for the wire's refusal.
+The receipt names the **capability row**, not the workspace. It named the workspace first, and that was a general receipt shape being available rather than workspace disposal meaning anything: the workspace reference is what a run is *about*, and the handles are what a bootstrap actually holds. A receipt claiming the workspace was released is silent about the filesystem and process handles, which are the ones that leak.
 
-## Bootstrap parses nothing
+Two arms, not three. `unregistered` sat here on the reasoning that a runtime lookup can be handed a name that failed to resolve. It cannot get this far — an envelope carries a roster-typed program reference, so an unresolvable name produces no envelope, and with no envelope there is no dispatch and no receipt. That refusal is the CLI wire's `rejected` arm with a `usage` exit. Keeping an arm for it here was the boundary refusal leaking one layer downstream and being answered twice.
 
-`InvocationEnvelope` carries a workspace, a program reference, and a caller. No argv, no flags, no command string.
+## Bootstrap parses nothing, and carries what parsing produced
+
+`InvocationEnvelope` carries a workspace, a program reference, the decoded input, and a caller. No argv, no flags, no command string.
+
+The input was missing, and that was not restraint. A bootstrap cannot invoke an operation without the operation's input, so an envelope carrying only a reference described something no dispatch could perform. Parsing belongs to the wire; its *product* has to arrive somewhere. The input is typed as the selected program's input, so an envelope for `release` cannot carry what `docs` accepts.
 
 The program is named by reference rather than by string, so an envelope for a program the roster does not contain cannot be constructed at all. A `program: string` would have made every envelope substitutable and moved the check to runtime, which is where the previous arrangement kept it.
 
-The outcome carries the CLI wire's `CliDisposition` whole rather than a summary of it. A bootstrap that reduced it to an exit code would be translating a translation, and the arm a shell sees would stop being the wire's decision.
+The outcome carries the CLI wire's `CliDisposition` whole rather than a summary of it, at the selected program's own operation identity. That identity used to be a free parameter beside the envelope's name with nothing relating them, so a receipt could pair an envelope for `release` with a disposition reporting on `ship` — both halves individually exact, about two different things, which is what made it invisible. A program's operation identity is computed from its name, so the relation was always available and simply not taken.
 
 The caller rides along and confers nothing — which is the point of carrying it somewhere it can be seen doing nothing.
 
 ## Laws
 
 - The registry's key set is the name union; each entry is the program of its own name; neither another program nor the broad form substitutes.
-- Every dispatch arm releases, checked by name on all three, with the arm count pinned so a fourth cannot arrive without one.
-- The envelope carries no argv, flags, or command, and the outcome carries no exit; the disposition is the wire's, whole.
+- Every dispatch arm releases the capability row it acquired, checked by name on both arms and refusing the workspace as the subject, with the arm count pinned so a third cannot arrive without one.
+- The envelope carries no argv, flags, or command and does carry a decoded input; the outcome carries no exit, and the disposition is the wire's, whole, at the program's own operation identity.
 - An envelope is exact over the program it names.
+- A receipt reports on the program its envelope names, refusing the same disposition read against another program's identity.
 
 ## Proof obligations
 

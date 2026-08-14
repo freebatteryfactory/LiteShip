@@ -49,12 +49,12 @@ import type {
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { DisposalReceipt } from '../../00_core/05_lifecycle/types.js';
-import type { OperationId } from '../../00_core/07_operation/types.js';
 import type { CliDisposition } from '../../02_wires/cli/types.js';
 import type { WireCaller } from '../../02_wires/types.js';
 import type { WorkspaceReference } from '../00_workspace/types.js';
 import type {
   SystemProgram,
+  SystemProgramId,
   SystemProgramName,
   SystemProgramReference,
   SystemProgramRoster,
@@ -114,10 +114,22 @@ export type BootstrapCapabilities<Requirements extends RequirementRow = Requirem
  *
  * There is no `argv` member. Parsing is the CLI wire's, and an envelope holding
  * raw arguments would be a second place where a command language lives.
+ *
+ * There *is* a decoded input, and its absence was not restraint. A bootstrap
+ * cannot invoke an operation without the operation's input, so an envelope
+ * carrying only a program reference described something no dispatch could
+ * perform. Parsing belongs to the wire and its product has to arrive
+ * somewhere; `Input` is that somewhere, and it is the selected program's input
+ * rather than a free type, so an envelope for `release` cannot carry what
+ * `docs` accepts.
  */
-export interface InvocationEnvelope<Name extends SystemProgramName = SystemProgramName> {
+export interface InvocationEnvelope<
+  Name extends SystemProgramName = SystemProgramName,
+  Input = unknown,
+> {
   readonly workspace: WorkspaceReference;
   readonly program: SystemProgramReference<Name>;
+  readonly input: Input;
   readonly caller: WireCaller;
 }
 
@@ -125,32 +137,39 @@ export interface InvocationEnvelope<Name extends SystemProgramName = SystemProgr
  * How one dispatch ended, with what it released.
  *
  * Every arm carries a disposal receipt. That is the whole design: a dispatch
- * that never found its program still acquired the capabilities the entry point
- * bound, and an entry point that releases them only on the success path is the
- * defect that shows up as a leaked handle three hours into a CI run.
+ * that could not start still acquired the capabilities the entry point bound,
+ * and an entry point that releases them only on the success path is the defect
+ * that shows up as a leaked handle three hours into a CI run.
  *
- * `unregistered` exists because the registry is total over the roster but a
- * *runtime* lookup can still be handed a name that failed to resolve at the wire
- * — and a bootstrap that reported that as a program failure would blame the
- * program for the wire's refusal.
+ * The receipt names the **capability row** that was acquired. It used to name
+ * the workspace, which was a general receipt shape being available rather than
+ * workspace disposal being meaningful: the workspace reference is what the run
+ * is *about*, and the handles are what a bootstrap actually holds and must let
+ * go of. A receipt claiming the workspace was released says nothing about the
+ * filesystem and process handles that leak.
+ *
+ * Two arms, not three. `unregistered` used to sit here, on the reasoning that a
+ * runtime lookup can be handed a name that failed to resolve. It cannot get
+ * this far: an `InvocationEnvelope` carries a roster-typed program reference,
+ * so a name that failed to resolve produces no envelope, and with no envelope
+ * there is no dispatch and no receipt. The refusal is the CLI wire's `rejected`
+ * arm with a `usage` exit, which is where an unknown command belongs. Keeping
+ * an arm for it here was the boundary refusal leaking one layer downstream and
+ * being answered twice.
  */
 export type DispatchOutcome<
+  Name extends SystemProgramName = SystemProgramName,
   Output = unknown,
   Failure = readonly Diagnostic[],
-  Op extends OperationId = OperationId,
+  Requirements extends RequirementRow = RequirementRow,
 > = Algebra<{
   dispatched: {
-    readonly disposition: CliDisposition<Output, Failure, Op>;
-    readonly released: DisposalReceipt<WorkspaceReference>;
-  };
-  unregistered: {
-    readonly requested: string;
-    readonly diagnostics: NonEmptyTuple<Diagnostic>;
-    readonly released: DisposalReceipt<WorkspaceReference>;
+    readonly disposition: CliDisposition<Output, Failure, SystemProgramId<Name>>;
+    readonly released: DisposalReceipt<BootstrapCapabilities<Requirements>>;
   };
   unavailable: {
     readonly diagnostics: NonEmptyTuple<Diagnostic>;
-    readonly released: DisposalReceipt<WorkspaceReference>;
+    readonly released: DisposalReceipt<BootstrapCapabilities<Requirements>>;
   };
 }>;
 
@@ -161,15 +180,23 @@ export type DispatchOutcome<
  * do as well as what happened. Nothing else: no timing, no log, no environment
  * capture. A bootstrap receipt that grew those would be a telemetry product, and
  * `00_core/18_inspection` owns explanation.
+ *
+ * One `Name`, threaded to both members. The outcome used to take a free
+ * `Op extends OperationId` while the envelope took a `Name`, with nothing
+ * relating them — so a receipt could pair an envelope for `release` with a
+ * disposition reporting on `ship`. A program's operation identity is computed
+ * from its name, which is precisely what makes the two relatable, and the
+ * previous shape declined to relate them.
  */
 export interface BootstrapReceipt<
   Name extends SystemProgramName = SystemProgramName,
+  Input = unknown,
   Output = unknown,
   Failure = readonly Diagnostic[],
-  Op extends OperationId = OperationId,
+  Requirements extends RequirementRow = RequirementRow,
 > {
-  readonly envelope: InvocationEnvelope<Name>;
-  readonly outcome: DispatchOutcome<Output, Failure, Op>;
+  readonly envelope: InvocationEnvelope<Name, Input>;
+  readonly outcome: DispatchOutcome<Name, Output, Failure, Requirements>;
 }
 
 // ---------------------------------------------------------------------------
@@ -205,27 +232,37 @@ export type TheRegistryIsTotalOverTheRoster = Assert<
 /**
  * Compile-time law: every dispatch releases what it acquired.
  *
- * Checked on all three arms by name, because this is the member a later edit
- * removes from the two arms that "cannot really leak anything". Both of them
- * can: the entry point bound its capabilities before it knew whether the program
- * existed.
+ * Checked on both arms by name, because this is the member a later edit removes
+ * from the arm that "cannot really leak anything". It can: the entry point
+ * bound its capabilities before it knew whether the run could start.
  *
- * Line four is the anti-vacuity partner — the population is three, so an arm
+ * The subject is the capability row, not the workspace. Lines one and two pin
+ * that, and line three refuses the workspace outright — a receipt naming what
+ * the run was *about* rather than what it *held* is a disposal claim about the
+ * wrong noun, and the handles it does not name are the ones that leak.
+ *
+ * Line four is the anti-vacuity partner — the population is two, so an arm
  * added beside these without a receipt fails here rather than passing unnoticed.
  */
 export type EveryDispatchReleasesWhatItAcquired = Assert<
   IsExactlyTrue<
     Equal<
       [
-        Equal<CaseOf<DispatchOutcome, 'dispatched'>['released'], DisposalReceipt<WorkspaceReference>>,
         Equal<
-          CaseOf<DispatchOutcome, 'unregistered'>['released'],
+          CaseOf<DispatchOutcome, 'dispatched'>['released'],
+          DisposalReceipt<BootstrapCapabilities>
+        >,
+        Equal<
+          CaseOf<DispatchOutcome, 'unavailable'>['released'],
+          DisposalReceipt<BootstrapCapabilities>
+        >,
+        Equal<
+          CaseOf<DispatchOutcome, 'dispatched'>['released'],
           DisposalReceipt<WorkspaceReference>
         >,
-        Equal<CaseOf<DispatchOutcome, 'unavailable'>['released'], DisposalReceipt<WorkspaceReference>>,
-        Equal<TagOf<DispatchOutcome>, 'dispatched' | 'unregistered' | 'unavailable'>,
+        Equal<TagOf<DispatchOutcome>, 'dispatched' | 'unavailable'>,
       ],
-      [true, true, true, true]
+      [true, true, false, true]
     >
   >
 >;
@@ -238,6 +275,15 @@ export type EveryDispatchReleasesWhatItAcquired = Assert<
  * The outcome carries the CLI wire's disposition whole rather than a summary of
  * it, so the exit arm a shell sees is the wire's decision and not a translation
  * of a translation.
+ *
+ * It does carry a decoded `input`, and the distinction is the whole point:
+ * parsing is the wire's and its *product* has to arrive somewhere. Line four
+ * pins that the input exists, so a later edit that removes it — restoring the
+ * shape where no dispatch could actually invoke anything — fails here.
+ *
+ * Line six pins the disposition is the wire's whole type at the program's own
+ * operation identity, which is what relates the reported operation to the
+ * envelope's program instead of leaving them two free parameters.
  */
 export type BootstrapParsesNothingAndDecidesNoExit = Assert<
   IsExactlyTrue<
@@ -246,10 +292,14 @@ export type BootstrapParsesNothingAndDecidesNoExit = Assert<
         'argv' extends keyof InvocationEnvelope ? true : false,
         'flags' extends keyof InvocationEnvelope ? true : false,
         'command' extends keyof InvocationEnvelope ? true : false,
+        'input' extends keyof InvocationEnvelope ? true : false,
         'exit' extends keyof CaseOf<DispatchOutcome, 'dispatched'> ? true : false,
-        Equal<CaseOf<DispatchOutcome, 'dispatched'>['disposition'], CliDisposition>,
+        Equal<
+          CaseOf<DispatchOutcome<'release'>, 'dispatched'>['disposition'],
+          CliDisposition<unknown, readonly Diagnostic[], SystemProgramId<'release'>>
+        >,
       ],
-      [false, false, false, false, true]
+      [false, false, false, true, false, true]
     >
   >
 >;
@@ -272,6 +322,41 @@ export type AnEnvelopeNamesARosteredProgram = Assert<
         Equal<InvocationEnvelope<'release'>['program'], SystemProgramReference<'release'>>,
       ],
       [false, false, true, true]
+    >
+  >
+>;
+
+/**
+ * Compile-time law: a receipt reports on the program its envelope names.
+ *
+ * The envelope took a `Name` and the outcome took a free `Op extends
+ * OperationId`, with nothing relating them, so a receipt could pair an envelope
+ * for `release` with a disposition reporting on `ship` and be perfectly
+ * well-typed. Both halves were individually exact, which is what made it
+ * invisible — the exactness was real and it was about two different things.
+ *
+ * A program's operation identity is computed from its name, so the relation was
+ * always available and simply not taken. Line one takes it. Line two is what
+ * makes the law a measurement: the same disposition read against a *different*
+ * program's identity is refused, so this distinguishes rather than observing
+ * that some identity arrived. Line four is the anti-vacuity partner.
+ */
+export type AReceiptReportsOnTheProgramItNames = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          CaseOf<BootstrapReceipt<'release'>['outcome'], 'dispatched'>['disposition'],
+          CliDisposition<unknown, readonly Diagnostic[], SystemProgramId<'release'>>
+        >,
+        Equal<
+          CaseOf<BootstrapReceipt<'release'>['outcome'], 'dispatched'>['disposition'],
+          CliDisposition<unknown, readonly Diagnostic[], SystemProgramId<'ship'>>
+        >,
+        Equal<BootstrapReceipt<'release'>['envelope']['program'], SystemProgramReference<'release'>>,
+        [BootstrapReceipt<'release'>] extends [never] ? true : false,
+      ],
+      [true, false, true, false]
     >
   >
 >;
