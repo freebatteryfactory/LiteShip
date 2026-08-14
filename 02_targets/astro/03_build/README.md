@@ -55,7 +55,8 @@ A host-only composition does not need to pretend it can satisfy a build-tool fac
 - Every non-productive disposition explains itself with a non-empty diagnostic tuple.
 - The request carries the planned outcome whole and restates no planning facts.
 - The facility names no foreign ecosystem: no plugin handle, no hook payload, no ambient context.
-- The type surface reaches the requirement, checked against a type written independently of the member.
+
+`AstroBuildTypeSurface` does not list the requirement, and that is not a gap. A type surface is an inspection summary consumed by the parent topology, not an export membrane — the real semantic API is the module's exports at their owner path, which is what the composition fixture in `02_targets/types.laws.ts` imports. A member was briefly added here along with a law reading it, and neither was on any consumer path: the summary was being made to feel reached. Both are gone.
 
 ## Proof obligations
 

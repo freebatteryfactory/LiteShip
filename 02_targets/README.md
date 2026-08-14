@@ -81,25 +81,31 @@ The test the architecture must keep passing: a composition of hosts alone can pr
 
 That test was run. `02_targets/cloudflare/03_deployment` is the first consumer that takes both, and a composition point passed a framework-produced application and a host-only-produced application through **one function** into the same request type. Until that compiled, the arm was representable but unexercised. Like the seam above, the proof is assurance awaiting `system/`.
 
-## The one place both children are visible
+## Where the children meet
 
 Astro genuinely uses Vite. Neither may import the other, because ecosystem usage and distribution dependency are not semantic authority — the rule that saved this umbrella from the predecessor's Cloudflare package, which imported a framework sibling and lost its independent story entirely.
 
 The consequence is that the seam between them is a set of choices made twice. Astro declares a socket without naming who fills it; Vite declares a facility "taken without reference to any requester"; and until now nothing imported both, so whether the supplier actually fit the socket was an untested belief held by two files that had never met.
 
-The composition at the bottom of `types.ts` is that test. It owns no target semantics and declares no facility, request, or disposition of its own — a local replica would prove that a copy fits a socket, which is the defect `00_audit` exists to detect, committed by the proof. Every type in it is the real one, imported from the child that owns it.
+`types.laws.ts` is that test, and it is a separate file for a reason that was learned the hard way. The composition first landed inside `types.ts`, on the reasoning that the parent is the one place that may see both children. That reasoning was half right and the half that was wrong closed a cycle: the children import this umbrella for participation, producer, and slot vocabulary, so an umbrella importing them back to check their composition makes `02_targets/types.ts -> astro/03_build/types.ts -> 02_targets/types.ts`. TypeScript accepts it — type-only imports, one program — which is why it had to be caught by reading.
+
+`system/types.ts` does import its children and is not the same case, though it was cited as the precedent. That file owns topology and nothing else, and no system child imports it, so nothing flows back. The distinguishing property is not *parent* but *owns vocabulary the children consume*.
+
+So the umbrella imports no child, and the fixture is compile-only: it owns no target semantics, declares no facility, request, or disposition of its own, emits nothing, and is imported by nobody. A local replica would prove that a copy fits a socket, which is the defect `system/01_assurance/00_audit` exists to detect, committed by the proof. Every type in it is the real one.
 
 The positive case needs no assertion. `AstroBuildFacilityRequirement` constrains its fourth parameter to Astro's facility at exact axes, so naming Vite's facility as the filler either compiles or does not. It compiles.
 
-### It compiles by coincidence, and the coincidence is now checked
+### Independent conformance, not coincidence
 
-Six choices had to be made independently on both sides, and every one happens to match: the slot-demand alias, the three request members, and the five disposition arms. `ViteProjectionRequest` and `AstroProjectionRequest` are structurally identical and separately declared. So is the disposition. So is the demand tuple.
+Astro declares a requirement. Vite independently exposes a facility. At this exact composition, Vite conforms. There is no shared upstream contract making that true, which is precisely why the fixture has to exist — but "conformance without a shared contract" is an ordinary architectural fact, not cosmic roulette, and calling it coincidence belongs to the investigation history rather than to the architecture.
 
-That is why the composition type-checks. Not derivation — coincidence. A deleted probe in the predecessor said so in its own header and called it luck.
+An earlier draft carried a second law asserting the two request types, the two disposition algebras, and the two slot aliases were pairwise equal. Measuring retired it on both counts.
 
-`TheAstroViteSeamAgreesByCoincidence` does not convert the coincidence into a derivation. Nothing can, short of coupling the siblings or hoisting the shared shape into this umbrella, and both are edits with consequences past this seam. What it does is make the luck legible: a unilateral change on either side turns red **here**, naming which of the six axes moved, instead of turning some later composition red with no indication of which choice diverged. Measured — widening Vite's slot demands, dropping a member from its request, adding a sixth disposition arm, and renaming a member on Astro's request each fire it.
+It was redundant: the facility constraint alone goes red when Vite widens its slot demands, gains a disposition arm, renames a disposition arm, or when Astro renames a request member. Four mutations, four failures, no equality law involved.
 
-If it ever fires, the answer is not to patch the fixture. It is to decide whether the shared shape belongs here.
+And it was wrong. `project` is a `Signature`, whose input slot is a parameter position and therefore contravariant, so a supplier whose request needs *fewer* members than the socket offers stays assignable — correctly. Dropping a member from Vite's request leaves the composition compiling, exactly as it should. The equality law would have called that a divergence and turned red on a legal change.
+
+A law that freezes two spellings into agreement is not checking a relationship. It is asserting that nobody will ever legally differ.
 
 ## Laws
 
@@ -111,7 +117,7 @@ If it ever fires, the answer is not to patch the fixture. It is to decide whethe
 - Attempt and composition are distinct reference kinds, compared against literal kind strings rather than against their own aliases.
 - A refusal carries an attempt and never a selected composition.
 - The Astro socket, filled by the real Vite facility, binds that exact supplier through root's own binding calculus; a supplier broadening participation, slots, or producer does not fill it, and the lawful pairing still does.
-- The two children agree on the six shapes their seam depends on, checked here so a unilateral change names the axis that diverged.
+- Type surfaces are inspection summaries consumed by the parent topology, not export membranes. The semantic API is a module's exports at their owner path, and a composition imports those directly.
 - A claim is not a producer. Their payloads are identical, so the law compares them structurally.
 - Failure carries the exact participation that failed, not merely its target.
 - A produced artifact binds core's artifact rather than restating it. Address, digest, media type, source revision, source relation, source map, configuration, and composition are absent by law — their presence would mean either a second artifact vocabulary or a second copy of a fact the producer already owns.
