@@ -74,11 +74,13 @@ CLI grammar belongs to the CLI child. The root executable's bootstrap does not p
 
 The initial wire families are direct, HTTP, browser, CLI, MCP, and LSP/editor. Typed model and agent stream codecs join them when a real consumer earns one.
 
-**Five children exist; `editor/` is not written.** `WireTypeTopology` names exactly the five that do, and it names each by the child's own surface rather than by a string. The distinction is the whole point: a roster written as `readonly ['direct']` asserts a child exists and cannot tell whether it does — delete the child's `types.ts` and the umbrella still compiles, still claiming one child. Naming the surface makes the claim answerable by the compiler.
+**Six children exist.** `WireTypeTopology` names exactly the six that do, and it names each by the child's own surface rather than by a string. The distinction is the whole point: a roster written as `readonly ['direct']` asserts a child exists and cannot tell whether it does — delete the child's `types.ts` and the umbrella still compiles, still claiming one child. Naming the surface makes the claim answerable by the compiler.
+
+`editor/` was the last named-and-empty home in the repository. It is written, and it is a sibling of `mcp/` rather than a resident of it — the predecessor's language server lived inside the MCP package and took its version identity from there, and the import audit now refuses that edge structurally.
 
 That was half true until a canary said otherwise. Deleting a child does break the import, so the roster genuinely cannot outlive what it names — but pointing `http` at `DirectWireTypeSurface` compiled, and the only thing that noticed was `noUnusedLocals` complaining about an import nobody read. A mis-wired entry is the likelier defect of the two: a child gets deleted deliberately and loudly, while an entry gets copy-pasted and edited in one of its two positions. `EachEntryNamesItsOwnChildsSurface` now compares each against a right-hand side written independently of the topology.
 
-A name in that topology is a promise the compiler checks. A name for an unwritten home is a promise nothing can keep, so `editor/` is named in prose here and nowhere in a type.
+A name in that topology is a promise the compiler checks, and a name for an unwritten home is a promise nothing can keep. `editor/` was named in prose here and nowhere in a type for exactly as long as it was unwritten.
 
 The topology lives in `types.laws.ts` rather than beside the vocabulary, and that is not filing. This umbrella owns `WireExchange` and `WireRefusal`, which the children import, so importing a child back to inspect it closed a cycle — `direct → umbrella → direct` — that TypeScript accepted and the layer carried for its entire existence. `system/types.ts` performs the identical import and is fine, because it owns topology and nothing else. The distinguishing property is not *parent* but *owns vocabulary the children consume*.
 

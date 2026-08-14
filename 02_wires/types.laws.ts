@@ -51,6 +51,7 @@ import type {
   WireRefusal,
 } from './types.js';
 import type { BrowserWireTypeSurface } from './browser/types.js';
+import type { EditorWireTypeSurface } from './editor/types.js';
 import type { CliWireTypeSurface } from './cli/types.js';
 import type { DirectWireTypeSurface } from './direct/types.js';
 import type { HttpWireTypeSurface } from './http/types.js';
@@ -71,9 +72,9 @@ export interface WireTypeHome<Name extends string, Surface> extends Named<Name> 
  * claim answerable by the compiler: the roster cannot outlive the thing it
  * names.
  *
- * `editor` is planned and absent, and is not listed: a name here is a promise
- * the compiler checks, and a name for an unwritten home is a promise nothing can
- * keep. The other four arrived, so they are named.
+ * Every named child exists. A name here is a promise the compiler checks, and
+ * a name for an unwritten home is a promise nothing can keep — which is why
+ * `editor` was absent from this tuple until its home was written.
  */
 export type WireTypeTopology = Tuple<
   [
@@ -82,6 +83,7 @@ export type WireTypeTopology = Tuple<
     WireTypeHome<'browser', BrowserWireTypeSurface>,
     WireTypeHome<'cli', CliWireTypeSurface>,
     WireTypeHome<'mcp', McpWireTypeSurface>,
+    WireTypeHome<'editor', EditorWireTypeSurface>,
   ]
 >;
 
@@ -120,9 +122,10 @@ export type EachEntryNamesItsOwnChildsSurface = Assert<
         Equal<WireTypeAt<'browser'>, BrowserWireTypeSurface>,
         Equal<WireTypeAt<'cli'>, CliWireTypeSurface>,
         Equal<WireTypeAt<'mcp'>, McpWireTypeSurface>,
-        Equal<WireChildName, 'direct' | 'http' | 'browser' | 'cli' | 'mcp'>,
+        Equal<WireTypeAt<'editor'>, EditorWireTypeSurface>,
+        Equal<WireChildName, 'direct' | 'http' | 'browser' | 'cli' | 'mcp' | 'editor'>,
       ],
-      [true, true, true, true, true, true]
+      [true, true, true, true, true, true, true]
     >
   >
 >;
