@@ -44,9 +44,10 @@ export const EMITTED_EXTENSION = '.js';
  * comparison because emit formatting is not the subject; `export {};` and
  * `export{};` are the same absence of behaviour.
  */
-export const carriesExecutableContent = (text) => text.replaceAll(/\s/gu, '') !== 'export{};';
+export const carriesExecutableContent = (/** @type {string} */ text) => text.replaceAll(/\s/gu, '') !== 'export{};';
 
-const walk = (dir) =>
+/** @returns {string[]} */
+const walk = (/** @type {string} */ dir) =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
     entry.isDirectory() ? walk(join(dir, entry.name)) : join(dir, entry.name),
   );

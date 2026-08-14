@@ -1,0 +1,27 @@
+{
+  // The specification: semantic declarations, and nothing that tests them.
+  //
+  // This is the population the public declaration surface is emitted from, so
+  // it is the one place the question "what does this repository export" has an
+  // answer. Laws and type tests are excluded by file population rather than by
+  // an annotation somebody has to remember on each of 670 declarations.
+  //
+  // Nothing consumes this configuration for checking — `tsconfig.json` already
+  // checks a superset. It exists so `check:declarations` can emit from exactly
+  // the semantic population and inspect what came out.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // Every exported declaration must be emittable without inference across
+    // files. It is enabled here and not in the law population because a law is
+    // never emitted, so requiring it to be independently emittable would be a
+    // rule with no subject.
+    "isolatedDeclarations": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false
+  },
+  // Everything except the laws. Not a hand-listed roster of semantic files: a
+  // directory the census forgets is exactly how `verification/` escaped.
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "**/*.laws.ts", "**/*.type-test.ts"]
+}

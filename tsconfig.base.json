@@ -1,0 +1,66 @@
+{
+  // Shared compiler posture. Three populations extend this and differ only in
+  // what they include and what they are allowed to emit:
+  //
+  //   tsconfig.spec.json    the specification — semantic declarations alone
+  //   tsconfig.json         the specification plus its laws and type tests
+  //   tsconfig.system.json  the repository-control implementations
+  //
+  // Not one configuration per home. Three, because they have materially
+  // different subjects: one emits the public declaration surface, one may
+  // never emit anything, and one runs on Node.
+  "compilerOptions": {
+    // --- realm neutrality -------------------------------------------------
+    // No DOM for anyone. Not "DOM for web and not for core" — nobody. A host
+    // that needs a platform global declares it where the physical behaviour
+    // lives. This flag found `AbortSignal` inside realm-neutral core, which
+    // was invisible while the whole repository shared one ambient library.
+    "lib": ["ESNext"],
+    // No ambient @types injection. The system-implementation population is the
+    // one place a Node environment is legitimate, and it says so locally.
+    "types": [],
+
+    // --- strictness -------------------------------------------------------
+    // `strict` is a 7.0 default. Stated anyway: this file is the policy, and a
+    // policy that relies on a default is a policy that moves when the default
+    // does.
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    // No current subject — there are no statements to be unreachable and no
+    // labels to be unused. Forward guards, credited with nothing today.
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+
+    // --- modules ----------------------------------------------------------
+    "target": "ESNext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    // Every file is a module. No file may become a script and leak a global.
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    // Canaried: an unresolvable side-effect import raises TS2882 with this on
+    // and is silently accepted with it off.
+    "noUncheckedSideEffectImports": true,
+    // Matters specifically for a Windows/macOS pair. A 7.0 default; explicit.
+    "forceConsistentCasingInFileNames": true,
+
+    // --- syntax -----------------------------------------------------------
+    // Canaried: rejects `enum` and value `namespace` with TS1294.
+    //
+    // It does NOT prove zero runtime output. `export const x = 1`,
+    // `export function`, and `export class` all pass it and all emit real
+    // JavaScript. The claim that this repository emits nothing executable is
+    // proved by emitting and inspecting the output, not by this flag.
+    "erasableSyntaxOnly": true,
+
+    // Lib declarations are checked, not trusted.
+    "skipLibCheck": false
+  }
+}

@@ -1,62 +1,19 @@
 {
-  // One project, deliberately. A project graph buys per-project `lib` and
-  // fail-closed import direction; the first is currently worth one member in
-  // one file, and the second is being settled by canary rather than assumed.
-  // Fourteen configurations before a measured need is the same reflex that
-  // gave the predecessor twenty-three packages.
+  // The specification and everything that attacks it: semantic declarations,
+  // their laws, and compile-use fixtures.
+  //
+  // This is the checking population and the default project, so `tsc` with no
+  // argument checks the largest thing. It emits nothing — a law is a question
+  // asked of the compiler, and a question has no output.
+  //
+  // The split into three configurations arrived with a measured need, not with
+  // a preference for structure. Laws were exported from semantic files, so all
+  // 670 of them appeared in the emitted declaration surface; separating the
+  // populations is what lets the declaration lane emit the specification alone
+  // and inspect what came out. One configuration per home remains the thing
+  // this repository refuses.
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    // --- realm neutrality -------------------------------------------------
-    // No DOM for anyone. Not "DOM for web and not for core" — nobody. A host
-    // that needs a platform global declares it where the physical behaviour
-    // lives. This flag found `AbortSignal` inside realm-neutral core, which
-    // was invisible while the whole repository shared one ambient library.
-    "lib": ["ESNext"],
-    // No ambient @types injection. Nothing is installed today; this keeps it
-    // that way by construction rather than by nobody having done it yet.
-    "types": [],
-
-    // --- strictness -------------------------------------------------------
-    // `strict` is a 7.0 default. Stated anyway: this file is the policy, and a
-    // policy that relies on a default is a policy that moves when the default
-    // does.
-    "strict": true,
-    "exactOptionalPropertyTypes": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitOverride": true,
-    "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": true,
-    // No current subject — there are no statements to be unreachable and no
-    // labels to be unused. Forward guards, credited with nothing today.
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-
-    // --- modules ----------------------------------------------------------
-    "target": "ESNext",
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    // Every file is a module. No file may become a script and leak a global.
-    "moduleDetection": "force",
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    // Canaried: an unresolvable side-effect import raises TS2882 with this on
-    // and is silently accepted with it off.
-    "noUncheckedSideEffectImports": true,
-    // Matters specifically for a Windows/macOS pair. A 7.0 default; explicit.
-    "forceConsistentCasingInFileNames": true,
-
-    // --- syntax -----------------------------------------------------------
-    // Canaried: rejects `enum` and value `namespace` with TS1294.
-    //
-    // It does NOT prove zero runtime output. `export const x = 1`,
-    // `export function`, and `export class` all pass it and all emit real
-    // JavaScript. The claim that this repository emits nothing executable is
-    // proved by emitting and inspecting the output, not by this flag.
-    "erasableSyntaxOnly": true,
-
-    // Lib declarations are checked, not trusted.
-    "skipLibCheck": false,
     "noEmit": true
   },
   // Everything. Not a governed-root list — a directory the census forgets is

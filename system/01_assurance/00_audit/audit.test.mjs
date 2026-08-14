@@ -103,7 +103,7 @@ test('an empty module is not executable content, and anything else is', () => {
 
 // --- end to end ------------------------------------------------------------
 
-const withTree = (files, run) => {
+const withTree = (/** @type {Record<string, string>} */ files, /** @type {(root: string) => {code: number, out: string}} */ run) => {
   const root = mkdtempSync(join(tmpdir(), 'liteship-audit-test-'));
   try {
     for (const [path, text] of Object.entries(files)) {
@@ -117,11 +117,18 @@ const withTree = (files, run) => {
   }
 };
 
-const audit = (root) => {
+const audit = (/** @type {string} */ root) => {
   try {
     return { code: 0, out: execFileSync(process.execPath, [AUDIT, root], { encoding: 'utf8' }) };
   } catch (error) {
-    return { code: error.status ?? 1, out: `${error.stdout ?? ''}${error.stderr ?? ''}` };
+    // `execFileSync` throws an Error carrying the child's status and streams.
+    // The audit's exit code is part of what these tests check, so the failure
+    // path is the interesting one and is read rather than rethrown.
+    const failure = /** @type {{ status?: number, stdout?: string, stderr?: string }} */ (error);
+    return {
+      code: failure.status ?? 1,
+      out: `${failure.stdout ?? ''}${failure.stderr ?? ''}`,
+    };
   }
 };
 

@@ -169,4 +169,16 @@ Of the rest: twenty-nine `max-lines` are a three-hundred-line cap on declaration
 
 No product runtime implementation exists here.
 
-Two repository-control implementations do: `zero-runtime.mjs`, which emits the project and rejects any file that is not `export {};`, and `import-boundary.mjs`. Both are `.mjs` so they sit outside the population they audit, and both run in the root `check`. That the number is two rather than one is worth watching — the previous arrangement grew one reasonable file at a time — but each answers a question the compiler provably cannot, and neither issues authority or carries a waiver.
+Three repository-control implementations do: `zero-runtime.mjs`, which emits the project and rejects any file that is not `export {};`; `import-boundary.mjs`; and `declarations.mjs`. All are `.mjs` so they sit outside the specification population they audit, and all run in the root `check`. That the number keeps rising is worth watching — the previous arrangement grew one reasonable file at a time — but each answers a question the compiler provably cannot, and none issues authority or carries a waiver.
+
+They are no longer unchecked themselves. `tsconfig.system.json` typechecks them under the same strict posture the specification uses, which is how the graders stopped being the one population outside every checking population. Typing them for the first time turned up two real unchecked-index sites in the cycle walker and the band comparison, both now guarded rather than asserted away.
+
+## The declaration lane
+
+`declarations.mjs` emits from `tsconfig.spec.json` — the specification alone, laws excluded by population — and inspects the result. Non-empty output, no compile-only module in the surface, no exported `Assert` alias whatever file it came from, no declaration importing a `.laws.js` or `.type-test.js` module, two independent emits byte-identical, and the emitted tree typechecking on its own as a consumer receives it.
+
+It does not trust the file naming, for the same reason `zero-runtime.mjs` does not trust `erasableSyntaxOnly`: a convention and a flag are both claims, and a claim is not evidence.
+
+It found a real defect on its first run. The root calculus is authored as `types.d.ts`, so it is an *input* declaration and the compiler never re-emits it — every emitted file imported from a `../types.js` that was not in the output, and the surface a consumer would have received resolved nothing. The lane now copies it in, which is what packaging does, and the consumer check reads the whole surface rather than a subset of it.
+
+Canaried: a law planted in a semantic `types.ts` is reported and exits nonzero.

@@ -9,14 +9,17 @@
   },
   "scripts": {
     "check:types": "tsc -p tsconfig.json",
+    "check:system": "tsc -p tsconfig.system.json",
     "check:zero-runtime": "node system/01_assurance/00_audit/zero-runtime.mjs",
+    "check:declarations": "node system/01_assurance/00_audit/declarations.mjs",
     "check:audits": "node --test system/01_assurance/00_audit/audit.test.mjs",
     "typecheck": "npm run check:types",
-    "check": "npm run check:types && npm run check:lint && npm run check:zero-runtime && npm run check:imports && npm run check:audits",
+    "check": "npm run check:types && npm run check:system && npm run check:lint && npm run check:zero-runtime && npm run check:imports && npm run check:declarations && npm run check:audits",
     "check:imports": "node system/01_assurance/00_audit/import-boundary.mjs .",
     "check:lint": "oxlint --deny-warnings ."
   },
   "devDependencies": {
+    "@types/node": "24.13.3",
     "oxlint": "1.78.0",
     "typescript": "7.0.2"
   }

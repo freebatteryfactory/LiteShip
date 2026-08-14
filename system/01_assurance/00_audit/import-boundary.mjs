@@ -93,7 +93,7 @@ import { LanguageVariant, SyntaxKind, createScanner } from 'typescript/unstable/
  * the parse API in `typescript/unstable/sync` needs a `Program` this audit does
  * not yet build.
  */
-export const moduleSpecifiers = (text) => {
+export const moduleSpecifiers = (/** @type {string} */ text) => {
   const scanner = createScanner(true, LanguageVariant.Standard, text);
   const found = [];
 
@@ -131,9 +131,10 @@ export const moduleSpecifiers = (text) => {
   return found;
 };
 
-const posix = (p) => p.split(sep).join('/');
+const posix = (/** @type {string} */ p) => p.split(sep).join('/');
 
-const walk = (dir) =>
+/** @returns {string[]} */
+const walk = (/** @type {string} */ dir) =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
     entry.name === 'node_modules' || entry.name === '.git'
       ? []
@@ -145,13 +146,13 @@ const walk = (dir) =>
 // `.mjs` as well as `.ts`. The two executable audits are `.mjs`, so a
 // population of `.ts` alone left the code that enforces dependency direction
 // outside the graph whose dependency direction is inspected.
-const inventory = (root) =>
+const inventory = (/** @type {string} */ root) =>
   walk(root)
     .filter((f) => f.endsWith('.ts') || f.endsWith('.mjs'))
     .map((f) => posix(f.slice(root.length + 1)));
 
 /** The directory segments a file lives under. A root-level file has none. */
-const dirsOf = (file) => file.split('/').slice(0, -1);
+const dirsOf = (/** @type {string} */ file) => file.split('/').slice(0, -1);
 
 /**
  * The band of one path segment, or `undefined` when the segment is unnumbered.
@@ -160,7 +161,7 @@ const dirsOf = (file) => file.split('/').slice(0, -1);
  * product home may import it, so it sits downstream of every numbered layer.
  * Everything else numbered carries its band in its name.
  */
-const bandOf = (segment, depth) => {
+const bandOf = (/** @type {string} */ segment, /** @type {number} */ depth) => {
   if (depth === 0 && segment === 'system') return Number.MAX_SAFE_INTEGER;
   const match = /^(\d+)_/u.exec(segment);
   return match ? Number(match[1]) : undefined;
@@ -193,17 +194,22 @@ const bandOf = (segment, depth) => {
  * own child -- this rule says nothing. Direction is not the question there;
  * whether anything comes back is, and `CYCLE` answers it.
  */
-export const classify = (from, to) => {
+export const classify = (/** @type {string} */ from, /** @type {string} */ to) => {
   const fromDirs = dirsOf(from);
   const toDirs = dirsOf(to);
 
   if (fromDirs.length === 0 && toDirs.length > 0) return 'DOWNSTREAM';
 
   for (let depth = 0; depth < Math.min(fromDirs.length, toDirs.length); depth += 1) {
-    if (fromDirs[depth] === toDirs[depth]) continue;
+    const fromSegment = fromDirs[depth];
+    const toSegment = toDirs[depth];
+    // The loop bound guarantees both, but the bound is arithmetic the compiler
+    // does not read. Stating it costs one branch and makes the guarantee local.
+    if (fromSegment === undefined || toSegment === undefined) break;
+    if (fromSegment === toSegment) continue;
 
-    const fromBand = bandOf(fromDirs[depth], depth);
-    const toBand = bandOf(toDirs[depth], depth);
+    const fromBand = bandOf(fromSegment, depth);
+    const toBand = bandOf(toSegment, depth);
 
     if (fromBand === undefined || toBand === undefined) return 'SIBLING';
     if (toBand > fromBand) return 'DOWNSTREAM';
@@ -263,6 +269,9 @@ for (const start of files) {
 
   while (stack.length > 0) {
     const frame = stack.at(-1);
+    // `stack.length > 0` is the loop condition; `at(-1)` is still typed as
+    // possibly absent, so the invariant is stated rather than assumed.
+    if (frame === undefined) break;
     const outgoing = edges.get(frame.node) ?? [];
 
     if (frame.next >= outgoing.length) {
@@ -273,6 +282,7 @@ for (const start of files) {
 
     const target = outgoing[frame.next];
     frame.next += 1;
+    if (target === undefined) continue;
 
     if (colour.get(target) === GREY) {
       const at = stack.findIndex((f) => f.node === target);
