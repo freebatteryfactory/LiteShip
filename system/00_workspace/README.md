@@ -54,7 +54,7 @@ There is no arm meaning **known and ignored**. An exemption would reintroduce pr
 
 `HomeCensusCoverage` and the `Evidence` wrapper on each observed file exist for one reason: a census that silently drops what it could not read reports a smaller repository than exists.
 
-That is not a hypothetical. Reporting on the subset it managed to reach, and reading clean downstream, is the specific habit that let a fifty-one-entry control plane sit at the root of a repository whose entire thesis is that it describes itself.
+That is not a hypothetical. Reporting on the subset it managed to reach, and reading clean downstream, is the specific habit that let a shadow control plane sit at the root of a repository whose entire thesis is that it describes itself.
 
 An unreadable file is `unavailable` inside its own `Evidence`. An unenumerable directory is `partial` at the run level. Neither is ever an omission.
 

@@ -1,6 +1,6 @@
 # Server: The Trusted General-Purpose Host
 
-Status: architecture specified across eleven homes; implementation absent and unauthorized
+Status: specified; implementation absent
 
 Authority: This README for server-wide meaning and proof obligations; `types.ts` for the topology; each numbered home's `README.md` and `types.ts` for local authority
 
@@ -67,4 +67,4 @@ All `system/01_assurance`. Pool sizes, timeouts, batching, backoff, concurrency,
 
 ## Implementation boundary
 
-The complete server architecture is specified. Every implementation — process runner, database pool, filesystem driver, native tool, HTTP listener — is absent and unauthorized until the whole repository architecture closes and Eassa explicitly authorizes implementation.
+Every implementation — process runner, database pool, filesystem driver, native tool, HTTP listener — is absent.

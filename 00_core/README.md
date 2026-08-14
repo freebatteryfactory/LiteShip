@@ -1,6 +1,6 @@
 # LiteShip Core Architecture
 
-Status: Confirmed and closed core architecture; implementation intentionally absent
+Status: specified; implementation absent
 
 Authority: This README for core ownership, dependency direction, semantic relationships, implementation boundaries, and proof obligations; `types.ts` for the complete core type topology; each numbered home's `README.md` and `types.ts` for local authority
 
@@ -1212,9 +1212,9 @@ The first cheap repository proof is mechanical parity between `AGENTS.md` and `C
 
 ## 23. Implementation and port order
 
-This architecture milestone is confirmed. Implementation remains unauthorized until its phase opens: the host umbrella and each consuming contract close first, so implementation begins against settled boundaries rather than candidates.
+Implementation waits on the consuming contracts, so it begins against boundaries that downstream homes have already had to hold rather than against candidates. That is a dependency, not a permission.
 
-When authorized, the dependency order is:
+The dependency order is:
 
 1. error, encoding, identity, schema, time, and lifecycle;
 2. evidence and operations;

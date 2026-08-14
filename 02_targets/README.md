@@ -1,7 +1,5 @@
 # Targets: Ecosystem Integration Surfaces
 
-Status: `astro/`, `vite/`, and `cloudflare/` authored; the Astro/Vite seam and direct mode were proved by probes that lived in the deleted `verification/` tree and have no replacement in this repository; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/`

@@ -7,7 +7,7 @@
  * copied inline, whether a target imported a sibling, or whether a gate would
  * have noticed the defect it claims to guard. Those are real questions and they
  * needed a home. They did not need a second reality: for a while they had one,
- * fifty-one entries at the repository root, outside every census.
+ * its own executable control plane at the repository root, outside every census.
  *
  * The governing constraint on this file is therefore subtraction. Assurance
  * declares only what has no owner upstream:

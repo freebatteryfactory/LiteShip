@@ -70,9 +70,13 @@ export interface FilledSlot {
 /**
  * What a build produced.
  *
- * `refused` carries compatibility evidence and diagnostics; `failed` carries
- * diagnostics. Neither carries slots, so a broken build cannot present a
- * partial roster as a result.
+ * `refused` declined before producing anything; `failed` broke while producing.
+ * Both carry diagnostics and nothing else — the tag is the whole distinction,
+ * because compatibility evidence belongs to `00_integration` and restating it
+ * here would be a second copy of a fact that already has an owner.
+ *
+ * Neither carries slots, so a broken build cannot present a partial roster as a
+ * result.
  */
 export type BuildProduct<Revision extends RevisionId = RevisionId> = Algebra<{
   built: {

@@ -78,7 +78,7 @@ type ProgramsByName<Names extends readonly SystemProgramName[]> = {
  *
  * Each entry is exact over its own name — `SystemProgram<'release'>` and not
  * `SystemProgram` — so a registry that maps `release` to the `docs` program is
- * refused. That is the mistake a canary caught in the wire topology last week,
+ * refused. That is the mistake a canary caught in the wire topology,
  * anticipated here rather than rediscovered.
  */
 export type ProgramRegistry = ProgramsByName<SystemProgramRoster>;

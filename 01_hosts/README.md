@@ -1,6 +1,6 @@
 # Hosts: Physical Execution Environments
 
-Status: umbrella contract confirmed and closed; all four children — `web/`, `worker/`, `edge/`, `server/` — architecture specified; child roster sealed; implementation absent
+Status: specified; implementation absent
 
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
@@ -27,9 +27,9 @@ Own the shared contract by which a host makes unresolved physical behavior real:
 - Requirement identity, realization planning, or settlement. Those belong to core.
 - A hydration-tier table, in any spelling.
 
-## The child roster is sealed
+## The child roster is closed to silent edits
 
-The approved host families are web, worker, edge, and server. That intent is recorded in the root README and its YAML projection.
+The host families are web, worker, edge, and server.
 
 For as long as only web physically existed, this umbrella deliberately declared no roster union: an inventory nothing can verify is the same defect as a law that cannot fail. All four child homes now physically exist with complete architectures, so the deferred population finalization has landed — `HostChildRoster` in `types.ts` names exactly web, worker, edge, and server in design order, and `TheChildRosterMatchesTheRealms` proves the roster and the host-realm union are one population: every realm has exactly one child, no child exists outside the union, and a fifth child is a new decision, never a silent edit.
 
@@ -127,6 +127,6 @@ The obligations concerning provenance, origin genuineness, boundary population, 
 
 ## Implementation boundary
 
-The shared contract and all four child architectures are specified. Concrete environment APIs, physical capability implementations, and every runtime behavior remain absent and unauthorized until the whole repository architecture closes and implementation is explicitly authorized.
+Concrete environment APIs, physical capability implementations, and every runtime behavior are absent.
 
 The host layer is architecturally complete and no implementation exists or is authorized. The waterfall continues downstream — targets, wires, system, and root composition — architecture-only until the whole repository closes.

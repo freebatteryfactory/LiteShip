@@ -17,7 +17,7 @@ Provide the executable failure algebra that composes the root `Result`, tagged c
 - `ok`, `err`, and result guards.
 - Secure tagged-error construction on real platform `Error` values.
 - Exhaustive and open tagged-error matching.
-- Definition, validation, invariant, unsupported, integrity, capacity, conflict, and host-defect error families.
+- The definition, invariant, and host-defect error families, and the validation result carrier.
 - Stable diagnostic identity, source location, evidence, and structured remediation actions.
 - Rendering contracts for concise human output, detailed human output, and lossless agent output.
 

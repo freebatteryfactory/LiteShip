@@ -1,6 +1,6 @@
 # Web: The Browser Host
 
-Status: architecture specified across thirteen homes; implementation absent and unauthorized
+Status: specified; implementation absent
 
 Authority: This README for web-wide meaning and proof obligations; `types.ts` for the topology; each numbered home's `README.md` and `types.ts` for local authority
 
@@ -94,4 +94,4 @@ The first three are `system/01_assurance`; the last is the implementation-gate p
 
 ## Implementation boundary
 
-The complete web architecture is specified. Every implementation — DOM code, listeners, drivers, contexts, databases, workers, activation — is absent and unauthorized until the whole repository architecture closes and Eassa explicitly authorizes implementation.
+Every implementation — DOM code, listeners, drivers, contexts, databases, workers, activation — is absent.

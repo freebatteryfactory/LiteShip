@@ -1,6 +1,6 @@
 # Wires: Protocol and Invocation Projection
 
-Status: umbrella and five children — `direct/`, `http/`, `browser/`, `cli/`, `mcp/` — architecture specified; `editor/` named and unwritten; implementation absent
+Status: specified; implementation absent
 
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 

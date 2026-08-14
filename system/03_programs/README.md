@@ -51,7 +51,9 @@ Both exactness axes thread. A candidate qualified over another snapshot is refus
 
 `SystemProgramExposure` is a mapped type over the eleven names, producing exactly the shape `WireExposure.exposed` accepts.
 
-So a program cannot exist and be unreachable, and a wire cannot claim to expose a program the roster does not name. A hand-written exposure list reaches disagreement within two additions, and nothing would notice.
+A hand-written exposure list reaches disagreement with the roster within two additions, and nothing would notice.
+
+**What this does not yet do is bind that shape to a wire.** `WireExposure.exposed` is `NonEmptyTuple<OperationReference>`, no `WireDefinition` is instantiated anywhere, and nothing assigns `SystemProgramExposure` to one. So the population is correct in isolation and reaches no consumer — a wire can still claim to expose operations the roster does not name. Closing that requires a concrete wire definition, not another law here.
 
 The mapping goes through a generic helper rather than mapping the concrete roster directly, and that is not style. A homomorphic mapped type preserves tuple arity only when its source is a naked type parameter; mapping the concrete alias produced an object that answered `[8]` correctly while failing `['length']` and refusing to extend a non-empty tuple. Two law lines caught it, and the fix is the same shape `PlannedEvaluations` uses in `01_assurance`.
 

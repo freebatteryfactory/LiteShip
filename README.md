@@ -1,7 +1,5 @@
 # LiteShip Root Architecture and Type Foundation
 
-Status: Root architecture, Type ABI, `00_core/`, `01_hosts/`, and the three `02_targets/` children exist as architecture; `system/`'s wire-independent foundation is authored; `02_wires/` has its umbrella and `direct/`; implementation absent everywhere
-
 Authority: This README for architecture and intent; `types.d.ts` for the declaration-level shape calculus
 
 Scope: Repository-wide ownership, type composition, dependency direction, type ABI evidence, executable placement, public addressing, and the closed boundary into `00_core/`
@@ -815,11 +813,9 @@ Evidence that warrants correcting core, or anything else: a downstream contract 
 
 Dependency direction is the one rule that does not bend — it is what makes this a waterfall rather than a graph.
 
-What exists as architecture: root, `00_core/` (nineteen homes), `01_hosts/` (four children — `web/` thirteen homes, `worker/` seven, `edge/` eleven, `server/` eleven), `02_targets/` (three children), `02_wires/` (umbrella and `direct/`), and `system/` (`00_workspace/`, `01_assurance/` with `00_audit/` and `01_gauntlet/`, `02_release/`).
+The physical tree is the population. A home exists when its directory does; this document does not carry a second census of what is written, because a hand-maintained one drifts from the tree within hours and then misleads every reader who trusts the root first.
 
-What is not yet written: the remaining wire children, `system/03_programs/`, and `system/04_bootstrap/`. The last two consume wire contracts, so writing them before the wires exist would mean guessing at a shape they must match. That is a dependency, not a schedule.
-
-No runtime implementation exists anywhere. Every home receives its architecture before any executable product code, so the shape settles while it is still cheap to change. Eassa decides when implementation starts.
+No runtime implementation exists anywhere. Every home receives its architecture before any executable product code, so the shape settles while it is still cheap to change.
 
 ## 18. Source basis
 
@@ -835,7 +831,3 @@ This clean-room design was built from:
 - current official TypeScript transition guidance establishing the native TypeScript 7 primary lane and the temporary TypeScript 6 compatibility/API lane required by Astro-class embedded-language tooling.
 
 The source quarry supplied mechanisms and failure evidence. The architecture in this document is clean-room successor design.
-
-## 19. Lintable architecture contract
-
-The prose above is the human architecture authority. The YAML block is its compact machine-checkable projection.

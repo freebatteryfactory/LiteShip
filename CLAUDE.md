@@ -32,7 +32,7 @@ Earlier decisions are evidence, not permission barriers.
 
 **No layer, folder, commit, tag, README, or prior ruling protects anything from correction.** When evidence shows an upstream authority is wrong or incomplete, correct that authority directly. Do not route around an upstream defect, and never add a downstream workaround because the upstream was previously described as finished — that is how a repository accumulates shims that outlive the problem.
 
-Evidence warranting correction includes: a downstream contract that cannot be expressed faithfully over the upstream one; compiler behaviour that contradicts a written claim; an implementation showing a declared contract is unrealizable; an old-source oracle revealing an omitted capability; an empirical result invalidating a physical assumption; or Eassa changing product intent.
+Evidence warranting correction includes: a downstream contract that cannot be expressed faithfully over the upstream one; compiler behaviour that contradicts a written claim; an implementation showing a declared contract is unrealizable; an old-source oracle revealing an omitted capability; an empirical result invalidating a physical assumption; or a change in product intent.
 
 Dependency direction is the one rule that does not bend, because it is what makes this tree a waterfall rather than a graph. Everything else is revisable, including anything in this file.
 
@@ -46,7 +46,7 @@ Every home carries a README, a declaration surface, laws, and proof obligations.
 
 The umbrella owns ecosystem-target, configuration, composition, and attempt identity; the relations that connect them; a production relation over the core artifact; slot claims as the pre-selection mirror of producers; the rejection-versus-failure altitude distinction; and the composition outcome that projects into core's existing explanation. There is no separate target-facts product: a wrapper that restates what it wraps let a refused outcome sit beside a non-empty production array, so the outcome projects directly. It owns none of: artifact identity, address, digest, ancestry grammar, a second source relation, a second explanation product, universal lifecycle phases, or per-target payloads. It does own the child roster and the earned deployable-application contract.
 
-No runtime implementation exists anywhere. The whole repository — targets, wires, system, root composition — receives its architecture before any executable product code, so that the shape is settled while it is still cheap to change. Eassa decides when implementation starts.
+No runtime implementation exists anywhere. The whole repository — targets, wires, system, root composition — receives its architecture before any executable product code, so that the shape is settled while it is still cheap to change.
 
 Core product-language semantics are stable, meaning they have survived downstream use, not that they are protected. Do not change them for local implementation convenience; do change them when the evidence above says they are wrong.
 
@@ -253,7 +253,7 @@ Bootstrap and raw host APIs are legitimate lower layers. They must remain thin a
 
 ## Working method
 
-Eassa is the product and architecture authority. Agents are reasoning, source-mining, implementation, and verification partners.
+Product intent and architecture direction come from the repository owner. Agents are reasoning, source-mining, implementation, and verification partners, and correct the owning authority directly when current evidence contradicts it.
 
 For architecture work:
 
@@ -285,15 +285,13 @@ When implementation begins:
 - keep dynamic growth bounded and lifecycle-owned;
 - use one operation/program path across direct, CLI, HTTP, MCP, editor, CI, and release where applicable.
 
-Meaningful repository workflows belong in typed `system/` programs. A `scripts/` directory is not the implementation architecture, and neither is a `verification/`, a `tools/`, or any other root a temporary need invents. This rule was written before either existed and did not stop them: `scripts/` was created the same day to hold one pre-commit shim, and `verification/` grew to a fifty-one-entry executable control plane, both exempt from every census because they sat outside the governed roots. Both were removed at `fix(layout): remove shadow control-plane roots`. Their capabilities are quarried from Git history — the capability is the preservation unit, never the folder. There is no replacement top-level tooling home; repository programs live in `system/`.
+Meaningful repository workflows belong in typed `system/` programs. A `scripts/` directory is not the implementation architecture, and neither is a `verification/`, a `tools/`, or any other root a temporary need invents. This rule was written before either existed and did not stop them: `scripts/` was created the same day to hold one pre-commit shim, and `verification/` grew into an executable control plane with its own compiler installation, both exempt from every census because they sat outside the governed roots. Both were removed at `fix(layout): remove shadow control-plane roots`. Their capabilities are quarried from Git history — the capability is the preservation unit, never the folder. There is no replacement top-level tooling home; repository programs live in `system/`.
 
 ## Documentation
 
 Keep documentation semantically dense.
 
 The README explains purpose, ownership, composition, and proof. It should not accumulate current test counts, completion percentages, branch state, or hand-maintained inventories that code can derive.
-
-A fenced YAML block may project checkable architecture metadata from the prose. It is not a second authority.
 
 `AGENTS.md` and `CLAUDE.md` remain ordinary files with byte parity. Do not replace them with symlinks. When their content changes, update both identically and verify parity mechanically.
 
@@ -312,7 +310,6 @@ The checked-in foundation must eventually satisfy the root-pinned toolchain matr
 - declaration emission and packed-artifact resolution;
 - focused positive and negative probes for algebras, brands, ports, `RefinePort` versus `RebindPort`, additive composition, safe refinement, closed requirement and binding tuples, signature composition, causality, envelopes, the canonical Type ABI graph, coverage, and attestations, carried as named laws in `types.laws.ts` and each proven non-vacuous by reversal;
 - zero runtime exports and no ambient globals;
-- parseable README YAML;
 - byte-identical ordinary `AGENTS.md` and `CLAUDE.md` files;
 - LF text and no symlinks.
 

@@ -37,8 +37,6 @@ That is what makes evaluation portable. A run consumes an audit product, which i
 
 That is not a theoretical concern in this repository. It is the exact shape of every vacuous law found here so far — a `keyof` over an empty population, a union tested against one arm, an exactness check read off an alias. All of them passed. None of them could have failed. A gate whose input population is empty is that defect with the subject changed.
 
-That is not a theoretical concern. It is the shape of every vacuous law found here so far, with the subject changed.
-
 There was a `reads` member beside it, a non-empty tuple of fact names, and it is gone. It had zero consumers: nothing read it but the law asserting it was non-empty. Opposite it sat `AcquiredFact.consumers` in `00_audit`, the same relationship written from the other direction and traversed from neither. Two rosters, one relationship, no reader.
 
 The remaining declaration is the proposition, which already names the facts and subjects a check reasons about. A data-defined check cannot secretly read undeclared evidence, because there is no arbitrary body in which to hide the read — that is the durable idea, and it does not need a type-level `FactNamesOf<Proposition>` extractor to be true. Walking the proposition is something an implementation does. Building the extractor before a static consumer needs one would be apparatus arriving ahead of its reason.
@@ -57,7 +55,7 @@ This is not a permission framework. It is a function argument. Publishing has st
 
 `AssuranceResult.evaluations` is one evaluation per planned check, positionally, each about that check's gate.
 
-The previous member was `readonly GateEvaluation[]`, which could be empty. That is the difference between *what was requested ran* and *something ran*, and the second reads downstream as a clean result — the specific habit that let a fifty-one-entry control plane report on the subset it reached for its entire existence.
+The previous member was `readonly GateEvaluation[]`, which could be empty. That is the difference between *what was requested ran* and *something ran*, and the second reads downstream as a clean result — the specific habit that let a shadow control plane report on the subset it reached for its entire existence.
 
 A homomorphic mapping over the spec's check tuple preserves arity, so a three-check spec admits exactly three evaluations; the per-position `infer` makes them the right three, so five evaluations of one gate cannot stand in for five checks. On the passing arm, every position whose consequence is the literal `required` narrows to an evaluation whose outcome is in the `satisfied` arm. That is what makes `passed` mean something rather than being a tag someone chose.
 

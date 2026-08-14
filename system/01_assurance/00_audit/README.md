@@ -112,13 +112,13 @@ Three cases, one rule, no roles and no exception list — which matters, because
 
 ### Measured
 
-Every class refused: downstream, peer, sibling, cycle, unresolved. Every one of the 652 real edges admitted, including the six shapes most likely to be false positives — the numbered waterfall in core and in system, system reaching upstream into core, both compile-only files importing children, and an umbrella reaching into its own child.
+Every class refused: downstream, peer, sibling, cycle, unresolved. Every real edge in the tree admitted, including the six shapes most likely to be false positives — the numbered waterfall in core and in system, system reaching upstream into core, both compile-only files importing children, and an umbrella reaching into its own child.
 
 ## Lint covers the executables, and nothing else needs it
 
 `.oxlintrc.json` at the root is a linter configuration and never a formatter. A formatter that escapes slashes differently across Windows and macOS has already cost this project a codebase, and no script here carries `--fix`.
 
-The repository is declaration-only except for the two `.mjs` files in this home, so the entire class of defect a linter exists for — unreachable code, loose equality, floating promises, shadowed bindings — can only occur in them. They are the files that check everything else, which is exactly why they are worth linting: a broken checker reports confidently and wrongly, and this session produced six of those by hand.
+The repository is declaration-only except for the two `.mjs` files in this home, so the entire class of defect a linter exists for — unreachable code, loose equality, floating promises, shadowed bindings — can only occur in them. They are the files that check everything else, which is exactly why they are worth linting: a broken checker reports confidently and wrongly.
 
 Measured before enabling, against eight planted defects:
 
@@ -139,10 +139,10 @@ All forty-eight normalized. Eight legitimate `{}` uses remain, and `ban-types` i
 
 Nothing prevents the drift recurring. That is stated rather than solved, because the alternatives are a regex over source text and an exception list, and this repository has already deleted one of each.
 
-Of the rest: twenty-nine `max-lines` are a three-hundred-line cap on declaration files carrying heavy documentation, which is a preference and not a defect. Two `no-useless-undefined` want an explicit `return undefined` removed from a function whose absence value is load-bearing, where explicit reads better. Four `require-unicode-regexp`, one `prefer-at`, one `prefer-string-replace-all`, and one `prefer-import-meta-properties` were real, all in this home's two executables, all mine, all fixed rather than waived.
+Of the rest: twenty-nine `max-lines` are a three-hundred-line cap on declaration files carrying heavy documentation, which is a preference and not a defect. Two `no-useless-undefined` want an explicit `return undefined` removed from a function whose absence value is load-bearing, where explicit reads better. Four `require-unicode-regexp`, one `prefer-at`, one `prefer-string-replace-all`, and one `prefer-import-meta-properties` were real, all in this home's two executables, all fixed rather than waived.
 
 ## Implementation boundary
 
 No product runtime implementation exists here.
 
-Two repository-control implementations do: `zero-runtime.mjs`, which emits the project and rejects any file that is not `export {};`, and `import-boundary.mjs`. Both are `.mjs` so they sit outside the population they audit, and both run in the root `check`. That the number is two rather than one is worth watching — the previous arrangement reached forty-six tracked entries one reasonable file at a time — but each answers a question the compiler provably cannot, and neither issues authority or carries a waiver.
+Two repository-control implementations do: `zero-runtime.mjs`, which emits the project and rejects any file that is not `export {};`, and `import-boundary.mjs`. Both are `.mjs` so they sit outside the population they audit, and both run in the root `check`. That the number is two rather than one is worth watching — the previous arrangement grew one reasonable file at a time — but each answers a question the compiler provably cannot, and neither issues authority or carries a waiver.

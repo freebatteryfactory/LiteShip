@@ -1,6 +1,6 @@
 # Worker: The Isolated-Execution Host
 
-Status: architecture specified across seven homes; implementation absent and unauthorized
+Status: specified; implementation absent
 
 Authority: This README for worker-wide meaning and proof obligations; `types.ts` for the topology; each numbered home's `README.md` and `types.ts` for local authority
 
@@ -66,4 +66,4 @@ The first four are `system/01_assurance`; the last is the implementation-gate pr
 
 ## Implementation boundary
 
-The complete worker architecture is specified. Every implementation — worker spawn, message loop, ring buffer, transfer, execution — is absent and unauthorized until the whole repository architecture closes and Eassa explicitly authorizes implementation.
+Every implementation — worker spawn, message loop, ring buffer, transfer, execution — is absent.

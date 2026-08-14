@@ -1,6 +1,6 @@
 # Edge: The Request-Time Host
 
-Status: architecture specified across eleven homes; implementation absent and unauthorized
+Status: specified; implementation absent
 
 Authority: This README for edge-wide meaning and proof obligations; `types.ts` for the topology; each numbered home's `README.md` and `types.ts` for local authority
 
@@ -67,4 +67,4 @@ All `system/01_assurance`. Body buffering, TTLs, stale windows, timeouts, retrie
 
 ## Implementation boundary
 
-The complete edge architecture is specified. Every implementation — request handler, cache driver, response pipeline, deferred runner — is absent and unauthorized until the whole repository architecture closes and Eassa explicitly authorizes implementation.
+Every implementation — request handler, cache driver, response pipeline, deferred runner — is absent.

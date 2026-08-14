@@ -9,7 +9,7 @@
  * at the root package metadata, the pinned toolchain matrix, the physical
  * directories, and the Git revision. It never restates their contents in a
  * vocabulary of its own. The repository already paid for the alternative: a
- * fifty-one-entry control plane grew its own model of what the repository was,
+ * shadow control plane grew its own model of what the repository was,
  * and because that model was never compared to the real one, the two disagreed
  * for as long as it existed.
  *

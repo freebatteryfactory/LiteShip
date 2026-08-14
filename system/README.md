@@ -1,7 +1,5 @@
 # System: Unnumbered Control Plane
 
-Status: all five homes are authored — `00_workspace/`, `01_assurance/` with `00_audit/` and `01_gauntlet/`, `02_release/`, `03_programs/`, and `04_bootstrap/`. Product runtime implementation is absent; two repository-control implementations exist, both in `01_assurance/00_audit/`.
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `system/`
@@ -22,7 +20,7 @@ That rule is the whole reason the layer exists as a layer rather than as tooling
 
 ## What this home cost before it existed
 
-`system/` was named in the layout from the beginning and authored last. In the gap, its responsibilities were built anyway — under a root `verification/` directory that grew to forty-six tracked entries with its own `package.json`, its own TypeScript installation, a runner, fifteen mutation banks, gates, gate self-tests, and twelve probes, plus a `scripts/` directory holding a pre-commit shim.
+`system/` was named in the layout from the beginning and authored last. In the gap, its responsibilities were built anyway — under a root `verification/` directory with its own `package.json`, its own TypeScript installation, a runner, mutation banks, gates, gate self-tests, and probes, plus a `scripts/` directory holding a pre-commit shim.
 
 Both sat outside the governed roots, so every census the repository ran on itself ignored them. `AGENTS.md` had forbidden a `scripts/` directory in prose before either existed, and prose does not run. The repository spent five hundred and eighty laws ensuring every fact had exactly one owner while the machinery enforcing that rule had none.
 
@@ -114,6 +112,6 @@ The obligations are `system/01_assurance` claims about the repository, which mea
 
 No product runtime implementation exists in this layer.
 
-One repository-control implementation does: `01_assurance/00_audit/zero-runtime.mjs`, which emits the project and rejects any file that is not `export {};`. It is deliberately `.mjs` so that it sits outside the population it audits, and it is the only executable byte in the repository. That number staying small is a thing to watch, not a rule to enforce — the previous arrangement reached forty-six tracked entries one reasonable file at a time.
+The repository-control implementations do: they live in `01_assurance/00_audit/`, and they are the only executable bytes in the repository. That number staying small is a thing to watch, not a rule to enforce — the previous arrangement grew one reasonable file at a time.
 
 Everything else here waits on a dependency rather than on a decision: programs and bootstrap need the CLI wire contract, and the contracts they would satisfy cannot be written honestly before it.

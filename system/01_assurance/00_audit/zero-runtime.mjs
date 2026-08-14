@@ -14,7 +14,7 @@
  *
  * This file is the first executable byte in the repository, and it lives here
  * rather than at the root deliberately. `verification/` began as one small
- * script outside every home and grew to fifty-one entries. The difference is
+ * script outside every home and grew from there. The difference is
  * ownership: this is a repository program, repository programs live in
  * `system/`, and assurance acquisition lives in `00_audit`. If a second audit
  * appears, it belongs beside this one — not in a new top-level folder.
