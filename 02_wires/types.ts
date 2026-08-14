@@ -318,13 +318,3 @@ export type ExposureIsStatedAndTheCallerIsNotPrivileged = Assert<
 // Surface
 // ---------------------------------------------------------------------------
 
-/** Type summary consumed by the root topology. */
-export interface WireTypeSurface {
-  readonly wire: WireReference;
-  readonly definition: WireDefinition;
-  readonly exposure: WireExposure;
-  readonly refusal: WireRefusal;
-  readonly admission: WireAdmission;
-  readonly exchange: WireExchange;
-  readonly caller: WireCaller;
-}

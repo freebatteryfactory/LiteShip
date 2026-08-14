@@ -165,12 +165,6 @@ export type ImportResolver = Hole<
   }
 >;
 
-/** The exact prerequisite row for one audit run. */
-export type AuditRequirements<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = readonly [
-  TypeProgramInterpreter<Snapshot>,
-  ImportResolver,
-];
-
 // ---------------------------------------------------------------------------
 // Product
 // ---------------------------------------------------------------------------

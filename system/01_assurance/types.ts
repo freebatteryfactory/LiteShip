@@ -1109,27 +1109,12 @@ export type AGateStatesWhatItDoesNotCover = Assert<
 // Children
 // ---------------------------------------------------------------------------
 
-/**
- * The children this home has: two, and these two.
- *
- * Audit acquires; gauntlet evaluates. They are separate because their
- * dependencies and costs are, not because separation is tidy — acquisition
- * needs a compiler lane and a filesystem, evaluation needs neither and can run
- * wherever the facts are shipped. A third child would be an edit somebody makes
- * on purpose rather than a folder that appears because a need did.
- */
-export type AssuranceChildRoster = readonly ['00_audit', '01_gauntlet'];
-
-/** The child names, derived from the roster so the population is written once. */
-export type AssuranceChildName = AssuranceChildRoster[number];
-
 // ---------------------------------------------------------------------------
 // Surface
 // ---------------------------------------------------------------------------
 
 /** Type summary consumed by the root system topology. */
 export interface AssuranceTypeSurface {
-  readonly children: AssuranceChildRoster;
   readonly subject: AssuranceSubject;
   readonly predicate: AssurancePredicate;
   readonly proposition: AssuranceProposition;

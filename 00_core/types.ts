@@ -12,7 +12,7 @@
  * @module
  */
 
-import type { Named, Tuple, WithoutOrdinalPrefix } from '../types.js';
+import type { Assert, Equal, IsExactlyTrue, Named, Tuple } from '../types.js';
 import type { ErrorTypeSurface } from './00_error/types.js';
 import type { EncodingTypeSurface } from './01_encoding/types.js';
 import type { IdentityTypeSurface } from './02_identity/types.js';
@@ -73,15 +73,80 @@ export type CoreHomeName = CoreTypeTopology[number]['name'];
 /** Select one owner surface by its source-home name. */
 export type CoreTypeAt<Name extends CoreHomeName> = Extract<CoreTypeTopology[number], { readonly name: Name }>['Type'];
 
+// ---------------------------------------------------------------------------
+// Law
+// ---------------------------------------------------------------------------
+
 /**
- * Name-indexed view used by assurance and agents, not by owner implementations.
+ * Compile-time law: every entry names its own home's surface.
  *
- * Derived from the topology rather than written beside it. This file used to
- * state its nineteen homes three times -- as a union, as a tuple, and as this
- * interface -- with nothing checking that the three agreed, so adding a
- * twentieth home meant editing three populations and any two of them could
- * drift in silence.
+ * This file had no assertions at all — nineteen homes, the largest topology in
+ * the repository, and nothing holding an entry to the surface it names. The
+ * same defect was found by canary in the wire topology and again in the system
+ * topology, fixed in both, and narrated at length in both. It was never applied
+ * here, which is to say the lesson was written down four times and applied to
+ * the two smallest cases.
+ *
+ * Deleting a home breaks the import and is loud. The likelier defect is quiet:
+ * an entry copy-pasted and edited in one of its two positions while the next
+ * one is being added, which compiles, and which only `noUnusedLocals` notices
+ * and only if the displaced import goes unread.
+ *
+ * The right-hand side is written independently of the topology, so this
+ * compares rather than restates. The last line pins the population, so a home
+ * added to the tuple and nowhere else fails here rather than passing
+ * unexamined.
  */
-export type CoreTypeSurface = {
-  readonly [Home in CoreTypeTopology[number] as WithoutOrdinalPrefix<Home['name']>]: Home['Type'];
-};
+export type EachCoreEntryNamesItsOwnHomesSurface = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<CoreTypeAt<'00_error'>, ErrorTypeSurface>,
+        Equal<CoreTypeAt<'01_encoding'>, EncodingTypeSurface>,
+        Equal<CoreTypeAt<'02_identity'>, IdentityTypeSurface>,
+        Equal<CoreTypeAt<'03_schema'>, SchemaTypeSurface>,
+        Equal<CoreTypeAt<'04_time'>, TimeTypeSurface>,
+        Equal<CoreTypeAt<'05_lifecycle'>, LifecycleTypeSurface>,
+        Equal<CoreTypeAt<'06_evidence'>, EvidenceTypeSurface>,
+        Equal<CoreTypeAt<'07_operation'>, OperationTypeSurface>,
+        Equal<CoreTypeAt<'08_state'>, StateTypeSurface>,
+        Equal<CoreTypeAt<'09_quantization'>, QuantizationTypeSurface>,
+        Equal<CoreTypeAt<'10_collection'>, CollectionTypeSurface>,
+        Equal<CoreTypeAt<'11_scene'>, SceneTypeSurface>,
+        Equal<CoreTypeAt<'12_media'>, MediaTypeSurface>,
+        Equal<CoreTypeAt<'13_stream'>, StreamTypeSurface>,
+        Equal<CoreTypeAt<'14_compiler'>, CompilerTypeSurface>,
+        Equal<CoreTypeAt<'15_program'>, ProgramTypeSurface>,
+        Equal<CoreTypeAt<'16_runtime'>, RuntimeTypeSurface>,
+        Equal<CoreTypeAt<'17_editor'>, EditorTypeSurface>,
+        Equal<CoreTypeAt<'18_inspection'>, InspectionTypeSurface>,
+        Equal<
+          CoreHomeName,
+          | '00_error'
+          | '01_encoding'
+          | '02_identity'
+          | '03_schema'
+          | '04_time'
+          | '05_lifecycle'
+          | '06_evidence'
+          | '07_operation'
+          | '08_state'
+          | '09_quantization'
+          | '10_collection'
+          | '11_scene'
+          | '12_media'
+          | '13_stream'
+          | '14_compiler'
+          | '15_program'
+          | '16_runtime'
+          | '17_editor'
+          | '18_inspection'
+        >,
+      ],
+      [
+        true, true, true, true, true, true, true, true, true, true,
+        true, true, true, true, true, true, true, true, true, true,
+      ]
+    >
+  >
+>;

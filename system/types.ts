@@ -26,7 +26,7 @@
  * @module
  */
 
-import type { Assert, Equal, IsExactlyTrue, Named, Tuple, WithoutOrdinalPrefix } from '../types.js';
+import type { Assert, Equal, IsExactlyTrue, Named, Tuple } from '../types.js';
 import type { WorkspaceTypeSurface } from './00_workspace/types.js';
 import type { AssuranceTypeSurface } from './01_assurance/types.js';
 import type { ReleaseTypeSurface } from './02_release/types.js';
@@ -76,11 +76,6 @@ export type SystemTypeAt<Name extends SystemHomeName> = Extract<
   SystemTypeTopology[number],
   { readonly name: Name }
 >['Type'];
-
-/** Name-indexed view used by assurance and agents, not by owner implementations. */
-export type SystemTypeSurface = {
-  readonly [Home in SystemTypeTopology[number] as WithoutOrdinalPrefix<Home['name']>]: Home['Type'];
-};
 
 
 // ---------------------------------------------------------------------------

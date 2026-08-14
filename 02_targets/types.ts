@@ -58,19 +58,6 @@ import type {
  */
 export type EcosystemTargetId<Name extends string = string> = Brand<Name, 'liteship.ecosystem-target-id'>;
 
-/**
- * The children this layer currently has: three, and these three.
- *
- * `02_targets/` contains exactly `astro/`, `vite/`, and `cloudflare/`. Saying so
- * in a type means a fourth is an edit somebody makes on purpose rather than a
- * folder that appears because a dependency did. The name union derives from the
- * tuple so the population is written once.
- */
-export type TargetChildRoster = readonly ['astro', 'vite', 'cloudflare'];
-
-/** The child names, derived from the roster. */
-export type TargetChildName = TargetChildRoster[number];
-
 /** Reference to one ecosystem integration. */
 export type EcosystemTargetReference<Id extends EcosystemTargetId = EcosystemTargetId> = Reference<
   'ecosystem-target',
@@ -925,35 +912,4 @@ export type EveryProductCarriesItsPhaseIdentity = Assert<
   >
 >;
 
-/** Type summary consumed by the root topology. */
-export interface TargetTypeSurface {
-  readonly children: TargetChildRoster;
-  readonly deployable: DeployableApplication;
-  readonly target: EcosystemTargetReference;
-  readonly configuration: TargetConfigurationRevision;
-  readonly composition: TargetCompositionReference;
-  readonly attempt: TargetAttemptReference;
-  readonly slot: ArtifactSlotReference;
-  readonly claim: SlotClaim;
-  readonly participation: TargetParticipation;
-  readonly produced: ProducedArtifact;
-  readonly producer: ArtifactProducer;
-  readonly rejection: TargetRejection;
-  readonly failure: TargetFailure;
-  readonly outcome: TargetCompositionOutcome;
-}
-
-/**
- * Compile-time law: every family this home owns is reachable from its surface.
- *
- * A declaration the topology summary does not name is correct and unreached,
- * which the completion standard treats as incomplete. Attempt and claim were
- * both stranded this way when they were introduced.
- */
-export type TheSurfaceReachesEveryOwnedFamily = Assert<
-  Equal<
-    [TargetTypeSurface['attempt'], TargetTypeSurface['claim']],
-    [TargetAttemptReference, SlotClaim]
-  >
->;
 

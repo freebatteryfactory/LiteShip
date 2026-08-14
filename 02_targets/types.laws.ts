@@ -53,8 +53,13 @@ import type {
   Equal,
   HoleContract,
   IsExactlyTrue,
+  Named,
+  Tuple,
 } from '../types.js';
 import type { RevisionId } from '../00_core/02_identity/types.js';
+import type { AstroTopology } from './astro/types.js';
+import type { ViteTopology } from './vite/types.js';
+import type { CloudflareTopology } from './cloudflare/types.js';
 import type {
   ArtifactProducer,
   ArtifactSlotReference,
@@ -250,6 +255,68 @@ export type ABroadenedSupplierDoesNotFillTheAstroSocket = Assert<
           : false,
       ],
       [false, false, false, false, true]
+    >
+  >
+>;
+
+// ---------------------------------------------------------------------------
+// The child topology
+// ---------------------------------------------------------------------------
+
+/** One target child, named beside the topology it exports. */
+export interface TargetTypeChild<Name extends string, Topology> extends Named<Name> {
+  readonly Type: Topology;
+}
+
+/**
+ * The target children, each named beside the real topology it exports.
+ *
+ * This replaced `TargetChildRoster`, which was `readonly ['astro', 'vite',
+ * 'cloudflare']` — a tuple of strings asserting three children exist and unable
+ * to tell whether they do. Delete a child's `types.ts` and the umbrella still
+ * compiled. `02_wires` documented rejecting exactly that shape and then fixed
+ * it; the identical shape stayed here.
+ *
+ * It lives in this file for the same reason the composition does: the umbrella
+ * owns vocabulary the children consume, so an umbrella importing them back
+ * closes a source-authority cycle. A file nobody imports may hold both.
+ */
+export type TargetTypeTopology = Tuple<
+  [
+    TargetTypeChild<'astro', AstroTopology>,
+    TargetTypeChild<'vite', ViteTopology>,
+    TargetTypeChild<'cloudflare', CloudflareTopology>,
+  ]
+>;
+
+/** The child names, derived from the topology. */
+export type TargetChildName = TargetTypeTopology[number]['name'];
+
+/** Select one child topology by its name. */
+export type TargetTypeAt<Name extends TargetChildName> = Extract<
+  TargetTypeTopology[number],
+  { readonly name: Name }
+>['Type'];
+
+/**
+ * Compile-time law: every entry names its own child's topology.
+ *
+ * Naming the topology is what gives the roster teeth — deleting a child breaks
+ * the import — and the mis-wired entry is the likelier defect, so the
+ * right-hand side is written independently and compared rather than restated.
+ * The last line pins the population, so a child added here and nowhere else
+ * fails rather than passing unexamined.
+ */
+export type EachTargetEntryNamesItsOwnChildsTopology = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<TargetTypeAt<'astro'>, AstroTopology>,
+        Equal<TargetTypeAt<'vite'>, ViteTopology>,
+        Equal<TargetTypeAt<'cloudflare'>, CloudflareTopology>,
+        Equal<TargetChildName, 'astro' | 'vite' | 'cloudflare'>,
+      ],
+      [true, true, true, true]
     >
   >
 >;

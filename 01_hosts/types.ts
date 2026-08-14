@@ -403,14 +403,3 @@ export type TheChildRosterMatchesTheRealms = Assert<
   >
 >;
 
-/** Type summary consumed by downstream bands. */
-export interface HostTypeSurface {
-  readonly realm: HostRealm;
-  readonly definition: HostDefinition;
-  readonly catalog: HostCapabilityCatalog;
-  readonly grounding: HostGroundingDefinition;
-  readonly descriptor: HostGroundingDescriptor;
-  readonly instance: HostGroundingInstance;
-  readonly admissionFailure: HostAdmissionFailure;
-  readonly children: HostChildRoster;
-}
