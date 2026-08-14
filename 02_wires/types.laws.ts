@@ -26,8 +26,12 @@
  * @module
  */
 
-import type { Named, Tuple } from '../types.js';
+import type { Assert, Equal, IsExactlyTrue, Named, Tuple } from '../types.js';
+import type { BrowserWireTypeSurface } from './browser/types.js';
+import type { CliWireTypeSurface } from './cli/types.js';
 import type { DirectWireTypeSurface } from './direct/types.js';
+import type { HttpWireTypeSurface } from './http/types.js';
+import type { McpWireTypeSurface } from './mcp/types.js';
 
 /** One child and the semantic surface its local `types.ts` declares. */
 export interface WireTypeHome<Name extends string, Surface> extends Named<Name> {
@@ -44,11 +48,19 @@ export interface WireTypeHome<Name extends string, Surface> extends Named<Name> 
  * claim answerable by the compiler: the roster cannot outlive the thing it
  * names.
  *
- * `http`, `browser`, `cli`, `mcp`, and `editor` are planned and absent. They are
- * not listed, because a name here is a promise the compiler checks and a name
- * for an unwritten home is a promise nothing can keep.
+ * `editor` is planned and absent, and is not listed: a name here is a promise
+ * the compiler checks, and a name for an unwritten home is a promise nothing can
+ * keep. The other four arrived, so they are named.
  */
-export type WireTypeTopology = Tuple<[WireTypeHome<'direct', DirectWireTypeSurface>]>;
+export type WireTypeTopology = Tuple<
+  [
+    WireTypeHome<'direct', DirectWireTypeSurface>,
+    WireTypeHome<'http', HttpWireTypeSurface>,
+    WireTypeHome<'browser', BrowserWireTypeSurface>,
+    WireTypeHome<'cli', CliWireTypeSurface>,
+    WireTypeHome<'mcp', McpWireTypeSurface>,
+  ]
+>;
 
 /** The child names, derived from the topology. */
 export type WireChildName = WireTypeTopology[number]['name'];
@@ -58,3 +70,36 @@ export type WireTypeAt<Name extends WireChildName> = Extract<
   WireTypeTopology[number],
   { readonly name: Name }
 >['Type'];
+
+/**
+ * Compile-time law: every entry names its own child's surface.
+ *
+ * Naming the surface is what gives the roster teeth, and a canary showed the
+ * teeth were half there. Deleting a child breaks the import, so the roster
+ * genuinely cannot outlive the thing it names — but pointing `http` at
+ * `DirectWireTypeSurface` compiled, and the only thing that noticed was
+ * `noUnusedLocals` complaining about an import nobody read.
+ *
+ * A mis-wired roster is the more likely defect of the two. A child is deleted
+ * deliberately and loudly; an entry is copy-pasted and edited in one of its two
+ * positions, quietly, while adding the next one.
+ *
+ * The right-hand side is written independently of the topology, so this is a
+ * comparison rather than a restatement. The last line pins the population, so an
+ * entry added here and nowhere else fails rather than passing unexamined.
+ */
+export type EachEntryNamesItsOwnChildsSurface = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<WireTypeAt<'direct'>, DirectWireTypeSurface>,
+        Equal<WireTypeAt<'http'>, HttpWireTypeSurface>,
+        Equal<WireTypeAt<'browser'>, BrowserWireTypeSurface>,
+        Equal<WireTypeAt<'cli'>, CliWireTypeSurface>,
+        Equal<WireTypeAt<'mcp'>, McpWireTypeSurface>,
+        Equal<WireChildName, 'direct' | 'http' | 'browser' | 'cli' | 'mcp'>,
+      ],
+      [true, true, true, true, true, true]
+    >
+  >
+>;
