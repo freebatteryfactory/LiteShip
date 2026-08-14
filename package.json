@@ -8,7 +8,8 @@
     "check:types": "tsc -p tsconfig.json",
     "check:zero-runtime": "node system/01_assurance/00_audit/zero-runtime.mjs",
     "typecheck": "npm run check:types",
-    "check": "npm run check:types && npm run check:zero-runtime"
+    "check": "npm run check:types && npm run check:zero-runtime && npm run check:imports",
+    "check:imports": "node system/01_assurance/00_audit/import-boundary.mjs ."
   },
   "devDependencies": {
     "typescript": "7.0.2"

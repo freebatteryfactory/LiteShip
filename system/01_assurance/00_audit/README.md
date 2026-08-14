@@ -68,6 +68,7 @@ What must not happen again is the previous response to that gap. Lacking the API
 - An acquired fact names at least one consumer, as a non-empty population that cannot become a plain array.
 - The audit product's surfaces, attestations, and graph are structurally the upstream owners' types.
 - The audit product carries no verdict, findings, authority, outcome, or pass flag.
+- Every relative import edge resolves, and none crosses a band downstream, a peer boundary, a sibling boundary, or closes a cycle. Enforced by `import-boundary.mjs` in the root `check`, not by a type.
 - An acquired fact carries no roster of the checks that will read it, under that name or an obvious substitute.
 - Probe coverage distinguishes complete from partial, has no skipped arm, and fact values remain `Evidence`.
 
@@ -81,6 +82,40 @@ Runtime and repository claims a type cannot express:
 - That a structural twin observation compared genuine declaration sites, not two aliases of one declaration.
 - That import resolution followed the module graph rather than matching specifier text.
 
+## The import boundary is implemented, and here is why it is a script
+
+`import-boundary.mjs` is the second executable byte in this repository, beside `zero-runtime.mjs`, and both live here because acquiring repository facts is what this home is for.
+
+The compiler cannot decide this and no configuration makes it able to. Direction, peerage, sibling exclusion, and acyclicity are claims about *where* a declaration lives, not about what it means — and TypeScript resolved every specifier correctly, reported nothing, and carried a cycle in `02_wires/` for the entire life of that layer. One program, type-only imports, green build.
+
+Project references would catch some of it, and the cost was measured rather than assumed. References enforce direction at *project* granularity, so a violation inside one project is invisible: catching `astro -> vite` needs astro and vite to be separate projects, and catching an umbrella/child cycle needs those separate too. Reaching what one script does would take roughly one tsconfig per home. Fourteen configurations before a measured need is the reflex that gave the predecessor twenty-three packages; sixty is not an improvement on it.
+
+### The bands are derived, never listed
+
+A top-level directory's ordinal prefix *is* its band. `02_targets` and `02_wires` are both band 2, therefore peers, and the root README says so in as many words.
+
+A scratchpad draft of this audit carried a hand-written rank table that gave them 3 and 4. It had invented an order the architecture denies, so `02_wires -> 02_targets` passed as a lawful downstream import — a second model of the repository living inside the tool whose job is noticing second models of the repository. Deriving the band did more than tidy it: with the two roots at different ranks, *peer* was not a relationship the audit could express at all.
+
+### Numbered children waterfall; unnumbered children are peers
+
+The first working draft reported a hundred and four violations, of which ninety-eight were `00_core/01_encoding -> 00_core/00_error` and its kin — the ordinary numbered waterfall, and the most common lawful edge in the repository.
+
+A layer's children come in two kinds and one rule cannot cover both. Numbered children (`00_error` through `18_inspection`, `00_workspace` through `02_release`) are a waterfall: higher may import lower, never the reverse. Unnumbered children (`astro`, `vite`, `cloudflare`; `web`, `worker`, `edge`, `server`) are peers with no order between them, so no import between them is lawful in either direction. Two numbered segments at the same band are peers too, which is what `02_targets` and `02_wires` are.
+
+So the check walks both paths until they diverge and classifies at the first differing segment. When one path is an ancestor of the other, it says nothing — direction is not the question for an umbrella reaching into its own child. Whether anything comes back is, and `CYCLE` answers it.
+
+### Cycles needed no taxonomy
+
+A shared-vocabulary umbrella importing a child it supplies is a cycle. A topology file importing children that never import it back is not. A compile-only fixture importing several children is not, because nothing imports the fixture.
+
+Three cases, one rule, no roles and no exception list — which matters, because an exception list is how the previous control plane justified itself. There are no waivers, no severities, and no baseline of known-acceptable findings. A violation is a violation and the exit code says so. If one is wrong, the rule is wrong and the rule gets fixed.
+
+### Measured
+
+Every class refused: downstream, peer, sibling, cycle, unresolved. Every one of the 652 real edges admitted, including the six shapes most likely to be false positives — the numbered waterfall in core and in system, system reaching upstream into core, both compile-only files importing children, and an umbrella reaching into its own child.
+
 ## Implementation boundary
 
-Architecture only. No implementation exists or is authorized.
+No product runtime implementation exists here.
+
+Two repository-control implementations do: `zero-runtime.mjs`, which emits the project and rejects any file that is not `export {};`, and `import-boundary.mjs`. Both are `.mjs` so they sit outside the population they audit, and both run in the root `check`. That the number is two rather than one is worth watching — the previous arrangement reached forty-six tracked entries one reasonable file at a time — but each answers a question the compiler provably cannot, and neither issues authority or carries a waiver.

@@ -1,6 +1,6 @@
 # LiteShip Root Architecture and Type Foundation
 
-Status: Root architecture, Type ABI, `00_core/`, `01_hosts/`, and the three `02_targets/` children exist as architecture; `system/`'s wire-independent foundation is authored; `02_wires/` is next; implementation absent everywhere
+Status: Root architecture, Type ABI, `00_core/`, `01_hosts/`, and the three `02_targets/` children exist as architecture; `system/`'s wire-independent foundation is authored; `02_wires/` has its umbrella and `direct/`; implementation absent everywhere
 
 Authority: This README for architecture and intent; `types.d.ts` for the declaration-level shape calculus
 
