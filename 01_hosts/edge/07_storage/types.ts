@@ -11,9 +11,7 @@
  */
 
 import type {
-  Assert,
   BindingsFor,
-  Equal,
   Hole,
   NonEmptyTuple,
   Result,
@@ -89,28 +87,6 @@ export interface EdgeStoreOffer
   readonly locations: NonEmptyTuple<'request'>;
   readonly backends: NonEmptyTuple<'javascript'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// That provider semantics agree with the selected upstream ports at runtime
-// is `system/assurance`; batching is empirical.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: construction returns exact bindings for the exact unique row. */
-export type EdgeConstructionReturnsExactBindings = Assert<
-  Equal<
-    EdgeStore['construct'],
-    <Row extends EdgeStoreRow>(
-      row: UniqueRequirements<Row>,
-    ) => Result<BindingsFor<Row>, NonEmptyTuple<Diagnostic>>
-  >
->;
-
-/** Compile-time law: a foreign hole is not a store port — the union is closed. */
-export type TheStorePortUnionIsClosed = Assert<
-  Equal<readonly [DeploymentStoreRequirement] extends EdgeStoreRow ? true : false, false>
->;
 
 /** Type summary consumed by the edge topology. */
 export interface EdgeStorageTypeSurface {

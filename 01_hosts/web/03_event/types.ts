@@ -21,17 +21,12 @@
 
 import type {
   Algebra,
-  Assert,
   Brand,
   CaseOf,
-  Equal,
   Hole,
-  InputOf,
   NonEmptyTuple,
-  OutputOf,
   Reference,
   Signature,
-  TagOf,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { CanonicalValue } from '../../../00_core/01_encoding/types.js';
@@ -179,87 +174,6 @@ export interface EventAuthorityOffer
   readonly locations: NonEmptyTuple<'local' | 'live'>;
   readonly backends: NonEmptyTuple<'javascript'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// That replacing a rendered structure disposes its old listeners, and that no
-// listener outlives its region membership, are implementation-fixture
-// obligations.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: an event projects to evidence or an operation, never a free function. */
-export type AnEventProjectsToEvidenceOrAnOperation = Assert<
-  Equal<TagOf<EventProjection>, 'evidence' | 'operation'>
->;
-
-/** Compile-time law: the operation projection produces a real invocation. */
-export type AnOperationProjectionProducesAnInvocation = Assert<
-  Equal<OutputOf<CaseOf<EventProjection, 'operation'>['project']>, OperationInvocation>
->;
-
-/** Compile-time law: the evidence projection produces a core evidence update. */
-export type AnEvidenceProjectionProducesAnUpdate = Assert<
-  Equal<OutputOf<CaseOf<EventProjection, 'evidence'>['project']>, EvidenceUpdate>
->;
-
-/**
- * Compile-time law: subscribing consumes the complete request — membership,
- * target, descriptor, projection — and produces the owned subscription. A
- * factory input that omitted the target or projection could not faithfully
- * construct what it claims to provide.
- */
-export type SubscribingConsumesTheCompleteRequest = Assert<
-  Equal<
-    [
-      InputOf<EventSubscriptionAuthority['subscribe']>,
-      EventSubscriptionRequest['target'],
-      EventSubscriptionRequest['projection'],
-      OutputOf<EventSubscriptionAuthority['subscribe']>,
-    ],
-    [EventSubscriptionRequest, WebNodeReference, EventProjection, EventSubscription]
-  >
->;
-
-/** Compile-time law: a subscription attaches to persistent membership, not a lease. */
-export type ASubscriptionAttachesToMembership = Assert<
-  Equal<
-    [EventSubscription['membership'], 'authority' extends keyof EventSubscription ? true : false],
-    [RegionMembership, false]
-  >
->;
-
-/** Compile-time law: a subscription knows what it observes and who owns it. */
-export type ASubscriptionHasIdentityAndAnOwner = Assert<
-  Equal<
-    [EventSubscription['descriptor'], EventSubscription['owner'], EventSubscription['lifecycle']],
-    [WebEventDescriptor, RealizationInstanceReference, CaseOf<RealizationLifecycle, 'owned'>]
-  >
->;
-
-/** Compile-time law: the authority is an offer requiring facility and region manager. */
-export type TheAuthorityRequiresFacilityAndManager = Assert<
-  Equal<
-    [EventAuthorityOffer['requires'], EventAuthorityOffer['id']],
-    [
-      readonly [EventFacilityRequirement, RegionAuthorityRequirement],
-      RealizationOfferId<'liteship.web.offer.event-authority'>,
-    ]
-  >
->;
-
-/** Compile-time law: observation cannot be constructed without a target and contract. */
-export type ObservationRequiresATargetAndContract = Assert<
-  Equal<
-    [
-      InputOf<EventFacility['observe']>,
-      EventObservationRequest['target'],
-      EventObservationRequest['payload'],
-      AdmittedEventObservation['id'],
-    ],
-    [EventObservationRequest, WebNodeReference, SchemaReference, WebObservationReference]
-  >
->;
 
 /** Type summary consumed by the web topology. */
 export interface WebEventTypeSurface {

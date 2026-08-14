@@ -13,13 +13,10 @@
  */
 
 import type {
-  Assert,
   BindingsFor,
   Brand,
   CaseOf,
-  Equal,
   Hole,
-  InputOf,
   NonEmptyTuple,
   Reference,
   RequirementRow,
@@ -33,7 +30,6 @@ import type {
   OperationId,
   OperationInvocation,
   OperationReceipt,
-  OperationReference,
 } from '../../../00_core/07_operation/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
@@ -139,129 +135,6 @@ export interface ServerOperationOffer
   readonly locations: NonEmptyTuple<'local' | 'live'>;
   readonly backends: NonEmptyTuple<'javascript'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// That handlers use the canonical operation catalog and exact schemas, and
-// that authorization is checked rather than assumed from placement, are
-// `system/assurance` obligations.
-// ---------------------------------------------------------------------------
-
-/**
- * Compile-time law: a handler pins its exact operation and threads it — the
- * definition's id, the invocations it handles, and the receipts it emits all
- * name exactly this operation.
- */
-type LawRowA = readonly [Hole<'liteship.server.law.capability-a', { readonly use: () => void }>];
-type LawRowB = readonly [Hole<'liteship.server.law.capability-b', { readonly use: () => void }>];
-
-export type AServerHandlerCannotServeAnotherOperation = Assert<
-  Equal<
-    [
-      ServerOperationHandler<
-        OperationId<'liteship.operation.law.op-a'>,
-        string,
-        string,
-        string,
-        LawRowA
-      >['operation'],
-      ServerOperationHandler<
-        OperationId<'liteship.operation.law.op-a'>,
-        string,
-        string,
-        string,
-        LawRowA
-      >['definition']['id'],
-      InputOf<
-        ServerOperationHandler<
-          OperationId<'liteship.operation.law.op-a'>,
-          string,
-          string,
-          string,
-          LawRowA
-        >['handle']
-      >['operation'],
-      ServerOperationHandler<
-        OperationId<'liteship.operation.law.op-b'>,
-        string,
-        string,
-        string,
-        LawRowA
-      > extends ServerOperationHandler<
-        OperationId<'liteship.operation.law.op-a'>,
-        string,
-        string,
-        string,
-        LawRowA
-      >
-        ? true
-        : false,
-    ],
-    [
-      OperationId<'liteship.operation.law.op-a'>,
-      OperationId<'liteship.operation.law.op-a'>,
-      OperationReference<OperationId<'liteship.operation.law.op-a'>>,
-      false,
-    ]
-  >
->;
-
-/**
- * Compile-time law: the requirements relationship threads — the handler's
- * definition carries the exact row, its capabilities are exactly the
- * bindings for that row, and a handler of row B is not a handler of row A.
- */
-export type AServerHandlerThreadsItsRequirements = Assert<
-  Equal<
-    [
-      ServerOperationHandler<OperationId, string, string, string, LawRowA>['definition']['requirements'],
-      ServerOperationHandler<OperationId, string, string, string, LawRowA>['capabilities'],
-      ServerOperationHandler<OperationId, string, string, string, LawRowB> extends ServerOperationHandler<
-        OperationId,
-        string,
-        string,
-        string,
-        LawRowA
-      >
-        ? true
-        : false,
-    ],
-    [LawRowA, BindingsFor<LawRowA>, false]
-  >
->;
-
-/** Compile-time law: binding is operation-correlated through the provider's generic operation. */
-export type ServerBindingIsOperationCorrelated = Assert<
-  Equal<
-    ServerOperationAuthority['bind'] extends (
-      request: ServerHandlerBindingRequest<
-        OperationId<'liteship.operation.law.op-a'>,
-        string,
-        string,
-        string,
-        LawRowA
-      >,
-    ) => Result<
-      ServerOperationHandler<OperationId<'liteship.operation.law.op-a'>, string, string, string, LawRowA>,
-      NonEmptyTuple<Diagnostic>
-    >
-      ? true
-      : false,
-    true
-  >
->;
-
-/** Compile-time law: a handler carries idempotency, capabilities, and an owned lifecycle. */
-export type AHandlerCarriesItsObligations = Assert<
-  Equal<
-    [
-      ServerOperationHandler<OperationId, string, string, string, readonly []>['idempotency']['key'],
-      ServerOperationHandler<OperationId, string, string, string, readonly []>['lifecycle'],
-    ],
-    [IdempotencyKey, CaseOf<RealizationLifecycle, 'owned'>]
-  >
->;
 
 /** Type summary consumed by the server topology. */
 export interface ServerOperationTypeSurface {

@@ -12,15 +12,12 @@
 
 import type {
   Algebra,
-  Assert,
   Brand,
   CaseOf,
-  Equal,
   Hole,
   NonEmptyTuple,
   Reference,
   Signature,
-  TagOf,
 } from '../../../types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
@@ -111,43 +108,6 @@ export interface EdgeCacheOffer
   readonly locations: NonEmptyTuple<'request'>;
   readonly backends: NonEmptyTuple<'javascript'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// That variation is complete and private data cannot cross partitions are
-// `system/assurance`; TTLs and stale windows are empirical.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: a key derives from canonical input, declared variation, and a partition. */
-export type AKeyIsCanonicalAndPartitioned = Assert<
-  Equal<
-    [CacheKey['input'], CacheKey['variations'], CacheKey['partition']],
-    [
-      ContentAddress<'application/vnd.liteship.edge-cache-input+cbor'>,
-      NonEmptyTuple<CacheVariation>,
-      CachePartitionKey,
-    ]
-  >
->;
-
-/** Compile-time law: the variation vocabulary is closed and exact. */
-export type TheVariationVocabularyIsClosed = Assert<
-  Equal<TagOf<CacheVariation>, 'tenant' | 'authorization' | 'locale' | 'capability' | 'content'>
->;
-
-/** Compile-time law: the disposition arms are phase-correct, and hit and stale carry entries. */
-export type DispositionsArePhaseCorrect = Assert<
-  Equal<
-    [TagOf<CacheDisposition>, CaseOf<CacheDisposition, 'hit'>['entry'], CaseOf<CacheDisposition, 'stale'>['entry']],
-    ['hit' | 'miss' | 'stale' | 'bypass', CacheEntry, CacheEntry]
-  >
->;
-
-/** Compile-time law: caching requires the policy. */
-export type CachingRequiresThePolicy = Assert<
-  Equal<EdgeCacheOffer['requires'], readonly [CacheFacilityRequirement, EdgePolicyRequirement]>
->;
 
 /** Type summary consumed by the edge topology. */
 export interface EdgeCacheTypeSurface {

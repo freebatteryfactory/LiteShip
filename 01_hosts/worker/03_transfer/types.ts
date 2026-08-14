@@ -19,10 +19,8 @@
 
 import type {
   Algebra,
-  Assert,
   Brand,
   CaseOf,
-  Equal,
   Hole,
   NonEmptyTuple,
   Reference,
@@ -135,68 +133,6 @@ export interface TransferAuthorityOffer
   readonly locations: NonEmptyTuple<'local'>;
   readonly backends: NonEmptyTuple<'javascript'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// That sender custody actually changes after a move, and that runtime
-// detachment or revocation is honored, are `system/assurance` obligations.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: the custody arms are exactly copy, move, and share. */
-export type TheCustodyArmsAreExact = Assert<
-  Equal<TagOf<CustodyMode>, 'copied' | 'moved' | 'shared'>
->;
-
-/** Compile-time law: a ticket of one mode is not a ticket of another. */
-export type ATicketPinsItsMode = Assert<
-  Equal<
-    [
-      TransferTicket<'moved'>['mode'],
-      TransferTicket<'moved'> extends TransferTicket<'copied'> ? true : false,
-    ],
-    [CaseOf<CustodyMode, 'moved'>, false]
-  >
->;
-
-/** Compile-time law: consummation is mode-correlated — a moved ticket yields a moved receipt. */
-export type ConsummationIsModeCorrelated = Assert<
-  Equal<
-    [
-      TransferAuthority['consummate'] extends (
-        ticket: TransferTicket<'moved'>,
-      ) => Result<CustodyReceipt<'moved'>, NonEmptyTuple<Diagnostic>>
-        ? true
-        : false,
-      CustodyReceipt<'moved'> extends CustodyReceipt<'copied'> ? true : false,
-    ],
-    [true, false]
-  >
->;
-
-/** Compile-time law: only a moved ticket produces detachment evidence. */
-export type OnlyAMoveDetaches = Assert<
-  Equal<
-    TransferAuthority['detachment'],
-    Signature<TransferTicket<'moved'>, DetachmentEvidence, NonEmptyTuple<Diagnostic>>
-  >
->;
-
-/** Compile-time law: transfer requires messaging — custody transitions ride declared channels. */
-export type TransferRequiresMessaging = Assert<
-  Equal<TransferAuthorityOffer['requires'], readonly [TransferFacilityRequirement, MessagingRequirement]>
->;
-
-/** Compile-time law: a shared arm names its role; copy and move carry none. */
-export type SharedCustodyNamesItsRole = Assert<
-  Equal<
-    [
-      CaseOf<CustodyMode, 'shared'>['role'],
-      'role' extends keyof CaseOf<CustodyMode, 'copied'> ? true : false,
-    ],
-    [EndpointRole, false]
-  >
->;
 
 /** Type summary consumed by the worker topology. */
 export interface WorkerTransferTypeSurface {

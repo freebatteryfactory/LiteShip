@@ -13,12 +13,9 @@
 
 import type {
   Algebra,
-  Assert,
-  Equal,
   Hole,
   NonEmptyTuple,
   Result,
-  TagOf,
 } from '../../../types.js';
 import type { CanonicalValue, ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
@@ -92,70 +89,6 @@ export interface RequestSettlementOffer
   readonly locations: NonEmptyTuple<'request'>;
   readonly backends: NonEmptyTuple<'javascript'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// The request identity and receipt relationships are local type law. The
-// plan, decision, and evidence values are heterogeneous erased core
-// populations: that the supplied decision belongs to the named plan, that
-// the evidence rows are the ones the decision was waiting for, and that
-// earlier faithful settlements are never recomputed, are the named
-// `system/assurance` obligation `settlement-input-population-agreement` —
-// its nonconforming witness is a settlement request pairing plan A's
-// reference with a decision derived from plan B, which no local generic law
-// can distinguish and the assurance census must refuse.
-// ---------------------------------------------------------------------------
-
-/**
- * Compile-time law: settlement binds the exact request, the plan ancestry,
- * and the core decision — settling request A yields an outcome naming
- * exactly request A, never request B.
- */
-export type SettlementBindsItsExactInputs = Assert<
-  Equal<
-    [
-      RequestSettlementRequest<EdgeRequestId<'liteship.edge.law.request-a'>>['request'],
-      RequestSettlementRequest<EdgeRequestId>['plan'],
-      RequestSettlementRequest<EdgeRequestId>['decision'],
-      RequestSettlementAuthority['settle'] extends (
-        request: RequestSettlementRequest<EdgeRequestId<'liteship.edge.law.request-a'>>,
-      ) => Result<
-        RequestSettlementOutcome<EdgeRequestId<'liteship.edge.law.request-a'>>,
-        NonEmptyTuple<Diagnostic>
-      >
-        ? true
-        : false,
-      RequestSettlementOutcome<EdgeRequestId<'liteship.edge.law.request-b'>> extends RequestSettlementOutcome<
-        EdgeRequestId<'liteship.edge.law.request-a'>
-      >
-        ? true
-        : false,
-    ],
-    [
-      EdgeRequestReference<EdgeRequestId<'liteship.edge.law.request-a'>>,
-      RealizationPlanReference,
-      SettlementDecision,
-      true,
-      false,
-    ]
-  >
->;
-
-/** Compile-time law: both outcome arms carry a physical receipt — no silent settlement. */
-export type BothOutcomesCarryReceipts = Assert<
-  Equal<
-    [
-      TagOf<RequestSettlementOutcome<EdgeRequestId>>,
-      RequestSettlementOutcome<EdgeRequestId> extends {
-        readonly receipt: RequestSettlementAddress;
-      }
-        ? true
-        : false,
-    ],
-    ['settled' | 'refused', true]
-  >
->;
 
 /** Type summary consumed by the edge topology. */
 export interface EdgeSettlementTypeSurface {

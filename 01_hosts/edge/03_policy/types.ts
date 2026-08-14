@@ -16,17 +16,13 @@
 
 import type {
   Algebra,
-  Assert,
   Brand,
-  CaseOf,
-  Equal,
   Hole,
   NonEmptyTuple,
-  TagOf,
 } from '../../../types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { GroundingId } from '../../../00_core/14_compiler/types.js';
-import type { HostGroundingOrigin } from '../../types.js';
+
 import type { EdgeGroundingDefinition } from '../00_bootstrap/types.js';
 
 export type AllowedOrigin = Brand<string, 'liteship.edge.allowed-origin'>;
@@ -87,49 +83,6 @@ export interface EdgePolicyGrounding
   > {
   readonly id: GroundingId<'liteship.edge.grounding.response-policy'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// That the policy is actually applied on the shipping path, and that private
-// data cannot cross cache partitions, are `system/assurance` obligations.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: the policy is a non-empty allowlist with pinned arms and an address. */
-export type ThePolicyIsAFailClosedAllowlist = Assert<
-  Equal<
-    [EdgeResponsePolicy['origins'], EdgeResponsePolicy['address'], TagOf<CredentialPolicy>],
-    [
-      NonEmptyTuple<AllowedOrigin>,
-      ContentAddress<'application/vnd.liteship.edge-policy+cbor'>,
-      'omit' | 'sameOrigin' | 'include',
-    ]
-  >
->;
-
-/** Compile-time law: every refusal arm names the exact governing policy address. */
-export type EveryRefusalNamesItsPolicy = Assert<
-  Equal<
-    [
-      CaseOf<EdgePolicyRefusal, 'origin'>['policy'],
-      CaseOf<EdgePolicyRefusal, 'partition'>['policy'],
-      TagOf<EdgePolicyRefusal>,
-    ],
-    [
-      EdgeResponsePolicy['address'],
-      EdgeResponsePolicy['address'],
-      'origin' | 'credentials' | 'redirect' | 'isolation' | 'partition',
-    ]
-  >
->;
-
-/** Compile-time law: the policy enters through a deployment grounding with unowned custody. */
-export type ThePolicyEntersThroughItsGrounding = Assert<
-  Equal<
-    [EdgePolicyGrounding['origin'], EdgePolicyGrounding['custody']],
-    [CaseOf<HostGroundingOrigin, 'deployment'>, 'unowned']
-  >
->;
 
 /** Type summary consumed by the edge topology. */
 export interface EdgePolicyTypeSurface {

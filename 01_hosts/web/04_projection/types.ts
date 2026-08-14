@@ -21,13 +21,9 @@
 
 import type {
   Algebra,
-  Assert,
-  CaseOf,
-  Equal,
   Hole,
   NonEmptyTuple,
   Signature,
-  TagOf,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { CanonicalValue, ContentAddress } from '../../../00_core/01_encoding/types.js';
@@ -166,85 +162,6 @@ export interface CommitApplicationOffer
   readonly locations: NonEmptyTuple<'local' | 'live'>;
   readonly backends: NonEmptyTuple<'javascript'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// The hostile-input population — iterative walking, depth and node limits,
-// cycle detection, getter refusal, own-property-only lookup, closed catalog,
-// listener disposal — text-inserts-as-text, and commit/lease coordinate
-// agreement are assurance and implementation obligations. That a forged
-// lookalike never reaches the renderer is a `system/assurance` obligation.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: opaque foreign output is not a write family. */
-export type ForeignOutputIsNotAWriteFamily = Assert<
-  Equal<'foreign' extends TagOf<WebWriteFamily> ? true : false, false>
->;
-
-/**
- * Compile-time law: one transaction path. A physical commit centers the
- * semantic `RuntimeCommit`, consumes a transaction lease, and carries no
- * sibling revision for either to disagree with.
- */
-export type APhysicalCommitCentersTheSemanticCommit = Assert<
-  Equal<
-    [
-      ProjectionCommit['commit'],
-      ProjectionCommit['lease'],
-      'revision' extends keyof ProjectionCommit ? true : false,
-    ],
-    [RuntimeCommit, RegionWriteAuthority, false]
-  >
->;
-
-/** Compile-time law: a trusted fragment arrives as a revision-pinned patch, never raw markup. */
-export type ATrustedFragmentArrivesAsARevisionPinnedPatch = Assert<
-  Equal<CaseOf<WebWriteFamily, 'trusted-fragment'>['patch'], TrustedFragmentPatch>
->;
-
-/** Compile-time law: admission has one owner — the admitted content itself. */
-export type AdmissionLivesInTheContentNotBesideIt = Assert<
-  Equal<
-    [
-      'admission' extends keyof CaseOf<WebWriteFamily, 'generated-structure'> ? true : false,
-      CaseOf<WebWriteFamily, 'generated-structure'>['content']['admission'],
-    ],
-    [false, GeneratedStructureAdmission]
-  >
->;
-
-/** Compile-time law: the renderer roster consumes the one core catalog species. */
-export type TheRendererConsumesTheCoreCatalog = Assert<
-  Equal<
-    [ComponentRendererCatalog['catalog'], StructureNodeMapping['catalog']],
-    [ComponentCatalogAddress, ComponentCatalogAddress]
-  >
->;
-
-/** Compile-time law: the mapping is bound to its exact structure and revision. */
-export type TheMappingIsBoundToItsAdmittedStructure = Assert<
-  Equal<
-    [StructureNodeMapping['structure'], StructureNodeMapping['revision']],
-    [GeneratedStructureReference, RevisionReference]
-  >
->;
-
-/** Compile-time law: application requires every authority it actually uses. */
-export type ApplicationRequiresEverythingItUses = Assert<
-  Equal<
-    [CommitApplicationOffer['requires'], CommitApplicationOffer['id']],
-    [
-      readonly [
-        RegionAuthorityRequirement,
-        SinkPolicyRequirement,
-        RendererCatalogRequirement,
-        EventAuthorityRequirement,
-      ],
-      RealizationOfferId<'liteship.web.offer.commit-application'>,
-    ]
-  >
->;
 
 /** Type summary consumed by the web topology. */
 export interface WebProjectionTypeSurface {

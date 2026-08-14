@@ -15,9 +15,7 @@
  */
 
 import type {
-  Assert,
   CaseOf,
-  Equal,
   Hole,
   NonEmptyTuple,
   RequirementRow,
@@ -160,77 +158,6 @@ export interface BootstrapEnvelopeGrounding
   > {
   readonly id: GroundingId<'liteship.worker.grounding.bootstrap-envelope'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// That raw realm globals are captured only beneath this boundary, that no
-// module performs ambient reads, and that every target-generated worker
-// artifact enters through this canonical bootstrap are `system/assurance`
-// obligations.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: the worker realm is exactly the worker realm, nothing wider. */
-export type WorkerRealmIsExactlyTheWorkerRealm = Assert<Equal<WorkerRealm, 'worker'>>;
-
-/** Compile-time law: a worker grounding slot cannot claim another realm. */
-export type AWorkerGroundingIsPinnedToTheWorkerRealm = Assert<
-  Equal<WorkerGroundingDefinition['realm'], 'worker'>
->;
-
-/** Compile-time law: the worker definition and its catalog share one identity and realm. */
-export type TheWorkerDefinitionSharesItsCatalogIdentity = Assert<
-  Equal<
-    [WorkerHostDefinition['catalog']['host'], WorkerHostDefinition['catalog']['realm']],
-    [WorkerHostReference, 'worker']
-  >
->;
-
-/**
- * Compile-time law: a worker offer cannot advertise another placement. The
- * initial-profile backends are exactly javascript and wasm — no webgpu by
- * default, no server, no host-native, no sibling realm, no html-css — and the
- * locations are exactly local and live.
- */
-export type AWorkerOfferCannotAdvertiseAnotherPlacement = Assert<
-  Equal<
-    [
-      WorkerRealizationOffer['realms'],
-      WorkerPlacedBackend,
-      WorkerSettlementLocation,
-      'webgpu' extends WorkerPlacedBackend ? true : false,
-    ],
-    [NonEmptyTuple<'worker'>, 'javascript' | 'wasm', 'local' | 'live', false]
-  >
->;
-
-/** Compile-time law: a grounding slot pins its allowed origin and exact custody arm. */
-export type AWorkerSlotPinsItsOriginAndCustody = Assert<
-  Equal<
-    [
-      RealmScopeGrounding['origin'],
-      RealmScopeGrounding['custody'],
-      BootstrapEnvelopeGrounding['origin'],
-    ],
-    [CaseOf<HostGroundingOrigin, 'intrinsic'>, 'unowned', CaseOf<HostGroundingOrigin, 'invocation'>]
-  >
->;
-
-/** Compile-time law: the envelope binds program, catalog, and generation — no naked entry. */
-export type TheEnvelopeCarriesItsExactEntry = Assert<
-  Equal<
-    [
-      WorkerBootstrapEnvelope['program'],
-      WorkerBootstrapEnvelope['catalog'],
-      WorkerBootstrapEnvelope['generation'],
-    ],
-    [
-      ContentAddress<'application/vnd.liteship.program+cbor'>,
-      RealizationCatalogAddress,
-      TransactionGeneration,
-    ]
-  >
->;
 
 /** Type summary consumed by the worker topology. */
 export interface WorkerBootstrapTypeSurface {

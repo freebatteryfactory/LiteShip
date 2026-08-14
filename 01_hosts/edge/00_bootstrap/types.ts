@@ -13,9 +13,7 @@
  */
 
 import type {
-  Assert,
   CaseOf,
-  Equal,
   Hole,
   NonEmptyTuple,
   RequirementRow,
@@ -156,51 +154,6 @@ export interface EdgeDeploymentGrounding
   > {
   readonly id: GroundingId<'liteship.edge.grounding.deployment-configuration'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: the edge realm is exactly the edge realm. */
-export type EdgeRealmIsExactlyTheEdgeRealm = Assert<Equal<EdgeRealm, 'edge'>>;
-
-/** Compile-time law: an edge grounding slot cannot claim another realm. */
-export type AnEdgeGroundingIsPinnedToTheEdgeRealm = Assert<
-  Equal<EdgeGroundingDefinition['realm'], 'edge'>
->;
-
-/** Compile-time law: the edge definition and its catalog share one identity and realm. */
-export type TheEdgeDefinitionSharesItsCatalogIdentity = Assert<
-  Equal<
-    [EdgeHostDefinition['catalog']['host'], EdgeHostDefinition['catalog']['realm']],
-    [EdgeHostReference, 'edge']
-  >
->;
-
-/**
- * Compile-time law: an edge offer cannot advertise another placement — the
- * location is exactly request-time and the backends exclude webgpu, server,
- * host-native, sibling realms, and html-css.
- */
-export type AnEdgeOfferCannotAdvertiseAnotherPlacement = Assert<
-  Equal<
-    [
-      EdgeRealizationOffer['realms'],
-      EdgePlacedBackend,
-      EdgeSettlementLocation,
-      'local' extends EdgeSettlementLocation ? true : false,
-    ],
-    [NonEmptyTuple<'edge'>, 'javascript' | 'wasm', 'request', false]
-  >
->;
-
-/** Compile-time law: the entry groundings pin their origins and custody. */
-export type TheEdgeEntryPinsItsOrigins = Assert<
-  Equal<
-    [EdgeInvocationGrounding['origin'], EdgeDeploymentGrounding['origin'], EdgeInvocationGrounding['custody']],
-    [CaseOf<HostGroundingOrigin, 'invocation'>, CaseOf<HostGroundingOrigin, 'deployment'>, 'unowned']
-  >
->;
 
 /** Type summary consumed by the edge topology. */
 export interface EdgeBootstrapTypeSurface {

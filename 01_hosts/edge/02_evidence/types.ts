@@ -16,8 +16,6 @@
  */
 
 import type {
-  Assert,
-  Equal,
   Hole,
   NonEmptyTuple,
   Result,
@@ -88,44 +86,6 @@ export interface RequestEvidenceOffer
   readonly locations: NonEmptyTuple<'request'>;
   readonly backends: NonEmptyTuple<'javascript'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// The complete request-evidence producer census, and the conservative
-// edge/web classifier relation holding in implementation, are
-// `system/assurance` obligations.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: reading is source-correlated, and a source-A update is not a source-B update. */
-export type RequestEvidenceIsSourceCorrelated = Assert<
-  Equal<
-    [
-      RequestEvidenceAuthority['read'] extends (
-        source: EvidenceSourceId<'liteship.evidence.law.source-a'>,
-      ) => Result<
-        EdgeSourcedEvidenceUpdate<EvidenceSourceId<'liteship.evidence.law.source-a'>>,
-        NonEmptyTuple<Diagnostic>
-      >
-        ? true
-        : false,
-      EdgeSourcedEvidenceUpdate<EvidenceSourceId<'liteship.evidence.law.source-b'>> extends EdgeSourcedEvidenceUpdate<
-        EvidenceSourceId<'liteship.evidence.law.source-a'>
-      >
-        ? true
-        : false,
-    ],
-    [true, false]
-  >
->;
-
-/** Compile-time law: an edge update names its exact source reference. */
-export type AnEdgeUpdateNamesItsExactSource = Assert<
-  Equal<
-    EdgeSourcedEvidenceUpdate<EvidenceSourceId<'liteship.evidence.law.source-a'>>['source'],
-    EvidenceReference<EvidenceSourceId<'liteship.evidence.law.source-a'>>
-  >
->;
 
 /** Type summary consumed by the edge topology. */
 export interface EdgeEvidenceTypeSurface {

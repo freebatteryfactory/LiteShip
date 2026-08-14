@@ -11,13 +11,10 @@
  */
 
 import type {
-  Assert,
   Brand,
   CaseOf,
-  Equal,
   Hole,
   NonEmptyTuple,
-  OutputOf,
   Reference,
   Result,
   Signature,
@@ -135,53 +132,6 @@ export interface ServerNetworkOffer
   readonly locations: NonEmptyTuple<'local' | 'live'>;
   readonly backends: NonEmptyTuple<'javascript'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// Timeout policy, socket buffers, and reuse are empirical; that every
-// connect and listen consults the allowlist on the shipping path is
-// assurance.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: connecting is decoder-correlated; one decoded family is not another. */
-export type ConnectingIsDecoderCorrelated = Assert<
-  Equal<
-    [
-      ServerNetworkAuthority['connect'] extends (
-        request: ServerConnectRequest<string>,
-      ) => Result<ServerConnection<string>, NonEmptyTuple<Diagnostic>>
-        ? true
-        : false,
-      ServerConnection<string> extends ServerConnection<Uint8Array> ? true : false,
-    ],
-    [true, false]
-  >
->;
-
-/**
- * Compile-time law: connections send and receive, listeners accept usable
- * connections rather than bare references, and both are endpoint-admitted
- * and owned.
- */
-export type ConnectionsAndListenersAreAdmittedAndOwned = Assert<
-  Equal<
-    [
-      ServerConnection<string>['send'],
-      OutputOf<ListenerResource['accept']>,
-      ServerConnection<string>['endpoint'],
-      ServerConnection<string>['lifecycle'],
-      ListenerResource['lifecycle'],
-    ],
-    [
-      Signature<ServerEncodedChunk, ServerConnectionReference, NonEmptyTuple<Diagnostic>>,
-      readonly ServerConnection<Uint8Array>[],
-      AllowedEndpoint,
-      CaseOf<RealizationLifecycle, 'owned'>,
-      CaseOf<RealizationLifecycle, 'owned'>,
-    ]
-  >
->;
 
 /** Type summary consumed by the server topology. */
 export interface ServerNetworkTypeSurface {

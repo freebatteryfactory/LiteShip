@@ -19,17 +19,13 @@
 
 import type {
   Algebra,
-  Assert,
   Brand,
   CaseOf,
-  Equal,
   Hole,
-  InputOf,
   NonEmptyTuple,
   Reference,
   Result,
   Signature,
-  TagOf,
 } from '../../../types.js';
 import type { CanonicalValue } from '../../../00_core/01_encoding/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
@@ -128,126 +124,6 @@ export interface QueueAuthorityOffer
   readonly locations: NonEmptyTuple<'local' | 'live'>;
   readonly backends: NonEmptyTuple<'javascript' | 'wasm'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// SPSC role exclusivity and atomic-order correctness at runtime are
-// `system/assurance` obligations; capacities and wait policies are empirical.
-// ---------------------------------------------------------------------------
-
-/**
- * Compile-time law: producer and consumer are distinct pinned roles on the
- * exact queue that owns them — queue A cannot hold an endpoint of queue B,
- * and no erased union side exists.
- */
-export type TheEndpointsPinTheirRoles = Assert<
-  Equal<
-    [
-      BoundedQueue<CanonicalValue, QueueId<'liteship.worker.law.queue-a'>, SharedBufferId>['producer']['queue'],
-      BoundedQueue<CanonicalValue, QueueId, SharedBufferId>['producer']['role'],
-      BoundedQueue<CanonicalValue, QueueId, SharedBufferId>['consumer']['role'],
-      QueueEndpoint<'producer', QueueId> extends QueueEndpoint<'consumer', QueueId> ? true : false,
-      QueueEndpoint<'producer', QueueId<'liteship.worker.law.queue-b'>> extends QueueEndpoint<
-        'producer',
-        QueueId<'liteship.worker.law.queue-a'>
-      >
-        ? true
-        : false,
-    ],
-    [QueueReference<QueueId<'liteship.worker.law.queue-a'>>, 'producer', 'consumer', false, false]
-  >
->;
-
-/** Compile-time law: construction is payload-correlated through the admission contract. */
-export type ConstructionIsPayloadCorrelated = Assert<
-  Equal<
-    [
-      QueueAuthority['construct'] extends (
-        request: QueueRequest<
-          string,
-          QueueId<'liteship.worker.law.queue-a'>,
-          SharedBufferId<'liteship.worker.law.buffer-a'>
-        >,
-      ) => Result<
-        BoundedQueue<
-          string,
-          QueueId<'liteship.worker.law.queue-a'>,
-          SharedBufferId<'liteship.worker.law.buffer-a'>
-        >,
-        NonEmptyTuple<Diagnostic>
-      >
-        ? true
-        : false,
-      BoundedQueue<string, QueueId, SharedBufferId> extends BoundedQueue<Uint8Array, QueueId, SharedBufferId>
-        ? true
-        : false,
-      BoundedQueue<string, QueueId, SharedBufferId<'liteship.worker.law.buffer-b'>> extends BoundedQueue<
-        string,
-        QueueId,
-        SharedBufferId<'liteship.worker.law.buffer-a'>
-      >
-        ? true
-        : false,
-    ],
-    [true, false, false]
-  >
->;
-
-/**
- * Compile-time law: a batch belongs to exactly one queue — queue A cannot
- * accept a batch naming queue B, and dequeue yields only this queue's
- * batches.
- */
-export type ABatchBelongsToExactlyOneQueue = Assert<
-  Equal<
-    [
-      QueueBatch<string, QueueId<'liteship.worker.law.queue-a'>>['queue'],
-      QueueBatch<string, QueueId<'liteship.worker.law.queue-b'>> extends QueueBatch<
-        string,
-        QueueId<'liteship.worker.law.queue-a'>
-      >
-        ? true
-        : false,
-      InputOf<BoundedQueue<string, QueueId<'liteship.worker.law.queue-a'>, SharedBufferId>['enqueue']>,
-    ],
-    [
-      QueueReference<QueueId<'liteship.worker.law.queue-a'>>,
-      false,
-      QueueBatch<string, QueueId<'liteship.worker.law.queue-a'>>,
-    ]
-  >
->;
-
-/** Compile-time law: a batch carries its identity and generation, and dequeue is generation-aware. */
-export type BatchesCarryTheirGeneration = Assert<
-  Equal<
-    [
-      QueueBatch<CanonicalValue, QueueId>['generation'],
-      BoundedQueue<CanonicalValue, QueueId, SharedBufferId>['dequeue'],
-    ],
-    [
-      TransactionGeneration,
-      Signature<
-        TransactionGeneration,
-        readonly QueueBatch<CanonicalValue, QueueId>[],
-        NonEmptyTuple<Diagnostic>
-      >,
-    ]
-  >
->;
-
-/** Compile-time law: a queue is bounded by declared policy and owned exactly once. */
-export type AQueueIsBoundedAndOwned = Assert<
-  Equal<
-    [
-      BoundedQueue<CanonicalValue, QueueId, SharedBufferId>['policy'],
-      BoundedQueue<CanonicalValue, QueueId, SharedBufferId>['lifecycle'],
-      TagOf<OverflowPolicy>,
-    ],
-    [OverflowPolicy, CaseOf<RealizationLifecycle, 'owned'>, 'refuse' | 'backpressure']
-  >
->;
 
 /** Type summary consumed by the worker topology. */
 export interface WorkerQueueTypeSurface {

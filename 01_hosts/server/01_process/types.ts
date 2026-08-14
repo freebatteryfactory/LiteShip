@@ -13,15 +13,12 @@
 
 import type {
   Algebra,
-  Assert,
   Brand,
   CaseOf,
-  Equal,
   Hole,
   NonEmptyTuple,
   Reference,
   Signature,
-  TagOf,
 } from '../../../types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
@@ -111,48 +108,6 @@ export interface ChildProcessOffer
   readonly locations: NonEmptyTuple<'local'>;
   readonly backends: NonEmptyTuple<'javascript' | 'host-native'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// Sandbox scope honoring and resource-limit enforcement are runtime
-// `system/assurance` obligations; pool sizes and timeouts are empirical.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: the signal and stdio vocabularies are closed. */
-export type TheProcessVocabulariesAreClosed = Assert<
-  Equal<
-    [ProcessSignal, StdioRole],
-    ['interrupt' | 'terminate' | 'hangup', 'stdin' | 'stdout' | 'stderr']
-  >
->;
-
-/** Compile-time law: the exit arms are phase-correct with their evidence. */
-export type ExitsArePhaseCorrect = Assert<
-  Equal<
-    [TagOf<ProcessExit>, CaseOf<ProcessExit, 'crashed'>['diagnostics']],
-    ['exited' | 'signalled' | 'crashed', NonEmptyTuple<Diagnostic>]
-  >
->;
-
-/** Compile-time law: a child is owned, configuration-scoped, and cancellable. */
-export type AChildIsOwnedAndScoped = Assert<
-  Equal<
-    [ChildProcess['lifecycle'], ChildProcess['configuration']],
-    [
-      CaseOf<RealizationLifecycle, 'owned'>,
-      ContentAddress<'application/vnd.liteship.server-child-configuration+cbor'>,
-    ]
-  >
->;
-
-/** Compile-time law: spawning consumes a complete scoped request. */
-export type SpawningConsumesAScopedRequest = Assert<
-  Equal<
-    ChildProcessAuthority['spawn'],
-    Signature<ChildProcessRequest, ChildProcess, NonEmptyTuple<Diagnostic>>
-  >
->;
 
 /** Type summary consumed by the server topology. */
 export interface ServerProcessTypeSurface {

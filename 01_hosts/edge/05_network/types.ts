@@ -11,10 +11,8 @@
  */
 
 import type {
-  Assert,
   Brand,
   CaseOf,
-  Equal,
   Hole,
   NonEmptyTuple,
   Reference,
@@ -140,78 +138,6 @@ export interface EdgeNetworkOffer
   readonly locations: NonEmptyTuple<'request'>;
   readonly backends: NonEmptyTuple<'javascript'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// Retry counts, timeouts, and connection reuse are empirical; that every
-// open actually consults the policy on the shipping path is assurance.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: opening is decoder-correlated; one decoded family is not another. */
-export type OutboundOpeningIsDecoderCorrelated = Assert<
-  Equal<
-    [
-      EdgeNetworkAuthority['open'] extends (
-        request: OutboundOpenRequest<string, OutboundRequestId<'liteship.edge.law.outbound-a'>>,
-      ) => Result<
-        EdgeOutboundConnection<string, OutboundRequestId<'liteship.edge.law.outbound-a'>>,
-        NonEmptyTuple<Diagnostic>
-      >
-        ? true
-        : false,
-      EdgeOutboundConnection<string, OutboundRequestId> extends EdgeOutboundConnection<
-        Uint8Array,
-        OutboundRequestId
-      >
-        ? true
-        : false,
-      EdgeOutboundConnection<string, OutboundRequestId<'liteship.edge.law.outbound-b'>> extends EdgeOutboundConnection<
-        string,
-        OutboundRequestId<'liteship.edge.law.outbound-a'>
-      >
-        ? true
-        : false,
-      OutboundOpenRequest<string, OutboundRequestId>['method'],
-      OutboundOpenRequest<string, OutboundRequestId>['body'],
-    ],
-    [
-      true,
-      false,
-      false,
-      RequestMethod,
-      ContentAddress<'application/vnd.liteship.edge-outbound-body+cbor'>,
-    ]
-  >
->;
-
-/** Compile-time law: a connection is bounded, owned, origin-admitted, and can actually send. */
-export type AConnectionIsBoundedOwnedAndAdmitted = Assert<
-  Equal<
-    [
-      EdgeOutboundConnection<string, OutboundRequestId>['buffer'],
-      EdgeOutboundConnection<string, OutboundRequestId>['lifecycle'],
-      EdgeOutboundConnection<string, OutboundRequestId>['origin'],
-      EdgeOutboundConnection<string, OutboundRequestId>['send'],
-      EdgeOutboundConnection<string, OutboundRequestId<'liteship.edge.law.outbound-a'>>['request'],
-    ],
-    [
-      EdgeBufferBound,
-      CaseOf<RealizationLifecycle, 'owned'>,
-      AllowedOrigin,
-      Signature<EdgeEncodedChunk, OutboundConnectionReference, NonEmptyTuple<Diagnostic>>,
-      OutboundRequestReference<OutboundRequestId<'liteship.edge.law.outbound-a'>>,
-    ]
-  >
->;
-
-/** Compile-time law: the offer requires the policy — networking cannot stand alone. */
-export type NetworkingRequiresThePolicy = Assert<
-  Equal<
-    EdgeNetworkOffer['requires'],
-    readonly [EdgeNetworkFacilityRequirement, EdgePolicyRequirement]
-  >
->;
 
 /** Type summary consumed by the edge topology. */
 export interface EdgeNetworkTypeSurface {

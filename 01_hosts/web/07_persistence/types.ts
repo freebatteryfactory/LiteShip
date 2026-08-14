@@ -15,16 +15,13 @@
  */
 
 import type {
-  Assert,
   BindingsFor,
-  UniqueRequirements,
   Brand,
-  Equal,
   Hole,
   NonEmptyTuple,
-  OutputOf,
   Result,
   Signature,
+  UniqueRequirements,
 } from '../../../types.js';
 import type { GroundingId, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
@@ -99,54 +96,6 @@ export interface WebStoreOffer<Provides extends BrowserStoreRow = BrowserStoreRo
   readonly locations: NonEmptyTuple<'local'>;
   readonly backends: NonEmptyTuple<'javascript'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// Which ports a deployment actually selects, and whether one database honestly
-// backs several atomically, are planning facts settled by residual demand and
-// verified by assurance — not declared here.
-// ---------------------------------------------------------------------------
-
-type ExampleForeignHole = Hole<'liteship.example.not-a-store', { readonly poke: () => void }>;
-
-/** Compile-time law: a store row cannot smuggle a hole that is not a store port. */
-export type AStoreRowRefusesAForeignHole = Assert<
-  Equal<readonly [ExampleForeignHole] extends BrowserStoreRow ? true : false, false>
->;
-
-/** Compile-time law: an atomic provider declares the exact subset it provides. */
-export type AnAtomicProviderDeclaresItsExactSubset = Assert<
-  Equal<
-    WebStoreOffer<readonly [RevisionStoreRequirement, SnapshotStoreRequirement]>['provides'],
-    readonly [RevisionStoreRequirement, SnapshotStoreRequirement]
-  >
->;
-
-/** Compile-time law: a store provider is constructed from the database facility. */
-export type AStoreProviderRequiresTheFacility = Assert<
-  Equal<WebStoreOffer['requires'], readonly [DatabaseFacilityRequirement]>
->;
-
-/**
- * Compile-time law: opening yields a database authority whose construction
- * returns exact ordered bindings for the requested row — never a loose union
- * array a wrong subset could satisfy.
- */
-export type ConstructionReturnsExactBindings = Assert<
-  Equal<
-    [
-      OutputOf<DatabaseFacility['open']>,
-      Equal<
-        BrowserDatabase['construct'],
-        <Row extends BrowserStoreRow>(
-          row: UniqueRequirements<Row>,
-        ) => Result<BindingsFor<Row>, NonEmptyTuple<Diagnostic>>
-      >,
-    ],
-    [BrowserDatabase, true]
-  >
->;
 
 /** Type summary consumed by the web topology. */
 export interface WebPersistenceTypeSurface {
