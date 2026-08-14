@@ -16,8 +16,8 @@ Project one crossing into a command invocation, keeping the answer separable fro
 
 - The stream distinction, named by role rather than by file descriptor.
 - What one crossing writes and where.
-- The exit algebra: four arms, of which one is success.
-- The disposition, which pins an exit arm per crossing arm wherever only one is honest.
+- The exit algebra: six arms, of which one is success.
+- The disposition, which pins both the receipt outcome and the exit arm on every arm.
 
 ## Does not own
 
@@ -35,16 +35,26 @@ The exposure, admission, and exchange types are not parameterized by the caller.
 
 Did the crossing work, and did the operation approve? A shell sees `0` and continues.
 
-`CliExit` has four arms because four distinguishable things happen:
+`CliExit` has six arms because six distinguishable things happen — the four outcomes an operation can reach, plus two it never reached:
 
 - **success** — the crossing completed and the operation succeeded.
 - **refusedByOperation** — the crossing completed and the operation said no. The tool worked; the answer is no. A human must not be shown a stack trace and a shell must not treat this as a crash.
+- **failed** — the crossing completed and the operation errored.
+- **cancelled** — the crossing completed and the operation was cancelled. Not a failure by it and not a refusal by it.
 - **usage** — nothing ran. Bad arguments, unknown command.
 - **interrupted** — the operation ran and its answer never made it out. The process died between the side effect and the flush, and a wrapper script must not retry this blindly.
 
 Collapsing `refusedByOperation` into `usage` is the ordinary shape — one nonzero code for everything that is not success — and it tells a user who typed a correct command that they typed it wrong.
 
-The answered arm is deliberately *not* pinned to success. An operation that refused arrived perfectly well, and forcing success there is the CLI form of a `200` hiding a rejection.
+### The split was half done, which is worse than not splitting
+
+There used to be one `answered` arm carrying any completed crossing beside an independently chosen exit, and four exit arms rather than six. The comment above it said the exit was a function of the outcome. Nothing made it one.
+
+Two consequences, and the second is the ugly one. A receipt reading `failed` sat beside `exit: success` and composed without complaint, because the only law on the subject checked that the *other two* crossing arms could not reach success — cross-arm exclusion, while the arm where an operation actually runs went unrelated. And `failed` and `cancelled` had no exit arm at all, so a failing command did not merely *permit* a false success, it had nothing else available: the type forced the lie for two of the four outcomes.
+
+Four completed arms now, one per outcome, each pinning the receipt outcome and the exit together. `succeeded` is the only arm carrying an answer value — a failing command previously had to produce an `Output` it did not have, so the answer stream is now absent where there is nothing to put on it rather than present and fabricated.
+
+This file opens by naming one integer asked to carry two questions. It had answered the transport question and left the operation question free, which reads as done from the outside.
 
 ## Two streams are one channel if anybody mixes them
 
@@ -54,10 +64,10 @@ Both members pin their stream to a literal, so the separation is construction ra
 
 ## Laws
 
-- Success is unreachable from a crossing that never ran and from one whose answer was lost.
-- A completed crossing may still exit `refusedByOperation`, and may not exit `usage`.
+- The exit is a projection of the operation's outcome: each completed arm's exit is the one honest answer for its outcome, and success is unreachable from the failed arm, the cancelled arm, a crossing that never ran, and one whose answer was lost.
+- A completed arm carries the receipt outcome it names, so the exit is pinned to a transport that said what happened; and only the succeeded arm has an answer stream.
 - The answer and the diagnostics carry different literal streams, with an anti-vacuity partner in case the stream type collapses to one value.
-- The four exit arms stay four, and the outcome algebra they project is pinned alongside them, so a fifth outcome arm makes the question visible here.
+- The six exit arms stay six, and the outcome algebra the first four project is pinned alongside them, so a fifth outcome arm makes the question visible here.
 - A disposition is exact over its operation.
 
 ## Proof obligations
