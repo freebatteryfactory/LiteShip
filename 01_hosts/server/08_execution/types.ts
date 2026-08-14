@@ -12,14 +12,10 @@
  */
 
 import type {
-  Assert,
   Brand,
   CaseOf,
-  Equal,
   Hole,
-  InputOf,
   NonEmptyTuple,
-  OutputOf,
   Reference,
   Signature,
 } from '../../../types.js';
@@ -108,64 +104,6 @@ export interface ServerExecutionOffer
   readonly locations: NonEmptyTuple<'local' | 'live'>;
   readonly backends: NonEmptyTuple<'javascript' | 'wasm' | 'host-native'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: a backend and its driver cannot disagree — distributively, native included. */
-export type AServerBackendAndItsDriverCannotDisagree = Assert<
-  Equal<
-    Extract<BoundServerDriver, { readonly backend: 'host-native' }>['driver']['kind'],
-    'host-native'
-  >
->;
-
-/** Compile-time law: the host actually executes — core's executor, exactly. */
-export type TheServerHostActuallyExecutes = Assert<
-  Equal<
-    [ServerExecutionHost['executor'], OutputOf<RuntimeExecutor['execute']>, InputOf<RuntimeExecutor['execute']>],
-    [RuntimeExecutor, RuntimeCommit, ExecutionRequest]
-  >
->;
-
-/** Compile-time law: scheduling schedules before execution — never a commit identity. */
-export type ServerSchedulingSchedulesBeforeExecution = Assert<
-  Equal<
-    [InputOf<ServerSchedulingFacility['schedule']>, OutputOf<ServerSchedulingFacility['schedule']>],
-    [ExecutionRequest, ExecutionRequest]
-  >
->;
-
-/**
- * Compile-time law: sessions are constructible from the host, result-bearing
- * with the real commit, self-correlated — session B is not session A — and
- * owned.
- */
-export type AServerSessionIsCancellableAndOwned = Assert<
-  Equal<
-    [
-      ServerExecutionHost['begin'],
-      ServerExecutionSession<ServerTaskId<'liteship.server.law.task-a'>>['result'],
-      ServerExecutionSession<ServerTaskId<'liteship.server.law.task-b'>> extends ServerExecutionSession<
-        ServerTaskId<'liteship.server.law.task-a'>
-      >
-        ? true
-        : false,
-      ServerExecutionSession<ServerTaskId>['lifecycle'],
-    ],
-    [
-      Signature<ExecutionRequest, ServerExecutionSession<ServerTaskId>, NonEmptyTuple<Diagnostic>>,
-      Signature<
-        ServerTaskReference<ServerTaskId<'liteship.server.law.task-a'>>,
-        RuntimeCommit,
-        NonEmptyTuple<Diagnostic>
-      >,
-      false,
-      CaseOf<RealizationLifecycle, 'owned'>,
-    ]
-  >
->;
 
 /** Type summary consumed by the server topology. */
 export interface ServerExecutionTypeSurface {

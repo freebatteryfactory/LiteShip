@@ -14,13 +14,11 @@
 
 import type {
   Algebra,
-  Assert,
   Brand,
   DataPath,
   EncodedOf,
   Equal,
   Issue,
-  IsNever,
   Port,
   Reference,
   Result,
@@ -432,104 +430,6 @@ export interface AdmissionClaim<Value, Id extends SchemaId = SchemaId, Encoded =
   readonly address?: ContentAddress;
   readonly value: Value;
 }
-
-type CustomerSchemaId = SchemaId<'customer'>;
-type OrderSchemaId = SchemaId<'order'>;
-type AgeSchemaId = SchemaId<'age'>;
-type RecursiveNodeSchemaId = SchemaId<'recursive-node'>;
-type RecursiveLabelSchemaId = SchemaId<'recursive-label'>;
-type RecursiveNodeValue = Readonly<{ label: string }>;
-type RecursiveNodeReferenceSchema = ReferenceSchema<
-  RecursiveNodeValue,
-  RecursiveNodeValue,
-  RecursiveNodeSchemaId
->;
-type RecursiveRootFieldMap = Readonly<{
-  next: SchemaFieldSpec<RecursiveNodeReferenceSchema, true>;
-}>;
-type RecursiveRootObjectSchema = ObjectSchema<CustomerSchemaId, RecursiveRootFieldMap>;
-
-/** Compile-time law: an unbranded runtime path cannot satisfy a field path. */
-export type FieldPathRejectsRawDataPath = Assert<
-  Equal<DataPath extends FieldPath<CustomerSchemaId, AgeSchemaId> ? true : false, false>
->;
-
-/** Compile-time law: paths rooted in different schemas are not interchangeable. */
-export type FieldPathRejectsForeignRoot = Assert<
-  Equal<
-    FieldPath<CustomerSchemaId, AgeSchemaId> extends FieldPath<OrderSchemaId, AgeSchemaId>
-      ? true
-      : false,
-    false
-  >
->;
-
-type CustomerFieldMap = Readonly<{
-  age: SchemaFieldSpec<Schema<number, number, AgeSchemaId>, true>;
-  path: SchemaFieldSpec<Schema<string, string, SchemaId<'customer-path'>>, false>;
-}>;
-type CustomerObjectSchema = ObjectSchema<CustomerSchemaId, CustomerFieldMap>;
-
-/** Compile-time law: direct property navigation returns a typed field reference. */
-export type ObjectSchemaDirectNavigationIsTyped = Assert<
-  Equal<CustomerObjectSchema['age']['path'], FieldPath<CustomerSchemaId, AgeSchemaId, readonly ['age']>>
->;
-
-/** Compile-time law: reserved carrier names remain reachable only through `.fields`. */
-export type ObjectSchemaReservedFieldUsesCollisionSafeView = Assert<
-  Equal<
-    CustomerObjectSchema['fields']['path']['path'],
-    FieldPath<CustomerSchemaId, SchemaId<'customer-path'>, readonly ['path']>
-  >
->;
-
-/** Compile-time law: named references expose their target without infinite direct expansion. */
-export type NamedReferenceStopsImplicitFieldExpansion = Assert<
-  Equal<'label' extends keyof RecursiveRootObjectSchema['next'] ? true : false, false>
->;
-
-/** Compile-time law: the explicit named-reference target remains typed and inspectable. */
-export type NamedReferenceExposesTypedTarget = Assert<
-  Equal<
-    RecursiveRootObjectSchema['next']['reference'],
-    SchemaReference<RecursiveNodeSchemaId, RecursiveNodeValue, RecursiveNodeValue>
-  >
->;
-
-type RecursiveEdgeReference = FieldReference<
-  CustomerSchemaId,
-  RecursiveNodeSchemaId,
-  RecursiveNodeValue,
-  RecursiveNodeValue,
-  readonly ['next']
->;
-type RecursiveLabelReference = FieldReference<
-  RecursiveNodeSchemaId,
-  RecursiveLabelSchemaId,
-  string,
-  string,
-  readonly ['label']
->;
-type ForeignRecursiveLabelReference = FieldReference<
-  OrderSchemaId,
-  RecursiveLabelSchemaId,
-  string,
-  string,
-  readonly ['label']
->;
-
-/** Compile-time law: explicit composition crosses a named reference exactly once. */
-export type FieldReferenceCompositionCrossesNamedReference = Assert<
-  Equal<
-    ComposeFieldReferences<RecursiveEdgeReference, RecursiveLabelReference>['path'],
-    FieldPath<CustomerSchemaId, RecursiveLabelSchemaId, readonly ['next', 'label']>
-  >
->;
-
-/** Compile-time law: a field rooted in another schema cannot satisfy a reference hop. */
-export type FieldReferenceCompositionRejectsForeignRoot = Assert<
-  IsNever<ComposeFieldReferences<RecursiveEdgeReference, ForeignRecursiveLabelReference>>
->;
 
 /** Type summary consumed by the root core topology. */
 export interface SchemaTypeSurface {

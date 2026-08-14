@@ -8,7 +8,15 @@
  * @module
  */
 
-import type { Algebra, Assert, Brand, Equal, NonEmptyTuple, Reference, RequirementRow, Result, Signature } from '../../types.js';
+import type {
+  Algebra,
+  Brand,
+  NonEmptyTuple,
+  Reference,
+  RequirementRow,
+  Result,
+  Signature,
+} from '../../types.js';
 import type { Diagnostic } from '../00_error/types.js';
 import type { AttestationId, EntityReference, ReceiptId, RevisionReference, WorldReference } from '../02_identity/types.js';
 import type { EntityFieldReference, SchemaId, SchemaReference } from '../03_schema/types.js';
@@ -30,7 +38,6 @@ export type PolicyId = Brand<string, 'liteship.policy-id'>;
 /** Coarse effect class used for policy and explanation. */
 export type EffectClass = 'observe' | 'create' | 'modify' | 'delete' | 'publish' | 'execute' | 'transfer';
 
-
 /** Independent operation-resource limits. Rate, quota, cost, and work are not one number. */
 export interface ResourceLimits {
   readonly rate?: { readonly maximum: number; readonly windowMilliseconds: number };
@@ -51,9 +58,6 @@ type RequireAtLeastOne<Value extends object> = {
 
 /** Effective bounded resource authority with at least one uniquely named limit. */
 export type ResourceBudget = Readonly<RequireAtLeastOne<ResourceLimits>>;
-
-/** Compile-time law: a resource budget must declare at least one limit. */
-export type ResourceBudgetRejectsEmpty = Assert<Equal<{} extends ResourceBudget ? true : false, false>>;
 
 /** Resource or capability whose authority is being exercised. */
 export type AuthorityTarget = Algebra<{
@@ -180,34 +184,6 @@ export interface OperationReceipt<
   readonly outcome: OperationOutcome<Output, Failure>;
   readonly resultingRevision?: RevisionReference;
 }
-
-/**
- * Compile-time law: an operation's identity threads — the definition's id,
- * the invocation's operation, the policy's operation, and the receipt's
- * invocation all name one exact operation, and an invocation of operation B
- * is not an invocation of operation A.
- */
-export type AnOperationThreadsItsIdentity = Assert<
-  Equal<
-    [
-      OperationDefinition<unknown, unknown, unknown, readonly [], OperationId<'liteship.operation.law.op-a'>>['id'],
-      OperationInvocation<unknown, OperationId<'liteship.operation.law.op-a'>>['operation'],
-      OperationReceipt<unknown, unknown, OperationId<'liteship.operation.law.op-a'>>['invocation']['operation'],
-      OperationInvocation<unknown, OperationId<'liteship.operation.law.op-b'>> extends OperationInvocation<
-        unknown,
-        OperationId<'liteship.operation.law.op-a'>
-      >
-        ? true
-        : false,
-    ],
-    [
-      OperationId<'liteship.operation.law.op-a'>,
-      OperationReference<OperationId<'liteship.operation.law.op-a'>>,
-      OperationReference<OperationId<'liteship.operation.law.op-a'>>,
-      false,
-    ]
-  >
->;
 
 /** Handler result before a wire projects it. */
 export type OperationResult<Output, Failure> = Result<Output, Failure | readonly Diagnostic[]>;

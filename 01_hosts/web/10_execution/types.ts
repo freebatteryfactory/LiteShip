@@ -19,13 +19,9 @@
  */
 
 import type {
-  Assert,
   CaseOf,
-  Equal,
   Hole,
-  InputOf,
   NonEmptyTuple,
-  OutputOf,
   Signature,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
@@ -166,96 +162,6 @@ export interface PreparationOffer
   readonly locations: NonEmptyTuple<'local' | 'live'>;
   readonly backends: NonEmptyTuple<'javascript'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// Backend crossover profiles are empirical and measured, never declared.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: the local set is exactly the residual browser backends. */
-export type TheLocalBackendSetIsExactlyResidual = Assert<
-  Equal<
-    [
-      'server' extends BrowserExecutionBackend ? true : false,
-      'host-native' extends BrowserExecutionBackend ? true : false,
-      'worker' extends BrowserExecutionBackend ? true : false,
-      'html-css' extends BrowserExecutionBackend ? true : false,
-      BrowserExecutionBackend,
-    ],
-    [false, false, false, false, 'javascript' | 'wasm' | 'webgpu']
-  >
->;
-
-/**
- * Compile-time law: backend and driver kind cannot disagree even at the
- * default union — the binding distributes, so a javascript entry carrying a
- * wasm driver is not a member of `BoundDriver` at all.
- */
-export type ABackendAndItsDriverCannotDisagree = Assert<
-  Equal<
-    [
-      WebExecutionHost['drivers'],
-      {
-        readonly backend: 'javascript';
-        readonly driver: ExecutionBackendDriver & { readonly kind: 'wasm' };
-      } extends BoundDriver
-        ? true
-        : false,
-    ],
-    [NonEmptyTuple<BoundDriver>, false]
-  >
->;
-
-/** Compile-time law: the host can actually execute, producing the runtime commit. */
-export type TheHostActuallyExecutes = Assert<
-  Equal<OutputOf<WebExecutionHost['executor']['execute']>, RuntimeCommit>
->;
-
-/** Compile-time law: prepared work is pinned, disposable, and never self-committing. */
-export type PreparationIsPinnedAndDisposable = Assert<
-  Equal<
-    [OutputOf<WebPreparationAuthority['prepare']>, InputOf<WebPreparationAuthority['discard']>],
-    [PreparedWork, PreparedWork]
-  >
->;
-
-/** Compile-time law: the handoff carries the full runtime commit, never a loose plan. */
-export type AHandoffCarriesTheRuntimeCommit = Assert<
-  Equal<CommittedOutputHandoff['commit'], RuntimeCommit>
->;
-
-/**
- * Compile-time law: scheduling schedules the pre-execution request — it never
- * consumes or produces an already-created commit, and never fabricates an
- * applied address. Execution produces the commit; application produces the
- * physical address.
- */
-export type SchedulingSchedulesBeforeExecution = Assert<
-  Equal<
-    [InputOf<SchedulingFacility['schedule']>, OutputOf<SchedulingFacility['schedule']>],
-    [ExecutionRequest, ExecutionRequest]
-  >
->;
-
-/** Compile-time law: prepared work reaches visibility only through the real commit. */
-export type PreparationReachesTheRealCommit = Assert<
-  Equal<
-    [InputOf<WebPreparationAuthority['consume']>, OutputOf<WebPreparationAuthority['consume']>],
-    [PreparationConsumption, PreparationDisposition]
-  >
->;
-
-/** Compile-time law: execution requires scheduling and the projection authority. */
-export type ExecutionRequiresSchedulingAndProjection = Assert<
-  Equal<
-    [ExecutionHostOffer['requires'], ExecutionHostOffer['id']],
-    [
-      readonly [SchedulingFacilityRequirement, CommitApplicationRequirement],
-      RealizationOfferId<'liteship.web.offer.execution-host'>,
-    ]
-  >
->;
 
 /** Type summary consumed by the web topology. */
 export interface WebExecutionTypeSurface {

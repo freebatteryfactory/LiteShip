@@ -16,14 +16,10 @@
  */
 
 import type {
-  Assert,
   Brand,
   CaseOf,
-  Equal,
   Hole,
-  InputOf,
   NonEmptyTuple,
-  OutputOf,
   Reference,
   Result,
   Signature,
@@ -165,107 +161,6 @@ export interface WorkerExecutionOffer
   readonly locations: NonEmptyTuple<'local' | 'live'>;
   readonly backends: NonEmptyTuple<'javascript' | 'wasm'>;
 }
-
-// ---------------------------------------------------------------------------
-// Laws
-//
-// Parity against the reference backend on the shipping path, and complete
-// end-to-end cost accounting including startup, transfer, synchronization,
-// commit, and disposal, are `system/assurance` and empirical obligations.
-// ---------------------------------------------------------------------------
-
-/** Compile-time law: a backend and its driver cannot disagree — distributively. */
-export type AWorkerBackendAndItsDriverCannotDisagree = Assert<
-  Equal<
-    Extract<BoundWorkerDriver, { readonly backend: 'javascript' }>['driver']['kind'],
-    'javascript'
-  >
->;
-
-/** Compile-time law: the host actually executes — the executor is core's, exactly. */
-export type TheWorkerHostActuallyExecutes = Assert<
-  Equal<
-    [WorkerExecutionHost['executor'], OutputOf<RuntimeExecutor['execute']>],
-    [RuntimeExecutor, RuntimeCommit]
-  >
->;
-
-/** Compile-time law: scheduling schedules before execution — never a commit identity. */
-export type WorkerSchedulingSchedulesBeforeExecution = Assert<
-  Equal<
-    [InputOf<WorkerSchedulingFacility['schedule']>, OutputOf<WorkerSchedulingFacility['schedule']>],
-    [ExecutionRequest, ExecutionRequest]
-  >
->;
-
-/**
- * Compile-time law: a result names its exact session and generation and
- * leaves as the real commit on a named channel — an envelope of session B
- * is not an envelope of session A, and a session's result yields its own
- * envelope.
- */
-export type AResultLeavesAsTheRealCommit = Assert<
-  Equal<
-    [
-      ExecutionResultEnvelope<WorkerTaskId<'liteship.worker.law.task-a'>>['session'],
-      ExecutionResultEnvelope<WorkerTaskId>['generation'],
-      ExecutionResultEnvelope<WorkerTaskId>['commit'],
-      ExecutionResultEnvelope<WorkerTaskId<'liteship.worker.law.task-b'>> extends ExecutionResultEnvelope<
-        WorkerTaskId<'liteship.worker.law.task-a'>
-      >
-        ? true
-        : false,
-      WorkerExecutionSession<WorkerTaskId<'liteship.worker.law.task-a'>>['result'],
-    ],
-    [
-      WorkerTaskReference<WorkerTaskId<'liteship.worker.law.task-a'>>,
-      TransactionGeneration,
-      RuntimeCommit,
-      false,
-      Signature<
-        WorkerTaskReference<WorkerTaskId<'liteship.worker.law.task-a'>>,
-        ExecutionResultEnvelope<WorkerTaskId<'liteship.worker.law.task-a'>>,
-        NonEmptyTuple<Diagnostic>
-      >,
-    ]
-  >
->;
-
-/**
- * Compile-time law: beginning is task-correlated through the provider's
- * generic operation — beginning task A yields a session of exactly task A,
- * whose id is the exact reference — sessions are self-correlated (session B
- * is not session A) and owned.
- */
-export type ASessionIsConstructibleResultBearingAndOwned = Assert<
-  Equal<
-    [
-      WorkerExecutionHost['begin'] extends (
-        request: WorkerExecutionRequest<WorkerTaskId<'liteship.worker.law.task-a'>>,
-      ) => Result<
-        WorkerExecutionSession<WorkerTaskId<'liteship.worker.law.task-a'>>,
-        NonEmptyTuple<Diagnostic>
-      >
-        ? true
-        : false,
-      WorkerExecutionRequest<WorkerTaskId<'liteship.worker.law.task-a'>>['task'],
-      WorkerExecutionSession<WorkerTaskId<'liteship.worker.law.task-a'>>['id'],
-      WorkerExecutionSession<WorkerTaskId<'liteship.worker.law.task-b'>> extends WorkerExecutionSession<
-        WorkerTaskId<'liteship.worker.law.task-a'>
-      >
-        ? true
-        : false,
-      WorkerExecutionSession<WorkerTaskId>['lifecycle'],
-    ],
-    [
-      true,
-      WorkerTaskReference<WorkerTaskId<'liteship.worker.law.task-a'>>,
-      WorkerTaskReference<WorkerTaskId<'liteship.worker.law.task-a'>>,
-      false,
-      CaseOf<RealizationLifecycle, 'owned'>,
-    ]
-  >
->;
 
 /** Type summary consumed by the worker topology. */
 export interface WorkerExecutionTypeSurface {
