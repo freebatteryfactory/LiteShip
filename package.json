@@ -8,10 +8,12 @@
     "check:types": "tsc -p tsconfig.json",
     "check:zero-runtime": "node system/01_assurance/00_audit/zero-runtime.mjs",
     "typecheck": "npm run check:types",
-    "check": "npm run check:types && npm run check:zero-runtime && npm run check:imports",
-    "check:imports": "node system/01_assurance/00_audit/import-boundary.mjs ."
+    "check": "npm run check:types && npm run check:lint && npm run check:zero-runtime && npm run check:imports",
+    "check:imports": "node system/01_assurance/00_audit/import-boundary.mjs .",
+    "check:lint": "oxlint --deny-warnings ."
   },
   "devDependencies": {
+    "oxlint": "^1.78.0",
     "typescript": "7.0.2"
   }
 }

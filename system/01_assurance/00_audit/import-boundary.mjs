@@ -88,7 +88,7 @@ const dirsOf = (file) => file.split('/').slice(0, -1);
  */
 const bandOf = (segment, depth) => {
   if (depth === 0 && segment === 'system') return Number.MAX_SAFE_INTEGER;
-  const match = /^(\d+)_/.exec(segment);
+  const match = /^(\d+)_/u.exec(segment);
   return match ? Number(match[1]) : undefined;
 };
 
@@ -147,10 +147,10 @@ for (const file of files) {
   const source = readFileSync(join(ROOT, file), 'utf8');
   const resolved = [];
 
-  for (const match of source.matchAll(/\bfrom\s+'(\.[^']*)'/g)) {
+  for (const match of source.matchAll(/\bfrom\s+'(\.[^']*)'/gu)) {
     const specifier = match[1];
     const base = posix(normalize(join(dirname(file), specifier)));
-    const candidates = [base.replace(/\.js$/, '.ts'), base.replace(/\.js$/, '.d.ts'), base];
+    const candidates = [base.replace(/\.js$/u, '.ts'), base.replace(/\.js$/u, '.d.ts'), base];
     const target = candidates.find((c) => known.has(c));
 
     if (!target) {

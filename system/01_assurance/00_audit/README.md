@@ -114,6 +114,21 @@ Three cases, one rule, no roles and no exception list — which matters, because
 
 Every class refused: downstream, peer, sibling, cycle, unresolved. Every one of the 652 real edges admitted, including the six shapes most likely to be false positives — the numbered waterfall in core and in system, system reaching upstream into core, both compile-only files importing children, and an umbrella reaching into its own child.
 
+## Lint covers the executables, and nothing else needs it
+
+ at the root is a linter configuration and never a formatter. A formatter that escapes slashes differently across Windows and macOS has already cost this project a codebase, and no script here carries .
+
+The repository is declaration-only except for the two  files in this home, so the entire class of defect a linter exists for — unreachable code, loose equality, floating promises, shadowed bindings — can only occur in them. They are the files that check everything else, which is exactly why they are worth linting: a broken checker reports confidently and wrongly, and this session produced six of those by hand.
+
+Measured before enabling, against eight planted defects:
+
+- The default correctness set produces **zero** findings on this tree and catches three of eight.
+- Adding  and  catches all eight and produces **ninety-four** findings on code written deliberately — fifty-six of them  firing on the  in root's , which is the standard idiom and load-bearing, and twenty-nine , which is a preference about file length rather than a defect.
+
+So: correctness in full, plus the four specific rules that caught a defect the default set missed — , , , . That configuration catches six of eight with zero findings on the tree. The two it still misses, an unreachable branch and an async callback passed to , need rules that bring noise with them, and six with no false positives is worth more than eight with ninety-four.
+
+ found four real ones on its first run, all in , all mine. Fixed rather than waived — which is the only move available, since there is no waiver mechanism.
+
 ## Implementation boundary
 
 No product runtime implementation exists here.

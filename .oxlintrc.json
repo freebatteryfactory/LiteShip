@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "deny"
+  },
+  "rules": {
+    "eqeqeq": "deny",
+    "no-self-compare": "deny",
+    "no-array-constructor": "deny",
+    "require-unicode-regexp": "deny"
+  },
+  "ignorePatterns": ["node_modules"]
+}
