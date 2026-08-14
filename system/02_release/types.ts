@@ -53,7 +53,7 @@ import type {
   WorkspaceSnapshotReference,
 } from '../00_workspace/types.js';
 import type { AssuranceRunSpec, AssuranceRunSpecId } from '../01_assurance/types.js';
-import type { AssuranceResult } from '../01_assurance/01_gauntlet/types.js';
+import type { AssuranceResult, ReleaseGradeResult } from '../01_assurance/01_gauntlet/types.js';
 
 // ---------------------------------------------------------------------------
 // Packaging
@@ -147,11 +147,19 @@ export type ReleaseCandidateReference<Id extends ReleaseCandidateId = ReleaseCan
 /**
  * Whether a candidate is allowed to ship.
  *
- * The qualified arm carries `CaseOf<AssuranceResult, 'passed'>` — the passed
- * arm specifically, never the full algebra. Widening it to `AssuranceResult`
- * would readmit `blocked` and restore self-qualification, which is why a law
- * below pins the exact arm rather than merely pinning that some result is
- * present.
+ * The qualified arm carries `ReleaseGradeResult` — a strict narrowing of the
+ * passed arm, never the full algebra. Widening it to `AssuranceResult` would
+ * readmit `blocked` and restore self-qualification, which is why a law below
+ * pins the exact type rather than merely pinning that some result is present.
+ *
+ * It carried the passed arm itself until an escape was found underneath it.
+ * `passed` means *what this run required was satisfied*, so a specification
+ * whose checks are all informational narrows no position and a refuted
+ * evaluation rides inside a passing result. That result then qualified a
+ * candidate, and a shipment went out on a run whose only check failed, with
+ * every law green. `ReleaseGradeResult` holds every planned position to the
+ * satisfied outcome regardless of consequence, which is the release's question
+ * rather than the run's.
  *
  * One member, not two. A qualification used to carry an authority and a receipt
  * side by side, and their agreement was prose.
@@ -169,7 +177,7 @@ export type ReleaseQualification<
   Spec extends AssuranceRunSpec = AssuranceRunSpec,
 > = Algebra<{
   unqualified: { readonly reason: string; readonly diagnostics: readonly Diagnostic[] };
-  qualified: { readonly result: CaseOf<AssuranceResult<Snapshot, Spec>, 'passed'> };
+  qualified: { readonly result: ReleaseGradeResult<Snapshot, Spec> };
 }>;
 
 /**
@@ -356,14 +364,18 @@ export interface Withdrawal<
 export type AReleaseCannotQualifyItself = Assert<
   Equal<
     [
+      Equal<CaseOf<ReleaseQualification, 'qualified'>['result'], ReleaseGradeResult>,
       Equal<CaseOf<ReleaseQualification, 'qualified'>['result'], CaseOf<AssuranceResult, 'passed'>>,
+      CaseOf<ReleaseQualification, 'qualified'>['result'] extends CaseOf<AssuranceResult, 'passed'>
+        ? true
+        : false,
       AssuranceResult extends CaseOf<ReleaseQualification, 'qualified'>['result'] ? true : false,
       'authority' extends keyof CaseOf<ReleaseQualification, 'qualified'>['result'] ? true : false,
       'snapshot' extends keyof CaseOf<ReleaseQualification, 'qualified'>['result'] ? true : false,
       'evaluations' extends keyof CaseOf<ReleaseQualification, 'qualified'>['result'] ? true : false,
       Equal<TagOf<ReleaseQualification>, 'unqualified' | 'qualified'>,
     ],
-    [true, false, false, true, true, true]
+    [true, false, true, false, false, true, true, true]
   >
 >;
 

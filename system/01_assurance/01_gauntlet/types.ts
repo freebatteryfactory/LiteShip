@@ -210,6 +210,26 @@ export type SatisfiedPlannedEvaluations<Checks extends NonEmptyTuple<PlannedChec
     : PlannedEvaluations<Checks>[Position];
 };
 
+/**
+ * Every planned position satisfied, whatever this run said it required.
+ *
+ * `passed` means *what this run required came out satisfied*, which is the
+ * right meaning for a run and the wrong prerequisite for a shipment. A spec
+ * whose every check is informational narrows no position, so a run in which a
+ * check was refuted still produces a `passed` result — correctly, because the
+ * run did not require that answer.
+ *
+ * A release is a different question. It is not asking whether some invocation
+ * got what it asked for; it is asking whether anything came out wrong. This is
+ * that question, and it is why an editor-grade run cannot qualify a shipment
+ * even when it passed: informational positions are held to the same standard
+ * here, so a refuted check blocks a release while still not blocking the
+ * editor invocation that ran it.
+ */
+export type FullySatisfiedEvaluations<Checks extends NonEmptyTuple<PlannedCheck>> = {
+  readonly [Position in keyof Checks]: SatisfiedEvaluationOf<Checks[Position]>;
+};
+
 // ---------------------------------------------------------------------------
 // Verdict
 // ---------------------------------------------------------------------------
@@ -279,6 +299,25 @@ export type AssuranceResult<
     readonly address: ContentAddress<'application/vnd.liteship.assurance-result+cbor'>;
   };
 }>;
+
+/**
+ * A passing result in which nothing came out wrong.
+ *
+ * The narrower prerequisite a shipment consumes. `passed` answers the run's
+ * question; this answers the release's. The two differ exactly on the
+ * informational positions, and that difference is the whole escape it closes:
+ * a specification of one informational check produces a passing result whose
+ * single evaluation may be `refuted`, and the broad qualification arm accepted
+ * it. A release then consumed a candidate whose only assurance run contained a
+ * known defect, with every law in the repository green.
+ */
+export type ReleaseGradeResult<
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
+> = Refine<
+  CaseOf<AssuranceResult<Snapshot, Spec>, 'passed'>,
+  { readonly evaluations: FullySatisfiedEvaluations<Spec['checks']> }
+>;
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -542,6 +581,62 @@ export type AnAssuranceResultIsExactOverItsSpecification = Assert<
         Equal<CaseOf<AssuranceResult<SnapshotLawA, SpecLawA>, 'passed'>['spec'], SpecLawA>,
       ],
       [false, true, false, true]
+    >
+  >
+>;
+
+type InformationalSpecLaw = AssuranceRunSpec<
+  AssuranceRunSpecId<'law.spec.informational'>,
+  readonly [InformationalCheckB]
+>;
+
+/**
+ * Compile-time law: a run that required nothing cannot qualify a shipment.
+ *
+ * The escape this closes was reachable with every law green. A specification
+ * whose checks are all informational narrows no position in the passing arm —
+ * correctly, because the run did not require those answers. So an evaluation
+ * that came out `refuted` sat inside a result tagged `passed`, and the release
+ * qualification's arm accepted any passing result. A candidate could be
+ * qualified, published, and shipped on the strength of a run whose only check
+ * failed.
+ *
+ * `passed` is the run's question and it is the wrong prerequisite for a
+ * release, which is not asking whether some invocation got what it asked for
+ * but whether anything came out wrong.
+ *
+ * Line one is the gap made visible: on an all-informational spec the passing
+ * arm and the fully-satisfied population are different types. Line two is the
+ * refusal that matters — a merely-passing editor result is not release grade.
+ * Line three is the lawful direction, so the narrowing did not invert. Line
+ * four is the anti-vacuity partner, without which a `never` would satisfy both
+ * refusals. Line five is the control: where every check is required, the two
+ * coincide, so this law is measuring the informational positions rather than
+ * asserting that two differently-spelled types differ.
+ */
+export type AnInformationalRunCannotQualifyARelease = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          CaseOf<AssuranceResult<SnapshotLawA, InformationalSpecLaw>, 'passed'>['evaluations'],
+          FullySatisfiedEvaluations<InformationalSpecLaw['checks']>
+        >,
+        CaseOf<AssuranceResult<SnapshotLawA, InformationalSpecLaw>, 'passed'> extends
+          ReleaseGradeResult<SnapshotLawA, InformationalSpecLaw>
+          ? true
+          : false,
+        ReleaseGradeResult<SnapshotLawA, InformationalSpecLaw> extends
+          CaseOf<AssuranceResult<SnapshotLawA, InformationalSpecLaw>, 'passed'>
+          ? true
+          : false,
+        [ReleaseGradeResult<SnapshotLawA, InformationalSpecLaw>] extends [never] ? true : false,
+        Equal<
+          CaseOf<AssuranceResult<SnapshotLawA, SpecLawA>, 'passed'>['evaluations'],
+          FullySatisfiedEvaluations<SpecLawA['checks']>
+        >,
+      ],
+      [false, false, true, false, true]
     >
   >
 >;
