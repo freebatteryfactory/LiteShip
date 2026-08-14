@@ -1,5 +1,10 @@
 /**
- * Compile-only child census for `02_wires/`.
+ * Compile-only laws and child census for `02_wires/`.
+ *
+ * Two subjects, one file. The umbrella's own laws are here for the reason root
+ * states about itself — a fixture living in a declaration file becomes part of
+ * that file's addressed public type surface — and the child census is here for
+ * the sharper reason below.
  *
  * `types.ts` owns the shared wire vocabulary -- `WireExchange`, `WireRefusal`,
  * and the exposure and admission grammar -- and `direct/` imports it. So the
@@ -26,7 +31,25 @@
  * @module
  */
 
-import type { Assert, Equal, IsExactlyTrue, Named, Tuple } from '../types.js';
+import type {
+  Assert,
+  CaseOf,
+  Equal,
+  IsExactlyTrue,
+  Named,
+  NonEmptyTuple,
+  TagOf,
+  Tuple,
+} from '../types.js';
+import type { OperationId, OperationReference } from '../00_core/07_operation/types.js';
+import type {
+  WireAdmission,
+  WireCaller,
+  WireDefinition,
+  WireExchange,
+  WireExposure,
+  WireRefusal,
+} from './types.js';
 import type { BrowserWireTypeSurface } from './browser/types.js';
 import type { CliWireTypeSurface } from './cli/types.js';
 import type { DirectWireTypeSurface } from './direct/types.js';
@@ -39,7 +62,7 @@ export interface WireTypeHome<Name extends string, Surface> extends Named<Name> 
 }
 
 /**
- * The children this layer currently has: one, and this one.
+ * The children this layer has.
  *
  * A topology rather than a bare name tuple, and the difference is load-bearing.
  * A roster written as `readonly ['direct']` claims a child exists and cannot
@@ -101,5 +124,128 @@ export type EachEntryNamesItsOwnChildsSurface = Assert<
       ],
       [true, true, true, true, true, true]
     >
+  >
+>;
+
+// ---------------------------------------------------------------------------
+// Laws
+// ---------------------------------------------------------------------------
+
+type WireLawA = OperationId<'liteship.wire.law.op-a'>;
+
+type WireLawB = OperationId<'liteship.wire.law.op-b'>;
+
+
+/**
+ * A refused crossing has no receipt; an undelivered one does.
+ *
+ * This is the central claim of the home. Line three is the one that matters
+ * most in practice: if `undelivered` ever loses its receipt, the fact that the
+ * operation ran becomes unrepresentable and every consumer that retries is
+ * silently wrong.
+ */
+export type ARefusalHasNoReceiptAndAnUndeliveredAnswerDoes = Assert<
+  Equal<
+    [
+      'receipt' extends keyof CaseOf<WireExchange, 'refused'> ? true : false,
+      'receipt' extends keyof CaseOf<WireExchange, 'completed'> ? true : false,
+      'receipt' extends keyof CaseOf<WireExchange, 'undelivered'> ? true : false,
+      'invocation' extends keyof CaseOf<WireExchange, 'refused'> ? true : false,
+      Equal<TagOf<WireExchange>, 'completed' | 'refused' | 'undelivered'>,
+    ],
+    [false, true, true, false, true]
+  >
+>;
+
+
+/**
+ * A wire failure channel is not an operation failure channel.
+ *
+ * `WireRefusal` has no arm carrying an operation outcome, and `WireExchange`
+ * has no `error` arm. An operation that refused or failed arrives as
+ * `completed` with a receipt saying so, because the crossing worked. Merging
+ * the two is how a transport error becomes indistinguishable from a business
+ * refusal.
+ */
+export type ARefusalIsNotAnOperationFailure = Assert<
+  Equal<
+    [
+      Equal<TagOf<WireRefusal>, 'malformed' | 'unrecognized'>,
+      'failed' extends TagOf<WireRefusal> ? true : false,
+      'error' extends TagOf<WireExchange> ? true : false,
+      'outcome' extends keyof CaseOf<WireExchange, 'refused'> ? true : false,
+      Equal<CaseOf<WireRefusal, 'unrecognized'>['requested'], string>,
+    ],
+    [true, false, false, false, true]
+  >
+>;
+
+
+/**
+ * Admission and exchange are exact over the operation.
+ *
+ * The third and sixth lines are the anti-vacuity partners. Without them the
+ * laws pass when the carriers drop the parameter, which is this repository's
+ * signature defect and has now been committed often enough to be checked by
+ * reflex.
+ */
+export type AWireIsExactOverTheOperationItProjects = Assert<
+  Equal<
+    [
+      WireAdmission<unknown, WireLawA> extends WireAdmission<unknown, WireLawB> ? true : false,
+      WireAdmission<unknown, WireLawA> extends WireAdmission<unknown, WireLawA> ? true : false,
+      WireAdmission extends WireAdmission<unknown, WireLawA> ? true : false,
+      WireExchange<unknown, never, WireLawA> extends WireExchange<unknown, never, WireLawB>
+        ? true
+        : false,
+      WireExchange<unknown, never, WireLawA> extends WireExchange<unknown, never, WireLawA>
+        ? true
+        : false,
+      WireExchange extends WireExchange<unknown, never, WireLawA> ? true : false,
+    ],
+    [false, true, false, false, true, false]
+  >
+>;
+
+
+/**
+ * A wire declares no operation semantics.
+ *
+ * Checked by name, because every one of these is a plausible-looking addition
+ * that would move meaning across the boundary into the transport. A wire that
+ * owns a handler is a second place where behaviour lives.
+ */
+export type AWireCarriesNoOperationSemantics = Assert<
+  Equal<
+    [
+      'payload' extends keyof WireDefinition ? true : false,
+      'context' extends keyof WireDefinition ? true : false,
+      'hooks' extends keyof WireDefinition ? true : false,
+      'handler' extends keyof WireDefinition ? true : false,
+      'middleware' extends keyof WireDefinition ? true : false,
+      'schema' extends keyof WireDefinition ? true : false,
+    ],
+    [false, false, false, false, false, false]
+  >
+>;
+
+
+/**
+ * Exposure states its complement, and the caller unlocks nothing.
+ *
+ * The last two lines are the dogfooding proof: neither the exposure nor the
+ * admission type is parameterized by who is calling, so there is no shape in
+ * which a system program travels a path an application cannot.
+ */
+export type ExposureIsStatedAndTheCallerIsNotPrivileged = Assert<
+  Equal<
+    [
+      Equal<WireExposure['exposed'], NonEmptyTuple<OperationReference>>,
+      Equal<WireExposure['withheld'], readonly OperationReference[]>,
+      undefined extends WireExposure['withheld'] ? true : false,
+      Equal<Exclude<keyof CaseOf<WireCaller, 'systemProgram'>, '_tag'>, never>,
+      Equal<Exclude<keyof CaseOf<WireCaller, 'application'>, '_tag'>, never>,
+    ],
+    [true, true, false, true, true]
   >
 >;
