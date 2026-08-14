@@ -72,8 +72,8 @@ export type SharedMemoryRole = 'reader' | 'writer';
 
 /** The declared atomic ordering discipline of one buffer. */
 export type AtomicDiscipline = Algebra<{
-  acquireRelease: {};
-  sequentiallyConsistent: {};
+  acquireRelease: Record<never, never>;
+  sequentiallyConsistent: Record<never, never>;
 }>;
 
 /**

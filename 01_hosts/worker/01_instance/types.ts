@@ -46,19 +46,19 @@ export type WorkerInstanceReference<Id extends WorkerInstanceId = WorkerInstance
  */
 export type WorkerLifecycleState = Algebra<{
   /** Bootstrap admitted; not yet ready to accept work. */
-  admitted: {};
+  admitted: Record<never, never>;
   /** Ready and accepting work. */
   ready: { readonly since: MonotonicNanoseconds };
   /** This realm is draining and will close itself. */
-  closing: {};
+  closing: Record<never, never>;
   /** This realm closed gracefully and recorded its receipt. */
   closed: { readonly receipt: ContentAddress<'application/vnd.liteship.worker-close+cbor'> };
   /** The parent terminated the realm; no worker-side receipt exists. */
-  terminated: {};
+  terminated: Record<never, never>;
   /** The realm crashed; diagnostics are the evidence. */
   crashed: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
   /** The platform withdrew the realm. */
-  withdrawn: {};
+  withdrawn: Record<never, never>;
 }>;
 
 /**

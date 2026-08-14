@@ -181,7 +181,7 @@ for (const start of files) {
   colour.set(start, GREY);
 
   while (stack.length > 0) {
-    const frame = stack[stack.length - 1];
+    const frame = stack.at(-1);
     const outgoing = edges.get(frame.node) ?? [];
 
     if (frame.next >= outgoing.length) {

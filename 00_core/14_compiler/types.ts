@@ -333,7 +333,7 @@ export type RuntimeFeaturePreservesRequirementIdentity = Assert<
 /** Lifecycle ownership of one materialized realization. */
 export type RealizationLifecycle = Algebra<{
   /** No owned runtime lifetime. Nothing is disposed. */
-  unowned: {};
+  unowned: Record<never, never>;
   /** One physical provider owning every binding it produced. */
   owned: { readonly resource: OwnedResource };
 }>;
@@ -523,7 +523,7 @@ export type StepInputBinding = Algebra<{
     readonly contract: SchemaReference;
   };
   invocation: { readonly slot: InvocationSlotId; readonly contract: SchemaReference };
-  none: {};
+  none: Record<never, never>;
 }>;
 
 /**
@@ -619,7 +619,7 @@ export interface PreparedWork {
  */
 export type PreparationDisposition = Algebra<{
   committed: { readonly commit: CommitId; readonly through: ContentAddress };
-  discarded: {};
+  discarded: Record<never, never>;
   invalidated: { readonly by: RevisionReference };
 }>;
 

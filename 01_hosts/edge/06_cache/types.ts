@@ -36,11 +36,11 @@ export type CacheEntryReference<Id extends CacheEntryId = CacheEntryId> = Refere
 
 /** The closed variation vocabulary. Variation is declared authority, never accident. */
 export type CacheVariation = Algebra<{
-  tenant: {};
-  authorization: {};
-  locale: {};
-  capability: {};
-  content: {};
+  tenant: Record<never, never>;
+  authorization: Record<never, never>;
+  locale: Record<never, never>;
+  capability: Record<never, never>;
+  content: Record<never, never>;
 }>;
 
 /**
@@ -66,9 +66,9 @@ export interface CacheEntry {
 /** The disposition of one lookup, phase-correct: hit, miss, stale, or bypass. */
 export type CacheDisposition = Algebra<{
   hit: { readonly entry: CacheEntry };
-  miss: {};
+  miss: Record<never, never>;
   stale: { readonly entry: CacheEntry };
-  bypass: {};
+  bypass: Record<never, never>;
 }>;
 
 /** The cache provider: lookup, fill, revalidate, and invalidate over exact keys. */

@@ -36,19 +36,19 @@ export type ServiceReference<Id extends ServiceId = ServiceId> = Reference<'serv
 
 /** Readiness and health, phase-correct: starting is not ready; unhealthy is not gone. */
 export type ServiceHealth = Algebra<{
-  starting: {};
+  starting: Record<never, never>;
   ready: { readonly since: MonotonicNanoseconds };
   unhealthy: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
-  draining: {};
+  draining: Record<never, never>;
   stopped: { readonly receipt: ContentAddress<'application/vnd.liteship.server-service-stop+cbor'> };
-  withdrawn: {};
+  withdrawn: Record<never, never>;
 }>;
 
 /** Restart policy shape — never a numeric constant. */
 export type RestartPolicy = Algebra<{
-  never: {};
-  restart: {};
-  replan: {};
+  never: Record<never, never>;
+  restart: Record<never, never>;
+  replan: Record<never, never>;
 }>;
 
 /**

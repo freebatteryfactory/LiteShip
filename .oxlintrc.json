@@ -7,7 +7,12 @@
     "eqeqeq": "deny",
     "no-self-compare": "deny",
     "no-array-constructor": "deny",
-    "require-unicode-regexp": "deny"
+    "require-unicode-regexp": "deny",
+    "prefer-at": "deny",
+    "prefer-string-replace-all": "deny",
+    "prefer-import-meta-properties": "deny"
   },
-  "ignorePatterns": ["node_modules"]
+  "ignorePatterns": [
+    "node_modules"
+  ]
 }

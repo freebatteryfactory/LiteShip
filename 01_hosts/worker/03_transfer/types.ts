@@ -51,8 +51,8 @@ export type TransferableReference<Id extends TransferableId = TransferableId> = 
  * scoped roles.
  */
 export type CustodyMode = Algebra<{
-  copied: {};
-  moved: {};
+  copied: Record<never, never>;
+  moved: Record<never, never>;
   shared: { readonly role: EndpointRole };
 }>;
 

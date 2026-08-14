@@ -930,7 +930,7 @@ export type TypeAbiLiteral = Algebra<{
   number: { readonly decimal: string };
   bigint: { readonly decimal: string };
   boolean: { readonly value: boolean };
-  null: {};
+  null: Record<never, never>;
 }>;
 
 /** Canonical property keys, including references to unique-symbol declarations. */
@@ -1081,7 +1081,7 @@ export type TypeAbiNode = Algebra<{
     readonly binder: TypeAbiBinderId;
     readonly index: number;
   };
-  this: {};
+  this: Record<never, never>;
   reference: {
     readonly target: TypeAbiSymbolReference;
     readonly arguments: readonly TypeAbiNodeId[];
@@ -1207,7 +1207,7 @@ export interface TypeAbiUnsupportedForm {
 
 /** Whether the complete observed public population was canonically interpreted. */
 export type TypeAbiCoverage = Algebra<{
-  complete: {};
+  complete: Record<never, never>;
   incomplete: { readonly unsupported: NonEmptyTuple<TypeAbiUnsupportedForm> };
 }>;
 

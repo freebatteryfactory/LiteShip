@@ -28,10 +28,9 @@
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, relative, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join, relative } from 'node:path';
 
-const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+const REPO = join(import.meta.dirname, '..', '..', '..');
 const TSC = join(REPO, 'node_modules', 'typescript', 'bin', 'tsc');
 
 const walk = (dir) =>
@@ -49,7 +48,7 @@ try {
 
   const emitted = walk(out).filter((file) => file.endsWith('.js'));
   const executable = emitted.filter(
-    (file) => readFileSync(file, 'utf8').replace(/\s/gu, '') !== 'export{};',
+    (file) => readFileSync(file, 'utf8').replaceAll(/\s/gu, '') !== 'export{};',
   );
 
   // An empty population would pass every check below, so say the number out

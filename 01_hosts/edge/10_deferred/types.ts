@@ -47,16 +47,16 @@ export type DeferredTaskReference<Id extends DeferredTaskId = DeferredTaskId> = 
  * costume.
  */
 export type DeferredBound = Algebra<{
-  untilFlush: {};
+  untilFlush: Record<never, never>;
   deadline: { readonly at: MonotonicNanoseconds };
 }>;
 
 /** The task outcome, phase-correct: completed with a receipt, failed, or cancelled. */
 export type DeferredOutcome = Algebra<{
-  pending: {};
+  pending: Record<never, never>;
   completed: { readonly receipt: ContentAddress<'application/vnd.liteship.edge-deferred+cbor'> };
   failed: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
-  cancelled: {};
+  cancelled: Record<never, never>;
 }>;
 
 /**

@@ -34,21 +34,21 @@ export type CachePartitionKey = Brand<string, 'liteship.edge.cache-partition'>;
 
 /** Credential handling over the closed arms — never a free string. */
 export type CredentialPolicy = Algebra<{
-  omit: {};
-  sameOrigin: {};
+  omit: Record<never, never>;
+  sameOrigin: Record<never, never>;
   include: { readonly origins: NonEmptyTuple<AllowedOrigin> };
 }>;
 
 /** Redirect handling over the closed arms. */
 export type RedirectPolicy = Algebra<{
-  refuse: {};
+  refuse: Record<never, never>;
   follow: { readonly origins: NonEmptyTuple<AllowedOrigin> };
 }>;
 
 /** Isolation policy arms a selected cross-realm capability may require. */
 export type IsolationPolicy = Algebra<{
-  none: {};
-  isolated: {};
+  none: Record<never, never>;
+  isolated: Record<never, never>;
 }>;
 
 /**

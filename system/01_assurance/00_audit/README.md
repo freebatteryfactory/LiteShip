@@ -125,9 +125,21 @@ Measured before enabling, against eight planted defects:
 - The default `correctness` set produces **zero** findings on this tree and catches three of eight.
 - Adding `suspicious` and `pedantic` catches all eight and produces **ninety-four** findings on code written deliberately — fifty-six of them `ban-types` firing on the `& {}` in root's `Simplify`, which is the standard idiom and load-bearing, and twenty-nine `max-lines`, which is a preference about file length rather than a defect.
 
-So: `correctness` in full, plus the four specific rules that each caught a defect the default set missed — `eqeqeq`, `no-self-compare`, `no-array-constructor`, `require-unicode-regexp`. That configuration catches six of eight with zero findings on the tree. The two it still misses, an unreachable branch and an async callback passed to `forEach`, need rules that bring noise with them, and six with no false positives is worth more than eight with ninety-four.
+So: `correctness` in full, plus the seven specific rules that each found something real — `eqeqeq`, `no-self-compare`, `no-array-constructor`, `require-unicode-regexp`, `prefer-at`, `prefer-string-replace-all`, `prefer-import-meta-properties`. That configuration catches six of the eight planted defects with zero findings on the tree. The two it misses, an unreachable branch and an async callback passed to `forEach`, need rules that bring noise, and six with no false positives is worth more than eight with ninety-four.
 
-`require-unicode-regexp` found four real ones on its first run, all in `import-boundary.mjs`, all mine. Fixed rather than waived — which is the only move available, since there is no waiver mechanism and will not be one.
+### The ninety-four were triaged badly the first time
+
+The first pass dismissed them from a summary of rule names, on the strength of one inspected instance: `ban-types` firing on the `& {}` in root's `Simplify`, which is the standard idiom and load-bearing. Fifty-six findings, one look, one conclusion.
+
+Reading all of them says something else. Exactly **one** was `Simplify`. **Forty-eight** were algebra arms written `none: {}`, `terminated: {}`, `withdrawn: {}` — against forty-three already written `Record<never, never>`. A near-even split between two spellings of one concept, drifting, in a repository whose whole thesis is that a fact has one owner and one spelling.
+
+The two are the same type: `Record<never, never>` *is* `{}` after instantiation, which is why every law kept passing through the conversion. So it was never a bug. It was the defect class this repository exists to remove, sitting in ninety-one places, invisible to the compiler because both spellings mean the same thing — and dismissed on inspection of one of them.
+
+All forty-eight normalized. Eight legitimate `{}` uses remain, and `ban-types` is therefore **not** enabled: `Simplify`'s intersection, the `{} extends Pick<Value, Key>` optionality idiom in three places, two empty type-parameter defaults, an accumulator seed, and one conditional tail. A rule that cannot run clean would need a waiver, and there is no waiver mechanism here and will not be one.
+
+Nothing prevents the drift recurring. That is stated rather than solved, because the alternatives are a regex over source text and an exception list, and this repository has already deleted one of each.
+
+Of the rest: twenty-nine `max-lines` are a three-hundred-line cap on declaration files carrying heavy documentation, which is a preference and not a defect. Two `no-useless-undefined` want an explicit `return undefined` removed from a function whose absence value is load-bearing, where explicit reads better. Four `require-unicode-regexp`, one `prefer-at`, one `prefer-string-replace-all`, and one `prefer-import-meta-properties` were real, all in this home's two executables, all mine, all fixed rather than waived.
 
 ## Implementation boundary
 

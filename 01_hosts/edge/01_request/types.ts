@@ -62,9 +62,9 @@ export interface AdmittedCookie {
  * lawful state; cloning is a declared act, never an accident.
  */
 export type BodyConsumption = Algebra<{
-  unconsumed: {};
+  unconsumed: Record<never, never>;
   consumed: { readonly through: ContentAddress<'application/vnd.liteship.edge-body+cbor'> };
-  cloned: {};
+  cloned: Record<never, never>;
 }>;
 
 /**

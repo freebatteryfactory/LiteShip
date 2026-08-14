@@ -94,13 +94,13 @@ export type HostExecutionContext<Row extends RequirementRow> = ContextOf<Row>;
  */
 export type HostGroundingOrigin = Algebra<{
   /** A host-environment intrinsic captured at bootstrap. */
-  intrinsic: {};
+  intrinsic: Record<never, never>;
   /** A value carried by the invocation that entered the host. */
-  invocation: {};
+  invocation: Record<never, never>;
   /** A binding supplied by deployment configuration. */
-  deployment: {};
+  deployment: Record<never, never>;
   /** A value the embedding application handed to the bootstrap. */
-  application: {};
+  application: Record<never, never>;
 }>;
 
 /**

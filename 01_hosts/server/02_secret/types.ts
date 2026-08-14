@@ -52,9 +52,9 @@ export type SecretScopedReference<Id extends SecretId = SecretId> = Reference<'s
 
 /** Rotation and revocation evidence for one secret. */
 export type SecretDisposition = Algebra<{
-  current: {};
-  rotated: {};
-  revoked: {};
+  current: Record<never, never>;
+  rotated: Record<never, never>;
+  revoked: Record<never, never>;
 }>;
 
 /**

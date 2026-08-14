@@ -54,8 +54,8 @@ export interface QueueEndpoint<Role extends QueueEndpointRole, Id extends QueueI
 
 /** Overflow policy shape: refuse the item or apply backpressure. No constants. */
 export type OverflowPolicy = Algebra<{
-  refuse: {};
-  backpressure: {};
+  refuse: Record<never, never>;
+  backpressure: Record<never, never>;
 }>;
 
 /** One admitted batch: the exact queue it belongs to, its identity, and its generation. */

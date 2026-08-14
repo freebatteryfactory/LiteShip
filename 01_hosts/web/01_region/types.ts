@@ -70,9 +70,9 @@ export interface RegionBoundary {
  * LiteShip writer and carries none.
  */
 export type RegionCustody = Algebra<{
-  static: {};
+  static: Record<never, never>;
   owned: { readonly writer: RegionWriterReference };
-  foreign: {};
+  foreign: Record<never, never>;
 }>;
 
 /**
