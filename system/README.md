@@ -1,6 +1,6 @@
 # System: Unnumbered Control Plane
 
-Status: `00_workspace/`, `01_assurance/` with `00_audit/` and `01_gauntlet/`, and `02_release/` are authored. `03_programs/` and `04_bootstrap/` are named and unwritten. Product runtime implementation is absent; one repository-control implementation exists, `01_assurance/00_audit/zero-runtime.mjs`.
+Status: all five homes are authored — `00_workspace/`, `01_assurance/` with `00_audit/` and `01_gauntlet/`, `02_release/`, `03_programs/`, and `04_bootstrap/`. Product runtime implementation is absent; two repository-control implementations exist, both in `01_assurance/00_audit/`.
 
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
@@ -38,6 +38,8 @@ Two consequences are worth stating because they shaped the types here rather tha
 - Workspace identity, observation, and the immutable repository snapshot.
 - The assurance vocabulary, its acquisition child, and its evaluation child.
 - Distributable and release meaning, including the passing assurance result a shipment must consume.
+- The program population, and the contract each program satisfies.
+- The bootstrap contract the root executable realizes.
 
 ## Does not own
 
@@ -47,18 +49,18 @@ Two consequences are worth stating because they shaped the types here rather tha
 - The root package identity, the pinned compiler, the compiler options, the public export membrane, or the executable entrypoint file. Those are the repository root's, and the root claims them in `README.md` §3.
 - A second model of the repository. Every home here points at something already owned upstream.
 
-## The population is three, and three is not the end
+## The population is five
 
-`03_programs/` and `04_bootstrap/` are named in the layout and have no folder yet.
+`03_programs/` and `04_bootstrap/` were named in the layout for a long time, and both now exist. What they were waiting on was never a schedule: a program projects through a wire, so its contract could not be written honestly before a wire contract existed. `02_wires/cli` landed and the dependency cleared.
 
-Both wait on the same thing, and the ground has moved since this was last written: `02_wires/` now exists, with its umbrella and the `direct` child authored. What is still missing is the CLI wire specifically, which is what a program projects through and what bootstrap connects. So the dependency is narrower than it was and it is still a dependency, not a schedule.
+That distinction is the whole reason they were named and empty rather than built early. The previous arrangement built its equivalent anyway, under a `verification/` directory, before anything it needed existed.
 
-- `03_programs/` will own the typed system-program contract and the program population: `build`, `verify`, `doctor`, `audit`, `gauntlet`, `benchmark`, `docs`, `migrate`, `package`, `release`, `ship`. Eleven definitions in one authority, not eleven subfolders. A program projects through a wire, so its contract cannot be written honestly before the CLI wire contract exists.
+- `03_programs/` owns the program population and the contract each one satisfies: `build`, `verify`, `doctor`, `audit`, `gauntlet`, `benchmark`, `docs`, `migrate`, `package`, `release`, `ship`. Eleven definitions in one authority, not eleven subfolders, and identity computed from the roster rather than declared eleven times.
 
-  When `release` is written it must supply an **exact** `AssuranceRunSpec`, never the broad default. The broad form is an erased catalog shape that deliberately accepts results from several exact specifications, which is right for a catalog and wrong for a shipment. Nothing in the type prevents a program from defaulting; the program must not.
-- `04_bootstrap/` will own the semantic contract the root executable realizes: process capability requirements, registry composition, the invocation envelope, dispatch outcome, disposal, and the bootstrap receipt. It connects the CLI wire, so it has the same prerequisite. The physical entrypoint file stays at the root; this home owns only the contract that file satisfies.
+  A concrete `release` program must supply an **exact** `AssuranceRunSpec`, never the broad default. The broad form is an erased catalog shape that deliberately accepts results from several exact specifications, which is right for a catalog and wrong for a shipment. Nothing in the type prevents a program from defaulting; the program must not.
+- `04_bootstrap/` owns the semantic contract the root executable realizes: process capability requirements, registry composition, the invocation envelope, dispatch outcome, disposal, and the bootstrap receipt. It carries the CLI wire's disposition whole rather than summarizing it, so the arm a shell sees stays the wire's decision. The physical entrypoint file stays at the root; this home owns only the contract that file satisfies.
 
-`SystemTypeTopology` therefore names three homes. Naming five would produce the inventory nothing can verify — the same shape `01_hosts` refused for as long as only one host physically existed.
+`SystemTypeTopology` names five homes because five exist. It named three when three existed, and the rule was never a count: a name in that tuple is a promise the compiler checks, and a name for an unwritten home is a promise nothing can keep. That is the same shape `01_hosts` refused for as long as only one host physically existed.
 
 **Workspace discovery is not a twelfth program.** The root README once listed it first among the system programs. It is an authority that `00_workspace` owns and that `doctor`, `verify`, `build`, and `package` consume. Exposing it through a program or an editor wire later is ordinary; making it its own orchestration engine would have meant two places that answer "what repository is this".
 
@@ -68,9 +70,19 @@ Everything that genuinely exceeds assignability lives in `01_assurance/`, and no
 
 The compiler cannot decide which directory declared a structurally identical type, whether an authority was imported from its canonical owner or copied inline, whether a target imported a sibling, whether a README roster matches the physical directories, or whether a gate would have noticed the defect it guards. Those questions are real. They are not type checking, and the mistake was never asking them — it was answering them from a second root.
 
-## This file asserts nothing, and that is the right number
+## This file asserted nothing, and a canary said that was wrong
 
-`system/types.ts` contains zero `Assert` declarations.
+`system/types.ts` now contains exactly one `Assert`, and the paragraph below explaining why zero was correct was itself an untested claim sitting in a document full of tested ones.
+
+It was half right. The name union *is* derived from the tuple, so `SystemHomeName` cannot disagree with it and a parity law would check a derivation against itself. That part stands, and five such laws were deleted for it.
+
+What it missed is that the derivation was never the exposed part. An entry can carry the wrong surface. Wiring `03_programs` to `BootstrapTypeSurface` compiled, and the only thing that noticed was `noUnusedLocals` complaining about an import nobody read — found by canarying the two new homes, and the identical gap the wire topology had one commit earlier, found the identical way.
+
+A mis-wired entry is the likelier defect by far. A home is deleted deliberately and loudly; an entry is copy-pasted and edited in one of its two positions, quietly, while adding the next one.
+
+So `EachEntryNamesItsOwnHomesSurface` compares each entry against a right-hand side written independently of the topology, and pins the population so a home added here and nowhere else fails rather than passing unexamined. That is not decoration to satisfy a heading, which is what the paragraph below was written to refuse — it is a gap a canary found in the claim itself.
+
+The original reasoning, kept because the half that was right is still the reason there is one law here and not six:
 
 This heading used to read **Laws** and list seven of them. Not one was in the file. Two were proof obligations wearing the wrong hat, two described types in child homes that assert them locally, two have since been deleted along with the vocabulary they were about, and one was a parity law that no longer has anything to compare.
 

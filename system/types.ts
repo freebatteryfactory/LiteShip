@@ -26,28 +26,40 @@
  * @module
  */
 
-import type { Named, Tuple, WithoutOrdinalPrefix } from '../types.js';
+import type { Assert, Equal, IsExactlyTrue, Named, Tuple, WithoutOrdinalPrefix } from '../types.js';
 import type { WorkspaceTypeSurface } from './00_workspace/types.js';
 import type { AssuranceTypeSurface } from './01_assurance/types.js';
 import type { ReleaseTypeSurface } from './02_release/types.js';
+import type { ProgramsTypeSurface } from './03_programs/types.js';
+import type { BootstrapTypeSurface } from './04_bootstrap/types.js';
 
 /**
  * The system homes that physically exist, in dependency order.
  *
  * Workspace observes the repository and depends on nothing else here.
- * Assurance consumes workspace snapshots. Release consumes assurance authority.
- * The order is the dependency, not a schedule.
+ * Assurance consumes workspace snapshots. Release consumes a passing assurance
+ * result. Programs are the operations that drive that chain, and bootstrap is
+ * the contract the root executable satisfies in order to reach them.
+ *
+ * The order is the dependency, not a schedule. Programs and bootstrap were named
+ * here long before they existed, and waited on exactly one thing: a program
+ * projects through a wire, so its contract could not be written honestly before
+ * `02_wires/cli` was.
  */
 export interface SystemTypeHome<Name extends string, Surface> extends Named<Name> {
   readonly Type: Surface;
 }
 
 /** Complete inspectable system type topology. */
-export type SystemTypeTopology = Tuple<[
-  SystemTypeHome<'00_workspace', WorkspaceTypeSurface>,
-  SystemTypeHome<'01_assurance', AssuranceTypeSurface>,
-  SystemTypeHome<'02_release', ReleaseTypeSurface>
-]>;
+export type SystemTypeTopology = Tuple<
+  [
+    SystemTypeHome<'00_workspace', WorkspaceTypeSurface>,
+    SystemTypeHome<'01_assurance', AssuranceTypeSurface>,
+    SystemTypeHome<'02_release', ReleaseTypeSurface>,
+    SystemTypeHome<'03_programs', ProgramsTypeSurface>,
+    SystemTypeHome<'04_bootstrap', BootstrapTypeSurface>,
+  ]
+>;
 
 /**
  * The system homes that physically exist, in dependency order.
@@ -70,3 +82,51 @@ export type SystemTypeSurface = {
   readonly [Home in SystemTypeTopology[number] as WithoutOrdinalPrefix<Home['name']>]: Home['Type'];
 };
 
+
+// ---------------------------------------------------------------------------
+// Law
+// ---------------------------------------------------------------------------
+
+/**
+ * Compile-time law: every entry names its own home's surface.
+ *
+ * This file had zero assertions, and the README explained at length why zero was
+ * the right number: the name union is derived from the tuple, so a parity law
+ * would check a derivation against itself, and a topology whose only job is to
+ * derive one population from one tuple has nothing left to be locally wrong
+ * about.
+ *
+ * That was an untested claim about a file full of tested ones, and a canary
+ * falsified it while `03_programs` and `04_bootstrap` were being added. Wiring
+ * `03_programs` to `BootstrapTypeSurface` compiled. The only thing that noticed
+ * was `noUnusedLocals`, complaining about an import nobody read.
+ *
+ * The derivation was never the exposed part. `SystemHomeName` cannot disagree
+ * with the tuple — that much was right. What can disagree is an entry with the
+ * wrong surface in it, and that is the likelier defect by far: a home is deleted
+ * deliberately and loudly, while an entry is copy-pasted and edited in one of its
+ * two positions, quietly, while adding the next one. The wire topology had the
+ * identical gap, found the identical way, one commit earlier.
+ *
+ * The right-hand side is written independently of the topology, so this compares
+ * rather than restates. The last line pins the population, so a home added here
+ * and nowhere else fails rather than passing unexamined.
+ */
+export type EachEntryNamesItsOwnHomesSurface = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<SystemTypeAt<'00_workspace'>, WorkspaceTypeSurface>,
+        Equal<SystemTypeAt<'01_assurance'>, AssuranceTypeSurface>,
+        Equal<SystemTypeAt<'02_release'>, ReleaseTypeSurface>,
+        Equal<SystemTypeAt<'03_programs'>, ProgramsTypeSurface>,
+        Equal<SystemTypeAt<'04_bootstrap'>, BootstrapTypeSurface>,
+        Equal<
+          SystemHomeName,
+          '00_workspace' | '01_assurance' | '02_release' | '03_programs' | '04_bootstrap'
+        >,
+      ],
+      [true, true, true, true, true, true]
+    >
+  >
+>;
