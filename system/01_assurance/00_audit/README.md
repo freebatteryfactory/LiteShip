@@ -122,6 +122,16 @@ It now uses the compiler's own lexer — `createScanner` from `typescript/unstab
 
 The retirement trigger stated elsewhere was stability, not existence, and it still is. This is `unstable` by the vendor's own word. What changed is that a lexer with the compiler's own token definitions is not in the same category as a pattern guessing at syntax, and the gap between them was one unclassified violation wide.
 
+### The graders are graded
+
+The relevant count was never how many executable files exist. It is how many hand-written algorithms may decide whether the repository passes without permanent evidence that they reject the intended defect *and* accept a lawful neighbour. There are two, both in the root `check`, and both have already shipped a defect that turned a bad tree green.
+
+`audit.test.mjs` holds that evidence. Both algorithms are exported as pure functions with the commands as thin wrappers behind `import.meta.main`, so importing one does not emit a project or walk a filesystem. The end-to-end cases build a small tree in a temporary directory and run the real command against it, so the exit code is part of what is checked.
+
+No manifest, registry, mutation bank, score, or waiver table. Two functions and one file on the standard runner.
+
+It earned itself on its first run. `fs.require('./member-call.js')` was still being read as an import edge, because `require` scans as `RequireKeyword` rather than as an identifier — so the guard meant to exclude member calls sat on a branch that never ran, and the identifier branch beside it was pure false-positive surface. That branch is gone. Nothing but a lawful-neighbour test was going to find it, which is the whole argument for having one.
+
 ### Measured
 
 Every class refused: downstream, peer, sibling, cycle, unresolved. Every real edge in the tree admitted, including the six shapes most likely to be false positives — the numbered waterfall in core and in system, system reaching upstream into core, both compile-only files importing children, and an umbrella reaching into its own child.

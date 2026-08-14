@@ -3,17 +3,21 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "LiteShip: a compiler-checked specification. Declaration-only; no runtime exports.",
+  "description": "LiteShip: a compiler-checked specification. The specification population emits no executable product code; the only executable bytes are the repository-control audits under system/01_assurance/00_audit/.",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "check:types": "tsc -p tsconfig.json",
     "check:zero-runtime": "node system/01_assurance/00_audit/zero-runtime.mjs",
+    "check:audits": "node --test system/01_assurance/00_audit/audit.test.mjs",
     "typecheck": "npm run check:types",
-    "check": "npm run check:types && npm run check:lint && npm run check:zero-runtime && npm run check:imports",
+    "check": "npm run check:types && npm run check:lint && npm run check:zero-runtime && npm run check:imports && npm run check:audits",
     "check:imports": "node system/01_assurance/00_audit/import-boundary.mjs .",
     "check:lint": "oxlint --deny-warnings ."
   },
   "devDependencies": {
-    "oxlint": "^1.78.0",
+    "oxlint": "1.78.0",
     "typescript": "7.0.2"
   }
 }

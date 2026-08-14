@@ -33,11 +33,27 @@ import { join, relative } from 'node:path';
 const REPO = join(import.meta.dirname, '..', '..', '..');
 const TSC = join(REPO, 'node_modules', 'typescript', 'bin', 'tsc');
 
+/** The extension TypeScript emits for a module in this project. */
+export const EMITTED_EXTENSION = '.js';
+
+/**
+ * Whether one emitted file carries anything that runs.
+ *
+ * The whole audit reduces to this predicate, so it is separable and tested
+ * rather than buried in the loop that applies it. Whitespace is removed before
+ * comparison because emit formatting is not the subject; `export {};` and
+ * `export{};` are the same absence of behaviour.
+ */
+export const carriesExecutableContent = (text) => text.replaceAll(/\s/gu, '') !== 'export{};';
+
 const walk = (dir) =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
     entry.isDirectory() ? walk(join(dir, entry.name)) : join(dir, entry.name),
   );
 
+// Only when run as a command. The predicate above is imported by the audit
+// self-test, and importing a module must not emit a project as a side effect.
+if (import.meta.main) {
 const out = mkdtempSync(join(tmpdir(), 'liteship-emit-'));
 try {
   execFileSync(
@@ -46,9 +62,9 @@ try {
     { stdio: 'inherit', cwd: REPO },
   );
 
-  const emitted = walk(out).filter((file) => file.endsWith('.js'));
-  const executable = emitted.filter(
-    (file) => readFileSync(file, 'utf8').replaceAll(/\s/gu, '') !== 'export{};',
+  const emitted = walk(out).filter((file) => file.endsWith(EMITTED_EXTENSION));
+  const executable = emitted.filter((file) =>
+    carriesExecutableContent(readFileSync(file, 'utf8')),
   );
 
   // An empty population would pass every check below, so say the number out
@@ -63,4 +79,5 @@ try {
   process.exit(executable.length === 0 ? 0 : 1);
 } finally {
   rmSync(out, { recursive: true, force: true });
+}
 }

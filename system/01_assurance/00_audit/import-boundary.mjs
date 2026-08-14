@@ -78,37 +78,59 @@ import { LanguageVariant, SyntaxKind, createScanner } from 'typescript/unstable/
  * after `import`, or as the first argument of `import(` or `require(`. Comments
  * and template literals are tokens the scanner already classifies, so they
  * cannot be mistaken for specifiers the way a text match mistook them.
+ *
+ * The `require(` case reads the identifier's *text*. Accepting any identifier
+ * before `(` was the first replacement's own defect: `ordinaryFunction('./x.js')`
+ * became an import edge, trading a false-negative class for a false-positive
+ * one. The canary that missed it used `require` as its only example, so it
+ * proved the mechanism accepted the string and never that it discriminated —
+ * a symmetric fixture, which is a failure mode this repository has a name for.
+ *
+ * A scanner reports tokens, not structure, and this is the boundary of what
+ * that buys: `require` reached through a member expression is excluded by
+ * checking the preceding token, but a local variable genuinely named `require`
+ * would still be read as one. The remaining gap wants a parsed source file, and
+ * the parse API in `typescript/unstable/sync` needs a `Program` this audit does
+ * not yet build.
  */
-const moduleSpecifiers = (text) => {
+export const moduleSpecifiers = (text) => {
   const scanner = createScanner(true, LanguageVariant.Standard, text);
   const found = [];
-  let previous;
-  let beforePrevious;
+
+  // The three most recent tokens, each as { kind, text }. Three, because
+  // deciding `require(` needs the token before `require` to rule out a member
+  // call: `fs.require('./x')` is not Node's require and must not become an edge.
+  let one;
+  let two;
+  let three;
 
   for (;;) {
-    const token = scanner.scan();
-    if (token === SyntaxKind.EndOfFile) break;
+    const kind = scanner.scan();
+    if (kind === SyntaxKind.EndOfFile) break;
 
-    if (token === SyntaxKind.StringLiteral) {
-      const afterFrom = previous === SyntaxKind.FromKeyword;
-      const afterImport = previous === SyntaxKind.ImportKeyword;
-      const afterCallParen =
-        previous === SyntaxKind.OpenParenToken &&
-        (beforePrevious === SyntaxKind.ImportKeyword ||
-          beforePrevious === SyntaxKind.RequireKeyword ||
-          beforePrevious === SyntaxKind.Identifier);
+    if (kind === SyntaxKind.StringLiteral) {
+      const afterFrom = one?.kind === SyntaxKind.FromKeyword;
+      const afterImport = one?.kind === SyntaxKind.ImportKeyword;
+      const openParen = one?.kind === SyntaxKind.OpenParenToken;
+      const afterImportCall = openParen && two?.kind === SyntaxKind.ImportKeyword;
+      const afterRequireCall =
+        openParen &&
+        two?.kind === SyntaxKind.RequireKeyword &&
+        three?.kind !== SyntaxKind.DotToken;
 
-      if (afterFrom || afterImport || afterCallParen) found.push(scanner.getTokenValue());
+      if (afterFrom || afterImport || afterImportCall || afterRequireCall) {
+        found.push(scanner.getTokenValue());
+      }
     }
 
-    beforePrevious = previous;
-    previous = token;
+    three = two;
+    two = one;
+    one = { kind };
   }
 
   return found;
 };
 
-const ROOT = resolve(process.argv[2] ?? '.');
 const posix = (p) => p.split(sep).join('/');
 
 const walk = (dir) =>
@@ -120,10 +142,13 @@ const walk = (dir) =>
         : join(dir, entry.name),
   );
 
-const files = walk(ROOT)
-  .filter((f) => f.endsWith('.ts'))
-  .map((f) => posix(f.slice(ROOT.length + 1)));
-const known = new Set(files);
+// `.mjs` as well as `.ts`. The two executable audits are `.mjs`, so a
+// population of `.ts` alone left the code that enforces dependency direction
+// outside the graph whose dependency direction is inspected.
+const inventory = (root) =>
+  walk(root)
+    .filter((f) => f.endsWith('.ts') || f.endsWith('.mjs'))
+    .map((f) => posix(f.slice(root.length + 1)));
 
 /** The directory segments a file lives under. A root-level file has none. */
 const dirsOf = (file) => file.split('/').slice(0, -1);
@@ -168,7 +193,7 @@ const bandOf = (segment, depth) => {
  * own child -- this rule says nothing. Direction is not the question there;
  * whether anything comes back is, and `CYCLE` answers it.
  */
-const classify = (from, to) => {
+export const classify = (from, to) => {
   const fromDirs = dirsOf(from);
   const toDirs = dirsOf(to);
 
@@ -188,6 +213,13 @@ const classify = (from, to) => {
 
   return undefined;
 };
+
+// Only when run as a command. The three algorithms above are imported by the
+// audit self-test, and importing a module must not walk a filesystem.
+if (import.meta.main) {
+const ROOT = resolve(process.argv[2] ?? '.');
+const files = inventory(ROOT);
+const known = new Set(files);
 
 const edges = new Map();
 const violations = [];
@@ -262,4 +294,15 @@ console.log(
   `import-boundary: ${files.length} files, ${edgeCount} relative edges, ${violations.length} violations`,
 );
 for (const violation of violations) console.log(`  ${violation}`);
-if (violations.length > 0) process.exitCode = 1;
+
+// An empty population satisfies every rule above. Zero files means the walk
+// found nothing, not that the tree is lawful — the same guard `zero-runtime`
+// carries for the same reason, and the reason this one lacked it is that
+// nobody had run it against a tree with no sources.
+if (files.length === 0) {
+  console.error('import-boundary: FAILED — nothing was inspected, so nothing was checked');
+  process.exitCode = 1;
+} else if (violations.length > 0) {
+  process.exitCode = 1;
+}
+}
