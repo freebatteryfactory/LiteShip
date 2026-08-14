@@ -110,9 +110,23 @@ A shared-vocabulary umbrella importing a child it supplies is a cycle. A topolog
 
 Three cases, one rule, no roles and no exception list — which matters, because an exception list is how the previous control plane justified itself. There are no waivers, no severities, and no baseline of known-acceptable findings. A violation is a violation and the exit code says so. If one is wrong, the rule is wrong and the rule gets fixed.
 
+### It read imports with a regular expression, and that was a live defect
+
+The specifier extraction matched `from '...'` against source text. So it saw single-quoted `from` clauses and nothing else. A side-effect `import './x.js'`, a dynamic `import("./x.js")`, a double-quoted specifier, and `import x = require('./x.js')` were all invisible to the check that exists to see them — and the side-effect import is the one that matters most, because it is precisely how one home reaches another for effect alone.
+
+This was not hypothetical. Planting `import '../vite/types.js';` at the top of `02_targets/astro/types.ts` — a real sibling violation, the class this repository lost a Cloudflare package to — produced `0 violations` from the regex version and `SIBLING 02_targets/astro/types.ts -> 02_targets/vite/types.ts` from the replacement.
+
+It was also a regex parser over source text, which this repository forbids and which the previous control plane was deleted for. The rule was written down, and then broken by the tool enforcing the rules.
+
+It now uses the compiler's own lexer — `createScanner` from `typescript/unstable/ast`. A specifier is a string literal in module position: after `from`, directly after `import`, or as the first argument of `import(` or `require(`. Comments and template literals are tokens the scanner already classifies, so they cannot be mistaken for specifiers the way a text match mistook them.
+
+The retirement trigger stated elsewhere was stability, not existence, and it still is. This is `unstable` by the vendor's own word. What changed is that a lexer with the compiler's own token definitions is not in the same category as a pattern guessing at syntax, and the gap between them was one unclassified violation wide.
+
 ### Measured
 
 Every class refused: downstream, peer, sibling, cycle, unresolved. Every real edge in the tree admitted, including the six shapes most likely to be false positives — the numbered waterfall in core and in system, system reaching upstream into core, both compile-only files importing children, and an umbrella reaching into its own child.
+
+Every import form extracted and no false positives: type-only, side-effect, double-quoted, dynamic, re-export, star re-export, `import = require`, and plain `require`, against a commented-out import, a template literal, and a bare string that is not a specifier.
 
 ## Lint covers the executables, and nothing else needs it
 

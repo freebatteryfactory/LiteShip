@@ -58,6 +58,55 @@
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname, normalize, sep, resolve } from 'node:path';
+import { LanguageVariant, SyntaxKind, createScanner } from 'typescript/unstable/ast';
+
+/**
+ * Every module specifier in one source text, read with the compiler's own lexer.
+ *
+ * This was a regular expression over source text, matching `from '...'`. It
+ * therefore saw single-quoted `from` clauses and nothing else: a side-effect
+ * `import './x.js'`, a dynamic `import("./x.js")`, a double-quoted specifier,
+ * and `import x = require('./x.js')` were all invisible to the audit that
+ * exists to see them. A side-effect import is the shape that matters most,
+ * because it is how one home reaches another for effect alone.
+ *
+ * It was also a regex parser over source text, which this repository forbids
+ * and which the previous control plane was deleted for. The rule was written
+ * down and then broken by the tool enforcing the rules.
+ *
+ * A specifier is a string literal in module position: after `from`, directly
+ * after `import`, or as the first argument of `import(` or `require(`. Comments
+ * and template literals are tokens the scanner already classifies, so they
+ * cannot be mistaken for specifiers the way a text match mistook them.
+ */
+const moduleSpecifiers = (text) => {
+  const scanner = createScanner(true, LanguageVariant.Standard, text);
+  const found = [];
+  let previous;
+  let beforePrevious;
+
+  for (;;) {
+    const token = scanner.scan();
+    if (token === SyntaxKind.EndOfFile) break;
+
+    if (token === SyntaxKind.StringLiteral) {
+      const afterFrom = previous === SyntaxKind.FromKeyword;
+      const afterImport = previous === SyntaxKind.ImportKeyword;
+      const afterCallParen =
+        previous === SyntaxKind.OpenParenToken &&
+        (beforePrevious === SyntaxKind.ImportKeyword ||
+          beforePrevious === SyntaxKind.RequireKeyword ||
+          beforePrevious === SyntaxKind.Identifier);
+
+      if (afterFrom || afterImport || afterCallParen) found.push(scanner.getTokenValue());
+    }
+
+    beforePrevious = previous;
+    previous = token;
+  }
+
+  return found;
+};
 
 const ROOT = resolve(process.argv[2] ?? '.');
 const posix = (p) => p.split(sep).join('/');
@@ -147,8 +196,8 @@ for (const file of files) {
   const source = readFileSync(join(ROOT, file), 'utf8');
   const resolved = [];
 
-  for (const match of source.matchAll(/\bfrom\s+'(\.[^']*)'/gu)) {
-    const specifier = match[1];
+  for (const specifier of moduleSpecifiers(source)) {
+    if (!specifier.startsWith('.')) continue;
     const base = posix(normalize(join(dirname(file), specifier)));
     const candidates = [base.replace(/\.js$/u, '.ts'), base.replace(/\.js$/u, '.d.ts'), base];
     const target = candidates.find((c) => known.has(c));
