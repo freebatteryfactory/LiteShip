@@ -73,9 +73,21 @@ Both exactness axes thread. A candidate qualified over another snapshot is refus
 
 A hand-written exposure list reaches disagreement with the roster within two additions, and nothing would notice.
 
-**What this does not yet do is bind that shape to a wire.** `WireExposure.exposed` is `NonEmptyTuple<OperationReference>`, no `WireDefinition` is instantiated anywhere, and nothing assigns `SystemProgramExposure` to one. So the population is correct in isolation and reaches no consumer — a wire can still claim to expose operations the roster does not name. Closing that requires a concrete wire definition, not another law here.
+`SystemProgramWire` is what binds that shape to a wire, and until it existed the shape reached no consumer. `WireExposure.exposed` is `NonEmptyTuple<OperationReference>` — it admits any operations at all, in any order, including none of these — so this home's claim that a wire cannot expose a program the roster does not name was false wherever it mattered. The mapped type produced the right shape, the wire accepted that shape, and nothing put one into the other.
+
+A `SystemProgramWire` refines `WireDefinition` so its exposed population *is* the derived one, positionally. The withheld population stays open: a wire that projects the programs and also withholds some application operation is ordinary, and constraining what a wire declines would be this home reaching across the boundary into the wire's own catalog.
 
 The mapping goes through a generic helper rather than mapping the concrete roster directly, and that is not style. A homomorphic mapped type preserves tuple arity only when its source is a naked type parameter; mapping the concrete alias produced an object that answered `[8]` correctly while failing `['length']` and refusing to extend a non-empty tuple. Two law lines caught it, and the fix is the same shape `PlannedEvaluations` uses in `01_assurance`.
+
+## The verify chain composes
+
+`TheVerifyChainComposesAtOneCoordinate` is the first composition of the assurance spine, and it is the reason the definition map was worth building.
+
+Until the programs carried contracts there was nothing to compose. Every registry entry consumed `unknown`, so *audit produces what gauntlet consumes* was a sentence in a README with no type that could disagree with it.
+
+Read through the programs' own signatures at one exact coordinate: audit's product is gauntlet's input, and the same product read at a different snapshot is refused, so the coordinate threads through the composition rather than riding alongside it. Verify answers with gauntlet's answer, because verify is audit and gauntlet in one invocation.
+
+What it is not: a run. These are contracts, and a composition of contracts proves the shapes meet. Whether an implementation of audit produces a product an implementation of gauntlet can read is a claim about bodies that do not exist.
 
 ## Why this home waited
 

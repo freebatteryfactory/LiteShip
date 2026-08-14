@@ -39,9 +39,11 @@
 
 import type {
   Named,
+  Refine,
   RequirementRow,
   Signature,
 } from '../../types.js';
+import type { WireDefinition, WireExposure, WireId } from '../../02_wires/types.js';
 import type { WorkspaceSnapshotReference } from '../00_workspace/types.js';
 import type { AuditProduct, AuditRequirements } from '../01_assurance/00_audit/types.js';
 import type { AssuranceResult } from '../01_assurance/01_gauntlet/types.js';
@@ -397,6 +399,30 @@ type ReferencesOf<Entries extends readonly SystemProgramEntry<SystemProgramName,
 };
 
 export type SystemProgramExposure = ReferencesOf<SystemProgramDefinitions>;
+
+/**
+ * A wire that projects the system programs, and exactly those.
+ *
+ * This is the consumer `SystemProgramExposure` did not have. The mapped type
+ * produced the right shape, `WireExposure.exposed` accepted that shape, and
+ * nothing ever put one into the other — so the home's own claim, that a wire
+ * cannot expose a program the roster does not name, was false. `exposed` is
+ * `NonEmptyTuple<OperationReference>`, which admits any operations at all, in
+ * any order, including none of these.
+ *
+ * A wire definition refined this way cannot. Its exposed population *is* the
+ * derived one, positionally, so a wire claiming to project the system programs
+ * projects the population the definition map declares or does not typecheck.
+ *
+ * The withheld population stays open. A wire that projects the programs and
+ * also withholds some application operation is ordinary, and constraining what
+ * a wire declines would be this home reaching across the boundary into the
+ * wire's own catalog.
+ */
+export type SystemProgramWire<Id extends WireId = WireId> = Refine<
+  WireDefinition<Id>,
+  { readonly exposure: Refine<WireExposure, { readonly exposed: SystemProgramExposure }> }
+>;
 
 // ---------------------------------------------------------------------------
 // Surface

@@ -13,10 +13,44 @@
 
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { EffectClass, OperationId, OperationReference } from '../../00_core/07_operation/types.js';
-import type { Assert, Equal, IsExactlyTrue, NonEmptyTuple, RequirementRow, Signature } from '../../types.js';
+import type {
+  Assert,
+  Equal,
+  IsExactlyTrue,
+  NonEmptyTuple,
+  OutputOf,
+  Refine,
+  RequirementRow,
+  Signature,
+} from '../../types.js';
+import type { WireDefinition, WireExposure } from '../../02_wires/types.js';
 import type { WorkspaceSnapshotId } from '../00_workspace/types.js';
+import type {
+  AssuranceRunSpec,
+  AssuranceRunSpecId,
+  FailureClassId,
+  FailureClassReference,
+  GateId,
+  GateRevisionId,
+  PlannedCheck,
+} from '../01_assurance/types.js';
+import type { AuditProduct } from '../01_assurance/00_audit/types.js';
 import type { QualifiedReleaseCandidate, ReleaseCandidateId, ReleaseReceipt } from '../02_release/types.js';
-import type { ObservesOnly, ReleaseSignature, SystemProgram, SystemProgramExposure, SystemProgramId, SystemProgramReference, SystemProgramRoster } from './types.js';
+import type {
+  AuditProgram,
+  GauntletProgram,
+  GauntletRequest,
+  ObservesOnly,
+  ReleaseProgram,
+  ReleaseSignature,
+  SystemProgram,
+  SystemProgramExposure,
+  SystemProgramId,
+  SystemProgramReference,
+  SystemProgramRoster,
+  SystemProgramWire,
+  VerifyProgram,
+} from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -149,6 +183,124 @@ export type TheEffectCharacterIsReadFromTheOperation = Assert<
         >,
       ],
       [true, false, true]
+    >
+  >
+>;
+
+
+// ---------------------------------------------------------------------------
+// The verify chain, at one exact coordinate
+// ---------------------------------------------------------------------------
+
+type VerifySnapshot = WorkspaceSnapshotId<'law.verify.snapshot'>;
+type ForeignSnapshot = WorkspaceSnapshotId<'law.verify.foreign'>;
+
+type VerifyCheck = Refine<
+  PlannedCheck<
+    GateId<'law.verify.gate'>,
+    GateRevisionId<'law.verify.revision'>,
+    readonly [FailureClassReference<FailureClassId<'law.verify.class'>>]
+  >,
+  { readonly consequence: 'required' }
+>;
+
+type VerifySpec = AssuranceRunSpec<AssuranceRunSpecId<'law.verify.spec'>, readonly [VerifyCheck]>;
+
+/** What `audit` produces at this coordinate, read through its own signature. */
+type AuditProduces = OutputOf<AuditProgram<VerifySnapshot>['definition']['signature']>;
+
+/** What `gauntlet` consumes at this coordinate. */
+type GauntletConsumes = GauntletRequest<VerifySnapshot, VerifySpec>['product'];
+
+/**
+ * Compile-time law: audit's product is gauntlet's input, and verify answers
+ * what gauntlet answers.
+ *
+ * This is the first composition of the assurance spine, and it is the reason
+ * the definition map was worth building. Until the programs carried contracts,
+ * there was nothing to compose: every registry entry consumed `unknown`, so
+ * "audit produces what gauntlet consumes" was a sentence in a README with no
+ * type that could disagree with it.
+ *
+ * Line one is the chain. Line two is what makes it a measurement rather than a
+ * restatement — the same product read at a *different* snapshot is refused, so
+ * the coordinate threads through the composition rather than being carried
+ * alongside it. Line three is the second half of the chain: verify is audit and
+ * gauntlet in one invocation, so it answers with gauntlet's answer.
+ *
+ * Line four is the anti-vacuity partner. `OutputOf` over a signature that had
+ * quietly become `never` would satisfy line one against a `never` product and
+ * prove nothing.
+ */
+export type TheVerifyChainComposesAtOneCoordinate = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<AuditProduces, GauntletConsumes>,
+        Equal<AuditProduces, AuditProduct<ForeignSnapshot>>,
+        Equal<
+          OutputOf<VerifyProgram<VerifySnapshot, VerifySpec>['definition']['signature']>,
+          OutputOf<GauntletProgram<VerifySnapshot, VerifySpec>['definition']['signature']>
+        >,
+        [AuditProduces] extends [never] ? true : false,
+      ],
+      [true, false, true, false]
+    >
+  >
+>;
+
+/**
+ * Compile-time law: a system-program wire projects the program population.
+ *
+ * `SystemProgramExposure` had no consumer. It was a mapped type producing
+ * exactly the shape `WireExposure.exposed` accepts, and nothing ever assigned
+ * one to the other — so this home's own claim, that a wire cannot expose a
+ * program the roster does not name, was false wherever it mattered.
+ *
+ * Line one is the binding. Line two is the refusal that makes it worth having:
+ * a plain `WireDefinition` does not satisfy the refined one, because its
+ * `exposed` is `NonEmptyTuple<OperationReference>` and admits any operations at
+ * all, in any order, including none of these. Line three keeps the direction
+ * honest — the refined wire is still a wire. Line four is the anti-vacuity
+ * partner, since `Refine` resolves to `never` for a change that narrows
+ * nothing.
+ */
+export type ASystemProgramWireProjectsThePopulation = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<SystemProgramWire['exposure']['exposed'], SystemProgramExposure>,
+        WireDefinition extends SystemProgramWire ? true : false,
+        SystemProgramWire extends WireDefinition ? true : false,
+        [SystemProgramWire] extends [never] ? true : false,
+        Equal<SystemProgramWire['exposure']['withheld'], WireExposure['withheld']>,
+      ],
+      [true, false, true, false, true]
+    >
+  >
+>;
+
+/**
+ * Compile-time law: the registry entry for `release` is the release contract.
+ *
+ * Read here rather than only in `04_bootstrap`, because this is the home that
+ * declares both the map and the signature that used to float beside it. The
+ * input of the rostered program and the input of `ReleaseSignature` are the
+ * same type; they were two correct declarations about different things for as
+ * long as the registry held a placeholder.
+ */
+export type TheRosteredReleaseIsTheReleaseContract = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          OutputOf<ReleaseProgram['definition']['signature']>,
+          OutputOf<ReleaseSignature>
+        >,
+        Equal<ReleaseProgram['name'], 'release'>,
+        [ReleaseProgram] extends [never] ? true : false,
+      ],
+      [true, true, false]
     >
   >
 >;
