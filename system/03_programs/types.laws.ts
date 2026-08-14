@@ -94,24 +94,30 @@ export type ReleaseConsumesAQualifiedCandidate = Assert<
 /**
  * Compile-time law: the exposed population and the program population are one.
  *
- * A mapped type over the roster preserves arity, so eleven programs expose
- * eleven references and the correspondence is positional. Line two is what a
- * hand-written list would have failed: a population of the right length made of
- * the wrong references.
+ * A mapped type over the definition map preserves arity, so the exposure and
+ * the population are the same length and the correspondence is positional.
+ * Line two is what a hand-written list would have failed: a population of the
+ * right length made of the wrong references.
  *
  * Line three pins that the result is what `WireExposure.exposed` accepts, which
  * is the only reason to compute it in this shape rather than as a union.
+ *
+ * Lines four and five are the tail. The previous version checked index eight
+ * positively and index nine negatively and never read the last position at
+ * all, so a mapping that mis-produced the final entry passed. Here the same
+ * index is refused for the wrong name and required for the right one.
  */
 export type TheExposedPopulationIsTheProgramPopulation = Assert<
   IsExactlyTrue<
     Equal<
       [
         Equal<SystemProgramExposure['length'], SystemProgramRoster['length']>,
-        Equal<SystemProgramExposure[8], SystemProgramReference<'package'>>,
+        Equal<SystemProgramExposure[3], SystemProgramReference<'package'>>,
         SystemProgramExposure extends NonEmptyTuple<OperationReference> ? true : false,
-        Equal<SystemProgramExposure[9], SystemProgramReference<'ship'>>,
+        Equal<SystemProgramExposure[3], SystemProgramReference<'ship'>>,
+        Equal<SystemProgramExposure[5], SystemProgramReference<'ship'>>,
       ],
-      [true, true, true, false]
+      [true, true, true, false, true]
     >
   >
 >;
@@ -132,10 +138,10 @@ export type TheEffectCharacterIsReadFromTheOperation = Assert<
     Equal<
       [
         Equal<SystemProgram['definition']['effects'], NonEmptyTuple<EffectClass>>,
-        ObservesOnly<SystemProgram<'doctor', unknown, unknown, readonly []>>,
+        ObservesOnly<SystemProgram<'audit', unknown, unknown, readonly []>>,
         Equal<
           ObservesOnly<
-            SystemProgram<'doctor', unknown, unknown, readonly []> & {
+            SystemProgram<'audit', unknown, unknown, readonly []> & {
               readonly definition: { readonly effects: readonly ['publish'] };
             }
           >,

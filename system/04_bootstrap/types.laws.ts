@@ -16,7 +16,13 @@ import type { DisposalReceipt } from '../../00_core/05_lifecycle/types.js';
 import type { CliDisposition } from '../../02_wires/cli/types.js';
 import type { Assert, CaseOf, Equal, IsExactlyTrue, TagOf } from '../../types.js';
 import type { WorkspaceReference } from '../00_workspace/types.js';
-import type { SystemProgram, SystemProgramId, SystemProgramName, SystemProgramReference } from '../03_programs/types.js';
+import type {
+  ReleaseProgram,
+  SystemProgram,
+  SystemProgramId,
+  SystemProgramName,
+  SystemProgramReference,
+} from '../03_programs/types.js';
 import type { BootstrapCapabilities, BootstrapReceipt, DispatchOutcome, InvocationEnvelope, ProgramRegistry } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -28,8 +34,16 @@ import type { BootstrapCapabilities, BootstrapReceipt, DispatchOutcome, Invocati
  *
  * Line one pins the key set against the name union, so a missing program has no
  * home and an extra one has no key. Lines two and three are the exactness that
- * makes it worth having: a registry entry is the program of *that* name, so
- * mapping `release` to another program is refused.
+ * makes it worth having: a registry entry is the program of *that* name with
+ * *that* contract, so mapping `release` to another program is refused and so
+ * is mapping it to a placeholder that merely carries the right name.
+ *
+ * Line three is the one that changed. `Equal<registry['release'],
+ * SystemProgram<'release'>>` used to be `true`, and that was the defect: the
+ * broad placeholder and the registry entry were the same type, so a bootstrap
+ * held something accepting `unknown` while `ReleaseSignature` described the
+ * real contract one home away. It is now `false`, and the entry is
+ * `ReleaseProgram`.
  *
  * Line three is the specific mistake a canary found in the wire topology — an
  * entry copy-pasted and edited in one of its two positions. It is checked here
@@ -40,11 +54,12 @@ export type TheRegistryIsTotalOverTheRoster = Assert<
     Equal<
       [
         Equal<keyof ProgramRegistry, SystemProgramName>,
+        Equal<ProgramRegistry['release'], ReleaseProgram>,
         Equal<ProgramRegistry['release'], SystemProgram<'release'>>,
-        SystemProgram<'docs'> extends ProgramRegistry['release'] ? true : false,
+        SystemProgram<'ship'> extends ProgramRegistry['release'] ? true : false,
         SystemProgram extends ProgramRegistry['release'] ? true : false,
       ],
-      [true, true, false, false]
+      [true, true, false, false, false]
     >
   >
 >;

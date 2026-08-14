@@ -1,4 +1,4 @@
-# Programs: The Eleven Operations Whose Subject Is This Repository
+# Programs: The Operations Whose Subject Is This Repository
 
 Status: architecture specified; implementation absent
 
@@ -14,7 +14,7 @@ Declare the program population, bind each program's identity to it, and type the
 
 ## Owns
 
-- The roster: eleven names, one tuple.
+- The definition map: each program beside its exact contract, in one tuple.
 - Program identity, computed from the name.
 - The program itself, which is core's operation definition plus a name.
 - The three release-path signatures: package, release, ship.
@@ -31,11 +31,31 @@ Declare the program population, bind each program's identity to it, and type the
 
 This is the whole subtraction, and it is why the home is small.
 
-A program's `OperationId` is `liteship.system.program.${Name}`, computed from the roster entry. There is no `SystemProgramId` brand beside `OperationId` — a program reference *is* an operation reference, so every consumer that already accepts one accepts a program without knowing it is one. Eleven hand-written brands would have been eleven declarations that can disagree with the roster, which is the shape a topology fold already removed once.
+A program's `OperationId` is `liteship.system.program.${Name}`, computed from the roster entry. There is no `SystemProgramId` brand beside `OperationId` — a program reference *is* an operation reference, so every consumer that already accepts one accepts a program without knowing it is one. A hand-written brand per program would be one more declaration per program that can disagree with the population, which is the shape a topology fold already removed once.
 
 Everything else comes from `OperationDefinition`. A program that lies about its effects lies in the same field an application operation would, and the same policy machinery reads it.
 
 `ObservesOnly` projects through `definition.effects` rather than adding a `readOnly` member. A second summary of the effects would be one more fact that can drift from what it summarizes.
+
+## Six programs, because six contracts are earned
+
+The population was eleven names — `doctor`, `verify`, `audit`, `gauntlet`, `build`, `benchmark`, `docs`, `migrate`, `package`, `release`, `ship` — in a tuple of strings, with every registry entry resolving to `SystemProgram<Name, unknown, unknown, RequirementRow>`.
+
+Eleven names and eleven broad placeholders. The three exact release signatures were declared *beside* that registry rather than defining its entries, so a bootstrap holding the `release` entry held something that accepted `unknown` while an exact contract sat one home away describing what release should consume. Two correct declarations about different things, which is the shape this repository keeps finding.
+
+`SystemProgramDefinitions` pairs each name with its contract, and the roster, the name union, the identities, the references, the registry, and the wire exposure all derive from it. There is one place a program is introduced.
+
+Six are here because six have inputs, outputs, and prerequisites presently readable off types that exist: `AuditProduct`, `AssuranceResult`, and the package, release, and publication chain. `doctor`, `build`, `benchmark`, `docs`, and `migrate` remain intended capabilities whose contracts are not yet reasoned. Naming them would restore exactly the placeholder the map exists to remove — a roster is a promise the compiler checks, and a promise about a contract nobody has written is not one it can keep.
+
+Each returns when its complete operation definition is reasoned and consumed. That is one edit to one tuple.
+
+`AuditRequirements` came back with them. It was declared once as "the exact prerequisite row for one audit run", was never a requirement row on any signature because no audit signature existed, and was deleted for having no consumer. The concrete `audit` program is that consumer, so there is now a signature for it to be the requirement row of.
+
+### Where the request shapes live, and why they must live here
+
+`gauntlet` evaluates an audit product, and `01_gauntlet` may not import `00_audit` — they are siblings, and sibling exclusion is the rule that kept the predecessor's Cloudflare package from losing its independent story.
+
+So `GauntletRequest` and `VerifyRequest` are declared here. This home is downstream of both children and is the first place allowed to name them together, which is precisely its job: it says which program consumes and produces which, and declares none of the products itself.
 
 ## Release consumes a qualified candidate
 
@@ -49,7 +69,7 @@ Both exactness axes thread. A candidate qualified over another snapshot is refus
 
 ## Exposure derives from the roster
 
-`SystemProgramExposure` is a mapped type over the eleven names, producing exactly the shape `WireExposure.exposed` accepts.
+`SystemProgramExposure` is a mapped type over the definition map, producing exactly the shape `WireExposure.exposed` accepts.
 
 A hand-written exposure list reaches disagreement with the roster within two additions, and nothing would notice.
 
@@ -75,10 +95,10 @@ That was a dependency, not a schedule. The distinction matters because the previ
 Runtime and repository claims a type cannot express:
 
 - That a governed release path supplies an exact `AssuranceRunSpec` rather than the broad default.
-- That each program's declared effects match what it does. `migrate` declaring `observe` compiles.
-- That the eleven programs are the eleven a user can invoke — that no twelfth is reachable through a wire and no rostered one is missing from a registry. `04_bootstrap` makes the second half structural; the first is a repository fact.
+- That each program's declared effects match what it does. `release` declaring `observe` compiles.
+- That the rostered programs are the ones a user can invoke — that no unrostered program is reachable through a wire and no rostered one is missing from a registry. `04_bootstrap` makes the second half structural; the first is a repository fact.
 - That a program's requirements are satisfied by the capabilities a bootstrap bound, for the concrete programs that do not exist yet.
 
 ## Implementation
 
-None. Eleven contracts and no bodies.
+None. Six contracts and no bodies.

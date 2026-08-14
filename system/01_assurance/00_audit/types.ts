@@ -156,6 +156,21 @@ export type ImportResolver = Hole<
   }
 >;
 
+/**
+ * The exact prerequisite row an audit run needs before it can read anything.
+ *
+ * This existed once and was deleted for having no consumer: it was declared as
+ * "the exact prerequisite row for one audit run" and was never a requirement
+ * row on any signature, because no audit signature existed. Deleting it was
+ * right, and it returns now for the only reason a declaration should — the
+ * concrete `audit` program names it, so there is a signature to be the
+ * requirement row of.
+ */
+export type AuditRequirements<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = readonly [
+  TypeProgramInterpreter<Snapshot>,
+  ImportResolver,
+];
+
 // ---------------------------------------------------------------------------
 // Product
 // ---------------------------------------------------------------------------

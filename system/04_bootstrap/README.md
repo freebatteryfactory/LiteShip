@@ -28,9 +28,11 @@ Say what must be true before any program runs, that every program is reachable, 
 
 ## The registry is total over the roster
 
-`ProgramRegistry` is a mapped type over `SystemProgramRoster`. Registering ten of eleven does not compile. Registering a twelfth does not compile either, because there is no key for it.
+`ProgramRegistry` is a mapped type over `SystemProgramDefinitions`. Registering all but one does not compile. Registering an unrostered program does not compile either, because there is no key for it.
 
-Each entry is exact over its own name — `SystemProgram<'release'>`, not `SystemProgram` — so a registry that maps `release` to the `docs` program is refused.
+Each entry is the program's **contract**, not a placeholder wearing its name. It used to be `SystemProgram<Name>` — exact over the name and broad over everything that matters — so the `release` entry a bootstrap actually held accepted `unknown`, while an exact `ReleaseSignature` sat one home away describing the real contract. Both declarations were correct and they were about different things.
+
+Deriving from the definition map means the `release` entry *is* `ReleaseProgram`, whose input is a qualified candidate. The guarantee stopped being adjacent to the dispatch path and became the dispatch path. A law pins that the broad `SystemProgram<'release'>` is no longer the same type as the registry entry, which is the line that used to read `true`.
 
 That last refinement exists because of a specific near-miss. The wire topology named its children by surface, which meant a deleted child broke the import, and it looked sufficient. It was not: pointing `http` at `DirectWireTypeSurface` compiled, and only an unused-import warning noticed. A mis-wired entry is the likelier defect of the two — a child gets deleted deliberately and loudly, while an entry gets copy-pasted and edited in one of its two positions. It is checked here before anyone has had the chance to make it.
 
@@ -48,7 +50,7 @@ Two arms, not three. `unregistered` sat here on the reasoning that a runtime loo
 
 `InvocationEnvelope` carries a workspace, a program reference, the decoded input, and a caller. No argv, no flags, no command string.
 
-The input was missing, and that was not restraint. A bootstrap cannot invoke an operation without the operation's input, so an envelope carrying only a reference described something no dispatch could perform. Parsing belongs to the wire; its *product* has to arrive somewhere. The input is typed as the selected program's input, so an envelope for `release` cannot carry what `docs` accepts.
+The input was missing, and that was not restraint. A bootstrap cannot invoke an operation without the operation's input, so an envelope carrying only a reference described something no dispatch could perform. Parsing belongs to the wire; its *product* has to arrive somewhere. The input is typed as the selected program's input, so an envelope for `release` cannot carry what `audit` accepts.
 
 The program is named by reference rather than by string, so an envelope for a program the roster does not contain cannot be constructed at all. A `program: string` would have made every envelope substitutable and moved the check to runtime, which is where the previous arrangement kept it.
 
@@ -71,7 +73,6 @@ Runtime claims a type cannot express:
 - That disposal actually ran. The receipt says a release happened; only the host can say the handle closed.
 - That the capabilities bound at the edge are the ones each program's requirements name. The binding calculus checks the shape; whether the supplied filesystem is a filesystem is a host fact.
 - That no program is reachable by a path that skips this contract — that the entry point is the only entry point.
-- That a `unregistered` outcome names something a user actually typed, rather than a lookup the implementation fumbled.
 
 ## Implementation
 

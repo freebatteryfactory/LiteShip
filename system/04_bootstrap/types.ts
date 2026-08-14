@@ -48,19 +48,21 @@ import type { CliDisposition } from '../../02_wires/cli/types.js';
 import type { WireCaller } from '../../02_wires/types.js';
 import type { WorkspaceReference } from '../00_workspace/types.js';
 import type {
-  SystemProgram,
+  SystemProgramDefinitions,
+  SystemProgramEntry,
   SystemProgramId,
   SystemProgramName,
   SystemProgramReference,
-  SystemProgramRoster,
 } from '../03_programs/types.js';
 
 // ---------------------------------------------------------------------------
 // The registry
 // ---------------------------------------------------------------------------
 
-type ProgramsByName<Names extends readonly SystemProgramName[]> = {
-  readonly [Name in Names[number]]: SystemProgram<Name>;
+type ProgramsByName<
+  Entries extends readonly SystemProgramEntry<SystemProgramName, unknown>[],
+> = {
+  readonly [Entry in Entries[number] as Entry['name']]: Entry['Program'];
 };
 
 /**
@@ -71,12 +73,18 @@ type ProgramsByName<Names extends readonly SystemProgramName[]> = {
  * not compile; registering a twelfth does not compile either, because there is
  * no key for it.
  *
- * Each entry is exact over its own name — `SystemProgram<'release'>` and not
- * `SystemProgram` — so a registry that maps `release` to the `docs` program is
- * refused. That is the mistake a canary caught in the wire topology,
- * anticipated here rather than rediscovered.
+ * Each entry is the program's *contract*, not a placeholder wearing its name.
+ * It used to be `SystemProgram<Name>` — exact over the name and broad over
+ * everything that matters, so the `release` entry a bootstrap actually holds
+ * accepted `unknown` while an exact `ReleaseSignature` sat one home away
+ * describing what release should consume. Two correct declarations about
+ * different things.
+ *
+ * Deriving from the definition map means the entry for `release` *is*
+ * `ReleaseProgram`, whose input is a qualified candidate. The guarantee stopped
+ * being adjacent to the dispatch path and became the dispatch path.
  */
-export type ProgramRegistry = ProgramsByName<SystemProgramRoster>;
+export type ProgramRegistry = ProgramsByName<SystemProgramDefinitions>;
 
 // ---------------------------------------------------------------------------
 // Capabilities
@@ -116,7 +124,7 @@ export type BootstrapCapabilities<Requirements extends RequirementRow = Requirem
  * perform. Parsing belongs to the wire and its product has to arrive
  * somewhere; `Input` is that somewhere, and it is the selected program's input
  * rather than a free type, so an envelope for `release` cannot carry what
- * `docs` accepts.
+ * `audit` accepts.
  */
 export interface InvocationEnvelope<
   Name extends SystemProgramName = SystemProgramName,

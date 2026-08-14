@@ -1,5 +1,5 @@
 /**
- * System programs: the eleven operations whose subject is this repository.
+ * System programs: the operations whose subject is this repository.
  *
  * A program is not a new kind of thing. It is an operation — core's
  * `OperationDefinition`, with core's effect classes, core's idempotency policy,
@@ -9,8 +9,8 @@
  *
  * Three facts, and they are the whole home.
  *
- * **The population is a tuple, and identity derives from it.** Eleven names in
- * one authority, not eleven subfolders and not eleven hand-written brands. A
+ * **The population is a definition map, and everything derives from it.** One
+ * authority, not one subfolder per program and not a hand-written brand each. A
  * program's `OperationId` is `liteship.system.program.${Name}`, computed, so a
  * name added to the roster gets an identity and a name removed loses one.
  *
@@ -26,7 +26,7 @@
  * have been a guess about its own consumer.
  *
  * **Exposure derives from the roster.** The CLI wire's exposed population is
- * computed from the eleven names, so a program cannot exist and be unreachable,
+ * computed from the definition map, so a program cannot exist and be unreachable,
  * and a wire cannot claim to expose a program that is not in the roster.
  *
  * What this home does *not* own: any privilege. `WireCaller` has an arm naming a
@@ -38,9 +38,13 @@
  */
 
 import type {
+  Named,
   RequirementRow,
   Signature,
 } from '../../types.js';
+import type { WorkspaceSnapshotReference } from '../00_workspace/types.js';
+import type { AuditProduct, AuditRequirements } from '../01_assurance/00_audit/types.js';
+import type { AssuranceResult } from '../01_assurance/01_gauntlet/types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type {
   EffectClass,
@@ -65,27 +69,69 @@ import type {
 // ---------------------------------------------------------------------------
 
 /**
- * The eleven programs, written once.
+ * One entry in the definition map: a name beside the program it names.
  *
- * Ordered by the phase each belongs to rather than alphabetically: observation
- * first, then evaluation, then the shipping chain. The order carries no
- * dependency — `SystemProgramName` is a union and nothing reads a position —
- * but a roster a reader cannot scan is a roster that grows a twelfth entry
- * nobody notices.
+ * The pairing is the whole point. A tuple of eleven strings was the previous
+ * shape, and every downstream product of it — identity, reference, registry,
+ * exposure — derived correctly from a population that said nothing about what
+ * any program consumes or produces.
  */
-export type SystemProgramRoster = readonly [
-  'doctor',
-  'verify',
-  'audit',
-  'gauntlet',
-  'build',
-  'benchmark',
-  'docs',
-  'migrate',
-  'package',
-  'release',
-  'ship',
+export interface SystemProgramEntry<Name extends string, Program> extends Named<Name> {
+  readonly Program: Program;
+}
+
+/**
+ * The programs whose contracts are earned, each beside its exact contract.
+ *
+ * This was a tuple of eleven names — `doctor`, `verify`, `audit`, `gauntlet`,
+ * `build`, `benchmark`, `docs`, `migrate`, `package`, `release`, `ship` — with
+ * every registry entry resolving to `SystemProgram<Name, unknown, unknown,
+ * RequirementRow>`. Eleven names, eleven broad placeholders, and the three
+ * exact release signatures declared *beside* that registry rather than
+ * defining its entries. A bootstrap holding the `release` entry held something
+ * that accepted `unknown`.
+ *
+ * Six, because six are the ones whose input, output, and prerequisites are
+ * presently readable off types that exist: `AuditProduct`, `AssuranceResult`,
+ * and the package, release, and publication chain. `doctor`, `build`,
+ * `benchmark`, `docs`, and `migrate` are intended system capabilities and their
+ * contracts are not yet reasoned. Naming them here would restore exactly the
+ * placeholder this map exists to remove — a roster is a promise the compiler
+ * checks, and a promise about a contract nobody has written is the shape this
+ * repository keeps paying for.
+ *
+ * Each returns when its complete operation definition is reasoned and consumed,
+ * which is one edit to this tuple and nothing else: the roster, the name union,
+ * the identities, the references, the registry, and the wire exposure are all
+ * derived from here.
+ *
+ * Ordered causally — observe, evaluate, then the shipping chain — because a
+ * roster a reader cannot scan grows an entry nobody notices.
+ */
+export type SystemProgramDefinitions = readonly [
+  SystemProgramEntry<'audit', AuditProgram>,
+  SystemProgramEntry<'gauntlet', GauntletProgram>,
+  SystemProgramEntry<'verify', VerifyProgram>,
+  SystemProgramEntry<'package', PackageProgram>,
+  SystemProgramEntry<'release', ReleaseProgram>,
+  SystemProgramEntry<'ship', ShipProgram>,
 ];
+
+/**
+ * The names of a definition map, positionally.
+ *
+ * Through a generic parameter rather than mapping the concrete tuple alias
+ * directly. A homomorphic mapped type preserves tuple arity only when its
+ * source is a naked type parameter; mapping the alias produces an object that
+ * answers by index and fails on `length`, and this is the third time that has
+ * been the answer in this repository.
+ */
+type NamesOf<Entries extends readonly SystemProgramEntry<string, unknown>[]> = {
+  readonly [Position in keyof Entries]: Entries[Position]['name'];
+};
+
+/** The population, derived from the definition map. */
+export type SystemProgramRoster = NamesOf<SystemProgramDefinitions>;
 
 /** The program names, derived from the roster so the population is written once. */
 export type SystemProgramName = SystemProgramRoster[number];
@@ -222,6 +268,116 @@ export type ShipSignature<
 >;
 
 // ---------------------------------------------------------------------------
+// The six programs
+//
+// The request shapes for `gauntlet` and `verify` are declared here rather than
+// in the homes that own their products, and that placement is forced. Gauntlet
+// evaluates an audit product, but `01_gauntlet` may not import `00_audit` —
+// they are siblings, and sibling exclusion is the rule that kept the
+// predecessor's Cloudflare package from losing its independent story. This
+// home is downstream of both and is the first place allowed to name them
+// together, which is exactly what it is for: it says which program consumes
+// and produces which, and declares none of the products themselves.
+// ---------------------------------------------------------------------------
+
+/** What `gauntlet` evaluates: one acquired product against one run's checks. */
+export interface GauntletRequest<
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
+> {
+  readonly product: AuditProduct<Snapshot>;
+  readonly spec: Spec;
+}
+
+/**
+ * What `verify` runs: one snapshot against one run's checks.
+ *
+ * Verify is audit and gauntlet in one invocation, so it takes the coordinate
+ * rather than the product — acquiring the product is its first half. That is
+ * why its requirement row is audit's: evaluation needs no capability, and
+ * whoever reads the repository does.
+ */
+export interface VerifyRequest<
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
+> {
+  readonly snapshot: WorkspaceSnapshotReference<Snapshot>;
+  readonly spec: Spec;
+}
+
+/** Acquire every fact about one snapshot. */
+export type AuditProgram<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = SystemProgram<
+  'audit',
+  WorkspaceSnapshotReference<Snapshot>,
+  AuditProduct<Snapshot>,
+  AuditRequirements<Snapshot>
+>;
+
+/**
+ * Evaluate an acquired product against one run specification.
+ *
+ * The requirement row is empty, and that is the claim `01_gauntlet` makes about
+ * itself in prose: evaluation needs no compiler lane, no filesystem, and no
+ * source control, so it runs wherever the facts can be shipped. Here that
+ * sentence is a closed tuple with nothing in it.
+ */
+export type GauntletProgram<
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
+> = SystemProgram<'gauntlet', GauntletRequest<Snapshot, Spec>, AssuranceResult<Snapshot, Spec>, readonly []>;
+
+/** Acquire and evaluate in one invocation. */
+export type VerifyProgram<
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
+> = SystemProgram<
+  'verify',
+  VerifyRequest<Snapshot, Spec>,
+  AssuranceResult<Snapshot, Spec>,
+  AuditRequirements<Snapshot>
+>;
+
+/** Pack a plan into distributables. */
+export type PackageProgram<
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Requirements extends RequirementRow = RequirementRow,
+> = SystemProgram<'package', ReleasePlan<Snapshot>, PackageReceipt<Snapshot>, Requirements>;
+
+/**
+ * Release a qualified candidate.
+ *
+ * The input is `QualifiedReleaseCandidate`, so the registry entry for
+ * `release` is the thing that cannot be invoked with an unqualified candidate.
+ * That property used to live on `ReleaseSignature`, declared beside a registry
+ * whose `release` entry accepted `unknown` — the guarantee was real and was
+ * about a type nothing dispatched through.
+ */
+export type ReleaseProgram<
+  Id extends ReleaseCandidateId = ReleaseCandidateId,
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
+  Requirements extends RequirementRow = RequirementRow,
+> = SystemProgram<
+  'release',
+  QualifiedReleaseCandidate<Id, Snapshot, Spec>,
+  ReleaseReceipt<Id, Snapshot, Spec>,
+  Requirements
+>;
+
+/** Publish what a release produced. */
+export type ShipProgram<
+  Id extends ReleaseCandidateId = ReleaseCandidateId,
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+  Spec extends AssuranceRunSpec = AssuranceRunSpec,
+  Requirements extends RequirementRow = RequirementRow,
+> = SystemProgram<
+  'ship',
+  PublicationPlan<Id, Snapshot, Spec>,
+  PublicationReceipt<Id, Snapshot, Spec>,
+  Requirements
+>;
+
+// ---------------------------------------------------------------------------
 // Exposure
 // ---------------------------------------------------------------------------
 
@@ -236,11 +392,11 @@ export type ShipSignature<
  * This is the shape `WireExposure.exposed` wants, and a CLI wire that exposes
  * the system programs assigns this to it directly.
  */
-type ReferencesOf<Names extends readonly SystemProgramName[]> = {
-  readonly [Position in keyof Names]: SystemProgramReference<Names[Position] & SystemProgramName>;
+type ReferencesOf<Entries extends readonly SystemProgramEntry<SystemProgramName, unknown>[]> = {
+  readonly [Position in keyof Entries]: SystemProgramReference<Entries[Position]['name']>;
 };
 
-export type SystemProgramExposure = ReferencesOf<SystemProgramRoster>;
+export type SystemProgramExposure = ReferencesOf<SystemProgramDefinitions>;
 
 // ---------------------------------------------------------------------------
 // Surface
