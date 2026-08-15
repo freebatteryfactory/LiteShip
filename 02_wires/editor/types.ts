@@ -11,14 +11,14 @@
  * Two facts have no owner upstream, and both are ways an editor protocol
  * quietly becomes a second LiteShip.
  *
- * **An editor protocol has two flows, and only one of them is an exchange.**
- * `WireExchange` describes one inbound request trying to become an invocation
- * and one answer trying to return. That is exactly right for a client request.
- * It is wrong for a server-initiated notification, which answers nothing,
- * correlates with no request, and may carry no operation receipt because no
- * operation was invoked. Forcing pushed diagnostics into the exchange algebra
- * to keep one universal shape would make `undelivered` — *the operation ran and
- * the answer was lost* — reachable for a message that never ran anything.
+ * **Requests and notifications are different flows.** `WireExchange` describes
+ * an inbound request trying to become an operation invocation and one answer
+ * trying to return. A server notification answers nothing, correlates with no
+ * request, and may carry no operation receipt because no operation ran. A
+ * server refresh request is answered, but remains protocol coordination rather
+ * than an operation crossing. Forcing either into one universal exchange would
+ * make `undelivered` — *the operation ran and the answer was lost* — reachable
+ * when no operation ran.
  *
  * The umbrella is deliberately not enlarged. One child needing a push stream
  * does not earn universal wire vocabulary; if a second wire turns out to have
@@ -26,10 +26,10 @@
  *
  * **An unsaved buffer is not a dirty workspace snapshot.** A snapshot is
  * revision-pinned and records digests read from the revision it names. An
- * editor's whole subject is state that has no revision yet. So the editor
- * coordinate is core's: a session, a working overlay over an exact base cut,
- * and a draft cut — and a draft result may never stand where a committed one
- * is required.
+ * editor's whole subject is state that has no revision yet. The draft
+ * coordinate therefore carries core's preview branch once; the preview owns
+ * its overlay, and the overlay owns its session and base. A draft result may
+ * never stand where a committed one is required.
  *
  * What this home does not own, because `00_core/17_editor` already does:
  * sessions, selections, working overlays, preview branches, history cursors,
@@ -49,20 +49,25 @@ import type {
   Algebra,
   Brand,
   CaseOf,
+  Hole,
   NonEmptyTuple,
   Reference,
   Refine,
+  Signature,
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
+import type { ContentAddress } from '../../00_core/01_encoding/types.js';
+import type { StreamSequence } from '../../00_core/04_time/types.js';
 import type { SemanticCut } from '../../00_core/08_state/types.js';
 import type {
   ApprovalDecision,
+  EditProposal,
   EditorSessionReference,
   PreviewBranch,
   SelectionSet,
-  WorkingOverlay,
 } from '../../00_core/17_editor/types.js';
-import type { OperationId } from '../../00_core/07_operation/types.js';
+import type { Explanation } from '../../00_core/18_inspection/types.js';
+import type { OperationId, OperationInvocation } from '../../00_core/07_operation/types.js';
 import type { WireExchange, WireRefusal } from '../types.js';
 
 // ---------------------------------------------------------------------------
@@ -80,6 +85,14 @@ export type EditorRequestId<Name extends string = string> = Brand<
   'liteship.editor.request-id'
 >;
 
+export type EditorConnectionId<Name extends string = string> = Brand<
+  Name,
+  'liteship.editor.connection-id'
+>;
+export type EditorConnectionReference<
+  Id extends EditorConnectionId = EditorConnectionId,
+> = Reference<'editor-connection', Id>;
+
 /**
  * The protocol's own document version.
  *
@@ -88,8 +101,8 @@ export type EditorRequestId<Name extends string = string> = Brand<
  * revision or a draft identity — a version is a counter the editor increments,
  * and a revision is a fact about content.
  */
-export type EditorDocumentVersion<Name extends string = string> = Brand<
-  Name,
+export type EditorDocumentVersion<Value extends number = number> = Brand<
+  Value,
   'liteship.editor.document-version'
 >;
 
@@ -101,6 +114,51 @@ export type EditorDocumentReference<Id extends EditorDocumentId = EditorDocument
   'editor-document',
   Id
 >;
+
+export type EditorSourceLanguage = 'astro' | 'typescript';
+export type EditorSourceText = Brand<string, 'liteship.editor.source-text'>;
+export type EditorSourceAddress = ContentAddress<'text/plain'>;
+export type EditorTextOffset = Brand<number, 'liteship.editor.text-offset'>;
+
+/** Editor-neutral source range; LSP UTF-16 positions are a downstream projection. */
+export interface EditorTextRange {
+  readonly start: EditorTextOffset;
+  readonly end: EditorTextOffset;
+}
+
+/** One faithful source-text replacement. */
+export interface EditorTextEdit {
+  readonly range: EditorTextRange;
+  readonly replacement: EditorSourceText;
+}
+
+/** One exact protocol document state. */
+export interface EditorDocumentState {
+  readonly document: EditorDocumentReference;
+  readonly version: EditorDocumentVersion;
+  readonly language: EditorSourceLanguage;
+  readonly source: EditorSourceAddress;
+}
+
+/**
+ * A document change never becomes semantic meaning by itself. The injected
+ * language capability admits it against the previous semantic ancestry.
+ */
+export type EditorDocumentChange = Algebra<{
+  opened: { readonly state: EditorDocumentState; readonly text: EditorSourceText };
+  incremental: {
+    readonly previous: EditorDocumentState;
+    readonly next: EditorDocumentState;
+    readonly edits: NonEmptyTuple<EditorTextEdit>;
+  };
+  replaced: {
+    readonly previous: EditorDocumentState;
+    readonly next: EditorDocumentState;
+    readonly text: EditorSourceText;
+    readonly ancestry: EditorCoordinate;
+  };
+  closed: { readonly state: EditorDocumentState };
+}>;
 
 // ---------------------------------------------------------------------------
 // Lifecycle
@@ -122,56 +180,6 @@ export type EditorProtocolPhase = Algebra<{
 }>;
 
 // ---------------------------------------------------------------------------
-// The method catalog
-// ---------------------------------------------------------------------------
-
-export type EditorMethodDirection = 'client-to-server' | 'server-to-client';
-export type EditorMethodKind = 'request' | 'notification';
-
-/**
- * One method, and everything the protocol needs to route it.
- *
- * Direction and kind together are what stop a server-initiated notification
- * from being answered and a client request from going unanswered.
- */
-export interface EditorMethod<
-  Name extends string = string,
-  Direction extends EditorMethodDirection = EditorMethodDirection,
-  Kind extends EditorMethodKind = EditorMethodKind,
-> {
-  readonly method: Name;
-  readonly direction: Direction;
-  readonly kind: Kind;
-}
-
-/** The methods a client may send. */
-export type EditorClientMethod<
-  Name extends string = string,
-  Kind extends EditorMethodKind = EditorMethodKind,
-> = EditorMethod<Name, 'client-to-server', Kind>;
-
-/** The methods a server may push. */
-export type EditorServerMethod<Name extends string = string> = EditorMethod<
-  Name,
-  'server-to-client',
-  'notification'
->;
-
-/**
- * What the server tells the client it can do.
- *
- * Derived from the methods actually handled, never written beside them. The
- * predecessor projected its capabilities from its method catalog and threw at
- * construction when a row had no backing handler, so a catalog edit could not
- * leave a stale capability advertised. This is that idea one step further: an
- * advertised capability for an unhandled method is not a thrown error, it is
- * unrepresentable, because the advertised set *is* the handled set.
- */
-export type EditorCapabilities<Handled extends string> = {
-  readonly [Method in Handled]: EditorClientMethod<Method>;
-};
-
-// ---------------------------------------------------------------------------
 // The coordinate an editor result carries
 // ---------------------------------------------------------------------------
 
@@ -189,11 +197,7 @@ export type EditorCapabilities<Handled extends string> = {
  */
 export type EditorCoordinate = Algebra<{
   committed: { readonly cut: SemanticCut };
-  draft: {
-    readonly session: EditorSessionReference;
-    readonly overlay: WorkingOverlay;
-    readonly preview: PreviewBranch;
-  };
+  draft: { readonly preview: PreviewBranch };
 }>;
 
 /** An answer about committed state, and never about a draft. */
@@ -201,6 +205,264 @@ export type CommittedCoordinate = CaseOf<EditorCoordinate, 'committed'>;
 
 /** An answer about uncommitted editor state, and never about a commit. */
 export type DraftCoordinate = CaseOf<EditorCoordinate, 'draft'>;
+
+/**
+ * A document-derived coordinate. Draft state always carries the exact protocol
+ * version it describes; semantic-only previews use `EditorCoordinate` instead.
+ */
+export type EditorDocumentCoordinate = Algebra<{
+  committed: {
+    readonly document: EditorDocumentReference;
+    readonly coordinate: CommittedCoordinate;
+  };
+  draft: {
+    readonly document: EditorDocumentState;
+    readonly coordinate: DraftCoordinate;
+  };
+}>;
+
+/** Result of admitting one source change into the shared semantic program. */
+export interface EditorLanguageProduct {
+  readonly document: EditorDocumentState;
+  readonly proposal: EditProposal;
+  readonly preview: PreviewBranch;
+  readonly diagnostics: readonly Diagnostic[];
+}
+
+/**
+ * Injected source-language authority. The wire carries changes to it; neither
+ * the wire nor core owns an Astro or TypeScript parser.
+ */
+export interface EditorLanguageCapability {
+  readonly admit: Signature<
+    EditorDocumentChange,
+    EditorLanguageProduct,
+    NonEmptyTuple<Diagnostic>
+  >;
+}
+
+export type EditorLanguageRequirement = Hole<
+  'liteship.editor.language',
+  EditorLanguageCapability
+>;
+
+/** One document-derived answer, correlated to its exact version when draft. */
+export interface EditorDocumentResult<Payload> {
+  readonly coordinate: EditorDocumentCoordinate;
+  readonly result: Payload;
+}
+
+/** A completion item remains semantic until the LSP projection renders it. */
+export interface EditorCompletion {
+  readonly label: string;
+  readonly detail?: string;
+  readonly replacement?: EditorTextEdit;
+}
+
+/** A semantic hover combines stable explanation with an optional source span. */
+export interface EditorHover {
+  readonly explanation: Explanation;
+  readonly range?: EditorTextRange;
+}
+
+/** Exact source destination for definition and source jumps. */
+export interface EditorSourceDestination {
+  readonly document: EditorDocumentReference;
+  readonly source: EditorSourceAddress;
+  readonly range: EditorTextRange;
+}
+
+/** What changed when the server asks the client to refresh projected facts. */
+export type EditorRefreshSubject = Algebra<{
+  diagnostics: { readonly coordinate: EditorDocumentCoordinate };
+  authority: {
+    readonly catalog: ContentAddress<'application/vnd.liteship.authority-graph+cbor'>;
+  };
+}>;
+
+/** Position-bearing query over one exact document state. */
+export interface EditorDocumentQuery {
+  readonly coordinate: EditorDocumentCoordinate;
+  readonly position: EditorTextOffset;
+}
+
+/** Source-backed operation proposal request. */
+export interface EditorOperationProposalRequest {
+  readonly coordinate: EditorDocumentCoordinate;
+  readonly invocation: OperationInvocation;
+}
+
+/** Start one semantic editor session at an exact committed base. */
+export interface EditorSessionRequest {
+  readonly base: SemanticCut;
+}
+
+export interface EditorInitializeRequest {
+  readonly connection: EditorConnectionReference;
+  readonly clientName?: string;
+}
+
+export interface EditorInitializeResult {
+  readonly connection: EditorConnectionReference;
+  readonly capabilities: EditorCapabilities;
+}
+
+// ---------------------------------------------------------------------------
+// Editor-neutral method authority
+// ---------------------------------------------------------------------------
+
+export type EditorMethodDirection = 'client-to-server' | 'server-to-client';
+export type EditorMethodKind = 'request' | 'notification';
+
+/** One semantic method and the exact relationship its handler must implement. */
+export interface EditorMethodDefinition<
+  Id extends string,
+  Direction extends EditorMethodDirection,
+  Kind extends EditorMethodKind,
+  Input,
+  Output,
+  Failure = NonEmptyTuple<Diagnostic>,
+  Phases extends NonEmptyTuple<EditorProtocolPhase['_tag']> = NonEmptyTuple<EditorProtocolPhase['_tag']>,
+> {
+  readonly id: Id;
+  readonly direction: Direction;
+  readonly kind: Kind;
+  readonly available: Phases;
+  readonly handler: Signature<Input, Output, Failure>;
+}
+
+type EditorClientRequest<Id extends string, Input, Output, Phases extends NonEmptyTuple<EditorProtocolPhase['_tag']> = readonly ['active']> =
+  EditorMethodDefinition<Id, 'client-to-server', 'request', Input, Output, NonEmptyTuple<Diagnostic>, Phases>;
+type EditorClientNotification<Id extends string, Input, Phases extends NonEmptyTuple<EditorProtocolPhase['_tag']> = readonly ['active']> =
+  EditorMethodDefinition<Id, 'client-to-server', 'notification', Input, void, NonEmptyTuple<Diagnostic>, Phases>;
+type EditorServerRequest<Id extends string, Input, Output = void> =
+  EditorMethodDefinition<Id, 'server-to-client', 'request', Input, Output, NonEmptyTuple<Diagnostic>, readonly ['active']>;
+type EditorServerNotification<Id extends string, Input, Phases extends NonEmptyTuple<EditorProtocolPhase['_tag']> = readonly ['active']> =
+  EditorMethodDefinition<Id, 'server-to-client', 'notification', Input, void, NonEmptyTuple<Diagnostic>, Phases>;
+
+/** The complete owner-ratified first editor method population. */
+export type EditorMethodCatalog = readonly [
+  EditorClientRequest<'lifecycle.initialize', EditorInitializeRequest, EditorInitializeResult, readonly ['initial']>,
+  EditorClientNotification<'lifecycle.initialized', EditorConnectionReference>,
+  EditorClientRequest<'lifecycle.shutdown', EditorConnectionReference, void>,
+  EditorClientNotification<'lifecycle.exit', EditorConnectionReference, readonly ['shuttingDown']>,
+  EditorClientNotification<'document.open', CaseOf<EditorDocumentChange, 'opened'>>,
+  EditorClientNotification<'document.change', CaseOf<EditorDocumentChange, 'incremental'> | CaseOf<EditorDocumentChange, 'replaced'>>,
+  EditorClientNotification<'document.close', CaseOf<EditorDocumentChange, 'closed'>>,
+  EditorClientRequest<'diagnostics.pull', EditorDocumentCoordinate, EditorDocumentResult<readonly Diagnostic[]>>,
+  EditorServerNotification<'diagnostics.publish', EditorDiagnosticPush>,
+  EditorServerRequest<'diagnostics.refresh', CaseOf<EditorRefreshSubject, 'diagnostics'>>,
+  EditorClientRequest<'remediation.list', EditorDocumentQuery, EditorDocumentResult<readonly EditorRemediationProjection[]>>,
+  EditorClientRequest<'language.complete', EditorDocumentQuery, EditorDocumentResult<readonly EditorCompletion[]>>,
+  EditorClientRequest<'language.hover', EditorDocumentQuery, EditorDocumentResult<EditorHover | null>>,
+  EditorClientRequest<'language.definition', EditorDocumentQuery, EditorDocumentResult<readonly EditorSourceDestination[]>>,
+  EditorClientRequest<'language.source', EditorDocumentQuery, EditorDocumentResult<readonly EditorSourceDestination[]>>,
+  EditorServerNotification<'authority.refresh', CaseOf<EditorRefreshSubject, 'authority'>>,
+  EditorClientRequest<'operation.preview', EditorOperationProposalRequest, EditorLanguageProduct>,
+  EditorClientRequest<'operation.apply', EditorRemediationOffer, EditorRequestOutcome>,
+  EditorClientRequest<'editor.session.open', EditorSessionRequest, EditorSessionReference>,
+  EditorClientRequest<'editor.draft.preview', EditorDocumentCoordinate, PreviewBranch>,
+  EditorServerNotification<'server.log', EditorHandlerFailure, readonly ['active', 'shuttingDown']>
+];
+
+type ClientHandledRow<Catalog extends EditorMethodCatalog> =
+  Extract<Catalog[number], { readonly direction: 'client-to-server' }>;
+
+/** Advertised semantic capabilities are projected from the actual handled rows. */
+export type EditorCapabilities<Catalog extends EditorMethodCatalog = EditorMethodCatalog> = {
+  readonly [Row in ClientHandledRow<Catalog> as Row['id']]: Row;
+};
+
+/** The concrete carrier relating the catalog to its advertised population. */
+export interface EditorProtocolDefinition<Catalog extends EditorMethodCatalog = EditorMethodCatalog> {
+  readonly methods: Catalog;
+  readonly capabilities: EditorCapabilities<Catalog>;
+}
+
+// ---------------------------------------------------------------------------
+// Exact LSP 3.17 projection
+// ---------------------------------------------------------------------------
+
+export type LspDocumentUri = Brand<string, 'liteship.editor.lsp-document-uri'>;
+export type LspRequestId = Brand<string | number, 'liteship.editor.lsp-request-id'>;
+
+/** LSP character positions are UTF-16 code-unit offsets. */
+export interface LspPosition {
+  readonly line: number;
+  readonly character: number;
+}
+
+export interface LspRange {
+  readonly start: LspPosition;
+  readonly end: LspPosition;
+}
+
+export interface LspTextEdit {
+  readonly range: LspRange;
+  readonly newText: string;
+}
+
+export interface LspVersionedDocument {
+  readonly uri: LspDocumentUri;
+  readonly version: EditorDocumentVersion;
+}
+
+export interface LspDocumentEdit {
+  readonly document: LspVersionedDocument;
+  readonly edits: NonEmptyTuple<LspTextEdit>;
+}
+
+/** Faithful LSP edit product; an edit arm without edits is unrepresentable. */
+export interface LspWorkspaceEdit {
+  readonly documentChanges: NonEmptyTuple<LspDocumentEdit>;
+}
+
+/** One exact projection from semantic method identity to LSP method spelling. */
+export interface LspMethodProjection<
+  Semantic extends EditorMethodCatalog[number]['id'],
+  Method extends string,
+  Direction extends EditorMethodDirection,
+  Kind extends EditorMethodKind,
+> {
+  readonly semantic: Semantic;
+  readonly method: Method;
+  readonly direction: Direction;
+  readonly kind: Kind;
+}
+
+export type LspMethodCatalog = readonly [
+  LspMethodProjection<'lifecycle.initialize', 'initialize', 'client-to-server', 'request'>,
+  LspMethodProjection<'lifecycle.initialized', 'initialized', 'client-to-server', 'notification'>,
+  LspMethodProjection<'lifecycle.shutdown', 'shutdown', 'client-to-server', 'request'>,
+  LspMethodProjection<'lifecycle.exit', 'exit', 'client-to-server', 'notification'>,
+  LspMethodProjection<'document.open', 'textDocument/didOpen', 'client-to-server', 'notification'>,
+  LspMethodProjection<'document.change', 'textDocument/didChange', 'client-to-server', 'notification'>,
+  LspMethodProjection<'document.close', 'textDocument/didClose', 'client-to-server', 'notification'>,
+  LspMethodProjection<'diagnostics.pull', 'textDocument/diagnostic', 'client-to-server', 'request'>,
+  LspMethodProjection<'diagnostics.publish', 'textDocument/publishDiagnostics', 'server-to-client', 'notification'>,
+  LspMethodProjection<'diagnostics.refresh', 'workspace/diagnostic/refresh', 'server-to-client', 'request'>,
+  LspMethodProjection<'remediation.list', 'textDocument/codeAction', 'client-to-server', 'request'>,
+  LspMethodProjection<'language.complete', 'textDocument/completion', 'client-to-server', 'request'>,
+  LspMethodProjection<'language.hover', 'textDocument/hover', 'client-to-server', 'request'>,
+  LspMethodProjection<'language.definition', 'textDocument/definition', 'client-to-server', 'request'>,
+  LspMethodProjection<'language.source', 'liteship/source', 'client-to-server', 'request'>,
+  LspMethodProjection<'authority.refresh', 'liteship/authority/refresh', 'server-to-client', 'notification'>,
+  LspMethodProjection<'operation.preview', 'liteship/operation/preview', 'client-to-server', 'request'>,
+  LspMethodProjection<'operation.apply', 'liteship/operation/apply', 'client-to-server', 'request'>,
+  LspMethodProjection<'editor.session.open', 'liteship/editor/session', 'client-to-server', 'request'>,
+  LspMethodProjection<'editor.draft.preview', 'liteship/editor/preview', 'client-to-server', 'request'>,
+  LspMethodProjection<'server.log', 'window/logMessage', 'server-to-client', 'notification'>
+];
+
+export type EditorServerNotificationMethod = Extract<
+  EditorMethodCatalog[number],
+  { readonly direction: 'server-to-client'; readonly kind: 'notification' }
+>['id'];
+
+export type EditorServerRequestMethod = Extract<
+  EditorMethodCatalog[number],
+  { readonly direction: 'server-to-client'; readonly kind: 'request' }
+>['id'];
 
 // ---------------------------------------------------------------------------
 // Flow one: a client request, which is an exchange
@@ -261,8 +523,18 @@ export type EditorLifecycleRefusal = Algebra<{
  * be reasoned about at all.
  */
 export interface EditorNotification<Payload = unknown> {
-  readonly method: EditorServerMethod;
-  readonly sequence: number;
+  readonly connection: EditorConnectionReference;
+  readonly method: EditorServerNotificationMethod;
+  readonly sequence: StreamSequence;
+  readonly payload: Payload;
+}
+
+/** Server-to-client request: ordered on the same connection, but answered. */
+export interface EditorOutboundRequest<Payload = unknown> {
+  readonly connection: EditorConnectionReference;
+  readonly request: EditorRequestId;
+  readonly method: EditorServerRequestMethod;
+  readonly sequence: StreamSequence;
   readonly payload: Payload;
 }
 
@@ -277,10 +549,8 @@ export interface EditorNotification<Payload = unknown> {
  * its source.
  */
 export interface EditorDiagnosticPush {
-  readonly document: EditorDocumentReference;
-  readonly version?: EditorDocumentVersion;
   readonly diagnostics: readonly Diagnostic[];
-  readonly coordinate: EditorCoordinate;
+  readonly coordinate: EditorDocumentCoordinate;
 }
 
 /**
@@ -314,7 +584,7 @@ export type EditorDiagnosticDelivery = Algebra<{
   pulled: {
     readonly request: EditorRequestId;
     readonly diagnostics: readonly Diagnostic[];
-    readonly coordinate: EditorCoordinate;
+    readonly coordinate: EditorDocumentCoordinate;
   };
 }>;
 
@@ -340,6 +610,15 @@ export interface EditorRemediationOffer {
   readonly selection?: SelectionSet;
 }
 
+export interface EditorDocumentEdit {
+  readonly document: EditorDocumentState;
+  readonly edits: NonEmptyTuple<EditorTextEdit>;
+}
+
+export interface EditorWorkspaceEdit {
+  readonly documentChanges: NonEmptyTuple<EditorDocumentEdit>;
+}
+
 /**
  * How an approved remediation reaches the client.
  *
@@ -356,10 +635,31 @@ export interface EditorRemediationOffer {
 export type EditorRemediationProjection = Algebra<{
   documentEdit: {
     readonly offer: EditorRemediationOffer;
-    readonly document: EditorDocumentReference;
-    readonly version?: EditorDocumentVersion;
+    readonly edit: EditorWorkspaceEdit;
   };
-  command: { readonly offer: EditorRemediationOffer; readonly command: string };
+  command: {
+    readonly offer: EditorRemediationOffer;
+    readonly invocation: OperationInvocation;
+    readonly reason: string;
+  };
+}>;
+
+export interface LspCommand {
+  readonly title: string;
+  readonly command: string;
+  readonly arguments: readonly unknown[];
+}
+
+/** LSP rendering of one already-decided semantic remediation projection. */
+export type LspRemediationProjection = Algebra<{
+  workspaceEdit: {
+    readonly source: CaseOf<EditorRemediationProjection, 'documentEdit'>;
+    readonly edit: LspWorkspaceEdit;
+  };
+  command: {
+    readonly source: CaseOf<EditorRemediationProjection, 'command'>;
+    readonly command: LspCommand;
+  };
 }>;
 
 // ---------------------------------------------------------------------------
@@ -386,15 +686,24 @@ export type EditorRefusal = Algebra<{
 
 /** Type summary consumed by the wire topology. */
 export interface EditorWireTypeSurface {
+  readonly connection: EditorConnectionReference;
   readonly phase: EditorProtocolPhase;
+  readonly protocol: EditorProtocolDefinition;
+  readonly methods: EditorMethodCatalog;
+  readonly lspMethods: LspMethodCatalog;
   readonly coordinate: EditorCoordinate;
+  readonly documentCoordinate: EditorDocumentCoordinate;
+  readonly documentChange: EditorDocumentChange;
+  readonly language: EditorLanguageCapability;
   readonly requestOutcome: EditorRequestOutcome;
   readonly notification: EditorNotification;
+  readonly outboundRequest: EditorOutboundRequest;
   readonly diagnosticPush: EditorDiagnosticPush;
   readonly diagnosticDelivery: EditorDiagnosticDelivery;
   readonly handlerFailure: EditorHandlerFailure;
   readonly remediationOffer: EditorRemediationOffer;
   readonly remediationProjection: EditorRemediationProjection;
+  readonly lspRemediationProjection: LspRemediationProjection;
   readonly refusal: EditorRefusal;
 }
 

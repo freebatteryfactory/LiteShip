@@ -10,88 +10,130 @@ Dependency authority: Actual source imports, constrained by the numbered path or
 
 ## Purpose
 
-Project an editing session as a language-server protocol, without becoming a second editor.
+Project the one LiteShip semantic program into an editor-neutral method authority and an exact LSP 3.17 protocol, without becoming a second editor or an MCP subsystem.
+
+Source text is the first human surface. Addressed semantic objects remain the internal authority and remain directly inspectable by agents and future visual tools. No LiteShip file format is introduced: the initial source languages are Astro and TypeScript.
 
 ## Owns
 
-- The two protocol flows: a client request that is an ordinary boundary crossing, and a server notification that is not.
-- The protocol lifecycle — initial, active, shutting down, exited — and the refusals that belong to it.
-- Request correlation, and the protocol's own document version.
-- Which state an answer is about: committed, or an editor draft.
-- Diagnostic delivery, pushed and pulled.
-- How an approved remediation reaches a client.
-- The wire's own refusal channel, beside the umbrella's.
+- Exact editor-connection identity, lifecycle, request correlation, and connection-scoped outbound ordering.
+- Versioned document open, incremental change, full replacement, and close relationships.
+- The concrete first semantic method catalog and capabilities derived from its handled rows.
+- The exact LSP spelling and UTF-16 coordinate projection of that semantic catalog.
+- Client requests, client notifications, server notifications, and answered server refresh requests as distinct flows.
+- Draft-versus-committed answer coordinates and document-version correlation.
+- Push and pull diagnostic delivery from one diagnostic authority.
+- Faithful source/workspace edits and command-backed semantic remediation where no faithful mapping exists.
+- Diagnostic refresh and semantic-authority/catalog refresh.
 
 ## Does not own
 
-- Sessions, selections, working overlays, preview branches, history cursors, edit proposals, or approval. `00_core/17_editor` owns every one, and they are imported.
-- Any parser. Turning document text into operations is an injected capability.
-- MCP anything. That is a sibling, and the import audit refuses the edge.
-- Risk or approval semantics. `ApprovalDecision` already carries the operation policy decision.
+- Sessions, selections, overlays, preview branches, proposals, approval, operations, explanations, or diagnostics. Core owns them.
+- Astro or TypeScript parsing. `EditorLanguageRequirement` injects the language authority.
+- LSP mechanics as core meaning. URI spelling, UTF-16 positions, request framing, and LSP capability payloads stay in this wire.
+- MCP anything. Editor and MCP are siblings and the import audit refuses the edge.
+- Rename, references, formatting, semantic tokens, inlay hints, or code lens. Their exact product paths are not yet earned.
 
-## Why it is not MCP
+## One source-to-meaning path
 
-The predecessor's language server lived inside the MCP package, took its advertised version from that package's `package.json`, and reached into `fast-glob`'s internals for glob matching. The capability ledger's ruling is that LSP is an editor wire with its own home, and the packet says it three separate times.
+The language capability performs the only admitted translation:
 
-Here that is structural rather than stated. `02_wires/editor` and `02_wires/mcp` are siblings, so the import audit refuses an edge between them — the separation is a check that runs, not a sentence somebody remembers.
+`document change -> parsed source relationship -> core operation proposal -> working overlay -> draft preview`
 
-## Two flows, and only one of them is an exchange
+An incremental change names its previous and next document states and carries a non-empty edit population. Full replacement is the explicit recovery and resynchronization arm; it names the prior state and semantic ancestry, so replacing the text cannot silently reset the document's relationship to the semantic program.
 
-`WireExchange` describes one inbound request trying to become an invocation and one answer trying to return. That is exactly right for a client request, and wrong for a server-initiated notification.
+`unknown` text does not enter core. The injected language authority either produces an exact `EditorLanguageProduct` or a non-empty diagnostic failure.
 
-A notification answers nothing, correlates with no request, and may carry no operation receipt because no operation was invoked. Forcing pushed diagnostics into the exchange algebra to keep one universal shape would make `undelivered` — *the operation ran and the answer was lost* — reachable for a message that never ran anything.
+## One owner for a draft coordinate
 
-So the notification is its own type, and both absences are checked by name: no request id, no receipt. It carries a sequence, because a stream whose order is only a runtime property cannot be reasoned about, and out-of-order diagnostics leave an editor showing squiggles for a superseded state.
+`EditorCoordinate.draft` carries only `PreviewBranch`. The preview already owns its `WorkingOverlay`; the overlay already owns the editor session and exact base cut. Repeating those facts at the wire created a parity triangle with three independently constructible session paths.
 
-**The umbrella was deliberately not enlarged.** One child needing a push stream does not earn universal wire vocabulary. If a second wire turns out to have the same relationship, that is when it moves up.
+Document-derived draft answers use `EditorDocumentCoordinate.draft`, which adds the exact versioned document state beside that semantic coordinate. Diagnostics, completions, hover/explanation, definitions/source locations, edits, and document-specific proposals therefore cannot describe an unsaved document without naming its version. A semantic preview with no document owner uses `EditorCoordinate` directly and invents no document version.
 
-## An unsaved buffer is not a dirty snapshot
+## Concrete method authority
 
-A `WorkspaceSnapshot` is revision-pinned and records digests read from the revision it names. An editor's whole subject is state that has no revision yet, so a dirty snapshot is not what an unsaved buffer is — it is a different kind of thing, not a degraded version of the same kind.
+`EditorMethodCatalog` is the actual handled/emitted population. Each row fixes semantic identity, direction, request-versus-notification kind, lifecycle availability, input, output, and failure.
 
-`EditorCoordinate` says which: a committed answer is about an exact cut, and a draft answer is about a session's working overlay and the preview it produced. Neither substitutes for the other, and `CommittedEditorOutcome` is the refinement a production or release path consumes so it cannot act on text nobody saved.
+The first population covers:
 
-The protocol's document version stays a protocol coordinate. It may reject a stale update and correlate messages about one document; it may never stand in for a semantic revision or a draft identity, because a version is a counter the editor increments and a revision is a fact about content.
+- initialize, initialized, shutdown, and exit;
+- document open, incremental/full change, and close;
+- push/pull diagnostics and diagnostic refresh;
+- code actions and faithful workspace edits;
+- completion, hover/explanation, definition, and source jumps;
+- semantic authority/catalog refresh;
+- operation preview and approved application;
+- editor-session and draft-preview interaction;
+- visible outbound handler-failure logging.
 
-## What the predecessor got right
+`EditorCapabilities` is derived from the client-to-server rows of that exact catalog. `EditorProtocolDefinition` carries the catalog and its derived capabilities together, so the mapped operator is proved on the public carrier rather than on a hand-authored method union.
 
-Its language server is the strongest single artifact in the old repository, and most of this home is a port of its behaviour rather than an invention.
+`LspMethodCatalog` projects every semantic method exactly once to its LSP or `liteship/*` protocol spelling. The semantic and projected method populations are equal by law. LSP positions are line plus UTF-16 code-unit character; LSP document edits are versioned and non-empty.
 
-- **An independent lifecycle**, fuzzed by a property test against exactly the phase machine reproduced here. Before initialize and after shutdown are separate refusals here, because answering both with one code left a client unable to tell "I started too early" from "I kept going too late."
-- **Requests and notifications distinguished** at the type level and cross-checked at routing.
-- **Capabilities projected from the method catalog**, throwing at construction when a row had no backing handler — so a catalog edit could not leave a stale capability advertised. `EditorCapabilities` takes that one step further: the advertised set *is* the handled set, so advertising an unhandled method is not an error to throw but a key that does not exist.
-- **Push and pull diagnostics both**, through one projection. Two vocabularies that agree by coincidence is how an editor ends up showing something an assurance run does not.
-- **An empty publish clears stale diagnostics.** A document reported dirty and now clean must receive an explicit empty population, or the client keeps the squiggles forever. That is why the pushed population is allowed to be empty.
-- **Code actions carrying the exact diagnostic they remediate**, so an offer is evaluable.
-- **Notification-handler failure surfaced on an outbound channel.** A notification cannot be answered, so a failure inside one has nowhere to go and is dropped by default; sending it out as a log message is the only honest option.
-- **An injected evaluation runner.** The old server took the engine as a parameter and its package declared no dependency on it — which is why that boundary was real rather than promised.
+## Requests, notifications, and ordering
 
-## What it did not have, and why
+An inbound operation request may cross the ordinary `WireExchange`: it can be refused before invocation, complete with an operation receipt, or run and lose its answer.
 
-No document store, `textDocumentSync: 0`, no hover, completion, definition, rename, or semantic tokens. Its `WorkspaceEdit` absence follows from the missing document store rather than from a decision about remediation: with no document contents, a unified diff could not be resolved into text edits, so every remediation projected as a client command.
+A server notification answers nothing and ran no operation. It carries no request ID and no receipt. It does carry one exact editor connection and core's `StreamSequence`, giving diagnostics, refresh signals, and logs one causal outbound order.
 
-That was an implementation limit, not a product ceiling. `EditorRemediationProjection` therefore has both arms — a document edit where a faithful source mapping exists, and a command where none does. The second is not a fallback for *not having implemented* the first: a semantic operation with no faithful text projection must not be given a fabricated one.
+A server refresh request is answered, so it carries a request ID, but it is protocol coordination rather than an operation invocation and therefore carries no operation receipt. The notification vocabulary remains local to the editor wire until another wire proves the same relationship.
 
-One thing not ported is a claim. The old module header said diagnostics are pushed on `initialized`; the handler validates state and does nothing else. The doc overstated the code, which is the defect class this repository has spent the week removing.
+## Synchronization and staleness
+
+Versioned incremental changes are the normal path. Full replacement is the recovery path. Both preserve exact source identity, content address, version, and semantic ancestry.
+
+`EditorRefusal.staleVersion` distinguishes a stale protocol coordinate from malformed input, an unknown method, or a lifecycle violation. Runtime implementation must reject a stale incremental update before asking the language capability to interpret it.
+
+## Diagnostics and refresh
+
+Push and pull carry core's `Diagnostic` population. An empty push is lawful and load-bearing: it clears previously published diagnostics for a document that became clean.
+
+Initial refresh has exactly two semantic subjects:
+
+- diagnostic refresh, naming the relevant document coordinate;
+- authority refresh, naming the addressed authority graph/catalog that changed.
+
+No optional LSP refresh family is implied.
+
+## Remediation
+
+Every offer names the exact diagnostic and core approval decision. The semantic projection has two arms:
+
+- `documentEdit` carries a real, non-empty, versioned `EditorWorkspaceEdit` where source mapping is faithful;
+- `command` carries the exact approved operation invocation and an explanation of why no faithful text mapping exists.
+
+The LSP projection turns those into `WorkspaceEdit` or `Command`. A command is not a fallback for an edit nobody implemented.
+
+## What the predecessor contributed
+
+The predecessor established the independent lifecycle, request/notification discrimination, push and pull diagnostics, explicit empty diagnostic clearing, diagnostic-linked code actions, visible notification-handler failures, injected evaluation authority, and catalog-derived capabilities.
+
+It had no document store, advertised `textDocumentSync: 0`, and projected unified diffs only as commands. It also claimed diagnostics were pushed on `initialized` while the handler did nothing. Those implementation limits and the false claim are not ported.
 
 ## Laws
 
-- A draft answer and a committed answer never substitute, in either direction, and a committed outcome cannot be occupied by a draft.
-- A server notification carries no request id and no receipt; a request outcome carries its correlation id; the notification carries a sequence.
-- Both diagnostic paths carry core's diagnostics, and both arms survive.
-- A remediation names the diagnostic it remediates and the approval that permitted it, and both projections derive from an offer; there is no editor-local risk label.
-- The protocol refuses use outside its lifecycle and says which way, while still carrying the umbrella's boundary refusal.
-- A capability is advertised only for a handled method.
+- A draft coordinate owns one preview and cannot occupy a committed outcome.
+- Notifications carry no request or receipt, and are ordered within one exact connection by `StreamSequence`.
+- Every document-derived draft answer names the exact document version.
+- Incremental changes name previous and next states; replacement preserves ancestry; only the injected language capability admits source.
+- A remediation carries either non-empty edits or the exact semantic invocation.
+- The protocol lifecycle refuses early and late use distinctly.
+- The concrete semantic method population equals the LSP projection population.
+- Capabilities derive from the handled catalog, including hover and completion and excluding unearned rename.
 
 ## Proof obligations
 
 Runtime and protocol claims a type cannot express:
 
-- That the transport frames messages correctly and a multi-byte character split across two reads does not corrupt one.
-- That handling is serialised enough that a connection closing cannot drop an in-flight publish — the predecessor found this exact race with a fast in-memory stream.
-- That a pushed empty population actually reaches the client for a document that became clean.
-- That the injected language capability translating document text into operation proposals is the only thing doing so, and that neither this wire nor core acquires a parser by accident.
-- That a document edit is emitted only where the semantic operation genuinely maps back to source text.
+- Framing preserves multi-byte characters across split reads.
+- Connection shutdown cannot drop an in-flight publish.
+- UTF-16 LSP ranges project to the intended editor-neutral source offsets.
+- Stale changes are rejected before parsing or proposal construction.
+- Empty diagnostic populations reach the client.
+- The injected language capability is the only source parser.
+- Full replacement preserves semantic ancestry.
+- An edit is emitted only where the operation maps faithfully to source.
+- A command is used only for an explicitly unmappable semantic operation.
 
 ## Implementation
 
