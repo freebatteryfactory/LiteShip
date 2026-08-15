@@ -462,7 +462,7 @@ A subsystem composes the coordinates it needs into one `TimeCut`. One transactio
 
 HLC keeps its standard meaning. A product containing HLC, vector, sample, and frame coordinates remains a temporal product, not a renamed universal clock.
 
-A `TimeProjection` carries complete source and target timebases, including rates or tempo maps, together with exactness, invertibility, and tolerance. A shared tag such as `frames` is not sufficient to make two timebases interchangeable.
+A `TimeProjection` carries complete source and target timebases, including rates or tempo maps. Fidelity is exact or approximate under an addressed temporal tolerance profile; invertibility is an independent capability. A shared tag such as `frames` is not sufficient to make two timebases interchangeable.
 
 ### 9.1 Spatial coordinates
 
@@ -480,7 +480,7 @@ The temporal algebra is not literally reused because space adds different laws:
 - dimensional loss;
 - bounds and geometric tolerance.
 
-A `SpatialTransform<From, To>` makes parent/child and egress-space conversion explicit and type-checkable. Inexact conversion declares tolerance and may be refused by target or policy. Coordinate-bearing geometry values and bounds preserve the same space parameter, so a screen-space point cannot silently enter world-space geometry.
+A `SpatialTransform<From, To>` makes parent/child and egress-space conversion explicit and type-checkable. Inexact conversion names an addressed scene-owned tolerance profile and may be refused by target or policy; invertibility remains a separate capability. Coordinate-bearing geometry values and bounds preserve the same space parameter, so a screen-space point cannot silently enter world-space geometry.
 
 This spatial contract is the one major clean-room semantic hypothesis in core. The project packet requires hierarchy, geometry, transform composition, z-order, blend semantics, and faithful output, but does not supply a mature old spatial algebra. Production authority therefore depends on strong multi-egress proofs.
 

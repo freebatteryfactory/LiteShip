@@ -72,6 +72,12 @@ Selection proceeds in two phases:
 - monotone legality propagation eliminates candidates that violate availability, realm, authority, fidelity, lifecycle, security, requirement, or egress constraints;
 - bounded cost selection enforces hard budgets, removes Pareto-dominated candidates, applies an explicit optimization objective, and records the structured reason.
 
+Fidelity is a legality minimum, not a measured outcome: it requires either
+exact projection or approximation under one addressed temporal or scene-owned
+tolerance profile. Invertibility is a separate positive constraint. A bare
+numeric tolerance and an `invertible: false` requirement are both illegal
+shapes; domain profile values own their metrics, units, bounds, and addresses.
+
 Quantization may classify or stabilize continuous evidence used by a plan. It does not replace constrained optimization. Backend candidates form a finite constrained choice set with multidimensional costs, not an ordered continuous state boundary.
 
 A solver may serve as an assurance oracle on bounded fixtures. Normal compilation remains deterministic and explainable without depending on an opaque general solver.

@@ -30,6 +30,7 @@ import type { Diagnostic, SourceLocation } from '../00_error/types.js';
 import type { CanonicalValue, ContentAddress, ContentDigest } from '../01_encoding/types.js';
 import type { CommitId, RevisionId, RevisionReference, SemanticLocation } from '../02_identity/types.js';
 import type { SchemaId, SchemaReference } from '../03_schema/types.js';
+import type { TemporalToleranceProfileCoordinate } from '../04_time/types.js';
 import type { DisposalFailure, OwnedResource } from '../05_lifecycle/types.js';
 import type {
   EvidenceAuthority,
@@ -38,6 +39,7 @@ import type {
   EvidenceReference,
 } from '../06_evidence/types.js';
 import type { PolicyId } from '../07_operation/types.js';
+import type { SceneToleranceProfileCoordinate } from '../11_scene/types.js';
 
 export type CompilerId<Name extends string = string> = Brand<Name, 'liteship.compiler-id'>;
 export type MigrationAdapterId<Name extends string = string> = Brand<Name, 'liteship.migration-adapter-id'>;
@@ -125,6 +127,18 @@ export type RealizationCatalogAddress = ContentAddress<'application/vnd.liteship
 export type SettlementLocation = 'build' | 'platform' | 'request' | 'local' | 'live' | 'remote';
 export type ExecutionBackend = 'html-css' | 'javascript' | 'wasm' | 'worker' | 'webgpu' | 'server' | 'host-native';
 
+/** The exact semantic domain whose addressed tolerance profile governs placement. */
+export type PlacementToleranceProfile = Algebra<{
+  temporal: { readonly profile: TemporalToleranceProfileCoordinate };
+  scene: { readonly profile: SceneToleranceProfileCoordinate };
+}>;
+
+/** Legal minimum fidelity: exact, or approximation under one addressed domain profile. */
+export type PlacementFidelityRequirement = Algebra<{
+  exact: Record<never, never>;
+  approximate: { readonly tolerance: PlacementToleranceProfile };
+}>;
+
 /**
  * Hard legality constraints.
  *
@@ -141,7 +155,8 @@ export type PlacementConstraint = Algebra<{
   security: { readonly policy: PolicyId };
   capability: { readonly requirement: RequirementId };
   egress: { readonly target: ProjectionTargetReference };
-  fidelity: { readonly exact: boolean; readonly invertible?: boolean; readonly tolerance?: number };
+  fidelity: { readonly minimum: PlacementFidelityRequirement };
+  invertibility: { readonly required: true };
   budget: { readonly metric: CostMetric; readonly maximum: number };
 }>;
 

@@ -35,7 +35,7 @@ A subsystem declares the temporal axes it requires. A runtime transaction receiv
 
 HLC retains its established computer-science meaning: wall coordinate plus logical counter and node identity. A product containing HLC, vector, sample, and frame coordinates remains a temporal product, not a renamed mega-HLC.
 
-A `TimeProjection` carries the complete source and target timebases, including frame rates, sample rates, or tempo maps, together with exactness, invertibility, and tolerance. Sharing a timebase tag is not enough to make two coordinates interchangeable.
+A `TimeProjection` carries the complete source and target timebases, including frame rates, sample rates, or tempo maps. Its fidelity is either exact or approximate under an addressed temporal tolerance profile; invertibility is a separate capability with its own algebra. Sharing a timebase tag is not enough to make two coordinates interchangeable.
 
 ## Laws
 
@@ -44,7 +44,8 @@ A `TimeProjection` carries the complete source and target timebases, including f
 - One transaction observes one coherent `TimeCut`.
 - Semantic tick functions receive time explicitly.
 - Frame, sample, beat, and simulation coordinates use declared timebases.
-- Inexact conversion declares tolerance and cannot silently claim exactness.
+- Inexact conversion names an addressed temporal tolerance profile stating domain, metric, unit, bound, and address; a bare number is illegal.
+- Invertibility is orthogonal to fidelity: exactness never implies reversibility, and approximation never implies its absence.
 - Long-running sample, frame, and generation coordinates do not wrap silently.
 
 ## Operation vocabulary

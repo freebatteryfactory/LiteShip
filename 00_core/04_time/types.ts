@@ -11,6 +11,8 @@
 
 import type { Algebra, Brand, Result } from '../../types.js';
 import type { Diagnostic } from '../00_error/types.js';
+import type { ContentAddress } from '../01_encoding/types.js';
+import type { ToleranceProfileReference } from '../02_identity/types.js';
 
 export type UnixTimeMilliseconds = Brand<number, 'liteship.time.unix-ms'>;
 export type MonotonicNanoseconds = Brand<bigint, 'liteship.time.monotonic-ns'>;
@@ -79,6 +81,44 @@ export interface TimeCut<Axes extends readonly TimeCoordinate[] = readonly TimeC
   readonly coordinates: Axes;
 }
 
+/** Domain-owned metric identity for temporal approximation. */
+export type TemporalToleranceMetric = Brand<string, 'liteship.time.tolerance-metric'>;
+export type TemporalToleranceUnit =
+  | 'second'
+  | 'nanosecond'
+  | 'frame'
+  | 'sample'
+  | 'beat'
+  | 'simulation-step';
+
+/** One addressed temporal tolerance value under the shared profile identity. */
+export interface TemporalToleranceProfile {
+  readonly id: ToleranceProfileReference;
+  readonly domain: 'temporal';
+  readonly metric: TemporalToleranceMetric;
+  readonly unit: TemporalToleranceUnit;
+  readonly bound: number;
+  readonly address: ContentAddress<'application/vnd.liteship.temporal-tolerance-profile+cbor'>;
+}
+
+/** Exact coordinate used where a temporal tolerance profile is referenced. */
+export interface TemporalToleranceProfileCoordinate {
+  readonly profile: ToleranceProfileReference;
+  readonly address: TemporalToleranceProfile['address'];
+}
+
+/** Actual fidelity of one temporal conversion. */
+export type TemporalProjectionFidelity = Algebra<{
+  exact: Record<never, never>;
+  approximate: { readonly tolerance: TemporalToleranceProfileCoordinate };
+}>;
+
+/** Invertibility is independent from approximation fidelity. */
+export type TemporalProjectionInvertibility = Algebra<{
+  invertible: Record<never, never>;
+  noninvertible: { readonly reason: string };
+}>;
+
 /** Ordering result, including partial-order outcomes. */
 export type TemporalOrder = 'before' | 'equal' | 'after' | 'concurrent' | 'incomparable';
 
@@ -93,9 +133,8 @@ export type Tick<State, Input, Coordinate extends TimeCut, Failure = never> = (
 export interface TimeProjection<From extends Timebase = Timebase, To extends Timebase = Timebase> {
   readonly from: From;
   readonly to: To;
-  readonly exact: boolean;
-  readonly invertible: boolean;
-  readonly tolerance?: number;
+  readonly fidelity: TemporalProjectionFidelity;
+  readonly invertibility: TemporalProjectionInvertibility;
 }
 
 /** Invalid or unsupported temporal relationship. */
@@ -112,4 +151,7 @@ export interface TimeTypeSurface {
   readonly hybrid: HybridLogicalClock;
   readonly vector: VectorClock;
   readonly tick: Tick<unknown, unknown, TimeCut, unknown>;
+  readonly tolerance: TemporalToleranceProfile;
+  readonly projectionFidelity: TemporalProjectionFidelity;
+  readonly projectionInvertibility: TemporalProjectionInvertibility;
 }

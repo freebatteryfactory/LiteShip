@@ -12,7 +12,7 @@
  */
 
 import type { Address, Assert, Equal } from '../../types.js';
-import type { DraftRevisionReference, RevisionReference } from './types.js';
+import type { DraftRevisionReference, RevisionReference, ToleranceProfileId, ToleranceProfileReference } from './types.js';
 
 /** Two distinct committed revisions, written as literal carriers. */
 type CommittedRevisionLawA = Address<
@@ -92,5 +92,23 @@ export type DraftRevisionIsNotCommitted = Assert<
         : false,
     ],
     [false, false, false, false]
+  >
+>;
+
+
+/** Compile-time law: tolerance profiles share one exact identity family across semantic domains. */
+export type AToleranceProfileReferenceIsExactOverItsIdentity = Assert<
+  Equal<
+    [
+      ToleranceProfileReference<ToleranceProfileId<'liteship.tolerance.law.a'>> extends ToleranceProfileReference<
+        ToleranceProfileId<'liteship.tolerance.law.b'>
+      >
+        ? true
+        : false,
+      ToleranceProfileReference<ToleranceProfileId<'liteship.tolerance.law.a'>> extends ToleranceProfileReference
+        ? true
+        : false,
+    ],
+    [false, true]
   >
 >;

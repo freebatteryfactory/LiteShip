@@ -51,7 +51,7 @@ Origin is not duplicated as an independently editable field. The parent transfor
 
 Standard presets cover screen 2D, Cartesian 2D, world 3D, normalized device coordinates, local entity space, and media pixel space. Applications may define additional spaces through the same contract.
 
-`SpatialTransform<From, To>` is ordered and typed. A value in one space cannot be supplied where another is required without a declared transform or projection.
+`SpatialTransform<From, To>` is ordered and typed. A value in one space cannot be supplied where another is required without a declared transform or projection. Fidelity is exact or approximate under an addressed scene tolerance profile; invertibility is an independent capability rather than a sibling boolean inside fidelity.
 
 ## Geometry and materials
 
@@ -100,7 +100,8 @@ A subscene is an addressed semantic world instance with local coordinates, local
 ## Laws
 
 - Fidelity is a four-arm algebra. The predecessor shape — a boolean beside two optionals — admitted eight combinations, two of them meaningless: an exact projection carrying an error bound, and an inexact one carrying neither a bound nor an alternative.
-- An approximate projection names an addressed tolerance profile, never a bare number. `0.01` cannot say whether it means pixels, normalized distance, channel error, or timing drift.
+- An approximate projection names an addressed scene-owned tolerance profile stating domain, metric, unit, bound, and address, never a bare number. `0.01` cannot say whether it means pixels, normalized distance, channel error, or timing drift.
+- Spatial fidelity and invertibility are orthogonal. Exact projection does not silently promise a reversible transform.
 - An unsupported projection carries a non-empty diagnostic population and a remediation. Silence is the failure mode this declaration exists to rule out.
 - Geometry and material both declare support, through one shared vocabulary. An opaque shader defeats an otherwise projectable geometry, and the geometry has no way to know.
 - A scene entity declares no egress roster of its own. The compiler derives what a composition reaches; an entity that could declare its own support would let a composition claim an egress neither of its parts can reach.

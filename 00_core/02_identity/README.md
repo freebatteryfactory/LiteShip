@@ -16,6 +16,7 @@ Keep persistent subject identity, immutable revision identity, current location,
 
 - `EntityId` and `WorldId`.
 - `RevisionId`, `PatchId`, `ChangeId`, `CommitId`, `AttestationId`, `TraceId`, and `ReceiptId`.
+- The shared `ToleranceProfileId` and exact reference used by domain-owned tolerance profiles.
 - Typed entity, world, revision, draft, patch, change, commit, and content references.
 - `SurfacePath` and semantic locations.
 - Execution-image-scoped dense slot bindings.
@@ -44,6 +45,7 @@ A draft revision may have byte-identical content and the same `RevisionId` as a 
 - Dense slots never cross the semantic boundary as identity.
 - Every public identity has one validated mint or decode route.
 - Reference kind is authority-bearing and cannot be erased by equal carrier bytes.
+- Tolerance profile identity is shared; temporal, scene, and future domain values remain with their semantic owners.
 
 ## Operation vocabulary
 

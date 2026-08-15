@@ -13,9 +13,10 @@
 
 import type { Assert, CaseOf, Equal, NonEmptyTuple, TagOf } from '../../types.js';
 import type { Diagnostic } from '../00_error/types.js';
+import type { ToleranceProfileReference } from '../02_identity/types.js';
 import type { EntityFieldReference } from '../03_schema/types.js';
 import type { InterpolatorReference } from '../09_quantization/types.js';
-import type { AuthoredEnvelope, CoordinateSpaceDefinition, CoordinateSpaceId, GeometryCapabilities, GeometryValue, MaterialCapabilities, MaterialDefinition, Point2, ProjectionFidelity, ProjectionSupport, SceneEntity, SceneMarker, TimelineDefinition, TimelineKey, TimelineTrack, ToleranceProfileReference } from './types.js';
+import type { AuthoredEnvelope, CoordinateSpaceDefinition, CoordinateSpaceId, GeometryCapabilities, GeometryValue, MaterialCapabilities, MaterialDefinition, Point2, ProjectionFidelity, ProjectionSupport, SceneEntity, SceneMarker, SceneToleranceProfile, SceneToleranceProfileCoordinate, SpatialTransform, SpatialTransformFidelity, SpatialTransformInvertibility, TimelineDefinition, TimelineKey, TimelineTrack } from './types.js';
 
 type ScreenSpace = CoordinateSpaceId<'screen'>;
 
@@ -117,12 +118,47 @@ export type AnExactProjectionCarriesNoTolerance = Assert<
   Equal<
     [
       'tolerance' extends keyof CaseOf<ProjectionFidelity, 'exact'> ? true : false,
-      CaseOf<ProjectionFidelity, 'approximate'>['tolerance'] extends ToleranceProfileReference
+      CaseOf<ProjectionFidelity, 'approximate'>['tolerance'] extends SceneToleranceProfileCoordinate
         ? true
         : false,
       number extends CaseOf<ProjectionFidelity, 'approximate'>['tolerance'] ? true : false,
     ],
     [false, true, false]
+  >
+>;
+
+
+/** Compile-time law: spatial transform fidelity and invertibility are independent declarations. */
+export type SpatialTransformFidelityIsCoherentAndOrthogonal = Assert<
+  Equal<
+    [
+      SpatialTransform['fidelity'],
+      SpatialTransform['invertibility'],
+      TagOf<SpatialTransformFidelity>,
+      TagOf<SpatialTransformInvertibility>,
+      number extends CaseOf<SpatialTransformFidelity, 'approximate'>['tolerance'] ? true : false,
+      'invertibility' extends keyof SpatialTransformFidelity ? true : false,
+    ],
+    [
+      SpatialTransformFidelity,
+      SpatialTransformInvertibility,
+      'exact' | 'approximate',
+      'invertible' | 'noninvertible',
+      false,
+      false,
+    ]
+  >
+>;
+
+
+/** Compile-time law: scene profiles retain shared identity and domain-owned meaning. */
+export type SceneToleranceProfilesCarryTheirWholeMeaning = Assert<
+  Equal<
+    [
+      SceneToleranceProfile['id'] extends ToleranceProfileReference ? true : false,
+      keyof SceneToleranceProfile,
+    ],
+    [true, 'id' | 'domain' | 'metric' | 'unit' | 'bound' | 'address']
   >
 >;
 

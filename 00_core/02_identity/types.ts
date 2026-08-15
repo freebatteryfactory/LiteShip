@@ -43,6 +43,15 @@ export type TraceId = Brand<string, 'liteship.trace-id'>;
 /** Identity of an acknowledged operation or transaction outcome. */
 export type ReceiptId = ContentAddress<'application/vnd.liteship.receipt+cbor'>;
 
+/** Stable identity of one tolerance-policy lineage, independent of its domain-owned value. */
+export type ToleranceProfileId<Name extends string = string> = Brand<
+  Name,
+  'liteship.tolerance-profile-id'
+>;
+export type ToleranceProfileReference<
+  Id extends ToleranceProfileId = ToleranceProfileId,
+> = Reference<'tolerance-profile', Id>;
+
 /** Stable path segment through semantic structure. */
 export type SurfacePathSegment = Algebra<{
   field: { readonly name: string };
@@ -135,4 +144,5 @@ export interface IdentityTypeSurface {
   readonly path: SurfacePath;
   readonly location: SemanticLocation;
   readonly denseSlot: DenseSlot;
+  readonly toleranceProfile: ToleranceProfileReference;
 }

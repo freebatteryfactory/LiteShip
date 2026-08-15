@@ -31,8 +31,10 @@ import type { Diagnostic } from '../00_error/types.js';
 import type { ContentAddress } from '../01_encoding/types.js';
 import type { CommitId, RevisionReference, SemanticLocation } from '../02_identity/types.js';
 import type { SchemaReference } from '../03_schema/types.js';
+import type { TemporalToleranceProfileCoordinate } from '../04_time/types.js';
 import type { OwnedResource } from '../05_lifecycle/types.js';
 import type { EvidenceRealm } from '../06_evidence/types.js';
+import type { SceneToleranceProfileCoordinate } from '../11_scene/types.js';
 import type {
   Artifact,
   ArtifactId,
@@ -60,6 +62,8 @@ import type {
   NonEmptyRequirementRow,
   OptimizationObjective,
   PlacementConstraint,
+  PlacementFidelityRequirement,
+  PlacementToleranceProfile,
   PreparationDisposition,
   PreparedWork,
   ProjectionTargetId,
@@ -96,6 +100,44 @@ import type {
   StepInputBinding,
   UnsatisfiabilityProof,
 } from './types.js';
+
+
+/** Compile-time law: placement fidelity is a legality minimum with addressed domain profiles. */
+export type PlacementFidelityRejectsBooleanAndNumericSoup = Assert<
+  Equal<
+    [
+      CaseOf<PlacementConstraint, 'fidelity'>['minimum'],
+      TagOf<PlacementFidelityRequirement>,
+      CaseOf<PlacementFidelityRequirement, 'approximate'>['tolerance'],
+      TagOf<PlacementToleranceProfile>,
+      CaseOf<PlacementToleranceProfile, 'temporal'>['profile'],
+      CaseOf<PlacementToleranceProfile, 'scene'>['profile'],
+      number extends CaseOf<PlacementFidelityRequirement, 'approximate'>['tolerance'] ? true : false,
+    ],
+    [
+      PlacementFidelityRequirement,
+      'exact' | 'approximate',
+      PlacementToleranceProfile,
+      'temporal' | 'scene',
+      TemporalToleranceProfileCoordinate,
+      SceneToleranceProfileCoordinate,
+      false,
+    ]
+  >
+>;
+
+
+/** Compile-time law: invertibility is a separate positive requirement, never false or optional in fidelity. */
+export type PlacementInvertibilityIsAnIndependentConstraint = Assert<
+  Equal<
+    [
+      CaseOf<PlacementConstraint, 'invertibility'>['required'],
+      'invertible' extends keyof CaseOf<PlacementConstraint, 'fidelity'> ? true : false,
+      'tolerance' extends keyof CaseOf<PlacementConstraint, 'fidelity'> ? true : false,
+    ],
+    [true, false, false]
+  >
+>;
 
 /** Compile-time law: an empty residual row cannot claim that runtime is required. */
 export type EmptyRequirementClosureHasNoRuntime = Assert<

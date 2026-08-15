@@ -18,7 +18,7 @@ import type {
 } from '../../types.js';
 import type { Diagnostic } from '../00_error/types.js';
 import type { CanonicalValue, ContentAddress } from '../01_encoding/types.js';
-import type { EntityReference, RevisionReference, WorldReference } from '../02_identity/types.js';
+import type { EntityReference, RevisionReference, ToleranceProfileReference, WorldReference } from '../02_identity/types.js';
 import type { EntityFieldReference, FieldReference, SchemaReference } from '../03_schema/types.js';
 import type { Timebase, Timecode } from '../04_time/types.js';
 import type { EvidenceReference } from '../06_evidence/types.js';
@@ -164,6 +164,38 @@ export type SpatialTransformOperation = Algebra<{
   matrix4: { readonly values: Matrix4 };
 }>;
 
+/** Domain-owned metric and unit identities for scene projection error. */
+export type SceneToleranceMetric = Brand<string, 'liteship.scene.tolerance-metric'>;
+export type SceneToleranceUnit = Brand<string, 'liteship.scene.tolerance-unit'>;
+
+/** One addressed scene or spatial tolerance value under the shared identity. */
+export interface SceneToleranceProfile {
+  readonly id: ToleranceProfileReference;
+  readonly domain: 'scene';
+  readonly metric: SceneToleranceMetric;
+  readonly unit: SceneToleranceUnit;
+  readonly bound: number;
+  readonly address: ContentAddress<'application/vnd.liteship.scene-tolerance-profile+cbor'>;
+}
+
+/** Exact coordinate used where a scene-owned tolerance profile is referenced. */
+export interface SceneToleranceProfileCoordinate {
+  readonly profile: ToleranceProfileReference;
+  readonly address: SceneToleranceProfile['address'];
+}
+
+/** Actual fidelity of one spatial conversion. */
+export type SpatialTransformFidelity = Algebra<{
+  exact: Record<never, never>;
+  approximate: { readonly tolerance: SceneToleranceProfileCoordinate };
+}>;
+
+/** Invertibility is independent from spatial approximation fidelity. */
+export type SpatialTransformInvertibility = Algebra<{
+  invertible: Record<never, never>;
+  noninvertible: { readonly reason: string };
+}>;
+
 /**
  * One declared spatial conversion. Parent/child transforms and egress-space
  * projections use the same composition law, while dimensional loss and
@@ -176,9 +208,8 @@ export interface SpatialTransform<
   readonly from: From;
   readonly to: To;
   readonly operations: readonly SpatialTransformOperation[];
-  readonly exact: boolean;
-  readonly invertible: boolean;
-  readonly tolerance?: number;
+  readonly fidelity: SpatialTransformFidelity;
+  readonly invertibility: SpatialTransformInvertibility;
   readonly address: ContentAddress<'application/vnd.liteship.spatial-transform+cbor'>;
 }
 
@@ -245,12 +276,6 @@ export type GeometryTransformSupport = Algebra<{
   unsupported: { readonly reason: string };
 }>;
 
-export type ToleranceProfileId<Name extends string = string> = Brand<Name, 'liteship.tolerance-profile-id'>;
-export type ToleranceProfileReference<Id extends ToleranceProfileId = ToleranceProfileId> = Reference<
-  'tolerance-profile',
-  Id
->;
-
 /**
  * How faithfully one subject reaches one egress.
  *
@@ -267,7 +292,7 @@ export type ToleranceProfileReference<Id extends ToleranceProfileId = ToleranceP
  */
 export type ProjectionFidelity = Algebra<{
   exact: Record<never, never>;
-  approximate: { readonly tolerance: ToleranceProfileReference };
+  approximate: { readonly tolerance: SceneToleranceProfileCoordinate };
   fallback: { readonly egress: SceneEgress; readonly reason: string };
   unsupported: {
     readonly diagnostics: NonEmptyTuple<Diagnostic>;
@@ -513,6 +538,9 @@ export interface SceneTypeSurface {
   readonly entity: SceneEntity;
   readonly space: CoordinateSpaceDefinition;
   readonly transform: SpatialTransform;
+  readonly tolerance: SceneToleranceProfile;
+  readonly transformFidelity: SpatialTransformFidelity;
+  readonly transformInvertibility: SpatialTransformInvertibility;
   readonly geometry: GeometryDefinition;
   readonly projection: ProjectionSupport;
   readonly materialCapabilities: MaterialCapabilities;
