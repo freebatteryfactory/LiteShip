@@ -276,7 +276,9 @@ export interface SystemProgram<
  * a home in the operation definition. A second `readOnly: boolean` here would be
  * one more fact that can disagree with the effects it summarizes.
  */
-export type ObservesOnly<Program extends SystemProgram> =
+export type ObservesOnly<
+  Program extends { readonly definition: { readonly effects: NonEmptyTuple<EffectClass> } },
+> =
   Program['definition']['effects'][number] extends Extract<EffectClass, 'observe'> ? true : false;
 
 /** Pin a rostered operation to the effect population its contract actually has. */

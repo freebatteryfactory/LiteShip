@@ -597,8 +597,10 @@ export type TheEffectCharacterIsReadFromTheOperation = Assert<
           >,
           false
         >,
+        Equal<ObservesOnly<DoctorProgram>, true>,
+        Equal<ObservesOnly<MigrateProgram>, false>,
       ],
-      [true, false, true]
+      [true, false, true, true, true]
     >
   >
 >;

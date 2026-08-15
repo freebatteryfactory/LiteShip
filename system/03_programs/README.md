@@ -141,7 +141,7 @@ That was a dependency, not a schedule. The distinction matters because the previ
 - A program reference is an operation reference; two programs are not interchangeable; the broad form does not substitute; and the identity is the computed one.
 - Release consumes a qualified candidate, exact over both snapshot and specification, with a lawful control and a `never` guard.
 - The exposed population and the program population are one, positionally, and the result is what a wire's exposure accepts.
-- The effect character is read through the operation definition, with an anti-vacuity partner proving the projector discriminates.
+- The effect character is read through the operation definition: the concrete doctor program is observation-only, the concrete migrate program is not, and a synthetic publish program remains the negative neighbour.
 - Migrate carries its exact request, report, typed failure, and migration-authority requirement through five existing wire projections under one program identity.
 - Build threads one request-derived execution coordinate through manager rendering, selected target admission, process receipt, and report; a foreign target product, receipt, or application report is rejected while explicit and discovered selection remain lawful.
 - Doctor is observation-only, keeps absent and unreadable separate, selects one of three providers with subject-specific prerequisites, and carries addressed conclusion evidence without deriving readiness mechanically from diagnostic severity.
