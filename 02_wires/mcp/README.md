@@ -51,6 +51,7 @@ The umbrella's `WireExposure` is a flat population of operation references, whic
 - An offer names its kind, and offers differing in operation or in kind do not substitute.
 - The catalog's withheld population is the umbrella's, so this refines the exposure rather than forking it.
 - An answer is exact over its operation.
+- Migration is offered as an exact tool projection carrying core's report and typed failure, never as a wire-local conversion API.
 
 ## Proof obligations
 

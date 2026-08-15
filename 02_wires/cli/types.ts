@@ -37,6 +37,7 @@ import type {
   TagOf,
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
+import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
 import type {
   OperationId,
   OperationOutcome,
@@ -196,6 +197,13 @@ export type CliDisposition<
   };
 }>;
 
+/** CLI rendering of the exact migration operation contract. */
+export type CliMigrationDisposition<Op extends OperationId> = CliDisposition<
+  MigrationReport,
+  MigrationFailure,
+  Op
+>;
+
 // ---------------------------------------------------------------------------
 // Surface
 // ---------------------------------------------------------------------------
@@ -206,4 +214,5 @@ export interface CliWireTypeSurface {
   readonly output: CliOutput;
   readonly exit: CliExit;
   readonly disposition: CliDisposition;
+  readonly migration: CliMigrationDisposition<OperationId>;
 }

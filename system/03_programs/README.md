@@ -17,6 +17,7 @@ Declare the program population, bind each program's identity to it, and type the
 - The definition map: each program beside its exact contract, in one tuple.
 - Program identity, computed from the name.
 - The program itself, which is core's operation definition plus a name.
+- The exact migrate program contract and its five-wire compile-use composition.
 - The three release-path signatures: package, release, ship.
 - The exposed population a wire projects, derived from the roster.
 
@@ -37,7 +38,7 @@ Everything else comes from `OperationDefinition`. A program that lies about its 
 
 `ObservesOnly` projects through `definition.effects` rather than adding a `readOnly` member. A second summary of the effects would be one more fact that can drift from what it summarizes.
 
-## Six programs, because six contracts are earned
+## Seven programs, because seven contracts are earned
 
 The population was eleven names — `doctor`, `verify`, `audit`, `gauntlet`, `build`, `benchmark`, `docs`, `migrate`, `package`, `release`, `ship` — in a tuple of strings, with every registry entry resolving to `SystemProgram<Name, unknown, unknown, RequirementRow>`.
 
@@ -45,7 +46,7 @@ Eleven names and eleven broad placeholders. The three exact release signatures w
 
 `SystemProgramDefinitions` pairs each name with its contract, and the roster, the name union, the identities, the references, the registry, and the wire exposure all derive from it. There is one place a program is introduced.
 
-Six are here because six have inputs, outputs, and prerequisites presently readable off types that exist: `AuditProduct`, `AssuranceResult`, and the package, release, and publication chain. `doctor`, `build`, `benchmark`, `docs`, and `migrate` remain intended capabilities whose contracts are not yet reasoned. Naming them would restore exactly the placeholder the map exists to remove — a roster is a promise the compiler checks, and a promise about a contract nobody has written is not one it can keep.
+Seven are here because seven have exact inputs, outputs, failures, prerequisites, and consumers presently readable off types that exist: `AuditProduct`, `AssuranceResult`, the compiler-owned migration authority, and the package, release, and publication chain. `doctor`, `build`, `benchmark`, and `docs` remain intended capabilities whose contracts are not yet reasoned. Naming them would restore exactly the placeholder the map exists to remove — a roster is a promise the compiler checks, and a promise about a contract nobody has written is not one it can keep.
 
 Each returns when its complete operation definition is reasoned and consumed. That is one edit to one tuple.
 
@@ -89,6 +90,12 @@ Read through the programs' own signatures at one exact coordinate: audit's produ
 
 What it is not: a run. These are contracts, and a composition of contracts proves the shapes meet. Whether an implementation of audit produces a product an implementation of gauntlet can read is a claim about bodies that do not exist.
 
+## Migrate is an operation, not an orphan library
+
+`MigrateProgram` consumes core's exact `MigrationRequest`, produces `MigrationReport`, fails with `MigrationFailure`, and requires the compiler-owned `MigrationAuthorityRequirement`. Its failure type is not the default diagnostic array: `SystemProgram` permits an exact failure carrier after the requirement row, so the rostered entry is the contract wires actually project.
+
+`MigrateProgramProjection` binds that one computed program identity through direct, CLI, HTTP, MCP, and editor wire carriers. It lives here because wires cannot import system back. No browser projection exists, and none is implied. The composition is compile-use evidence only; no handler body exists.
+
 ## Why this home waited
 
 A program projects through a wire. Its contract could not be written honestly before the wire contract existed, and `02_wires/cli` landed first for that reason.
@@ -101,6 +108,7 @@ That was a dependency, not a schedule. The distinction matters because the previ
 - Release consumes a qualified candidate, exact over both snapshot and specification, with a lawful control and a `never` guard.
 - The exposed population and the program population are one, positionally, and the result is what a wire's exposure accepts.
 - The effect character is read through the operation definition, with an anti-vacuity partner proving the projector discriminates.
+- Migrate carries its exact request, report, typed failure, and migration-authority requirement through five existing wire projections under one program identity.
 
 ## Proof obligations
 
@@ -113,4 +121,4 @@ Runtime and repository claims a type cannot express:
 
 ## Implementation
 
-None. Six contracts and no bodies.
+None. Seven contracts and no bodies.

@@ -13,8 +13,9 @@
 
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { OperationId, OperationOutcome } from '../../00_core/07_operation/types.js';
+import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
 import type { Assert, CaseOf, Equal, IsExactlyTrue, NonEmptyTuple, TagOf } from '../../types.js';
-import type { CliDisposition, CliExit, CliOutput, CliStream } from './types.js';
+import type { CliDisposition, CliExit, CliMigrationDisposition, CliOutput, CliStream } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -202,6 +203,21 @@ export type ACliDispositionIsExactOverItsOperation = Assert<
           : false,
       ],
       [false, true, false]
+    >
+  >
+>;
+
+export type CliMigrationProjectsTheCoreContract = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          CaseOf<CliMigrationDisposition<CliLawA>, 'failed'>['crossing']['receipt']['outcome'],
+          CaseOf<OperationOutcome<MigrationReport, MigrationFailure>, 'failed'>
+        >,
+        CliMigrationDisposition<CliLawA> extends CliMigrationDisposition<CliLawB> ? true : false,
+      ],
+      [true, false]
     >
   >
 >;

@@ -64,6 +64,7 @@ The first population covers:
 - semantic authority/catalog refresh;
 - operation preview and approved application;
 - editor-session and draft-preview interaction;
+- migration invocation over an exact source/adapter request, returning the protocol-neutral migration report;
 - visible outbound handler-failure logging.
 
 `EditorCapabilities` is derived from the client-to-server rows of that exact catalog. `EditorProtocolDefinition` carries the catalog and its derived capabilities together, so the mapped operator is proved on the public carrier rather than on a hand-authored method union.

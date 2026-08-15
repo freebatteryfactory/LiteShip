@@ -18,6 +18,8 @@ import type {
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { StreamSequence } from '../../00_core/04_time/types.js';
+import type { OperationId } from '../../00_core/07_operation/types.js';
+import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
 import type { ApprovalDecision, PreviewBranch } from '../../00_core/17_editor/types.js';
 import type {
   CommittedCoordinate,
@@ -34,6 +36,7 @@ import type {
   EditorLanguageCapability,
   EditorLanguageRequirement,
   EditorMethodCatalog,
+  EditorMigrationProjection,
   EditorNotification,
   EditorProtocolDefinition,
   EditorProtocolPhase,
@@ -154,6 +157,8 @@ type CatalogId = EditorMethodCatalog[number]['id'];
 type ProjectedId = LspMethodCatalog[number]['semantic'];
 type InitializeRow = Extract<EditorMethodCatalog[number], { readonly id: 'lifecycle.initialize' }>;
 type ExitRow = Extract<EditorMethodCatalog[number], { readonly id: 'lifecycle.exit' }>;
+type EditorMigrationLawA = OperationId<'liteship.wire.editor.migration.a'>;
+type EditorMigrationLawB = OperationId<'liteship.wire.editor.migration.b'>;
 
 export type TheConcreteCatalogOwnsCapabilitiesAndLspProjection = Assert<
   IsExactlyTrue<
@@ -164,11 +169,29 @@ export type TheConcreteCatalogOwnsCapabilitiesAndLspProjection = Assert<
         'language.hover' extends keyof EditorCapabilities ? true : false,
         'language.complete' extends keyof EditorCapabilities ? true : false,
         'language.rename' extends keyof EditorCapabilities ? true : false,
+        'migration.run' extends keyof EditorCapabilities ? true : false,
         Equal<InitializeRow['available'], readonly ['initial']>,
         Equal<ExitRow['available'], readonly ['shuttingDown']>,
         Equal<InputOf<InitializeRow['handler']>['connection'], EditorConnectionReference>,
       ],
-      [true, true, true, true, false, true, true, true]
+      [true, true, true, true, false, true, true, true, true]
+    >
+  >
+>;
+
+export type EditorMigrationProjectsTheExactOperation = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          EditorMigrationProjection<EditorMigrationLawA>['outcome'],
+          EditorRequestOutcome<MigrationReport, MigrationFailure, EditorMigrationLawA>
+        >,
+        EditorMigrationProjection<EditorMigrationLawA> extends EditorMigrationProjection<EditorMigrationLawB>
+          ? true
+          : false,
+      ],
+      [true, false]
     >
   >
 >;

@@ -19,6 +19,8 @@ Invoke an operation in the same address space. No serialization, no transport, n
 
 Both are narrowings of the umbrella's algebras. This home declares no type of its own beyond them, and that is the point.
 
+`DirectMigrationExchange` applies that same narrowing to core's exact migration report and failure contract; system binds the program identity downstream.
+
 ## Does not own
 
 - Anything the umbrella owns. Wire identity, exposure, the caller distinction, and the shape of a refusal all belong to `02_wires/`.
@@ -46,6 +48,7 @@ That second absence is the payoff. In-process is exactly the case where the expe
 - The direct wire narrows the umbrella rather than forking it: its populations are assignable to the umbrella's, and the umbrella's are not assignable to its.
 - In-process has no `undelivered` arm and no `malformed` arm, and both populations are pinned by count.
 - Narrowing did not cost exactness: a direct exchange is exact over the operation it projects, and the broad form does not substitute.
+- Direct migration carries core's exact report and typed failure under the exact operation identity.
 
 ## Proof obligations
 

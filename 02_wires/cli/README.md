@@ -69,6 +69,7 @@ Both members pin their stream to a literal, so the separation is construction ra
 - The answer and the diagnostics carry different literal streams, with an anti-vacuity partner in case the stream type collapses to one value.
 - The six exit arms stay six, and the outcome algebra the first four project is pinned alongside them, so a fifth outcome arm makes the question visible here.
 - A disposition is exact over its operation.
+- The migration disposition projects core's exact report and typed failure without changing stream or exit semantics.
 
 ## Proof obligations
 

@@ -13,9 +13,10 @@
 
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { OperationId } from '../../00_core/07_operation/types.js';
+import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
 import type { Assert, CaseOf, Equal, IsExactlyTrue, NonEmptyTuple, TagOf } from '../../types.js';
 import type { WireExchange, WireExposure } from '../types.js';
-import type { McpAnswer, McpCatalog, McpOffer, McpSurfaceKind } from './types.js';
+import type { McpAnswer, McpCatalog, McpMigrationProjection, McpOffer, McpSurfaceKind } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -24,6 +25,19 @@ import type { McpAnswer, McpCatalog, McpOffer, McpSurfaceKind } from './types.js
 type McpLawA = OperationId<'liteship.wire.mcp.law.op-a'>;
 
 type McpLawB = OperationId<'liteship.wire.mcp.law.op-b'>;
+
+export type McpMigrationIsAnExactToolProjection = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<McpMigrationProjection<McpLawA>['offer'], McpOffer<McpLawA, 'tool'>>,
+        Equal<McpMigrationProjection<McpLawA>['answer'], McpAnswer<MigrationReport, MigrationFailure, McpLawA>>,
+        McpMigrationProjection<McpLawA> extends McpMigrationProjection<McpLawB> ? true : false,
+      ],
+      [true, true, false]
+    >
+  >
+>;
 
 
 /**

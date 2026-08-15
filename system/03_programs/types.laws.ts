@@ -14,15 +14,24 @@
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { EffectClass, OperationId, OperationReference } from '../../00_core/07_operation/types.js';
 import type {
+  MigrationAuthorityRequirement,
+  MigrationFailure,
+  MigrationReport,
+  MigrationRequest,
+} from '../../00_core/14_compiler/types.js';
+import type {
   Assert,
   Equal,
+  FailureOf,
   IsExactlyTrue,
   NonEmptyTuple,
   OutputOf,
   Refine,
   RequirementRow,
+  RequirementsOf,
   Signature,
 } from '../../types.js';
+import type { DirectMigrationExchange } from '../../02_wires/direct/types.js';
 import type { WireDefinition, WireExposure } from '../../02_wires/types.js';
 import type { WorkspaceSnapshotId } from '../00_workspace/types.js';
 import type {
@@ -40,6 +49,8 @@ import type {
   AuditProgram,
   GauntletProgram,
   GauntletRequest,
+  MigrateProgram,
+  MigrateProgramProjection,
   ObservesOnly,
   ReleaseProgram,
   ReleaseSignature,
@@ -146,10 +157,35 @@ export type TheExposedPopulationIsTheProgramPopulation = Assert<
     Equal<
       [
         Equal<SystemProgramExposure['length'], SystemProgramRoster['length']>,
-        Equal<SystemProgramExposure[3], SystemProgramReference<'package'>>,
+        Equal<SystemProgramExposure[3], SystemProgramReference<'migrate'>>,
         SystemProgramExposure extends NonEmptyTuple<OperationReference> ? true : false,
         Equal<SystemProgramExposure[3], SystemProgramReference<'ship'>>,
-        Equal<SystemProgramExposure[5], SystemProgramReference<'ship'>>,
+        Equal<SystemProgramExposure[6], SystemProgramReference<'ship'>>,
+      ],
+      [true, true, true, false, true]
+    >
+  >
+>;
+
+export type MigrateIsOneExactProgramProjectedThroughFiveExistingWires = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          MigrateProgram['definition']['signature'],
+          Signature<
+            MigrationRequest,
+            MigrationReport,
+            MigrationFailure,
+            readonly [MigrationAuthorityRequirement]
+          >
+        >,
+        Equal<FailureOf<MigrateProgram['definition']['signature']>, MigrationFailure>,
+        Equal<RequirementsOf<MigrateProgram['definition']['signature']>, readonly [MigrationAuthorityRequirement]>,
+        MigrateProgramProjection['direct'] extends DirectMigrationExchange<SystemProgramId<'verify'>>
+          ? true
+          : false,
+        Equal<keyof MigrateProgramProjection, 'direct' | 'cli' | 'http' | 'mcp' | 'editor'>,
       ],
       [true, true, true, false, true]
     >

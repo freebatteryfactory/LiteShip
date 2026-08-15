@@ -67,6 +67,11 @@ import type {
   SelectionSet,
 } from '../../00_core/17_editor/types.js';
 import type { Explanation } from '../../00_core/18_inspection/types.js';
+import type {
+  MigrationFailure,
+  MigrationReport,
+  MigrationRequest,
+} from '../../00_core/14_compiler/types.js';
 import type { OperationId, OperationInvocation } from '../../00_core/07_operation/types.js';
 import type { WireExchange, WireRefusal } from '../types.js';
 
@@ -297,6 +302,17 @@ export interface EditorSessionRequest {
   readonly base: SemanticCut;
 }
 
+/** Source-backed editor invocation of the protocol-neutral migrate operation. */
+export interface EditorMigrationRequest {
+  readonly migration: MigrationRequest;
+  readonly document?: EditorDocumentCoordinate;
+}
+
+export interface EditorMigrationProjection<Op extends OperationId = OperationId> {
+  readonly request: EditorMigrationRequest;
+  readonly outcome: EditorRequestOutcome<MigrationReport, MigrationFailure, Op>;
+}
+
 export interface EditorInitializeRequest {
   readonly connection: EditorConnectionReference;
   readonly clientName?: string;
@@ -362,6 +378,7 @@ export type EditorMethodCatalog = readonly [
   EditorClientRequest<'operation.apply', EditorRemediationOffer, EditorRequestOutcome>,
   EditorClientRequest<'editor.session.open', EditorSessionRequest, EditorSessionReference>,
   EditorClientRequest<'editor.draft.preview', EditorDocumentCoordinate, PreviewBranch>,
+  EditorClientRequest<'migration.run', EditorMigrationRequest, EditorMigrationProjection>,
   EditorServerNotification<'server.log', EditorHandlerFailure, readonly ['active', 'shuttingDown']>
 ];
 
@@ -451,6 +468,7 @@ export type LspMethodCatalog = readonly [
   LspMethodProjection<'operation.apply', 'liteship/operation/apply', 'client-to-server', 'request'>,
   LspMethodProjection<'editor.session.open', 'liteship/editor/session', 'client-to-server', 'request'>,
   LspMethodProjection<'editor.draft.preview', 'liteship/editor/preview', 'client-to-server', 'request'>,
+  LspMethodProjection<'migration.run', 'liteship/migrate', 'client-to-server', 'request'>,
   LspMethodProjection<'server.log', 'window/logMessage', 'server-to-client', 'notification'>
 ];
 
@@ -704,6 +722,7 @@ export interface EditorWireTypeSurface {
   readonly remediationOffer: EditorRemediationOffer;
   readonly remediationProjection: EditorRemediationProjection;
   readonly lspRemediationProjection: LspRemediationProjection;
+  readonly migration: EditorMigrationProjection;
   readonly refusal: EditorRefusal;
 }
 

@@ -31,6 +31,7 @@ import type {
   NonEmptyTuple,
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
+import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
 import type { IdempotencyKey, OperationId } from '../../00_core/07_operation/types.js';
 import type {
   WireExchange,
@@ -134,6 +135,13 @@ export type HttpProjection<
   };
 }>;
 
+/** HTTP projection of migration; host admission and authorization remain outside the wire. */
+export type HttpMigrationProjection<Op extends OperationId> = HttpProjection<
+  MigrationReport,
+  MigrationFailure,
+  Op
+>;
+
 // ---------------------------------------------------------------------------
 // Surface
 // ---------------------------------------------------------------------------
@@ -144,4 +152,5 @@ export interface HttpWireTypeSurface {
   readonly safety: HttpMethodSafety;
   readonly retry: HttpRetryEligibility;
   readonly projection: HttpProjection;
+  readonly migration: HttpMigrationProjection<OperationId>;
 }

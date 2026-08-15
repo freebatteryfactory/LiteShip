@@ -35,6 +35,7 @@ import type {
   NonEmptyTuple,
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
+import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
 import type { OperationId, OperationReference } from '../../00_core/07_operation/types.js';
 import type {
   WireExchange,
@@ -122,6 +123,12 @@ export type McpAnswer<
   };
 }>;
 
+/** Migration is an invokable MCP tool, never an orphan library. */
+export interface McpMigrationProjection<Op extends OperationId> {
+  readonly offer: McpOffer<Op, 'tool'>;
+  readonly answer: McpAnswer<MigrationReport, MigrationFailure, Op>;
+}
+
 // ---------------------------------------------------------------------------
 // Surface
 // ---------------------------------------------------------------------------
@@ -132,4 +139,5 @@ export interface McpWireTypeSurface {
   readonly offer: McpOffer;
   readonly catalog: McpCatalog;
   readonly answer: McpAnswer;
+  readonly migration: McpMigrationProjection<OperationId>;
 }

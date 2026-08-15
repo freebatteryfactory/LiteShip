@@ -44,10 +44,21 @@ import type {
   Signature,
 } from '../../types.js';
 import type { WireDefinition, WireExposure, WireId } from '../../02_wires/types.js';
+import type { DirectMigrationExchange } from '../../02_wires/direct/types.js';
+import type { CliMigrationDisposition } from '../../02_wires/cli/types.js';
+import type { HttpMigrationProjection } from '../../02_wires/http/types.js';
+import type { McpMigrationProjection } from '../../02_wires/mcp/types.js';
+import type { EditorMigrationProjection } from '../../02_wires/editor/types.js';
 import type { WorkspaceSnapshotReference } from '../00_workspace/types.js';
 import type { AuditProduct, AuditRequirements } from '../01_assurance/00_audit/types.js';
 import type { AssuranceResult } from '../01_assurance/01_gauntlet/types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
+import type {
+  MigrationAuthorityRequirement,
+  MigrationFailure,
+  MigrationReport,
+  MigrationRequest,
+} from '../../00_core/14_compiler/types.js';
 import type {
   EffectClass,
   OperationDefinition,
@@ -93,10 +104,10 @@ export interface SystemProgramEntry<Name extends string, Program> extends Named<
  * defining its entries. A bootstrap holding the `release` entry held something
  * that accepted `unknown`.
  *
- * Six, because six are the ones whose input, output, and prerequisites are
+ * Seven, because seven are the ones whose input, output, and prerequisites are
  * presently readable off types that exist: `AuditProduct`, `AssuranceResult`,
- * and the package, release, and publication chain. `doctor`, `build`,
- * `benchmark`, `docs`, and `migrate` are intended system capabilities and their
+ * migration authority, and the package, release, and publication chain.
+ * `doctor`, `build`, `benchmark`, and `docs` are intended system capabilities and their
  * contracts are not yet reasoned. Naming them here would restore exactly the
  * placeholder this map exists to remove — a roster is a promise the compiler
  * checks, and a promise about a contract nobody has written is the shape this
@@ -114,6 +125,7 @@ export type SystemProgramDefinitions = readonly [
   SystemProgramEntry<'audit', AuditProgram>,
   SystemProgramEntry<'gauntlet', GauntletProgram>,
   SystemProgramEntry<'verify', VerifyProgram>,
+  SystemProgramEntry<'migrate', MigrateProgram>,
   SystemProgramEntry<'package', PackageProgram>,
   SystemProgramEntry<'release', ReleaseProgram>,
   SystemProgramEntry<'ship', ShipProgram>,
@@ -180,12 +192,13 @@ export interface SystemProgram<
   Input = unknown,
   Output = unknown,
   Requirements extends RequirementRow = RequirementRow,
+  Failure = readonly Diagnostic[],
 > {
   readonly name: Name;
   readonly definition: OperationDefinition<
     Input,
     Output,
-    readonly Diagnostic[],
+    Failure,
     Requirements,
     SystemProgramId<Name>
   >;
@@ -270,7 +283,7 @@ export type ShipSignature<
 >;
 
 // ---------------------------------------------------------------------------
-// The six programs
+// The seven programs
 //
 // The request shapes for `gauntlet` and `verify` are declared here rather than
 // in the homes that own their products, and that placement is forced. Gauntlet
@@ -338,6 +351,27 @@ export type VerifyProgram<
   AssuranceResult<Snapshot, Spec>,
   AuditRequirements<Snapshot>
 >;
+
+/** Interpret one external source without applying the admitted meaning. */
+export type MigrateProgram = SystemProgram<
+  'migrate',
+  MigrationRequest,
+  MigrationReport,
+  readonly [MigrationAuthorityRequirement],
+  MigrationFailure
+>;
+
+/**
+ * Real compile-use composition: one migration program identity projected
+ * through every owner-ratified wire, with no wire importing system back.
+ */
+export interface MigrateProgramProjection {
+  readonly direct: DirectMigrationExchange<SystemProgramId<'migrate'>>;
+  readonly cli: CliMigrationDisposition<SystemProgramId<'migrate'>>;
+  readonly http: HttpMigrationProjection<SystemProgramId<'migrate'>>;
+  readonly mcp: McpMigrationProjection<SystemProgramId<'migrate'>>;
+  readonly editor: EditorMigrationProjection<SystemProgramId<'migrate'>>;
+}
 
 /** Pack a plan into distributables. */
 export type PackageProgram<
@@ -435,6 +469,8 @@ export interface ProgramsTypeSurface {
   readonly program: SystemProgram;
   readonly reference: SystemProgramReference;
   readonly exposure: SystemProgramExposure;
+  readonly migrate: MigrateProgram;
+  readonly migrateProjection: MigrateProgramProjection;
   readonly packageSignature: PackageSignature;
   readonly releaseSignature: ReleaseSignature;
   readonly shipSignature: ShipSignature;

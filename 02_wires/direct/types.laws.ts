@@ -11,10 +11,11 @@
  * @module
  */
 
-import type { OperationId } from '../../00_core/07_operation/types.js';
-import type { Assert, Equal, TagOf } from '../../types.js';
+import type { OperationId, OperationOutcome } from '../../00_core/07_operation/types.js';
+import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
+import type { Assert, CaseOf, Equal, IsExactlyTrue, TagOf } from '../../types.js';
 import type { WireExchange, WireRefusal } from '../types.js';
-import type { DirectExchange, DirectRefusal } from './types.js';
+import type { DirectExchange, DirectMigrationExchange, DirectRefusal } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -88,5 +89,22 @@ export type ADirectExchangeIsExactOverItsOperation = Assert<
       DirectExchange extends DirectExchange<unknown, never, DirectLawA> ? true : false,
     ],
     [false, true, false]
+  >
+>;
+
+export type DirectMigrationProjectsTheCoreContract = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          CaseOf<DirectMigrationExchange<DirectLawA>, 'completed'>['receipt']['outcome'],
+          OperationOutcome<MigrationReport, MigrationFailure>
+        >,
+        DirectMigrationExchange<DirectLawA> extends DirectMigrationExchange<DirectLawB>
+          ? true
+          : false,
+      ],
+      [true, false]
+    >
   >
 >;

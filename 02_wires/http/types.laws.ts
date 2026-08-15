@@ -13,9 +13,10 @@
 
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { IdempotencyKey, OperationId } from '../../00_core/07_operation/types.js';
+import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
 import type { Assert, CaseOf, Equal, IsExactlyTrue, TagOf } from '../../types.js';
 import type { WireExchange, WireRefusal } from '../types.js';
-import type { HttpProjection, HttpRetryEligibility, HttpStatusClass } from './types.js';
+import type { HttpMigrationProjection, HttpProjection, HttpRetryEligibility, HttpStatusClass } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -24,6 +25,21 @@ import type { HttpProjection, HttpRetryEligibility, HttpStatusClass } from './ty
 type HttpLawA = OperationId<'liteship.wire.http.law.op-a'>;
 
 type HttpLawB = OperationId<'liteship.wire.http.law.op-b'>;
+
+export type HttpMigrationProjectsTheCoreContract = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          CaseOf<HttpMigrationProjection<HttpLawA>, 'answered'>['crossing'],
+          CaseOf<WireExchange<MigrationReport, MigrationFailure, HttpLawA>, 'completed'>
+        >,
+        HttpMigrationProjection<HttpLawA> extends HttpMigrationProjection<HttpLawB> ? true : false,
+      ],
+      [true, false]
+    >
+  >
+>;
 
 
 /**

@@ -50,6 +50,7 @@ A rejected crossing may always be resent — nothing happened. An answered cross
 - A lost answer never projects to a client error; a rejected request never projects to success; an answered crossing keeps the full class range.
 - Retry eligibility is present on the lost arm and absent from the other two.
 - A projection is exact over its operation, with the anti-vacuity partner for the carrier dropping its parameter.
+- HTTP migration uses the same crossing projection over core's exact migration report and failure; authorization and source admission remain host concerns.
 
 ## Proof obligations
 
