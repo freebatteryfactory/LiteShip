@@ -83,7 +83,7 @@ export interface CliOutput<Output = unknown> {
 /**
  * What the process tells its parent.
  *
- * Six arms rather than an integer, because an integer is where the two
+ * Seven arms rather than an integer, because an integer is where the two
  * questions get merged. Each arm corresponds to a distinguishable thing that
  * happened, and only one of them is success:
  *
@@ -100,6 +100,10 @@ export interface CliOutput<Output = unknown> {
  * - `interrupted` — the operation ran and its answer never made it out. The
  *   process died between the side effect and the flush, and this is the arm a
  *   wrapper script must not retry blindly.
+ * - `threshold` — the operation succeeded and returned its answer, but a
+ *   caller-selected wire policy rejects that answer for this invocation. The
+ *   doctor program's strict mode is the first consumer: a caution report stays
+ *   a caution report while the shell receives a nonzero exit.
  *
  * `failed` and `cancelled` did not exist here, and their absence was not a
  * gap in coverage — it was a forced lie. An operation whose receipt said
@@ -114,6 +118,7 @@ export type CliExit = Algebra<{
   cancelled: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
   usage: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
   interrupted: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
+  threshold: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
 }>;
 
 /**
@@ -156,11 +161,9 @@ type CompletedWith<
  * left free, which is worse than not splitting them at all, because the split
  * looks done.
  *
- * Four completed arms now, one per outcome, each pinning both sides. Only
- * `succeeded` carries an answer value — a failing command previously had to
- * produce an `Output` it did not have, so the answer stream is now structurally
- * absent where there is nothing to put on it, rather than present and
- * fabricated.
+ * Five completed arms now: one per outcome plus the successful-answer
+ * threshold projection. Each pins both sides. `succeeded` and `threshold`
+ * carry an answer value; failing commands do not have an `Output` to fabricate.
  */
 export type CliDisposition<
   Output = unknown,
@@ -171,6 +174,12 @@ export type CliDisposition<
     readonly crossing: CompletedWith<'succeeded', Output, Failure, Op>;
     readonly output: CliOutput<Output>;
     readonly exit: CaseOf<CliExit, 'success'>;
+  };
+  threshold: {
+    readonly crossing: CompletedWith<'succeeded', Output, Failure, Op>;
+    readonly output: CliOutput<Output>;
+    readonly diagnostics: CliDiagnosticStream;
+    readonly exit: CaseOf<CliExit, 'threshold'>;
   };
   refusedByOperation: {
     readonly crossing: CompletedWith<'refused', Output, Failure, Op>;

@@ -31,7 +31,7 @@ Own the shared vocabulary for the facts TypeScript's assignability cannot decide
 - `AuthorityRecord`, `AuthorityGraph`, `CanonicalImport`, `Explanation`, or `InspectionQuery`. `00_core/18_inspection` owns them, and its module comment already assigns their *production* to system assurance.
 - `TypeAbiSurface`, `TypeAbiAttestation`, `TypeAbiCoverage`, or the toolchain matrix. Root `types.d.ts` owns them.
 - A facts product. `Explanation` already carries facts, and `02_targets` recorded what a wrapper that restates what it wraps costs.
-- Any repository program, command, or runner. That is `system/03_programs`, which does not exist yet.
+- Any repository program, command, or runner. The contracts are rostered in `system/03_programs`; this home owns only their assurance products.
 
 ## Ordinary operation input lives where both children can reach it
 

@@ -666,21 +666,19 @@ LiteShip's own system programs use this same wire. User applications can project
 
 Its responsibilities are workspace, assurance, release, repository programs, and bootstrap.
 
-It owns typed programs for:
+Its earned definition map currently owns typed programs for:
 
-- build;
-- verify;
 - doctor;
 - audit;
 - gauntlet;
-- benchmark;
-- docs generation;
+- verify;
+- consumer-application build;
 - migration orchestration;
 - packaging;
 - release;
 - shipping.
 
-Eleven, not twelve. This list previously opened with *workspace discovery*, and that entry has moved rather than vanished: `system/00_workspace` owns workspace identity, snapshots, root and source-home observation, revision and working-tree state, and toolchain references, and the programs above consume that authority. Discovery is a thing programs need, not a thing programs orchestrate. Exposing it later through `doctor`, an editor wire, or MCP is ordinary; making it a twelfth orchestration engine would have meant two places that answer "what repository is this", which is the defect the layer exists to prevent.
+Nine are rostered. Benchmark and docs generation remain intended capabilities whose output contracts have not yet been quarried; they are not `unknown -> unknown` placeholders. This list previously opened with *workspace discovery*, and that entry has moved rather than vanished: `system/00_workspace` owns workspace identity, snapshots, root and source-home observation, revision and working-tree state, and toolchain references, and the programs above consume that authority. Discovery is a thing programs need, not a thing programs orchestrate. Exposing it later through `doctor`, an editor wire, or MCP is ordinary; making it another orchestration engine would have meant two places that answer "what repository is this", which is the defect the layer exists to prevent.
 
 Packaging likewise did not disappear from the responsibility list — it was absorbed. `system/02_release` owns distributable artifact identity, package manifests, candidates, qualification, attestations, publication plans, and receipts; `package`, `release`, and `ship` remain three distinct programs over that one authority. There is no separate packaging home waiting to hatch.
 

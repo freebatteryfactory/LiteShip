@@ -35,6 +35,7 @@ import type {
   NonEmptyTuple,
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
+import type { ContentAddress } from '../../00_core/01_encoding/types.js';
 import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
 import type { OperationId, OperationReference } from '../../00_core/07_operation/types.js';
 import type {
@@ -129,6 +130,29 @@ export interface McpMigrationProjection<Op extends OperationId> {
   readonly answer: McpAnswer<MigrationReport, MigrationFailure, Op>;
 }
 
+/**
+ * Evidence that one MCP composition is admitted for trusted local execution.
+ *
+ * This is a wire-composition fact, not authority conferred by the caller. The
+ * address names the host admission and policy evidence that made a local
+ * execution tool reachable. A general MCP catalog has no such member and does
+ * not become trusted merely by offering the same operation.
+ */
+export type McpLocalTrustAdmission = ContentAddress<
+  'application/vnd.liteship.mcp-local-trust-admission+cbor'
+>;
+
+/** One tool exposed only by an exact trusted-local MCP composition. */
+export interface TrustedLocalMcpToolProjection<
+  Output,
+  Failure,
+  Op extends OperationId,
+> {
+  readonly admission: McpLocalTrustAdmission;
+  readonly offer: McpOffer<Op, 'tool'>;
+  readonly answer: McpAnswer<Output, Failure, Op>;
+}
+
 // ---------------------------------------------------------------------------
 // Surface
 // ---------------------------------------------------------------------------
@@ -140,4 +164,6 @@ export interface McpWireTypeSurface {
   readonly catalog: McpCatalog;
   readonly answer: McpAnswer;
   readonly migration: McpMigrationProjection<OperationId>;
+  readonly localTrust: McpLocalTrustAdmission;
+  readonly trustedLocalTool: TrustedLocalMcpToolProjection<unknown, readonly Diagnostic[], OperationId>;
 }

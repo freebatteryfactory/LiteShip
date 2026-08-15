@@ -16,7 +16,15 @@ import type { OperationId } from '../../00_core/07_operation/types.js';
 import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
 import type { Assert, CaseOf, Equal, IsExactlyTrue, NonEmptyTuple, TagOf } from '../../types.js';
 import type { WireExchange, WireExposure } from '../types.js';
-import type { McpAnswer, McpCatalog, McpMigrationProjection, McpOffer, McpSurfaceKind } from './types.js';
+import type {
+  McpAnswer,
+  McpCatalog,
+  McpLocalTrustAdmission,
+  McpMigrationProjection,
+  McpOffer,
+  McpSurfaceKind,
+  TrustedLocalMcpToolProjection,
+} from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -35,6 +43,27 @@ export type McpMigrationIsAnExactToolProjection = Assert<
         McpMigrationProjection<McpLawA> extends McpMigrationProjection<McpLawB> ? true : false,
       ],
       [true, true, false]
+    >
+  >
+>;
+
+/** Trusted-local reachability is evidence on one composition, not caller privilege. */
+export type TrustedLocalExecutionRequiresAnAdmission = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<TrustedLocalMcpToolProjection<unknown, readonly Diagnostic[], McpLawA>['admission'], McpLocalTrustAdmission>,
+        Equal<TrustedLocalMcpToolProjection<unknown, readonly Diagnostic[], McpLawA>['offer'], McpOffer<McpLawA, 'tool'>>,
+        TrustedLocalMcpToolProjection<unknown, readonly Diagnostic[], McpLawA> extends TrustedLocalMcpToolProjection<
+          unknown,
+          readonly Diagnostic[],
+          McpLawB
+        >
+          ? true
+          : false,
+        'admission' extends keyof McpOffer ? true : false,
+      ],
+      [true, true, false, false]
     >
   >
 >;

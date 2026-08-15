@@ -18,7 +18,8 @@ import type {
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { StreamSequence } from '../../00_core/04_time/types.js';
-import type { OperationId } from '../../00_core/07_operation/types.js';
+import type { OperationId, OperationReference } from '../../00_core/07_operation/types.js';
+import type { Explanation } from '../../00_core/18_inspection/types.js';
 import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
 import type { ApprovalDecision, PreviewBranch } from '../../00_core/17_editor/types.js';
 import type {
@@ -29,6 +30,7 @@ import type {
   EditorConnectionReference,
   EditorCoordinate,
   EditorDiagnosticDelivery,
+  EditorDiagnosticExplanationProjection,
   EditorDocumentChange,
   EditorDocumentCoordinate,
   EditorDocumentEdit,
@@ -49,6 +51,29 @@ import type {
   LspPosition,
   LspWorkspaceEdit,
 } from './types.js';
+
+type EditorInspectionLawReport = {
+  readonly subject: { readonly kind: 'workspace' };
+  readonly diagnostics: readonly Diagnostic[];
+  readonly explanation: Explanation;
+};
+type EditorInspectionLawOp = OperationId<'law.editor.inspection'>;
+
+export type NonDocumentReportsProjectWithoutInventingADocumentVersion = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<EditorDiagnosticExplanationProjection<EditorInspectionLawReport, EditorInspectionLawOp>['report'], EditorInspectionLawReport>,
+        Equal<EditorDiagnosticExplanationProjection<EditorInspectionLawReport, EditorInspectionLawOp>['operation'], OperationReference<EditorInspectionLawOp>>,
+        Equal<EditorDiagnosticExplanationProjection<EditorInspectionLawReport>['report']['explanation'], Explanation>,
+        Equal<EditorDiagnosticExplanationProjection<EditorInspectionLawReport>['report']['diagnostics'], readonly Diagnostic[]>,
+        'coordinate' extends keyof EditorDiagnosticExplanationProjection<EditorInspectionLawReport> ? true : false,
+        'version' extends keyof EditorDiagnosticExplanationProjection<EditorInspectionLawReport> ? true : false,
+      ],
+      [true, true, true, true, false, false]
+    >
+  >
+>;
 
 export type ADraftAnswerHasOneOwnerAndNeverStandsForACommit = Assert<
   IsExactlyTrue<

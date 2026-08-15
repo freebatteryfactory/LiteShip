@@ -72,7 +72,7 @@ import type {
   MigrationReport,
   MigrationRequest,
 } from '../../00_core/14_compiler/types.js';
-import type { OperationId, OperationInvocation } from '../../00_core/07_operation/types.js';
+import type { OperationId, OperationInvocation, OperationReference } from '../../00_core/07_operation/types.js';
 import type { WireExchange, WireRefusal } from '../types.js';
 
 // ---------------------------------------------------------------------------
@@ -606,6 +606,29 @@ export type EditorDiagnosticDelivery = Algebra<{
   };
 }>;
 
+/**
+ * An operation report projected into the editor's diagnostic and explanation
+ * surfaces without inventing an editor-only invocation protocol.
+ *
+ * Doctor is the first system consumer. The whole report remains available so
+ * its conclusion, diagnostics, explanation, and real subject stay one product;
+ * repository, consumer-application, and deployed-application reports do not
+ * pretend to be document-derived or fabricate document versions.
+ */
+export interface EditorDiagnosticExplanationReport {
+  readonly subject: unknown;
+  readonly diagnostics: readonly Diagnostic[];
+  readonly explanation: Explanation;
+}
+
+export interface EditorDiagnosticExplanationProjection<
+  Report extends EditorDiagnosticExplanationReport = EditorDiagnosticExplanationReport,
+  Op extends OperationId = OperationId,
+> {
+  readonly operation: OperationReference<Op>;
+  readonly report: Report;
+}
+
 // ---------------------------------------------------------------------------
 // Remediation
 // ---------------------------------------------------------------------------
@@ -718,6 +741,7 @@ export interface EditorWireTypeSurface {
   readonly outboundRequest: EditorOutboundRequest;
   readonly diagnosticPush: EditorDiagnosticPush;
   readonly diagnosticDelivery: EditorDiagnosticDelivery;
+  readonly diagnosticExplanation: EditorDiagnosticExplanationProjection;
   readonly handlerFailure: EditorHandlerFailure;
   readonly remediationOffer: EditorRemediationOffer;
   readonly remediationProjection: EditorRemediationProjection;

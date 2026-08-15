@@ -66,9 +66,9 @@ A wire exposing a subset without saying so reads downstream as exposing everythi
 
 `WireCaller` distinguishes an application operation from a system program and **unlocks nothing**. Neither `WireExposure` nor `WireAdmission` nor `WireExchange` is parameterized by it, so there is no shape in which a system program travels a path an application cannot.
 
-That absence is the point. The standard arrangement is a privileged internal engine beside a weaker public imitation, and it is precisely how the public path stops being tested — the people who would notice never use it. `verify`, `build`, `doctor`, and `ship` will cross the same CLI wire an application's own operation catalog crosses.
+That absence is the point. The standard arrangement is a privileged internal engine beside a weaker public imitation, and it is precisely how the public path stops being tested — the people who would notice never use it. `verify`, `build`, `doctor`, and `ship` are rostered system operations projected through the same CLI wire an application's own operation catalog crosses.
 
-CLI grammar belongs to the CLI child. The root executable's bootstrap does not parse a private command language, and `system/03_programs` will not own a command engine of its own.
+CLI grammar belongs to the CLI child. The root executable's bootstrap does not parse a private command language, and `system/03_programs` owns contracts and compositions rather than a command engine of its own.
 
 ## Children
 

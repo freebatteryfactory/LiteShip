@@ -25,7 +25,7 @@ Own what a release is: a candidate over an exact snapshot, the artifacts packed 
 ## Does not own
 
 - Registry protocol, transport, or credentials. Publishing is physical behaviour: a host capability reached through a wire.
-- Command parsing or a release workflow. `package`, `release`, and `ship` are three programs in `system/03_programs`, which does not exist yet.
+- Command parsing or a release workflow. `package`, `release`, and `ship` are three rostered programs in `system/03_programs`.
 - Assurance results. `01_assurance` produces them; this home consumes one and cannot mint it. There is no authority object to mint — a passing result is the evidence.
 - Artifact ancestry, source relations, or projection targets. `00_core/14_compiler` owns those, and a packed artifact binds addresses rather than restating them.
 - Version numbers as a source of truth about compatibility. See below.

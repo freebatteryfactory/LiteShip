@@ -74,6 +74,33 @@ export type TheExitIsAProjectionOfTheOperationOutcome = Assert<
   >
 >;
 
+/**
+ * Compile-time law: a stricter wire threshold never rewrites a successful
+ * operation as a failed one.
+ *
+ * Doctor strict mode is the first consumer. Its report remains on the answer
+ * stream and its receipt remains `succeeded`; only the CLI exit arm records
+ * that the caller-selected acceptance threshold was not met.
+ */
+export type AWireThresholdPreservesTheSuccessfulOutcome = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          CaseOf<CliDisposition, 'threshold'>['crossing']['receipt']['outcome'],
+          CaseOf<OperationOutcome, 'succeeded'>
+        >,
+        Equal<CaseOf<CliDisposition, 'threshold'>['exit'], CaseOf<CliExit, 'threshold'>>,
+        'output' extends keyof CaseOf<CliDisposition, 'threshold'> ? true : false,
+        CaseOf<CliExit, 'threshold'> extends CaseOf<CliDisposition, 'failed'>['exit']
+          ? true
+          : false,
+      ],
+      [true, true, true, false]
+    >
+  >
+>;
+
 
 /**
  * Compile-time law: a completed arm carries the receipt outcome it names.
@@ -142,9 +169,9 @@ export type TheAnswerAndTheDiagnosticsDoNotShareAStream = Assert<
  * nonzero code for everything that is not success — and it tells a user who
  * typed a correct command that they typed it wrong.
  *
- * The exit population is four operation outcomes plus two the operation never
- * reached: `usage`, where nothing ran, and `interrupted`, where the answer was
- * lost. The outcome algebra is pinned alongside, because the first four exist
+ * The exit population is four operation outcomes, two boundary outcomes, and
+ * one caller-selected answer threshold. The outcome algebra is pinned
+ * alongside, because the first four exist
  * to project it — if `OperationOutcome` grows a fifth arm, this law goes red
  * and the question of what a command should exit with becomes visible rather
  * than being answered by whichever arm happens to be assignable.
@@ -161,6 +188,7 @@ export type ARefusalByTheOperationIsNotAUsageError = Assert<
           | 'cancelled'
           | 'usage'
           | 'interrupted'
+          | 'threshold'
         >,
         Equal<TagOf<OperationOutcome>, 'succeeded' | 'failed' | 'refused' | 'cancelled'>,
         CaseOf<CliExit, 'success'> extends CaseOf<CliExit, 'refusedByOperation'> ? true : false,

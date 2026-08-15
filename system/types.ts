@@ -9,13 +9,10 @@
  * does not re-export their declarations or become an implementation hub, for
  * the same reason `00_core/types.ts` does not.
  *
- * **The population here is three, and three is not the end.** `03_programs`
- * and `04_bootstrap` are settled responsibilities with no folder yet, because
- * both consume wire contracts and only `02_wires/direct/` is written so far.
- * Naming them in
- * this topology before they exist would produce exactly the inventory nothing
- * can verify that `01_hosts` refused for as long as only one host was real. The
- * README states what is coming; the type states what is here.
+ * **The population here is five.** Workspace, assurance, release, programs,
+ * and bootstrap all physically exist and every entry carries its own home's
+ * surface. Programs and bootstrap waited for the wire contracts they consume;
+ * now the topology names the complete authored population.
  *
  * A note on a word that is already taken: `00_core/08_state` owns
  * `SystemDefinition`, which is a system in the entity/component sense — a rule

@@ -23,7 +23,7 @@ Read facts against the checks one invocation asked for, and produce one result r
 
 - Any acquisition. No compiler lane, no filesystem, no source control appears here, and their absence from the run product is a law.
 - Gate identity, definitions, planned checks, run specifications, scope, outcome, findings, or the demonstration vocabulary. Those are the assurance umbrella's, because `00_audit` needs the same input vocabulary and cannot import a sibling to get it.
-- Command parsing, exit codes, or output rendering. Those are the CLI wire's, and the wire does not exist yet.
+- Command parsing, exit codes, or output rendering. Those are the authored CLI wire's, not this evaluation home.
 
 ## Gauntlet acquires nothing
 

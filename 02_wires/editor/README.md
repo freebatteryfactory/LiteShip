@@ -23,6 +23,7 @@ Source text is the first human surface. Addressed semantic objects remain the in
 - Client requests, client notifications, server notifications, and answered server refresh requests as distinct flows.
 - Draft-versus-committed answer coordinates and document-version correlation.
 - Push and pull diagnostic delivery from one diagnostic authority.
+- Non-document operation reports projected through core diagnostics and explanations without fabricated document coordinates.
 - Faithful source/workspace edits and command-backed semantic remediation where no faithful mapping exists.
 - Diagnostic refresh and semantic-authority/catalog refresh.
 
@@ -89,6 +90,8 @@ Versioned incremental changes are the normal path. Full replacement is the recov
 
 Push and pull carry core's `Diagnostic` population. An empty push is lawful and load-bearing: it clears previously published diagnostics for a document that became clean.
 
+`EditorDiagnosticExplanationProjection` is the corresponding non-document surface. Doctor is its first system consumer: repository, consumer-application, and deployed-application reports name their real subject and operation while reusing core diagnostics and explanation. They carry no document coordinate or version because none owns them.
+
 Initial refresh has exactly two semantic subjects:
 
 - diagnostic refresh, naming the relevant document coordinate;
@@ -121,6 +124,7 @@ It had no document store, advertised `textDocumentSync: 0`, and projected unifie
 - The protocol lifecycle refuses early and late use distinctly.
 - The concrete semantic method population equals the LSP projection population.
 - Capabilities derive from the handled catalog, including hover and completion and excluding unearned rename.
+- Non-document diagnostic/explanation projection names its exact operation and invents no document version.
 
 ## Proof obligations
 

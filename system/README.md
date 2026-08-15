@@ -53,7 +53,7 @@ Two consequences are worth stating because they shaped the types here rather tha
 
 That distinction is the whole reason they were named and empty rather than built early. The previous arrangement built its equivalent anyway, under a `verification/` directory, before anything it needed existed.
 
-- `03_programs/` owns the program population and the contract each one satisfies: `build`, `verify`, `doctor`, `audit`, `gauntlet`, `benchmark`, `docs`, `migrate`, `package`, `release`, `ship`. Eleven definitions in one authority, not eleven subfolders, and identity computed from the roster rather than declared eleven times.
+- `03_programs/` owns the program population and the contract each one satisfies. Nine are earned and rostered: `doctor`, `audit`, `gauntlet`, `verify`, `build`, `migrate`, `package`, `release`, and `ship`. `benchmark` and `docs` remain intended names without invented output contracts. Definitions live in one authority, not one subfolder per verb, and identity is computed from the map rather than declared per program.
 
   A concrete `release` program must supply an **exact** `AssuranceRunSpec`, never the broad default. The broad form is an erased catalog shape that deliberately accepts results from several exact specifications, which is right for a catalog and wrong for a shipment. Nothing in the type prevents a program from defaulting; the program must not.
 - `04_bootstrap/` owns the semantic contract the root executable realizes: process capability requirements, registry composition, the invocation envelope, dispatch outcome, disposal, and the bootstrap receipt. It carries the CLI wire's disposition whole rather than summarizing it, so the arm a shell sees stays the wire's decision. The physical entrypoint file stays at the root; this home owns only the contract that file satisfies.
@@ -90,7 +90,7 @@ A topology file whose whole job is to derive one population from one tuple has n
 
 The local facts, such as they are:
 
-- The topology names three homes. Each entry carries the type surface its home exports, so a roster entry cannot outlive the home it names.
+- The topology names five homes. Each entry carries the type surface its home exports, so a roster entry cannot outlive the home it names.
 - The name union, the lookup, and the ergonomic surface all derive from that one tuple.
 
 What the child homes assert about themselves is in their own READMEs, which is where a law belongs: next to the declaration it constrains.
@@ -114,4 +114,4 @@ No product runtime implementation exists in this layer.
 
 The repository-control implementations do: they live in `01_assurance/00_audit/`, and they are the only executable bytes in the repository. That number staying small is a thing to watch, not a rule to enforce — the previous arrangement grew one reasonable file at a time.
 
-Everything else here waits on a dependency rather than on a decision: programs and bootstrap need the CLI wire contract, and the contracts they would satisfy cannot be written honestly before it.
+Everything else remains type architecture: program and bootstrap contracts now consume the completed wire declarations, and no product runtime body exists here.

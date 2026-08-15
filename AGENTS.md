@@ -75,7 +75,7 @@ The source waterfall is:
 - `01_hosts/`: shared host realization contract with an exact four-child roster; `web/` (thirteen homes), `worker/` (seven), `edge/` (eleven), and `server/` (eleven) all exist as specified architecture with no implementation
 - `02_targets/`: ecosystem lifecycle integrations
 - `02_wires/`: protocol and invocation projections
-- unnumbered `system/`: workspace, assurance, release, repository programs, and bootstrap. Its wire-independent homes exist — `00_workspace/`, `01_assurance/` with `00_audit/` and `01_gauntlet/`, `02_release/`. `03_programs/` and `04_bootstrap/` are deferred because both consume wire contracts; `SystemTypeTopology` names only the three that exist. Packaging is owned by `02_release`, and `package`/`release`/`ship` are three programs over that one authority. Workspace discovery is an authority in `00_workspace`, not a twelfth program
+- unnumbered `system/`: workspace, assurance, release, repository programs, and bootstrap. All five homes exist — `00_workspace/`, `01_assurance/` with `00_audit/` and `01_gauntlet/`, `02_release/`, `03_programs/`, and `04_bootstrap/`. The earned program map contains doctor, audit, gauntlet, verify, build, migrate, package, release, and ship; benchmark and docs remain unrostered until their outputs are quarried. Packaging is owned by `02_release`, while build, doctor, and migrate bind their upstream owners only at the downstream system composition point. Workspace discovery is an authority in `00_workspace`, not another program
 
 The repository root is the `liteship` meta-package, canonical TypeScript toolchain authority, public export membrane, and tiny executable composition root.
 
@@ -299,7 +299,7 @@ The README explains purpose, ownership, composition, and proof. It should not ac
 
 The root owns its compiler configuration and nothing more: `package.json` pins the compiler and declares `typecheck` and `check`, `tsconfig.json` holds the strict posture, and `include` is `**/*.ts` so no directory can typecheck-exempt itself by being one the census forgot. That is using TypeScript, not a build workflow.
 
-Beyond it, no implementation command set is authoritative. Do not copy commands from the old repository or invent a root build workflow before `system/03_programs` and the root bootstrap are designed.
+Beyond it, no implementation command set is authoritative. The program and bootstrap contracts do not authorize product-runtime bodies or a copied root workflow; quarry exact predecessor behavior and satisfy the rostered contract when implementation is explicitly in scope.
 
 The checked-in foundation must eventually satisfy the root-pinned toolchain matrix:
 

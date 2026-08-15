@@ -12,7 +12,11 @@
  */
 
 import type { Diagnostic } from '../../00_core/00_error/types.js';
-import type { EffectClass, OperationId, OperationReference } from '../../00_core/07_operation/types.js';
+import type {
+  EffectClass,
+  OperationId,
+  OperationReference,
+} from '../../00_core/07_operation/types.js';
 import type {
   MigrationAuthorityRequirement,
   MigrationFailure,
@@ -21,8 +25,11 @@ import type {
 } from '../../00_core/14_compiler/types.js';
 import type {
   Assert,
+  CaseOf,
   Equal,
   FailureOf,
+  HoleContract,
+  InputOf,
   IsExactlyTrue,
   NonEmptyTuple,
   OutputOf,
@@ -30,8 +37,16 @@ import type {
   RequirementRow,
   RequirementsOf,
   Signature,
+  TagOf,
 } from '../../types.js';
 import type { DirectMigrationExchange } from '../../02_wires/direct/types.js';
+import type { ChildProcessRequirement } from '../../01_hosts/server/01_process/types.js';
+import type { ServerNetworkRequirement } from '../../01_hosts/server/04_network/types.js';
+import type { WorkspaceFileSystem, WorkspaceObservationRequirements } from '../00_workspace/types.js';
+import type { BuildProduct as ViteBuildProduct } from '../../02_targets/vite/05_build/types.js';
+import type { AstroTargetId } from '../../02_targets/astro/00_integration/types.js';
+import type { ViteTargetId } from '../../02_targets/vite/00_integration/types.js';
+import type { EcosystemTargetReference } from '../../02_targets/types.js';
 import type { WireDefinition, WireExposure } from '../../02_wires/types.js';
 import type { WorkspaceSnapshotId } from '../00_workspace/types.js';
 import type {
@@ -47,11 +62,33 @@ import type { AuditProduct } from '../01_assurance/00_audit/types.js';
 import type { QualifiedReleaseCandidate, ReleaseCandidateId, ReleaseReceipt } from '../02_release/types.js';
 import type {
   AuditProgram,
+  BuildFailure,
+  BuildExecutionPlan,
+  BuildProgram,
+  BuildProgramProjection,
+  BuildRequirements,
+  BuildTargetCatalog,
+  BuildTargetChoice,
+  ConsumerApplicationDoctorProvider,
+  DeployedApplicationDoctorProvider,
+  DoctorAuthority,
+  DoctorAuthorityRequirement,
+  DoctorFailure,
+  DoctorProgram,
+  DoctorProgramProjection,
+  DoctorProviderCatalog,
+  DoctorReadout,
+  DoctorRemediationComposition,
+  DoctorReport,
+  DoctorSubject,
   GauntletProgram,
   GauntletRequest,
   MigrateProgram,
   MigrateProgramProjection,
   ObservesOnly,
+  PackageManagerCatalog,
+  RepositoryDoctorProvider,
+  UnsupportedPackageManager,
   ReleaseProgram,
   ReleaseSignature,
   SystemProgram,
@@ -157,12 +194,136 @@ export type TheExposedPopulationIsTheProgramPopulation = Assert<
     Equal<
       [
         Equal<SystemProgramExposure['length'], SystemProgramRoster['length']>,
-        Equal<SystemProgramExposure[3], SystemProgramReference<'migrate'>>,
+        Equal<SystemProgramExposure[5], SystemProgramReference<'migrate'>>,
         SystemProgramExposure extends NonEmptyTuple<OperationReference> ? true : false,
-        Equal<SystemProgramExposure[3], SystemProgramReference<'ship'>>,
-        Equal<SystemProgramExposure[6], SystemProgramReference<'ship'>>,
+        Equal<SystemProgramExposure[5], SystemProgramReference<'ship'>>,
+        Equal<SystemProgramExposure[8], SystemProgramReference<'ship'>>,
       ],
       [true, true, true, false, true]
+    >
+  >
+>;
+
+/**
+ * Compile-time law: the two newly earned program contracts are rostered.
+ *
+ * This is intentionally written before their declarations. On the previous
+ * seven-program roster both extractions are `never`, so the law is the red
+ * proof that adding declarations beside the carrier would not be enough.
+ */
+export type BuildAndDoctorEnterThroughTheDefinitionMap = Assert<
+  IsExactlyTrue<
+    Equal<
+      [Extract<SystemProgramRoster[number], 'build'>, Extract<SystemProgramRoster[number], 'doctor'>],
+      ['build', 'doctor']
+    >
+  >
+>;
+
+/**
+ * Compile-time law: build is the target-neutral consumer-application carrier.
+ *
+ * The first line reads the rostered program's own signature. The second pins
+ * the exact requirement row. The third proves Vite's target-owned product is
+ * consumed by its catalog row rather than promoted to the universal output.
+ * The last two lines make exposure composition-specific: no HTTP or editor key
+ * can appear on the initial build projection.
+ */
+export type BuildConsumesQualifiedTargetAndManagerCatalogs = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<FailureOf<BuildProgram['definition']['signature']>, BuildFailure>,
+        Equal<RequirementsOf<BuildProgram['definition']['signature']>, BuildRequirements>,
+        Equal<
+          InputOf<BuildTargetCatalog[1]['admit']>,
+          Extract<ViteBuildProduct, { readonly _tag: 'built' }>
+        >,
+        Equal<PackageManagerCatalog['length'], 2>,
+        Equal<BuildTargetCatalog[0]['binary'], 'astro'>,
+        Equal<BuildTargetCatalog[1]['binary'], 'vite'>,
+        Refine<
+          CaseOf<BuildTargetChoice, 'explicit'>,
+          { readonly target: EcosystemTargetReference<ViteTargetId> }
+        > extends CaseOf<BuildExecutionPlan, 'astro'>['request']['target']
+          ? true
+          : false,
+        Refine<
+          CaseOf<BuildTargetChoice, 'explicit'>,
+          { readonly target: EcosystemTargetReference<AstroTargetId> }
+        > extends CaseOf<BuildExecutionPlan, 'astro'>['request']['target']
+          ? true
+          : false,
+        Equal<TagOf<UnsupportedPackageManager>, 'yarn' | 'bun' | 'other'>,
+        BuildFailure extends { readonly diagnostics: NonEmptyTuple<Diagnostic> } ? true : false,
+        Equal<keyof BuildProgramProjection, 'direct' | 'cli' | 'trustedLocalMcp'>,
+        'http' extends keyof BuildProgramProjection ? true : false,
+        'editor' extends keyof BuildProgramProjection ? true : false,
+        Equal<BuildProgram['definition']['effects'], readonly ['execute', 'create']>,
+      ],
+      [true, true, true, true, true, true, false, true, true, true, true, false, false, true]
+    >
+  >
+>;
+
+/**
+ * Compile-time law: doctor diagnoses three subject families and mutates none.
+ *
+ * Each provider carries the prerequisites of its own subject. The rostered
+ * program itself requires the provider authority and pins its effect to
+ * observation, while remediation is a separate composition of ordinary
+ * operation receipts followed by another report.
+ */
+export type DoctorDogfoodsOneObservationalAuthority = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<TagOf<DoctorSubject>, 'repository' | 'consumer-application' | 'deployed-application'>,
+        Equal<TagOf<DoctorReadout<unknown>>, 'ok' | 'absent' | 'unreadable'>,
+        Equal<DoctorProviderCatalog['length'], 3>,
+        Equal<RepositoryDoctorProvider['requirements'], WorkspaceObservationRequirements>,
+        Equal<
+          ConsumerApplicationDoctorProvider['requirements'],
+          readonly [WorkspaceFileSystem, ChildProcessRequirement]
+        >,
+        Equal<
+          DeployedApplicationDoctorProvider['requirements'],
+          readonly [ServerNetworkRequirement]
+        >,
+        Equal<HoleContract<DoctorAuthorityRequirement>, DoctorAuthority>,
+        Equal<FailureOf<DoctorProgram['definition']['signature']>, DoctorFailure>,
+        Equal<OutputOf<DoctorProgram['definition']['signature']>, DoctorReport>,
+        Equal<TagOf<DoctorReport>, 'ready' | 'caution' | 'blocked'>,
+        Equal<CaseOf<DoctorReport, 'ready'>['diagnostics'], readonly []>,
+        Equal<CaseOf<DoctorReport, 'blocked'>['diagnostics'], NonEmptyTuple<Diagnostic>>,
+        DoctorFailure extends { readonly diagnostics: NonEmptyTuple<Diagnostic> } ? true : false,
+        Equal<DoctorProgram['definition']['effects'], readonly ['observe']>,
+        Equal<keyof DoctorProgramProjection, 'direct' | 'cli' | 'mcp' | 'editor'>,
+        'http' extends keyof DoctorProgramProjection ? true : false,
+        Equal<DoctorProgramProjection['editor']['report'], DoctorReport>,
+        Equal<
+          CaseOf<DoctorProgramProjection['cli'], 'threshold'>['output']['answer']['value'],
+          DoctorReport
+        >,
+        Equal<
+          CaseOf<DoctorRemediationComposition, 'repository'>['run']['before'],
+          DoctorReport<CaseOf<DoctorSubject, 'repository'>>
+        >,
+        Equal<
+          CaseOf<DoctorRemediationComposition, 'repository'>['run']['after'],
+          DoctorReport<CaseOf<DoctorSubject, 'repository'>>
+        >,
+        'receipt' extends keyof CaseOf<DoctorRemediationComposition, 'repository'>['run']['applications'][number]
+          ? true
+          : false,
+      ],
+      [
+        true, true, true, true, true,
+        true, true, true, true, true,
+        true, true, true, true, true,
+        false,
+        true, true, true, true, true,
+      ]
     >
   >
 >;

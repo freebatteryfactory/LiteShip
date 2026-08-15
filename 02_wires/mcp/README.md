@@ -17,6 +17,7 @@ Offer operations to a model as tools, resources, or prompts, and keep a tool tha
 - The surface kind, and the offer that binds an operation to one.
 - The catalog, which refines the umbrella's exposure rather than forking it.
 - The answer algebra: protocol error, result, transport loss.
+- The admission evidence required by a trusted-local execution composition.
 
 ## Does not own
 
@@ -44,6 +45,12 @@ The umbrella's `WireExposure` is a flat population of operation references, whic
 
 `withheld` stays a bare population, and the asymmetry is deliberate: a withheld operation has no kind, because it is not being offered as anything.
 
+## Trusted-local execution is a composition, not a caller privilege
+
+Some operations are lawful MCP tools only when the server is an explicitly admitted local composition. Consumer build is the first example: offering it from a general or remote MCP catalog would silently create remote code execution authority.
+
+`TrustedLocalMcpToolProjection` therefore carries an addressed local-trust admission beside the ordinary tool offer and answer. The admission is evidence about the host composition. It is not a property a model caller supplies, and a plain `McpOffer` has no member that can claim it.
+
 ## Laws
 
 - A completed crossing is a result and never a protocol error; a protocol error carries no receipt and a result does.
@@ -52,6 +59,7 @@ The umbrella's `WireExposure` is a flat population of operation references, whic
 - The catalog's withheld population is the umbrella's, so this refines the exposure rather than forking it.
 - An answer is exact over its operation.
 - Migration is offered as an exact tool projection carrying core's report and typed failure, never as a wire-local conversion API.
+- Trusted-local tool projection requires addressed admission evidence and remains exact over the operation it exposes.
 
 ## Proof obligations
 
