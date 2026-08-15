@@ -15,7 +15,7 @@ Own secret-provider authority: opaque references that never carry material, iden
 ## Owns
 
 - Opaque `SecretScopedReference` values — the only secret-shaped thing broad contexts ever hold.
-- `RevealedSecret<Id>`: identity-correlated (revealing A provably yields A's revelation), with exactly three members — the identity, the scoped `use` operation, and its disposal. Material never appears as a field: it exists only as the input of a `SecretConsumer<Id>` admitted for exactly this secret, so broad contexts, receipts, logs, and object traversal have nothing to reach. That code explicitly admitted into the consumer boundary can still leak what it is given remains the standing assurance obligation.
+- `RevealedSecret<Id>`: identity-correlated (revealing A provably yields A's revelation), with the identity and scoped `use` operation beside core's directly exposed owned lifecycle. Disposal takes no secret reference and returns no identity echo. Material never appears as a field: it exists only as the input of a `SecretConsumer<Id>` admitted for exactly this secret, so broad contexts, receipts, logs, and object traversal have nothing to reach. That code explicitly admitted into the consumer boundary can still leak what it is given remains the standing assurance obligation.
 - Disposition observation without revelation: current, rotated, revoked.
 
 ## Does not own
@@ -25,7 +25,7 @@ Own secret-provider authority: opaque references that never carry material, iden
 ## Laws
 
 - Revelation is identity-correlated — A's revelation is not B's.
-- A revealed secret's members are exactly `reveals`, `use`, and `dispose`; material appears only as the consumer's input, and a consumer of secret B cannot be used for secret A.
+- A revealed secret is an `OwnedResource`; material appears only as the consumer's input, and a consumer of secret B cannot be used for secret A.
 - Disposition never reveals, over closed arms.
 
 ## Proof obligations

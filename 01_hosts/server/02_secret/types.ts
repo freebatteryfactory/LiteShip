@@ -22,6 +22,7 @@ import type {
 } from '../../../types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { OwnedResource } from '../../../00_core/05_lifecycle/types.js';
 import type { GroundingId, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 
@@ -56,17 +57,17 @@ export type SecretDisposition = Algebra<{
 /**
  * One revealed secret: generic over the exact secret identity it reveals —
  * revealing secret A yields a revelation of A, provably not of B. It has
- * exactly three members: the identity, the scoped `use` operation, and the
- * disposal. Material never appears as a field: it exists only as the input
+ * the identity and scoped `use` operation beside core's ordinary owned
+ * lifecycle. Disposal accepts no caller-supplied subject and echoes no secret
+ * reference. Material never appears as a field: it exists only as the input
  * of an admitted consumer for exactly this secret, so broad contexts,
  * receipts, logs, and object traversal have nothing to reach. That runtime
  * code explicitly admitted into the consumer boundary can still leak what
  * it is given remains the standing assurance obligation.
  */
-export interface RevealedSecret<Id extends SecretId> {
+export interface RevealedSecret<Id extends SecretId> extends OwnedResource {
   readonly reveals: SecretScopedReference<Id>;
   readonly use: Signature<SecretConsumer<Id>, SecretUseReceipt<Id>, NonEmptyTuple<Diagnostic>>;
-  readonly dispose: Signature<SecretScopedReference<Id>, SecretScopedReference<Id>, NonEmptyTuple<Diagnostic>>;
 }
 
 /**

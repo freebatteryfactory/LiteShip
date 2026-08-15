@@ -12,6 +12,7 @@
  */
 
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { OwnedResource } from '../../../00_core/05_lifecycle/types.js';
 import type { Assert, Equal, InputOf, NonEmptyTuple, Result, Signature, TagOf } from '../../../types.js';
 import type { RevealedSecret, SecretConsumer, SecretDisposition, SecretId, SecretMaterial, SecretProvider, SecretScopedReference, SecretUseReceipt } from './types.js';
 
@@ -46,15 +47,17 @@ export type RevelationIsIdentityCorrelated = Assert<
 
 
 /**
- * Compile-time law: a revealed secret's members are exactly the identity,
- * the scoped use operation, and the disposal — material is not a member of
- * the revelation or the receipt; it appears only as the consumer's input,
- * and a consumer of secret B cannot be used for secret A.
+ * Compile-time law: a revealed secret is an actual owned resource. Its
+ * disposal accepts no caller-supplied subject and produces no identity echo;
+ * exact secret identity remains owned by `reveals` and `use`. Material is not
+ * a member of the revelation or receipt, and appears only as the consumer's
+ * input.
  */
 export type ARevealedSecretHasNoSerializationSurface = Assert<
   Equal<
     [
-      keyof RevealedSecret<SecretId>,
+      RevealedSecret<SecretId> extends OwnedResource ? true : false,
+      Equal<RevealedSecret<SecretId>['dispose'], OwnedResource['dispose']>,
       'material' extends keyof RevealedSecret<SecretId> ? true : false,
       keyof SecretUseReceipt<SecretId>,
       InputOf<SecretConsumer<SecretId>['consume']>,
@@ -64,7 +67,7 @@ export type ARevealedSecretHasNoSerializationSurface = Assert<
         ? true
         : false,
     ],
-    ['reveals' | 'use' | 'dispose', false, 'reveals' | 'address', SecretMaterial, false]
+    [true, true, false, 'reveals' | 'address', SecretMaterial, false]
   >
 >;
 

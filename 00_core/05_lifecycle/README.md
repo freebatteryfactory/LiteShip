@@ -54,8 +54,8 @@ Cancellation is observable through an explicit signal or requirement. Disposal b
 
 Four lifecycle families stay separate by semantic effect:
 
-- cancellation requests cooperative termination and returns a `CancellationReceipt`; it implies neither disposal nor the subject's terminal outcome;
-- disposal or release ends ownership idempotently through the directly exposed `OwnedResource` lifecycle;
+- cancellation requests cooperative termination; per-use host operations return a `CancellationReceipt`, while `Lifetime.cancel` is the local synchronous signal request and returns no receipt; neither form implies disposal or the subject's terminal outcome;
+- disposal or release ends ownership idempotently. A resource object directly exposes `OwnedResource`; an authority that releases existing custody may instead consume that exact custody and return its `DisposalReceipt`;
 - finalization completes a protocol, stream, encoder, service, or transaction and preserves any terminal coordinate or product it creates;
 - observation reports the existing lifecycle or cancellation algebra and requests no transition.
 
