@@ -96,6 +96,7 @@ import type {
   OperationDefinition,
   OperationId,
   OperationInvocation,
+  OperationOutcome,
   OperationPolicyDecision,
   OperationReference,
   OperationReceipt,
@@ -762,21 +763,56 @@ export interface DoctorObservation {
   readonly readout: DoctorReadout<ContentAddress>;
 }
 
+export type DoctorRemediationProposalId<Name extends string = string> = Brand<
+  Name,
+  'liteship.system.doctor-remediation-proposal-id'
+>;
+export type DoctorRemediationProposalReference<
+  Id extends DoctorRemediationProposalId = DoctorRemediationProposalId,
+> = Reference<'doctor-remediation-proposal', Id>;
+
 /** Proposed ordinary operation; approval remains core operation policy's. */
-export interface DoctorRemediationProposal<Op extends OperationId = OperationId> {
-  readonly invocation: OperationInvocation<unknown, Op>;
+export interface DoctorRemediationProposal<
+  Id extends DoctorRemediationProposalId = DoctorRemediationProposalId,
+  Invocation extends OperationInvocation = OperationInvocation,
+> {
+  readonly id: DoctorRemediationProposalReference<Id>;
+  readonly invocation: Invocation;
   readonly explanation: Explanation;
 }
+
+export type DoctorConclusionDecisionAddress = ContentAddress<
+  'application/vnd.liteship.doctor-conclusion-decision+cbor'
+>;
+
+/** Addressed provider judgment; diagnostic severity is not a hidden conclusion rule. */
+export type DoctorConclusionEvidence = Algebra<{
+  ready: {
+    readonly decision: DoctorConclusionDecisionAddress;
+    readonly considered: readonly DoctorProbeReference[];
+  };
+  caution: {
+    readonly decision: DoctorConclusionDecisionAddress;
+    readonly considered: readonly DoctorProbeReference[];
+  };
+  blocked: {
+    readonly decision: DoctorConclusionDecisionAddress;
+    readonly considered: readonly DoctorProbeReference[];
+  };
+}>;
 
 interface DoctorReportProduct<
   Subject extends DoctorSubject,
   Diagnostics extends readonly Diagnostic[],
+  Proposals extends readonly DoctorRemediationProposal[],
+  Conclusion extends DoctorConclusionEvidence['_tag'],
 > {
   readonly subject: Subject;
   readonly observations: readonly DoctorObservation[];
   readonly diagnostics: Diagnostics;
+  readonly conclusion: CaseOf<DoctorConclusionEvidence, Conclusion>;
   readonly explanation: Explanation;
-  readonly proposedRemediations: readonly DoctorRemediationProposal[];
+  readonly proposedRemediations: Proposals;
 }
 
 /**
@@ -784,10 +820,13 @@ interface DoctorReportProduct<
  * population are one algebra: caution and blocked cannot be emitted empty,
  * while ready cannot carry findings that its conclusion ignored.
  */
-export type DoctorReport<Subject extends DoctorSubject = DoctorSubject> = Algebra<{
-  ready: DoctorReportProduct<Subject, readonly []>;
-  caution: DoctorReportProduct<Subject, NonEmptyTuple<Diagnostic>>;
-  blocked: DoctorReportProduct<Subject, NonEmptyTuple<Diagnostic>>;
+export type DoctorReport<
+  Subject extends DoctorSubject = DoctorSubject,
+  Proposals extends readonly DoctorRemediationProposal[] = readonly DoctorRemediationProposal[],
+> = Algebra<{
+  ready: DoctorReportProduct<Subject, readonly [], Proposals, 'ready'>;
+  caution: DoctorReportProduct<Subject, NonEmptyTuple<Diagnostic>, Proposals, 'caution'>;
+  blocked: DoctorReportProduct<Subject, NonEmptyTuple<Diagnostic>, Proposals, 'blocked'>;
 }>;
 
 /** Failures of diagnosis itself; a blocked environment remains a report. */
@@ -876,26 +915,89 @@ export type DoctorProgram = ProgramWithEffects<
   readonly ['observe']
 >;
 
-/** One proposed remediation beside the ordinary operation-policy decision. */
-export interface DoctorRemediationDecision<Op extends OperationId = OperationId> {
-  readonly proposal: DoctorRemediationProposal<Op>;
-  readonly policy: OperationPolicyDecision<Op>;
-}
+type DoctorProposalOperation<Proposal extends DoctorRemediationProposal> =
+  Proposal['invocation']['operation']['id'];
 
-/** One policy-decided remediation and the ordinary operation receipt it produced. */
-export interface DoctorRemediationApplication<Op extends OperationId = OperationId> {
-  readonly decision: DoctorRemediationDecision<Op>;
-  readonly receipt: OperationReceipt<unknown, unknown, Op>;
-}
+type DoctorPolicyFor<
+  Proposal extends DoctorRemediationProposal,
+  Allowed extends boolean,
+> = Omit<
+  OperationPolicyDecision<DoctorProposalOperation<Proposal>>,
+  'operation' | 'allowed'
+> & {
+  readonly operation: Proposal['invocation']['operation'];
+  readonly allowed: Allowed;
+};
+
+type DoctorReceiptFor<
+  Proposal extends DoctorRemediationProposal,
+  Outcome extends OperationOutcome<unknown, unknown>,
+> = Omit<
+  OperationReceipt<unknown, unknown, DoctorProposalOperation<Proposal>>,
+  'invocation' | 'outcome'
+> & {
+  readonly invocation: Proposal['invocation'];
+  readonly outcome: Outcome;
+};
+
+/** Exactly one terminal accounting outcome for one diagnosed proposal. */
+export type DoctorRemediationOutcome<
+  Proposal extends DoctorRemediationProposal = DoctorRemediationProposal,
+> = Algebra<{
+  'declined-by-policy': {
+    readonly proposal: Proposal;
+    readonly decision: DoctorPolicyFor<Proposal, false>;
+  };
+  'approved-not-executed': {
+    readonly proposal: Proposal;
+    readonly decision: DoctorPolicyFor<Proposal, true>;
+    readonly diagnostics: NonEmptyTuple<Diagnostic>;
+  };
+  'execution-failed': {
+    readonly proposal: Proposal;
+    readonly decision: DoctorPolicyFor<Proposal, true>;
+    readonly receipt: DoctorReceiptFor<
+      Proposal,
+      Exclude<
+        OperationOutcome<unknown, unknown>,
+        CaseOf<OperationOutcome<unknown, unknown>, 'succeeded'>
+      >
+    >;
+    readonly diagnostics: NonEmptyTuple<Diagnostic>;
+  };
+  applied: {
+    readonly proposal: Proposal;
+    readonly decision: DoctorPolicyFor<Proposal, true>;
+    readonly receipt: DoctorReceiptFor<
+      Proposal,
+      CaseOf<OperationOutcome<unknown, unknown>, 'succeeded'>
+    >;
+  };
+}>;
+
+type DoctorRemediationOutcomeTuple<
+  Proposals extends readonly DoctorRemediationProposal[],
+> = {
+  readonly [Index in keyof Proposals]: Proposals[Index] extends DoctorRemediationProposal
+    ? DoctorRemediationOutcome<Proposals[Index]>
+    : never;
+};
+
+/** Position-preserving accounting over the exact diagnosed proposal population. */
+export type DoctorRemediationOutcomes<
+  Proposals extends readonly DoctorRemediationProposal[],
+> = DoctorRemediationOutcomeTuple<Proposals>;
 
 /**
  * `doctor --fix` is composition, not a mutating doctor arm: diagnose, consider
  * policy decisions, invoke ordinary operations, and diagnose again.
  */
-export interface DoctorRemediationRun<Subject extends DoctorSubject> {
-  readonly before: DoctorReport<Subject>;
-  readonly decisions: readonly DoctorRemediationDecision[];
-  readonly applications: readonly DoctorRemediationApplication[];
+export interface DoctorRemediationRun<
+  Subject extends DoctorSubject,
+  Proposals extends readonly DoctorRemediationProposal[] = readonly DoctorRemediationProposal[],
+> {
+  readonly before: DoctorReport<Subject, Proposals>;
+  readonly outcomes: DoctorRemediationOutcomes<Proposals>;
   readonly after: DoctorReport<Subject>;
 }
 

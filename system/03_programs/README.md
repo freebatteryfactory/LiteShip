@@ -122,9 +122,9 @@ Initial exposure is exact and composition-owned: direct, CLI, and a trusted-loca
 
 The subject selects one of three provider definitions. Repository diagnosis requires the workspace observation row; consumer diagnosis requires workspace reads and child-process authority; deployed diagnosis requires admitted server network authority. A corrupt or unreadable source remains `unreadable`, distinct from `absent` and from an `ok` read.
 
-The report carries observations, the honest `ready | caution | blocked` conclusion, core diagnostics, an explanation, and proposed ordinary operation invocations. A blocked environment is a successful diagnosis, not a doctor failure. Doctor failure means the diagnostic operation itself could not select a provider, admit the subject, run a probe, or admit its report.
+The report carries observations, the honest `ready | caution | blocked` conclusion, core diagnostics, an explanation, and proposed ordinary operation invocations. Each conclusion carries an addressed provider decision and the probes it considered. That evidence is deliberate: `caution` and `blocked` are provider judgments, not aliases for warning and error severity. A blocked environment is a successful diagnosis, not a doctor failure. Doctor failure means the diagnostic operation itself could not select a provider, admit the subject, run a probe, or admit its report.
 
-`DoctorRemediationComposition` is the contract behind `doctor --fix`: diagnose, collect ordinary operation-policy decisions, bind each applied decision to its ordinary operation receipt, then diagnose the same subject again. The flag does not create approval semantics and the doctor operation never mutates.
+`DoctorRemediationComposition` is the contract behind `doctor --fix`: diagnose, map the exact proposal tuple positionally to one terminal result per proposal, then diagnose the same exact subject again. A result is declined by policy, approved but not executed with a reason, execution-failed with its receipt, or applied with the exact proposal invocation repeated in the successful operation receipt. There is no second decision or application list that can drift from the diagnosis. The flag does not create approval semantics and the doctor operation never mutates.
 
 Strict CLI mode exposed one missing wire state. A caution report remains a successful operation result and stays on the answer stream; the CLI may separately select its `threshold` exit arm so a shell receives nonzero without rewriting the report or receipt as failed.
 
@@ -144,8 +144,8 @@ That was a dependency, not a schedule. The distinction matters because the previ
 - The effect character is read through the operation definition, with an anti-vacuity partner proving the projector discriminates.
 - Migrate carries its exact request, report, typed failure, and migration-authority requirement through five existing wire projections under one program identity.
 - Build threads one request-derived execution coordinate through manager rendering, selected target admission, process receipt, and report; a foreign target product, receipt, or application report is rejected while explicit and discovered selection remain lawful.
-- Doctor is observation-only, keeps absent and unreadable separate, and selects one of three providers with subject-specific prerequisites.
-- Doctor remediation carries ordinary policy decisions and operation receipts between two reports of the same subject family.
+- Doctor is observation-only, keeps absent and unreadable separate, selects one of three providers with subject-specific prerequisites, and carries addressed conclusion evidence without deriving readiness mechanically from diagnostic severity.
+- Doctor remediation maps the before-report's exact proposal tuple to one positional outcome tuple, binds applied and failed receipts to the proposal invocation, and re-diagnoses the same exact subject.
 
 ## Proof obligations
 

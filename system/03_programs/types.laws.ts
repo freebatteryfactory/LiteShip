@@ -15,6 +15,7 @@ import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type {
   EffectClass,
   OperationId,
+  OperationInvocation,
   OperationReference,
 } from '../../00_core/07_operation/types.js';
 import type {
@@ -41,7 +42,11 @@ import type {
 import type { DirectMigrationExchange } from '../../02_wires/direct/types.js';
 import type { ChildProcessRequirement } from '../../01_hosts/server/01_process/types.js';
 import type { ServerNetworkRequirement } from '../../01_hosts/server/04_network/types.js';
-import type { WorkspaceFileSystem, WorkspaceObservationRequirements } from '../00_workspace/types.js';
+import type {
+  WorkspaceFileSystem,
+  WorkspaceObservationRequirements,
+  WorkspaceSnapshotReference,
+} from '../00_workspace/types.js';
 import type { BuildProduct as ViteBuildProduct } from '../../02_targets/vite/05_build/types.js';
 import type { AstroTargetId } from '../../02_targets/astro/00_integration/types.js';
 import type { ViteTargetId } from '../../02_targets/vite/00_integration/types.js';
@@ -79,12 +84,18 @@ import type {
   DeployedApplicationDoctorProvider,
   DoctorAuthority,
   DoctorAuthorityRequirement,
+  DoctorConclusionEvidence,
   DoctorFailure,
   DoctorProgram,
   DoctorProgramProjection,
   DoctorProviderCatalog,
   DoctorReadout,
   DoctorRemediationComposition,
+  DoctorRemediationOutcome,
+  DoctorRemediationOutcomes,
+  DoctorRemediationProposal,
+  DoctorRemediationProposalId,
+  DoctorRemediationRun,
   DoctorReport,
   DoctorSubject,
   GauntletProgram,
@@ -411,7 +422,10 @@ export type DoctorDogfoodsOneObservationalAuthority = Assert<
           CaseOf<DoctorRemediationComposition, 'repository'>['run']['after'],
           DoctorReport<CaseOf<DoctorSubject, 'repository'>>
         >,
-        'receipt' extends keyof CaseOf<DoctorRemediationComposition, 'repository'>['run']['applications'][number]
+        'receipt' extends keyof CaseOf<
+          DoctorRemediationOutcome,
+          'applied'
+        >
           ? true
           : false,
       ],
@@ -422,6 +436,99 @@ export type DoctorDogfoodsOneObservationalAuthority = Assert<
         false,
         true, true, true, true, true,
       ]
+    >
+  >
+>;
+
+/**
+ * Red-first carrier law: remediation is one result per diagnosed proposal,
+ * never two independently writable decision and application populations.
+ */
+export type DoctorRemediationHasOneProposalDerivedOutcomePopulation = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        'outcomes' extends keyof CaseOf<DoctorRemediationComposition, 'repository'>['run']
+          ? true
+          : false,
+        'decisions' extends keyof CaseOf<DoctorRemediationComposition, 'repository'>['run']
+          ? true
+          : false,
+        'applications' extends keyof CaseOf<DoctorRemediationComposition, 'repository'>['run']
+          ? true
+          : false,
+      ],
+      [true, false, false]
+    >
+  >
+>;
+
+type DoctorLawOperationA = OperationId<'law.doctor.operation-a'>;
+type DoctorLawOperationB = OperationId<'law.doctor.operation-b'>;
+type DoctorLawProposalA = DoctorRemediationProposal<
+  DoctorRemediationProposalId<'law.doctor.proposal-a'>,
+  OperationInvocation<{ readonly subject: 'a' }, DoctorLawOperationA>
+>;
+type DoctorLawProposalB = DoctorRemediationProposal<
+  DoctorRemediationProposalId<'law.doctor.proposal-b'>,
+  OperationInvocation<{ readonly subject: 'b' }, DoctorLawOperationB>
+>;
+type DoctorLawProposals = readonly [DoctorLawProposalA, DoctorLawProposalB];
+type DoctorLawOutcomes = DoctorRemediationOutcomes<DoctorLawProposals>;
+type DoctorLawSubjectA = Refine<
+  CaseOf<DoctorSubject, 'repository'>,
+  {
+    readonly snapshot: WorkspaceSnapshotReference<WorkspaceSnapshotId<'law.doctor.snapshot-a'>>;
+  }
+>;
+type DoctorLawSubjectB = Refine<
+  CaseOf<DoctorSubject, 'repository'>,
+  {
+    readonly snapshot: WorkspaceSnapshotReference<WorkspaceSnapshotId<'law.doctor.snapshot-b'>>;
+  }
+>;
+type DoctorLawRun = DoctorRemediationRun<DoctorLawSubjectA, DoctorLawProposals>;
+
+/**
+ * Compile-time law: each diagnosed proposal has one positional policy/execution
+ * outcome, whose receipt repeats the exact invocation rather than merely its
+ * operation family. The repeat diagnosis remains at the exact original subject.
+ */
+export type DoctorRemediationAccountsForEachExactProposal = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<DoctorLawOutcomes['length'], 2>,
+        Equal<DoctorLawOutcomes[0]['proposal'], DoctorLawProposalA>,
+        DoctorLawProposalB extends DoctorLawOutcomes[0]['proposal'] ? true : false,
+        Equal<
+          CaseOf<DoctorLawOutcomes[0], 'applied'>['receipt']['invocation'],
+          DoctorLawProposalA['invocation']
+        >,
+        Equal<
+          CaseOf<DoctorLawOutcomes[0], 'applied'>['receipt']['invocation']['operation'],
+          OperationReference<DoctorLawOperationA>
+        >,
+        Equal<
+          CaseOf<DoctorLawOutcomes[0], 'declined-by-policy'>['decision']['allowed'],
+          false
+        >,
+        Equal<CaseOf<DoctorLawOutcomes[0], 'applied'>['decision']['allowed'], true>,
+        DoctorLawOutcomes extends readonly DoctorRemediationOutcome[] ? true : false,
+        readonly DoctorRemediationOutcome[] extends DoctorLawOutcomes ? true : false,
+        DoctorReport<DoctorLawSubjectB> extends DoctorLawRun['after'] ? true : false,
+        Equal<
+          CaseOf<DoctorReport, 'caution'>['conclusion'],
+          CaseOf<DoctorConclusionEvidence, 'caution'>
+        >,
+        CaseOf<DoctorReport, 'blocked'>['conclusion'] extends CaseOf<
+          DoctorConclusionEvidence,
+          'caution'
+        >
+          ? true
+          : false,
+      ],
+      [true, true, false, true, true, true, true, true, false, false, true, false]
     >
   >
 >;
