@@ -25,6 +25,7 @@ import type {
   Signature,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { DisposalReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type {
   GroundingId,
   PreparationDisposition,
@@ -32,7 +33,6 @@ import type {
   RealizationLifecycle,
   RealizationOfferId,
   SpeculativeCandidate,
-  SpeculativeCandidateReference,
 } from '../../../00_core/14_compiler/types.js';
 import type {
   ExecutionBackendDriver,
@@ -144,7 +144,11 @@ export interface PreparationConsumption {
 export interface WebPreparationAuthority {
   readonly prepare: Signature<SpeculativeCandidate, PreparedWork, NonEmptyTuple<Diagnostic>>;
   readonly consume: Signature<PreparationConsumption, PreparationDisposition, NonEmptyTuple<Diagnostic>>;
-  readonly discard: Signature<PreparedWork, SpeculativeCandidateReference, NonEmptyTuple<Diagnostic>>;
+  readonly discard: Signature<
+    PreparedWork,
+    DisposalReceipt<PreparedWork['prepared']>,
+    NonEmptyTuple<Diagnostic>
+  >;
 }
 
 export type PreparationRequirement = Hole<'liteship.web.preparation', WebPreparationAuthority>;

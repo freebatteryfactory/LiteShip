@@ -27,6 +27,7 @@ import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { RevisionReference, SemanticLocation } from '../../../00_core/02_identity/types.js';
 import type { TransactionGeneration } from '../../../00_core/04_time/types.js';
+import type { DisposalReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type {
   GroundingId,
   ProjectionTargetReference,
@@ -218,7 +219,11 @@ export interface RegionLeaseRequest {
 export interface RegionAuthority {
   readonly claim: Signature<RegionClaimRequest, RegionMembership, NonEmptyTuple<Diagnostic>>;
   readonly transfer: Signature<RegionTransferRequest, RegionMembership, NonEmptyTuple<Diagnostic>>;
-  readonly release: Signature<RegionMembership, RegionReference, NonEmptyTuple<Diagnostic>>;
+  readonly release: Signature<
+    RegionMembership,
+    DisposalReceipt<RegionMembershipReference>,
+    NonEmptyTuple<Diagnostic>
+  >;
   readonly issue: Signature<RegionLeaseRequest, RegionWriteAuthority, NonEmptyTuple<Diagnostic>>;
 }
 

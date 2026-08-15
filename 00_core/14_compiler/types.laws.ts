@@ -31,6 +31,7 @@ import type { Diagnostic } from '../00_error/types.js';
 import type { ContentAddress } from '../01_encoding/types.js';
 import type { CommitId, RevisionReference, SemanticLocation } from '../02_identity/types.js';
 import type { SchemaReference } from '../03_schema/types.js';
+import type { OwnedResource } from '../05_lifecycle/types.js';
 import type { EvidenceRealm } from '../06_evidence/types.js';
 import type {
   Artifact,
@@ -245,7 +246,7 @@ type OwnedExampleOffer = RealizationOffer<ExampleProvides, ExampleRequires, unkn
 
 /**
  * Compile-time law: an offer declaring an owned materialization has a factory
- * whose instance carries the owned lifecycle arm — with its resource — and a
+ * whose instance carries the owned lifecycle arm — directly disposable — and a
  * materialization stamped with the same arm. The predecessor of this law
  * compared the materialization tag union against itself and never mentioned
  * `RealizationInstance` at all, which made its name a promise the fixture
@@ -253,6 +254,24 @@ type OwnedExampleOffer = RealizationOffer<ExampleProvides, ExampleRequires, unkn
  */
 export type AnOwnedOfferYieldsAnOwnedInstance = Assert<
   Equal<OutputOf<OwnedExampleOffer['factory']>['lifecycle'], CaseOf<RealizationLifecycle, 'owned'>>
+>;
+
+
+/**
+ * Compile-time law: ownership is not hidden behind a detached `resource`
+ * wrapper. The lifecycle arm itself is the `OwnedResource` every consumer can
+ * dispose, while the lawful unowned neighbour exposes no disposal operation.
+ */
+export type AnOwnedLifecycleIsDirectlyDisposable = Assert<
+  Equal<
+    [
+      CaseOf<RealizationLifecycle, 'owned'> extends OwnedResource ? true : false,
+      'dispose' extends keyof CaseOf<RealizationLifecycle, 'owned'> ? true : false,
+      'resource' extends keyof CaseOf<RealizationLifecycle, 'owned'> ? true : false,
+      'dispose' extends keyof CaseOf<RealizationLifecycle, 'unowned'> ? true : false,
+    ],
+    [true, true, false, false]
+  >
 >;
 
 

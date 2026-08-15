@@ -13,8 +13,8 @@
 
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
-import type { Assert, BindingsFor, CaseOf, Equal, NonEmptyTuple, Result, UniqueRequirements } from '../../../types.js';
-import type { AdmittedPath, FileBufferBound, FileHandle, FileOpenRequest, FileStream, FilesystemProvider, FilesystemRootId, FilesystemRootReference, FilesystemStoreRow, LockResource, WatchResource } from './types.js';
+import type { Assert, BindingsFor, CaseOf, Equal, NonEmptyTuple, OutputOf, Result, UniqueRequirements } from '../../../types.js';
+import type { AdmittedPath, FileBufferBound, FileHandle, FileOpenRequest, FileStream, FileStreamFinalizationReceipt, FileStreamId, FileStreamOpenRequest, FilesystemProvider, FilesystemRootId, FilesystemRootReference, FilesystemStoreRow, LockResource, WatchResource } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -62,8 +62,17 @@ export type TheResourceFamiliesAreRealAndRootCorrelated = Assert<
   Equal<
     [
       FilesystemProvider['stream'] extends (
-        request: FileOpenRequest<FilesystemRootId<'liteship.server.fs.law.root-a'>>,
-      ) => Result<FileStream<FilesystemRootId<'liteship.server.fs.law.root-a'>>, NonEmptyTuple<Diagnostic>>
+        request: FileStreamOpenRequest<
+          FilesystemRootId<'liteship.server.fs.law.root-a'>,
+          FileStreamId<'liteship.server.fs.law.stream-a'>
+        >,
+      ) => Result<
+        FileStream<
+          FilesystemRootId<'liteship.server.fs.law.root-a'>,
+          FileStreamId<'liteship.server.fs.law.stream-a'>
+        >,
+        NonEmptyTuple<Diagnostic>
+      >
         ? true
         : false,
       FileStream<FilesystemRootId<'liteship.server.fs.law.root-b'>> extends FileStream<
@@ -99,5 +108,22 @@ export type AHandleIsBoundAndOwned = Assert<
       FilesystemRootReference<FilesystemRootId<'liteship.server.fs.law.root-a'>>,
       CaseOf<RealizationLifecycle, 'owned'>,
     ]
+  >
+>;
+
+
+/** Compile-time law: stream close finalizes the exact stream and returns its terminal content. */
+export type StreamClosePreservesItsTerminalOutput = Assert<
+  Equal<
+    OutputOf<
+      FileStream<
+        FilesystemRootId<'liteship.server.fs.law.root-a'>,
+        FileStreamId<'liteship.server.fs.law.stream-a'>
+      >['close']
+    >,
+    FileStreamFinalizationReceipt<
+      FilesystemRootId<'liteship.server.fs.law.root-a'>,
+      FileStreamId<'liteship.server.fs.law.stream-a'>
+    >
   >
 >;

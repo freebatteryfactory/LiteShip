@@ -51,6 +51,7 @@ import type {
   SampleRate,
 } from '../../../00_core/12_media/types.js';
 import type { SampleIndex } from '../../../00_core/04_time/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type {
   GroundingId,
   RealizationLifecycle,
@@ -159,7 +160,11 @@ export interface ServerRenderJob<
   readonly tool: ToolProfile<Tool, Profile>;
   readonly destination: AdmittedPath<Out>;
   readonly frames: MediaSource<ServerPhysicalFrame<Representation, Frame, Render>, Source>;
-  readonly cancel: Signature<MediaJobReference<Id>, MediaJobReference<Id>, NonEmptyTuple<Diagnostic>>;
+  readonly cancel: Signature<
+    MediaJobReference<Id>,
+    CancellationReceipt<MediaJobReference<Id>>,
+    NonEmptyTuple<Diagnostic>
+  >;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 

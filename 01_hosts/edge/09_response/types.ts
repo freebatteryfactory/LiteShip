@@ -16,11 +16,13 @@ import type {
   CaseOf,
   Hole,
   NonEmptyTuple,
+  Reference,
   Result,
   Signature,
 } from '../../../types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { GroundingId, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { EdgeGroundingDefinition, EdgeRealizationOffer } from '../00_bootstrap/types.js';
 import type {
@@ -38,6 +40,11 @@ export type AdmittedStatus = Brand<number, 'liteship.edge.admitted-status'>;
 
 /** The physical receipt address only commitment mints. */
 export type ResponseCommitAddress = ContentAddress<'application/vnd.liteship.edge-response-commit+cbor'>;
+export type ResponseStreamId<Name extends string = string> = Brand<Name, 'liteship.edge.response-stream-id'>;
+export type ResponseStreamReference<Id extends ResponseStreamId = ResponseStreamId> = Reference<
+  'edge-response-stream',
+  Id
+>;
 
 /**
  * The response plan: status, headers, cookies, body address, the exact
@@ -74,13 +81,24 @@ export interface ResponseBufferBound {
  * exactly the same request. Streaming is the incremental path to the same
  * single commit — it never mints a second receipt authority.
  */
-export interface ResponseStream<Id extends EdgeRequestId> {
+export interface ResponseStream<Id extends EdgeRequestId, Stream extends ResponseStreamId = ResponseStreamId> {
+  readonly id: ResponseStreamReference<Stream>;
   readonly plan: ResponsePlan<Id>;
   readonly buffer: ResponseBufferBound;
   readonly write: Signature<EdgeEncodedChunk, ResponseBufferBound, NonEmptyTuple<Diagnostic>>;
-  readonly cancel: Signature<EdgeRequestReference<Id>, EdgeRequestReference<Id>, NonEmptyTuple<Diagnostic>>;
-  readonly finish: Signature<ResponsePlan<Id>, CommittedResponse<Id>, NonEmptyTuple<Diagnostic>>;
+  readonly cancel: Signature<
+    ResponseStreamReference<Stream>,
+    CancellationReceipt<ResponseStreamReference<Stream>>,
+    NonEmptyTuple<Diagnostic>
+  >;
+  readonly finish: Signature<ResponseStreamReference<Stream>, CommittedResponse<Id>, NonEmptyTuple<Diagnostic>>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
+}
+
+/** Opening one response stream names the fresh per-use stream identity. */
+export interface ResponseStreamOpenRequest<Id extends EdgeRequestId, Stream extends ResponseStreamId> {
+  readonly stream: ResponseStreamReference<Stream>;
+  readonly plan: ResponsePlan<Id>;
 }
 
 /**
@@ -108,7 +126,9 @@ export type ResponseFailure = Algebra<{
 export interface ResponseCommitAuthority<Id extends EdgeRequestId> {
   readonly request: EdgeRequestReference<Id>;
   readonly commit: (plan: ResponsePlan<Id>) => Result<CommittedResponse<Id>, ResponseFailure>;
-  readonly open: (plan: ResponsePlan<Id>) => Result<ResponseStream<Id>, ResponseFailure>;
+  readonly open: <Stream extends ResponseStreamId>(
+    request: ResponseStreamOpenRequest<Id, Stream>,
+  ) => Result<ResponseStream<Id, Stream>, ResponseFailure>;
 }
 
 /** Narrow invocation authority over the physical response writer — same exact request. */

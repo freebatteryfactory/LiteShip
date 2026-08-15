@@ -33,7 +33,6 @@ import type {
   NonEmptyTuple,
   Reference,
   Result,
-  Signature,
 } from '../../../types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
@@ -148,7 +147,6 @@ export interface SharedMemoryAuthority {
   readonly view: <Role extends SharedMemoryRole, Id extends SharedBufferId>(
     request: SharedMemoryViewRequest<Role, Id>,
   ) => Result<SharedMemoryView<Role, Id>, NonEmptyTuple<Diagnostic>>;
-  readonly release: Signature<SharedBufferReference, SharedMemoryLayoutAddress, NonEmptyTuple<Diagnostic>>;
 }
 
 export type SharedMemoryFacilityRequirement = Hole<

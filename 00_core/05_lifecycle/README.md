@@ -52,6 +52,18 @@ Cancellation is observable through an explicit signal or requirement. Disposal b
 - `cancel` requests cooperative cancellation where supported.
 - `dispose` ends ownership exactly once.
 
+Four lifecycle families stay separate by semantic effect:
+
+- cancellation requests cooperative termination and returns a `CancellationReceipt`; it implies neither disposal nor the subject's terminal outcome;
+- disposal or release ends ownership idempotently through the directly exposed `OwnedResource` lifecycle;
+- finalization completes a protocol, stream, encoder, service, or transaction and preserves any terminal coordinate or product it creates;
+- observation reports the existing lifecycle or cancellation algebra and requests no transition.
+
+Shared spelling does not merge these families. In particular, there is no
+generic transition receipt, no cancellation operation returning its subject as
+if nothing happened, and no finalization output discarded merely to resemble
+disposal.
+
 ## Proof obligations
 
 - LIFO ordering.

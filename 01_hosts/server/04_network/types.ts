@@ -20,6 +20,7 @@ import type {
   Signature,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 
@@ -68,7 +69,11 @@ export interface ServerConnection<Decoded> {
   readonly buffer: ServerBufferBound;
   readonly send: Signature<ServerEncodedChunk, ServerConnectionReference, NonEmptyTuple<Diagnostic>>;
   readonly receive: Signature<ServerBufferBound, readonly Decoded[], NonEmptyTuple<Diagnostic>>;
-  readonly cancel: Signature<ServerConnectionReference, ServerConnectionReference, NonEmptyTuple<Diagnostic>>;
+  readonly cancel: Signature<
+    ServerConnectionReference,
+    CancellationReceipt<ServerConnectionReference>,
+    NonEmptyTuple<Diagnostic>
+  >;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
@@ -81,7 +86,6 @@ export interface ListenerResource {
     readonly ServerConnection<Uint8Array>[],
     NonEmptyTuple<Diagnostic>
   >;
-  readonly close: Signature<ListenerReference, ListenerReference, NonEmptyTuple<Diagnostic>>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 

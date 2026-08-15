@@ -12,19 +12,21 @@
  */
 
 import type { GroundingId, RealizationOfferId } from '../../00_core/14_compiler/types.js';
-import type { Assert, Equal, InputOf } from '../../types.js';
+import type { Assert, Equal, InputOf, OutputOf } from '../../types.js';
+import type { CancellationReceipt } from '../../00_core/05_lifecycle/types.js';
 import type { RealizationCatalog } from '../types.js';
 import type { ServerBootstrapTypeSurface, ServerConfiguration, ServerProcessEntry } from './00_bootstrap/types.js';
-import type { HostProcessAuthority, ServerProcessTypeSurface } from './01_process/types.js';
+import type { ChildProcess, HostProcessAuthority, ServerProcessTypeSurface } from './01_process/types.js';
 import type { SecretProvider, SecretSourceBinding, ServerSecretTypeSurface } from './02_secret/types.js';
 import type { FilesystemProvider, FilesystemRootBinding, ServerFilesystemTypeSurface } from './03_filesystem/types.js';
-import type { ServerNetworkFacility, ServerNetworkTypeSurface } from './04_network/types.js';
-import type { DatabaseEndpointBinding, DatabaseProvider, ServerDatabaseTypeSurface } from './05_database/types.js';
+import type { ServerConnection, ServerNetworkFacility, ServerNetworkTypeSurface } from './04_network/types.js';
+import type { DatabaseEndpointBinding, DatabaseProvider, ServerDatabaseTypeSurface, StatementResource } from './05_database/types.js';
 import type { ServerServiceTypeSurface } from './06_service/types.js';
-import type { ServerToolTypeSurface, ToolAuthority, ToolCatalogBinding } from './07_tool/types.js';
-import type { ServerExecutionHost, ServerExecutionTypeSurface, ServerSchedulingFacility } from './08_execution/types.js';
-import type { OperationCatalogBinding, ServerOperationTypeSurface } from './09_operation/types.js';
-import type { ServerCodecAdmission, ServerMediaTypeSurface } from './10_media/types.js';
+import type { ServerToolTypeSurface, ToolAuthority, ToolCatalogBinding, ToolExecution, ToolId } from './07_tool/types.js';
+import type { ServerExecutionHost, ServerExecutionSession, ServerExecutionTypeSurface, ServerSchedulingFacility, ServerTaskId } from './08_execution/types.js';
+import type { OperationCatalogBinding, ServerOperationExecution, ServerOperationTypeSurface } from './09_operation/types.js';
+import type { ServerCodecAdmission, ServerMediaTypeSurface, ServerRenderJob } from './10_media/types.js';
+import type { OperationId } from '../../00_core/07_operation/types.js';
 import type { ServerCapabilityTopology, ServerTypeAt, ServerTypeTopology } from './types.js';
 
 
@@ -242,5 +244,30 @@ export type ServerSurfacesCarryTheirDeclaredMembers = Assert<
       ServerTypeAt<'08_execution'>['host'],
     ],
     [SecretProvider, FilesystemProvider, DatabaseProvider, ToolAuthority, ServerExecutionHost]
+  >
+>;
+
+
+/** Compile-time law: every server cancellation request returns the core receipt for its per-use subject. */
+export type ServerCancellationTargetsStayExact = Assert<
+  Equal<
+    [
+      OutputOf<ChildProcess['cancel']>,
+      OutputOf<ServerConnection<Uint8Array>['cancel']>,
+      OutputOf<StatementResource['cancel']>,
+      OutputOf<ToolExecution<ToolId>['cancel']>,
+      OutputOf<ServerExecutionSession<ServerTaskId>['cancel']>,
+      OutputOf<ServerOperationExecution<OperationId, unknown, unknown, unknown>['cancel']>,
+      OutputOf<ServerRenderJob['cancel']>,
+    ],
+    [
+      CancellationReceipt<ChildProcess['id']>,
+      CancellationReceipt<ServerConnection<Uint8Array>['id']>,
+      CancellationReceipt<StatementResource['id']>,
+      CancellationReceipt<ToolExecution<ToolId>['id']>,
+      CancellationReceipt<ServerExecutionSession<ServerTaskId>['id']>,
+      CancellationReceipt<ServerOperationExecution<OperationId, unknown, unknown, unknown>['id']>,
+      CancellationReceipt<ServerRenderJob['id']>,
+    ]
   >
 >;

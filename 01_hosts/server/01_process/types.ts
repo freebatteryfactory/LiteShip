@@ -22,6 +22,7 @@ import type {
 } from '../../../types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 
@@ -71,7 +72,11 @@ export interface ChildProcess {
   readonly id: ProcessReference;
   readonly configuration: ChildProcessRequest['configuration'];
   readonly stdio: readonly StdioResource[];
-  readonly cancel: Signature<ProcessReference, ProcessReference, NonEmptyTuple<Diagnostic>>;
+  readonly cancel: Signature<
+    ProcessReference,
+    CancellationReceipt<ProcessReference>,
+    NonEmptyTuple<Diagnostic>
+  >;
   readonly exit: ProcessExit;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }

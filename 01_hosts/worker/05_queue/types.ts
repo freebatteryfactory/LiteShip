@@ -62,6 +62,12 @@ export interface QueueBatch<Payload, Id extends QueueId> {
   readonly items: NonEmptyTuple<Payload>;
 }
 
+/** Closing a queue finalizes its ordering and returns the last admitted generation. */
+export interface QueueCloseReceipt<Id extends QueueId> {
+  readonly queue: QueueReference<Id>;
+  readonly terminalGeneration: TransactionGeneration;
+}
+
 /**
  * One live bounded queue: a per-use owned resource over an exact shared
  * buffer, with an admission contract for its payload, one producer, one
@@ -82,7 +88,11 @@ export interface BoundedQueue<Payload, Id extends QueueId, Buf extends SharedBuf
     readonly QueueBatch<Payload, Id>[],
     NonEmptyTuple<Diagnostic>
   >;
-  readonly closeQueue: Signature<QueueReference<Id>, TransactionGeneration, NonEmptyTuple<Diagnostic>>;
+  readonly closeQueue: Signature<
+    QueueReference<Id>,
+    QueueCloseReceipt<Id>,
+    NonEmptyTuple<Diagnostic>
+  >;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 

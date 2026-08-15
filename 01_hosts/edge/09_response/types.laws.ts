@@ -12,10 +12,11 @@
  */
 
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { Assert, CaseOf, Equal, HoleContract, NonEmptyTuple, Result, Signature, TagOf } from '../../../types.js';
 import type { EdgeRequestId, EdgeRequestReference } from '../01_request/types.js';
 import type { EdgeResponsePolicy } from '../03_policy/types.js';
-import type { CommittedResponse, ResponseCommitAddress, ResponseCommitAuthority, ResponseCommitGrant, ResponseCommitRequirement, ResponseFacility, ResponseFailure, ResponsePlan, ResponseStream } from './types.js';
+import type { CommittedResponse, ResponseCommitAddress, ResponseCommitAuthority, ResponseCommitGrant, ResponseCommitRequirement, ResponseFacility, ResponseFailure, ResponsePlan, ResponseStream, ResponseStreamId, ResponseStreamReference } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -74,7 +75,8 @@ export type CommitmentIsRequestCorrelated = Assert<
       >
         ? true
         : false,
-      ResponseStream<EdgeRequestId>['finish'],
+      ResponseStream<EdgeRequestId, ResponseStreamId<'liteship.edge.law.stream-a'>>['finish'],
+      ResponseStream<EdgeRequestId, ResponseStreamId<'liteship.edge.law.stream-a'>>['cancel'],
     ],
     [
       (
@@ -84,7 +86,16 @@ export type CommitmentIsRequestCorrelated = Assert<
       EdgeRequestReference<EdgeRequestId<'liteship.edge.law.request-a'>>,
       false,
       false,
-      Signature<ResponsePlan<EdgeRequestId>, CommittedResponse<EdgeRequestId>, NonEmptyTuple<Diagnostic>>,
+      Signature<
+        ResponseStreamReference<ResponseStreamId<'liteship.edge.law.stream-a'>>,
+        CommittedResponse<EdgeRequestId>,
+        NonEmptyTuple<Diagnostic>
+      >,
+      Signature<
+        ResponseStreamReference<ResponseStreamId<'liteship.edge.law.stream-a'>>,
+        CancellationReceipt<ResponseStreamReference<ResponseStreamId<'liteship.edge.law.stream-a'>>>,
+        NonEmptyTuple<Diagnostic>
+      >,
     ]
   >
 >;

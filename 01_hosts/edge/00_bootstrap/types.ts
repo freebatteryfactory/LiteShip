@@ -21,6 +21,7 @@ import type {
   TagOf,
 } from '../../../types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
+import type { CancellationState } from '../../../00_core/05_lifecycle/types.js';
 import type {
   ExecutionBackend,
   GroundingId,
@@ -116,7 +117,7 @@ export interface EdgeRealizationOffer<
 export interface EdgeInvocationContext {
   readonly cancelled: Signature<
     EdgeInvocationContext['address'],
-    boolean,
+    CancellationState,
     readonly []
   >;
   readonly address: ContentAddress<'application/vnd.liteship.edge-invocation+cbor'>;

@@ -12,6 +12,7 @@
  */
 
 import type {
+  Algebra,
   BindingsFor,
   Brand,
   CaseOf,
@@ -32,7 +33,7 @@ import type {
   SnapshotStoreRequirement,
 } from '../../../00_core/08_state/types.js';
 import type { TransactionGeneration } from '../../../00_core/04_time/types.js';
-import type { Deadline } from '../../../00_core/05_lifecycle/types.js';
+import type { CancellationReceipt, Deadline } from '../../../00_core/05_lifecycle/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 import type { SecretProviderRequirement } from '../02_secret/types.js';
@@ -42,8 +43,18 @@ export type DatabaseReference<Id extends DatabaseId = DatabaseId> = Reference<
   'server-database',
   Id
 >;
-export type DatabaseConnectionId = Brand<string, 'liteship.server.database-connection-id'>;
-export type DatabaseConnectionReference = Reference<'server-database-connection', DatabaseConnectionId>;
+export type DatabaseConnectionId<Name extends string = string> = Brand<
+  Name,
+  'liteship.server.database-connection-id'
+>;
+export type DatabaseConnectionReference<Id extends DatabaseConnectionId = DatabaseConnectionId> = Reference<
+  'server-database-connection',
+  Id
+>;
+export type StatementId<Name extends string = string> = Brand<Name, 'liteship.server.statement-id'>;
+export type StatementReference<Id extends StatementId = StatementId> = Reference<'server-statement', Id>;
+export type TransactionId<Name extends string = string> = Brand<Name, 'liteship.server.transaction-id'>;
+export type TransactionReference<Id extends TransactionId = TransactionId> = Reference<'server-transaction', Id>;
 
 /** The store ports a server database may realize — exactly the core four. */
 export type ServerStorePortRequirement =
@@ -63,7 +74,8 @@ export interface DatabasePool {
 }
 
 /** The complete statement request: exact connection, both contracts, and the deadline. */
-export interface StatementRequest {
+export interface StatementRequest<Id extends StatementId = StatementId> {
+  readonly statement: StatementReference<Id>;
   readonly connection: DatabaseConnectionReference;
   readonly input: SchemaReference<SchemaId, unknown>;
   readonly output: SchemaReference<SchemaId, unknown>;
@@ -71,13 +83,18 @@ export interface StatementRequest {
 }
 
 /** One statement resource: contract-bound, deadline-governed execution, cancellable, owned. */
-export interface StatementResource {
+export interface StatementResource<Id extends StatementId = StatementId> {
+  readonly id: StatementReference<Id>;
   readonly connection: DatabaseConnectionReference;
   readonly input: SchemaReference<SchemaId, unknown>;
   readonly output: SchemaReference<SchemaId, unknown>;
   readonly deadline: Deadline;
   readonly execute: Signature<CanonicalValue, CanonicalValue, NonEmptyTuple<Diagnostic>>;
-  readonly cancel: Signature<DatabaseConnectionReference, DatabaseConnectionReference, NonEmptyTuple<Diagnostic>>;
+  readonly cancel: Signature<
+    StatementReference<Id>,
+    CancellationReceipt<StatementReference<Id>>,
+    NonEmptyTuple<Diagnostic>
+  >;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
@@ -97,21 +114,48 @@ export interface DatabaseConnection {
 }
 
 /** The complete lease request: exact connection and the generation it serves. */
-export interface TransactionLeaseRequest {
+export interface TransactionLeaseRequest<Id extends TransactionId = TransactionId> {
+  readonly transaction: TransactionReference<Id>;
   readonly connection: DatabaseConnectionReference;
   readonly generation: TransactionGeneration;
 }
+
+/** Finalization of one exact transaction, including the custody returned to its provider. */
+export type TransactionFinalizationReceipt<Id extends TransactionId = TransactionId> = Algebra<{
+  committed: {
+    readonly transaction: TransactionReference<Id>;
+    readonly terminalGeneration: TransactionGeneration;
+    readonly diagnostics: readonly Diagnostic[];
+    readonly returned: DatabaseConnectionReference;
+  };
+  rolledBack: {
+    readonly transaction: TransactionReference<Id>;
+    readonly terminalGeneration: TransactionGeneration;
+    readonly diagnostics: readonly Diagnostic[];
+    readonly returned: DatabaseConnectionReference;
+  };
+}>;
 
 /**
  * One transaction lease: issued per commit for one exact connection and one
  * exact generation, with commit and rollback closing it. A lease is never
  * the long-lived binding — the provider is.
  */
-export interface TransactionLease {
+export interface TransactionLease<Id extends TransactionId = TransactionId> {
+  readonly id: TransactionReference<Id>;
   readonly connection: DatabaseConnectionReference;
   readonly generation: TransactionGeneration;
-  readonly commit: Signature<TransactionGeneration, DatabaseConnectionReference, NonEmptyTuple<Diagnostic>>;
-  readonly rollback: Signature<TransactionGeneration, DatabaseConnectionReference, NonEmptyTuple<Diagnostic>>;
+  readonly commit: Signature<
+    TransactionReference<Id>,
+    CaseOf<TransactionFinalizationReceipt<Id>, 'committed'>,
+    NonEmptyTuple<Diagnostic>
+  >;
+  readonly rollback: Signature<
+    TransactionReference<Id>,
+    CaseOf<TransactionFinalizationReceipt<Id>, 'rolledBack'>,
+    NonEmptyTuple<Diagnostic>
+  >;
+  readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
 /** One change-feed resource over one exact database. */
@@ -133,8 +177,12 @@ export interface DatabaseProvider {
   readonly database: DatabaseReference;
   readonly pool: Signature<DatabaseReference, DatabasePool, NonEmptyTuple<Diagnostic>>;
   readonly connect: Signature<DatabaseReference, DatabaseConnection, NonEmptyTuple<Diagnostic>>;
-  readonly lease: Signature<TransactionLeaseRequest, TransactionLease, NonEmptyTuple<Diagnostic>>;
-  readonly statement: Signature<StatementRequest, StatementResource, NonEmptyTuple<Diagnostic>>;
+  readonly lease: <Id extends TransactionId>(
+    request: TransactionLeaseRequest<Id>,
+  ) => Result<TransactionLease<Id>, NonEmptyTuple<Diagnostic>>;
+  readonly statement: <Id extends StatementId>(
+    request: StatementRequest<Id>,
+  ) => Result<StatementResource<Id>, NonEmptyTuple<Diagnostic>>;
   readonly migration: MigrationExecutionFacility;
   readonly construct: <Row extends ServerStoreRow>(
     row: UniqueRequirements<Row>,

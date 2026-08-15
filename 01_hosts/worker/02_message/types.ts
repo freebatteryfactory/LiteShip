@@ -80,7 +80,8 @@ export interface DeliveryReceipt<C extends CorrelationId> {
  * operations share one decoded type and one exact channel identity. `send`
  * yields the acknowledgement for the exact correlation sent; `receive`
  * yields admitted envelopes of this exact channel; `reply` answers the exact
- * correlation it was given; `closeChannel` closes exactly this channel.
+ * correlation it was given. Ownership ends through the channel's directly
+ * exposed idempotent lifecycle rather than a second close vocabulary.
  */
 export interface WorkerChannel<Decoded, Id extends ChannelId> {
   readonly id: ChannelReference<Id>;
@@ -98,7 +99,6 @@ export interface WorkerChannel<Decoded, Id extends ChannelId> {
   readonly reply: <C extends CorrelationId>(
     envelope: MessageEnvelope<Decoded, Id, C>,
   ) => Result<DeliveryReceipt<C>, NonEmptyTuple<Diagnostic>>;
-  readonly closeChannel: Signature<ChannelReference<Id>, ChannelReference<Id>, NonEmptyTuple<Diagnostic>>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 

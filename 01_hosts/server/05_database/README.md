@@ -14,7 +14,7 @@ Own database-provider authority: exact database identity, per-use connections, p
 
 ## Owns
 
-- Three distinct altitudes, provably so: the provider (durable), connections (per-use owned resources), and transaction leases (per-generation, closed by commit or rollback, never a long-lived binding).
+- Three distinct altitudes, provably so: the provider (durable), connections (per-use owned resources), and exact transaction leases (per-generation, finalized by commit or rollback into a terminal receipt that returns connection custody, never a long-lived binding).
 - Exact port realization: a unique row of the four core store ports in, `BindingsFor` that row out.
 - Pools as the durable acquisition points, contract-bound deadline-governed cancellable statement resources — the deadline relationship is architectural; its numeric value stays empirical — the migration execution facility applying addressed artifacts at a generation, change feeds as owned resources, and credentials by requirement row from the secret provider.
 

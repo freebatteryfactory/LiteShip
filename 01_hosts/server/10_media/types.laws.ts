@@ -12,6 +12,7 @@
  */
 
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { SchemaId, SchemaReference } from '../../../00_core/03_schema/types.js';
 import type { SampleIndex } from '../../../00_core/04_time/types.js';
@@ -287,7 +288,11 @@ export type AJobIsReceiptedCancellableAndOwned = Assert<
     [RenderLawJobA['lifecycle'], RenderLawJobA['cancel']],
     [
       CaseOf<RealizationLifecycle, 'owned'>,
-      Signature<MediaJobReference<MediaLawJobA>, MediaJobReference<MediaLawJobA>, NonEmptyTuple<Diagnostic>>,
+      Signature<
+        MediaJobReference<MediaLawJobA>,
+        CancellationReceipt<MediaJobReference<MediaLawJobA>>,
+        NonEmptyTuple<Diagnostic>
+      >,
     ]
   >
 >;

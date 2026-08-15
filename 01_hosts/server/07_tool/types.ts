@@ -25,6 +25,7 @@ import type { CanonicalValue, ContentAddress } from '../../../00_core/01_encodin
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { SchemaId, SchemaReference } from '../../../00_core/03_schema/types.js';
 import type { ReproducibilityClaim } from '../../../00_core/06_evidence/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 import type { ChildProcessRequirement } from '../01_process/types.js';
@@ -33,6 +34,14 @@ import type { FilesystemRootReference } from '../03_filesystem/types.js';
 export type ToolId<Name extends string = string> = Brand<Name, 'liteship.server.tool-id'>;
 export type ToolReference<Id extends ToolId = ToolId> = Reference<'server-tool', Id>;
 export type ToolVersion = Brand<string, 'liteship.server.tool-version'>;
+export type ToolExecutionId<Name extends string = string> = Brand<
+  Name,
+  'liteship.server.tool-execution-id'
+>;
+export type ToolExecutionReference<Id extends ToolExecutionId = ToolExecutionId> = Reference<
+  'server-tool-execution',
+  Id
+>;
 
 export type ToolProfileId<Name extends string = string> = Brand<Name, 'liteship.server.tool-profile-id'>;
 export type ToolProfileReference<Id extends ToolProfileId = ToolProfileId> = Reference<
@@ -75,7 +84,12 @@ export interface ToolSandbox {
  * One tool invocation request, correlated to the exact tool: input and
  * output contracts, sandbox, and the profile it targets.
  */
-export interface ToolInvocationRequest<Tool extends ToolId, Profile extends ToolProfileId = ToolProfileId> {
+export interface ToolInvocationRequest<
+  Tool extends ToolId,
+  Profile extends ToolProfileId = ToolProfileId,
+  Execution extends ToolExecutionId = ToolExecutionId,
+> {
+  readonly execution: ToolExecutionReference<Execution>;
   readonly profile: ToolProfile<Tool, Profile>;
   readonly input: SchemaReference<SchemaId, unknown>;
   readonly value: CanonicalValue;
@@ -96,10 +110,19 @@ export type ToolOutcome = Algebra<{
  * One live tool execution: bound to the exact tool, cancellable, owned, and
  * receipted.
  */
-export interface ToolExecution<Tool extends ToolId, Profile extends ToolProfileId = ToolProfileId> {
+export interface ToolExecution<
+  Tool extends ToolId,
+  Profile extends ToolProfileId = ToolProfileId,
+  Execution extends ToolExecutionId = ToolExecutionId,
+> {
+  readonly id: ToolExecutionReference<Execution>;
   readonly profile: ToolProfile<Tool, Profile>;
-  readonly cancel: Signature<ToolReference<Tool>, ToolReference<Tool>, NonEmptyTuple<Diagnostic>>;
-  readonly result: Signature<ToolReference<Tool>, ToolOutcome, NonEmptyTuple<Diagnostic>>;
+  readonly cancel: Signature<
+    ToolExecutionReference<Execution>,
+    CancellationReceipt<ToolExecutionReference<Execution>>,
+    NonEmptyTuple<Diagnostic>
+  >;
+  readonly result: Signature<ToolExecutionReference<Execution>, ToolOutcome, NonEmptyTuple<Diagnostic>>;
   readonly receipt: ContentAddress<'application/vnd.liteship.server-tool-receipt+cbor'>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
@@ -109,9 +132,9 @@ export interface ToolExecution<Tool extends ToolId, Profile extends ToolProfileI
  * an execution of A, provably not of B.
  */
 export interface ToolAuthority {
-  readonly invoke: <Tool extends ToolId, Profile extends ToolProfileId>(
-    request: ToolInvocationRequest<Tool, Profile>,
-  ) => Result<ToolExecution<Tool, Profile>, NonEmptyTuple<Diagnostic>>;
+  readonly invoke: <Tool extends ToolId, Profile extends ToolProfileId, Execution extends ToolExecutionId>(
+    request: ToolInvocationRequest<Tool, Profile, Execution>,
+  ) => Result<ToolExecution<Tool, Profile, Execution>, NonEmptyTuple<Diagnostic>>;
 }
 
 /** The admitted tool roster beneath the provider. */

@@ -12,10 +12,11 @@
  */
 
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
-import type { IdempotencyKey, OperationId, OperationReference } from '../../../00_core/07_operation/types.js';
+import type { IdempotencyKey, OperationId } from '../../../00_core/07_operation/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
-import type { Assert, BindingsFor, CaseOf, Equal, Hole, InputOf, NonEmptyTuple, Result } from '../../../types.js';
-import type { ServerHandlerBindingRequest, ServerOperationAuthority, ServerOperationHandler } from './types.js';
+import type { Assert, BindingsFor, CaseOf, Equal, Hole, NonEmptyTuple, Result, Signature } from '../../../types.js';
+import type { ServerHandlerBindingRequest, ServerOperationAuthority, ServerOperationExecution, ServerOperationExecutionId, ServerOperationExecutionReference, ServerOperationExecutionRequest, ServerOperationHandler } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -52,15 +53,30 @@ export type AServerHandlerCannotServeAnotherOperation = Assert<
         string,
         LawRowA
       >['definition']['id'],
-      InputOf<
-        ServerOperationHandler<
+      ServerOperationHandler<
           OperationId<'liteship.operation.law.op-a'>,
           string,
           string,
           string,
           LawRowA
-        >['handle']
-      >['operation'],
+        >['handle'] extends (
+          request: ServerOperationExecutionRequest<
+            OperationId<'liteship.operation.law.op-a'>,
+            string,
+            ServerOperationExecutionId<'liteship.server.operation.law.execution-a'>
+          >,
+        ) => Result<
+          ServerOperationExecution<
+            OperationId<'liteship.operation.law.op-a'>,
+            string,
+            string,
+            string,
+            ServerOperationExecutionId<'liteship.server.operation.law.execution-a'>
+          >,
+          NonEmptyTuple<Diagnostic>
+        >
+          ? true
+          : false,
       ServerOperationHandler<
         OperationId<'liteship.operation.law.op-b'>,
         string,
@@ -80,7 +96,42 @@ export type AServerHandlerCannotServeAnotherOperation = Assert<
     [
       OperationId<'liteship.operation.law.op-a'>,
       OperationId<'liteship.operation.law.op-a'>,
-      OperationReference<OperationId<'liteship.operation.law.op-a'>>,
+      true,
+      false,
+    ]
+  >
+>;
+
+
+/** Compile-time law: cancellation belongs to the exact in-flight execution, never the handler. */
+export type CancellationTargetsOneOperationExecution = Assert<
+  Equal<
+    [
+      ServerOperationExecution<
+        OperationId<'liteship.operation.law.op-a'>,
+        string,
+        string,
+        string,
+        ServerOperationExecutionId<'liteship.server.operation.law.execution-a'>
+      >['cancel'],
+      'cancel' extends keyof ServerOperationHandler<
+        OperationId<'liteship.operation.law.op-a'>,
+        string,
+        string,
+        string,
+        LawRowA
+      >
+        ? true
+        : false,
+    ],
+    [
+      Signature<
+        ServerOperationExecutionReference<ServerOperationExecutionId<'liteship.server.operation.law.execution-a'>>,
+        CancellationReceipt<
+          ServerOperationExecutionReference<ServerOperationExecutionId<'liteship.server.operation.law.execution-a'>>
+        >,
+        NonEmptyTuple<Diagnostic>
+      >,
       false,
     ]
   >

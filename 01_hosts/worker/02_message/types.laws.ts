@@ -14,8 +14,8 @@
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { CanonicalValue } from '../../../00_core/01_encoding/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
-import type { Assert, CaseOf, Equal, NonEmptyTuple, Result, Signature } from '../../../types.js';
-import type { ChannelId, ChannelOpenRequest, ChannelReference, CorrelationId, DeliveryReceipt, MessageBufferBound, MessageEnvelope, MessagingAuthority, WorkerChannel } from './types.js';
+import type { Assert, CaseOf, Equal, NonEmptyTuple, Result } from '../../../types.js';
+import type { ChannelId, ChannelOpenRequest, CorrelationId, DeliveryReceipt, MessageBufferBound, MessageEnvelope, MessagingAuthority, WorkerChannel } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -54,8 +54,8 @@ export type OpeningIsDecoderAndIdentityCorrelated = Assert<
 
 /**
  * Compile-time law: a channel speaks exactly its own identity — an envelope
- * naming channel B is not an envelope of channel A, and channel A's close
- * accepts only channel A.
+ * naming channel B is not an envelope of channel A, and ownership ends only
+ * through the shared direct lifecycle rather than a second close vocabulary.
  */
 export type AChannelSpeaksExactlyItself = Assert<
   Equal<
@@ -67,11 +67,11 @@ export type AChannelSpeaksExactlyItself = Assert<
       >
         ? true
         : false,
-      WorkerChannel<string, LawChannelA>['closeChannel'],
+      'closeChannel' extends keyof WorkerChannel<string, LawChannelA> ? true : false,
     ],
     [
       false,
-      Signature<ChannelReference<LawChannelA>, ChannelReference<LawChannelA>, NonEmptyTuple<Diagnostic>>,
+      false,
     ]
   >
 >;

@@ -26,12 +26,12 @@ Own the physical message seam: channel and endpoint identity, typed addressed en
 
 ## One provider, per-use channels
 
-The plan selects a persistent `MessagingAuthority`; every channel is a per-use owned resource with its own identity, decoder, bound, and lifecycle. Two channels are two values. Every channel exposes real send, receive, reply, and close operations over its own payload family — a channel that could be described but not consumed from would be a photograph of a pipe.
+The plan selects a persistent `MessagingAuthority`; every channel is a per-use owned resource with its own identity, decoder, bound, and directly disposable lifecycle. Two channels are two values. Every channel exposes real send, receive, and reply operations over its own payload family — a channel that could be described but not consumed from would be a photograph of a pipe. Ownership ends through the shared idempotent lifecycle, not a second close operation returning the caller's own reference.
 
 ## Laws
 
 - Opening is decoder- and identity-correlated; a channel of one decoded type or one identity is not another's, and an envelope names the exact channel it travels.
-- A channel sends, receives, replies, and closes its own payload family.
+- A channel sends, receives, and replies within its own payload family, then disposes exactly once.
 - An acknowledgement names the exact correlation it answers — sending correlation A yields a receipt of exactly A.
 - Channels are bounded, owned, repeatable resources.
 

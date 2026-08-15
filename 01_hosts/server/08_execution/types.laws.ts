@@ -12,10 +12,11 @@
  */
 
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { ExecutionRequest, RuntimeCommit, RuntimeExecutor } from '../../../00_core/16_runtime/types.js';
-import type { Assert, CaseOf, Equal, InputOf, NonEmptyTuple, OutputOf, Signature } from '../../../types.js';
-import type { BoundServerDriver, ServerExecutionHost, ServerExecutionSession, ServerSchedulingFacility, ServerTaskId, ServerTaskReference } from './types.js';
+import type { Assert, CaseOf, Equal, InputOf, NonEmptyTuple, OutputOf, Result, Signature } from '../../../types.js';
+import type { BoundServerDriver, ServerExecutionHost, ServerExecutionRequest, ServerExecutionSession, ServerSchedulingFacility, ServerTaskId, ServerTaskReference } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -56,8 +57,16 @@ export type ServerSchedulingSchedulesBeforeExecution = Assert<
 export type AServerSessionIsCancellableAndOwned = Assert<
   Equal<
     [
-      ServerExecutionHost['begin'],
+      ServerExecutionHost['begin'] extends (
+        request: ServerExecutionRequest<ServerTaskId<'liteship.server.law.task-a'>>,
+      ) => Result<
+        ServerExecutionSession<ServerTaskId<'liteship.server.law.task-a'>>,
+        NonEmptyTuple<Diagnostic>
+      >
+        ? true
+        : false,
       ServerExecutionSession<ServerTaskId<'liteship.server.law.task-a'>>['result'],
+      ServerExecutionSession<ServerTaskId<'liteship.server.law.task-a'>>['cancel'],
       ServerExecutionSession<ServerTaskId<'liteship.server.law.task-b'>> extends ServerExecutionSession<
         ServerTaskId<'liteship.server.law.task-a'>
       >
@@ -66,10 +75,15 @@ export type AServerSessionIsCancellableAndOwned = Assert<
       ServerExecutionSession<ServerTaskId>['lifecycle'],
     ],
     [
-      Signature<ExecutionRequest, ServerExecutionSession<ServerTaskId>, NonEmptyTuple<Diagnostic>>,
+      true,
       Signature<
         ServerTaskReference<ServerTaskId<'liteship.server.law.task-a'>>,
         RuntimeCommit,
+        NonEmptyTuple<Diagnostic>
+      >,
+      Signature<
+        ServerTaskReference<ServerTaskId<'liteship.server.law.task-a'>>,
+        CancellationReceipt<ServerTaskReference<ServerTaskId<'liteship.server.law.task-a'>>>,
         NonEmptyTuple<Diagnostic>
       >,
       false,

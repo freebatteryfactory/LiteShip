@@ -10,11 +10,12 @@ Dependency authority: Actual source imports, constrained by the numbered path or
 
 ## Purpose
 
-Own trusted server-physical operation-handler realization: exact bindings to core operation definitions, capability rows, idempotency resources, cancellation, and lifecycle.
+Own trusted server-physical operation-handler realization: exact bindings to core operation definitions, capability rows, idempotency resources, per-execution cancellation, and lifecycle.
 
 ## Owns
 
-- The handler: bound to its exact operation (A is provably not B) and its exact requirement row, speaking the definition's own input, output, and failure families, carrying exactly the bindings for that row — never a free requirement list — and an idempotency resource.
+- The handler: a long-lived provider bound to its exact operation (A is provably not B) and exact requirement row, carrying exactly the bindings for that row — never a free requirement list — and an idempotency resource.
+- The execution: one exact invocation, result, cancellation receipt, and owned lifecycle. Cancellation targets this per-use execution, never the handler serving its siblings.
 - Operation-correlated binding on the provider.
 - The deployment-admitted handler catalog grounding.
 
@@ -25,7 +26,7 @@ Own trusted server-physical operation-handler realization: exact bindings to cor
 ## Laws
 
 - A handler cannot serve another operation; binding is operation-correlated.
-- A handler carries idempotency, capabilities, and an owned lifecycle.
+- A handler carries idempotency, capabilities, and an owned lifecycle; each invocation produces its own cancellable execution.
 
 ## Proof obligations
 

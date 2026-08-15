@@ -13,11 +13,11 @@
 
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { TransactionGeneration } from '../../../00_core/04_time/types.js';
-import type { Deadline } from '../../../00_core/05_lifecycle/types.js';
+import type { CancellationReceipt, Deadline } from '../../../00_core/05_lifecycle/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { Assert, BindingsFor, CaseOf, Equal, InputOf, NonEmptyTuple, Result, Signature, UniqueRequirements } from '../../../types.js';
 import type { SecretProviderRequirement } from '../02_secret/types.js';
-import type { DatabaseConnection, DatabaseEndpointRequirement, DatabasePool, DatabaseProvider, DatabaseProviderOffer, DatabaseReference, MigrationAddress, ServerStoreRow, StatementRequest, StatementResource, TransactionLease, TransactionLeaseRequest } from './types.js';
+import type { DatabaseConnection, DatabaseEndpointRequirement, DatabasePool, DatabaseProvider, DatabaseProviderOffer, DatabaseReference, MigrationAddress, ServerStoreRow, StatementId, StatementReference, StatementRequest, StatementResource, TransactionFinalizationReceipt, TransactionId, TransactionLease, TransactionLeaseRequest, TransactionReference } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -30,8 +30,28 @@ import type { DatabaseConnection, DatabaseEndpointRequirement, DatabasePool, Dat
 /** Compile-time law: a lease is issued per generation for one exact connection. */
 export type ALeaseIsIssuedPerGeneration = Assert<
   Equal<
-    [TransactionLease['generation'], InputOf<DatabaseProvider['lease']>, InputOf<TransactionLease['commit']>],
-    [TransactionGeneration, TransactionLeaseRequest, TransactionGeneration]
+    [
+      TransactionLease<TransactionId<'liteship.server.db.law.tx-a'>>['generation'],
+      DatabaseProvider['lease'] extends (
+        request: TransactionLeaseRequest<TransactionId<'liteship.server.db.law.tx-a'>>,
+      ) => Result<
+        TransactionLease<TransactionId<'liteship.server.db.law.tx-a'>>,
+        NonEmptyTuple<Diagnostic>
+      >
+        ? true
+        : false,
+      InputOf<TransactionLease<TransactionId<'liteship.server.db.law.tx-a'>>['commit']>,
+      CaseOf<
+        TransactionFinalizationReceipt<TransactionId<'liteship.server.db.law.tx-a'>>,
+        'committed'
+      >['transaction'],
+    ],
+    [
+      TransactionGeneration,
+      true,
+      TransactionReference<TransactionId<'liteship.server.db.law.tx-a'>>,
+      TransactionReference<TransactionId<'liteship.server.db.law.tx-a'>>,
+    ]
   >
 >;
 
@@ -45,18 +65,31 @@ export type ThePoolStatementAndMigrationPathsAreReal = Assert<
   Equal<
     [
       DatabaseProvider['pool'],
-      DatabaseProvider['statement'],
+      DatabaseProvider['statement'] extends (
+        request: StatementRequest<StatementId<'liteship.server.db.law.statement-a'>>,
+      ) => Result<
+        StatementResource<StatementId<'liteship.server.db.law.statement-a'>>,
+        NonEmptyTuple<Diagnostic>
+      >
+        ? true
+        : false,
       DatabaseProvider['migration']['apply'],
       StatementRequest['deadline'],
       StatementResource['deadline'],
+      StatementResource<StatementId<'liteship.server.db.law.statement-a'>>['cancel'],
       StatementResource['lifecycle'],
     ],
     [
       Signature<DatabaseReference, DatabasePool, NonEmptyTuple<Diagnostic>>,
-      Signature<StatementRequest, StatementResource, NonEmptyTuple<Diagnostic>>,
+      true,
       Signature<MigrationAddress, TransactionGeneration, NonEmptyTuple<Diagnostic>>,
       Deadline,
       Deadline,
+      Signature<
+        StatementReference<StatementId<'liteship.server.db.law.statement-a'>>,
+        CancellationReceipt<StatementReference<StatementId<'liteship.server.db.law.statement-a'>>>,
+        NonEmptyTuple<Diagnostic>
+      >,
       CaseOf<RealizationLifecycle, 'owned'>,
     ]
   >

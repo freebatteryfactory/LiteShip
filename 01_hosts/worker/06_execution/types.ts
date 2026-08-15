@@ -26,6 +26,7 @@ import type {
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { TransactionGeneration } from '../../../00_core/04_time/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type {
   ExecutionBackendDriver,
@@ -113,7 +114,11 @@ export interface ExecutionResultEnvelope<Id extends WorkerTaskId> {
 export interface WorkerExecutionSession<Id extends WorkerTaskId> {
   readonly id: WorkerTaskReference<Id>;
   readonly request: ExecutionRequest;
-  readonly cancel: Signature<WorkerTaskReference<Id>, WorkerTaskReference<Id>, NonEmptyTuple<Diagnostic>>;
+  readonly cancel: Signature<
+    WorkerTaskReference<Id>,
+    CancellationReceipt<WorkerTaskReference<Id>>,
+    NonEmptyTuple<Diagnostic>
+  >;
   readonly result: Signature<WorkerTaskReference<Id>, ExecutionResultEnvelope<Id>, NonEmptyTuple<Diagnostic>>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }

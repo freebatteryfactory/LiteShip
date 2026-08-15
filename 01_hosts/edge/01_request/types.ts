@@ -21,6 +21,7 @@ import type {
 } from '../../../types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { CancellationState } from '../../../00_core/05_lifecycle/types.js';
 import type { GroundingId, RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { EdgeGroundingDefinition } from '../00_bootstrap/types.js';
 
@@ -98,7 +99,7 @@ export interface AdmittedRequest<Id extends EdgeRequestId> {
     NonEmptyTuple<Diagnostic>
   >;
   readonly clone: Signature<EdgeRequestReference<Id>, RequestClone<Id>, NonEmptyTuple<Diagnostic>>;
-  readonly cancelled: Signature<EdgeRequestReference<Id>, boolean, readonly []>;
+  readonly cancelled: Signature<EdgeRequestReference<Id>, CancellationState, readonly []>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'unowned'>;
 }
 

@@ -15,8 +15,8 @@ import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { OperationInvocation } from '../../../00_core/07_operation/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
-import type { Assert, CaseOf, Equal, NonEmptyTuple, TagOf } from '../../../types.js';
-import type { RestartPolicy, ServiceHealth, ServiceInstance, ServiceRequest } from './types.js';
+import type { Assert, CaseOf, Equal, NonEmptyTuple, OutputOf, TagOf } from '../../../types.js';
+import type { RestartPolicy, ServiceDrainReceipt, ServiceHealth, ServiceInstance, ServiceRequest, ServiceStopReceipt } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -63,5 +63,14 @@ export type AServiceIsAddressedDrainableAndOwned = Assert<
       NonEmptyTuple<OperationInvocation>,
       CaseOf<RealizationLifecycle, 'owned'>,
     ]
+  >
+>;
+
+
+/** Compile-time law: drain and stop report their exact lifecycle transitions. */
+export type ServiceFinalizationReturnsItsTransitionReceipts = Assert<
+  Equal<
+    [OutputOf<ServiceInstance['drain']>, OutputOf<ServiceInstance['stop']>],
+    [ServiceDrainReceipt, ServiceStopReceipt]
   >
 >;

@@ -15,9 +15,9 @@ import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { CanonicalValue } from '../../../00_core/01_encoding/types.js';
 import type { TransactionGeneration } from '../../../00_core/04_time/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
-import type { Assert, CaseOf, Equal, InputOf, NonEmptyTuple, Result, Signature, TagOf } from '../../../types.js';
+import type { Assert, CaseOf, Equal, InputOf, NonEmptyTuple, OutputOf, Result, Signature, TagOf } from '../../../types.js';
 import type { SharedBufferId } from '../04_memory/types.js';
-import type { BoundedQueue, OverflowPolicy, QueueAuthority, QueueBatch, QueueEndpoint, QueueId, QueueReference, QueueRequest } from './types.js';
+import type { BoundedQueue, OverflowPolicy, QueueAuthority, QueueBatch, QueueCloseReceipt, QueueEndpoint, QueueId, QueueReference, QueueRequest } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -140,5 +140,20 @@ export type AQueueIsBoundedAndOwned = Assert<
       TagOf<OverflowPolicy>,
     ],
     [OverflowPolicy, CaseOf<RealizationLifecycle, 'owned'>, 'refuse' | 'backpressure']
+  >
+>;
+
+
+/** Compile-time law: closing finalizes one exact queue and returns its terminal generation. */
+export type QueueCloseIsFinalizationNotDisposal = Assert<
+  Equal<
+    OutputOf<
+      BoundedQueue<
+        CanonicalValue,
+        QueueId<'liteship.worker.law.queue-a'>,
+        SharedBufferId
+      >['closeQueue']
+    >,
+    QueueCloseReceipt<QueueId<'liteship.worker.law.queue-a'>>
   >
 >;

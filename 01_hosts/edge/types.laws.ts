@@ -12,19 +12,20 @@
  */
 
 import type { GroundingId, RealizationOfferId } from '../../00_core/14_compiler/types.js';
-import type { Assert, Equal, InputOf } from '../../types.js';
+import type { Assert, Equal, InputOf, OutputOf } from '../../types.js';
+import type { CancellationReceipt, CancellationState } from '../../00_core/05_lifecycle/types.js';
 import type { RealizationCatalog } from '../types.js';
 import type { EdgeBootstrapTypeSurface, EdgeDeploymentConfiguration, EdgeInvocationContext } from './00_bootstrap/types.js';
-import type { EdgeRequestId, EdgeRequestTypeSurface } from './01_request/types.js';
+import type { AdmittedRequest, EdgeRequestId, EdgeRequestTypeSurface } from './01_request/types.js';
 import type { EdgeEvidenceTypeSurface, HintSourceFacility } from './02_evidence/types.js';
 import type { EdgePolicyTypeSurface, EdgeResponsePolicy } from './03_policy/types.js';
 import type { EdgeSettlementTypeSurface } from './04_settlement/types.js';
-import type { EdgeNetworkAuthority, EdgeNetworkFacility, EdgeNetworkTypeSurface } from './05_network/types.js';
+import type { EdgeNetworkAuthority, EdgeNetworkFacility, EdgeNetworkTypeSurface, EdgeOutboundConnection, OutboundRequestId } from './05_network/types.js';
 import type { CacheFacility, CacheKey, EdgeCacheTypeSurface } from './06_cache/types.js';
 import type { DeploymentStoreBinding, EdgeStorageTypeSurface } from './07_storage/types.js';
 import type { EdgeExecutionFacility, EdgeExecutionHost, EdgeExecutionTypeSurface } from './08_execution/types.js';
-import type { CommittedResponse, EdgeResponseTypeSurface, ResponseFacility } from './09_response/types.js';
-import type { DeferredFacility, EdgeDeferredTypeSurface } from './10_deferred/types.js';
+import type { CommittedResponse, EdgeResponseTypeSurface, ResponseFacility, ResponseStream } from './09_response/types.js';
+import type { DeferredFacility, DeferredTask, EdgeDeferredTypeSurface } from './10_deferred/types.js';
 import type { EdgeCapabilityTopology, EdgeTypeAt, EdgeTypeTopology } from './types.js';
 
 
@@ -244,5 +245,26 @@ export type EdgeSurfacesCarryTheirDeclaredMembers = Assert<
       EdgeTypeAt<'09_response'>['committed'],
     ],
     [EdgeNetworkAuthority, CacheKey, EdgeExecutionHost, CommittedResponse<EdgeRequestId>]
+  >
+>;
+
+
+/** Compile-time law: observation reports state while cancellation returns its exact receipt. */
+export type EdgeCancellationFamiliesStayDistinct = Assert<
+  Equal<
+    [
+      OutputOf<EdgeInvocationContext['cancelled']>,
+      OutputOf<AdmittedRequest<EdgeRequestId>['cancelled']>,
+      OutputOf<EdgeOutboundConnection<Uint8Array, OutboundRequestId>['cancel']>,
+      OutputOf<ResponseStream<EdgeRequestId>['cancel']>,
+      OutputOf<DeferredTask['cancel']>,
+    ],
+    [
+      CancellationState,
+      CancellationState,
+      CancellationReceipt<EdgeOutboundConnection<Uint8Array, OutboundRequestId>['id']>,
+      CancellationReceipt<ResponseStream<EdgeRequestId>['id']>,
+      CancellationReceipt<DeferredTask['id']>,
+    ]
   >
 >;

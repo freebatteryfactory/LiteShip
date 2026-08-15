@@ -48,6 +48,18 @@ export type RestartPolicy = Algebra<{
   replan: Record<never, never>;
 }>;
 
+/** A graceful drain request moves one exact service into its draining state. */
+export interface ServiceDrainReceipt {
+  readonly service: ServiceReference;
+  readonly state: CaseOf<ServiceHealth, 'draining'>;
+}
+
+/** Stopping finalizes one exact service and returns the receipt minted by that transition. */
+export interface ServiceStopReceipt {
+  readonly service: ServiceReference;
+  readonly state: CaseOf<ServiceHealth, 'stopped'>;
+}
+
 /**
  * One live service: configuration-addressed, health-observable, drainable,
  * and owned. Draining is the graceful path; stop mints the receipt.
@@ -58,12 +70,8 @@ export interface ServiceInstance {
   readonly owns: NonEmptyTuple<OperationInvocation>;
   readonly health: ServiceHealth;
   readonly policy: RestartPolicy;
-  readonly drain: Signature<ServiceReference, ServiceReference, NonEmptyTuple<Diagnostic>>;
-  readonly stop: Signature<
-    ServiceReference,
-    ContentAddress<'application/vnd.liteship.server-service-stop+cbor'>,
-    NonEmptyTuple<Diagnostic>
-  >;
+  readonly drain: Signature<ServiceReference, ServiceDrainReceipt, NonEmptyTuple<Diagnostic>>;
+  readonly stop: Signature<ServiceReference, ServiceStopReceipt, NonEmptyTuple<Diagnostic>>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 

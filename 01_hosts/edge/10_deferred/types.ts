@@ -24,6 +24,7 @@ import type {
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { MonotonicNanoseconds } from '../../../00_core/04_time/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { OperationInvocation } from '../../../00_core/07_operation/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { EdgeGroundingDefinition, EdgeRealizationOffer } from '../00_bootstrap/types.js';
@@ -68,7 +69,11 @@ export interface DeferredTask {
   readonly scope: RequirementRow;
   readonly bound: DeferredBound;
   readonly outcome: DeferredOutcome;
-  readonly cancel: Signature<DeferredTaskReference, DeferredTaskReference, NonEmptyTuple<Diagnostic>>;
+  readonly cancel: Signature<
+    DeferredTaskReference,
+    CancellationReceipt<DeferredTaskReference>,
+    NonEmptyTuple<Diagnostic>
+  >;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 

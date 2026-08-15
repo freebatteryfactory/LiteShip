@@ -10,7 +10,7 @@ Dependency authority: Actual source imports, constrained by the numbered path or
 
 ## Purpose
 
-Own scoped filesystem-provider authority: deployment-admitted roots, root-correlated path admission, owned handles with read, atomic write, and close, and honest failure.
+Own scoped filesystem-provider authority: deployment-admitted roots, root-correlated path admission, directly disposable owned handles, finalized streams with terminal content, and honest failure.
 
 ## Owns
 

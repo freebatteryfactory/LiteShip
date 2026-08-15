@@ -41,6 +41,11 @@ export type FilesystemRootReference<Id extends FilesystemRootId = FilesystemRoot
   'server-filesystem-root',
   Id
 >;
+export type FileStreamId<Name extends string = string> = Brand<Name, 'liteship.server.file-stream-id'>;
+export type FileStreamReference<Id extends FileStreamId = FileStreamId> = Reference<
+  'server-file-stream',
+  Id
+>;
 
 /** An admitted path under one exact root. The parameter has no erasing default. */
 export type AdmittedPath<Root extends FilesystemRootId> = Brand<
@@ -50,7 +55,9 @@ export type AdmittedPath<Root extends FilesystemRootId> = Brand<
 
 /**
  * One open file handle: bound to the exact root and admitted path that
- * opened it, owned, with real read, atomic-write, and close operations.
+ * opened it, owned, with real read and atomic-write operations. Ownership ends
+ * through the directly exposed lifecycle; no second close operation competes
+ * with disposal.
  */
 export interface FileHandle<Root extends FilesystemRootId> {
   readonly root: FilesystemRootReference<Root>;
@@ -65,7 +72,6 @@ export interface FileHandle<Root extends FilesystemRootId> {
     AdmittedPath<Root>,
     NonEmptyTuple<Diagnostic>
   >;
-  readonly close: Signature<AdmittedPath<Root>, FilesystemRootReference<Root>, NonEmptyTuple<Diagnostic>>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
@@ -85,13 +91,12 @@ export interface DirectoryHandle<Root extends FilesystemRootId> {
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
-/** One watch: root-bound change observation, bounded, owned, closable. */
+/** One watch: root-bound change observation, bounded, owned, and directly disposable. */
 export interface WatchResource<Root extends FilesystemRootId> {
   readonly root: FilesystemRootReference<Root>;
   readonly path: AdmittedPath<Root>;
   readonly buffer: FileBufferBound;
   readonly receive: Signature<FileBufferBound, readonly AdmittedPath<Root>[], NonEmptyTuple<Diagnostic>>;
-  readonly close: Signature<AdmittedPath<Root>, FilesystemRootReference<Root>, NonEmptyTuple<Diagnostic>>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
@@ -99,18 +104,33 @@ export interface WatchResource<Root extends FilesystemRootId> {
 export interface LockResource<Root extends FilesystemRootId> {
   readonly root: FilesystemRootReference<Root>;
   readonly path: AdmittedPath<Root>;
-  readonly release: Signature<AdmittedPath<Root>, FilesystemRootReference<Root>, NonEmptyTuple<Diagnostic>>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
+/** Finalizing a writable stream flushes it and names the terminal file content. */
+export interface FileStreamFinalizationReceipt<
+  Root extends FilesystemRootId,
+  Id extends FileStreamId = FileStreamId,
+> {
+  readonly stream: FileStreamReference<Id>;
+  readonly root: FilesystemRootReference<Root>;
+  readonly path: AdmittedPath<Root>;
+  readonly content: ContentAddress<'application/vnd.liteship.server-file-content+cbor'>;
+}
+
 /** One file stream: root-bound chunked read/write with backpressure. */
-export interface FileStream<Root extends FilesystemRootId> {
+export interface FileStream<Root extends FilesystemRootId, Id extends FileStreamId = FileStreamId> {
+  readonly id: FileStreamReference<Id>;
   readonly root: FilesystemRootReference<Root>;
   readonly path: AdmittedPath<Root>;
   readonly buffer: FileBufferBound;
   readonly read: Signature<FileBufferBound, readonly FileChunk[], NonEmptyTuple<Diagnostic>>;
   readonly write: Signature<FileChunk, FileBufferBound, NonEmptyTuple<Diagnostic>>;
-  readonly close: Signature<AdmittedPath<Root>, FilesystemRootReference<Root>, NonEmptyTuple<Diagnostic>>;
+  readonly close: Signature<
+    FileStreamReference<Id>,
+    FileStreamFinalizationReceipt<Root, Id>,
+    NonEmptyTuple<Diagnostic>
+  >;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
@@ -131,6 +151,12 @@ export type FilesystemStoreRow = readonly [
 export interface FileOpenRequest<Root extends FilesystemRootId> {
   readonly root: FilesystemRootReference<Root>;
   readonly path: AdmittedPath<Root>;
+}
+
+/** A stream open carries the fresh per-use stream identity. */
+export interface FileStreamOpenRequest<Root extends FilesystemRootId, Id extends FileStreamId>
+  extends FileOpenRequest<Root> {
+  readonly stream: FileStreamReference<Id>;
 }
 
 /**
@@ -155,9 +181,9 @@ export interface FilesystemProvider {
   readonly lock: <Root extends FilesystemRootId>(
     request: FileOpenRequest<Root>,
   ) => Result<LockResource<Root>, NonEmptyTuple<Diagnostic>>;
-  readonly stream: <Root extends FilesystemRootId>(
-    request: FileOpenRequest<Root>,
-  ) => Result<FileStream<Root>, NonEmptyTuple<Diagnostic>>;
+  readonly stream: <Root extends FilesystemRootId, Id extends FileStreamId>(
+    request: FileStreamOpenRequest<Root, Id>,
+  ) => Result<FileStream<Root, Id>, NonEmptyTuple<Diagnostic>>;
   readonly construct: <Row extends FilesystemStoreRow>(
     row: UniqueRequirements<Row>,
   ) => Result<BindingsFor<Row>, NonEmptyTuple<Diagnostic>>;

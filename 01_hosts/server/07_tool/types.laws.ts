@@ -14,9 +14,10 @@
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { CanonicalValue, ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { ReproducibilityClaim } from '../../../00_core/06_evidence/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { Assert, CaseOf, Equal, NonEmptyTuple, Result, Signature, TagOf } from '../../../types.js';
-import type { ToolAuthority, ToolExecution, ToolId, ToolInvocationRequest, ToolOutcome, ToolProfile, ToolProfileId, ToolProfileReference, ToolReference, ToolSandbox } from './types.js';
+import type { ToolAuthority, ToolExecution, ToolExecutionId, ToolExecutionReference, ToolId, ToolInvocationRequest, ToolOutcome, ToolProfile, ToolProfileId, ToolProfileReference, ToolReference, ToolSandbox } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -98,6 +99,11 @@ export type AnInvocationCarriesContractsAndSandbox = Assert<
       ToolInvocationRequest<ToolId>['value'],
       ToolInvocationRequest<ToolId>['sandbox'],
       ToolExecution<ToolId<'liteship.server.tool.law.tool-a'>>['result'],
+      ToolExecution<
+        ToolId<'liteship.server.tool.law.tool-a'>,
+        ToolProfileId,
+        ToolExecutionId<'liteship.server.tool.law.execution-a'>
+      >['cancel'],
       CaseOf<ToolOutcome, 'produced'>['value'],
       TagOf<ReproducibilityClaim<ToolProfileReference>>,
     ],
@@ -105,8 +111,13 @@ export type AnInvocationCarriesContractsAndSandbox = Assert<
       CanonicalValue,
       ToolSandbox,
       Signature<
-        ToolReference<ToolId<'liteship.server.tool.law.tool-a'>>,
+        ToolExecutionReference,
         ToolOutcome,
+        NonEmptyTuple<Diagnostic>
+      >,
+      Signature<
+        ToolExecutionReference<ToolExecutionId<'liteship.server.tool.law.execution-a'>>,
+        CancellationReceipt<ToolExecutionReference<ToolExecutionId<'liteship.server.tool.law.execution-a'>>>,
         NonEmptyTuple<Diagnostic>
       >,
       CanonicalValue,

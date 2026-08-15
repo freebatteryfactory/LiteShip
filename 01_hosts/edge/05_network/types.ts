@@ -20,6 +20,7 @@ import type {
   Signature,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { EdgeGroundingDefinition, EdgeRealizationOffer } from '../00_bootstrap/types.js';
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
@@ -84,7 +85,11 @@ export interface EdgeOutboundConnection<Decoded, Rid extends OutboundRequestId> 
   readonly buffer: EdgeBufferBound;
   readonly send: Signature<EdgeEncodedChunk, OutboundConnectionReference, NonEmptyTuple<Diagnostic>>;
   readonly receive: Signature<EdgeBufferBound, readonly Decoded[], NonEmptyTuple<Diagnostic>>;
-  readonly cancel: Signature<OutboundConnectionReference, OutboundConnectionReference, NonEmptyTuple<Diagnostic>>;
+  readonly cancel: Signature<
+    OutboundConnectionReference,
+    CancellationReceipt<OutboundConnectionReference>,
+    NonEmptyTuple<Diagnostic>
+  >;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 

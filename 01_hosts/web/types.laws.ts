@@ -12,7 +12,8 @@
  */
 
 import type { GroundingId, RealizationOfferId } from '../../00_core/14_compiler/types.js';
-import type { Assert, Equal, InputOf } from '../../types.js';
+import type { Assert, CaseOf, Equal, InputOf, OutputOf } from '../../types.js';
+import type { CancellationReceipt } from '../../00_core/05_lifecycle/types.js';
 import type { RealizationCatalog } from '../types.js';
 import type { WebBootstrapTypeSurface } from './00_bootstrap/types.js';
 import type { ApplicationMountGrounding, InvocationMountGrounding, MountRegion, RegionAuthority, RegionAuthorityOffer, RegionDiscovery, RegionDiscoveryGrounding, WebRegionTypeSurface } from './01_region/types.js';
@@ -20,7 +21,7 @@ import type { SinkPolicyGrounding, WebSecurityTypeSurface, WebSinkPolicy } from 
 import type { EventAuthorityOffer, EventFacility, EventFacilityGrounding, WebEventTypeSurface } from './03_event/types.js';
 import type { CommitApplicationOffer, ComponentRendererCatalog, RendererCatalogGrounding, WebProjectionTypeSurface } from './04_projection/types.js';
 import type { ProbeFacilityGrounding, WebEvidenceTypeSurface } from './05_evidence/types.js';
-import type { TransportAuthority, TransportAuthorityOffer, TransportFacilityGrounding, WebTransportTypeSurface } from './06_transport/types.js';
+import type { TransportAuthority, TransportAuthorityOffer, TransportFacilityGrounding, WebConnection, WebTransportTypeSurface } from './06_transport/types.js';
 import type { DatabaseFacilityGrounding, WebPersistenceTypeSurface, WebStoreOffer } from './07_persistence/types.js';
 import type { AudioFacility, AudioFacilityGrounding, AudioRuntimeAuthority, AudioRuntimeOffer, CodecAdmissionGrounding, InjectedAudioRuntimeGrounding, MediaAuthorityOffer, SampleClockTransport, WebCodecAdmission, WebCodecOffer, WebMediaTypeSurface } from './08_media/types.js';
 import type { GpuAccess, GpuAccessGrounding, GraphicsAuthorityOffer, GraphicsLoss, WebGraphicsTypeSurface } from './09_graphics/types.js';
@@ -316,5 +317,14 @@ export type SurfacesCarryTheirDeclaredMembers = Assert<
       WebTypeAt<'01_region'>['manager'],
     ],
     [SampleClockTransport, GraphicsLoss, TransportAuthority, RegionAuthority]
+  >
+>;
+
+
+/** Compile-time law: browser transport cancellation answers for the exact physical connection. */
+export type WebTransportCancellationTargetsItsConnection = Assert<
+  Equal<
+    OutputOf<CaseOf<WebConnection, 'readable-stream'>['cancel']>,
+    CancellationReceipt<CaseOf<WebConnection, 'readable-stream'>['id']>
   >
 >;

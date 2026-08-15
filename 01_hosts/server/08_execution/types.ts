@@ -17,9 +17,11 @@ import type {
   Hole,
   NonEmptyTuple,
   Reference,
+  Result,
   Signature,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type {
   ExecutionBackendDriver,
@@ -48,11 +50,19 @@ type ServerDriverBinding<Backend> = Backend extends ServerExecutionBackend
   : never;
 export type BoundServerDriver = ServerDriverBinding<ServerExecutionBackend>;
 
+/** The complete execution request carries the fresh per-use task identity. */
+export interface ServerExecutionRequest<Id extends ServerTaskId> {
+  readonly task: ServerTaskReference<Id>;
+  readonly request: ExecutionRequest;
+}
+
 /** The server execution host: matching drivers, core's exact executor, and a session path. */
 export interface ServerExecutionHost {
   readonly drivers: NonEmptyTuple<BoundServerDriver>;
   readonly executor: RuntimeExecutor;
-  readonly begin: Signature<ExecutionRequest, ServerExecutionSession<ServerTaskId>, NonEmptyTuple<Diagnostic>>;
+  readonly begin: <Id extends ServerTaskId>(
+    request: ServerExecutionRequest<Id>,
+  ) => Result<ServerExecutionSession<Id>, NonEmptyTuple<Diagnostic>>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
@@ -64,7 +74,11 @@ export interface ServerExecutionHost {
 export interface ServerExecutionSession<Id extends ServerTaskId> {
   readonly id: ServerTaskReference<Id>;
   readonly request: ExecutionRequest;
-  readonly cancel: Signature<ServerTaskReference<Id>, ServerTaskReference<Id>, NonEmptyTuple<Diagnostic>>;
+  readonly cancel: Signature<
+    ServerTaskReference<Id>,
+    CancellationReceipt<ServerTaskReference<Id>>,
+    NonEmptyTuple<Diagnostic>
+  >;
   readonly result: Signature<ServerTaskReference<Id>, RuntimeCommit, NonEmptyTuple<Diagnostic>>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }

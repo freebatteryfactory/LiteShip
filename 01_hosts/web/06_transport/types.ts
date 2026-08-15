@@ -29,6 +29,7 @@ import type {
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { CanonicalValue } from '../../../00_core/01_encoding/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { StreamResumeRequest } from '../../../00_core/13_stream/types.js';
 import type {
   GroundingId,
@@ -97,6 +98,11 @@ interface ConnectionCommon<Decoded> {
   readonly decoder: CarrierDecodeContract<Decoded>;
   readonly buffer: BufferBound;
   readonly receive: Signature<BufferBound, readonly Decoded[], NonEmptyTuple<Diagnostic>>;
+  readonly cancel: Signature<
+    ConnectionReference,
+    CancellationReceipt<ConnectionReference>,
+    NonEmptyTuple<Diagnostic>
+  >;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 

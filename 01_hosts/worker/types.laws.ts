@@ -12,7 +12,8 @@
  */
 
 import type { GroundingId, RealizationOfferId } from '../../00_core/14_compiler/types.js';
-import type { Assert, Equal, InputOf, TagOf } from '../../types.js';
+import type { Assert, Equal, InputOf, OutputOf, TagOf } from '../../types.js';
+import type { CancellationReceipt } from '../../00_core/05_lifecycle/types.js';
 import type { RealizationCatalog } from '../types.js';
 import type { RealmScopeFacility, WorkerBootstrapTypeSurface } from './00_bootstrap/types.js';
 import type { WorkerInstanceTypeSurface } from './01_instance/types.js';
@@ -20,7 +21,7 @@ import type { MessageFacility, MessagingAuthority, WorkerMessageTypeSurface } fr
 import type { CustodyMode, TransferFacility, TransferTicket, WorkerTransferTypeSurface } from './03_transfer/types.js';
 import type { MemoryLayoutId, SharedBufferId, SharedMemoryBuffer, SharedMemoryFacility, WorkerMemoryTypeSurface } from './04_memory/types.js';
 import type { WorkerQueueTypeSurface } from './05_queue/types.js';
-import type { WorkerExecutionHost, WorkerExecutionTypeSurface, WorkerSchedulingFacility } from './06_execution/types.js';
+import type { WorkerExecutionHost, WorkerExecutionSession, WorkerExecutionTypeSurface, WorkerSchedulingFacility, WorkerTaskId } from './06_execution/types.js';
 import type { WorkerCapabilityTopology, WorkerTypeAt, WorkerTypeTopology } from './types.js';
 
 
@@ -190,5 +191,14 @@ export type WorkerSurfacesCarryTheirDeclaredMembers = Assert<
       SharedMemoryBuffer<MemoryLayoutId, SharedBufferId>,
       WorkerExecutionHost,
     ]
+  >
+>;
+
+
+/** Compile-time law: cancelling one worker execution answers for that exact per-use task. */
+export type WorkerCancellationTargetsItsExactTask = Assert<
+  Equal<
+    OutputOf<WorkerExecutionSession<WorkerTaskId>['cancel']>,
+    CancellationReceipt<WorkerExecutionSession<WorkerTaskId>['id']>
   >
 >;

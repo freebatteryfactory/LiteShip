@@ -12,6 +12,7 @@
  */
 
 import type { PreparationDisposition, PreparedWork, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
+import type { DisposalReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { ExecutionBackendDriver, ExecutionRequest, RuntimeCommit } from '../../../00_core/16_runtime/types.js';
 import type { Assert, Equal, InputOf, NonEmptyTuple, OutputOf } from '../../../types.js';
 import type { CommitApplicationRequirement } from '../04_projection/types.js';
@@ -68,8 +69,12 @@ export type TheHostActuallyExecutes = Assert<
 /** Compile-time law: prepared work is pinned, disposable, and never self-committing. */
 export type PreparationIsPinnedAndDisposable = Assert<
   Equal<
-    [OutputOf<WebPreparationAuthority['prepare']>, InputOf<WebPreparationAuthority['discard']>],
-    [PreparedWork, PreparedWork]
+    [
+      OutputOf<WebPreparationAuthority['prepare']>,
+      InputOf<WebPreparationAuthority['discard']>,
+      OutputOf<WebPreparationAuthority['discard']>,
+    ],
+    [PreparedWork, PreparedWork, DisposalReceipt<PreparedWork['prepared']>]
   >
 >;
 

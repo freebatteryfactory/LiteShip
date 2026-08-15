@@ -294,8 +294,8 @@ export interface RequirementClosure<
 export type RealizationLifecycle = Algebra<{
   /** No owned runtime lifetime. Nothing is disposed. */
   unowned: Record<never, never>;
-  /** One physical provider owning every binding it produced. */
-  owned: { readonly resource: OwnedResource };
+  /** One physical provider directly exposing the lifetime of every binding it produced. */
+  owned: OwnedResource;
 }>;
 
 /**

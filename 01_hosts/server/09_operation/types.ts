@@ -24,6 +24,7 @@ import type {
   Signature,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type {
   IdempotencyKey,
   OperationDefinition,
@@ -42,6 +43,13 @@ export type ServerHandlerReference<Id extends ServerHandlerId = ServerHandlerId>
   'server-handler',
   Id
 >;
+export type ServerOperationExecutionId<Name extends string = string> = Brand<
+  Name,
+  'liteship.server.operation-execution-id'
+>;
+export type ServerOperationExecutionReference<
+  Id extends ServerOperationExecutionId = ServerOperationExecutionId,
+> = Reference<'server-operation-execution', Id>;
 
 /** One idempotency resource: the key and its receipt-lookup contract. */
 export interface IdempotencyResource {
@@ -51,6 +59,43 @@ export interface IdempotencyResource {
     readonly OperationReceipt[],
     NonEmptyTuple<Diagnostic>
   >;
+}
+
+/** The complete invocation of one exact in-flight operation execution. */
+export interface ServerOperationExecutionRequest<
+  Op extends OperationId,
+  Input,
+  Execution extends ServerOperationExecutionId,
+> {
+  readonly execution: ServerOperationExecutionReference<Execution>;
+  readonly invocation: OperationInvocation<Input, Op>;
+}
+
+/**
+ * One in-flight execution. Cancellation applies to this per-use subject, not
+ * to the long-lived handler that can serve many executions concurrently.
+ */
+export interface ServerOperationExecution<
+  Op extends OperationId,
+  Input,
+  Output,
+  Failure,
+  Execution extends ServerOperationExecutionId = ServerOperationExecutionId,
+> {
+  readonly id: ServerOperationExecutionReference<Execution>;
+  readonly handler: ServerHandlerReference;
+  readonly invocation: OperationInvocation<Input, Op>;
+  readonly cancel: Signature<
+    ServerOperationExecutionReference<Execution>,
+    CancellationReceipt<ServerOperationExecutionReference<Execution>>,
+    NonEmptyTuple<Diagnostic>
+  >;
+  readonly result: Signature<
+    ServerOperationExecutionReference<Execution>,
+    OperationReceipt<Output, Failure, Op>,
+    NonEmptyTuple<Diagnostic>
+  >;
+  readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
 /**
@@ -71,12 +116,12 @@ export interface ServerOperationHandler<
   readonly definition: OperationDefinition<Input, Output, Failure, Requirements, Op>;
   readonly capabilities: BindingsFor<Requirements>;
   readonly idempotency: IdempotencyResource;
-  readonly handle: Signature<
-    OperationInvocation<Input, Op>,
-    OperationReceipt<Output, Failure, Op>,
+  readonly handle: <Execution extends ServerOperationExecutionId>(
+    request: ServerOperationExecutionRequest<Op, Input, Execution>,
+  ) => Result<
+    ServerOperationExecution<Op, Input, Output, Failure, Execution>,
     NonEmptyTuple<Diagnostic>
   >;
-  readonly cancel: Signature<ServerHandlerReference, ServerHandlerReference, NonEmptyTuple<Diagnostic>>;
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
@@ -139,6 +184,7 @@ export interface ServerOperationOffer
 /** Type summary consumed by the server topology. */
 export interface ServerOperationTypeSurface {
   readonly handler: ServerOperationHandler<OperationId, unknown, unknown, unknown, readonly []>;
+  readonly execution: ServerOperationExecution<OperationId, unknown, unknown, unknown>;
   readonly idempotency: IdempotencyResource;
   readonly authority: ServerOperationAuthority;
   readonly catalogGrounding: OperationCatalogGrounding;
