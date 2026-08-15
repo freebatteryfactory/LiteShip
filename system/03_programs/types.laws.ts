@@ -29,7 +29,6 @@ import type {
   Equal,
   FailureOf,
   HoleContract,
-  InputOf,
   IsExactlyTrue,
   NonEmptyTuple,
   OutputOf,
@@ -63,12 +62,19 @@ import type { QualifiedReleaseCandidate, ReleaseCandidateId, ReleaseReceipt } fr
 import type {
   AuditProgram,
   BuildFailure,
+  BuildArtifactAdmission,
   BuildExecutionPlan,
+  BuildExecutionReceipt,
+  BuildNativeProduct,
+  BuildReport,
+  BuildRequest,
+  BuildRequestId,
   BuildProgram,
   BuildProgramProjection,
   BuildRequirements,
   BuildTargetCatalog,
   BuildTargetChoice,
+  ConsumerApplicationId,
   ConsumerApplicationDoctorProvider,
   DeployedApplicationDoctorProvider,
   DoctorAuthority,
@@ -236,7 +242,7 @@ export type BuildConsumesQualifiedTargetAndManagerCatalogs = Assert<
         Equal<FailureOf<BuildProgram['definition']['signature']>, BuildFailure>,
         Equal<RequirementsOf<BuildProgram['definition']['signature']>, BuildRequirements>,
         Equal<
-          InputOf<BuildTargetCatalog[1]['admit']>,
+          Parameters<BuildTargetCatalog[1]['admit']>[0]['product'],
           Extract<ViteBuildProduct, { readonly _tag: 'built' }>
         >,
         Equal<PackageManagerCatalog['length'], 2>,
@@ -262,6 +268,98 @@ export type BuildConsumesQualifiedTargetAndManagerCatalogs = Assert<
         Equal<BuildProgram['definition']['effects'], readonly ['execute', 'create']>,
       ],
       [true, true, true, true, true, true, false, true, true, true, true, false, false, true]
+    >
+  >
+>;
+
+type BuildLawRequestA = BuildRequest<
+  BuildRequestId<'law.build.request-a'>,
+  ConsumerApplicationId<'law.build.application-a'>,
+  WorkspaceSnapshotId<'law.build.snapshot-a'>
+>;
+
+type BuildLawRequestB = BuildRequest<
+  BuildRequestId<'law.build.request-b'>,
+  ConsumerApplicationId<'law.build.application-b'>,
+  WorkspaceSnapshotId<'law.build.snapshot-b'>
+>;
+
+type BuildLawAstroPlanA = CaseOf<BuildExecutionPlan<BuildLawRequestA>, 'astro'>;
+type BuildLawVitePlanA = CaseOf<BuildExecutionPlan<BuildLawRequestA>, 'vite'>;
+type BuildLawAstroPlanB = CaseOf<BuildExecutionPlan<BuildLawRequestB>, 'astro'>;
+type BuildLawAstroAdapter = BuildLawAstroPlanA['process']['target']['adapter'];
+type BuildLawViteAdapter = BuildLawVitePlanA['process']['target']['adapter'];
+type BuildLawViteNativeProduct = BuildNativeProduct<
+  BuildRequestId<'law.build.request-a'>,
+  BuildLawViteAdapter,
+  Extract<ViteBuildProduct, { readonly _tag: 'built' }>
+>;
+type BuildLawAstroProductWithViteAdapter = BuildNativeProduct<
+  BuildRequestId<'law.build.request-a'>,
+  BuildLawViteAdapter,
+  Parameters<BuildTargetCatalog[0]['admit']>[0]['product']
+>;
+
+/**
+ * Compile-time law: request, selected adapter, native target product, admitted
+ * artifacts, process receipt, and report tell one execution story.
+ *
+ * The first pair admits the lawful Astro path. The next three reject a Vite
+ * product, a foreign receipt, and a foreign application/report. The following
+ * pair proves the Vite native product is accepted only by the Vite row. The
+ * final pair keeps discovery and exact explicit selection as lawful neighbours.
+ */
+export type BuildThreadsOneExactExecutionThroughTheReport = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        BuildArtifactAdmission<
+          BuildRequestId<'law.build.request-a'>,
+          BuildLawAstroAdapter
+        > extends BuildReport<BuildLawAstroPlanA>['product']
+          ? true
+          : false,
+        BuildExecutionReceipt<
+          BuildRequestId<'law.build.request-a'>
+        > extends BuildReport<BuildLawAstroPlanA>['receipt']
+          ? true
+          : false,
+        BuildArtifactAdmission<
+          BuildRequestId<'law.build.request-a'>,
+          BuildLawViteAdapter
+        > extends BuildReport<BuildLawAstroPlanA>['product']
+          ? true
+          : false,
+        BuildExecutionReceipt<
+          BuildRequestId<'law.build.request-b'>
+        > extends BuildReport<BuildLawAstroPlanA>['receipt']
+          ? true
+          : false,
+        BuildReport<BuildLawAstroPlanB> extends BuildReport<BuildLawAstroPlanA>
+          ? true
+          : false,
+        BuildLawViteNativeProduct extends Parameters<BuildTargetCatalog[0]['admit']>[0]
+          ? true
+          : false,
+        BuildLawAstroProductWithViteAdapter extends Parameters<
+          BuildTargetCatalog[0]['admit']
+        >[0]
+          ? true
+          : false,
+        BuildLawViteNativeProduct extends Parameters<BuildTargetCatalog[1]['admit']>[0]
+          ? true
+          : false,
+        CaseOf<BuildTargetChoice, 'discover'> extends BuildLawAstroPlanA['request']['target']
+          ? true
+          : false,
+        Refine<
+          CaseOf<BuildTargetChoice, 'explicit'>,
+          { readonly target: EcosystemTargetReference<AstroTargetId> }
+        > extends BuildLawAstroPlanA['request']['target']
+          ? true
+          : false,
+      ],
+      [true, true, false, false, false, false, false, true, true, true]
     >
   >
 >;

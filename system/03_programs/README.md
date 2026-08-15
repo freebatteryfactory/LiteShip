@@ -108,7 +108,7 @@ Target selection has two inputs: explicit or discover. An explicit Astro request
 
 Package-manager and target integration are catalogued definitions, not switches distributed through a body. The manager population is exactly npm and pnpm. Yarn and Bun are explicit unsupported observations, and an unrecognized manager has its own admitted name. The target population is Astro and Vite, each with a stable adapter lineage, an addressed definition, its exact binary, and an admission signature from its target-owned successful product. Vite's `BuildProduct` is the input to the Vite row; it is never the universal build result.
 
-The target-neutral report owns one selected execution plan, one admitted non-empty population of `ProducedArtifact` values—which already own their filled slots—one successful host-execution receipt, and one explanation. Launch failure and a completed nonzero host build are different failure arms. Every failure carries non-empty diagnostics.
+The build request identity is also its execution identity viewed through `BuildExecutionReference`; there is no unrelated second identifier to reconcile. A manager renders that identity into the child-process request beside its exact manager selection and target binary. The selected target adapter then accepts only a native product carrying that same execution and its own exact adapter coordinate. The target-neutral report is generic over the resulting plan, so its admitted non-empty `ProducedArtifact` population and successful process receipt cannot be borrowed from another request, application, or target. Launch failure and a completed nonzero host build remain different failure arms. Every failure carries non-empty diagnostics.
 
 Initial exposure is exact and composition-owned: direct, CLI, and a trusted-local MCP tool whose admission evidence is named. HTTP and editor do not appear on `BuildProgramProjection`.
 
@@ -143,7 +143,7 @@ That was a dependency, not a schedule. The distinction matters because the previ
 - The exposed population and the program population are one, positionally, and the result is what a wire's exposure accepts.
 - The effect character is read through the operation definition, with an anti-vacuity partner proving the projector discriminates.
 - Migrate carries its exact request, report, typed failure, and migration-authority requirement through five existing wire projections under one program identity.
-- Build correlates explicit target choice with the selected execution-plan arm, consumes Vite's product only through the Vite adapter row, and exposes no HTTP or editor key.
+- Build threads one request-derived execution coordinate through manager rendering, selected target admission, process receipt, and report; a foreign target product, receipt, or application report is rejected while explicit and discovered selection remain lawful.
 - Doctor is observation-only, keeps absent and unreadable separate, and selects one of three providers with subject-specific prerequisites.
 - Doctor remediation carries ordinary policy decisions and operation receipts between two reports of the same subject family.
 

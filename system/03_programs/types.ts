@@ -48,11 +48,13 @@ import type {
   Brand,
   CaseOf,
   Hole,
+  MaybePromise,
   Named,
   NonEmptyTuple,
   Reference,
   Refine,
   RequirementRow,
+  Result,
   Signature,
 } from '../../types.js';
 import type { WireDefinition, WireExposure, WireId } from '../../02_wires/types.js';
@@ -342,11 +344,22 @@ export type BuildTargetChoice = Algebra<{
 }>;
 
 /** Build one exact consumer application snapshot. */
-export interface BuildRequest {
-  readonly id: BuildRequestReference;
-  readonly application: ConsumerApplicationSnapshot;
+export interface BuildRequest<
+  Id extends BuildRequestId = BuildRequestId,
+  Application extends ConsumerApplicationId = ConsumerApplicationId,
+  Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId,
+> {
+  readonly id: BuildRequestReference<Id>;
+  readonly application: ConsumerApplicationSnapshot<Application, Snapshot>;
   readonly target: BuildTargetChoice;
 }
+
+/** The execution identity is the build request identity viewed at execution. */
+export type BuildExecutionReference<
+  Id extends BuildRequestId = BuildRequestId,
+> = Reference<'system-build-execution', Id>;
+
+type BuildRequestIdentity<Request extends BuildRequest> = Request['id']['id'];
 
 export type QualifiedPackageManagerName = 'npm' | 'pnpm';
 export type PackageManagerId<
@@ -373,15 +386,45 @@ export interface PackageBinaryRequest {
   readonly arguments: readonly ['build'];
 }
 
+/** One package-manager render request, already bound to the build execution. */
+export interface PackageManagerRenderRequest<
+  Execution extends BuildRequestId = BuildRequestId,
+  Binary extends PackageBinaryRequest['binary'] = PackageBinaryRequest['binary'],
+> {
+  readonly execution: BuildExecutionReference<Execution>;
+  readonly binary: PackageBinaryRequest & { readonly binary: Binary };
+}
+
+/**
+ * The rendered child-process request. Execution, manager, and target binary
+ * travel with the host request instead of becoming three sibling assertions.
+ */
+export interface RenderedBuildProcessRequest<
+  Execution extends BuildRequestId = BuildRequestId,
+  Manager extends PackageManagerSelection = PackageManagerSelection,
+  Binary extends PackageBinaryRequest['binary'] = PackageBinaryRequest['binary'],
+> {
+  readonly execution: BuildExecutionReference<Execution>;
+  readonly manager: Manager;
+  readonly binary: PackageBinaryRequest & { readonly binary: Binary };
+  readonly child: ChildProcessRequest;
+}
+
 /** One manager adapter: exact identity, addressed semantics, one renderer. */
 export interface PackageManagerDefinition<
   Name extends QualifiedPackageManagerName = QualifiedPackageManagerName,
 > {
   readonly coordinate: PackageManagerCoordinate<Name>;
-  readonly render: Signature<
-    PackageBinaryRequest,
-    ChildProcessRequest,
-    NonEmptyTuple<Diagnostic>
+  readonly render: <
+    Execution extends BuildRequestId,
+    Binary extends PackageBinaryRequest['binary'],
+  >(
+    request: PackageManagerRenderRequest<Execution, Binary>,
+  ) => MaybePromise<
+    Result<
+      RenderedBuildProcessRequest<Execution, CaseOf<PackageManagerSelection, Name>, Binary>,
+      NonEmptyTuple<Diagnostic>
+    >
   >;
 }
 
@@ -415,11 +458,39 @@ export interface BuildTargetAdapterCoordinate<
   readonly definition: BuildTargetAdapterDefinitionAddress;
 }
 
-/** Target-neutral admitted output: every produced artifact already owns its slot. */
-export interface BuildArtifactAdmission {
+/** Native product presented by the selected target adapter for this execution. */
+export interface BuildNativeProduct<
+  Execution extends BuildRequestId = BuildRequestId,
+  Adapter extends BuildTargetAdapterCoordinate = BuildTargetAdapterCoordinate,
+  Product = unknown,
+> {
+  readonly execution: BuildExecutionReference<Execution>;
+  readonly adapter: Adapter;
+  readonly product: Product;
+}
+
+/** Target-neutral admitted output, still bound to execution and selected adapter. */
+export interface BuildArtifactAdmission<
+  Execution extends BuildRequestId = BuildRequestId,
+  Adapter extends BuildTargetAdapterCoordinate = BuildTargetAdapterCoordinate,
+> {
+  readonly execution: BuildExecutionReference<Execution>;
+  readonly adapter: Adapter;
   readonly filled: NonEmptyTuple<ProducedArtifact>;
   readonly evidence: ContentAddress<'application/vnd.liteship.target-build-evidence+cbor'>;
   readonly diagnostics: readonly Diagnostic[];
+}
+
+/** One adapter-specific, execution-preserving target-product admission. */
+export interface BuildTargetAdmission<
+  Adapter extends BuildTargetAdapterCoordinate,
+  NativeProduct,
+> {
+  <Execution extends BuildRequestId>(
+    product: BuildNativeProduct<Execution, Adapter, NativeProduct>,
+  ): MaybePromise<
+    Result<BuildArtifactAdmission<Execution, Adapter>, NonEmptyTuple<Diagnostic>>
+  >;
 }
 
 /**
@@ -438,7 +509,7 @@ export interface BuildTargetAdapter<
   readonly target: EcosystemTargetReference<Target>;
   readonly binary: Binary;
   readonly compatibility: Compatibility;
-  readonly admit: Signature<NativeProduct, BuildArtifactAdmission, NonEmptyTuple<Diagnostic>>;
+  readonly admit: BuildTargetAdmission<BuildTargetAdapterCoordinate<Id>, NativeProduct>;
 }
 
 export type AstroBuildTargetAdapter = BuildTargetAdapter<
@@ -483,8 +554,11 @@ export type BuildTargetSelection = Algebra<{
   };
 }>;
 
-type BuildRequestFor<Target extends AstroTargetId | ViteTargetId> = Refine<
-  BuildRequest,
+type BuildRequestFor<
+  Target extends AstroTargetId | ViteTargetId,
+  Request extends BuildRequest = BuildRequest,
+> = Refine<
+  Request,
   {
     readonly target:
       | CaseOf<BuildTargetChoice, 'discover'>
@@ -496,20 +570,44 @@ type BuildRequestFor<Target extends AstroTargetId | ViteTargetId> = Refine<
 >;
 
 /**
+ * One rendered host-process invocation under one selected target. The rendered
+ * request owns the manager and execution; this product adds only the target
+ * whose binary it rendered.
+ */
+export interface BuildProcessSelection<
+  Request extends BuildRequest = BuildRequest,
+  Manager extends PackageManagerSelection = PackageManagerSelection,
+  Target extends BuildTargetSelection = BuildTargetSelection,
+> {
+  readonly target: Target;
+  readonly rendered: RenderedBuildProcessRequest<
+    BuildRequestIdentity<Request>,
+    Manager,
+    Target['_tag']
+  >;
+}
+
+/**
  * The complete selected execution plan, correlated to the request. An explicit
  * Astro request cannot inhabit the Vite arm, while discovery can lawfully
  * produce either after exactly one compatible candidate remains.
  */
-export type BuildExecutionPlan = Algebra<{
+export type BuildExecutionPlan<Request extends BuildRequest = BuildRequest> = Algebra<{
   astro: {
-    readonly request: BuildRequestFor<AstroTargetId>;
-    readonly manager: PackageManagerSelection;
-    readonly target: CaseOf<BuildTargetSelection, 'astro'>;
+    readonly request: BuildRequestFor<AstroTargetId, Request>;
+    readonly process: BuildProcessSelection<
+      BuildRequestFor<AstroTargetId, Request>,
+      PackageManagerSelection,
+      CaseOf<BuildTargetSelection, 'astro'>
+    >;
   };
   vite: {
-    readonly request: BuildRequestFor<ViteTargetId>;
-    readonly manager: PackageManagerSelection;
-    readonly target: CaseOf<BuildTargetSelection, 'vite'>;
+    readonly request: BuildRequestFor<ViteTargetId, Request>;
+    readonly process: BuildProcessSelection<
+      BuildRequestFor<ViteTargetId, Request>,
+      PackageManagerSelection,
+      CaseOf<BuildTargetSelection, 'vite'>
+    >;
   };
 }>;
 
@@ -519,18 +617,22 @@ export type BuildExecutionReceiptAddress = ContentAddress<
 export type NonzeroProcessExitCode = Brand<number, 'liteship.nonzero-process-exit-code'>;
 
 /** Host build completed successfully, distinct from the operation receipt. */
-export interface BuildExecutionReceipt {
+export interface BuildExecutionReceipt<Execution extends BuildRequestId = BuildRequestId> {
+  readonly execution: BuildExecutionReference<Execution>;
   readonly process: ProcessReference;
   readonly exit: CaseOf<ProcessExit, 'exited'>;
   readonly exitCode: 0;
   readonly address: BuildExecutionReceiptAddress;
 }
 
-/** Target-neutral successful consumer build. */
-export interface BuildReport {
-  readonly plan: BuildExecutionPlan;
-  readonly product: BuildArtifactAdmission;
-  readonly receipt: BuildExecutionReceipt;
+type BuildPlanExecution<Plan extends BuildExecutionPlan> = Plan['process']['rendered']['execution']['id'];
+type BuildPlanAdapter<Plan extends BuildExecutionPlan> = Plan['process']['target']['adapter'];
+
+/** Target-neutral successful consumer build, exact over one complete execution path. */
+export interface BuildReport<Plan extends BuildExecutionPlan = BuildExecutionPlan> {
+  readonly plan: Plan;
+  readonly product: BuildArtifactAdmission<BuildPlanExecution<Plan>, BuildPlanAdapter<Plan>>;
+  readonly receipt: BuildExecutionReceipt<BuildPlanExecution<Plan>>;
   readonly explanation: Explanation;
 }
 
@@ -602,8 +704,11 @@ export type BuildRequirements = readonly [
 ];
 
 /** Build a consumer application; never build the LiteShip repository itself. */
-export type BuildProgram = ProgramWithEffects<
-  SystemProgram<'build', BuildRequest, BuildReport, BuildRequirements, BuildFailure>,
+export type BuildProgram<
+  Request extends BuildRequest = BuildRequest,
+  Plan extends BuildExecutionPlan<Request> = BuildExecutionPlan<Request>,
+> = ProgramWithEffects<
+  SystemProgram<'build', Request, BuildReport<Plan>, BuildRequirements, BuildFailure>,
   readonly ['execute', 'create']
 >;
 
