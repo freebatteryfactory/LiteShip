@@ -10,17 +10,29 @@ import type {
   Assert,
   CaseOf,
   Equal,
+  FailureOf,
   HoleContract,
   InputOf,
   IsExactlyTrue,
   NonEmptyTuple,
+  OutputOf,
   TagOf,
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { StreamSequence } from '../../00_core/04_time/types.js';
-import type { OperationId, OperationReference } from '../../00_core/07_operation/types.js';
+import type {
+  OperationId,
+  OperationReceipt,
+  OperationReference,
+} from '../../00_core/07_operation/types.js';
 import type { Explanation } from '../../00_core/18_inspection/types.js';
-import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
+import type {
+  MigrationAdapter,
+  MigrationFailure,
+  MigrationReport,
+  MigrationRequest,
+  MigrationRequestId,
+} from '../../00_core/14_compiler/types.js';
 import type { ApprovalDecision, PreviewBranch } from '../../00_core/17_editor/types.js';
 import type {
   CommittedCoordinate,
@@ -31,14 +43,20 @@ import type {
   EditorCoordinate,
   EditorDiagnosticDelivery,
   EditorDiagnosticExplanationProjection,
+  EditorChangedDocument,
   EditorDocumentChange,
   EditorDocumentCoordinate,
   EditorDocumentEdit,
+  EditorDocumentId,
+  EditorDocumentState,
+  EditorDocumentVersion,
   EditorHandlerFailure,
   EditorLanguageCapability,
+  EditorLanguageAdmission,
+  EditorLanguageProduct,
   EditorLanguageRequirement,
   EditorMethodCatalog,
-  EditorMigrationProjection,
+  EditorMigrationMethod,
   EditorNotification,
   EditorProtocolDefinition,
   EditorProtocolPhase,
@@ -182,8 +200,16 @@ type CatalogId = EditorMethodCatalog[number]['id'];
 type ProjectedId = LspMethodCatalog[number]['semantic'];
 type InitializeRow = Extract<EditorMethodCatalog[number], { readonly id: 'lifecycle.initialize' }>;
 type ExitRow = Extract<EditorMethodCatalog[number], { readonly id: 'lifecycle.exit' }>;
-type EditorMigrationLawA = OperationId<'liteship.wire.editor.migration.a'>;
-type EditorMigrationLawB = OperationId<'liteship.wire.editor.migration.b'>;
+type OperationApplyRow = Extract<
+  EditorMethodCatalog[number],
+  { readonly id: 'operation.apply' }
+>;
+type MigrationRunRow = Extract<
+  EditorMethodCatalog[number],
+  { readonly id: 'migration.run' }
+>;
+type EditorMigrationLawA = MigrationRequestId<'liteship.wire.editor.migration.a'>;
+type EditorMigrationLawB = MigrationRequestId<'liteship.wire.editor.migration.b'>;
 
 export type TheConcreteCatalogOwnsCapabilitiesAndLspProjection = Assert<
   IsExactlyTrue<
@@ -204,19 +230,101 @@ export type TheConcreteCatalogOwnsCapabilitiesAndLspProjection = Assert<
   >
 >;
 
-export type EditorMigrationProjectsTheExactOperation = Assert<
+/**
+ * Red-first carrier law: method handlers return semantic products. Request
+ * correlation and boundary crossing belong only to the outer request carrier.
+ */
+export type SemanticMethodResultsDoNotNestTheEditorWire = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        'request' extends keyof OutputOf<OperationApplyRow['handler']> ? true : false,
+        'crossing' extends keyof OutputOf<OperationApplyRow['handler']> ? true : false,
+        'request' extends keyof OutputOf<MigrationRunRow['handler']> ? true : false,
+        'outcome' extends keyof OutputOf<MigrationRunRow['handler']> ? true : false,
+        OutputOf<MigrationRunRow['handler']> extends MigrationReport ? true : false,
+        Equal<OutputOf<OperationApplyRow['handler']>, OperationReceipt>,
+      ],
+      [false, false, false, false, true, true]
+    >
+  >
+>;
+
+export type EditorMigrationMethodPreservesTheExactSemanticRequest = Assert<
   IsExactlyTrue<
     Equal<
       [
         Equal<
-          EditorMigrationProjection<EditorMigrationLawA>['outcome'],
-          EditorRequestOutcome<MigrationReport, MigrationFailure, EditorMigrationLawA>
+          InputOf<EditorMigrationMethod<MigrationAdapter, EditorMigrationLawA>['handler']>['migration'],
+          MigrationRequest<MigrationAdapter, EditorMigrationLawA>
         >,
-        EditorMigrationProjection<EditorMigrationLawA> extends EditorMigrationProjection<EditorMigrationLawB>
+        Equal<
+          OutputOf<EditorMigrationMethod<MigrationAdapter, EditorMigrationLawA>['handler']>,
+          MigrationReport<MigrationAdapter, EditorMigrationLawA>
+        >,
+        Equal<
+          FailureOf<EditorMigrationMethod<MigrationAdapter, EditorMigrationLawA>['handler']>,
+          MigrationFailure
+        >,
+        EditorMigrationMethod<MigrationAdapter, EditorMigrationLawA> extends EditorMigrationMethod<
+          MigrationAdapter,
+          EditorMigrationLawB
+        >
           ? true
           : false,
       ],
-      [true, false]
+      [true, true, true, false]
+    >
+  >
+>;
+
+type EditorLanguageStateA1 = EditorDocumentState<
+  EditorDocumentId<'law.editor.document-a'>,
+  EditorDocumentVersion<1>
+>;
+type EditorLanguageStateA2 = EditorDocumentState<
+  EditorDocumentId<'law.editor.document-a'>,
+  EditorDocumentVersion<2>
+>;
+type EditorLanguageStateB2 = EditorDocumentState<
+  EditorDocumentId<'law.editor.document-b'>,
+  EditorDocumentVersion<2>
+>;
+type EditorLanguageChangeA = CaseOf<
+  EditorDocumentChange<
+    EditorDocumentId<'law.editor.document-a'>,
+    EditorDocumentVersion<1>,
+    EditorDocumentVersion<2>
+  >,
+  'incremental'
+>;
+type EditorLanguageChangeB = CaseOf<
+  EditorDocumentChange<
+    EditorDocumentId<'law.editor.document-b'>,
+    EditorDocumentVersion<1>,
+    EditorDocumentVersion<2>
+  >,
+  'incremental'
+>;
+
+/** The injected language carrier cannot answer change A with document B. */
+export type LanguageAdmissionThreadsTheExactDocumentChange = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<EditorLanguageCapability['admit'], EditorLanguageAdmission>,
+        Equal<EditorLanguageProduct<EditorLanguageChangeA>['change'], EditorLanguageChangeA>,
+        Equal<EditorLanguageChangeA['previous'], EditorLanguageStateA1>,
+        Equal<EditorChangedDocument<EditorLanguageChangeA>, EditorLanguageStateA2>,
+        EditorLanguageStateB2 extends EditorLanguageChangeA['next'] ? true : false,
+        EditorLanguageProduct<EditorLanguageChangeB> extends EditorLanguageProduct<EditorLanguageChangeA>
+          ? true
+          : false,
+        EditorLanguageProduct<EditorLanguageChangeA> extends EditorLanguageProduct<EditorLanguageChangeA>
+          ? true
+          : false,
+      ],
+      [true, true, true, true, false, false, true]
     >
   >
 >;

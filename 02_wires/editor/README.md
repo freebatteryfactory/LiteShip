@@ -43,7 +43,7 @@ The language capability performs the only admitted translation:
 
 An incremental change names its previous and next document states and carries a non-empty edit population. Full replacement is the explicit recovery and resynchronization arm; it names the prior state and semantic ancestry, so replacing the text cannot silently reset the document's relationship to the semantic program.
 
-`unknown` text does not enter core. The injected language authority either produces an exact `EditorLanguageProduct` or a non-empty diagnostic failure.
+`unknown` text does not enter core. The injected language authority is generic over the exact `EditorDocumentChange` it receives and either produces `EditorLanguageProduct<ThatChange>` or a non-empty diagnostic failure. The product carries that change once; its resulting document state is derived from the opened/changed/replaced/closed arm, so document A cannot yield a product for document B and no duplicate document coordinate can drift from the input.
 
 ## One owner for a draft coordinate
 
@@ -54,6 +54,8 @@ Document-derived draft answers use `EditorDocumentCoordinate.draft`, which adds 
 ## Concrete method authority
 
 `EditorMethodCatalog` is the actual handled/emitted population. Each row fixes semantic identity, direction, request-versus-notification kind, lifecycle availability, input, output, and failure.
+
+A method handler returns semantic meaning, never another wire envelope. `operation.apply` returns the ordinary operation receipt and `migration.run` returns the exact protocol-neutral migration report. The outer `EditorRequestOutcome` alone owns request correlation, boundary crossing, and the semantic coordinate of the answer; a handler result cannot repeat or contradict those facts.
 
 The first population covers:
 
@@ -120,9 +122,11 @@ It had no document store, advertised `textDocumentSync: 0`, and projected unifie
 - Notifications carry no request or receipt, and are ordered within one exact connection by `StreamSequence`.
 - Every document-derived draft answer names the exact document version.
 - Incremental changes name previous and next states; replacement preserves ancestry; only the injected language capability admits source.
+- Language admission threads one exact change into its product; a foreign document or version cannot substitute.
 - A remediation carries either non-empty edits or the exact semantic invocation.
 - The protocol lifecycle refuses early and late use distinctly.
 - The concrete semantic method population equals the LSP projection population.
+- Semantic method outputs contain no nested request correlation or wire crossing; operation application and migration return their core receipts/reports.
 - Capabilities derive from the handled catalog, including hover and completion and excluding unearned rename.
 - Non-document diagnostic/explanation projection names its exact operation and invents no document version.
 

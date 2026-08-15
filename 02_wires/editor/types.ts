@@ -50,9 +50,11 @@ import type {
   Brand,
   CaseOf,
   Hole,
+  MaybePromise,
   NonEmptyTuple,
   Reference,
   Refine,
+  Result,
   Signature,
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
@@ -69,10 +71,17 @@ import type {
 import type { Explanation } from '../../00_core/18_inspection/types.js';
 import type {
   MigrationFailure,
+  MigrationAdapter,
   MigrationReport,
   MigrationRequest,
+  MigrationRequestId,
 } from '../../00_core/14_compiler/types.js';
-import type { OperationId, OperationInvocation, OperationReference } from '../../00_core/07_operation/types.js';
+import type {
+  OperationId,
+  OperationInvocation,
+  OperationReceipt,
+  OperationReference,
+} from '../../00_core/07_operation/types.js';
 import type { WireExchange, WireRefusal } from '../types.js';
 
 // ---------------------------------------------------------------------------
@@ -138,9 +147,12 @@ export interface EditorTextEdit {
 }
 
 /** One exact protocol document state. */
-export interface EditorDocumentState {
-  readonly document: EditorDocumentReference;
-  readonly version: EditorDocumentVersion;
+export interface EditorDocumentState<
+  Document extends EditorDocumentId = EditorDocumentId,
+  Version extends EditorDocumentVersion = EditorDocumentVersion,
+> {
+  readonly document: EditorDocumentReference<Document>;
+  readonly version: Version;
   readonly language: EditorSourceLanguage;
   readonly source: EditorSourceAddress;
 }
@@ -149,20 +161,27 @@ export interface EditorDocumentState {
  * A document change never becomes semantic meaning by itself. The injected
  * language capability admits it against the previous semantic ancestry.
  */
-export type EditorDocumentChange = Algebra<{
-  opened: { readonly state: EditorDocumentState; readonly text: EditorSourceText };
+export type EditorDocumentChange<
+  Document extends EditorDocumentId = EditorDocumentId,
+  PreviousVersion extends EditorDocumentVersion = EditorDocumentVersion,
+  NextVersion extends EditorDocumentVersion = EditorDocumentVersion,
+> = Algebra<{
+  opened: {
+    readonly state: EditorDocumentState<Document, NextVersion>;
+    readonly text: EditorSourceText;
+  };
   incremental: {
-    readonly previous: EditorDocumentState;
-    readonly next: EditorDocumentState;
+    readonly previous: EditorDocumentState<Document, PreviousVersion>;
+    readonly next: EditorDocumentState<Document, NextVersion>;
     readonly edits: NonEmptyTuple<EditorTextEdit>;
   };
   replaced: {
-    readonly previous: EditorDocumentState;
-    readonly next: EditorDocumentState;
+    readonly previous: EditorDocumentState<Document, PreviousVersion>;
+    readonly next: EditorDocumentState<Document, NextVersion>;
     readonly text: EditorSourceText;
     readonly ancestry: EditorCoordinate;
   };
-  closed: { readonly state: EditorDocumentState };
+  closed: { readonly state: EditorDocumentState<Document, PreviousVersion> };
 }>;
 
 // ---------------------------------------------------------------------------
@@ -226,12 +245,33 @@ export type EditorDocumentCoordinate = Algebra<{
   };
 }>;
 
-/** Result of admitting one source change into the shared semantic program. */
-export interface EditorLanguageProduct {
-  readonly document: EditorDocumentState;
+/** The exact document state one admitted change leaves authoritative. */
+export type EditorChangedDocument<Change extends EditorDocumentChange> =
+  Change extends CaseOf<EditorDocumentChange, 'opened'>
+    ? Change['state']
+    : Change extends
+          | CaseOf<EditorDocumentChange, 'incremental'>
+          | CaseOf<EditorDocumentChange, 'replaced'>
+      ? Change['next']
+      : Change extends CaseOf<EditorDocumentChange, 'closed'>
+        ? Change['state']
+        : never;
+
+/** Result of admitting one exact source change into the shared semantic program. */
+export interface EditorLanguageProduct<
+  Change extends EditorDocumentChange = EditorDocumentChange,
+> {
+  readonly change: Change;
   readonly proposal: EditProposal;
   readonly preview: PreviewBranch;
   readonly diagnostics: readonly Diagnostic[];
+}
+
+/** Input and semantic product stay correlated through the generic admission call. */
+export interface EditorLanguageAdmission {
+  <Change extends EditorDocumentChange>(
+    change: Change,
+  ): MaybePromise<Result<EditorLanguageProduct<Change>, NonEmptyTuple<Diagnostic>>>;
 }
 
 /**
@@ -239,11 +279,7 @@ export interface EditorLanguageProduct {
  * the wire nor core owns an Astro or TypeScript parser.
  */
 export interface EditorLanguageCapability {
-  readonly admit: Signature<
-    EditorDocumentChange,
-    EditorLanguageProduct,
-    NonEmptyTuple<Diagnostic>
-  >;
+  readonly admit: EditorLanguageAdmission;
 }
 
 export type EditorLanguageRequirement = Hole<
@@ -303,14 +339,12 @@ export interface EditorSessionRequest {
 }
 
 /** Source-backed editor invocation of the protocol-neutral migrate operation. */
-export interface EditorMigrationRequest {
-  readonly migration: MigrationRequest;
+export interface EditorMigrationRequest<
+  Adapter extends MigrationAdapter = MigrationAdapter,
+  Request extends MigrationRequestId = MigrationRequestId,
+> {
+  readonly migration: MigrationRequest<Adapter, Request>;
   readonly document?: EditorDocumentCoordinate;
-}
-
-export interface EditorMigrationProjection<Op extends OperationId = OperationId> {
-  readonly request: EditorMigrationRequest;
-  readonly outcome: EditorRequestOutcome<MigrationReport, MigrationFailure, Op>;
 }
 
 export interface EditorInitializeRequest {
@@ -347,14 +381,31 @@ export interface EditorMethodDefinition<
   readonly handler: Signature<Input, Output, Failure>;
 }
 
-type EditorClientRequest<Id extends string, Input, Output, Phases extends NonEmptyTuple<EditorProtocolPhase['_tag']> = readonly ['active']> =
-  EditorMethodDefinition<Id, 'client-to-server', 'request', Input, Output, NonEmptyTuple<Diagnostic>, Phases>;
+type EditorClientRequest<
+  Id extends string,
+  Input,
+  Output,
+  Phases extends NonEmptyTuple<EditorProtocolPhase['_tag']> = readonly ['active'],
+  Failure = NonEmptyTuple<Diagnostic>,
+> = EditorMethodDefinition<Id, 'client-to-server', 'request', Input, Output, Failure, Phases>;
 type EditorClientNotification<Id extends string, Input, Phases extends NonEmptyTuple<EditorProtocolPhase['_tag']> = readonly ['active']> =
   EditorMethodDefinition<Id, 'client-to-server', 'notification', Input, void, NonEmptyTuple<Diagnostic>, Phases>;
 type EditorServerRequest<Id extends string, Input, Output = void> =
   EditorMethodDefinition<Id, 'server-to-client', 'request', Input, Output, NonEmptyTuple<Diagnostic>, readonly ['active']>;
 type EditorServerNotification<Id extends string, Input, Phases extends NonEmptyTuple<EditorProtocolPhase['_tag']> = readonly ['active']> =
   EditorMethodDefinition<Id, 'server-to-client', 'notification', Input, void, NonEmptyTuple<Diagnostic>, Phases>;
+
+/** Semantic migration method; outer request framing is applied exactly once. */
+export type EditorMigrationMethod<
+  Adapter extends MigrationAdapter = MigrationAdapter,
+  Request extends MigrationRequestId = MigrationRequestId,
+> = EditorClientRequest<
+  'migration.run',
+  EditorMigrationRequest<Adapter, Request>,
+  MigrationReport<Adapter, Request>,
+  readonly ['active'],
+  MigrationFailure
+>;
 
 /** The complete owner-ratified first editor method population. */
 export type EditorMethodCatalog = readonly [
@@ -375,10 +426,10 @@ export type EditorMethodCatalog = readonly [
   EditorClientRequest<'language.source', EditorDocumentQuery, EditorDocumentResult<readonly EditorSourceDestination[]>>,
   EditorServerNotification<'authority.refresh', CaseOf<EditorRefreshSubject, 'authority'>>,
   EditorClientRequest<'operation.preview', EditorOperationProposalRequest, EditorLanguageProduct>,
-  EditorClientRequest<'operation.apply', EditorRemediationOffer, EditorRequestOutcome>,
+  EditorClientRequest<'operation.apply', EditorRemediationOffer, OperationReceipt>,
   EditorClientRequest<'editor.session.open', EditorSessionRequest, EditorSessionReference>,
   EditorClientRequest<'editor.draft.preview', EditorDocumentCoordinate, PreviewBranch>,
-  EditorClientRequest<'migration.run', EditorMigrationRequest, EditorMigrationProjection>,
+  EditorMigrationMethod,
   EditorServerNotification<'server.log', EditorHandlerFailure, readonly ['active', 'shuttingDown']>
 ];
 
@@ -746,7 +797,7 @@ export interface EditorWireTypeSurface {
   readonly remediationOffer: EditorRemediationOffer;
   readonly remediationProjection: EditorRemediationProjection;
   readonly lspRemediationProjection: LspRemediationProjection;
-  readonly migration: EditorMigrationProjection;
+  readonly migration: EditorMigrationMethod;
   readonly refusal: EditorRefusal;
 }
 
