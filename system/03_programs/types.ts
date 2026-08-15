@@ -82,10 +82,12 @@ import type { AuditProduct, AuditRequirements } from '../01_assurance/00_audit/t
 import type { AssuranceResult } from '../01_assurance/01_gauntlet/types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type {
+  MigrationAdapter,
   MigrationAuthorityRequirement,
   MigrationFailure,
   MigrationReport,
   MigrationRequest,
+  MigrationRequestId,
 } from '../../00_core/14_compiler/types.js';
 import type {
   EffectClass,
@@ -954,11 +956,14 @@ export type VerifyProgram<
 >;
 
 /** Interpret one external source without applying the admitted meaning. */
-export type MigrateProgram = ProgramWithEffects<
+export type MigrateProgram<
+  Adapter extends MigrationAdapter = MigrationAdapter,
+  Request extends MigrationRequestId = MigrationRequestId,
+> = ProgramWithEffects<
   SystemProgram<
     'migrate',
-    MigrationRequest,
-    MigrationReport,
+    MigrationRequest<Adapter, Request>,
+    MigrationReport<Adapter, Request>,
     readonly [MigrationAuthorityRequirement],
     MigrationFailure
   >,

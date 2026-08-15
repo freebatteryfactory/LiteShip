@@ -94,7 +94,7 @@ What it is not: a run. These are contracts, and a composition of contracts prove
 
 ## Migrate is an operation, not an orphan library
 
-`MigrateProgram` consumes core's exact `MigrationRequest`, produces `MigrationReport`, fails with `MigrationFailure`, and requires the compiler-owned `MigrationAuthorityRequirement`. Its failure type is not the default diagnostic array: `SystemProgram` permits an exact failure carrier after the requirement row, so the rostered entry is the contract wires actually project.
+`MigrateProgram` consumes core's exact selected-row `MigrationRequest`, produces the report parameterized by that same adapter and request identity, fails with `MigrationFailure`, and requires the compiler-owned `MigrationAuthorityRequirement`. Its failure type is not the default diagnostic array: `SystemProgram` permits an exact failure carrier after the requirement row, so the rostered entry is the contract wires actually project.
 
 `MigrateProgramProjection` binds that one computed program identity through direct, CLI, HTTP, MCP, and editor wire carriers. It lives here because wires cannot import system back. No browser projection exists, and none is implied. The composition is compile-use evidence only; no handler body exists.
 

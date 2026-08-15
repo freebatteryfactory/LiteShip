@@ -47,8 +47,13 @@ import type {
   IncompleteState,
   InvocationSlotId,
   MigrationAdapter,
+  MigrationAdapterCandidate,
   MigrationAdapterCatalog,
+  MigrationAdapterDefinitionId,
+  MigrationAdapterId,
   MigrationAdapterOutcome,
+  MigrationAdapterSelection,
+  MigrationApplicationProposal,
   MigrationAuthority,
   MigrationAuthorityRequirement,
   MigrationFailure,
@@ -56,9 +61,14 @@ import type {
   MigrationProduct,
   MigrationReport,
   MigrationRequest,
+  MigrationOutputProfile,
+  MigrationOutputProfileId,
+  MigrationRequestId,
   MigrationSource,
   MigrationSourceCoordinate,
   MigrationSourceFormatId,
+  MigrationSourceProfile,
+  MigrationSourceProfileId,
   NonEmptyRequirementRow,
   OptimizationObjective,
   PlacementConstraint,
@@ -955,20 +965,50 @@ export type AnUnmappableRelationRequiresItsLimitations = Assert<
 
 type MigrationLawFormatA = MigrationSourceFormatId<'law.migration.format.a'>;
 type MigrationLawFormatB = MigrationSourceFormatId<'law.migration.format.b'>;
+type MigrationLawSourceA = MigrationSourceProfile<
+  string,
+  MigrationSourceProfileId<'law.migration.source.a'>,
+  MigrationLawFormatA
+>;
+type MigrationLawSourceB = MigrationSourceProfile<
+  string,
+  MigrationSourceProfileId<'law.migration.source.b'>,
+  MigrationLawFormatB
+>;
+type MigrationLawOutputA = MigrationOutputProfile<
+  number,
+  MigrationOutputProfileId<'law.migration.output.a'>
+>;
+type MigrationLawOutputB = MigrationOutputProfile<
+  boolean,
+  MigrationOutputProfileId<'law.migration.output.b'>
+>;
+type MigrationLawAdapterA = MigrationAdapter<
+  MigrationAdapterId<'law.migration.adapter.a'>,
+  MigrationAdapterDefinitionId<'law.migration.adapter-definition.a'>,
+  MigrationLawSourceA,
+  MigrationLawOutputA
+>;
+type MigrationLawAdapterB = MigrationAdapter<
+  MigrationAdapterId<'law.migration.adapter.b'>,
+  MigrationAdapterDefinitionId<'law.migration.adapter-definition.b'>,
+  MigrationLawSourceB,
+  MigrationLawOutputB
+>;
+type MigrationLawRequestA = MigrationRequestId<'law.migration.request.a'>;
+type MigrationLawRequestB = MigrationRequestId<'law.migration.request.b'>;
 
 export type AnAdapterCarriesLossBesideItsProductAndCannotFailSilently = Assert<
   IsExactlyTrue<
     Equal<
       [
         Equal<
-          OutputOf<MigrationAdapter<MigrationLawFormatA, string, number>['migrate']>,
+          OutputOf<MigrationLawAdapterA['migrate']>,
           MigrationAdapterOutcome<number>
         >,
         Equal<FailureOf<MigrationAdapter['migrate']>, NonEmptyTuple<Diagnostic>>,
-        MigrationAdapter<MigrationLawFormatA> extends MigrationAdapter<MigrationLawFormatB>
-          ? true
-          : false,
-        MigrationAdapter extends MigrationAdapter<MigrationLawFormatA> ? true : false,
+        MigrationLawAdapterA extends MigrationLawAdapterB ? true : false,
+        MigrationAdapter extends MigrationLawAdapterA ? true : false,
         Equal<MigrationProduct['diagnostics'], readonly Diagnostic[]>,
         Equal<TagOf<MigrationAdapterOutcome>, 'admitted' | 'rejected'>,
       ],
@@ -985,7 +1025,7 @@ export type InlineSourceBecomesAddressedBeforeExecutionEvidence = Assert<
         'address' extends keyof CaseOf<MigrationSource, 'inline'> ? true : false,
         'address' extends keyof CaseOf<MigrationSourceCoordinate, 'inline'> ? true : false,
         'profile' extends keyof CaseOf<MigrationSourceCoordinate, 'artifact'> ? true : false,
-        'definition' extends keyof MigrationRequest['adapter'] ? true : false,
+        'definition' extends keyof MigrationRequest['selection']['candidate']['adapter'] ? true : false,
       ],
       [true, false, true, true, true]
     >
@@ -1030,6 +1070,62 @@ export type AReportDistinguishesLawfulEmptyMeaningFromNoProduct = Assert<
         'receipt' extends keyof CaseOf<MigrationReport, 'admitted'> ? true : false,
       ],
       [true, true, true, false, true, false]
+    >
+  >
+>;
+
+/** Execution consumes one selected catalog row, with a lawful exact neighbor. */
+export type MigrationExecutionRejectsRecombinedCatalogFacts = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        {
+          readonly adapter: MigrationLawAdapterB['coordinate'];
+          readonly source: MigrationLawAdapterA['source'];
+          readonly output: MigrationLawAdapterA['output'];
+        } extends MigrationAdapterCandidate<MigrationLawAdapterA>
+          ? true
+          : false,
+        {
+          readonly adapter: MigrationLawAdapterA['coordinate'];
+          readonly source: MigrationLawAdapterA['source'];
+          readonly output: MigrationLawAdapterB['output'];
+        } extends MigrationAdapterCandidate<MigrationLawAdapterA>
+          ? true
+          : false,
+        MigrationAdapterCandidate<MigrationLawAdapterA> extends MigrationAdapterCandidate<MigrationLawAdapterA>
+          ? true
+          : false,
+        Equal<
+          MigrationRequest<MigrationLawAdapterA, MigrationLawRequestA>['selection'],
+          MigrationAdapterSelection<MigrationLawAdapterA>
+        >,
+      ],
+      [false, false, true, true]
+    >
+  >
+>;
+
+/** The proposal derives from one admitted request and cannot switch reports. */
+export type AProposalCannotSwitchTheReportItApplies = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          CaseOf<MigrationReport<MigrationLawAdapterA, MigrationLawRequestA>, 'admitted'>['request'],
+          MigrationRequest<MigrationLawAdapterA, MigrationLawRequestA>
+        >,
+        Equal<
+          CaseOf<MigrationReport<MigrationLawAdapterA, MigrationLawRequestA>, 'admitted'>['proposedApplication'],
+          MigrationApplicationProposal<MigrationLawRequestA>
+        >,
+        MigrationApplicationProposal<MigrationLawRequestB> extends MigrationApplicationProposal<MigrationLawRequestA>
+          ? true
+          : false,
+        'source' extends keyof MigrationApplicationProposal<MigrationLawRequestA> ? true : false,
+        'bundle' extends keyof MigrationApplicationProposal<MigrationLawRequestA> ? true : false,
+      ],
+      [true, true, false, false, false]
     >
   >
 >;

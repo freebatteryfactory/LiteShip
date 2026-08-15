@@ -18,6 +18,7 @@ import type {
   CaseOf,
   Hole,
   HoleKey,
+  MaybePromise,
   NonEmptyTuple,
   Reference,
   RequirementRow,
@@ -38,7 +39,11 @@ import type {
   EvidenceRealm,
   EvidenceReference,
 } from '../06_evidence/types.js';
-import type { PolicyId } from '../07_operation/types.js';
+import type {
+  OperationId,
+  OperationInvocation,
+  PolicyId,
+} from '../07_operation/types.js';
 import type { SceneToleranceProfileCoordinate } from '../11_scene/types.js';
 
 export type CompilerId<Name extends string = string> = Brand<Name, 'liteship.compiler-id'>;
@@ -955,6 +960,13 @@ export type MigrationOutputProfileReference<
 export type MigrationAdapterDefinitionAddress = ContentAddress<
   'application/vnd.liteship.migration-adapter-definition+cbor'
 >;
+export type MigrationAdapterDefinitionId<Name extends string = string> = Brand<
+  Name,
+  'liteship.migration-adapter-definition-id'
+>;
+export type MigrationAdapterDefinitionReference<
+  Id extends MigrationAdapterDefinitionId = MigrationAdapterDefinitionId,
+> = Reference<'migration-adapter-definition', Id>;
 export type MigrationCatalogAddress = ContentAddress<
   'application/vnd.liteship.migration-catalog+cbor'
 >;
@@ -966,61 +978,90 @@ export type MigrationCompatibilityPolicyAddress = ContentAddress<
 >;
 
 /** Exact schema-backed identity of one admitted source population. */
-export interface MigrationSourceProfile<Value extends CanonicalValue = CanonicalValue> {
-  readonly id: MigrationSourceProfileReference;
-  readonly format: MigrationSourceFormatId;
+export interface MigrationSourceProfile<
+  Value extends CanonicalValue = CanonicalValue,
+  Id extends MigrationSourceProfileId = MigrationSourceProfileId,
+  Format extends MigrationSourceFormatId = MigrationSourceFormatId,
+> {
+  readonly id: MigrationSourceProfileReference<Id>;
+  readonly format: Format;
   readonly mediaType: MigrationMediaType;
   readonly schema: SchemaReference<SchemaId, Value>;
 }
 
 /** Exact schema-backed identity of the admitted meaning an adapter produces. */
-export interface MigrationOutputProfile<Value extends CanonicalValue = CanonicalValue> {
-  readonly id: MigrationOutputProfileReference;
+export interface MigrationOutputProfile<
+  Value extends CanonicalValue = CanonicalValue,
+  Id extends MigrationOutputProfileId = MigrationOutputProfileId,
+> {
+  readonly id: MigrationOutputProfileReference<Id>;
   readonly schema: SchemaReference<SchemaId, Value>;
 }
 
 /** Source as it crosses the operation boundary. Inline input is addressed by admission. */
-export type MigrationSource<Value extends CanonicalValue = CanonicalValue> = Algebra<{
+export type MigrationSource<
+  Value extends CanonicalValue = CanonicalValue,
+  Profile extends MigrationSourceProfile = MigrationSourceProfile,
+> = Algebra<{
   artifact: {
     readonly address: ContentAddress;
-    readonly profile: MigrationSourceProfile<Value>;
+    readonly profile: Profile;
   };
   inline: {
-    readonly profile: MigrationSourceProfile<Value>;
+    readonly profile: Profile;
     readonly value: Value;
   };
 }>;
 
 /** Exact source coordinate after artifact admission or inline canonicalization. */
-export type MigrationSourceCoordinate = Algebra<{
+export type MigrationSourceCoordinate<
+  Profile extends MigrationSourceProfileReference = MigrationSourceProfileReference,
+> = Algebra<{
   artifact: {
     readonly address: ContentAddress;
-    readonly profile: MigrationSourceProfileReference;
+    readonly profile: Profile;
   };
   inline: {
     readonly address: ContentAddress<'application/vnd.liteship.migration-inline-source+cbor'>;
-    readonly profile: MigrationSourceProfileReference;
+    readonly profile: Profile;
   };
 }>;
 
-/** Stable lineage plus the exact addressed adapter semantics selected to run. */
-export interface MigrationAdapterCoordinate<Id extends MigrationAdapterId = MigrationAdapterId> {
-  readonly id: Id;
-  readonly definition: MigrationAdapterDefinitionAddress;
+/** One exact addressed adapter definition revision. */
+export interface MigrationAdapterDefinitionCoordinate<
+  Id extends MigrationAdapterDefinitionId = MigrationAdapterDefinitionId,
+> {
+  readonly id: MigrationAdapterDefinitionReference<Id>;
+  readonly address: MigrationAdapterDefinitionAddress;
 }
+
+/** Stable lineage plus the exact addressed adapter semantics selected to run. */
+export interface MigrationAdapterCoordinate<
+  Id extends MigrationAdapterId = MigrationAdapterId,
+  Definition extends MigrationAdapterDefinitionId = MigrationAdapterDefinitionId,
+> {
+  readonly id: Id;
+  readonly definition: MigrationAdapterDefinitionCoordinate<Definition>;
+}
+
+type MigrationSourceValue<Profile extends MigrationSourceProfile> =
+  Profile extends MigrationSourceProfile<infer Value> ? Value : never;
+type MigrationOutputValue<Profile extends MigrationOutputProfile> =
+  Profile extends MigrationOutputProfile<infer Value> ? Value : never;
 
 /** One exact adapter in the compiler-owned migration population. */
 export interface MigrationAdapter<
-  Format extends MigrationSourceFormatId = MigrationSourceFormatId,
-  Input extends CanonicalValue = CanonicalValue,
-  Output extends CanonicalValue = CanonicalValue,
+  Id extends MigrationAdapterId = MigrationAdapterId,
+  Definition extends MigrationAdapterDefinitionId = MigrationAdapterDefinitionId,
+  Source extends MigrationSourceProfile = MigrationSourceProfile,
+  Output extends MigrationOutputProfile = MigrationOutputProfile,
 > {
-  readonly coordinate: MigrationAdapterCoordinate;
-  readonly source: MigrationSourceProfile<Input> & { readonly format: Format };
-  readonly output: MigrationOutputProfile<Output>;
+  readonly coordinate: MigrationAdapterCoordinate<Id, Definition>;
+  readonly source: Source;
+  readonly output: Output;
   readonly migrate: Signature<
-    Input,
-    MigrationAdapterOutcome<Output>,
+    MigrationSourceValue<Source>,
+    MigrationAdapterOutcome<MigrationOutputValue<Output>>,
     NonEmptyTuple<Diagnostic>
   >;
 }
@@ -1033,23 +1074,55 @@ export interface MigrationAdapterCatalog<
   readonly adapters: Adapters;
 }
 
-/** Discoverable adapter row; discovery never runs it. */
-export interface MigrationAdapterCandidate {
-  readonly adapter: MigrationAdapterCoordinate;
-  readonly source: MigrationSourceProfileReference;
-  readonly output: MigrationOutputProfileReference;
-}
+/** Discoverable row derived from one exact adapter; discovery never runs it. */
+export type MigrationAdapterCandidate<Adapter extends MigrationAdapter = MigrationAdapter> = Readonly<{
+  adapter: Adapter['coordinate'];
+  source: Adapter['source'];
+  output: Adapter['output'];
+}>;
+
+type MigrationAdapterCandidates<Adapters extends NonEmptyTuple<MigrationAdapter>> = {
+  readonly [Index in keyof Adapters]: Adapters[Index] extends MigrationAdapter
+    ? MigrationAdapterCandidate<Adapters[Index]>
+    : never;
+};
 
 export interface MigrationDiscoveryRequest {
   readonly source: MigrationSourceProfileReference;
   readonly policy?: MigrationCompatibilityPolicyAddress;
 }
 
+/** Why this exact discovered row was selected. */
+export type MigrationCompatibilityDecision = Algebra<{
+  explicit: Record<never, never>;
+  compatible: { readonly policy: MigrationCompatibilityPolicyAddress };
+}>;
+
+/** One indivisible selected catalog row and its compatibility decision. */
+export interface MigrationAdapterSelection<Adapter extends MigrationAdapter = MigrationAdapter> {
+  readonly candidate: MigrationAdapterCandidate<Adapter>;
+  readonly decision: MigrationCompatibilityDecision;
+}
+
+export type MigrationRequestId<Name extends string = string> = Brand<
+  Name,
+  'liteship.migration-request-id'
+>;
+export type MigrationRequestReference<
+  Id extends MigrationRequestId = MigrationRequestId,
+> = Reference<'migration-request', Id>;
+export type MigrationAdmissionReference<
+  Id extends MigrationRequestId = MigrationRequestId,
+> = Reference<'migration-admission', Id>;
+
 /** Exact execution request. Candidate order can never select an adapter. */
-export interface MigrationRequest<Value extends CanonicalValue = CanonicalValue> {
-  readonly source: MigrationSource<Value>;
-  readonly adapter: MigrationAdapterCoordinate;
-  readonly output: MigrationOutputProfileReference;
+export interface MigrationRequest<
+  Adapter extends MigrationAdapter = MigrationAdapter,
+  Request extends MigrationRequestId = MigrationRequestId,
+> {
+  readonly id: MigrationRequestReference<Request>;
+  readonly source: MigrationSource<MigrationSourceValue<Adapter['source']>, Adapter['source']>;
+  readonly selection: MigrationAdapterSelection<Adapter>;
 }
 
 /** A source fragment that was lost or approximated, with an exact explanation. */
@@ -1066,9 +1139,11 @@ export type MigrationMeaningPopulation = Algebra<{
 }>;
 
 /** Canonical operation-level product; adapter-specific values remain behind the profile. */
-export interface MigrationMeaningBundle {
+export interface MigrationMeaningBundle<
+  Profile extends MigrationOutputProfileReference = MigrationOutputProfileReference,
+> {
   readonly address: MigrationBundleAddress;
-  readonly profile: MigrationOutputProfileReference;
+  readonly profile: Profile;
   readonly population: MigrationMeaningPopulation;
 }
 
@@ -1085,9 +1160,12 @@ export type MigrationAdapterOutcome<Output extends CanonicalValue = CanonicalVal
 }>;
 
 /** Adapter completed but could not admit any source meaning. */
-export interface MigrationRejection {
-  readonly source: MigrationSourceCoordinate;
-  readonly adapter: MigrationAdapterCoordinate;
+export interface MigrationRejection<
+  Adapter extends MigrationAdapter = MigrationAdapter,
+  Request extends MigrationRequestId = MigrationRequestId,
+> {
+  readonly request: MigrationRequest<Adapter, Request>;
+  readonly source: MigrationSourceCoordinate<Adapter['source']['id']>;
   readonly diagnostics: NonEmptyTuple<Diagnostic>;
 }
 
@@ -1106,63 +1184,80 @@ export type MigrationFailure = Algebra<{
     readonly diagnostics: NonEmptyTuple<Diagnostic>;
   };
   'source-admission-refused': {
-    readonly source: MigrationSource;
+    readonly request: MigrationRequest;
     readonly diagnostics: NonEmptyTuple<Diagnostic>;
   };
   'source-canonicalization-failed': {
-    readonly source: CaseOf<MigrationSource, 'inline'>;
+    readonly request: MigrationRequest;
     readonly diagnostics: NonEmptyTuple<Diagnostic>;
   };
   'adapter-execution-failed': {
+    readonly request: MigrationRequest;
     readonly source: MigrationSourceCoordinate;
-    readonly adapter: MigrationAdapterCoordinate;
     readonly diagnostics: NonEmptyTuple<Diagnostic>;
   };
   'output-admission-failed': {
+    readonly request: MigrationRequest;
     readonly source: MigrationSourceCoordinate;
-    readonly adapter: MigrationAdapterCoordinate;
-    readonly output: MigrationOutputProfileReference;
     readonly diagnostics: NonEmptyTuple<Diagnostic>;
   };
   'provenance-failed': {
+    readonly request: MigrationRequest;
     readonly source: MigrationSourceCoordinate;
-    readonly adapter: MigrationAdapterCoordinate;
     readonly diagnostics: NonEmptyTuple<Diagnostic>;
   };
 }>;
 
+/** Input to the separate operation that applies one admitted migration. */
+export interface MigrationApplicationInput<Request extends MigrationRequestId = MigrationRequestId> {
+  readonly admission: MigrationAdmissionReference<Request>;
+}
+
 /** Applying admitted meaning is a separate operation, never a migration side effect. */
-export interface MigrationApplicationProposal {
-  readonly source: MigrationSourceCoordinate;
-  readonly bundle: MigrationMeaningBundle;
+export interface MigrationApplicationProposal<
+  Request extends MigrationRequestId = MigrationRequestId,
+  Op extends OperationId = OperationId,
+> {
+  readonly invocation: OperationInvocation<MigrationApplicationInput<Request>, Op>;
   readonly explanation: string;
 }
 
 /** One exact report, carried as the migration operation's output. */
-export type MigrationReport = Algebra<{
+export type MigrationReport<
+  Adapter extends MigrationAdapter = MigrationAdapter,
+  Request extends MigrationRequestId = MigrationRequestId,
+> = Algebra<{
   admitted: {
-    readonly source: MigrationSourceCoordinate;
-    readonly adapter: MigrationAdapterCoordinate;
-    readonly bundle: MigrationMeaningBundle;
+    readonly admission: MigrationAdmissionReference<Request>;
+    readonly request: MigrationRequest<Adapter, Request>;
+    readonly source: MigrationSourceCoordinate<Adapter['source']['id']>;
+    readonly bundle: MigrationMeaningBundle<Adapter['output']['id']>;
     readonly diagnostics: readonly Diagnostic[];
     readonly dropped: readonly MigrationLoss[];
     readonly approximated: readonly MigrationLoss[];
-    readonly proposedApplication: MigrationApplicationProposal;
+    readonly proposedApplication: MigrationApplicationProposal<Request>;
   };
   rejected: {
-    readonly rejection: MigrationRejection;
+    readonly rejection: MigrationRejection<Adapter, Request>;
   };
 }>;
 
 /** Compiler-owned discovery and execution authority projected through operations. */
-export interface MigrationAuthority {
-  readonly catalog: MigrationAdapterCatalog;
+export interface MigrationAuthority<
+  Catalog extends MigrationAdapterCatalog = MigrationAdapterCatalog,
+> {
+  readonly catalog: Catalog;
   readonly discover: Signature<
     MigrationDiscoveryRequest,
-    NonEmptyTuple<MigrationAdapterCandidate>,
+    MigrationAdapterCandidates<Catalog['adapters']>,
     MigrationFailure
   >;
-  readonly execute: Signature<MigrationRequest, MigrationReport, MigrationFailure>;
+  readonly execute: <
+    Adapter extends Catalog['adapters'][number],
+    Request extends MigrationRequestId,
+  >(
+    request: MigrationRequest<Adapter, Request>,
+  ) => MaybePromise<Result<MigrationReport<Adapter, Request>, MigrationFailure>>;
 }
 
 export type MigrationAuthorityRequirement = Hole<
@@ -1195,6 +1290,7 @@ export interface CompilerTypeSurface {
   readonly requirements: RequirementClosure;
   readonly migration: MigrationAdapter;
   readonly migrationCatalog: MigrationAdapterCatalog;
+  readonly migrationSelection: MigrationAdapterSelection;
   readonly migrationRequest: MigrationRequest;
   readonly migrationReport: MigrationReport;
   readonly migrationFailure: MigrationFailure;

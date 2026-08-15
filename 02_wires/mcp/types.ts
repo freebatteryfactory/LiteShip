@@ -36,7 +36,12 @@ import type {
 } from '../../types.js';
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { ContentAddress } from '../../00_core/01_encoding/types.js';
-import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
+import type {
+  MigrationAdapter,
+  MigrationFailure,
+  MigrationReport,
+  MigrationRequestId,
+} from '../../00_core/14_compiler/types.js';
 import type { OperationId, OperationReference } from '../../00_core/07_operation/types.js';
 import type {
   WireExchange,
@@ -125,9 +130,13 @@ export type McpAnswer<
 }>;
 
 /** Migration is an invokable MCP tool, never an orphan library. */
-export interface McpMigrationProjection<Op extends OperationId> {
+export interface McpMigrationProjection<
+  Op extends OperationId,
+  Adapter extends MigrationAdapter = MigrationAdapter,
+  Request extends MigrationRequestId = MigrationRequestId,
+> {
   readonly offer: McpOffer<Op, 'tool'>;
-  readonly answer: McpAnswer<MigrationReport, MigrationFailure, Op>;
+  readonly answer: McpAnswer<MigrationReport<Adapter, Request>, MigrationFailure, Op>;
 }
 
 /**

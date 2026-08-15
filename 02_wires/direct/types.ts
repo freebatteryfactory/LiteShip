@@ -23,7 +23,12 @@
 
 import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { OperationId } from '../../00_core/07_operation/types.js';
-import type { MigrationFailure, MigrationReport } from '../../00_core/14_compiler/types.js';
+import type {
+  MigrationAdapter,
+  MigrationFailure,
+  MigrationReport,
+  MigrationRequestId,
+} from '../../00_core/14_compiler/types.js';
 import type { WireExchange, WireRefusal } from '../types.js';
 
 /**
@@ -62,8 +67,12 @@ export type DirectExchange<
 >;
 
 /** In-process migration projection; exact program identity is bound downstream. */
-export type DirectMigrationExchange<Op extends OperationId> = DirectExchange<
-  MigrationReport,
+export type DirectMigrationExchange<
+  Op extends OperationId,
+  Adapter extends MigrationAdapter = MigrationAdapter,
+  Request extends MigrationRequestId = MigrationRequestId,
+> = DirectExchange<
+  MigrationReport<Adapter, Request>,
   MigrationFailure,
   Op
 >;

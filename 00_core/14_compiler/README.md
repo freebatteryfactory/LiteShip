@@ -39,13 +39,13 @@ Own the complete compiler-arm registry, migration, faithful settlement, exact re
 
 Compilation and migration are inverse faces under one compiler authority, but they do not share one forced signature. Compiler arms lower LiteShip meaning outward; migration adapters interpret admitted foreign meaning inward. `MigrationAdapterCatalog` is the one addressed, non-empty, discoverable adapter population.
 
-An adapter coordinate has two parts: a stable lineage ID and the address of the exact adapter definition. Discovery by source profile returns candidates and never executes or silently selects one. Execution names one exact coordinate. Multiple adapters may serve one profile; no registration order has semantic force.
+An adapter coordinate has two parts: a stable lineage ID and an exact definition coordinate whose revision identity is bound to its content address. Discovery by source profile returns candidates and never executes or silently selects one. Execution consumes one `MigrationAdapterSelection` derived from a single candidate row; adapter, source profile, output profile, definition revision, and compatibility decision cannot be reassembled as independent siblings. Multiple adapters may serve one profile; no registration order has semantic force.
 
 `MigrationSource` has two arms. An artifact arrives already addressed. Inline schema-admitted canonical data receives an address during source admission, before adapter execution evidence is created. `MigrationSourceCoordinate` is therefore addressed in both arms.
 
 Adapter-local success carries product and diagnostics together, including error diagnostics for source fragments that were dropped while the remaining meaning was admitted. Adapter-local rejection is distinct from operational failure. Operational failure is a typed algebra whose every arm carries non-empty diagnostics; a possibly empty diagnostic array can never be the only explanation for no product.
 
-The operation-level `MigrationReport` distinguishes admitted and rejected source. An admitted report carries an addressed meaning bundle, exact source and adapter coordinates, dropped and approximated populations, diagnostics, and a proposed application. The surrounding `OperationReceipt` binds that report to the invocation; putting the receipt back inside its own output would be recursive, while copying only its ID into the report would create two receipt authorities that can disagree. A lawful empty product must occupy the explicit `empty` population arm and name the schema that admitted emptiness. An accidental empty array is not a product.
+The operation-level `MigrationReport` distinguishes admitted and rejected source. An admitted report carries its exact execution request whole, the addressed source coordinate produced by admission, an output-profile-correlated meaning bundle, dropped and approximated populations, diagnostics, and a proposed application. The proposal references the admission derived from that request inside an ordinary operation invocation; it never repeats source or bundle coordinates that could name another report's product. The surrounding `OperationReceipt` binds the report to the invocation; putting the receipt back inside its own output would be recursive, while copying only its ID into the report would create two receipt authorities that can disagree. A lawful empty product must occupy the explicit `empty` population arm and name the schema that admitted emptiness. An accidental empty array is not a product.
 
 Migration never applies the produced meaning. `MigrationApplicationProposal` is consumed by a separate approved operation.
 
@@ -194,7 +194,7 @@ Several authorities backed by one physical provider share one instance and one l
 
 - One compiler fleet authority exists.
 - Adding an arm creates every declared downstream obligation.
-- Migration discovers and executes one exact adapter and produces an addressed admitted-meaning report without applying it.
+- Migration discovers one candidate, executes that indivisible selected row, and produces a request-correlated addressed admitted-meaning report without applying it.
 - Legality precedes cost.
 - Settlement location and execution backend remain separate.
 - Runtime features derive from exact residual requirements.
