@@ -1075,20 +1075,19 @@ export interface MigrationAdapterCatalog<
 }
 
 /** Discoverable row derived from one exact adapter; discovery never runs it. */
-export type MigrationAdapterCandidate<Adapter extends MigrationAdapter = MigrationAdapter> = Readonly<{
-  adapter: Adapter['coordinate'];
-  source: Adapter['source'];
-  output: Adapter['output'];
-}>;
-
-type MigrationAdapterCandidates<Adapters extends NonEmptyTuple<MigrationAdapter>> = {
-  readonly [Index in keyof Adapters]: Adapters[Index] extends MigrationAdapter
-    ? MigrationAdapterCandidate<Adapters[Index]>
+export type MigrationAdapterCandidate<Adapter extends MigrationAdapter = MigrationAdapter> =
+  Adapter extends MigrationAdapter
+    ? Readonly<{
+        adapter: Adapter['coordinate'];
+        source: Adapter['source'];
+        output: Adapter['output'];
+      }>
     : never;
-};
 
-export interface MigrationDiscoveryRequest {
-  readonly source: MigrationSourceProfileReference;
+export interface MigrationDiscoveryRequest<
+  Profile extends MigrationSourceProfileReference = MigrationSourceProfileReference,
+> {
+  readonly source: Profile;
   readonly policy?: MigrationCompatibilityPolicyAddress;
 }
 
@@ -1099,9 +1098,34 @@ export type MigrationCompatibilityDecision = Algebra<{
 }>;
 
 /** One indivisible selected catalog row and its compatibility decision. */
-export interface MigrationAdapterSelection<Adapter extends MigrationAdapter = MigrationAdapter> {
-  readonly candidate: MigrationAdapterCandidate<Adapter>;
-  readonly decision: MigrationCompatibilityDecision;
+export type MigrationAdapterSelection<Adapter extends MigrationAdapter = MigrationAdapter> =
+  Adapter extends MigrationAdapter
+    ? {
+        readonly candidate: MigrationAdapterCandidate<Adapter>;
+        readonly decision: MigrationCompatibilityDecision;
+      }
+    : never;
+
+type MigrationAdapterForSource<
+  Adapter extends MigrationAdapter,
+  Profile extends MigrationSourceProfileReference,
+> = Adapter extends MigrationAdapter
+  ? Adapter['source']['id'] extends Profile
+    ? Adapter
+    : never
+  : never;
+
+/** Exact successful discovery result for one requested source profile. */
+export type MigrationDiscoverySelection<
+  Catalog extends MigrationAdapterCatalog,
+  Profile extends MigrationSourceProfileReference,
+> = MigrationAdapterSelection<MigrationAdapterForSource<Catalog['adapters'][number], Profile>>;
+
+/** Discovery either identifies one indivisible compatible row or fails. */
+export interface MigrationDiscovery<Catalog extends MigrationAdapterCatalog> {
+  <Profile extends MigrationSourceProfileReference>(
+    request: MigrationDiscoveryRequest<Profile>,
+  ): MaybePromise<Result<MigrationDiscoverySelection<Catalog, Profile>, MigrationFailure>>;
 }
 
 export type MigrationRequestId<Name extends string = string> = Brand<
@@ -1128,7 +1152,6 @@ export interface MigrationRequest<
 /** A source fragment that was lost or approximated, with an exact explanation. */
 export interface MigrationLoss {
   readonly source: SourceLocation;
-  readonly explanation: string;
   readonly diagnostics: NonEmptyTuple<Diagnostic>;
 }
 
@@ -1219,7 +1242,7 @@ export interface MigrationApplicationProposal<
   Op extends OperationId = OperationId,
 > {
   readonly invocation: OperationInvocation<MigrationApplicationInput<Request>, Op>;
-  readonly explanation: string;
+  readonly diagnostic: Diagnostic;
 }
 
 /** One exact report, carried as the migration operation's output. */
@@ -1247,11 +1270,7 @@ export interface MigrationAuthority<
   Catalog extends MigrationAdapterCatalog = MigrationAdapterCatalog,
 > {
   readonly catalog: Catalog;
-  readonly discover: Signature<
-    MigrationDiscoveryRequest,
-    MigrationAdapterCandidates<Catalog['adapters']>,
-    MigrationFailure
-  >;
+  readonly discover: MigrationDiscovery<Catalog>;
   readonly execute: <
     Adapter extends Catalog['adapters'][number],
     Request extends MigrationRequestId,

@@ -56,6 +56,8 @@ import type {
   MigrationApplicationProposal,
   MigrationAuthority,
   MigrationAuthorityRequirement,
+  MigrationDiscovery,
+  MigrationDiscoverySelection,
   MigrationFailure,
   MigrationMeaningPopulation,
   MigrationProduct,
@@ -995,8 +997,76 @@ type MigrationLawAdapterB = MigrationAdapter<
   MigrationLawSourceB,
   MigrationLawOutputB
 >;
+type MigrationLawAdapterAAlternative = MigrationAdapter<
+  MigrationAdapterId<'law.migration.adapter.a-alternative'>,
+  MigrationAdapterDefinitionId<'law.migration.adapter-definition.a-alternative'>,
+  MigrationLawSourceA,
+  MigrationLawOutputB
+>;
 type MigrationLawRequestA = MigrationRequestId<'law.migration.request.a'>;
 type MigrationLawRequestB = MigrationRequestId<'law.migration.request.b'>;
+type MigrationLawCatalog = MigrationAdapterCatalog<readonly [MigrationLawAdapterA, MigrationLawAdapterB]>;
+type MigrationLawAmbiguousCatalog = MigrationAdapterCatalog<
+  readonly [MigrationLawAdapterA, MigrationLawAdapterAAlternative]
+>;
+
+/** Discovery is source-correlated and succeeds with one indivisible selected row. */
+export type MigrationDiscoveryReturnsOneSelectedCompatibleRow = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<
+          MigrationDiscoverySelection<MigrationLawCatalog, MigrationLawSourceA['id']>,
+          MigrationAdapterSelection<MigrationLawAdapterA>
+        >,
+        Equal<
+          MigrationDiscoverySelection<MigrationLawCatalog, MigrationLawSourceB['id']>,
+          MigrationAdapterSelection<MigrationLawAdapterB>
+        >,
+        MigrationAdapterSelection<MigrationLawAdapterB> extends MigrationDiscoverySelection<
+          MigrationLawCatalog,
+          MigrationLawSourceA['id']
+        >
+          ? true
+          : false,
+        Equal<MigrationAuthority<MigrationLawCatalog>['discover'], MigrationDiscovery<MigrationLawCatalog>>,
+        [MigrationDiscoverySelection<MigrationLawCatalog, MigrationLawSourceA['id']>] extends [never]
+          ? true
+          : false,
+        MigrationAdapterSelection<MigrationLawAdapterA> extends MigrationDiscoverySelection<
+          MigrationLawAmbiguousCatalog,
+          MigrationLawSourceA['id']
+        >
+          ? true
+          : false,
+        MigrationAdapterSelection<MigrationLawAdapterAAlternative> extends MigrationDiscoverySelection<
+          MigrationLawAmbiguousCatalog,
+          MigrationLawSourceA['id']
+        >
+          ? true
+          : false,
+        {
+          readonly candidate: {
+            readonly adapter: MigrationLawAdapterA['coordinate'];
+            readonly source: MigrationLawSourceA;
+            readonly output: MigrationLawOutputB;
+          };
+          readonly decision: MigrationAdapterSelection<MigrationLawAdapterA>['decision'];
+        } extends MigrationDiscoverySelection<MigrationLawAmbiguousCatalog, MigrationLawSourceA['id']>
+          ? true
+          : false,
+        {
+          readonly adapter: MigrationLawAdapterA['coordinate'];
+          readonly source: MigrationLawSourceA;
+          readonly output: MigrationLawOutputB;
+        } extends MigrationAdapterCandidate<MigrationLawAdapterA | MigrationLawAdapterAAlternative>
+          ? true
+          : false,
+      ],
+      [true, true, false, true, false, true, true, false, false]
+    >
+  >
+>;
 
 export type AnAdapterCarriesLossBesideItsProductAndCannotFailSilently = Assert<
   IsExactlyTrue<
