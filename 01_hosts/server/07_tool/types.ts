@@ -126,7 +126,7 @@ export type ToolAuthorityRequirement = Hole<'liteship.server.tools', ToolAuthori
 export interface ToolCatalogGrounding
   extends ServerGroundingDefinition<
     readonly [ToolCatalogRequirement],
-    unknown,
+    ToolCatalogBinding,
     'deployment',
     'unowned'
   > {

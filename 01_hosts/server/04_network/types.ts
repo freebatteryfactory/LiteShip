@@ -112,7 +112,7 @@ export type ServerNetworkRequirement = Hole<'liteship.server.network', ServerNet
 export interface ServerNetworkFacilityGrounding
   extends ServerGroundingDefinition<
     readonly [ServerNetworkFacilityRequirement],
-    unknown,
+    ServerNetworkFacility,
     'intrinsic',
     'unowned'
   > {

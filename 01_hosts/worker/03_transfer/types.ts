@@ -113,7 +113,7 @@ export type TransferRequirement = Hole<'liteship.worker.transfer', TransferAutho
 export interface TransferFacilityGrounding
   extends WorkerGroundingDefinition<
     readonly [TransferFacilityRequirement],
-    unknown,
+    TransferFacility,
     'intrinsic',
     'unowned'
   > {

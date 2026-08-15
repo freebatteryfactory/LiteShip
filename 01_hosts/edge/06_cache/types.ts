@@ -88,7 +88,7 @@ export type EdgeCacheRequirement = Hole<'liteship.edge.cache', EdgeCacheAuthorit
 export interface CacheFacilityGrounding
   extends EdgeGroundingDefinition<
     readonly [CacheFacilityRequirement],
-    unknown,
+    CacheFacility,
     'intrinsic',
     'unowned'
   > {

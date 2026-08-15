@@ -141,7 +141,7 @@ export type WorkerExecutionRequirement = Hole<'liteship.worker.execution', Worke
 export interface WorkerSchedulingGrounding
   extends WorkerGroundingDefinition<
     readonly [WorkerSchedulingRequirement],
-    unknown,
+    WorkerSchedulingFacility,
     'intrinsic',
     'unowned'
   > {

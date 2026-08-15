@@ -77,7 +77,7 @@ export type EdgePolicyRequirement = Hole<'liteship.edge.response-policy', EdgeRe
 export interface EdgePolicyGrounding
   extends EdgeGroundingDefinition<
     readonly [EdgePolicyRequirement],
-    unknown,
+    EdgeResponsePolicy,
     'deployment',
     'unowned'
   > {

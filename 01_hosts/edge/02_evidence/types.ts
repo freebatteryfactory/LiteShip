@@ -66,7 +66,7 @@ export type RequestEvidenceRequirement = Hole<
 export interface HintSourceGrounding
   extends EdgeGroundingDefinition<
     readonly [HintSourceRequirement],
-    unknown,
+    HintSourceFacility,
     'invocation',
     'unowned'
   > {

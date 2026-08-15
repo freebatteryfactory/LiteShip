@@ -84,7 +84,7 @@ export type ServerExecutionRequirement = Hole<'liteship.server.execution', Serve
 export interface ServerSchedulingGrounding
   extends ServerGroundingDefinition<
     readonly [ServerSchedulingRequirement],
-    unknown,
+    ServerSchedulingFacility,
     'intrinsic',
     'unowned'
   > {

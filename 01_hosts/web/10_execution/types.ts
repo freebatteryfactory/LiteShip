@@ -101,7 +101,7 @@ export type WebExecutionRequirement = Hole<'liteship.web.execution', WebExecutio
 
 /** Intrinsic grounding: the scheduling facility derived from the platform. */
 export interface SchedulingFacilityGrounding
-  extends WebGroundingDefinition<readonly [SchedulingFacilityRequirement], unknown, 'intrinsic', 'unowned'> {
+  extends WebGroundingDefinition<readonly [SchedulingFacilityRequirement], SchedulingFacility, 'intrinsic', 'unowned'> {
   readonly id: GroundingId<'liteship.web.grounding.scheduling-facility'>;
 }
 

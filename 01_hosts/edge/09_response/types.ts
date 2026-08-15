@@ -149,7 +149,7 @@ export type ResponseCommitRequirement = Hole<'liteship.edge.response-commit', Re
 export interface ResponseFacilityGrounding
   extends EdgeGroundingDefinition<
     readonly [ResponseFacilityRequirement],
-    unknown,
+    ResponseFacility<EdgeRequestId>,
     'invocation',
     'unowned'
   > {

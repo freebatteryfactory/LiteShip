@@ -12,19 +12,19 @@
  */
 
 import type { GroundingId, RealizationOfferId } from '../../00_core/14_compiler/types.js';
-import type { Assert, Equal } from '../../types.js';
+import type { Assert, Equal, InputOf } from '../../types.js';
 import type { RealizationCatalog } from '../types.js';
-import type { ServerBootstrapTypeSurface } from './00_bootstrap/types.js';
-import type { ServerProcessTypeSurface } from './01_process/types.js';
-import type { SecretProvider, ServerSecretTypeSurface } from './02_secret/types.js';
-import type { FilesystemProvider, ServerFilesystemTypeSurface } from './03_filesystem/types.js';
-import type { ServerNetworkTypeSurface } from './04_network/types.js';
-import type { DatabaseProvider, ServerDatabaseTypeSurface } from './05_database/types.js';
+import type { ServerBootstrapTypeSurface, ServerConfiguration, ServerProcessEntry } from './00_bootstrap/types.js';
+import type { HostProcessAuthority, ServerProcessTypeSurface } from './01_process/types.js';
+import type { SecretProvider, SecretSourceBinding, ServerSecretTypeSurface } from './02_secret/types.js';
+import type { FilesystemProvider, FilesystemRootBinding, ServerFilesystemTypeSurface } from './03_filesystem/types.js';
+import type { ServerNetworkFacility, ServerNetworkTypeSurface } from './04_network/types.js';
+import type { DatabaseEndpointBinding, DatabaseProvider, ServerDatabaseTypeSurface } from './05_database/types.js';
 import type { ServerServiceTypeSurface } from './06_service/types.js';
-import type { ServerToolTypeSurface, ToolAuthority } from './07_tool/types.js';
-import type { ServerExecutionHost, ServerExecutionTypeSurface } from './08_execution/types.js';
-import type { ServerOperationTypeSurface } from './09_operation/types.js';
-import type { ServerMediaTypeSurface } from './10_media/types.js';
+import type { ServerToolTypeSurface, ToolAuthority, ToolCatalogBinding } from './07_tool/types.js';
+import type { ServerExecutionHost, ServerExecutionTypeSurface, ServerSchedulingFacility } from './08_execution/types.js';
+import type { OperationCatalogBinding, ServerOperationTypeSurface } from './09_operation/types.js';
+import type { ServerCodecAdmission, ServerMediaTypeSurface } from './10_media/types.js';
 import type { ServerCapabilityTopology, ServerTypeAt, ServerTypeTopology } from './types.js';
 
 
@@ -113,6 +113,38 @@ export type TheServerGroundingPopulationIsExact = Assert<
     | 'codecAdmission'
     | 'schedulingFacility'
     | 'operationCatalog'
+  >
+>;
+
+/** Compile-time law: every server grounding admits the exact supplied host or deployment fact. */
+export type EveryServerGroundingAdmitsItsExactSuppliedInput = Assert<
+  Equal<
+    [
+      InputOf<ServerCapabilityTopology['groundings']['processEntry']['admit']>,
+      InputOf<ServerCapabilityTopology['groundings']['configuration']['admit']>,
+      InputOf<ServerCapabilityTopology['groundings']['processFacility']['admit']>,
+      InputOf<ServerCapabilityTopology['groundings']['secretSource']['admit']>,
+      InputOf<ServerCapabilityTopology['groundings']['filesystemRoot']['admit']>,
+      InputOf<ServerCapabilityTopology['groundings']['networkFacility']['admit']>,
+      InputOf<ServerCapabilityTopology['groundings']['databaseEndpoint']['admit']>,
+      InputOf<ServerCapabilityTopology['groundings']['toolCatalog']['admit']>,
+      InputOf<ServerCapabilityTopology['groundings']['codecAdmission']['admit']>,
+      InputOf<ServerCapabilityTopology['groundings']['schedulingFacility']['admit']>,
+      InputOf<ServerCapabilityTopology['groundings']['operationCatalog']['admit']>,
+    ],
+    [
+      ServerProcessEntry,
+      ServerConfiguration,
+      HostProcessAuthority,
+      SecretSourceBinding,
+      FilesystemRootBinding,
+      ServerNetworkFacility,
+      DatabaseEndpointBinding,
+      ToolCatalogBinding,
+      ServerCodecAdmission,
+      ServerSchedulingFacility,
+      OperationCatalogBinding,
+    ]
   >
 >;
 

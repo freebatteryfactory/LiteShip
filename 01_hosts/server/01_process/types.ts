@@ -88,7 +88,7 @@ export type ChildProcessRequirement = Hole<'liteship.server.child-process', Chil
 export interface ProcessFacilityGrounding
   extends ServerGroundingDefinition<
     readonly [ProcessAuthorityRequirement],
-    unknown,
+    HostProcessAuthority,
     'intrinsic',
     'unowned'
   > {

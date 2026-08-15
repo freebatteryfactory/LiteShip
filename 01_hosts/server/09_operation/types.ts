@@ -115,7 +115,7 @@ export type ServerOperationRequirement = Hole<'liteship.server.operations', Serv
 export interface OperationCatalogGrounding
   extends ServerGroundingDefinition<
     readonly [OperationCatalogRequirement],
-    unknown,
+    OperationCatalogBinding,
     'deployment',
     'unowned'
   > {

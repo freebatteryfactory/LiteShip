@@ -144,7 +144,7 @@ export type BootstrapEnvelopeRequirement = Hole<
 
 /** Intrinsic grounding: the isolated realm's own admitted scope. */
 export interface RealmScopeGrounding
-  extends WorkerGroundingDefinition<readonly [RealmScopeRequirement], unknown, 'intrinsic', 'unowned'> {
+  extends WorkerGroundingDefinition<readonly [RealmScopeRequirement], RealmScopeFacility, 'intrinsic', 'unowned'> {
   readonly id: GroundingId<'liteship.worker.grounding.realm-scope'>;
 }
 

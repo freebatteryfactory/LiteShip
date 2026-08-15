@@ -247,7 +247,7 @@ export interface WebCodecFacility {
 export interface CodecAdmissionGrounding
   extends WebGroundingDefinition<
     readonly [WebCodecAdmissionRequirement],
-    unknown,
+    WebCodecAdmission,
     'intrinsic',
     'unowned'
   > {
@@ -277,23 +277,21 @@ export type MediaAuthorityRequirement = Hole<'liteship.web.media-authority', Med
 
 /** Intrinsic grounding: the constructor facility itself, not any constructed resource. */
 export interface AudioFacilityGrounding
-  extends WebGroundingDefinition<readonly [AudioFacilityRequirement], unknown, 'intrinsic', 'unowned'> {
+  extends WebGroundingDefinition<readonly [AudioFacilityRequirement], AudioFacility, 'intrinsic', 'unowned'> {
   readonly id: GroundingId<'liteship.web.grounding.audio-facility'>;
 }
 
 /**
- * An application-supplied existing audio runtime — an already-created
- * `AudioContext` genuinely carrying its clock — enters as an application
- * grounding with recorded custody. The requirement is the clock-bearing
- * provider capability, never a standalone clock hole: the clock arrives
- * inside each instance, not as a separately deduplicable name. Generic
- * injected media values enter as admitted application inputs to a provider
- * operation, not as one global injected-resource hole.
+ * An application supplies the exact clock-bearing audio-runtime authority and
+ * retains its custody. Admission borrows that provider; it does not imply that
+ * a particular source resource already exists or that LiteShip may dispose the
+ * application-owned runtime. Source resources enter through the authority's
+ * admitted per-use operations, never through one global injected-resource hole.
  */
 export interface InjectedAudioRuntimeGrounding
   extends WebGroundingDefinition<
     readonly [AudioRuntimeRequirement],
-    unknown,
+    AudioRuntimeAuthority,
     'application',
     'unowned'
   > {

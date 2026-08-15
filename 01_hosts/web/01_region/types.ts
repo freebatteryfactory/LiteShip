@@ -228,7 +228,7 @@ export type RegionAuthorityRequirement = Hole<'liteship.web.region-authority', R
 
 /** Intrinsic grounding: the discovery authority derived from the document. */
 export interface RegionDiscoveryGrounding
-  extends WebGroundingDefinition<readonly [RegionDiscoveryRequirement], unknown, 'intrinsic', 'unowned'> {
+  extends WebGroundingDefinition<readonly [RegionDiscoveryRequirement], RegionDiscovery, 'intrinsic', 'unowned'> {
   readonly id: GroundingId<'liteship.web.grounding.region-discovery'>;
 }
 

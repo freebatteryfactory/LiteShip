@@ -137,7 +137,7 @@ export type MessagingRequirement = Hole<'liteship.worker.messaging', MessagingAu
 export interface MessageFacilityGrounding
   extends WorkerGroundingDefinition<
     readonly [MessageFacilityRequirement],
-    unknown,
+    MessageFacility,
     'intrinsic',
     'unowned'
   > {

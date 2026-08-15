@@ -67,7 +67,7 @@ export type EdgeStoreRequirement = Hole<'liteship.edge.store', EdgeStore>;
 export interface DeploymentStoreGrounding
   extends EdgeGroundingDefinition<
     readonly [DeploymentStoreRequirement],
-    unknown,
+    DeploymentStoreBinding,
     'deployment',
     'unowned'
   > {

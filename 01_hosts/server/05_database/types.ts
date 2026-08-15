@@ -157,7 +157,7 @@ export type DatabaseProviderRequirement = Hole<'liteship.server.database', Datab
 export interface DatabaseEndpointGrounding
   extends ServerGroundingDefinition<
     readonly [DatabaseEndpointRequirement],
-    unknown,
+    DatabaseEndpointBinding,
     'deployment',
     'unowned'
   > {

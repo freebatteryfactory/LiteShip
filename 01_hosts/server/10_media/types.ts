@@ -226,7 +226,7 @@ export type ServerCodecAdmissionRequirement = Hole<
 export interface ServerCodecAdmissionGrounding
   extends ServerGroundingDefinition<
     readonly [ServerCodecAdmissionRequirement],
-    unknown,
+    ServerCodecAdmission,
     'deployment',
     'unowned'
   > {

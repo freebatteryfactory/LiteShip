@@ -175,7 +175,7 @@ export type TransportAuthorityRequirement = Hole<'liteship.web.transport-authori
 
 /** Intrinsic grounding: the browser transport entrypoints, admitted narrowly. */
 export interface TransportFacilityGrounding
-  extends WebGroundingDefinition<readonly [TransportFacilityRequirement], unknown, 'intrinsic', 'unowned'> {
+  extends WebGroundingDefinition<readonly [TransportFacilityRequirement], BrowserTransportFacility, 'intrinsic', 'unowned'> {
   readonly id: GroundingId<'liteship.web.grounding.transport-facility'>;
 }
 

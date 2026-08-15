@@ -206,7 +206,7 @@ export type CaptureAuthorityRequirement = Hole<'liteship.web.capture-authority',
 export interface CaptureFacilityGrounding
   extends WebGroundingDefinition<
     readonly [CaptureFacilityRequirement],
-    unknown,
+    CaptureFacility,
     'intrinsic',
     'unowned'
   > {

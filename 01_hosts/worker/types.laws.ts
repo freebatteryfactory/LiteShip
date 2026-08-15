@@ -12,15 +12,15 @@
  */
 
 import type { GroundingId, RealizationOfferId } from '../../00_core/14_compiler/types.js';
-import type { Assert, Equal, TagOf } from '../../types.js';
+import type { Assert, Equal, InputOf, TagOf } from '../../types.js';
 import type { RealizationCatalog } from '../types.js';
-import type { WorkerBootstrapTypeSurface } from './00_bootstrap/types.js';
+import type { RealmScopeFacility, WorkerBootstrapTypeSurface } from './00_bootstrap/types.js';
 import type { WorkerInstanceTypeSurface } from './01_instance/types.js';
-import type { MessagingAuthority, WorkerMessageTypeSurface } from './02_message/types.js';
-import type { CustodyMode, TransferTicket, WorkerTransferTypeSurface } from './03_transfer/types.js';
-import type { MemoryLayoutId, SharedBufferId, SharedMemoryBuffer, WorkerMemoryTypeSurface } from './04_memory/types.js';
+import type { MessageFacility, MessagingAuthority, WorkerMessageTypeSurface } from './02_message/types.js';
+import type { CustodyMode, TransferFacility, TransferTicket, WorkerTransferTypeSurface } from './03_transfer/types.js';
+import type { MemoryLayoutId, SharedBufferId, SharedMemoryBuffer, SharedMemoryFacility, WorkerMemoryTypeSurface } from './04_memory/types.js';
 import type { WorkerQueueTypeSurface } from './05_queue/types.js';
-import type { WorkerExecutionHost, WorkerExecutionTypeSurface } from './06_execution/types.js';
+import type { WorkerExecutionHost, WorkerExecutionTypeSurface, WorkerSchedulingFacility } from './06_execution/types.js';
 import type { WorkerCapabilityTopology, WorkerTypeAt, WorkerTypeTopology } from './types.js';
 
 
@@ -84,6 +84,31 @@ export type TheWorkerGroundingPopulationIsExact = Assert<
     | 'transferFacility'
     | 'sharedMemoryFacility'
     | 'schedulingFacility'
+  >
+>;
+
+/**
+ * Compile-time law: only the parent-written bootstrap envelope enters as raw
+ * hostile data; every other worker grounding admits its exact realm facility.
+ */
+export type EveryWorkerGroundingAdmitsItsExactSuppliedInput = Assert<
+  Equal<
+    [
+      InputOf<WorkerCapabilityTopology['groundings']['realmScope']['admit']>,
+      InputOf<WorkerCapabilityTopology['groundings']['bootstrapEnvelope']['admit']>,
+      InputOf<WorkerCapabilityTopology['groundings']['messageFacility']['admit']>,
+      InputOf<WorkerCapabilityTopology['groundings']['transferFacility']['admit']>,
+      InputOf<WorkerCapabilityTopology['groundings']['sharedMemoryFacility']['admit']>,
+      InputOf<WorkerCapabilityTopology['groundings']['schedulingFacility']['admit']>,
+    ],
+    [
+      RealmScopeFacility,
+      unknown,
+      MessageFacility,
+      TransferFacility,
+      SharedMemoryFacility,
+      WorkerSchedulingFacility,
+    ]
   >
 >;
 

@@ -118,7 +118,7 @@ export type EdgeNetworkRequirement = Hole<'liteship.edge.network', EdgeNetworkAu
 export interface EdgeNetworkFacilityGrounding
   extends EdgeGroundingDefinition<
     readonly [EdgeNetworkFacilityRequirement],
-    unknown,
+    EdgeNetworkFacility,
     'intrinsic',
     'unowned'
   > {

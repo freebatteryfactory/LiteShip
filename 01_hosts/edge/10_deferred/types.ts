@@ -97,7 +97,7 @@ export type DeferredWorkRequirement = Hole<'liteship.edge.deferred-work', Deferr
 export interface DeferredFacilityGrounding
   extends EdgeGroundingDefinition<
     readonly [DeferredFacilityRequirement],
-    unknown,
+    DeferredFacility,
     'intrinsic',
     'unowned'
   > {

@@ -111,7 +111,7 @@ export type ProbeFacilityRequirement = Hole<'liteship.web.probe-facility', Probe
 
 /** Intrinsic grounding: the producer authority derived from matchMedia and peers. */
 export interface ProbeFacilityGrounding
-  extends WebGroundingDefinition<readonly [ProbeFacilityRequirement], unknown, 'intrinsic', 'unowned'> {
+  extends WebGroundingDefinition<readonly [ProbeFacilityRequirement], ProbeFacility, 'intrinsic', 'unowned'> {
   readonly id: GroundingId<'liteship.web.grounding.probe-facility'>;
 }
 

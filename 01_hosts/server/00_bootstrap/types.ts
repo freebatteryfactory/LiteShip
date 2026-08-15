@@ -131,7 +131,7 @@ export type ServerConfigurationRequirement = Hole<
 export interface ServerEntryGrounding
   extends ServerGroundingDefinition<
     readonly [ServerEntryRequirement],
-    unknown,
+    ServerProcessEntry,
     'invocation',
     'unowned'
   > {
@@ -142,7 +142,7 @@ export interface ServerEntryGrounding
 export interface ServerConfigurationGrounding
   extends ServerGroundingDefinition<
     readonly [ServerConfigurationRequirement],
-    unknown,
+    ServerConfiguration,
     'deployment',
     'unowned'
   > {

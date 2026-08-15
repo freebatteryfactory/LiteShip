@@ -249,7 +249,7 @@ export type GraphicsAuthorityRequirement = Hole<'liteship.web.graphics-authority
 
 /** Intrinsic grounding: the access facility, not any acquired device. */
 export interface GpuAccessGrounding
-  extends WebGroundingDefinition<readonly [GpuAccessRequirement], unknown, 'intrinsic', 'unowned'> {
+  extends WebGroundingDefinition<readonly [GpuAccessRequirement], GpuAccess, 'intrinsic', 'unowned'> {
   readonly id: GroundingId<'liteship.web.grounding.gpu-access'>;
 }
 

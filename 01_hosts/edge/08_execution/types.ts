@@ -127,7 +127,7 @@ export type EdgeOperationRequirement = Hole<'liteship.edge.operation', EdgeOpera
 export interface EdgeExecutionFacilityGrounding
   extends EdgeGroundingDefinition<
     readonly [EdgeExecutionFacilityRequirement],
-    unknown,
+    EdgeExecutionFacility,
     'intrinsic',
     'unowned'
   > {

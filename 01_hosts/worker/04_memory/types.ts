@@ -161,7 +161,7 @@ export type SharedMemoryRequirement = Hole<'liteship.worker.shared-memory', Shar
 export interface SharedMemoryFacilityGrounding
   extends WorkerGroundingDefinition<
     readonly [SharedMemoryFacilityRequirement],
-    unknown,
+    SharedMemoryFacility,
     'intrinsic',
     'unowned'
   > {

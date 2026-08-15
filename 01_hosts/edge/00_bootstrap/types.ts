@@ -137,7 +137,7 @@ export type EdgeDeploymentRequirement = Hole<
 export interface EdgeInvocationGrounding
   extends EdgeGroundingDefinition<
     readonly [EdgeInvocationRequirement],
-    unknown,
+    EdgeInvocationContext,
     'invocation',
     'unowned'
   > {
@@ -148,7 +148,7 @@ export interface EdgeInvocationGrounding
 export interface EdgeDeploymentGrounding
   extends EdgeGroundingDefinition<
     readonly [EdgeDeploymentRequirement],
-    unknown,
+    EdgeDeploymentConfiguration,
     'deployment',
     'unowned'
   > {

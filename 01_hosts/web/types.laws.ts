@@ -12,19 +12,19 @@
  */
 
 import type { GroundingId, RealizationOfferId } from '../../00_core/14_compiler/types.js';
-import type { Assert, Equal } from '../../types.js';
+import type { Assert, Equal, InputOf } from '../../types.js';
 import type { RealizationCatalog } from '../types.js';
 import type { WebBootstrapTypeSurface } from './00_bootstrap/types.js';
-import type { ApplicationMountGrounding, InvocationMountGrounding, RegionAuthority, RegionAuthorityOffer, RegionDiscoveryGrounding, WebRegionTypeSurface } from './01_region/types.js';
-import type { SinkPolicyGrounding, WebSecurityTypeSurface } from './02_security/types.js';
-import type { EventAuthorityOffer, EventFacilityGrounding, WebEventTypeSurface } from './03_event/types.js';
-import type { CommitApplicationOffer, RendererCatalogGrounding, WebProjectionTypeSurface } from './04_projection/types.js';
+import type { ApplicationMountGrounding, InvocationMountGrounding, MountRegion, RegionAuthority, RegionAuthorityOffer, RegionDiscovery, RegionDiscoveryGrounding, WebRegionTypeSurface } from './01_region/types.js';
+import type { SinkPolicyGrounding, WebSecurityTypeSurface, WebSinkPolicy } from './02_security/types.js';
+import type { EventAuthorityOffer, EventFacility, EventFacilityGrounding, WebEventTypeSurface } from './03_event/types.js';
+import type { CommitApplicationOffer, ComponentRendererCatalog, RendererCatalogGrounding, WebProjectionTypeSurface } from './04_projection/types.js';
 import type { ProbeFacilityGrounding, WebEvidenceTypeSurface } from './05_evidence/types.js';
 import type { TransportAuthority, TransportAuthorityOffer, TransportFacilityGrounding, WebTransportTypeSurface } from './06_transport/types.js';
 import type { DatabaseFacilityGrounding, WebPersistenceTypeSurface, WebStoreOffer } from './07_persistence/types.js';
-import type { AudioFacilityGrounding, AudioRuntimeOffer, CodecAdmissionGrounding, InjectedAudioRuntimeGrounding, MediaAuthorityOffer, SampleClockTransport, WebCodecOffer, WebMediaTypeSurface } from './08_media/types.js';
-import type { GpuAccessGrounding, GraphicsAuthorityOffer, GraphicsLoss, WebGraphicsTypeSurface } from './09_graphics/types.js';
-import type { ExecutionHostOffer, PreparationOffer, SchedulingFacilityGrounding, WebExecutionTypeSurface } from './10_execution/types.js';
+import type { AudioFacility, AudioFacilityGrounding, AudioRuntimeAuthority, AudioRuntimeOffer, CodecAdmissionGrounding, InjectedAudioRuntimeGrounding, MediaAuthorityOffer, SampleClockTransport, WebCodecAdmission, WebCodecOffer, WebMediaTypeSurface } from './08_media/types.js';
+import type { GpuAccess, GpuAccessGrounding, GraphicsAuthorityOffer, GraphicsLoss, WebGraphicsTypeSurface } from './09_graphics/types.js';
+import type { ExecutionHostOffer, PreparationOffer, SchedulingFacility, SchedulingFacilityGrounding, WebExecutionTypeSurface } from './10_execution/types.js';
 import type { IslandActivationOffer, WebIslandTypeSurface } from './11_island/types.js';
 import type { CaptureAuthorityOffer, CaptureFacilityGrounding, WebCaptureTypeSurface } from './12_capture/types.js';
 import type { WebCapabilityTopology, WebTypeAt, WebTypeTopology } from './types.js';
@@ -150,6 +150,46 @@ export type TheGroundingPopulationIsExact = Assert<
     | 'captureFacility'
     | 'codecAdmission'
     | 'schedulingFacility'
+  >
+>;
+
+/** Compile-time law: every web grounding admits the exact supplied browser, application, or invocation fact. */
+export type EveryWebGroundingAdmitsItsExactSuppliedInput = Assert<
+  Equal<
+    [
+      InputOf<WebCapabilityTopology['groundings']['regionDiscovery']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['applicationMount']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['invocationMount']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['sinkPolicy']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['rendererCatalog']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['eventFacility']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['probeFacility']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['transportFacility']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['databaseFacility']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['audioFacility']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['injectedAudioRuntime']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['gpuAccess']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['captureFacility']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['codecAdmission']['admit']>,
+      InputOf<WebCapabilityTopology['groundings']['schedulingFacility']['admit']>,
+    ],
+    [
+      RegionDiscovery,
+      MountRegion,
+      MountRegion,
+      WebSinkPolicy,
+      ComponentRendererCatalog,
+      EventFacility,
+      import('./05_evidence/types.js').ProbeFacility,
+      import('./06_transport/types.js').BrowserTransportFacility,
+      import('./07_persistence/types.js').DatabaseFacility,
+      AudioFacility,
+      AudioRuntimeAuthority,
+      GpuAccess,
+      import('./12_capture/types.js').CaptureFacility,
+      WebCodecAdmission,
+      SchedulingFacility,
+    ]
   >
 >;
 

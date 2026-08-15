@@ -92,7 +92,7 @@ export type SecretProviderRequirement = Hole<'liteship.server.secrets', SecretPr
 export interface SecretSourceGrounding
   extends ServerGroundingDefinition<
     readonly [SecretSourceRequirement],
-    unknown,
+    SecretSourceBinding,
     'deployment',
     'unowned'
   > {

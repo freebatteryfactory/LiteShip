@@ -53,6 +53,7 @@ Grounding is deliberately not "an offer whose prerequisite row happens to be emp
 A lawful grounding:
 
 - enters through one explicit origin — a host intrinsic captured at bootstrap, an invocation input, a deployment binding, or an application-supplied bootstrap value;
+- admits the exact physical shape whenever the supplying side already knows it; `unknown` is reserved for a genuinely hostile raw boundary whose own admission signature visibly decodes and validates before producing an instance;
 - exists independently of realization-plan selection;
 - may be validated, narrowed, scoped, attenuated, or wrapped by admission, but never performs provider selection, resource acquisition, permission negotiation, network or storage work, or lifecycle creation;
 - provides an exact non-empty unique row of canonical owner-imported holes;
@@ -70,6 +71,13 @@ A supplied boundary value can be malformed or violate policy. That refusal is ne
 ## Custody is recorded, not created
 
 An admitted value's lifecycle arm records custody: `unowned` means the supplier keeps the lifetime, `owned` means custody transferred into LiteShip and the provider is disposed exactly once. Admission records which of these is true; it never creates the lifetime itself.
+
+Input precision and custody precision are one boundary claim. Naming the right
+value while leaving ownership vague still lets a host release a borrowed
+platform facility or leak a transferred resource. Each grounding therefore
+states both the supplier-known input and whether admission borrows or accepts
+custody; the realm topology laws pin those inputs at the carrier every consumer
+actually receives.
 
 Custody is universal lifecycle metadata and answers exactly one question: who owns the physical lifetime and who disposes. Authority scope — where, for whom, during which transaction, request, region, or tenant a binding is valid — is owned by the provided capability contract or the child host that can state it faithfully. Custody never substitutes for scope, and this umbrella deliberately declares no scope vocabulary: a generic scope union would be a junk drawer whose members mean radically different things per environment, asserted before any child home exists to check it.
 
@@ -100,6 +108,7 @@ The capability catalog contains the actual erased grounding and offer descriptor
 - Authority boundaries use exact binding rows.
 - Build is a settlement location, not a host realm.
 - Grounding admits what exists; offers construct what does not.
+- A supplier-known grounding input is exact; only raw hostile input remains `unknown` until its grounding decodes it.
 - Creating an owned lifetime is construction; recording transferred custody of an existing one may be grounding.
 - Admission carries no LiteShip prerequisites and fails only in its own algebra.
 - Declared, selected, and admitted are three grounding states that never share a name.

@@ -153,7 +153,7 @@ export type EventAuthorityRequirement = Hole<'liteship.web.event-authority', Eve
 
 /** Intrinsic grounding: the observation facility derived from event targets. */
 export interface EventFacilityGrounding
-  extends WebGroundingDefinition<readonly [EventFacilityRequirement], unknown, 'intrinsic', 'unowned'> {
+  extends WebGroundingDefinition<readonly [EventFacilityRequirement], EventFacility, 'intrinsic', 'unowned'> {
   readonly id: GroundingId<'liteship.web.grounding.event-facility'>;
 }
 

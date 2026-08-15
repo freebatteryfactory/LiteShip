@@ -60,7 +60,7 @@ export type DatabaseFacilityRequirement = Hole<'liteship.web.database-facility',
 
 /** Intrinsic grounding: the database factory facility. */
 export interface DatabaseFacilityGrounding
-  extends WebGroundingDefinition<readonly [DatabaseFacilityRequirement], unknown, 'intrinsic', 'unowned'> {
+  extends WebGroundingDefinition<readonly [DatabaseFacilityRequirement], DatabaseFacility, 'intrinsic', 'unowned'> {
   readonly id: GroundingId<'liteship.web.grounding.database-facility'>;
 }
 

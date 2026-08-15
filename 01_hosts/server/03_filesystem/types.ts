@@ -178,7 +178,7 @@ export type FilesystemRequirement = Hole<'liteship.server.filesystem', Filesyste
 export interface FilesystemRootGrounding
   extends ServerGroundingDefinition<
     readonly [FilesystemRootRequirement],
-    unknown,
+    FilesystemRootBinding,
     'deployment',
     'unowned'
   > {
