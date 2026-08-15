@@ -43,7 +43,7 @@ The language capability performs the only admitted translation:
 
 An incremental change names its previous and next document states and carries a non-empty edit population. Full replacement is the explicit recovery and resynchronization arm; it names the prior state and semantic ancestry, so replacing the text cannot silently reset the document's relationship to the semantic program.
 
-`unknown` text does not enter core. The injected language authority is generic over the exact `EditorDocumentChange` it receives and either produces `EditorLanguageProduct<ThatChange>` or a non-empty diagnostic failure. The product carries that change once; its resulting document state is derived from the opened/changed/replaced/closed arm, so document A cannot yield a product for document B and no duplicate document coordinate can drift from the input.
+`unknown` text does not enter core. The injected language authority is generic over the exact `EditorDocumentChange` it receives and either produces `EditorLanguageProduct<ThatChange>` or a non-empty diagnostic failure. The product carries that change once; its resulting document state is derived from the opened/changed/replaced/closed arm, so document A cannot yield a product for document B and no duplicate document coordinate can drift from the input. The laws also compare the generic call signature against the formerly tempting broad function: a broad-change-to-broad-product handler cannot satisfy the language authority.
 
 ## One owner for a draft coordinate
 
@@ -53,9 +53,11 @@ Document-derived draft answers use `EditorDocumentCoordinate.draft`, which adds 
 
 ## Concrete method authority
 
-`EditorMethodCatalog` is the actual handled/emitted population. Each row fixes semantic identity, direction, request-versus-notification kind, lifecycle availability, input, output, and failure.
+`EditorMethodCatalog` is the actual handled/emitted population. Each row fixes semantic identity, direction, request-versus-notification kind, lifecycle availability, input, output, and failure. A duplicate semantic identity invalidates the public population rather than disappearing into a union.
 
-A method handler returns semantic meaning, never another wire envelope. `operation.apply` returns the ordinary operation receipt and `migration.run` returns the exact protocol-neutral migration report. The outer `EditorRequestOutcome` alone owns request correlation, boundary crossing, and the semantic coordinate of the answer; a handler result cannot repeat or contradict those facts.
+A method handler returns semantic meaning, never another wire envelope. `operation.apply` returns the ordinary operation receipt and `migration.run` uses a generic call signature that returns the exact protocol-neutral migration report for its adapter and request. The concrete catalog therefore carries the same exactness formerly proved only on hand-instantiated aliases. The outer `EditorRequestOutcome` alone owns request correlation, boundary crossing, and the semantic coordinate of the answer; a handler result cannot repeat or contradict those facts.
+
+Document-derived request handlers use the same pattern. Diagnostics, remediation lists, completion, hover, definition, and source jumps are generic over the exact input coordinate and return `EditorDocumentResult<Payload, ThatCoordinate>`. A broad document-query handler cannot satisfy those catalog rows, so a request about document/version A cannot be answered with a result about B.
 
 The first population covers:
 
@@ -72,13 +74,13 @@ The first population covers:
 
 `EditorCapabilities` is derived from the client-to-server rows of that exact catalog. `EditorProtocolDefinition` carries the catalog and its derived capabilities together, so the mapped operator is proved on the public carrier rather than on a hand-authored method union.
 
-`LspMethodCatalog` projects every semantic method exactly once to its LSP or `liteship/*` protocol spelling. The semantic and projected method populations are equal by law. LSP positions are line plus UTF-16 code-unit character; LSP document edits are versioned and non-empty.
+`LspMethodNameMap` owns protocol spelling once. `LspMethodCatalog` is a position-preserving projection of the semantic catalog: direction and request/notification kind are read from the handled row, not repeated by hand. Duplicate semantic identities or duplicate protocol spellings invalidate their public populations, and wrong direction, kind, spelling, or an appended duplicate fails the laws. LSP positions are line plus UTF-16 code-unit character; LSP document edits are versioned and non-empty.
 
 ## Requests, notifications, and ordering
 
 An inbound operation request may cross the ordinary `WireExchange`: it can be refused before invocation, complete with an operation receipt, or run and lose its answer.
 
-A server notification answers nothing and ran no operation. It carries no request ID and no receipt. It does carry one exact editor connection and core's `StreamSequence`, giving diagnostics, refresh signals, and logs one causal outbound order.
+A server notification answers nothing and ran no operation. It carries no request ID and no receipt. Its `EditorConnectionOrder<Connection>` binds the exact editor connection to core's `StreamSequence` as one coordinate, giving diagnostics, refresh signals, and logs one causal outbound order. A notification ordered on connection B cannot substitute for one ordered on connection A.
 
 A server refresh request is answered, so it carries a request ID, but it is protocol coordination rather than an operation invocation and therefore carries no operation receipt. The notification vocabulary remains local to the editor wire until another wire proves the same relationship.
 
@@ -123,9 +125,10 @@ It had no document store, advertised `textDocumentSync: 0`, and projected unifie
 - Every document-derived draft answer names the exact document version.
 - Incremental changes name previous and next states; replacement preserves ancestry; only the injected language capability admits source.
 - Language admission threads one exact change into its product; a foreign document or version cannot substitute.
+- A broad language or document-query handler cannot satisfy the exact generic admission carrier.
 - A remediation carries either non-empty edits or the exact semantic invocation.
 - The protocol lifecycle refuses early and late use distinctly.
-- The concrete semantic method population equals the LSP projection population.
+- The LSP population is derived positionally from the unique semantic population; direction and kind come from each handled row, and duplicate protocol spellings are refused.
 - Semantic method outputs contain no nested request correlation or wire crossing; operation application and migration return their core receipts/reports.
 - Capabilities derive from the handled catalog, including hover and completion and excluding unearned rename.
 - Non-document diagnostic/explanation projection names its exact operation and invents no document version.

@@ -19,13 +19,12 @@ import type {
   OperationReference,
 } from '../../00_core/07_operation/types.js';
 import type {
-  MigrationAdapter,
   MigrationAuthorityRequirement,
   MigrationFailure,
   MigrationReport,
   MigrationRequest,
-  MigrationRequestId,
 } from '../../00_core/14_compiler/types.js';
+import type { EditorMigrationAdmission } from '../../02_wires/editor/types.js';
 import type {
   Assert,
   CaseOf,
@@ -555,16 +554,8 @@ export type MigrateIsOneExactProgramProjectedThroughFiveExistingWires = Assert<
           : false,
         Equal<keyof MigrateProgramProjection, 'direct' | 'cli' | 'http' | 'mcp' | 'editor'>,
         Equal<
-          OutputOf<
-            MigrateProgramProjection<
-              MigrationAdapter,
-              MigrationRequestId<'law.system.migration-request'>
-            >['editor']['handler']
-          >,
-          MigrationReport<
-            MigrationAdapter,
-            MigrationRequestId<'law.system.migration-request'>
-          >
+          MigrateProgramProjection['editor']['handler'],
+          EditorMigrationAdmission
         >,
       ],
       [true, true, true, false, true, true]

@@ -288,8 +288,11 @@ export type EditorLanguageRequirement = Hole<
 >;
 
 /** One document-derived answer, correlated to its exact version when draft. */
-export interface EditorDocumentResult<Payload> {
-  readonly coordinate: EditorDocumentCoordinate;
+export interface EditorDocumentResult<
+  Payload,
+  Coordinate extends EditorDocumentCoordinate = EditorDocumentCoordinate,
+> {
+  readonly coordinate: Coordinate;
   readonly result: Payload;
 }
 
@@ -347,6 +350,13 @@ export interface EditorMigrationRequest<
   readonly document?: EditorDocumentCoordinate;
 }
 
+/** One generic semantic migration handler; request and report stay correlated. */
+export interface EditorMigrationAdmission {
+  <Adapter extends MigrationAdapter, Request extends MigrationRequestId>(
+    request: EditorMigrationRequest<Adapter, Request>,
+  ): MaybePromise<Result<MigrationReport<Adapter, Request>, MigrationFailure>>;
+}
+
 export interface EditorInitializeRequest {
   readonly connection: EditorConnectionReference;
   readonly clientName?: string;
@@ -395,20 +405,47 @@ type EditorServerRequest<Id extends string, Input, Output = void> =
 type EditorServerNotification<Id extends string, Input, Phases extends NonEmptyTuple<EditorProtocolPhase['_tag']> = readonly ['active']> =
   EditorMethodDefinition<Id, 'server-to-client', 'notification', Input, void, NonEmptyTuple<Diagnostic>, Phases>;
 
+type EditorDocumentCoordinateOf<Input> = Input extends EditorDocumentCoordinate
+  ? Input
+  : Input extends { readonly coordinate: infer Coordinate extends EditorDocumentCoordinate }
+    ? Coordinate
+    : never;
+
+/** Generic document-query handler whose result repeats the exact input coordinate. */
+export interface EditorDocumentAdmission<Input, Payload> {
+  <Request extends Input>(
+    request: Request,
+  ): MaybePromise<
+    Result<
+      EditorDocumentResult<Payload, EditorDocumentCoordinateOf<Request>>,
+      NonEmptyTuple<Diagnostic>
+    >
+  >;
+}
+
+type EditorDocumentRequest<Id extends string, Input, Payload> = Omit<
+  EditorClientRequest<Id, Input, EditorDocumentResult<Payload>>,
+  'handler'
+> & {
+  readonly handler: EditorDocumentAdmission<Input, Payload>;
+};
+
 /** Semantic migration method; outer request framing is applied exactly once. */
-export type EditorMigrationMethod<
-  Adapter extends MigrationAdapter = MigrationAdapter,
-  Request extends MigrationRequestId = MigrationRequestId,
-> = EditorClientRequest<
-  'migration.run',
-  EditorMigrationRequest<Adapter, Request>,
-  MigrationReport<Adapter, Request>,
-  readonly ['active'],
-  MigrationFailure
->;
+export type EditorMigrationMethod = Omit<
+  EditorClientRequest<
+    'migration.run',
+    EditorMigrationRequest,
+    MigrationReport,
+    readonly ['active'],
+    MigrationFailure
+  >,
+  'handler'
+> & {
+  readonly handler: EditorMigrationAdmission;
+};
 
 /** The complete owner-ratified first editor method population. */
-export type EditorMethodCatalog = readonly [
+type DeclaredEditorMethodCatalog = readonly [
   EditorClientRequest<'lifecycle.initialize', EditorInitializeRequest, EditorInitializeResult, readonly ['initial']>,
   EditorClientNotification<'lifecycle.initialized', EditorConnectionReference>,
   EditorClientRequest<'lifecycle.shutdown', EditorConnectionReference, void>,
@@ -416,14 +453,14 @@ export type EditorMethodCatalog = readonly [
   EditorClientNotification<'document.open', CaseOf<EditorDocumentChange, 'opened'>>,
   EditorClientNotification<'document.change', CaseOf<EditorDocumentChange, 'incremental'> | CaseOf<EditorDocumentChange, 'replaced'>>,
   EditorClientNotification<'document.close', CaseOf<EditorDocumentChange, 'closed'>>,
-  EditorClientRequest<'diagnostics.pull', EditorDocumentCoordinate, EditorDocumentResult<readonly Diagnostic[]>>,
+  EditorDocumentRequest<'diagnostics.pull', EditorDocumentCoordinate, readonly Diagnostic[]>,
   EditorServerNotification<'diagnostics.publish', EditorDiagnosticPush>,
   EditorServerRequest<'diagnostics.refresh', CaseOf<EditorRefreshSubject, 'diagnostics'>>,
-  EditorClientRequest<'remediation.list', EditorDocumentQuery, EditorDocumentResult<readonly EditorRemediationProjection[]>>,
-  EditorClientRequest<'language.complete', EditorDocumentQuery, EditorDocumentResult<readonly EditorCompletion[]>>,
-  EditorClientRequest<'language.hover', EditorDocumentQuery, EditorDocumentResult<EditorHover | null>>,
-  EditorClientRequest<'language.definition', EditorDocumentQuery, EditorDocumentResult<readonly EditorSourceDestination[]>>,
-  EditorClientRequest<'language.source', EditorDocumentQuery, EditorDocumentResult<readonly EditorSourceDestination[]>>,
+  EditorDocumentRequest<'remediation.list', EditorDocumentQuery, readonly EditorRemediationProjection[]>,
+  EditorDocumentRequest<'language.complete', EditorDocumentQuery, readonly EditorCompletion[]>,
+  EditorDocumentRequest<'language.hover', EditorDocumentQuery, EditorHover | null>,
+  EditorDocumentRequest<'language.definition', EditorDocumentQuery, readonly EditorSourceDestination[]>,
+  EditorDocumentRequest<'language.source', EditorDocumentQuery, readonly EditorSourceDestination[]>,
   EditorServerNotification<'authority.refresh', CaseOf<EditorRefreshSubject, 'authority'>>,
   EditorClientRequest<'operation.preview', EditorOperationProposalRequest, EditorLanguageProduct>,
   EditorClientRequest<'operation.apply', EditorRemediationOffer, OperationReceipt>,
@@ -432,6 +469,23 @@ export type EditorMethodCatalog = readonly [
   EditorMigrationMethod,
   EditorServerNotification<'server.log', EditorHandlerFailure, readonly ['active', 'shuttingDown']>
 ];
+
+type DuplicateMethodIds<
+  Catalog extends readonly { readonly id: string }[],
+  Seen extends string = never,
+> = Catalog extends readonly [
+  infer Head extends { readonly id: string },
+  ...infer Tail extends readonly { readonly id: string }[],
+]
+  ? Head['id'] extends Seen
+    ? Head['id'] | DuplicateMethodIds<Tail, Seen>
+    : DuplicateMethodIds<Tail, Seen | Head['id']>
+  : never;
+
+/** Duplicate semantic methods invalidate the public handled population. */
+export type EditorMethodCatalog = [DuplicateMethodIds<DeclaredEditorMethodCatalog>] extends [never]
+  ? DeclaredEditorMethodCatalog
+  : never;
 
 type ClientHandledRow<Catalog extends EditorMethodCatalog> =
   Extract<Catalog[number], { readonly direction: 'client-to-server' }>;
@@ -486,42 +540,71 @@ export interface LspWorkspaceEdit {
 }
 
 /** One exact projection from semantic method identity to LSP method spelling. */
+export type LspMethodNameMap = {
+  readonly 'lifecycle.initialize': 'initialize';
+  readonly 'lifecycle.initialized': 'initialized';
+  readonly 'lifecycle.shutdown': 'shutdown';
+  readonly 'lifecycle.exit': 'exit';
+  readonly 'document.open': 'textDocument/didOpen';
+  readonly 'document.change': 'textDocument/didChange';
+  readonly 'document.close': 'textDocument/didClose';
+  readonly 'diagnostics.pull': 'textDocument/diagnostic';
+  readonly 'diagnostics.publish': 'textDocument/publishDiagnostics';
+  readonly 'diagnostics.refresh': 'workspace/diagnostic/refresh';
+  readonly 'remediation.list': 'textDocument/codeAction';
+  readonly 'language.complete': 'textDocument/completion';
+  readonly 'language.hover': 'textDocument/hover';
+  readonly 'language.definition': 'textDocument/definition';
+  readonly 'language.source': 'liteship/source';
+  readonly 'authority.refresh': 'liteship/authority/refresh';
+  readonly 'operation.preview': 'liteship/operation/preview';
+  readonly 'operation.apply': 'liteship/operation/apply';
+  readonly 'editor.session.open': 'liteship/editor/session';
+  readonly 'editor.draft.preview': 'liteship/editor/preview';
+  readonly 'migration.run': 'liteship/migrate';
+  readonly 'server.log': 'window/logMessage';
+};
+
+type EditorMethodRow<Semantic extends EditorMethodCatalog[number]['id']> = Extract<
+  EditorMethodCatalog[number],
+  { readonly id: Semantic }
+>;
+
 export interface LspMethodProjection<
   Semantic extends EditorMethodCatalog[number]['id'],
-  Method extends string,
-  Direction extends EditorMethodDirection,
-  Kind extends EditorMethodKind,
 > {
   readonly semantic: Semantic;
-  readonly method: Method;
-  readonly direction: Direction;
-  readonly kind: Kind;
+  readonly method: LspMethodNameMap[Semantic];
+  readonly direction: EditorMethodRow<Semantic>['direction'];
+  readonly kind: EditorMethodRow<Semantic>['kind'];
 }
 
-export type LspMethodCatalog = readonly [
-  LspMethodProjection<'lifecycle.initialize', 'initialize', 'client-to-server', 'request'>,
-  LspMethodProjection<'lifecycle.initialized', 'initialized', 'client-to-server', 'notification'>,
-  LspMethodProjection<'lifecycle.shutdown', 'shutdown', 'client-to-server', 'request'>,
-  LspMethodProjection<'lifecycle.exit', 'exit', 'client-to-server', 'notification'>,
-  LspMethodProjection<'document.open', 'textDocument/didOpen', 'client-to-server', 'notification'>,
-  LspMethodProjection<'document.change', 'textDocument/didChange', 'client-to-server', 'notification'>,
-  LspMethodProjection<'document.close', 'textDocument/didClose', 'client-to-server', 'notification'>,
-  LspMethodProjection<'diagnostics.pull', 'textDocument/diagnostic', 'client-to-server', 'request'>,
-  LspMethodProjection<'diagnostics.publish', 'textDocument/publishDiagnostics', 'server-to-client', 'notification'>,
-  LspMethodProjection<'diagnostics.refresh', 'workspace/diagnostic/refresh', 'server-to-client', 'request'>,
-  LspMethodProjection<'remediation.list', 'textDocument/codeAction', 'client-to-server', 'request'>,
-  LspMethodProjection<'language.complete', 'textDocument/completion', 'client-to-server', 'request'>,
-  LspMethodProjection<'language.hover', 'textDocument/hover', 'client-to-server', 'request'>,
-  LspMethodProjection<'language.definition', 'textDocument/definition', 'client-to-server', 'request'>,
-  LspMethodProjection<'language.source', 'liteship/source', 'client-to-server', 'request'>,
-  LspMethodProjection<'authority.refresh', 'liteship/authority/refresh', 'server-to-client', 'notification'>,
-  LspMethodProjection<'operation.preview', 'liteship/operation/preview', 'client-to-server', 'request'>,
-  LspMethodProjection<'operation.apply', 'liteship/operation/apply', 'client-to-server', 'request'>,
-  LspMethodProjection<'editor.session.open', 'liteship/editor/session', 'client-to-server', 'request'>,
-  LspMethodProjection<'editor.draft.preview', 'liteship/editor/preview', 'client-to-server', 'request'>,
-  LspMethodProjection<'migration.run', 'liteship/migrate', 'client-to-server', 'request'>,
-  LspMethodProjection<'server.log', 'window/logMessage', 'server-to-client', 'notification'>
-];
+type ProjectLspMethods<Catalog extends readonly { readonly id: keyof LspMethodNameMap }[]> = {
+  readonly [Index in keyof Catalog]: Catalog[Index] extends {
+    readonly id: infer Semantic extends EditorMethodCatalog[number]['id'];
+  }
+    ? LspMethodProjection<Semantic>
+    : never;
+};
+
+type DeclaredLspMethodCatalog = ProjectLspMethods<EditorMethodCatalog>;
+
+type DuplicateProtocolMethods<
+  Catalog extends readonly { readonly method: string }[],
+  Seen extends string = never,
+> = Catalog extends readonly [
+  infer Head extends { readonly method: string },
+  ...infer Tail extends readonly { readonly method: string }[],
+]
+  ? Head['method'] extends Seen
+    ? Head['method'] | DuplicateProtocolMethods<Tail, Seen>
+    : DuplicateProtocolMethods<Tail, Seen | Head['method']>
+  : never;
+
+/** Every semantic row projects exactly once to one unique protocol method. */
+export type LspMethodCatalog = [DuplicateProtocolMethods<DeclaredLspMethodCatalog>] extends [never]
+  ? DeclaredLspMethodCatalog
+  : never;
 
 export type EditorServerNotificationMethod = Extract<
   EditorMethodCatalog[number],
@@ -591,19 +674,31 @@ export type EditorLifecycleRefusal = Algebra<{
  * been superseded, and a stream whose order is only a runtime property cannot
  * be reasoned about at all.
  */
-export interface EditorNotification<Payload = unknown> {
-  readonly connection: EditorConnectionReference;
-  readonly method: EditorServerNotificationMethod;
+/** One stream coordinate scoped by the exact editor connection that owns it. */
+export interface EditorConnectionOrder<
+  Connection extends EditorConnectionId = EditorConnectionId,
+> {
+  readonly connection: EditorConnectionReference<Connection>;
   readonly sequence: StreamSequence;
+}
+
+export interface EditorNotification<
+  Payload = unknown,
+  Connection extends EditorConnectionId = EditorConnectionId,
+> {
+  readonly order: EditorConnectionOrder<Connection>;
+  readonly method: EditorServerNotificationMethod;
   readonly payload: Payload;
 }
 
 /** Server-to-client request: ordered on the same connection, but answered. */
-export interface EditorOutboundRequest<Payload = unknown> {
-  readonly connection: EditorConnectionReference;
+export interface EditorOutboundRequest<
+  Payload = unknown,
+  Connection extends EditorConnectionId = EditorConnectionId,
+> {
+  readonly order: EditorConnectionOrder<Connection>;
   readonly request: EditorRequestId;
   readonly method: EditorServerRequestMethod;
-  readonly sequence: StreamSequence;
   readonly payload: Payload;
 }
 

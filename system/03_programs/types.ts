@@ -69,6 +69,7 @@ import type {
 } from '../../02_wires/mcp/types.js';
 import type {
   EditorDiagnosticExplanationProjection,
+  EditorMigrationAdmission,
   EditorMigrationMethod,
 } from '../../02_wires/editor/types.js';
 import type { ContentAddress } from '../../00_core/01_encoding/types.js';
@@ -1183,15 +1184,12 @@ export type MigrateProgram<
  * Real compile-use composition: one migration program identity projected
  * through every owner-ratified wire, with no wire importing system back.
  */
-export interface MigrateProgramProjection<
-  Adapter extends MigrationAdapter = MigrationAdapter,
-  Request extends MigrationRequestId = MigrationRequestId,
-> {
+export interface MigrateProgramProjection {
   readonly direct: DirectMigrationExchange<SystemProgramId<'migrate'>>;
   readonly cli: CliMigrationDisposition<SystemProgramId<'migrate'>>;
   readonly http: HttpMigrationProjection<SystemProgramId<'migrate'>>;
   readonly mcp: McpMigrationProjection<SystemProgramId<'migrate'>>;
-  readonly editor: EditorMigrationMethod<Adapter, Request>;
+  readonly editor: EditorMigrationMethod & { readonly handler: EditorMigrationAdmission };
 }
 
 /** Pack a plan into distributables. */
