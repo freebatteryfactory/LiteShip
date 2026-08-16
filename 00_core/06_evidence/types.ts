@@ -31,6 +31,62 @@ import type { TimeCoordinate } from '../04_time/types.js';
  */
 export type Truth = 'true' | 'false' | 'pending';
 
+/** Canonical Strong Kleene negation table. */
+export interface TruthNegationTable {
+  readonly true: 'false';
+  readonly false: 'true';
+  readonly pending: 'pending';
+}
+
+/** Canonical Strong Kleene conjunction table, indexed left operand then right. */
+export interface TruthConjunctionTable {
+  readonly true: {
+    readonly true: 'true';
+    readonly false: 'false';
+    readonly pending: 'pending';
+  };
+  readonly false: {
+    readonly true: 'false';
+    readonly false: 'false';
+    readonly pending: 'false';
+  };
+  readonly pending: {
+    readonly true: 'pending';
+    readonly false: 'false';
+    readonly pending: 'pending';
+  };
+}
+
+/** Canonical Strong Kleene disjunction table, indexed left operand then right. */
+export interface TruthDisjunctionTable {
+  readonly true: {
+    readonly true: 'true';
+    readonly false: 'true';
+    readonly pending: 'true';
+  };
+  readonly false: {
+    readonly true: 'true';
+    readonly false: 'false';
+    readonly pending: 'pending';
+  };
+  readonly pending: {
+    readonly true: 'true';
+    readonly false: 'pending';
+    readonly pending: 'pending';
+  };
+}
+
+/** Strong Kleene negation, derived from the canonical table. */
+export type TruthNot<Value extends Truth> = TruthNegationTable[Value];
+
+/** Strong Kleene conjunction, derived from the canonical table. */
+export type TruthAnd<Left extends Truth, Right extends Truth> =
+  TruthConjunctionTable[Left][Right];
+
+/** Strong Kleene disjunction, derived from the canonical table. */
+export type TruthOr<Left extends Truth, Right extends Truth> =
+  TruthDisjunctionTable[Left][Right];
+
 /** Operational state of an evidence source. */
 export type Evidence<Value, Failure = readonly Diagnostic[]> = Algebra<{
   unavailable: { readonly reason?: string };

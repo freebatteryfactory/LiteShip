@@ -15,7 +15,138 @@ import type { Assert, Brand, CaseOf, Equal, Reference, TagOf } from '../../types
 import type { Diagnostic } from '../00_error/types.js';
 import type { ContentAddress } from '../01_encoding/types.js';
 import type { TimeCoordinate } from '../04_time/types.js';
-import type { EvidenceCut, EvidenceCutId, EvidenceCutReference, EvidenceObservation, ReproducibilityClaim } from './types.js';
+import type {
+  DecisionBlocker,
+  EvidenceCut,
+  EvidenceCutId,
+  EvidenceCutReference,
+  EvidenceObservation,
+  ReproducibilityClaim,
+  Truth,
+  TruthAnd,
+  TruthConjunctionTable,
+  TruthDisjunctionTable,
+  TruthNegationTable,
+  TruthNot,
+  TruthOr,
+} from './types.js';
+
+// ---------------------------------------------------------------------------
+// Strong Kleene truth
+// ---------------------------------------------------------------------------
+
+/** Compile-time law: the knowledge axis has exactly the three ruled values. */
+export type TruthHasExactlyThreeValuesAndPendingIsTheThird = Assert<
+  Equal<
+    [Truth, 'pending' extends Truth ? true : false, 'unknown' extends Truth ? true : false],
+    ['true' | 'false' | 'pending', true, false]
+  >
+>;
+
+
+/** Compile-time law: every cell of the canonical negation table is exact. */
+export type TheKleeneNegationTableIsExact = Assert<
+  Equal<
+    [
+      TruthNegationTable['true'],
+      TruthNegationTable['false'],
+      TruthNegationTable['pending'],
+      TruthNot<'true'>,
+      TruthNot<'false'>,
+      TruthNot<'pending'>,
+    ],
+    ['false', 'true', 'pending', 'false', 'true', 'pending']
+  >
+>;
+
+
+/** Compile-time law: all nine conjunction cells are exact, in row-major order. */
+export type TheKleeneConjunctionTableIsExact = Assert<
+  Equal<
+    [
+      TruthConjunctionTable['true']['true'],
+      TruthConjunctionTable['true']['false'],
+      TruthConjunctionTable['true']['pending'],
+      TruthConjunctionTable['false']['true'],
+      TruthConjunctionTable['false']['false'],
+      TruthConjunctionTable['false']['pending'],
+      TruthConjunctionTable['pending']['true'],
+      TruthConjunctionTable['pending']['false'],
+      TruthConjunctionTable['pending']['pending'],
+    ],
+    ['true', 'false', 'pending', 'false', 'false', 'false', 'pending', 'false', 'pending']
+  >
+>;
+
+
+/** Compile-time law: all nine disjunction cells are exact, in row-major order. */
+export type TheKleeneDisjunctionTableIsExact = Assert<
+  Equal<
+    [
+      TruthDisjunctionTable['true']['true'],
+      TruthDisjunctionTable['true']['false'],
+      TruthDisjunctionTable['true']['pending'],
+      TruthDisjunctionTable['false']['true'],
+      TruthDisjunctionTable['false']['false'],
+      TruthDisjunctionTable['false']['pending'],
+      TruthDisjunctionTable['pending']['true'],
+      TruthDisjunctionTable['pending']['false'],
+      TruthDisjunctionTable['pending']['pending'],
+    ],
+    ['true', 'true', 'true', 'true', 'false', 'pending', 'true', 'pending', 'pending']
+  >
+>;
+
+
+/**
+ * Compile-time law: a pending operand cannot conceal an answer already settled
+ * by the other operand, including when the pending value arrives in a union.
+ */
+export type APendingAnswerCannotHideAKnownAnswer = Assert<
+  Equal<
+    [
+      TruthAnd<'pending', 'false'>,
+      TruthAnd<'false', 'pending'>,
+      TruthOr<'pending', 'true'>,
+      TruthOr<'true', 'pending'>,
+      TruthAnd<Truth, 'false'>,
+      TruthOr<Truth, 'true'>,
+    ],
+    ['false', 'false', 'true', 'true', 'false', 'true']
+  >
+>;
+
+
+/**
+ * Compile-time law: blocker vocabulary keeps operational work, source
+ * unavailability, and epistemic indeterminacy structurally distinct.
+ */
+export type ADecisionBlockerSeparatesItsThreeArms = Assert<
+  Equal<
+    [
+      TagOf<DecisionBlocker>,
+      keyof CaseOf<DecisionBlocker, 'unavailable'>,
+      keyof CaseOf<DecisionBlocker, 'outstanding'>,
+      keyof CaseOf<DecisionBlocker, 'pending'>,
+      undefined extends CaseOf<DecisionBlocker, 'unavailable'>['subject'] ? true : false,
+      undefined extends CaseOf<DecisionBlocker, 'outstanding'>['subject'] ? true : false,
+      undefined extends CaseOf<DecisionBlocker, 'pending'>['subject'] ? true : false,
+      CaseOf<DecisionBlocker, 'outstanding'>['since'],
+      CaseOf<DecisionBlocker, 'pending'>['reason'],
+    ],
+    [
+      'unavailable' | 'outstanding' | 'pending',
+      '_tag' | 'subject' | 'reason',
+      '_tag' | 'subject' | 'since',
+      '_tag' | 'subject' | 'reason',
+      false,
+      false,
+      true,
+      TimeCoordinate | undefined,
+      string | undefined,
+    ]
+  >
+>;
 
 /** A literal profile carrier, so the laws below compare something real. */
 type ReproLawProfile = Reference<'law-profile', Brand<'liteship.law.profile-a', 'liteship.law-profile'>>;

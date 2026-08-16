@@ -20,6 +20,7 @@ Model operational evidence state, three-valued truth, source authority, lifetime
 - `Evidence = unavailable | outstanding | ready | failed`.
 - Evidence source definitions and references.
 - Source authority, lifetime, evolution, cadence, and realm axes.
+- The canonical Strong Kleene negation, conjunction, and disjunction tables and their type operators.
 - Generic `Proposition<Atom>` using strong Kleene logic.
 - Evidence atoms, blockers, failures, supporting sources, and decisions.
 - The constrained foreign evidence adapter contract.
@@ -60,7 +61,7 @@ Collections reuse this proposition algebra rather than defining a second boolean
 
 ## Proof obligations
 
-- Complete strong Kleene truth table.
+- The type-level Strong Kleene tables are complete; the runtime proposition evaluator must conform to those exact cells.
 - Annihilator cases preserve hidden blocker and failure evidence.
 - Authority mismatch refuses.
 - Retractable evidence can reverse a decision without stale caching.
