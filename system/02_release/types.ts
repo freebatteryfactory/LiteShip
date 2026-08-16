@@ -88,13 +88,12 @@ export interface PackedArtifact<Id extends PackageId = PackageId> {
  * address is a fact about the surface, and the difference is the whole reason
  * the Type ABI exists.
  *
- * The `unknown` arm is required and is not a failure. A release with no
- * predecessor surface to compare against genuinely does not know, and a
- * grammar that forces it to say `compatible` teaches the whole apparatus to
- * lie exactly once per first release.
+ * The `no-predecessor` arm is a compatibility conclusion, not an assessment
+ * state: the current surface is known and no previous surface exists. It keeps
+ * that first release from lying about a comparison that never occurred.
  */
 export type CompatibilityClaim = Algebra<{
-  unknown: { readonly reason: string };
+  'no-predecessor': { readonly current: TypeAbiAddress };
   unchanged: { readonly previous: TypeAbiAddress; readonly current: TypeAbiAddress };
   compatible: { readonly previous: TypeAbiAddress; readonly current: TypeAbiAddress };
   breaking: {

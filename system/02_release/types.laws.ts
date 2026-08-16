@@ -12,7 +12,7 @@
  */
 
 import type { Diagnostic } from '../../00_core/00_error/types.js';
-import type { Assert, CaseOf, Equal, IsExactlyTrue, NonEmptyTuple, OutputOf, TagOf } from '../../types.js';
+import type { Assert, CaseOf, Equal, IsExactlyTrue, NonEmptyTuple, OutputOf, TagOf, TypeAbiAddress } from '../../types.js';
 import type { WorkspaceObservation, WorkspaceSnapshotId } from '../00_workspace/types.js';
 import type { AssuranceResult, ReleaseGradeResult } from '../01_assurance/01_gauntlet/types.js';
 import type { AssuranceRunSpec, AssuranceRunSpecId } from '../01_assurance/types.js';
@@ -270,22 +270,28 @@ export type AReleaseReceiptRequiresAQualifiedCandidate = Assert<
 
 
 /**
- * A compatibility claim may say it does not know.
+ * A compatibility claim can state that no predecessor exists.
  *
- * The `unknown` arm is checked as present, and the count is pinned so a later
- * edit cannot delete it as apparent dead weight. A grammar without it forces
- * a first release to assert compatibility with a predecessor that does not
- * exist.
+ * This is a conclusion over the current ABI rather than a reason-shaped
+ * assessment state. The roster, current address, absent predecessor, and
+ * absent free-text reason are all pinned at the public carrier.
  */
-export type ACompatibilityClaimMayBeUnknown = Assert<
-  Equal<
-    [
-      'unknown' extends TagOf<CompatibilityClaim> ? true : false,
-      Equal<TagOf<CompatibilityClaim>, 'unknown' | 'unchanged' | 'compatible' | 'breaking'>,
-      'previous' extends keyof CaseOf<CompatibilityClaim, 'unknown'> ? true : false,
-      Equal<CaseOf<CompatibilityClaim, 'breaking'>['diagnostics'], NonEmptyTuple<Diagnostic>>,
-    ],
-    [true, true, false, true]
+export type ACompatibilityClaimNamesNoPredecessorExactly = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        'no-predecessor' extends TagOf<CompatibilityClaim> ? true : false,
+        Equal<
+          TagOf<CompatibilityClaim>,
+          'no-predecessor' | 'unchanged' | 'compatible' | 'breaking'
+        >,
+        'previous' extends keyof CaseOf<CompatibilityClaim, 'no-predecessor'> ? true : false,
+        'reason' extends keyof CaseOf<CompatibilityClaim, 'no-predecessor'> ? true : false,
+        Equal<CaseOf<CompatibilityClaim, 'no-predecessor'>['current'], TypeAbiAddress>,
+        Equal<CaseOf<CompatibilityClaim, 'breaking'>['diagnostics'], NonEmptyTuple<Diagnostic>>,
+      ],
+      [true, true, false, false, true, true]
+    >
   >
 >;
 

@@ -74,7 +74,7 @@ A positive chain law alone would be satisfied by a chain in which every stage ca
 
 A semantic version is an assertion a human typed. An ABI address is a fact about the surface, computed from the canonicalizer, the surface digest, and the exact interpreter lane. The difference is the entire reason the Type ABI exists, and stating compatibility over version strings would have made the ABI decorative on its first real consumer.
 
-The `unknown` arm is required and is not a failure. A release with no predecessor surface to compare against genuinely does not know, and a grammar that forces it to say `compatible` teaches the whole apparatus to lie exactly once per first release — after which the lie is in the record and indistinguishable from a measurement. A law pins the arm count so `unknown` cannot later be deleted as apparent dead weight.
+The `no-predecessor` arm is a real conclusion, not an unfinished assessment: it carries the current ABI address and states that no previous surface exists. A grammar that forces the first release to say `compatible` teaches the apparatus to invent a comparison. A law pins the complete roster, the current address, the absent predecessor, and the absence of a free-text reason.
 
 ## Three receipts, because three things can fail separately
 
@@ -93,7 +93,7 @@ A publication receipt's `published` population is separate from its plan's `dest
 - No stage in that chain admits a product from another coordinate, and the matching coordinate is still accepted at every joint.
 - No stage admits a result from another specification either, and the broad specification does not satisfy a carrier that named one.
 - A release receipt requires a candidate whose qualification is in the qualified arm; a plain candidate is not assignable, a qualified one is still a candidate, and the refinement did not collapse to `never`.
-- A compatibility claim may be unknown, carries no predecessor in that arm, and its breaking arm carries a non-empty diagnostic population.
+- A compatibility claim may name no predecessor, carries the current ABI but no predecessor or reason in that arm, and its breaking arm carries a non-empty diagnostic population.
 - The three receipts are three populations; none substitutes for another, and the package receipt carries no destination.
 - A release candidate and its receipt are exact over candidate identity and over the snapshot, and the broad form does not substitute.
 
