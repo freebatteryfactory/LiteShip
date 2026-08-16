@@ -257,6 +257,14 @@ export type BuildConsumesQualifiedTargetAndManagerCatalogs = Assert<
           Parameters<BuildTargetCatalog[1]['admit']>[0]['product'],
           Extract<ViteBuildProduct, { readonly _tag: 'built' }>
         >,
+        Equal<
+          Extract<ReturnType<PackageManagerCatalog[0]['render']>, PromiseLike<unknown>>,
+          never
+        >,
+        Equal<
+          Extract<ReturnType<BuildTargetCatalog[0]['admit']>, PromiseLike<unknown>>,
+          never
+        >,
         Equal<PackageManagerCatalog['length'], 2>,
         Equal<BuildTargetCatalog[0]['binary'], 'astro'>,
         Equal<BuildTargetCatalog[1]['binary'], 'vite'>,
@@ -279,7 +287,7 @@ export type BuildConsumesQualifiedTargetAndManagerCatalogs = Assert<
         'editor' extends keyof BuildProgramProjection ? true : false,
         Equal<BuildProgram['definition']['effects'], readonly ['execute', 'create']>,
       ],
-      [true, true, true, true, true, true, false, true, true, true, true, false, false, true]
+      [true, true, true, true, true, true, true, true, false, true, true, true, true, false, false, true]
     >
   >
 >;
@@ -488,10 +496,17 @@ export type DoctorRemediationAccountsForEachExactProposal = Assert<
           OperationReference<DoctorLawOperationA>
         >,
         Equal<
-          CaseOf<DoctorLawOutcomes[0], 'declined-by-policy'>['decision']['allowed'],
-          false
+          CaseOf<DoctorLawOutcomes[0], 'declined-by-policy'>['decision']['disposition']['_tag'],
+          'denied'
         >,
-        Equal<CaseOf<DoctorLawOutcomes[0], 'applied'>['decision']['allowed'], true>,
+        Equal<
+          CaseOf<DoctorLawOutcomes[0], 'approval-required'>['decision']['disposition']['_tag'],
+          'approval-required'
+        >,
+        Equal<
+          CaseOf<DoctorLawOutcomes[0], 'applied'>['decision']['disposition']['_tag'],
+          'allowed'
+        >,
         DoctorLawOutcomes extends readonly DoctorRemediationOutcome[] ? true : false,
         readonly DoctorRemediationOutcome[] extends DoctorLawOutcomes ? true : false,
         DoctorReport<DoctorLawSubjectB> extends DoctorLawRun['after'] ? true : false,
@@ -506,7 +521,7 @@ export type DoctorRemediationAccountsForEachExactProposal = Assert<
           ? true
           : false,
       ],
-      [true, true, false, true, true, true, true, true, false, false, true, false]
+      [true, true, false, true, true, true, true, true, true, false, false, true, false]
     >
   >
 >;

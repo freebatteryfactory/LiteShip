@@ -30,7 +30,10 @@ declare const SignatureRequirementsSlot: unique symbol;
 /** Flatten an intersection into the object shape shown by editors and errors. */
 export type Simplify<Value> = { [Key in keyof Value]: Value[Key] } & {};
 
-/** A value that may be available synchronously or through a promise-like value. */
+/**
+ * A physical port or explicitly wait-capable realization may answer now or
+ * later. Semantic contracts use `Signature` and never contain this carrier.
+ */
 export type MaybePromise<Value> = Value | PromiseLike<Value>;
 
 /** Remove a selected key set from an object shape. */
@@ -733,11 +736,17 @@ export type ComposeSignatures<
 /** Result shape produced by a signature. */
 export type SignatureResult<Value extends AnySignature> = Result<OutputOf<Value>, FailureOf<Value>>;
 
-/** Executable realization of a typed signature. */
-export type Executor<Value extends AnySignature> = (
+/** Synchronously guaranteed realization of a typed signature. */
+export type SynchronousExecutor<Value extends AnySignature> = (
   input: InputOf<Value>,
   context: ContextOf<RequirementsOf<Value>>,
-) => MaybePromise<SignatureResult<Value>>;
+) => SignatureResult<Value>;
+
+/** Realization of a typed signature that explicitly permits suspension. */
+export type AsynchronousExecutor<Value extends AnySignature> = (
+  input: InputOf<Value>,
+  context: ContextOf<RequirementsOf<Value>>,
+) => PromiseLike<SignatureResult<Value>>;
 
 // ---------------------------------------------------------------------------
 // 8. Generic identity, path, reference, causality, and envelope products

@@ -1030,6 +1030,10 @@ export type MigrationDiscoveryReturnsOneSelectedCompatibleRow = Assert<
           ? true
           : false,
         Equal<MigrationAuthority<MigrationLawCatalog>['discover'], MigrationDiscovery<MigrationLawCatalog>>,
+        Equal<
+          Extract<ReturnType<MigrationDiscovery<MigrationLawCatalog>>, PromiseLike<unknown>>,
+          never
+        >,
         [MigrationDiscoverySelection<MigrationLawCatalog, MigrationLawSourceA['id']>] extends [never]
           ? true
           : false,
@@ -1063,7 +1067,7 @@ export type MigrationDiscoveryReturnsOneSelectedCompatibleRow = Assert<
           ? true
           : false,
       ],
-      [true, true, false, true, false, true, true, false, false]
+      [true, true, false, true, true, false, true, true, false, false]
     >
   >
 >;

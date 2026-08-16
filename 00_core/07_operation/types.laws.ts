@@ -11,8 +11,19 @@
  * @module
  */
 
-import type { Assert, Equal } from '../../types.js';
-import type { OperationDefinition, OperationId, OperationInvocation, OperationReceipt, OperationReference, ResourceBudget } from './types.js';
+import type { Diagnostic } from '../00_error/types.js';
+import type { Assert, CaseOf, Equal, IsExactlyTrue, NonEmptyTuple, TagOf } from '../../types.js';
+import type {
+  ApprovalRequirement,
+  OperationDefinition,
+  OperationId,
+  OperationInvocation,
+  OperationPolicyDecision,
+  OperationPolicyDisposition,
+  OperationReceipt,
+  OperationReference,
+  ResourceBudget,
+} from './types.js';
 
 /** Compile-time law: a resource budget must declare at least one limit. */
 export type ResourceBudgetRejectsEmpty = Assert<Equal<{} extends ResourceBudget ? true : false, false>>;
@@ -29,6 +40,7 @@ export type AnOperationThreadsItsIdentity = Assert<
     [
       OperationDefinition<unknown, unknown, unknown, readonly [], OperationId<'liteship.operation.law.op-a'>>['id'],
       OperationInvocation<unknown, OperationId<'liteship.operation.law.op-a'>>['operation'],
+      OperationPolicyDecision<OperationId<'liteship.operation.law.op-a'>>['operation'],
       OperationReceipt<unknown, unknown, OperationId<'liteship.operation.law.op-a'>>['invocation']['operation'],
       OperationInvocation<unknown, OperationId<'liteship.operation.law.op-b'>> extends OperationInvocation<
         unknown,
@@ -41,7 +53,51 @@ export type AnOperationThreadsItsIdentity = Assert<
       OperationId<'liteship.operation.law.op-a'>,
       OperationReference<OperationId<'liteship.operation.law.op-a'>>,
       OperationReference<OperationId<'liteship.operation.law.op-a'>>,
+      OperationReference<OperationId<'liteship.operation.law.op-a'>>,
       false,
     ]
+  >
+>;
+
+/** Compile-time law: policy disposition and approval cannot tell conflicting stories. */
+export type OperationPolicyDispositionCorrelatesApprovalAndAuthorization = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        Equal<TagOf<OperationPolicyDisposition>, 'allowed' | 'approval-required' | 'denied'>,
+        Equal<TagOf<ApprovalRequirement>, 'none' | 'human' | 'independent'>,
+        Equal<
+          CaseOf<OperationPolicyDisposition, 'allowed'>['approval'],
+          CaseOf<ApprovalRequirement, 'none'>
+        >,
+        Equal<
+          CaseOf<OperationPolicyDisposition, 'approval-required'>['approval'],
+          | CaseOf<ApprovalRequirement, 'human'>
+          | CaseOf<ApprovalRequirement, 'independent'>
+        >,
+        Equal<
+          CaseOf<OperationPolicyDisposition, 'denied'>['diagnostics'],
+          NonEmptyTuple<Diagnostic>
+        >,
+        CaseOf<ApprovalRequirement, 'human'> extends CaseOf<
+          OperationPolicyDisposition,
+          'allowed'
+        >['approval']
+          ? true
+          : false,
+        CaseOf<ApprovalRequirement, 'none'> extends CaseOf<
+          OperationPolicyDisposition,
+          'approval-required'
+        >['approval']
+          ? true
+          : false,
+        OperationPolicyDecision<OperationId<'liteship.operation.law.op-a'>> extends OperationPolicyDecision<
+          OperationId<'liteship.operation.law.op-b'>
+        >
+          ? true
+          : false,
+      ],
+      [true, true, true, true, true, false, false, false]
+    >
   >
 >;

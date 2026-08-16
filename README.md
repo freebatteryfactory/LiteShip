@@ -324,7 +324,9 @@ The repository does not maintain a second fixed hydration-tier table beside the 
 
 The root does not bless `Operation` as a pre-semantic universal noun. Core earns that name by adding identity, schemas, idempotency, cancellation, receipts, affordances, and dispatch semantics.
 
-`InputOf`, `OutputOf`, `FailureOf`, and `RequirementsOf` project the signature's dimensions. `SignatureResult` and `Executor` derive its common executable view.
+`InputOf`, `OutputOf`, `FailureOf`, and `RequirementsOf` project the signature's dimensions. `SignatureResult` derives the closed result. `SynchronousExecutor` and `AsynchronousExecutor` make suspension permission explicit instead of granting it to every realization through one broad executor.
+
+Semantic meaning contains no promise, callback, task, or host future. Physical ports and explicitly asynchronous realizations may wait; their carrier says so. A synchronously guaranteed realization remains a different contract because pre-paint legality, deterministic replay, transaction participation, and suspension cost all consume that distinction.
 
 `SignaturesConnect<Left, Right>` checks whether the left output can feed the right input. `ComposeSignatures` builds the pipeline when it can, unions the two failure algebras, and merges named requirements with the same conflict laws used everywhere else.
 

@@ -25,6 +25,7 @@
 
 import type {
   Algebra,
+  AsynchronousExecutor,
   AnyHole,
   Assert,
   Binding,
@@ -37,7 +38,6 @@ import type {
   ContextOf,
   Envelope,
   Equal,
-  Executor,
   ErrOf,
   Extend,
   FailureOf,
@@ -65,6 +65,7 @@ import type {
   SatisfiedContext,
   Signature,
   SignaturesConnect,
+  SynchronousExecutor,
   Tagged,
   UniqueRequirements,
   WithoutOrdinalPrefix,
@@ -432,21 +433,24 @@ export type ComposingUnionsFailuresAndMergesRequirements = Assert<
  *
  * `SignatureResult` is `Result<OutputOf<V>, FailureOf<V>>`, and both arms of
  * `Result` carry one payload each, so swapping the arguments produces a
- * perfectly valid type that means the opposite. Nothing tested it — neither
- * `SignatureResult` nor `Executor` had a single consumer anywhere in the
- * repository.
+ * perfectly valid type that means the opposite. The realization contracts are
+ * the public consumers that make the relationship observable.
  *
- * The claim is proved through `Executor` rather than by reading
- * `SignatureResult` directly, because that is where the relationship is
- * actually used: an executor takes the signature's input and returns its
- * result. `Produce` emits `number` and fails with `'produce-failed'`, two
- * unrelated types, so a swap turns this red rather than merely reordering
- * equals.
+ * Both realization contracts consume the signature's exact input and return
+ * its exact result. They differ only in whether suspension is permitted.
  */
 export type ExecutingASignatureConsumesItsInputAndYieldsItsResult = Assert<
   Equal<
-    [Parameters<Executor<Produce>>[0], Awaited<ReturnType<Executor<Produce>>>],
-    [string, Result<number, 'produce-failed'>]
+    [
+      Parameters<SynchronousExecutor<Produce>>[0],
+      ReturnType<SynchronousExecutor<Produce>>,
+      Parameters<AsynchronousExecutor<Produce>>[0],
+      Awaited<ReturnType<AsynchronousExecutor<Produce>>>,
+      ReturnType<AsynchronousExecutor<Produce>> extends ReturnType<SynchronousExecutor<Produce>>
+        ? true
+        : false,
+    ],
+    [string, Result<number, 'produce-failed'>, string, Result<number, 'produce-failed'>, false]
   >
 >;
 

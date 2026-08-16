@@ -20,7 +20,7 @@ Define one protocol-neutral operation model for application actions, system prog
 - Effect classes, business effects, reversibility, idempotency, and cancellation.
 - Independent rate, quota, concurrency, byte, duration, fan-out, cost, step, and token limits.
 - Subject, actor, workload, client, delegate, purpose, and delegated authority.
-- Operation policy decisions and approval requirements.
+- Operation policy dispositions and approval requirements.
 - Operation receipts as acknowledged outcomes.
 
 ## Does not own
@@ -39,6 +39,8 @@ Field-level authority uses the shared `EntityFieldReference`, preserving both th
 Resource governance is multidimensional. Rate, quota, concurrency, payload, duration, fan-out, economic cost, step count, and token count remain uniquely named independent limits. Definition, delegation, and invocation requests compose into one policy-derived effective budget rather than one caller-authored score or duplicate limit list.
 
 Risk and approval are derived from the operation definition, business effects, reversibility, delegated authority, effective budget, host policy, and current context. A caller or editor cannot relabel its own request as low risk.
+
+Policy has three outcomes: allowed now, approval required, or denied. `allowed` carries only the `none` approval requirement; `approval-required` carries a human or independent approval requirement; `denied` carries non-empty diagnostics. A boolean beside a free approval member is forbidden because it admits allowed-but-prohibited and denied-with-no-reason combinations.
 
 ## Laws
 
@@ -68,6 +70,7 @@ Risk and approval are derived from the operation definition, business effects, r
 - Direct, HTTP, CLI, MCP, and editor projections preserve definition and outcome identity.
 - Idempotency and duplicate-delivery behavior prevent repeated business effects.
 - Approval derives from operation policy inputs and cannot be caller-authored.
+- Allowed, approval-required, and denied policy dispositions cannot be recombined with an incompatible approval requirement.
 - Agent delegation cannot exceed sponsor authority, target scope, or effective resource budget.
 - Definitions and delegations cannot declare an empty business-effect set.
 - Operation receipts bind invocation, decision, result, and resulting state transition where applicable.

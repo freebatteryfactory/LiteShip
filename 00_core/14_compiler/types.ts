@@ -1120,11 +1120,14 @@ export type MigrationDiscoverySelection<
   Profile extends MigrationSourceProfileReference,
 > = MigrationAdapterSelection<MigrationAdapterForSource<Catalog['adapters'][number], Profile>>;
 
-/** Discovery either identifies one indivisible compatible row or fails. */
+/**
+ * Discovery synchronously selects from the catalog value it is given. Adapter
+ * execution may wait; catalog lookup may not acquire hidden physical input.
+ */
 export interface MigrationDiscovery<Catalog extends MigrationAdapterCatalog> {
   <Profile extends MigrationSourceProfileReference>(
     request: MigrationDiscoveryRequest<Profile>,
-  ): MaybePromise<Result<MigrationDiscoverySelection<Catalog, Profile>, MigrationFailure>>;
+  ): Result<MigrationDiscoverySelection<Catalog, Profile>, MigrationFailure>;
 }
 
 export type MigrationRequestId<Name extends string = string> = Brand<

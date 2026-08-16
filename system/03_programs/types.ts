@@ -48,7 +48,6 @@ import type {
   Brand,
   CaseOf,
   Hole,
-  MaybePromise,
   Named,
   NonEmptyTuple,
   Reference,
@@ -99,6 +98,7 @@ import type {
   OperationInvocation,
   OperationOutcome,
   OperationPolicyDecision,
+  OperationPolicyDisposition,
   OperationReference,
   OperationReceipt,
 } from '../../00_core/07_operation/types.js';
@@ -414,7 +414,11 @@ export interface RenderedBuildProcessRequest<
   readonly child: ChildProcessRequest;
 }
 
-/** One manager adapter: exact identity, addressed semantics, one renderer. */
+/**
+ * One manager adapter: exact identity, addressed semantics, one synchronous
+ * renderer. It transforms an admitted request into a process request; process
+ * execution belongs to the injected child-process authority.
+ */
 export interface PackageManagerDefinition<
   Name extends QualifiedPackageManagerName = QualifiedPackageManagerName,
 > {
@@ -424,11 +428,9 @@ export interface PackageManagerDefinition<
     Binary extends PackageBinaryRequest['binary'],
   >(
     request: PackageManagerRenderRequest<Execution, Binary>,
-  ) => MaybePromise<
-    Result<
-      RenderedBuildProcessRequest<Execution, CaseOf<PackageManagerSelection, Name>, Binary>,
-      NonEmptyTuple<Diagnostic>
-    >
+  ) => Result<
+    RenderedBuildProcessRequest<Execution, CaseOf<PackageManagerSelection, Name>, Binary>,
+    NonEmptyTuple<Diagnostic>
   >;
 }
 
@@ -485,16 +487,14 @@ export interface BuildArtifactAdmission<
   readonly diagnostics: readonly Diagnostic[];
 }
 
-/** One adapter-specific, execution-preserving target-product admission. */
+/** One synchronous, execution-preserving target-product admission. */
 export interface BuildTargetAdmission<
   Adapter extends BuildTargetAdapterCoordinate,
   NativeProduct,
 > {
   <Execution extends BuildRequestId>(
     product: BuildNativeProduct<Execution, Adapter, NativeProduct>,
-  ): MaybePromise<
-    Result<BuildArtifactAdmission<Execution, Adapter>, NonEmptyTuple<Diagnostic>>
-  >;
+  ): Result<BuildArtifactAdmission<Execution, Adapter>, NonEmptyTuple<Diagnostic>>;
 }
 
 /**
@@ -923,13 +923,13 @@ type DoctorProposalOperation<Proposal extends DoctorRemediationProposal> =
 
 type DoctorPolicyFor<
   Proposal extends DoctorRemediationProposal,
-  Allowed extends boolean,
+  Disposition extends OperationPolicyDisposition['_tag'],
 > = Omit<
   OperationPolicyDecision<DoctorProposalOperation<Proposal>>,
-  'operation' | 'allowed'
+  'operation' | 'disposition'
 > & {
   readonly operation: Proposal['invocation']['operation'];
-  readonly allowed: Allowed;
+  readonly disposition: CaseOf<OperationPolicyDisposition, Disposition>;
 };
 
 type DoctorReceiptFor<
@@ -943,22 +943,26 @@ type DoctorReceiptFor<
   readonly outcome: Outcome;
 };
 
-/** Exactly one terminal accounting outcome for one diagnosed proposal. */
+/** Exactly one policy/execution accounting outcome for one diagnosed proposal. */
 export type DoctorRemediationOutcome<
   Proposal extends DoctorRemediationProposal = DoctorRemediationProposal,
 > = Algebra<{
   'declined-by-policy': {
     readonly proposal: Proposal;
-    readonly decision: DoctorPolicyFor<Proposal, false>;
+    readonly decision: DoctorPolicyFor<Proposal, 'denied'>;
+  };
+  'approval-required': {
+    readonly proposal: Proposal;
+    readonly decision: DoctorPolicyFor<Proposal, 'approval-required'>;
   };
   'approved-not-executed': {
     readonly proposal: Proposal;
-    readonly decision: DoctorPolicyFor<Proposal, true>;
+    readonly decision: DoctorPolicyFor<Proposal, 'allowed'>;
     readonly diagnostics: NonEmptyTuple<Diagnostic>;
   };
   'execution-failed': {
     readonly proposal: Proposal;
-    readonly decision: DoctorPolicyFor<Proposal, true>;
+    readonly decision: DoctorPolicyFor<Proposal, 'allowed'>;
     readonly receipt: DoctorReceiptFor<
       Proposal,
       Exclude<
@@ -970,7 +974,7 @@ export type DoctorRemediationOutcome<
   };
   applied: {
     readonly proposal: Proposal;
-    readonly decision: DoctorPolicyFor<Proposal, true>;
+    readonly decision: DoctorPolicyFor<Proposal, 'allowed'>;
     readonly receipt: DoctorReceiptFor<
       Proposal,
       CaseOf<OperationOutcome<unknown, unknown>, 'succeeded'>

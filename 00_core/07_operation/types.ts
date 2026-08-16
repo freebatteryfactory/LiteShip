@@ -11,6 +11,7 @@
 import type {
   Algebra,
   Brand,
+  CaseOf,
   NonEmptyTuple,
   Reference,
   RequirementRow,
@@ -109,7 +110,25 @@ export type ApprovalRequirement = Algebra<{
   none: Record<never, never>;
   human: { readonly approvers: number };
   independent: { readonly approvers: number; readonly separationOfDuties: true };
-  prohibited: { readonly diagnostics: readonly Diagnostic[] };
+}>;
+
+/**
+ * Policy disposition keeps authorization, pending approval, and denial
+ * structurally distinct. Approval is a requirement only on the two arms that
+ * can lawfully carry one; denial explains itself with non-empty diagnostics.
+ */
+export type OperationPolicyDisposition = Algebra<{
+  allowed: {
+    readonly approval: CaseOf<ApprovalRequirement, 'none'>;
+    readonly diagnostics: readonly Diagnostic[];
+  };
+  'approval-required': {
+    readonly approval:
+      | CaseOf<ApprovalRequirement, 'human'>
+      | CaseOf<ApprovalRequirement, 'independent'>;
+    readonly diagnostics: readonly Diagnostic[];
+  };
+  denied: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
 }>;
 
 /**
@@ -157,9 +176,7 @@ export interface OperationInvocation<Input = unknown, Op extends OperationId = O
 export interface OperationPolicyDecision<Op extends OperationId = OperationId> {
   readonly operation: OperationReference<Op>;
   readonly policy: PolicyId;
-  readonly allowed: boolean;
-  readonly approval: ApprovalRequirement;
-  readonly diagnostics: readonly Diagnostic[];
+  readonly disposition: OperationPolicyDisposition;
   readonly effectiveBudget?: ResourceBudget;
   readonly attestation?: AttestationId;
 }
@@ -193,6 +210,7 @@ export interface OperationTypeSurface {
   readonly definition: OperationDefinition<unknown, unknown, unknown>;
   readonly invocation: OperationInvocation;
   readonly policy: OperationPolicyDecision;
+  readonly policyDisposition: OperationPolicyDisposition;
   readonly approval: ApprovalRequirement;
   readonly outcome: OperationOutcome;
   readonly receipt: OperationReceipt;
