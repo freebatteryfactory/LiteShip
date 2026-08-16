@@ -132,15 +132,25 @@ export type ADraftCutCannotSatisfyACommittedCut = Assert<
 >;
 
 
-/** Compile-time law: a commit carries the exact cut it answers for. */
-export type ACommitCarriesItsExactCut = Assert<
+/**
+ * Compile-time law: a commit carries its coordinate once.
+ *
+ * `result` and `time` are checked by name for absence. Their return would not
+ * break anything on the day it happened — it would reintroduce two facts that
+ * agree with the cut until the first time they do not, which is the shape this
+ * home removes on sight.
+ */
+export type ACommitCarriesTheCutAndNoSiblingCoordinate = Assert<
   Equal<
     [
       Commit<CutLawA>['cut'],
       Commit<CutLawA> extends Commit<SemanticCut<CutLawWorldB, CutLawRevisionA, CutLawEvidenceA>>
         ? true
         : false,
+      'result' extends keyof Commit ? true : false,
+      'time' extends keyof Commit ? true : false,
+      'base' extends keyof Commit ? true : false,
     ],
-    [CutLawA, false]
+    [CutLawA, false, false, false, true]
   >
 >;

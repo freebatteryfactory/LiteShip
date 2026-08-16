@@ -16,7 +16,7 @@ import type { Diagnostic } from '../00_error/types.js';
 import type { ToleranceProfileReference } from '../02_identity/types.js';
 import type { EntityFieldReference } from '../03_schema/types.js';
 import type { InterpolatorReference } from '../09_quantization/types.js';
-import type { AuthoredEnvelope, CoordinateSpaceDefinition, CoordinateSpaceId, GeometryCapabilities, GeometryValue, MaterialCapabilities, MaterialDefinition, Point2, ProjectionFidelity, ProjectionSupport, SceneMarker, SceneToleranceProfile, SceneToleranceProfileCoordinate, SpatialTransform, SpatialTransformFidelity, SpatialTransformInvertibility, TimelineDefinition, TimelineKey, TimelineTrack } from './types.js';
+import type { AuthoredEnvelope, CoordinateSpaceDefinition, CoordinateSpaceId, GeometryCapabilities, GeometryValue, MaterialCapabilities, MaterialDefinition, Point2, ProjectionFidelity, ProjectionSupport, SceneEntity, SceneMarker, SceneToleranceProfile, SceneToleranceProfileCoordinate, SpatialTransform, SpatialTransformFidelity, SpatialTransformInvertibility, TimelineDefinition, TimelineKey, TimelineTrack } from './types.js';
 
 type ScreenSpace = CoordinateSpaceId<'screen'>;
 
@@ -203,6 +203,26 @@ export type GeometryAndMaterialDeclareSupportThroughOneVocabulary = Assert<
       MaterialDefinition['capabilities'] extends MaterialCapabilities ? true : false,
     ],
     [NonEmptyTuple<ProjectionSupport>, NonEmptyTuple<ProjectionSupport>, true]
+  >
+>;
+
+
+/**
+ * Compile-time law: an entity declares no egress roster of its own.
+ *
+ * The entity composes a geometry and a material; the compiler derives what that
+ * composition reaches. An entity that could declare its own support would let a
+ * composition claim an egress neither of its parts can reach — an authored
+ * override wearing the costume of a derivation.
+ */
+export type ASceneEntityDeclaresNoEgressRoster = Assert<
+  Equal<
+    [
+      'projections' extends keyof SceneEntity ? true : false,
+      'capabilities' extends keyof SceneEntity ? true : false,
+      'egress' extends keyof SceneEntity ? true : false,
+    ],
+    [false, false, false]
   >
 >;
 

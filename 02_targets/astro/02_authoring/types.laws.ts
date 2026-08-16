@@ -31,6 +31,53 @@ export type ActivationCarriesTheCoreProposition = Assert<
 >;
 
 
+/**
+ * Compile-time law: an authored directive selects no execution backend.
+ *
+ * The predecessor's `client:worker`, `client:gpu`, and `client:wasm` are each a
+ * backend choice spelled as authoring syntax. Every one of these keys is absent
+ * by law, so the nine spellings cannot reassemble here under one name.
+ */
+export type AnAuthoredDirectiveSelectsNoBackend = Assert<
+  Equal<
+    [
+      'backend' extends keyof AuthoredActivation ? true : false,
+      'worker' extends keyof AuthoredActivation ? true : false,
+      'gpu' extends keyof AuthoredActivation ? true : false,
+      'wasm' extends keyof AuthoredActivation ? true : false,
+      'execution' extends keyof AuthoredActivation ? true : false,
+      'runtime' extends keyof AuthoredActivation ? true : false,
+    ],
+    [false, false, false, false, false, false]
+  >
+>;
+
+
+/**
+ * Compile-time law: the activation directive is not a drawer.
+ *
+ * Island identity, graph-cut joining, evidence-source declaration, egress
+ * selection, operation mounting, and target configuration each have an owner.
+ * None of them is here. This is the law that stops one syntax-shaped kingdom
+ * rising from the ashes of nine directives.
+ */
+export type TheActivationDirectiveHoldsNoForeignMeaning = Assert<
+  Equal<
+    [
+      'island' extends keyof AuthoredActivation ? true : false,
+      'join' extends keyof AuthoredActivation ? true : false,
+      'source' extends keyof AuthoredActivation ? true : false,
+      'egress' extends keyof AuthoredActivation ? true : false,
+      'operation' extends keyof AuthoredActivation ? true : false,
+      'configuration' extends keyof AuthoredActivation ? true : false,
+      'payload' extends keyof AuthoredActivation ? true : false,
+      'context' extends keyof AuthoredActivation ? true : false,
+    ],
+    [false, false, false, false, false, false, false, false]
+  >
+>;
+
+
 /** Compile-time law: a refusal names what it refused and why. */
 export type ARefusalNamesWhatItRefused = Assert<
   Equal<

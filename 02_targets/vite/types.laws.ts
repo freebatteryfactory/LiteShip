@@ -30,6 +30,7 @@ export type TheViteRosterIsExactlySixHomes = Assert<
   >
 >;
 
+
 /** Compile-time law: load-bearing surface members keep their declared types. */
 export type ViteSurfacesCarryTheirDeclaredMembers = Assert<
   Equal<
@@ -42,4 +43,10 @@ export type ViteSurfacesCarryTheirDeclaredMembers = Assert<
     ],
     [true, true, true, true, true]
   >
+>;
+
+
+/** Compile-time law: this child declares no ecosystem-target identity of its own. */
+export type TheViteChildDeclaresNoSecondTargetIdentity = Assert<
+  Equal<'target' extends keyof ViteTopology ? true : false, false>
 >;

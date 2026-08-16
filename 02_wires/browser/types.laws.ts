@@ -27,18 +27,25 @@ type BrowserLawB = OperationId<'liteship.wire.browser.law.op-b'>;
 
 
 /**
- * Compile-time law: loss arms carry their exact recovery dispositions.
+ * Compile-time law: a transferred input has no recovery, and the absence is
+ * structural.
  *
- * The recoverable arm carries its key. Both arms pin the dispositions they
- * report. Without those relations the two
+ * Lines one and two are the point of the home. Neither an idempotency key nor a
+ * retry member exists on the unrecoverable arm, so a consumer cannot consult one
+ * and decide to try anyway. Line three keeps the recoverable arm honest — it
+ * *does* carry the key, because there the recovery is real.
+ *
+ * Lines four and five pin the dispositions to their arms. Without them the two
  * arms are distinguishable only by name, and a later edit that lets
  * `unrecoverable` carry a `copied` disposition would restore exactly the
  * confusion the split exists to remove.
  */
-export type ATransferredInputHasExactRecoveryDispositions = Assert<
+export type ATransferredInputHasNoRecovery = Assert<
   IsExactlyTrue<
     Equal<
       [
+        'idempotencyKey' extends keyof CaseOf<BrowserLoss, 'unrecoverable'> ? true : false,
+        'retry' extends keyof CaseOf<BrowserLoss, 'unrecoverable'> ? true : false,
         Equal<CaseOf<BrowserLoss, 'recoverable'>['idempotencyKey'], IdempotencyKey>,
         Equal<
           CaseOf<BrowserLoss, 'unrecoverable'>['disposition'],
@@ -49,7 +56,7 @@ export type ATransferredInputHasExactRecoveryDispositions = Assert<
           CaseOf<TransferDisposition, 'copied'>
         >,
       ],
-      [true, true, true]
+      [false, false, true, true, true]
     >
   >
 >;

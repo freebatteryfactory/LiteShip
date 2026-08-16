@@ -17,7 +17,7 @@ import type { CanonicalValue, ContentAddress, ContentDigest } from '../01_encodi
 import type { RevisionReference } from '../02_identity/types.js';
 import type { StreamSequence } from '../04_time/types.js';
 import type { CancellationReceipt, DisposalReceipt } from '../05_lifecycle/types.js';
-import type { AdmittedProfile, AnalysisAlgorithmId, AnalysisAlgorithmReference, AnalysisCoordinateSystem, CapturedProvenance, ContainerProfileId, ContainerProfileReference, DecodeProfileId, DecodeProfileReference, DecodedFrame, DecodedProvenance, DecodedSampleBlock, EncodeProfileId, EncodeProfileReference, MediaAnalysisResult, MediaArtifact, MediaAssetId, MediaAssetReference, MediaBatch, MediaCut, MediaDecodeProduct, MediaDecodeRequest, MediaDecoderAuthority, MediaDecoderRequirement, MediaEncodeProduct, MediaEncodeRequest, MediaEncoderAuthority, MediaEncoderRequirement, MediaEvent, MediaExportDecision, MediaExportDisposition, MediaExportRequest, MediaFrame, MediaMuxAuthority, MediaMuxRequest, MediaMuxRequirement, MediaPacket, MediaRepresentationId, MediaRepresentationReference, MediaSource, MediaSourceCredit, MediaSourceId, MediaSourceReference, MediaTrackConfiguration, MediaTrackId, MediaTrackReference, MediaTrackSources, MediaTrackTag, PayloadLocation, PhysicalFrame, PhysicalPayload, RasterizedProvenance, SampleProvenance, SemanticFrameDerivation } from './types.js';
+import type { AdmittedProfile, AnalysisAlgorithmId, AnalysisAlgorithmReference, AnalysisCoordinateSystem, CapturedProvenance, ContainerProfileId, ContainerProfileReference, DecodeProfileId, DecodeProfileReference, DecodedFrame, DecodedProvenance, DecodedSampleBlock, EncodeProfileId, EncodeProfileReference, MediaAnalysisResult, MediaArtifact, MediaAssetId, MediaAssetReference, MediaBatch, MediaCut, MediaDecodeProduct, MediaDecodeRequest, MediaDecoderAuthority, MediaDecoderRequirement, MediaEncodeProduct, MediaEncodeRequest, MediaEncoderAuthority, MediaEncoderRequirement, MediaEvent, MediaExportDecision, MediaExportDisposition, MediaExportRequest, MediaFrame, MediaMuxAuthority, MediaMuxRequest, MediaMuxRequirement, MediaPacket, MediaRepresentationId, MediaRepresentationReference, MediaSource, MediaSourceCredit, MediaSourceId, MediaSourceReference, MediaTrackConfiguration, MediaTrackId, MediaTrackReference, MediaTrackSources, MediaTrackTag, PayloadLocation, PhysicalFrame, PhysicalPayload, PhysicalSampleBlock, RasterizedProvenance, SampleProvenance, SemanticFrameDerivation } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -47,8 +47,47 @@ type MediaLawSourceA = MediaSourceId<'liteship.media.law.source-a'>;
 type MediaLawAlgorithmA = AnalysisAlgorithmId<'liteship.media.law.algorithm-a'>;
 
 
-/** Compile-time law: a semantic media frame binds the shared cut authority. */
-export type AMediaFrameCarriesItsCut = Assert<Equal<MediaFrame['cut'], MediaCut>>;
+/**
+ * Compile-time law: a media frame owns its coordinate once.
+ *
+ * `frame`, `samples`, and `time` are checked by name for absence. Their return
+ * would not break anything the day it happened — it would reintroduce members
+ * that agree with the cut right up until they do not.
+ */
+export type AMediaFrameCarriesTheCutAndNoSiblingCoordinate = Assert<
+  Equal<
+    [
+      MediaFrame['cut'] extends MediaCut ? true : false,
+      'frame' extends keyof MediaFrame ? true : false,
+      'samples' extends keyof MediaFrame ? true : false,
+      'time' extends keyof MediaFrame ? true : false,
+    ],
+    [true, false, false, false]
+  >
+>;
+
+
+/**
+ * Compile-time law: a physical frame carries no coordinate of its own.
+ *
+ * The coordinate belongs to provenance — to the semantic frame a rasterization
+ * realizes, to the source coordinate a decode came from, to the capture
+ * coordinate a composite was taken at. A sibling `time` here is the parity
+ * triangle reincarnating one layer below where it was removed.
+ */
+export type APhysicalFrameCarriesNoCoordinateOfItsOwn = Assert<
+  Equal<
+    [
+      'time' extends keyof PhysicalFrame ? true : false,
+      'at' extends keyof PhysicalFrame ? true : false,
+      'cut' extends keyof PhysicalFrame ? true : false,
+      'provenance' extends keyof PhysicalFrame ? true : false,
+      'time' extends keyof PhysicalSampleBlock ? true : false,
+      'range' extends keyof PhysicalSampleBlock ? true : false,
+    ],
+    [false, false, false, true, false, false]
+  >
+>;
 
 
 /**
@@ -486,11 +525,25 @@ export type AnAnalysisResultNamesEverythingThatDeterminedIt = Assert<
 >;
 
 
-/** Compile-time law: one export decision answers for the request it carries. */
-export type AnExportDecisionBindsItsRequestAndDisposition = Assert<
+/**
+ * Compile-time law: an export request names its subject, cut, and egress, and
+ * carries no disposition.
+ *
+ * A request holding its own answer is a decided plan wearing a request nametag,
+ * and it let a semantic-projection disposition exist while naming nothing at
+ * all.
+ */
+export type AnExportRequestNamesItsSubjectAndCarriesNoAnswer = Assert<
   Equal<
-    [MediaExportDecision['request'], MediaExportDecision['disposition']],
-    [MediaExportRequest, MediaExportDisposition]
+    [
+      'subject' extends keyof MediaExportRequest ? true : false,
+      'cut' extends keyof MediaExportRequest ? true : false,
+      'egress' extends keyof MediaExportRequest ? true : false,
+      'disposition' extends keyof MediaExportRequest ? true : false,
+      MediaExportDecision['request'] extends MediaExportRequest ? true : false,
+      MediaExportDecision['disposition'] extends MediaExportDisposition ? true : false,
+    ],
+    [true, true, true, false, true, true]
   >
 >;
 

@@ -117,6 +117,23 @@ export type CaptureAvailabilityIsAnsweredNotAssumed = Assert<
 
 
 /**
+ * Compile-time law: capture decides nothing about encoding, and holds no scene
+ * or frame model of its own.
+ */
+export type CaptureCarriesNoCodecOrSceneAuthority = Assert<
+  Equal<
+    [
+      'codec' extends keyof CaptureRequest ? true : false,
+      'container' extends keyof CaptureRequest ? true : false,
+      'scene' extends keyof CaptureRequest ? true : false,
+      'frame' extends keyof CaptureRequest ? true : false,
+    ],
+    [false, false, false, false]
+  >
+>;
+
+
+/**
  * Compile-time law: the intrinsic facility is grounded and the owned authority
  * is offered over it.
  *

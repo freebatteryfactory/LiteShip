@@ -45,6 +45,7 @@ import type { OperationId, OperationReference } from '../00_core/07_operation/ty
 import type {
   WireAdmission,
   WireCaller,
+  WireDefinition,
   WireExchange,
   WireExposure,
   WireRefusal,
@@ -139,21 +140,23 @@ type WireLawB = OperationId<'liteship.wire.law.op-b'>;
 
 
 /**
- * Completed and undelivered crossings retain the receipt proving execution.
+ * A refused crossing has no receipt; an undelivered one does.
  *
  * This is the central claim of the home. Line three is the one that matters
  * most in practice: if `undelivered` ever loses its receipt, the fact that the
  * operation ran becomes unrepresentable and every consumer that retries is
  * silently wrong.
  */
-export type ExecutedCrossingsRetainTheirReceipt = Assert<
+export type ARefusalHasNoReceiptAndAnUndeliveredAnswerDoes = Assert<
   Equal<
     [
+      'receipt' extends keyof CaseOf<WireExchange, 'refused'> ? true : false,
       'receipt' extends keyof CaseOf<WireExchange, 'completed'> ? true : false,
       'receipt' extends keyof CaseOf<WireExchange, 'undelivered'> ? true : false,
+      'invocation' extends keyof CaseOf<WireExchange, 'refused'> ? true : false,
       Equal<TagOf<WireExchange>, 'completed' | 'refused' | 'undelivered'>,
     ],
-    [true, true, true]
+    [false, true, true, false, true]
   >
 >;
 
@@ -161,18 +164,22 @@ export type ExecutedCrossingsRetainTheirReceipt = Assert<
 /**
  * A wire failure channel is not an operation failure channel.
  *
- * `WireRefusal` names boundary failures. An operation that refused or failed
- * arrives as `completed` with a receipt saying so, because the crossing worked.
- * Merging the two is how a transport error becomes indistinguishable from a
- * business refusal.
+ * `WireRefusal` has no arm carrying an operation outcome, and `WireExchange`
+ * has no `error` arm. An operation that refused or failed arrives as
+ * `completed` with a receipt saying so, because the crossing worked. Merging
+ * the two is how a transport error becomes indistinguishable from a business
+ * refusal.
  */
 export type ARefusalIsNotAnOperationFailure = Assert<
   Equal<
     [
       Equal<TagOf<WireRefusal>, 'malformed' | 'unrecognized'>,
+      'failed' extends TagOf<WireRefusal> ? true : false,
+      'error' extends TagOf<WireExchange> ? true : false,
+      'outcome' extends keyof CaseOf<WireExchange, 'refused'> ? true : false,
       Equal<CaseOf<WireRefusal, 'unrecognized'>['requested'], string>,
     ],
-    [true, true]
+    [true, false, false, false, true]
   >
 >;
 
@@ -200,6 +207,28 @@ export type AWireIsExactOverTheOperationItProjects = Assert<
       WireExchange extends WireExchange<unknown, never, WireLawA> ? true : false,
     ],
     [false, true, false, false, true, false]
+  >
+>;
+
+
+/**
+ * A wire declares no operation semantics.
+ *
+ * Checked by name, because every one of these is a plausible-looking addition
+ * that would move meaning across the boundary into the transport. A wire that
+ * owns a handler is a second place where behaviour lives.
+ */
+export type AWireCarriesNoOperationSemantics = Assert<
+  Equal<
+    [
+      'payload' extends keyof WireDefinition ? true : false,
+      'context' extends keyof WireDefinition ? true : false,
+      'hooks' extends keyof WireDefinition ? true : false,
+      'handler' extends keyof WireDefinition ? true : false,
+      'middleware' extends keyof WireDefinition ? true : false,
+      'schema' extends keyof WireDefinition ? true : false,
+    ],
+    [false, false, false, false, false, false]
   >
 >;
 

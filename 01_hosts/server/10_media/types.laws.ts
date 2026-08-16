@@ -96,7 +96,7 @@ export type ARenderJobProducesABoundedFrameSource = Assert<
 
 /**
  * Compile-time law: a render job binds its exact cut, contract, render profile,
- * tool profile, and destination.
+ * tool profile, and destination, and carries no sample position beside the cut.
  */
 export type ARenderJobBindsItsCutAndProfiles = Assert<
   Equal<
@@ -121,6 +121,7 @@ export type ARenderJobBindsItsCutAndProfiles = Assert<
       RenderLawJobA['render'],
       RenderLawJobA['tool'],
       RenderLawJobA['destination'],
+      'position' extends keyof RenderLawJobA ? true : false,
     ],
     [
       MediaJobReference<MediaLawJobA>,
@@ -131,6 +132,7 @@ export type ARenderJobBindsItsCutAndProfiles = Assert<
       ServerRenderProfile<MediaLawRenderA>,
       ToolProfile<MediaLawToolA, MediaLawProfileA>,
       AdmittedPath<MediaLawRootA>,
+      false,
     ]
   >
 >;
@@ -243,16 +245,32 @@ export type RenderThreadsTheRequestAncestry = Assert<
 
 
 /**
- * Compile-time law: this host fills core's codec sockets through one offer.
+ * Compile-time law: this host fills core's codec sockets and declares none of
+ * its own.
+ *
+ * A server-local decode, encode, or mux contract would be a second vocabulary
+ * beside core's, which is the state this fold found and removed.
  */
-export type TheServerMediaOfferFillsTheCoreCodecSockets = Assert<
+export type TheServerFillsTheCoreCodecSockets = Assert<
   Equal<
-    ServerMediaOffer['provides'],
-    readonly [
-      ServerMediaRequirement,
-      MediaDecoderRequirement,
-      MediaEncoderRequirement,
-      MediaMuxRequirement,
+    [
+      ServerMediaOffer['provides'],
+      'decode' extends keyof ServerMediaAuthority ? true : false,
+      'encode' extends keyof ServerMediaAuthority ? true : false,
+      'finalize' extends keyof ServerMediaAuthority ? true : false,
+      'renderFrames' extends keyof ServerMediaAuthority ? true : false,
+    ],
+    [
+      readonly [
+        ServerMediaRequirement,
+        MediaDecoderRequirement,
+        MediaEncoderRequirement,
+        MediaMuxRequirement,
+      ],
+      false,
+      false,
+      false,
+      true,
     ]
   >
 >;

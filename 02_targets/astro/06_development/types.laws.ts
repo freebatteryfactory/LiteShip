@@ -26,19 +26,22 @@ type LawRevision = RevisionId;
 
 
 /**
- * Compile-time law: development output and produced artifacts are distinct.
+ * Compile-time law: development output is not a produced artifact.
  *
  * Both directions, because a one-directional check passes when the two
  * collapse. If a generated declaration were assignable to `ProducedArtifact`,
  * a dev-server convenience could fill an artifact slot in a real composition.
  */
-export type DevelopmentOutputAndProducedArtifactsAreNotSubstitutable = Assert<
+export type DevelopmentOutputHasNoProductionAuthority = Assert<
   Equal<
     [
       GeneratedDeclaration extends ProducedArtifact ? true : false,
       ProducedArtifact extends GeneratedDeclaration ? true : false,
+      'producer' extends keyof GeneratedDeclaration ? true : false,
+      'slot' extends keyof GeneratedDeclaration ? true : false,
+      'artifact' extends keyof GeneratedDeclaration ? true : false,
     ],
-    [false, false]
+    [false, false, false, false, false]
   >
 >;
 
@@ -73,15 +76,17 @@ export type AWatchedSourceIsAdmitted = Assert<
 /**
  * Compile-time law: stale is neither fresh nor absent.
  *
- * Three distinct arms, with stale carrying the diagnostic that explains why
- * the current declaration cannot be used.
+ * Three distinct arms, and only `fresh` carries a declaration. A stale result
+ * that could carry one would be indistinguishable from a current answer.
  */
-export type DevelopmentEvidenceKeepsStaleDistinctAndDiagnosed = Assert<
+export type StaleIsNeitherFreshNorAbsent = Assert<
   Equal<
     [
       Equal<DevelopmentEvidence['_tag'], 'fresh' | 'stale' | 'unavailable'>,
+      'declaration' extends keyof CaseOf<DevelopmentEvidence, 'stale'> ? true : false,
+      'declaration' extends keyof CaseOf<DevelopmentEvidence, 'unavailable'> ? true : false,
       Equal<CaseOf<DevelopmentEvidence, 'stale'>['diagnostics'], NonEmptyTuple<Diagnostic>>,
     ],
-    [true, true]
+    [true, false, false, true]
   >
 >;

@@ -28,6 +28,7 @@ export type TheCloudflareRosterIsExactlyFourHomes = Assert<
   >
 >;
 
+
 /** Compile-time law: load-bearing surface members keep their declared types. */
 export type CloudflareSurfacesCarryTheirDeclaredMembers = Assert<
   Equal<
@@ -38,4 +39,10 @@ export type CloudflareSurfacesCarryTheirDeclaredMembers = Assert<
     ],
     [true, true, true]
   >
+>;
+
+
+/** Compile-time law: this child declares no second ecosystem-target identity. */
+export type TheCloudflareChildDeclaresNoSecondTargetIdentity = Assert<
+  Equal<'target' extends keyof CloudflareTopology ? true : false, false>
 >;

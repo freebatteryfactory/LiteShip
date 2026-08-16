@@ -449,6 +449,29 @@ export type DoctorDogfoodsOneObservationalAuthority = Assert<
   >
 >;
 
+/**
+ * Red-first carrier law: remediation is one result per diagnosed proposal,
+ * never two independently writable decision and application populations.
+ */
+export type DoctorRemediationHasOneProposalDerivedOutcomePopulation = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        'outcomes' extends keyof CaseOf<DoctorRemediationComposition, 'repository'>['run']
+          ? true
+          : false,
+        'decisions' extends keyof CaseOf<DoctorRemediationComposition, 'repository'>['run']
+          ? true
+          : false,
+        'applications' extends keyof CaseOf<DoctorRemediationComposition, 'repository'>['run']
+          ? true
+          : false,
+      ],
+      [true, false, false]
+    >
+  >
+>;
+
 type DoctorLawOperationA = OperationId<'law.doctor.operation-a'>;
 type DoctorLawOperationB = OperationId<'law.doctor.operation-b'>;
 type DoctorLawProposalA = DoctorRemediationProposal<

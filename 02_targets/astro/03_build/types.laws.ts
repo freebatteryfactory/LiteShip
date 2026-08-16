@@ -157,10 +157,42 @@ export type EveryNonProductiveDispositionExplainsItself = Assert<
 >;
 
 
-/** Compile-time law: the request carries the planned outcome whole. */
-export type TheRequestCarriesThePlannedOutcomeWhole = Assert<
+/**
+ * Compile-time law: the request carries the planned outcome whole and restates
+ * none of its parts.
+ *
+ * The absences are the law. A request that named satisfiers, groundings,
+ * offers, or a free requirement row would own a second copy of the plan.
+ */
+export type TheRequestRestatesNoPlanningFacts = Assert<
   Equal<
-    AstroProjectionRequest<LawParticipation, LawDemands>['planned'],
-    CaseOf<CompileOutcome, 'planned'>
+    [
+      AstroProjectionRequest<LawParticipation, LawDemands>['planned'],
+      'satisfaction' extends keyof AstroProjectionRequest<LawParticipation, LawDemands> ? true : false,
+      'grounding' extends keyof AstroProjectionRequest<LawParticipation, LawDemands> ? true : false,
+      'offers' extends keyof AstroProjectionRequest<LawParticipation, LawDemands> ? true : false,
+      'requirements' extends keyof AstroProjectionRequest<LawParticipation, LawDemands> ? true : false,
+    ],
+    [CaseOf<CompileOutcome, 'planned'>, false, false, false, false]
+  >
+>;
+
+
+/**
+ * Compile-time law: the facility names no ecosystem but its own.
+ *
+ * No plugin handle, no hook payload, no ambient context. Any of those would
+ * make the contract unfillable by anything except the supplier it was shaped
+ * around, which is the sibling import re-entering through the type system.
+ */
+export type TheFacilityNamesNoForeignEcosystem = Assert<
+  Equal<
+    [
+      'plugin' extends keyof AstroBuildFacility<LawParticipation, LawDemands, LawProducer> ? true : false,
+      'vite' extends keyof AstroBuildFacility<LawParticipation, LawDemands, LawProducer> ? true : false,
+      'hooks' extends keyof AstroBuildFacility<LawParticipation, LawDemands, LawProducer> ? true : false,
+      'context' extends keyof AstroBuildFacility<LawParticipation, LawDemands, LawProducer> ? true : false,
+    ],
+    [false, false, false, false]
   >
 >;

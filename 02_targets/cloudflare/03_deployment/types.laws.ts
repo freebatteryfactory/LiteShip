@@ -38,6 +38,28 @@ export type ADeploymentConsumesTheUmbrellaApplication = Assert<
 >;
 
 
+/**
+ * Compile-time law: a deployment cannot ask which producer was involved.
+ *
+ * This is the direct-mode acceptance test as a type. Every one of these keys
+ * would give a consumer something to branch on, and the moment one exists,
+ * `withoutAstro` becomes expressible.
+ */
+export type ADeploymentCannotAskWhoProduced = Assert<
+  Equal<
+    [
+      'astro' extends keyof DeploymentRequest ? true : false,
+      'framework' extends keyof DeploymentRequest ? true : false,
+      'producer' extends keyof DeploymentRequest ? true : false,
+      'direct' extends keyof DeploymentRequest ? true : false,
+      'outputMode' extends keyof DeploymentRequest ? true : false,
+      'middleware' extends keyof DeploymentRequest ? true : false,
+    ],
+    [false, false, false, false, false, false]
+  >
+>;
+
+
 /** Compile-time law: a deployment pins its exact participation and configuration. */
 export type ADeploymentPinsItsExactAxes = Assert<
   Equal<
@@ -52,6 +74,23 @@ export type ADeploymentPinsItsExactAxes = Assert<
       >,
     ],
     [true, true]
+  >
+>;
+
+
+/**
+ * Compile-time law: refusal precedes the attempt, failure follows it, and
+ * neither reports a deployment.
+ */
+export type RefusalAndFailureReportNoDeployment = Assert<
+  Equal<
+    [
+      Equal<DeploymentOutcome['_tag'], 'deployed' | 'refused' | 'failed'>,
+      'request' extends keyof CaseOf<DeploymentOutcome, 'refused'> ? true : false,
+      'request' extends keyof CaseOf<DeploymentOutcome, 'failed'> ? true : false,
+      'bindings' extends keyof CaseOf<DeploymentOutcome, 'failed'> ? true : false,
+    ],
+    [true, false, false, false]
   >
 >;
 

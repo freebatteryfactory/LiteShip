@@ -57,11 +57,21 @@ export type AGeneratedAssetCarriesTheCoreSourceRelation = Assert<
 /**
  * Compile-time law: a generated asset stays in the module graph.
  *
- * `entry` is a real generated module identity, so the generated asset remains
- * attached to the module graph.
+ * `entry` is a real generated module identity, so a worker assembled from
+ * interpolated strings has nowhere to live. There is no `code`, no `source`,
+ * and no `url` member for one to hide in.
  */
 export type AGeneratedAssetStaysInTheGraph = Assert<
-  Equal<GeneratedAsset['entry'], GeneratedModuleIdentity>
+  Equal<
+    [
+      Equal<GeneratedAsset['entry'], GeneratedModuleIdentity>,
+      'code' extends keyof GeneratedAsset ? true : false,
+      'source' extends keyof GeneratedAsset ? true : false,
+      'url' extends keyof GeneratedAsset ? true : false,
+      'blob' extends keyof GeneratedAsset ? true : false,
+    ],
+    [true, false, false, false, false]
+  >
 >;
 
 
@@ -73,13 +83,14 @@ export type AGeneratedAssetStaysInTheGraph = Assert<
  * an asset with ancestry; `unresolved-ancestry` carries diagnostics and no
  * asset at all.
  */
-export type UnresolvedAncestryIsDiagnosed = Assert<
+export type UnresolvedAncestryIsNotAnAsset = Assert<
   Equal<
     [
       Equal<AssetEmission['_tag'], 'emitted' | 'unresolved-ancestry' | 'failed'>,
+      'asset' extends keyof CaseOf<AssetEmission, 'unresolved-ancestry'> ? true : false,
       Equal<CaseOf<AssetEmission, 'unresolved-ancestry'>['diagnostics'], NonEmptyTuple<Diagnostic>>,
     ],
-    [true, true]
+    [true, false, true]
   >
 >;
 

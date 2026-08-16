@@ -100,21 +100,28 @@ export type AStatusClassIsPinnedWhereOnlyOneIsHonest = Assert<
 
 
 /**
- * Compile-time law: a lost answer carries explicit retry eligibility.
+ * Compile-time law: retry eligibility exists only where the operation ran.
  *
- * An unsafe method with no idempotency key, whose answer was lost, must be
- * nameable. The retry algebra keeps that case distinct from free and keyed
- * retries.
+ * A rejected crossing never reached an operation, so retrying it is free and
+ * needs no member to say so; an answered crossing has its answer. Putting
+ * `retry` on either would invite a client to consult it, and a member that is
+ * always the same answer is a member that gets read wrong eventually.
+ *
+ * Line four is the one that has to exist: an unsafe method with no idempotency
+ * key, whose answer was lost, must be nameable. The default across the industry
+ * is that it has no name and the client retries.
  */
-export type ALostAnswerCarriesRetryEligibility = Assert<
+export type RetryEligibilityExistsOnlyWhereTheOperationRan = Assert<
   IsExactlyTrue<
     Equal<
       [
         'retry' extends keyof CaseOf<HttpProjection, 'lost'> ? true : false,
+        'retry' extends keyof CaseOf<HttpProjection, 'rejected'> ? true : false,
+        'retry' extends keyof CaseOf<HttpProjection, 'answered'> ? true : false,
         Equal<TagOf<HttpRetryEligibility>, 'free' | 'keyed' | 'forbidden'>,
         Equal<CaseOf<HttpRetryEligibility, 'keyed'>['idempotencyKey'], IdempotencyKey>,
       ],
-      [true, true, true]
+      [true, false, false, true, true]
     >
   >
 >;

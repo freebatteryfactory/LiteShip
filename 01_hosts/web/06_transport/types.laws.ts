@@ -47,6 +47,19 @@ export type ResumptionKeepsTheStreamIdentity = Assert<
 >;
 
 
+/** Compile-time law: a one-shot fetch has nothing to resume and carries none of it. */
+export type AOneShotFetchCarriesNoReplayMachinery = Assert<
+  Equal<
+    [
+      'resumption' extends keyof CaseOf<WebConnection, 'fetch'> ? true : false,
+      'heartbeat' extends keyof CaseOf<WebConnection, 'fetch'> ? true : false,
+      'reconnection' extends keyof CaseOf<WebConnection, 'fetch'> ? true : false,
+    ],
+    [false, false, false]
+  >
+>;
+
+
 /** Compile-time law: the carrier set is closed and every carrier decodes. */
 export type EveryCarrierActuallyDecodes = Assert<
   Equal<

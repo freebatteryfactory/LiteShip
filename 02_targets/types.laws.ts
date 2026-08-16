@@ -443,6 +443,30 @@ export type ParticipationBindsItsExactRelations = Assert<
 
 
 /**
+ * Compile-time law: the outcome is the sole owner of composition identity.
+ *
+ * Neither a participation nor a producer names a composition. This is what
+ * makes the mismatch unrepresentable rather than merely forbidden: an outcome
+ * for composition A cannot hold participants stamped with composition B,
+ * because participants carry no such stamp. The alternative -- threading the
+ * composition generic through both populations -- would correlate two copies of
+ * a fact instead of leaving it with one owner.
+ */
+export type CompositionIsOwnedByTheOutcomeAlone = Assert<
+  Equal<
+    [
+      'composition' extends keyof TargetParticipation ? true : false,
+      'composition' extends keyof CaseOf<ArtifactProducer, 'direct-composition'> ? true : false,
+      'composition' extends keyof CaseOf<ArtifactProducer, 'ecosystem-target'> ? true : false,
+      'composition' extends keyof ProducedArtifact ? true : false,
+      'composition' extends keyof TargetFailure ? true : false,
+    ],
+    [false, false, false, false, false]
+  >
+>;
+
+
+/**
  * Compile-time law: attempt and composition are distinct reference kinds.
  *
  * Compared against the literal kind strings rather than against the aliases.
@@ -566,6 +590,25 @@ export type AnOutcomePinsItsExactComposition = Assert<
 
 
 /**
+ * Compile-time law: a refusal carries an attempt, never a selected composition.
+ *
+ * Rejection happens before selection. A refused arm holding a
+ * `TargetCompositionReference` would give a rejected attempt the identity of a
+ * composition it never became -- the target-shaped version of handing a
+ * rejected compiler branch a candidate reference.
+ */
+export type ARefusalCarriesNoSelectedComposition = Assert<
+  Equal<
+    [
+      CaseOf<TargetCompositionOutcome, 'refused'>['attempt'],
+      'composition' extends keyof CaseOf<TargetCompositionOutcome, 'refused'> ? true : false,
+    ],
+    [TargetAttemptReference, false]
+  >
+>;
+
+
+/**
  * Compile-time law: failure carries the exact participation that failed.
  *
  * Naming only the target would drop the configuration revision on exactly the
@@ -601,9 +644,30 @@ export type ParticipationsAreNotInterchangeable = Assert<
 >;
 
 
-/** Compile-time law: target production binds the core artifact whole. */
-export type AProducedArtifactBindsTheCoreArtifact = Assert<
-  Equal<ProducedArtifact['artifact'], Artifact>
+/**
+ * Compile-time law: a produced artifact binds the core artifact rather than
+ * restating it.
+ *
+ * The absences are the law. If any of these keys appears here, the architecture
+ * has acquired a second artifact vocabulary, and the two will agree only for as
+ * long as someone keeps checking.
+ */
+export type AProducedArtifactRestatesNothing = Assert<
+  Equal<
+    [
+      ProducedArtifact['artifact'] extends Artifact ? true : false,
+      'address' extends keyof ProducedArtifact ? true : false,
+      'digest' extends keyof ProducedArtifact ? true : false,
+      'mediaType' extends keyof ProducedArtifact ? true : false,
+      'source' extends keyof ProducedArtifact ? true : false,
+      'relation' extends keyof ProducedArtifact ? true : false,
+      'sourceMap' extends keyof ProducedArtifact ? true : false,
+      // configuration belongs to the producer; composition belongs to the outcome
+      'configuration' extends keyof ProducedArtifact ? true : false,
+      'composition' extends keyof ProducedArtifact ? true : false,
+    ],
+    [true, false, false, false, false, false, false, false, false]
+  >
 >;
 
 
@@ -625,6 +689,86 @@ export type EcosystemProductionReusesExactParticipation = Assert<
 >;
 
 
+/**
+ * Compile-time law: production is expressible with no ecosystem target and no
+ * target configuration.
+ *
+ * This is the direct-mode acceptance test as a type. A composition of hosts
+ * alone can produce an artifact, so a consumer never needs to ask which
+ * framework was involved, and no consumer needs a "without Astro" branch. The
+ * configuration absence matters as much as the target absence: a direct
+ * production required to name an ecosystem configuration is still an
+ * ecosystem-shaped path wearing a different label.
+ */
+export type DirectProductionNeedsNoTargetContext = Assert<
+  Equal<
+    [
+      'target' extends keyof CaseOf<ArtifactProducer, 'direct-composition'> ? true : false,
+      'participation' extends keyof CaseOf<ArtifactProducer, 'direct-composition'> ? true : false,
+      'configuration' extends keyof CaseOf<ArtifactProducer, 'direct-composition'> ? true : false,
+    ],
+    [false, false, false]
+  >
+>;
+
+
+/**
+ * Compile-time law: failure names the participant and stops.
+ *
+ * The composition belongs to the outcome carrying the failure. A copy here
+ * would be a second fact requiring a parity law nobody would remember to write.
+ */
+export type FailureDoesNotDuplicateComposition = Assert<
+  Equal<'composition' extends keyof TargetFailure ? true : false, false>
+>;
+
+
+/**
+ * Compile-time law: the umbrella carries no per-target luggage and no universal
+ * lifecycle.
+ *
+ * Named members are checked because a junk drawer does not become
+ * constitutional by dropping the word Astro from its label -- `payload`,
+ * `context`, and `hooks` are the same costume with the tag cut out.
+ */
+export type TheUmbrellaCarriesNoTargetLuggage = Assert<
+  Equal<
+    [
+      'astro' extends keyof TargetParticipation ? true : false,
+      'vite' extends keyof TargetParticipation ? true : false,
+      'cloudflare' extends keyof TargetParticipation ? true : false,
+      'remotion' extends keyof TargetParticipation ? true : false,
+      'payload' extends keyof TargetParticipation ? true : false,
+      'context' extends keyof TargetParticipation ? true : false,
+      'hooks' extends keyof TargetParticipation ? true : false,
+      'phase' extends keyof TargetParticipation ? true : false,
+      'lifecycle' extends keyof TargetParticipation ? true : false,
+    ],
+    [false, false, false, false, false, false, false, false, false]
+  >
+>;
+
+
+/**
+ * Compile-time law: refusal and failure stay distinct, and neither carries
+ * production.
+ *
+ * A refused composition holding artifacts would let a caller keep shipping past
+ * a refusal because the payload looked survivable.
+ */
+export type RefusalAndFailureCarryNoProduction = Assert<
+  Equal<
+    [
+      'produced' extends keyof CaseOf<TargetCompositionOutcome, 'refused'> ? true : false,
+      'produced' extends keyof CaseOf<TargetCompositionOutcome, 'failed'> ? true : false,
+      'rejection' extends keyof CaseOf<TargetCompositionOutcome, 'failed'> ? true : false,
+      'failure' extends keyof CaseOf<TargetCompositionOutcome, 'refused'> ? true : false,
+    ],
+    [false, false, false, false]
+  >
+>;
+
+
 /** Compile-time law: a composed outcome has at least one participant. */
 export type AComposedOutcomeHasParticipants = Assert<
   Equal<CaseOf<TargetCompositionOutcome, 'composed'>['participants'], NonEmptyTuple<TargetParticipation>>
@@ -640,7 +784,16 @@ export type AComposedOutcomeHasParticipants = Assert<
  * becomes expressible somewhere downstream.
  */
 export type ADeployableApplicationIsProducerAgnostic = Assert<
-  Equal<DeployableApplication['entry']['producer'], ArtifactProducer>
+  Equal<
+    [
+      DeployableApplication['entry']['producer'] extends ArtifactProducer ? true : false,
+      'target' extends keyof DeployableApplication ? true : false,
+      'participation' extends keyof DeployableApplication ? true : false,
+      'composition' extends keyof DeployableApplication ? true : false,
+      'framework' extends keyof DeployableApplication ? true : false,
+    ],
+    [true, false, false, false, false]
+  >
 >;
 
 
@@ -658,6 +811,63 @@ export type ADeployableApplicationHasOneEntry = Assert<
       DeployableApplication extends readonly ProducedArtifact[] ? true : false,
     ],
     [true, true, false]
+  >
+>;
+
+
+/**
+ * Compile-time law: a deployable application restates no artifact facts.
+ *
+ * It binds produced artifacts and adds nothing. Address, digest, media type,
+ * and slot all live where they already lived; a manifest member here would be
+ * the second artifact vocabulary this home spent the whole umbrella refusing.
+ */
+export type ADeployableApplicationRestatesNothing = Assert<
+  Equal<
+    [
+      'address' extends keyof DeployableApplication ? true : false,
+      'digest' extends keyof DeployableApplication ? true : false,
+      'manifest' extends keyof DeployableApplication ? true : false,
+      'slot' extends keyof DeployableApplication ? true : false,
+    ],
+    [false, false, false, false]
+  >
+>;
+
+
+/**
+ * Compile-time law (T15): the outcome projects into core's explanation and
+ * declares no explanation vocabulary of its own.
+ *
+ * This was a proof obligation stated in prose while nothing checked it. The
+ * risk is not that someone writes a bad explanation — it is that a second one
+ * appears, because a layer that grows a `facts` or `report` member has already
+ * stopped inheriting core's envelope, and every consumer downstream then has
+ * two dialects to reconcile.
+ *
+ * An earlier draft did exactly this: a facts product wrapping the outcome, which
+ * let a refused outcome sit beside a non-empty production array while the law
+ * forbidding that held one object inward. The names are checked because a
+ * wrapper is one member away at all times.
+ */
+export type TheOutcomeProjectsIntoTheOneExplanation = Assert<
+  Equal<
+    [
+      'explanation' extends keyof CaseOf<TargetCompositionOutcome, 'composed'> ? true : false,
+      'facts' extends keyof CaseOf<TargetCompositionOutcome, 'composed'> ? true : false,
+      'report' extends keyof CaseOf<TargetCompositionOutcome, 'composed'> ? true : false,
+      'rendered' extends keyof CaseOf<TargetCompositionOutcome, 'composed'> ? true : false,
+      // What a projection actually reads: the selected composition, its
+      // participants, and what they produced. All three present, none wrapped.
+      keyof CaseOf<TargetCompositionOutcome, 'composed'>,
+    ],
+    [
+      false,
+      false,
+      false,
+      false,
+      '_tag' | 'composition' | 'participants' | 'produced',
+    ]
   >
 >;
 

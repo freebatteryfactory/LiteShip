@@ -61,6 +61,35 @@ export type TheInterpreterCanonicalizesThenAttests = Assert<
 
 
 /**
+ * An acquired fact carries no roster of who will read it.
+ *
+ * The deleted member is checked by name, and so are the two spellings it would
+ * come back under. A reverse index inside an evidence product is a roster with
+ * no relation to what it names: free to list checks outside the run, free to
+ * omit checks inside it, and answerable to nothing. The relationship it claimed
+ * belongs to the check's proposition, which is the one place that says what a
+ * check reasons about.
+ *
+ * The last two lines pin what the fact does own, so this reads as a subtraction
+ * rather than as a shape nobody has looked at.
+ */
+export type AnAcquiredFactCarriesNoConsumerRoster = Assert<
+  IsExactlyTrue<
+    Equal<
+      [
+        'consumers' extends keyof AcquiredFact ? true : false,
+        'gates' extends keyof AcquiredFact ? true : false,
+        'readers' extends keyof AcquiredFact ? true : false,
+        Equal<AcquiredFact['value'], Evidence<ContentAddress>>,
+        Equal<AcquiredFact['probe'], AuditProbeReference>,
+      ],
+      [false, false, false, true, true]
+    >
+  >
+>;
+
+
+/**
  * Audit produces upstream vocabulary and declares no twin of it.
  *
  * Checked structurally against the owners rather than by name. A local
@@ -77,6 +106,27 @@ export type AuditProducesUpstreamVocabulary = Assert<
       Equal<StructuralTwin['canonicalImport'], CanonicalImport>,
     ],
     [true, true, true, true]
+  >
+>;
+
+
+/**
+ * Audit decides nothing.
+ *
+ * The product carries no verdict, no finding, no authority, and no gate
+ * outcome. These are checked by name because that is exactly how the boundary
+ * erodes — one convenience member at a time, each individually reasonable.
+ */
+export type AnAuditProductCarriesNoVerdict = Assert<
+  Equal<
+    [
+      'verdict' extends keyof AuditProduct ? true : false,
+      'findings' extends keyof AuditProduct ? true : false,
+      'authority' extends keyof AuditProduct ? true : false,
+      'outcome' extends keyof AuditProduct ? true : false,
+      'passed' extends keyof AuditProduct ? true : false,
+    ],
+    [false, false, false, false, false]
   >
 >;
 

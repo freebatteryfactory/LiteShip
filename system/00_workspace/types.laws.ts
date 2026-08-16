@@ -186,10 +186,12 @@ export type WorkingTreeStateIsNotABooleanWithOptionals = Assert<
   Equal<
     [
       Equal<TagOf<WorkingTreeState>, 'clean' | 'modified'>,
+      'dirty' extends keyof WorkingTreeState ? true : false,
+      'paths' extends keyof CaseOf<WorkingTreeState, 'clean'> ? true : false,
       CaseOf<WorkingTreeState, 'modified'>['paths'] extends NonEmptyTuple<WorkspacePath> ? true : false,
       readonly WorkspacePath[] extends CaseOf<WorkingTreeState, 'modified'>['paths'] ? true : false,
     ],
-    [true, true, false]
+    [true, false, false, true, false]
   >
 >;
 
@@ -268,7 +270,10 @@ export type ASourceHomeObservationCarriesDigestsNotContents = Assert<
     [
       Equal<SourceHomeObservation['readme'], Evidence<ContentDigest>>,
       Equal<SourceHomeObservation['declarations'], Evidence<ContentDigest>>,
+      'contents' extends keyof SourceHomeObservation ? true : false,
+      'source' extends keyof SourceHomeObservation ? true : false,
+      'text' extends keyof SourceHomeObservation ? true : false,
     ],
-    [true, true]
+    [true, true, false, false, false]
   >
 >;
