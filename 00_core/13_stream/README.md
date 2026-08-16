@@ -10,11 +10,11 @@ Dependency authority: Actual source imports, constrained by the numbered path or
 
 ## Purpose
 
-Own semantic event envelopes, snapshots, family patches, holds, predictions, acknowledgements, checkpoints, replay, resumption, completeness, quality, and backpressure without turning transport framing into payload meaning.
+Own semantic event envelopes, snapshots, family patches, holds, predictions, observation acknowledgements, checkpoints, replay, resumption, completeness, quality, and backpressure without turning transport framing into payload meaning.
 
 ## Owns
 
-- Stream identity, sequence, event, acknowledgement, checkpoint, and resume contracts.
+- Stream identity, sequence, event, observation acknowledgement, checkpoint, and resume contracts.
 - Semantic snapshot, patch, hold, and prediction frame classes.
 - Explicit trusted-fragment snapshots and constrained semantic-location patches.
 - Explicit hostile generated-structure snapshots and patches.
@@ -50,7 +50,7 @@ The successor stream roster therefore includes:
 - scene patches;
 - media events.
 
-Acknowledgement, checkpoint, resumption, and operation receipts are control records, not interchangeable payload families.
+Observation acknowledgement, checkpoint, resumption, and operation receipts are control records, not interchangeable payload families.
 
 ## Shared envelope and family payloads
 
@@ -72,7 +72,8 @@ Frame classes mean:
 - Trusted-fragment and generated-structure arms have exact, non-overlapping payload rosters and distinct attestation reference kinds.
 - Every patch names its family and exact base revision.
 - Unknown payload versions fail closed.
-- Acknowledgement names the exact event safely observed.
+- An observation acknowledgement names the exact event safely observed. It proves no semantic commit, operation success, business effect, or exactly-once side effect.
+- An event, observation acknowledgement, checkpoint, and resume request retain one exact stream identity; a resume request cannot carry another stream's control record.
 - Checkpointing authorizes bounded prefix compaction.
 - Backpressure and overflow are explicit.
 - Quality may remove optional richness but never truth, authority, security, accessibility, or required interaction.

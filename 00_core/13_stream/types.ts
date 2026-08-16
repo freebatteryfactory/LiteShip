@@ -48,10 +48,10 @@ export type GeneratedStructureAdmission = Reference<'generated-structure-admissi
 export type StreamFrameKind = 'snapshot' | 'patch' | 'hold' | 'prediction';
 export type StreamCompleteness = 'partial' | 'complete';
 
-/** Common semantic stream envelope. */
-export interface StreamEvent<Payload = StreamPayload> {
+/** Common semantic stream envelope, exact over the stream that owns it. */
+export interface StreamEvent<Id extends StreamId = StreamId, Payload = StreamPayload> {
   readonly id: StreamEventId;
-  readonly stream: StreamReference;
+  readonly stream: StreamReference<Id>;
   readonly sequence: StreamSequence;
   readonly kind: StreamFrameKind;
   readonly completeness: StreamCompleteness;
@@ -194,26 +194,26 @@ export type StreamPayload = Algebra<{
   media: { readonly value: MediaEvent };
 }>;
 
-/** Acknowledges a safely observed or committed stream position. */
-export interface StreamAcknowledgement {
-  readonly stream: StreamReference;
+/** Safely observed stream position used for replay and resumption. */
+export interface StreamObservationAcknowledgement<Id extends StreamId = StreamId> {
+  readonly stream: StreamReference<Id>;
   readonly event: StreamEventId;
   readonly sequence: StreamSequence;
 }
 
 /** Checkpoint sufficient to resume without replaying the entire prefix. */
-export interface StreamCheckpoint {
-  readonly stream: StreamReference;
+export interface StreamCheckpoint<Id extends StreamId = StreamId> {
+  readonly stream: StreamReference<Id>;
   readonly event: StreamEventId;
   readonly sequence: StreamSequence;
   readonly state: ContentAddress;
 }
 
 /** Resume request after reconnect or process restart. */
-export interface StreamResumeRequest {
-  readonly stream: StreamReference;
-  readonly acknowledged?: StreamAcknowledgement;
-  readonly checkpoint?: StreamCheckpoint;
+export interface StreamResumeRequest<Id extends StreamId = StreamId> {
+  readonly stream: StreamReference<Id>;
+  readonly acknowledged?: StreamObservationAcknowledgement<Id>;
+  readonly checkpoint?: StreamCheckpoint<Id>;
 }
 
 /** Bounded buffering and overload behavior. */
@@ -237,7 +237,7 @@ export interface StreamTypeSurface {
   readonly generatedStructure: GeneratedStructureSnapshot;
   readonly generatedAdmission: GeneratedStructureAdmission;
   readonly generatedPatch: GeneratedStructurePatch;
-  readonly acknowledgement: StreamAcknowledgement;
+  readonly observationAcknowledgement: StreamObservationAcknowledgement;
   readonly checkpoint: StreamCheckpoint;
   readonly resume: StreamResumeRequest;
   readonly backpressure: BackpressurePolicy;

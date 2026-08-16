@@ -772,7 +772,7 @@ Physical APIs such as `AudioContext`, `AudioWorklet`, `WebCodecs`, ffmpeg, files
 
 ## 16. Semantic streams and patch families
 
-`13_stream/` owns event envelopes, sequence, snapshots, patches, holds, predictions, acknowledgement, checkpoints, replay, resumption, completeness, quality, and backpressure.
+`13_stream/` owns event envelopes, sequence, snapshots, patches, holds, predictions, observation acknowledgement, checkpoints, replay, resumption, completeness, quality, and backpressure.
 
 Transports do not define payload meaning.
 
@@ -798,7 +798,7 @@ The successor stream roster includes:
 - scene patches;
 - media events.
 
-Acknowledgements, checkpoints, resumption records, and operation receipts are control records rather than interchangeable payload families.
+Observation acknowledgements, checkpoints, resumption records, and operation receipts are control records rather than interchangeable payload families. An observation acknowledgement proves only the safely observed replay position; durable semantic application remains the domain commit owner's fact.
 
 ### 16.3 Family-specific patches
 
