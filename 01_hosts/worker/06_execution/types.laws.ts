@@ -35,8 +35,8 @@ export type AWorkerBackendAndItsDriverCannotDisagree = Assert<
 >;
 
 
-/** Compile-time law: the host actually executes — the executor is core's, exactly. */
-export type TheWorkerHostActuallyExecutes = Assert<
+/** Compile-time law: the worker host carries core's runtime execution contract exactly. */
+export type TheWorkerHostCarriesTheRuntimeExecutionContract = Assert<
   Equal<
     [WorkerExecutionHost['executor'], OutputOf<RuntimeExecutor['execute']>],
     [RuntimeExecutor, RuntimeCommit]

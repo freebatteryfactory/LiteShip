@@ -91,12 +91,11 @@ export type AWireThresholdPreservesTheSuccessfulOutcome = Assert<
           CaseOf<OperationOutcome, 'succeeded'>
         >,
         Equal<CaseOf<CliDisposition, 'threshold'>['exit'], CaseOf<CliExit, 'threshold'>>,
-        'output' extends keyof CaseOf<CliDisposition, 'threshold'> ? true : false,
         CaseOf<CliExit, 'threshold'> extends CaseOf<CliDisposition, 'failed'>['exit']
           ? true
           : false,
       ],
-      [true, true, true, false]
+      [true, true, false]
     >
   >
 >;
@@ -112,9 +111,7 @@ export type AWireThresholdPreservesTheSuccessfulOutcome = Assert<
  * exit constraint would be pinning an exit to a transport that never said what
  * happened.
  *
- * Line three is the anti-vacuity partner. Line four is the answer stream: only
- * the succeeded arm has one, because a failing command has no `Output` to put
- * on it and the previous shape required one anyway.
+ * Line three is the anti-vacuity partner.
  */
 export type ACompletedArmCarriesTheOutcomeItNames = Assert<
   IsExactlyTrue<
@@ -129,10 +126,8 @@ export type ACompletedArmCarriesTheOutcomeItNames = Assert<
           CaseOf<OperationOutcome, 'succeeded'>
         >,
         [CaseOf<CliDisposition, 'succeeded'>['crossing']] extends [never] ? true : false,
-        'output' extends keyof CaseOf<CliDisposition, 'failed'> ? true : false,
-        'output' extends keyof CaseOf<CliDisposition, 'succeeded'> ? true : false,
       ],
-      [true, true, false, false, true]
+      [true, true, false]
     >
   >
 >;

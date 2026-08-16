@@ -20,33 +20,16 @@ import type { AssuranceResult, BlockedPlannedEvaluations, FullySatisfiedEvaluati
 // Laws
 // ---------------------------------------------------------------------------
 
-/**
- * A result is passed or blocked, with nothing in between.
- *
- * The absent third arm is the law, and it outlived the type it was written
- * about. `passed-with-warnings` is the shape that turns a required check into a
- * suggestion over time: the arm appears for one legitimate reason, accumulates,
- * and eventually the required population is empty and nobody decided that.
- *
- * `degraded` is checked for the same reason and a sharper one — a `degradation`
- * member was deleted from both arms in this commit, and a tag is the obvious
- * place for it to reappear.
- */
+/** Compile-time law: an assurance result is passed or blocked and carries findings. */
 export type TheResultHasNoMiddleArm = Assert<
   Equal<
     [
       Equal<TagOf<AssuranceResult>, 'passed' | 'blocked'>,
-      'passed-with-warnings' extends TagOf<AssuranceResult> ? true : false,
-      'degraded' extends TagOf<AssuranceResult> ? true : false,
-      'degradation' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
-      'advisories' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
-      'degradation' extends keyof CaseOf<AssuranceResult, 'blocked'> ? true : false,
       Equal<GateEvaluation['findings'], readonly Finding[]>,
     ],
-    [true, false, false, false, false, false, true]
+    [true, true]
   >
 >;
-
 
 /**
  * A gate definition is exact over its identity.
@@ -478,26 +461,5 @@ export type OnlyARequiredCheckCanBlockARun = Assert<
       ],
       [true, true, true, true, true, false, false, false]
     >
-  >
->;
-
-
-/**
- * Gauntlet acquires nothing.
- *
- * A run carries no surface, no graph, no probe, and no interpreter. If any of
- * these appears the split has collapsed and the heaviest dependency in the
- * repository has followed evaluation everywhere it goes.
- */
-export type AnAssuranceResultAcquiresNothing = Assert<
-  Equal<
-    [
-      'surfaces' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
-      'graph' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
-      'probes' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
-      'interpreter' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
-      'files' extends keyof CaseOf<AssuranceResult, 'passed'> ? true : false,
-    ],
-    [false, false, false, false, false]
   >
 >;

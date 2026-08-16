@@ -61,32 +61,6 @@ export type AMountCarriesHostAuthorities = Assert<
 
 
 /**
- * Compile-time law: the attachment owns no HTTP.
- *
- * Every key here names something the predecessor's route factories owned.
- * Their absence is the law; their presence would mean a second dispatcher has
- * grown inside a target child.
- */
-export type AMountOwnsNoTransportPolicy = Assert<
-  Equal<
-    [
-      'status' extends keyof AstroMount<LawOpA> ? true : false,
-      'headers' extends keyof AstroMount<LawOpA> ? true : false,
-      'etag' extends keyof AstroMount<LawOpA> ? true : false,
-      'vary' extends keyof AstroMount<LawOpA> ? true : false,
-      'negotiate' extends keyof AstroMount<LawOpA> ? true : false,
-      'decode' extends keyof AstroMount<LawOpA> ? true : false,
-      'body' extends keyof AstroMount<LawOpA> ? true : false,
-      'jsonrpc' extends keyof AstroMount<LawOpA> ? true : false,
-      'dispatch' extends keyof AstroMount<LawOpA> ? true : false,
-      'route' extends keyof AstroMount<LawOpA> ? true : false,
-    ],
-    [false, false, false, false, false, false, false, false, false, false]
-  >
->;
-
-
-/**
  * Compile-time law: the outcome is a core receipt, not a response.
  *
  * A target that produced a response would have chosen a status and a

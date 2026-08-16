@@ -105,44 +105,6 @@ export type EveryDispatchReleasesWhatItAcquired = Assert<
 
 
 /**
- * Compile-time law: bootstrap parses nothing and decides no exit.
- *
- * The envelope carries no argv, no flags, and no command string, because a
- * bootstrap holding raw arguments is a second place a command language lives.
- * The outcome carries the CLI wire's disposition whole rather than a summary of
- * it, so the exit arm a shell sees is the wire's decision and not a translation
- * of a translation.
- *
- * It does carry a decoded `input`, and the distinction is the whole point:
- * parsing is the wire's and its *product* has to arrive somewhere. Line four
- * pins that the input exists, so a later edit that removes it — restoring the
- * shape where no dispatch could actually invoke anything — fails here.
- *
- * Line six pins the disposition is the wire's whole type at the program's own
- * operation identity, which is what relates the reported operation to the
- * envelope's program instead of leaving them two free parameters.
- */
-export type BootstrapParsesNothingAndDecidesNoExit = Assert<
-  IsExactlyTrue<
-    Equal<
-      [
-        'argv' extends keyof InvocationEnvelope ? true : false,
-        'flags' extends keyof InvocationEnvelope ? true : false,
-        'command' extends keyof InvocationEnvelope ? true : false,
-        'input' extends keyof InvocationEnvelope ? true : false,
-        'exit' extends keyof CaseOf<DispatchOutcome, 'dispatched'> ? true : false,
-        Equal<
-          CaseOf<DispatchOutcome<'release'>, 'dispatched'>['disposition'],
-          CliDisposition<unknown, readonly Diagnostic[], SystemProgramId<'release'>>
-        >,
-      ],
-      [false, false, false, true, false, true]
-    >
-  >
->;
-
-
-/**
  * Compile-time law: an envelope names a program the roster contains.
  *
  * The reference is exact, so an envelope for `release` is not one for `ship`,

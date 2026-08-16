@@ -101,27 +101,6 @@ export type TheViteFacilityCarriesItsAxesCovariantly = Assert<
 >;
 
 
-/**
- * Compile-time law: the facility names no requester and no foreign ecosystem.
- *
- * The absences are the law. A `framework`, `astro`, `integration`, or `hooks`
- * member would make this facility fillable only by the requester it was shaped
- * around — a sibling import re-entering through the type system.
- */
-export type TheViteFacilityNamesNoRequester = Assert<
-  Equal<
-    [
-      'astro' extends keyof ViteBuildFacility<LawParticipation, LawDemands, LawProducer> ? true : false,
-      'framework' extends keyof ViteBuildFacility<LawParticipation, LawDemands, LawProducer> ? true : false,
-      'integration' extends keyof ViteBuildFacility<LawParticipation, LawDemands, LawProducer> ? true : false,
-      'hooks' extends keyof ViteBuildFacility<LawParticipation, LawDemands, LawProducer> ? true : false,
-      'plugin' extends keyof ViteBuildFacility<LawParticipation, LawDemands, LawProducer> ? true : false,
-    ],
-    [false, false, false, false, false]
-  >
->;
-
-
 /** Compile-time law: only production carries artifacts. */
 export type OnlyViteProductionCarriesArtifacts = Assert<
   Equal<

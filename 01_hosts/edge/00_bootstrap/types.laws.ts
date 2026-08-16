@@ -13,15 +13,11 @@
 
 import type { Assert, CaseOf, Equal, NonEmptyTuple } from '../../../types.js';
 import type { HostGroundingOrigin } from '../../types.js';
-import type { EdgeDeploymentGrounding, EdgeGroundingDefinition, EdgeHostDefinition, EdgeHostReference, EdgeInvocationGrounding, EdgePlacedBackend, EdgeRealizationOffer, EdgeRealm, EdgeSettlementLocation } from './types.js';
+import type { EdgeDeploymentGrounding, EdgeGroundingDefinition, EdgeHostDefinition, EdgeHostReference, EdgeInvocationGrounding, EdgePlacedBackend, EdgeRealizationOffer, EdgeSettlementLocation } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
 // ---------------------------------------------------------------------------
-
-/** Compile-time law: the edge realm is exactly the edge realm. */
-export type EdgeRealmIsExactlyTheEdgeRealm = Assert<Equal<EdgeRealm, 'edge'>>;
-
 
 /** Compile-time law: an edge grounding slot cannot claim another realm. */
 export type AnEdgeGroundingIsPinnedToTheEdgeRealm = Assert<

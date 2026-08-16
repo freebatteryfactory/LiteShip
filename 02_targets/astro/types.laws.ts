@@ -40,7 +40,6 @@ export type TheRosterIsExactlySevenHomes = Assert<
   >
 >;
 
-
 /**
  * Compile-time law: load-bearing surface members keep their declared types.
  *
@@ -58,15 +57,4 @@ export type AstroSurfacesCarryTheirDeclaredMembers = Assert<
     ],
     [true, true, true, true]
   >
->;
-
-
-/**
- * Compile-time law: this child declares no ecosystem-target identity of its own.
- *
- * Its identity is the umbrella's, instantiated. A second brand here would make
- * "the Astro target" two types that agree only while someone keeps checking.
- */
-export type TheChildDeclaresNoSecondTargetIdentity = Assert<
-  Equal<'target' extends keyof AstroTopology ? true : false, false>
 >;

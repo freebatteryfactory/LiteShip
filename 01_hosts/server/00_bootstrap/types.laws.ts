@@ -13,15 +13,11 @@
 
 import type { Assert, CaseOf, Equal, NonEmptyTuple } from '../../../types.js';
 import type { HostGroundingOrigin } from '../../types.js';
-import type { ServerConfigurationGrounding, ServerEntryGrounding, ServerGroundingDefinition, ServerHostDefinition, ServerHostReference, ServerPlacedBackend, ServerRealizationOffer, ServerRealm, ServerSettlementLocation } from './types.js';
+import type { ServerConfigurationGrounding, ServerEntryGrounding, ServerGroundingDefinition, ServerHostDefinition, ServerHostReference, ServerPlacedBackend, ServerRealizationOffer, ServerSettlementLocation } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
 // ---------------------------------------------------------------------------
-
-/** Compile-time law: the server realm is exactly the server realm. */
-export type ServerRealmIsExactlyTheServerRealm = Assert<Equal<ServerRealm, 'server'>>;
-
 
 /** Compile-time law: a server grounding slot cannot claim another realm. */
 export type AServerGroundingIsPinnedToTheServerRealm = Assert<

@@ -663,11 +663,9 @@ export type EditorLifecycleRefusal = Algebra<{
 /**
  * One server-initiated message.
  *
- * It carries no request id, because it answers nothing. It carries no
- * operation receipt, because no operation was invoked to produce it — and a
- * receipt here would assert that something ran. Both absences are checked by
- * name in the laws, because both are the kind of member that arrives one
- * convenient afternoon.
+ * It answers no request and proves no operation effect. Request correlation is
+ * carried by `EditorOutboundRequest`; operation effects are carried by their
+ * semantic receipts.
  *
  * The sequence is what makes ordering inspectable. Pushed diagnostics that
  * arrive out of order leave an editor showing squiggles for a state that has

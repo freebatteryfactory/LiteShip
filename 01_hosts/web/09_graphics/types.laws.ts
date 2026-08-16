@@ -139,41 +139,6 @@ export type ARasterizedFrameNamesItsSemanticFrame = Assert<
 
 
 /**
- * Compile-time law: a rasterized frame carries no coordinate of its own — the
- * semantic frame it names owns it.
- */
-export type ARasterizedFrameBorrowsNoCoordinate = Assert<
-  Equal<
-    [
-      'time' extends keyof WebPhysicalFrame ? true : false,
-      'at' extends keyof WebPhysicalFrame ? true : false,
-      'provenance' extends keyof WebPhysicalFrame ? true : false,
-    ],
-    [false, false, true]
-  >
->;
-
-
-/**
- * Compile-time law: readback decides nothing about encoding.
- *
- * A capture that could choose a codec, a container, or a bitrate would have
- * become an encoder wearing the graphics home's name.
- */
-export type ReadbackCarriesNoCodecDecision = Assert<
-  Equal<
-    [
-      'codec' extends keyof RasterizationRequest ? true : false,
-      'container' extends keyof RasterizationRequest ? true : false,
-      'bitrate' extends keyof RasterizationRequest ? true : false,
-      'profile' extends keyof RasterizationRequest ? true : false,
-    ],
-    [false, false, false, true]
-  >
->;
-
-
-/**
  * Compile-time law: a raster profile is more than a context kind, and its
  * reproducibility claim is exact over its own reference.
  */

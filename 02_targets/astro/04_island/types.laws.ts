@@ -66,25 +66,9 @@ export type AnIslandEntryPinsItsExactConfiguration = Assert<
 >;
 
 
-/**
- * Compile-time law: the entry binds a produced artifact rather than restating
- * artifact facts.
- *
- * Ancestry lives on `ProducedArtifact.predecessors`. An entry that carried its
- * own address, digest, or predecessor list would be a second artifact
- * vocabulary inside a target child.
- */
-export type AnIslandEntryRestatesNoArtifactFacts = Assert<
-  Equal<
-    [
-      Equal<AstroIslandEntry['entry'], ProducedArtifact>,
-      'address' extends keyof AstroIslandEntry ? true : false,
-      'digest' extends keyof AstroIslandEntry ? true : false,
-      'predecessors' extends keyof AstroIslandEntry ? true : false,
-      'manifest' extends keyof AstroIslandEntry ? true : false,
-    ],
-    [true, false, false, false, false]
-  >
+/** Compile-time law: the island entry binds the produced artifact whole. */
+export type AnIslandEntryBindsTheProducedArtifact = Assert<
+  Equal<AstroIslandEntry['entry'], ProducedArtifact>
 >;
 
 

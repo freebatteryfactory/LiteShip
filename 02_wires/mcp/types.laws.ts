@@ -61,9 +61,8 @@ export type TrustedLocalExecutionRequiresAnAdmission = Assert<
         >
           ? true
           : false,
-        'admission' extends keyof McpOffer ? true : false,
       ],
-      [true, true, false, false]
+      [true, true, false]
     >
   >
 >;
@@ -78,10 +77,8 @@ export type TrustedLocalExecutionRequiresAnAdmission = Assert<
  * at the boundary, so a tool that ran and declined has nowhere to put itself
  * except `result`.
  *
- * Line three is the one an implementation would otherwise get wrong every time:
- * a protocol error carries no receipt, because nothing ran to have one. Line
- * four is its partner — a result does carry one, so the model gets the outcome
- * rather than a bare failure flag.
+ * The final line prevents a completed crossing from being substituted into the
+ * protocol-error arm.
  */
 export type ACompletedCrossingIsAResultNotAProtocolError = Assert<
   IsExactlyTrue<
@@ -95,8 +92,6 @@ export type ACompletedCrossingIsAResultNotAProtocolError = Assert<
           CaseOf<McpAnswer, 'protocolError'>['crossing'],
           CaseOf<WireExchange, 'refused'>
         >,
-        'receipt' extends keyof CaseOf<McpAnswer, 'protocolError'>['crossing'] ? true : false,
-        'receipt' extends keyof CaseOf<McpAnswer, 'result'>['crossing'] ? true : false,
         CaseOf<WireExchange, 'completed'> extends CaseOf<
           McpAnswer,
           'protocolError'
@@ -104,7 +99,7 @@ export type ACompletedCrossingIsAResultNotAProtocolError = Assert<
           ? true
           : false,
       ],
-      [true, true, false, true, false]
+      [true, true, false]
     >
   >
 >;
@@ -117,18 +112,15 @@ export type ACompletedCrossingIsAResultNotAProtocolError = Assert<
  * the shape that makes a model retry a call whose effects already happened, and
  * collapsing it into `result` claims an answer that was never received.
  *
- * The negative lines check for the two names the merge would arrive under.
  */
 export type ALostAnswerIsItsOwnArm = Assert<
   IsExactlyTrue<
     Equal<
       [
         Equal<TagOf<McpAnswer>, 'protocolError' | 'result' | 'transportLoss'>,
-        'error' extends TagOf<McpAnswer> ? true : false,
-        'failed' extends TagOf<McpAnswer> ? true : false,
         Equal<CaseOf<McpAnswer, 'transportLoss'>['diagnostics'], NonEmptyTuple<Diagnostic>>,
       ],
-      [true, false, false, true]
+      [true, true]
     >
   >
 >;

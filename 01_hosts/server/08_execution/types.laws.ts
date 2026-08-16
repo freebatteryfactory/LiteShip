@@ -31,8 +31,8 @@ export type AServerBackendAndItsDriverCannotDisagree = Assert<
 >;
 
 
-/** Compile-time law: the host actually executes — core's executor, exactly. */
-export type TheServerHostActuallyExecutes = Assert<
+/** Compile-time law: the server host carries core's runtime execution contract exactly. */
+export type TheServerHostCarriesTheRuntimeExecutionContract = Assert<
   Equal<
     [ServerExecutionHost['executor'], OutputOf<RuntimeExecutor['execute']>, InputOf<RuntimeExecutor['execute']>],
     [RuntimeExecutor, RuntimeCommit, ExecutionRequest]

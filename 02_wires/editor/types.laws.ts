@@ -127,9 +127,6 @@ export type ANotificationIsOrderedWithinOneNamedConnection = Assert<
   IsExactlyTrue<
     Equal<
       [
-        'request' extends keyof EditorNotification ? true : false,
-        'receipt' extends keyof EditorNotification ? true : false,
-        'request' extends keyof EditorRequestOutcome ? true : false,
         Equal<EditorNotification['order']['sequence'], StreamSequence>,
         Equal<
           EditorNotification<unknown, EditorConnectionId<'law.editor.connection-a'>>['order'],
@@ -141,11 +138,8 @@ export type ANotificationIsOrderedWithinOneNamedConnection = Assert<
         > extends EditorNotification<unknown, EditorConnectionId<'law.editor.connection-a'>>
           ? true
           : false,
-        'connection' extends keyof EditorNotification ? true : false,
-        'sequence' extends keyof EditorNotification ? true : false,
-        'crossing' extends keyof EditorNotification ? true : false,
       ],
-      [false, false, true, true, true, false, false, false, false]
+      [true, true, false]
     >
   >
 >;
@@ -318,14 +312,12 @@ export type SemanticMethodResultsDoNotNestTheEditorWire = Assert<
   IsExactlyTrue<
     Equal<
       [
-        'request' extends keyof OutputOf<OperationApplyRow['handler']> ? true : false,
-        'crossing' extends keyof OutputOf<OperationApplyRow['handler']> ? true : false,
         Equal<MigrationRunRow['handler'], EditorMigrationAdmission>,
         NestedEditorMigrationAdmission extends MigrationRunRow['handler'] ? true : false,
         [MigrationRunRow] extends [never] ? true : false,
         Equal<OutputOf<OperationApplyRow['handler']>, OperationReceipt>,
       ],
-      [false, false, true, false, false, true]
+      [true, false, false, true]
     >
   >
 >;

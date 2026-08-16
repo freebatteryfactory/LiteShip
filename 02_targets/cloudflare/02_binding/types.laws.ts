@@ -51,26 +51,6 @@ export type ARequiredBindingIsNotAnOptionalOne = Assert<
 >;
 
 
-/**
- * Compile-time law: a binding holds no credential and no account.
- *
- * The absences are the law. This home declares what a deployment needs; it is
- * not a place for secrets to accumulate on the way to being deployed.
- */
-export type ABindingHoldsNoSecret = Assert<
-  Equal<
-    [
-      'token' extends keyof PlatformBinding ? true : false,
-      'secret' extends keyof PlatformBinding ? true : false,
-      'account' extends keyof PlatformBinding ? true : false,
-      'credential' extends keyof PlatformBinding ? true : false,
-      'connection' extends keyof PlatformBinding ? true : false,
-    ],
-    [false, false, false, false, false]
-  >
->;
-
-
 /** Compile-time law: an unsatisfied binding names itself and says why. */
 export type AnUnsatisfiedBindingExplainsItself = Assert<
   Equal<

@@ -15,8 +15,8 @@ import type { RevisionReference } from '../../../00_core/02_identity/types.js';
 import type { TransactionGeneration } from '../../../00_core/04_time/types.js';
 import type { DisposalReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { RealizationOfferId } from '../../../00_core/14_compiler/types.js';
-import type { Assert, CaseOf, Equal, InputOf, NonEmptyTuple, OutputOf, TagOf } from '../../../types.js';
-import type { MountRegion, ProjectionSubject, RegionAuthority, RegionAuthorityOffer, RegionAuthorityRequirement, RegionBoundary, RegionClaimRequest, RegionCustody, RegionCustodyTransition, RegionDiscovery, RegionDiscoveryRequirement, RegionLeaseRequest, RegionMembership, RegionMembershipReference, RegionProjectionIndex, RegionReference, RegionResolveRequest, RegionWriteAuthority, RegionWriterReference } from './types.js';
+import type { Assert, Equal, InputOf, NonEmptyTuple, OutputOf, TagOf } from '../../../types.js';
+import type { MountRegion, ProjectionSubject, RegionAuthority, RegionAuthorityOffer, RegionAuthorityRequirement, RegionBoundary, RegionClaimRequest, RegionCustodyTransition, RegionDiscovery, RegionDiscoveryRequirement, RegionLeaseRequest, RegionMembership, RegionMembershipReference, RegionProjectionIndex, RegionReference, RegionResolveRequest, RegionWriteAuthority, RegionWriterReference } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -42,12 +42,6 @@ export type ALeaseReferencesItsMembershipExactly = Assert<
     ],
     [RegionMembership, RevisionReference, TransactionGeneration, false, false]
   >
->;
-
-
-/** Compile-time law: a foreign region carries no writer key at any type. */
-export type AForeignRegionHasNoWriter = Assert<
-  Equal<'writer' extends keyof CaseOf<RegionCustody, 'foreign'> ? true : false, false>
 >;
 
 

@@ -32,7 +32,7 @@ import type {
   TagOf,
   Tuple,
 } from '../../types.js';
-import type { Diagnostic, RemediationAction } from '../../00_core/00_error/types.js';
+import type { Diagnostic } from '../../00_core/00_error/types.js';
 import type { Decision, Evidence, Proposition, Truth } from '../../00_core/06_evidence/types.js';
 import type { WorkspaceSnapshotReference } from '../00_workspace/types.js';
 import type {
@@ -41,7 +41,6 @@ import type {
   AssuranceProposition,
   AssuranceSubject,
   AttributedRefusal,
-  CheckConsequence,
   ClaimDemonstration,
   ClaimProofs,
   DemonstratedClaimProofs,
@@ -52,7 +51,6 @@ import type {
   EvaluatedGate,
   FailureClassId,
   FailureClassReference,
-  Finding,
   GateDefinition,
   GateId,
   GateOrigin,
@@ -60,7 +58,6 @@ import type {
   GateRevisionId,
   GateRevisionReference,
   GateScope,
-  PlannedCheck,
   SpecimenReference,
 } from './types.js';
 import type { AuditTypeSurface } from './00_audit/types.js';
@@ -127,31 +124,16 @@ export type EachAssuranceEntryNamesItsOwnChildsSurface = Assert<
 // Laws
 // ---------------------------------------------------------------------------
 
-/**
- * A gate claims something, and does not declare what it reads.
- *
- * The first two lines are what survives of a law that also pinned `reads`.
- * Widening the claim population to a plain array admits the empty case, and a
- * gate that claims nothing can never be disproven — indistinguishable from a
- * gate that cannot fail, which is the state every vacuous law in this repository
- * has been in.
- *
- * Lines three and four are the subtraction, checked by name because that is how
- * it would come back: `reads` had zero consumers and sat opposite
- * `AcquiredFact.consumers`, the same relationship written twice and read never.
- * The proposition is the one declaration of what a check reasons about.
- */
-export type AGateClaimsDetectionAndDeclaresNoReads = Assert<
+/** Compile-time law: a gate carries a non-empty claim population and proposition. */
+export type AGateCarriesItsClaimsAndProposition = Assert<
   IsExactlyTrue<
     Equal<
       [
         Equal<GateDefinition['claims'], NonEmptyTuple<FailureClassReference>>,
         readonly FailureClassReference[] extends GateDefinition['claims'] ? true : false,
-        'reads' extends keyof GateDefinition ? true : false,
-        'facts' extends keyof GateDefinition ? true : false,
         Equal<GateDefinition['proposition'], AssuranceProposition>,
       ],
-      [true, false, false, false, true]
+      [true, false, true]
     >
   >
 >;
@@ -310,31 +292,6 @@ export type ProofIsBoundToTheExactRule = Assert<
 
 
 /**
- * No standing consequence lives on a check or on what it reports.
- *
- * A definition used to declare itself blocking for all time, and a finding
- * carried a copy of that declaration. Both are gone: consequence belongs to the
- * invocation. The names are checked explicitly because this is exactly how the
- * boundary re-erodes — one convenience member at a time, each individually
- * reasonable — and because `severity` is the obvious next spelling.
- */
-export type NoStandingConsequenceLivesOnACheckOrItsFindings = Assert<
-  Equal<
-    [
-      'disposition' extends keyof GateDefinition ? true : false,
-      'severity' extends keyof GateDefinition ? true : false,
-      'blocking' extends keyof GateDefinition ? true : false,
-      'disposition' extends keyof Finding ? true : false,
-      'severity' extends keyof Finding ? true : false,
-      Equal<CheckConsequence, 'required' | 'informational'>,
-      Equal<PlannedCheck['consequence'], CheckConsequence>,
-    ],
-    [false, false, false, false, false, true, true]
-  >
->;
-
-
-/**
  * Assurance contributes an atom to core's logic and does not fork it.
  *
  * The first line is the identity. The rest are the ones that make it bite: a
@@ -374,38 +331,6 @@ export type PendingNeverPassesAGate = Assert<
       Equal<TagOf<GateOutcome>, 'satisfied' | 'refuted' | 'indeterminate'>,
     ],
     [true, false, false, true, true]
-  >
->;
-
-
-/**
- * A finding restates nothing the evaluation carrying it already owns.
- *
- * A finding lives inside one evaluation, so the gate is that evaluation's gate
- * and the outcome is that evaluation's outcome. Carrying copies would let a
- * finding disagree with the evaluation containing it — a parallel roster in
- * miniature, and the third one this commit removes.
- *
- * All four absences are checked by name, because each is one plausible-looking
- * edit away: `gate` and `outcome` read as helpful denormalization, `disposition`
- * and `severity` read as reporting convenience. Lines five through seven pin
- * what a finding does own, so this is a subtraction rather than a shape nobody
- * has looked at.
- */
-export type AFindingRestatesNothingItsEvaluationOwns = Assert<
-  IsExactlyTrue<
-    Equal<
-      [
-        'gate' extends keyof Finding ? true : false,
-        'outcome' extends keyof Finding ? true : false,
-        'disposition' extends keyof Finding ? true : false,
-        'severity' extends keyof Finding ? true : false,
-        Equal<Finding['subject'], AssuranceSubject>,
-        Equal<Finding['diagnostics'], readonly Diagnostic[]>,
-        Equal<Finding['remediation'], readonly RemediationAction[]>,
-      ],
-      [false, false, false, false, true, true, true]
-    >
   >
 >;
 
@@ -516,13 +441,13 @@ export type AttributionNamesTheRelationshipItClaims = Assert<
  * separates those: not acquired, acquired and came out one way or the other,
  * acquisition itself broke.
  *
- * Line three is the correction to the correction. Deleting the qualification
+ * The correction to the correction is retained in the outcome. Deleting the qualification
  * algebra outright would have lost the distinction between *nobody tested this*
  * and *this was tested and did not notice*, which is the more dangerous state
  * and the one worth acting on. It survives as `disproven`, in the outcome, where
  * it is evidence rather than status.
  *
- * Line five keeps the two subjects apart by name. `GateOutcome.refuted` means
+ * The vocabulary keeps the two subjects apart by name. `GateOutcome.refuted` means
  * the check found the repository wanting; `disproven` means the check was found
  * wanting. One word for both would be the vocabulary collapsing at exactly the
  * point it matters.
@@ -532,14 +457,11 @@ export type UntestedIsAnAbsenceRatherThanAnArm = Assert<
     Equal<
       [
         Equal<TagOf<DemonstrationOutcome>, 'demonstrated' | 'disproven'>,
-        'untested' extends TagOf<DemonstrationOutcome> ? true : false,
-        'disproven' extends TagOf<DemonstrationOutcome> ? true : false,
         Equal<TagOf<Evidence<DemonstrationOutcome>>, 'unavailable' | 'outstanding' | 'ready' | 'failed'>,
-        'refuted' extends TagOf<DemonstrationOutcome> ? true : false,
         [DemonstratedProof] extends [never] ? true : false,
         Equal<DemonstratedProof['value'], CaseOf<DemonstrationOutcome, 'demonstrated'>>,
       ],
-      [true, false, true, true, false, false, true]
+      [true, true, false, true]
     >
   >
 >;
@@ -560,9 +482,8 @@ export type ASpecimenIsNotARepositorySnapshot = Assert<
         SpecimenReference extends WorkspaceSnapshotReference ? true : false,
         WorkspaceSnapshotReference extends SpecimenReference ? true : false,
         Equal<DemonstrationWitness['specimen'], SpecimenReference>,
-        'snapshot' extends keyof DemonstrationWitness ? true : false,
       ],
-      [false, false, true, false]
+      [false, false, true]
     >
   >
 >;

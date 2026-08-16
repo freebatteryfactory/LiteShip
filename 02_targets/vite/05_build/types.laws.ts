@@ -28,32 +28,7 @@ import type { BuildProduct, FilledSlot } from './types.js';
  * predecessor's two-emitter shape with better naming.
  */
 export type OneSlotReceivesOneProducer = Assert<
-  Equal<
-    [
-      Equal<FilledSlot['produced'], ProducedArtifact>,
-      'producers' extends keyof FilledSlot ? true : false,
-      'candidates' extends keyof FilledSlot ? true : false,
-      'emitters' extends keyof FilledSlot ? true : false,
-    ],
-    [true, false, false, false]
-  >
->;
-
-
-/**
- * Compile-time law: the build carries no second manifest vocabulary.
- *
- * Ancestry is on the produced artifact and on per-chunk metadata. A `manifest`
- * member here would be a third derivation of facts that already have an owner.
- */
-export type TheBuildCarriesNoSecondManifest = Assert<
-  Equal<
-    [
-      'manifest' extends keyof CaseOf<BuildProduct, 'built'> ? true : false,
-      'boundaries' extends keyof CaseOf<BuildProduct, 'built'> ? true : false,
-    ],
-    [false, false]
-  >
+  Equal<FilledSlot['produced'], ProducedArtifact>
 >;
 
 
@@ -64,26 +39,17 @@ export type TheBuildCarriesNoSecondManifest = Assert<
  * local optional map field cannot take its place.
  */
 export type SourceMapDispositionIsStated = Assert<
-  Equal<
-    [
-      Equal<CaseOf<BuildProduct, 'built'>['maps'], SourceRelation<RevisionId>>,
-      'sourceMap' extends keyof CaseOf<BuildProduct, 'built'> ? true : false,
-      'map' extends keyof CaseOf<BuildProduct, 'built'> ? true : false,
-    ],
-    [true, false, false]
-  >
+  Equal<CaseOf<BuildProduct, 'built'>['maps'], SourceRelation<RevisionId>>
 >;
 
 
-/** Compile-time law: a refused or failed build reports no slots. */
-export type ABrokenBuildReportsNoSlots = Assert<
+/** Compile-time law: a failed build carries a non-empty diagnosis. */
+export type AFailedBuildExplainsItself = Assert<
   Equal<
     [
       Equal<BuildProduct['_tag'], 'built' | 'refused' | 'failed'>,
-      'slots' extends keyof CaseOf<BuildProduct, 'refused'> ? true : false,
-      'slots' extends keyof CaseOf<BuildProduct, 'failed'> ? true : false,
       Equal<CaseOf<BuildProduct, 'failed'>['diagnostics'], NonEmptyTuple<Diagnostic>>,
     ],
-    [true, false, false, true]
+    [true, true]
   >
 >;

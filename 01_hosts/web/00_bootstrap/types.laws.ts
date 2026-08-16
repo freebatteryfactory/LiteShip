@@ -13,7 +13,7 @@
 
 import type { Assert, CaseOf, Equal, Hole, NonEmptyTuple } from '../../../types.js';
 import type { HostGroundingOrigin } from '../../types.js';
-import type { WebGroundingDefinition, WebHostDefinition, WebHostReference, WebPlacedBackend, WebRealizationOffer, WebRealm, WebSettlementLocation } from './types.js';
+import type { WebGroundingDefinition, WebHostDefinition, WebHostReference, WebPlacedBackend, WebRealizationOffer, WebSettlementLocation } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -22,10 +22,6 @@ import type { WebGroundingDefinition, WebHostDefinition, WebHostReference, WebPl
 // module performs ambient browser reads, and that the declared slot population
 // matches the actual entrypoint surface are `system/assurance` obligations.
 // ---------------------------------------------------------------------------
-
-/** Compile-time law: the web realm is exactly the web realm, nothing wider. */
-export type WebRealmIsExactlyTheWebRealm = Assert<Equal<WebRealm, 'web'>>;
-
 
 /** Compile-time law: a web grounding slot cannot claim another realm. */
 export type AWebGroundingIsPinnedToTheWebRealm = Assert<

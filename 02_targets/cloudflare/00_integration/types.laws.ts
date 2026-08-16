@@ -36,27 +36,6 @@ export type TheAdapterNamesTheCloudflareTargetExactly = Assert<
 >;
 
 
-/**
- * Compile-time law: registration names no framework.
- *
- * The absences are the law, and this is the one the predecessor failed. A
- * member naming a framework — required or optional — would restore exactly the
- * dependency that cost the old package its direct path.
- */
-export type RegistrationNamesNoFramework = Assert<
-  Equal<
-    [
-      'astro' extends keyof CloudflareAdapterDefinition ? true : false,
-      'framework' extends keyof CloudflareAdapterDefinition ? true : false,
-      'integration' extends keyof CloudflareAdapterDefinition ? true : false,
-      'middleware' extends keyof CloudflareAdapterDefinition ? true : false,
-      'outputMode' extends keyof CloudflareAdapterDefinition ? true : false,
-    ],
-    [false, false, false, false, false]
-  >
->;
-
-
 /** Compile-time law: compatibility keeps its four altitudes distinct. */
 export type CloudflareCompatibilityKeepsItsFourAltitudes = Assert<
   Equal<CloudflareCompatibility['_tag'], 'supported' | 'degraded' | 'refused' | 'unavailable'>

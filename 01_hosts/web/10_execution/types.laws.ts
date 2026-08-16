@@ -60,8 +60,8 @@ export type ABackendAndItsDriverCannotDisagree = Assert<
 >;
 
 
-/** Compile-time law: the host can actually execute, producing the runtime commit. */
-export type TheHostActuallyExecutes = Assert<
+/** Compile-time law: the web host carries core's runtime execution contract. */
+export type TheWebHostCarriesTheRuntimeExecutionContract = Assert<
   Equal<OutputOf<WebExecutionHost['executor']['execute']>, RuntimeCommit>
 >;
 

@@ -16,7 +16,7 @@ import type { TransactionGeneration } from '../../../00_core/04_time/types.js';
 import type { RealizationCatalogAddress } from '../../../00_core/14_compiler/types.js';
 import type { Assert, CaseOf, Equal, NonEmptyTuple } from '../../../types.js';
 import type { HostGroundingOrigin } from '../../types.js';
-import type { BootstrapEnvelopeGrounding, RealmScopeGrounding, WorkerBootstrapEnvelope, WorkerGroundingDefinition, WorkerHostDefinition, WorkerHostReference, WorkerPlacedBackend, WorkerRealizationOffer, WorkerRealm, WorkerSettlementLocation } from './types.js';
+import type { BootstrapEnvelopeGrounding, RealmScopeGrounding, WorkerBootstrapEnvelope, WorkerGroundingDefinition, WorkerHostDefinition, WorkerHostReference, WorkerPlacedBackend, WorkerRealizationOffer, WorkerSettlementLocation } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -26,10 +26,6 @@ import type { BootstrapEnvelopeGrounding, RealmScopeGrounding, WorkerBootstrapEn
 // artifact enters through this canonical bootstrap are `system/assurance`
 // obligations.
 // ---------------------------------------------------------------------------
-
-/** Compile-time law: the worker realm is exactly the worker realm, nothing wider. */
-export type WorkerRealmIsExactlyTheWorkerRealm = Assert<Equal<WorkerRealm, 'worker'>>;
-
 
 /** Compile-time law: a worker grounding slot cannot claim another realm. */
 export type AWorkerGroundingIsPinnedToTheWorkerRealm = Assert<

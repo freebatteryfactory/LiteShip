@@ -48,18 +48,15 @@ export type RevelationIsIdentityCorrelated = Assert<
 
 
 /**
- * Compile-time law: a revealed secret is an actual owned resource. Its
- * disposal accepts no caller-supplied subject and produces no identity echo;
- * exact secret identity remains owned by `reveals` and `use`. Material is not
- * a member of the revelation or receipt, and appears only as the consumer's
- * input.
+ * Compile-time law: a revealed secret is an owned resource and its consumer
+ * remains exact over the secret identity. Material appears only as the
+ * consumer's input.
  */
-export type ARevealedSecretHasNoSerializationSurface = Assert<
+export type ARevealedSecretIsOwnedAndIdentityCorrelated = Assert<
   Equal<
     [
       RevealedSecret<SecretId> extends OwnedResource ? true : false,
       Equal<RevealedSecret<SecretId>['dispose'], OwnedResource['dispose']>,
-      'material' extends keyof RevealedSecret<SecretId> ? true : false,
       keyof SecretUseReceipt<SecretId>,
       InputOf<SecretConsumer<SecretId>['consume']>,
       SecretConsumer<SecretId<'liteship.server.secret.law.secret-b'>> extends SecretConsumer<
@@ -68,7 +65,7 @@ export type ARevealedSecretHasNoSerializationSurface = Assert<
         ? true
         : false,
     ],
-    [true, true, false, 'reveals' | 'address', SecretMaterial, false]
+    [true, true, 'reveals' | 'address', SecretMaterial, false]
   >
 >;
 

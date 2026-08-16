@@ -30,8 +30,8 @@ export type AnEdgeBackendAndItsDriverCannotDisagree = Assert<
 >;
 
 
-/** Compile-time law: the host actually executes — core's executor, exactly. */
-export type TheEdgeHostActuallyExecutes = Assert<
+/** Compile-time law: the edge host carries core's runtime execution contract exactly. */
+export type TheEdgeHostCarriesTheRuntimeExecutionContract = Assert<
   Equal<
     [EdgeExecutionHost['executor'], OutputOf<RuntimeExecutor['execute']>, InputOf<RuntimeExecutor['execute']>],
     [RuntimeExecutor, RuntimeCommit, ExecutionRequest]
