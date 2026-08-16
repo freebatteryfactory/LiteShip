@@ -27,17 +27,26 @@ import type {
   RevisionPatch,
 } from '../08_state/types.js';
 
+/** Stable identity for one collection. */
 export type CollectionId<Name extends string = string> = Brand<Name, 'liteship.collection-id'>;
+/** Stable identity for one collection query. */
 export type CollectionQueryId<Name extends string = string> = Brand<Name, 'liteship.collection-query-id'>;
+/** Stable identity for one query parameter. */
 export type QueryParameterId<Name extends string = string> = Brand<Name, 'liteship.query-parameter-id'>;
+/** Stable identity for one collation. */
 export type CollationId<Name extends string = string> = Brand<Name, 'liteship.collation-id'>;
+/** Type-level representation of row key. */
 export type RowKey<Value extends string | number = string | number> = Brand<Value, 'liteship.row-key'>;
+/** Typed reference to one collection. */
 export type CollectionReference<
   Id extends CollectionId = CollectionId,
   RowRoot extends SchemaId = SchemaId,
 > = Brand<Reference<'collection', Id>, readonly ['liteship.collection-reference', RowRoot]>;
+/** Typed reference to one collection query. */
 export type CollectionQueryReference<Id extends CollectionQueryId = CollectionQueryId> = Reference<'collection-query', Id>;
+/** Typed reference to one query parameter. */
 export type QueryParameterReference<Id extends QueryParameterId = QueryParameterId> = Reference<'query-parameter', Id>;
+/** Typed reference to one collation. */
 export type CollationReference<Id extends CollationId = CollationId> = Reference<'collation', Id>;
 
 /** Deterministic text comparison profile. Unsupported backends must refuse rather than approximate silently. */

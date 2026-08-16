@@ -45,7 +45,9 @@ import type {
 /** The edge realm, derived from the umbrella authority rather than restated. */
 export type EdgeRealm = Extract<HostRealm, 'edge'>;
 
+/** Stable identity for one edge host. */
 export type EdgeHostId = HostId<'liteship.host.edge'>;
+/** Typed reference to one edge host. */
 export type EdgeHostReference = HostReference<EdgeHostId>;
 
 /** The edge host definition, mechanically tied to its catalog's identity and realm. */
@@ -128,7 +130,9 @@ export interface EdgeDeploymentConfiguration {
   readonly address: ContentAddress<'application/vnd.liteship.edge-deployment+cbor'>;
 }
 
+/** Capability requirement for edge invocation. */
 export type EdgeInvocationRequirement = Hole<'liteship.edge.invocation', EdgeInvocationContext>;
+/** Capability requirement for edge deployment. */
 export type EdgeDeploymentRequirement = Hole<
   'liteship.edge.deployment-configuration',
   EdgeDeploymentConfiguration

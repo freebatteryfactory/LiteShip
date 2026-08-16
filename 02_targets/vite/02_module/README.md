@@ -1,7 +1,5 @@
 # Vite Module Identity
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/vite/02_module/`
@@ -25,9 +23,9 @@ Separate the friendly name an author imports from what a generated module actual
 - Module contents. This home owns identity and disposition.
 - Artifact identity. Core owns that; `04_asset` binds it.
 
-## Seven strings, one identity
+## Specifier and identity
 
-The predecessor served seven virtual modules under fixed string identifiers. Two different projects, with two different configurations, produced byte-identical module ids — so a cache, a diff, or an ancestry question could not tell them apart.
+A fixed virtual-module string cannot distinguish projects or configurations, so caches, diffs, and ancestry questions would conflate byte-distinct modules.
 
 The ecosystem does not help here. Neither the bundler nor its plugin contract documents any convention for parameterising a virtual id, and neither detects a collision. This is genuinely the target layer's to own, and the fix is that identity reads every axis that can change the bytes.
 
@@ -50,4 +48,4 @@ Assurance-and-implementation territory.
 
 ## Implementation boundary
 
-Specified. No code exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

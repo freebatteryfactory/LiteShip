@@ -73,16 +73,13 @@ type ProgramsByName<
  * not compile; registering a twelfth does not compile either, because there is
  * no key for it.
  *
- * Each entry is the program's *contract*, not a placeholder wearing its name.
- * It used to be `SystemProgram<Name>` — exact over the name and broad over
- * everything that matters, so the `release` entry a bootstrap actually holds
- * accepted `unknown` while an exact `ReleaseSignature` sat one home away
- * describing what release should consume. Two correct declarations about
- * different things.
+ * Each entry is the program's *contract*, not a placeholder exact only over its
+ * name. A broad `SystemProgram<Name>` entry would erase the input, output,
+ * failure, and requirements dispatch must preserve.
  *
  * Deriving from the definition map means the entry for `release` *is*
- * `ReleaseProgram`, whose input is a qualified candidate. The guarantee stopped
- * being adjacent to the dispatch path and became the dispatch path.
+ * `ReleaseProgram`, whose input is a qualified candidate. The guarantee is the
+ * dispatch path rather than an exact signature beside a broad registry row.
  */
 export type ProgramRegistry = ProgramsByName<SystemProgramDefinitions>;
 
@@ -144,21 +141,15 @@ export interface InvocationEnvelope<
  * and an entry point that releases them only on the success path is the defect
  * that shows up as a leaked handle three hours into a CI run.
  *
- * The receipt names the **capability row** that was acquired. It used to name
- * the workspace, which was a general receipt shape being available rather than
- * workspace disposal being meaningful: the workspace reference is what the run
- * is *about*, and the handles are what a bootstrap actually holds and must let
- * go of. A receipt claiming the workspace was released says nothing about the
- * filesystem and process handles that leak.
+ * The receipt names the **capability row** that was acquired. The workspace is
+ * what the run is about; capability handles are what bootstrap owns and must
+ * release. A workspace-shaped disposal receipt would say nothing about leaked
+ * filesystem or process handles.
  *
- * Two arms, not three. `unregistered` used to sit here, on the reasoning that a
- * runtime lookup can be handed a name that failed to resolve. It cannot get
- * this far: an `InvocationEnvelope` carries a roster-typed program reference,
- * so a name that failed to resolve produces no envelope, and with no envelope
- * there is no dispatch and no receipt. The refusal is the CLI wire's `rejected`
- * arm with a `usage` exit, which is where an unknown command belongs. Keeping
- * an arm for it here was the boundary refusal leaking one layer downstream and
- * being answered twice.
+ * There is no `unregistered` arm. An `InvocationEnvelope` carries a
+ * roster-typed program reference, so a name that failed to resolve produces no
+ * envelope, dispatch, or receipt. The CLI wire owns that boundary refusal and
+ * its `usage` exit.
  */
 export type DispatchOutcome<
   Name extends SystemProgramName = SystemProgramName,
@@ -184,12 +175,10 @@ export type DispatchOutcome<
  * capture. A bootstrap receipt that grew those would be a telemetry product, and
  * `00_core/18_inspection` owns explanation.
  *
- * One `Name`, threaded to both members. The outcome used to take a free
- * `Op extends OperationId` while the envelope took a `Name`, with nothing
- * relating them — so a receipt could pair an envelope for `release` with a
- * disposition reporting on `ship`. A program's operation identity is computed
- * from its name, which is precisely what makes the two relatable, and the
- * previous shape declined to relate them.
+ * One `Name` threads both members. A free operation identity beside the
+ * envelope name would allow a `release` envelope to carry a disposition for
+ * `ship`; the computed program operation identity makes that mismatch
+ * unrepresentable.
  */
 export interface BootstrapReceipt<
   Name extends SystemProgramName = SystemProgramName,

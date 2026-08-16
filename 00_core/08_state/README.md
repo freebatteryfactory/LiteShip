@@ -1,7 +1,5 @@
 # Revisioned State and World Algebra
 
-Status: specified with empirical realizations; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `08_state/`
@@ -102,6 +100,6 @@ Core defines what must be stored and the compare-and-swap, snapshot, append, loa
 
 ## Implementation boundary
 
-The semantic model, conformance contract, persistence ports, and index-plan contract are specified. The production in-memory data structure and physical indexes are empirical choices.
+State realizations must preserve revision ancestry, patch legality, commit identity, deterministic ordering, and query conformance; in-memory structures and physical indexes remain evidence-selected choices.
 
 Selecting sparse persistent structures, paged tables, relation indexes, snapshot cadence, and dense projection thresholds is empirical benchmarking work. This home owns no replication: a replication architecture would compose through family patch and conflict semantics and would be an explicit architecture reopening, not an unstated obligation.

@@ -57,10 +57,12 @@ import type { WebGroundingDefinition, WebRealizationOffer } from '../00_bootstra
 import type { ProjectionCommit } from '../04_projection/types.js';
 import type { GraphicsResourceReference } from '../09_graphics/types.js';
 
+/** Stable identity for one capture profile. */
 export type CaptureProfileId<Name extends string = string> = Brand<
   Name,
   'liteship.web.capture-profile-id'
 >;
+/** Typed reference to one capture profile. */
 export type CaptureProfileReference<Id extends CaptureProfileId = CaptureProfileId> = Reference<
   'web-capture-profile',
   Id
@@ -96,7 +98,9 @@ export interface CaptureProfile<Id extends CaptureProfileId = CaptureProfileId> 
   readonly reproducibility: ReproducibilityClaim<CaptureProfileReference<Id>>;
 }
 
+/** Stable identity for one capture scope. */
 export type CaptureScopeId<Name extends string = string> = Brand<Name, 'liteship.web.capture-scope-id'>;
+/** Typed reference to one capture scope. */
 export type CaptureScopeReference<Id extends CaptureScopeId = CaptureScopeId> = Reference<
   'web-capture-scope',
   Id
@@ -199,7 +203,9 @@ export interface CaptureAuthority {
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
+/** Capability requirement for capture facility. */
 export type CaptureFacilityRequirement = Hole<'liteship.web.capture-facility', CaptureFacility>;
+/** Capability requirement for capture authority. */
 export type CaptureAuthorityRequirement = Hole<'liteship.web.capture-authority', CaptureAuthority>;
 
 /** Grounding the intrinsic browser capture entrypoint. */

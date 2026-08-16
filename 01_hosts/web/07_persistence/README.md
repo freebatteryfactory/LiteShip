@@ -1,7 +1,5 @@
 # Web Persistence
 
-Status: provisional physical realization; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/07_persistence/`
@@ -44,4 +42,4 @@ Both are assurance-and-implementation territory when a concrete provider exists.
 
 ## Implementation boundary
 
-Provisional. No IndexedDB code, no database schema, no driver exists or is authorized.
+Persistence schema, transaction, and storage profiles remain empirical; a realization must preserve canonical revision, commit, failure, and custody semantics.

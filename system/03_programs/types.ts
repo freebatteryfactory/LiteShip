@@ -306,6 +306,7 @@ export type ConsumerApplicationId<Name extends string = string> = Brand<
   Name,
   'liteship.system.consumer-application-id'
 >;
+/** Typed reference to one consumer application. */
 export type ConsumerApplicationReference<
   Id extends ConsumerApplicationId = ConsumerApplicationId,
 > = Reference<'consumer-application', Id>;
@@ -332,10 +333,12 @@ export interface ConsumerApplicationSnapshot<
   readonly configuration: ConsumerApplicationConfigurationAddress;
 }
 
+/** Stable identity for one build request. */
 export type BuildRequestId<Name extends string = string> = Brand<
   Name,
   'liteship.system.build-request-id'
 >;
+/** Typed reference to one build request. */
 export type BuildRequestReference<Id extends BuildRequestId = BuildRequestId> = Reference<
   'system-build-request',
   Id
@@ -365,13 +368,17 @@ export type BuildExecutionReference<
 
 type BuildRequestIdentity<Request extends BuildRequest> = Request['id']['id'];
 
+/** Type-level representation of qualified package manager name. */
 export type QualifiedPackageManagerName = 'npm' | 'pnpm';
+/** Stable identity for one package manager. */
 export type PackageManagerId<
   Name extends QualifiedPackageManagerName = QualifiedPackageManagerName,
 > = Brand<Name, 'liteship.system.package-manager-id'>;
+/** Typed reference to one package manager. */
 export type PackageManagerReference<
   Name extends QualifiedPackageManagerName = QualifiedPackageManagerName,
 > = Reference<'package-manager', PackageManagerId<Name>>;
+/** Content address for one package manager definition. */
 export type PackageManagerDefinitionAddress = ContentAddress<
   'application/vnd.liteship.package-manager-definition+cbor'
 >;
@@ -440,18 +447,22 @@ export type PackageManagerCatalog = readonly [
   PackageManagerDefinition<'pnpm'>,
 ];
 
+/** Capability requirement for package manager catalog. */
 export type PackageManagerCatalogRequirement = Hole<
   'liteship.system.build.package-managers',
   PackageManagerCatalog
 >;
 
+/** Stable identity for one build target adapter. */
 export type BuildTargetAdapterId<Name extends string = string> = Brand<
   Name,
   'liteship.system.build-target-adapter-id'
 >;
+/** Typed reference to one build target adapter. */
 export type BuildTargetAdapterReference<
   Id extends BuildTargetAdapterId = BuildTargetAdapterId,
 > = Reference<'build-target-adapter', Id>;
+/** Content address for one build target adapter definition. */
 export type BuildTargetAdapterDefinitionAddress = ContentAddress<
   'application/vnd.liteship.build-target-adapter-definition+cbor'
 >;
@@ -516,6 +527,7 @@ export interface BuildTargetAdapter<
   readonly admit: BuildTargetAdmission<BuildTargetAdapterCoordinate<Id>, NativeProduct>;
 }
 
+/** Type-level representation of astro build target adapter. */
 export type AstroBuildTargetAdapter = BuildTargetAdapter<
   AstroTargetId,
   CaseOf<AstroProjectionDisposition, 'produced'>,
@@ -523,6 +535,7 @@ export type AstroBuildTargetAdapter = BuildTargetAdapter<
   BuildTargetAdapterId<'astro'>,
   'astro'
 >;
+/** Type-level representation of vite build target adapter. */
 export type ViteBuildTargetAdapter = BuildTargetAdapter<
   ViteTargetId,
   CaseOf<ViteBuildProduct, 'built'>,
@@ -533,6 +546,7 @@ export type ViteBuildTargetAdapter = BuildTargetAdapter<
 
 /** The initially supported build-target population, with no ordered fallback. */
 export type BuildTargetCatalog = readonly [AstroBuildTargetAdapter, ViteBuildTargetAdapter];
+/** Capability requirement for build target catalog. */
 export type BuildTargetCatalogRequirement = Hole<
   'liteship.system.build.targets',
   BuildTargetCatalog
@@ -615,9 +629,11 @@ export type BuildExecutionPlan<Request extends BuildRequest = BuildRequest> = Al
   };
 }>;
 
+/** Content address for one build execution receipt. */
 export type BuildExecutionReceiptAddress = ContentAddress<
   'application/vnd.liteship.system-build-execution-receipt+cbor'
 >;
+/** Type-level representation of nonzero process exit code. */
 export type NonzeroProcessExitCode = Brand<number, 'liteship.nonzero-process-exit-code'>;
 
 /** Host build completed successfully, distinct from the operation receipt. */
@@ -642,6 +658,7 @@ export interface BuildReport<Plan extends BuildExecutionPlan = BuildExecutionPla
 
 type AtLeastTwo<Value> = readonly [Value, Value, ...Value[]];
 
+/** Type-level representation of unsupported package manager. */
 export type UnsupportedPackageManager = Algebra<{
   yarn: { readonly source: 'manifest' | 'lockfile' | 'invocation' };
   bun: { readonly source: 'manifest' | 'lockfile' | 'invocation' };
@@ -751,10 +768,12 @@ export type DoctorReadout<Value> = Algebra<{
   unreadable: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
 }>;
 
+/** Stable identity for one doctor probe. */
 export type DoctorProbeId<Name extends string = string> = Brand<
   Name,
   'liteship.system.doctor-probe-id'
 >;
+/** Typed reference to one doctor probe. */
 export type DoctorProbeReference<Id extends DoctorProbeId = DoctorProbeId> = Reference<
   'doctor-probe',
   Id
@@ -766,10 +785,12 @@ export interface DoctorObservation {
   readonly readout: DoctorReadout<ContentAddress>;
 }
 
+/** Stable identity for one doctor remediation proposal. */
 export type DoctorRemediationProposalId<Name extends string = string> = Brand<
   Name,
   'liteship.system.doctor-remediation-proposal-id'
 >;
+/** Typed reference to one doctor remediation proposal. */
 export type DoctorRemediationProposalReference<
   Id extends DoctorRemediationProposalId = DoctorRemediationProposalId,
 > = Reference<'doctor-remediation-proposal', Id>;
@@ -784,6 +805,7 @@ export interface DoctorRemediationProposal<
   readonly explanation: Explanation;
 }
 
+/** Content address for one doctor conclusion decision. */
 export type DoctorConclusionDecisionAddress = ContentAddress<
   'application/vnd.liteship.doctor-conclusion-decision+cbor'
 >;
@@ -843,18 +865,22 @@ export type DoctorFailure = Algebra<{
   'report-admission-failed': { readonly diagnostics: NonEmptyTuple<Diagnostic> };
 }>;
 
+/** Stable identity for one doctor provider. */
 export type DoctorProviderId<Name extends string = string> = Brand<
   Name,
   'liteship.system.doctor-provider-id'
 >;
+/** Typed reference to one doctor provider. */
 export type DoctorProviderReference<Id extends DoctorProviderId = DoctorProviderId> = Reference<
   'doctor-provider',
   Id
 >;
+/** Content address for one doctor provider definition. */
 export type DoctorProviderDefinitionAddress = ContentAddress<
   'application/vnd.liteship.doctor-provider-definition+cbor'
 >;
 
+/** Coordinate identifying one doctor provider. */
 export interface DoctorProviderCoordinate<Id extends DoctorProviderId = DoctorProviderId> {
   readonly id: DoctorProviderReference<Id>;
   readonly definition: DoctorProviderDefinitionAddress;
@@ -876,14 +902,17 @@ export interface DoctorProviderDefinition<
   >;
 }
 
+/** Provider contract for repository doctor. */
 export type RepositoryDoctorProvider = DoctorProviderDefinition<
   'repository',
   WorkspaceObservationRequirements
 >;
+/** Provider contract for consumer application doctor. */
 export type ConsumerApplicationDoctorProvider = DoctorProviderDefinition<
   'consumer-application',
   readonly [WorkspaceFileSystem, ChildProcessRequirement]
 >;
+/** Provider contract for deployed application doctor. */
 export type DeployedApplicationDoctorProvider = DoctorProviderDefinition<
   'deployed-application',
   readonly [ServerNetworkRequirement]
@@ -896,11 +925,13 @@ export type DoctorProviderCatalog = readonly [
   DeployedApplicationDoctorProvider,
 ];
 
+/** Authority governing doctor. */
 export interface DoctorAuthority {
   readonly providers: DoctorProviderCatalog;
   readonly diagnose: Signature<DoctorSubject, DoctorReport, DoctorFailure>;
 }
 
+/** Capability requirement for doctor authority. */
 export type DoctorAuthorityRequirement = Hole<
   'liteship.system.doctor',
   DoctorAuthority
@@ -1008,6 +1039,7 @@ export interface DoctorRemediationRun<
   readonly after: DoctorReport<Subject>;
 }
 
+/** Type-level representation of doctor remediation composition. */
 export type DoctorRemediationComposition = Algebra<{
   repository: { readonly run: DoctorRemediationRun<CaseOf<DoctorSubject, 'repository'>> };
   'consumer-application': {
@@ -1105,9 +1137,8 @@ export type ShipSignature<
 // The request shapes for `gauntlet` and `verify` are declared here rather than
 // in the homes that own their products, and that placement is forced. Gauntlet
 // evaluates an audit product, but `01_gauntlet` may not import `00_audit` —
-// they are siblings, and sibling exclusion is the rule that kept the
-// predecessor's Cloudflare package from losing its independent story. This
-// home is downstream of both and is the first place allowed to name them
+// they are sibling authorities. This home is downstream of both and is the
+// first place allowed to name them
 // together, which is exactly what it is for: it says which program consumes
 // and produces which, and declares none of the products themselves.
 // ---------------------------------------------------------------------------
@@ -1207,9 +1238,8 @@ export type PackageProgram<
  *
  * The input is `QualifiedReleaseCandidate`, so the registry entry for
  * `release` is the thing that cannot be invoked with an unqualified candidate.
- * That property used to live on `ReleaseSignature`, declared beside a registry
- * whose `release` entry accepted `unknown` — the guarantee was real and was
- * about a type nothing dispatched through.
+ * An exact `ReleaseSignature` beside a broad registry row would protect a
+ * contract no dispatch path holds.
  */
 export type ReleaseProgram<
   Id extends ReleaseCandidateId = ReleaseCandidateId,
@@ -1255,6 +1285,7 @@ type ReferencesOf<Entries extends readonly SystemProgramEntry<SystemProgramName,
   readonly [Position in keyof Entries]: SystemProgramReference<Entries[Position]['name']>;
 };
 
+/** Type-level representation of system program exposure. */
 export type SystemProgramExposure = ReferencesOf<SystemProgramDefinitions>;
 
 /**

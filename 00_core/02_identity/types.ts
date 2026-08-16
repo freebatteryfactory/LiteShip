@@ -48,6 +48,7 @@ export type ToleranceProfileId<Name extends string = string> = Brand<
   Name,
   'liteship.tolerance-profile-id'
 >;
+/** Typed reference to one tolerance profile. */
 export type ToleranceProfileReference<
   Id extends ToleranceProfileId = ToleranceProfileId,
 > = Reference<'tolerance-profile', Id>;

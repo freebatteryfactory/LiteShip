@@ -50,7 +50,9 @@ import type { CommitApplicationRequirement } from '../04_projection/types.js';
 import type { ConnectionReference } from '../06_transport/types.js';
 import type { WebExecutionRequirement } from '../10_execution/types.js';
 
+/** Stable identity for one island. */
 export type IslandId<Name extends string = string> = Brand<Name, 'liteship.web.island-id'>;
+/** Typed reference to one island. */
 export type IslandReference<Id extends IslandId = IslandId> = Reference<'web-island', Id>;
 
 /**
@@ -124,6 +126,7 @@ export interface IslandActivationAuthority {
   readonly activate: Signature<IslandJoin, IslandInstance, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for island authority. */
 export type IslandAuthorityRequirement = Hole<'liteship.web.island-authority', IslandActivationAuthority>;
 
 /**

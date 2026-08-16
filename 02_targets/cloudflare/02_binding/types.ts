@@ -45,9 +45,8 @@ export interface PlatformBinding<Necessity extends BindingNecessity = BindingNec
 /**
  * Whether the platform actually satisfied a declared binding.
  *
- * `unsatisfied` is a first-class arm carrying diagnostics. The predecessor's
- * general failure shape was silent degradation, and a missing binding resolved
- * to a no-op is the same shape wearing infrastructure clothes.
+ * `unsatisfied` is a first-class arm carrying diagnostics. A missing binding
+ * must not degrade silently or resolve to a no-op.
  */
 export type BindingResolution = Algebra<{
   satisfied: { readonly binding: PlatformBinding };

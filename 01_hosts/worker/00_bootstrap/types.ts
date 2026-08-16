@@ -48,7 +48,9 @@ import type { GroundingId } from '../../../00_core/14_compiler/types.js';
 /** The worker realm, derived from the umbrella authority rather than restated. */
 export type WorkerRealm = Extract<HostRealm, 'worker'>;
 
+/** Stable identity for one worker host. */
 export type WorkerHostId = HostId<'liteship.host.worker'>;
+/** Typed reference to one worker host. */
 export type WorkerHostReference = HostReference<WorkerHostId>;
 
 /** The worker host definition, mechanically tied to its catalog's identity and realm. */
@@ -136,7 +138,9 @@ export interface RealmScopeFacility {
   readonly host: WorkerHostReference;
 }
 
+/** Capability requirement for realm scope. */
 export type RealmScopeRequirement = Hole<'liteship.worker.realm-scope', RealmScopeFacility>;
+/** Capability requirement for bootstrap envelope. */
 export type BootstrapEnvelopeRequirement = Hole<
   'liteship.worker.bootstrap-envelope',
   WorkerBootstrapEnvelope

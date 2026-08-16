@@ -35,7 +35,9 @@ import type {
 import type { GroundingId, RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { WebGroundingDefinition } from '../00_bootstrap/types.js';
 
+/** Stable identity for one web producer. */
 export type WebProducerId<Name extends string = string> = Brand<Name, 'liteship.web.producer-id'>;
+/** Typed reference to one web producer. */
 export type WebProducerReference<Id extends WebProducerId = WebProducerId> = Reference<
   'web-producer',
   Id
@@ -107,6 +109,7 @@ export interface ProbeFacility {
   ) => Result<WebWatcher<Source>, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for probe facility. */
 export type ProbeFacilityRequirement = Hole<'liteship.web.probe-facility', ProbeFacility>;
 
 /** Intrinsic grounding: the producer authority derived from matchMedia and peers. */

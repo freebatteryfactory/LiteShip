@@ -24,15 +24,19 @@ import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 
+/** Stable identity for one server connection. */
 export type ServerConnectionId<Name extends string = string> = Brand<
   Name,
   'liteship.server.connection-id'
 >;
+/** Typed reference to one server connection. */
 export type ServerConnectionReference<
   Id extends ServerConnectionId = ServerConnectionId,
 > = Reference<'server-connection', Id>;
 
+/** Stable identity for one listener. */
 export type ListenerId<Name extends string = string> = Brand<Name, 'liteship.server.listener-id'>;
+/** Typed reference to one listener. */
 export type ListenerReference<Id extends ListenerId = ListenerId> = Reference<
   'server-listener',
   Id
@@ -107,10 +111,12 @@ export interface ServerNetworkFacility {
   readonly listen: ServerNetworkAuthority['listen'];
 }
 
+/** Capability requirement for server network facility. */
 export type ServerNetworkFacilityRequirement = Hole<
   'liteship.server.network-facility',
   ServerNetworkFacility
 >;
+/** Capability requirement for server network. */
 export type ServerNetworkRequirement = Hole<'liteship.server.network', ServerNetworkAuthority>;
 
 /** Intrinsic grounding: the host network machinery, admitted narrowly. */

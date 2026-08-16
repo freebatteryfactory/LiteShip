@@ -1,7 +1,5 @@
 # Web Sink Policy
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/02_security/`
@@ -46,4 +44,4 @@ Both are `system/01_assurance` obligations.
 
 ## Implementation boundary
 
-Specified. No sanitizer, Trusted Types registration, or DOM policy code exists or is authorized.
+A security realization must enforce the declared allowlists and preserve policy identity across sanitization, Trusted Types, DOM sinks, and network egress.

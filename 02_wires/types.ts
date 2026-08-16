@@ -46,7 +46,9 @@ import type {
 // Identity
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one wire. */
 export type WireId<Name extends string = string> = Brand<Name, 'liteship.wire-id'>;
+/** Typed reference to one wire. */
 export type WireReference<Id extends WireId = WireId> = Reference<'wire', Id>;
 
 // ---------------------------------------------------------------------------
@@ -196,4 +198,3 @@ export type WireCaller = Algebra<{
 // ---------------------------------------------------------------------------
 // Surface
 // ---------------------------------------------------------------------------
-

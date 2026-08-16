@@ -1,7 +1,5 @@
 # Vite Integration Identity
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/vite/00_integration/`
@@ -47,4 +45,4 @@ Assurance-and-implementation territory.
 
 ## Implementation boundary
 
-Specified. No code exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

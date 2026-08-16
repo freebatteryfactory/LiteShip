@@ -169,6 +169,7 @@ type ShadowsReservedKey<Body, Reserved extends PropertyKey> = Body extends unkno
     : never
   : never;
 
+/** Tagged object whose fields cannot shadow its discriminant. */
 export type Tagged<Tag extends string, Fields extends object = {}> = [
   ShadowsReservedKey<Fields, '_tag'>,
 ] extends [never]

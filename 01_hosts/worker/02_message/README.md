@@ -1,7 +1,5 @@
 # Worker Messaging
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/worker/02_message/`
@@ -43,4 +41,4 @@ This is an implementation fixture; batch sizes and buffering thresholds are empi
 
 ## Implementation boundary
 
-Specified. No postMessage, MessageChannel, or decode code exists or is authorized.
+A message realization must preserve channel identity, sequence, admission, diagnostics, and delivery outcomes across the physical worker boundary.

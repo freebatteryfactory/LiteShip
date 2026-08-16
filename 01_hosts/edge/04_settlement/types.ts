@@ -71,6 +71,7 @@ export interface RequestSettlementAuthority {
   ) => Result<RequestSettlementOutcome<Id>, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for request settlement. */
 export type RequestSettlementRequirement = Hole<
   'liteship.edge.request-settlement',
   RequestSettlementAuthority

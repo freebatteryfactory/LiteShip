@@ -1,7 +1,5 @@
 # Astro Target
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/astro/`
@@ -48,13 +46,13 @@ A generic artifact home would become a waiting room for unrelated emitted things
 
 Astro genuinely uses Vite. That fact is expressed without importing Vite, naming Vite, or borrowing Vite's vocabulary: `03_build` declares a hole whose contract is written entirely in upstream language, and a supplier converges with it or does not.
 
-Coexistence does not create ownership. "Astro uses Vite" does not put Vite above Astro, and the predecessor's one target that imported a sibling is precisely the one that lost its independent story.
+Coexistence does not create ownership. "Astro uses Vite" does not put Vite above Astro; importing a sibling would make Astro's contract depend on another target's vocabulary and erase the producer-neutral seam.
 
-Whether any supplier actually converges is not a question this child may answer about itself. A composition point imports both public surfaces and proves the binding, which it may do because it is not a target and acquires no semantic ownership by doing so. That composition point is assurance; its home is `system/`, which is not yet authored.
+Whether any supplier actually converges is not a question this child may answer about itself. A composition point under `system/` imports both public surfaces and proves the binding without acquiring target ownership.
 
 ## Laws
 
-- The roster is exactly seven homes; a home added on disk without being reached here breaks the umbrella.
+- The roster contains integration, configuration, authoring, build, island, server, and development; an ungoverned child breaks the umbrella.
 - Load-bearing surface members keep their declared types, named one by one — a whole-surface comparison stays green while an individual member blurs to `unknown`.
 - This child declares no second ecosystem-target identity. Its identity is the umbrella's, instantiated.
 
@@ -69,4 +67,4 @@ These are runtime claims, not unfinished work. A type cannot express any of them
 
 ## Implementation boundary
 
-Specified. No integration code, no hook handlers, no runtime exists or is authorized.
+An Astro realization must translate ecosystem hooks into the declared target contracts without importing a sibling target or absorbing host authority.

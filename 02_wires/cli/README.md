@@ -1,7 +1,5 @@
 # CLI Wire: Argv In, Two Streams and an Exit Code Out
 
-Status: architecture specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_wires/cli/`
@@ -47,19 +45,19 @@ Did the crossing work, and did the operation approve? A shell sees `0` and conti
 
 Collapsing `refusedByOperation` into `usage` is the ordinary shape — one nonzero code for everything that is not success — and it tells a user who typed a correct command that they typed it wrong.
 
-### The split was half done, which is worse than not splitting
+### Crossing and exit are one decision
 
-There used to be one `answered` arm carrying any completed crossing beside an independently chosen exit, and four exit arms rather than six. The comment above it said the exit was a function of the outcome. Nothing made it one.
+One `answered` arm beside an independently selected exit would let the operation receipt and process exit disagree.
 
-Two consequences, and the second is the ugly one. A receipt reading `failed` sat beside `exit: success` and composed without complaint, because the only law on the subject checked that the *other two* crossing arms could not reach success — cross-arm exclusion, while the arm where an operation actually runs went unrelated. And `failed` and `cancelled` had no exit arm at all, so a failing command did not merely *permit* a false success, it had nothing else available: the type forced the lie for two of the four outcomes.
+A receipt reading `failed` must not compose beside `exit: success`, and failed or cancelled operations must not fabricate an answer value merely to inhabit a shared completed arm.
 
-Four completed arms now, one per outcome, each pinning the receipt outcome and the exit together. `succeeded` is the only arm carrying an answer value — a failing command previously had to produce an `Output` it did not have, so the answer stream is now absent where there is nothing to put on it rather than present and fabricated.
+Each completed outcome has its own arm pinning the receipt outcome and exit together. `succeeded` is the only arm carrying an answer value, so the answer stream is absent where there is nothing to put on it rather than present and fabricated.
 
 The threshold arm is also completed and carries the successful answer. It does not add an operation outcome. That distinction is load-bearing: turning a strict acceptance policy into `failed` would falsify the receipt, while returning shell success would ignore the policy the caller selected.
 
-This file opens by naming one integer asked to carry two questions. It had answered the transport question and left the operation question free, which reads as done from the outside.
+The exit algebra answers transport and operation questions together; neither is a free sibling of the other.
 
-## Two streams are one channel if anybody mixes them
+## Separate answer and diagnostic streams
 
 The answer is machine-readable and goes one way; diagnostics are for a human and go the other. A single diagnostic on the answer stream corrupts every downstream parse, and the failure is silent, intermittent, and appears only when something went wrong — which is when the pipeline mattered.
 

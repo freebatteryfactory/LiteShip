@@ -84,9 +84,9 @@ export interface AstroProjectionRequest<
  * genuinely no effective demands. `unsupported` means the facility does not do
  * this and says so with evidence. `unresolved` means source, configuration, or
  * ancestry could not be determined. `failed` means a lawfully selected facility
- * broke while projecting. Collapsing any of these into `empty` reproduces the
- * predecessor's worst shape: a virtual module that returned an empty object
- * when its data was missing, indistinguishable from a genuinely empty project.
+ * broke while projecting. Collapsing any of these into `empty` lets a virtual
+ * module return an empty object when its data is missing, indistinguishable from
+ * a genuinely empty project.
  */
 export type AstroProjectionDisposition<Producer extends ArtifactProducer = ArtifactProducer> = Algebra<{
   empty: Record<never, never>;

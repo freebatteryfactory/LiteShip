@@ -1,7 +1,5 @@
 # Edge Deferred Work
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/edge/10_deferred/`
@@ -37,4 +35,4 @@ Own explicitly bounded post-response work: task identity, request ancestry, reta
 
 ## Implementation boundary
 
-Specified. No waitUntil-style or scheduling code exists or is authorized.
+A deferred-work realization must preserve task identity, outstanding state, custody, completion, and failure across platform scheduling.

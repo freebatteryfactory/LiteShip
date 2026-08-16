@@ -35,8 +35,11 @@ import type { RealizationLifecycle, RealizationOfferId } from '../../../00_core/
 import type { WorkerRealizationOffer } from '../00_bootstrap/types.js';
 import type { SharedBufferId, SharedBufferReference, SharedMemoryRequirement } from '../04_memory/types.js';
 
+/** Stable identity for one queue. */
 export type QueueId<Name extends string = string> = Brand<Name, 'liteship.worker.queue-id'>;
+/** Typed reference to one queue. */
 export type QueueReference<Id extends QueueId = QueueId> = Reference<'worker-queue', Id>;
+/** Stable identity for one queue batch. */
 export type QueueBatchId = Brand<string, 'liteship.worker.queue-batch-id'>;
 
 /** The two SPSC endpoint roles. One queue has exactly one of each. */
@@ -119,6 +122,7 @@ export interface QueueAuthority {
   ) => Result<BoundedQueue<Payload, Id, Buf>, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for queue. */
 export type QueueRequirement = Hole<'liteship.worker.queue', QueueAuthority>;
 
 /** Constructing the queue provider: it builds over the shared-memory provider. */

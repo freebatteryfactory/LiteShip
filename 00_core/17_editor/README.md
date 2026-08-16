@@ -1,7 +1,5 @@
 # Editor and Agent Control
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `17_editor/`
@@ -32,7 +30,7 @@ Own semantic selection, revision-pinned working overlays, draft previews, histor
 - A separate agent mutation language.
 - A replication algorithm.
 
-## Five-layer model
+## Editor state model
 
 The editor composes five distinct layers:
 
@@ -110,6 +108,6 @@ Approval is derived from `OperationPolicyDecision`, effects, reversibility, auth
 
 ## Implementation boundary
 
-The five-layer model, overlay derivation, draft authority, selection contract, and human/agent flow are specified. Visual UX, widgets, and collaboration are absent.
+Editor realizations must preserve session, overlay, draft, selection, proposal, approval, and committed-result relationships; visual interaction and collaboration remain consumer-driven design work.
 
 Pressure-testing selection and history ergonomics in real scene, collection, and generated-structure editors is an implementation obligation. This home owns no replication: it would compose through family merge policies and would be an explicit architecture reopening, not a reshaping of this baseline.

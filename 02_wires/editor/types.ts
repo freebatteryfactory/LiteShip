@@ -1,12 +1,8 @@
 /**
  * The editor wire: an editing session projected as a language-server protocol.
  *
- * The predecessor's language server lived inside the MCP package, took its
- * version identity from that package, and reached into `fast-glob`'s internals.
- * The packet's ruling is that LSP is an editor wire and not MCP internals, and
- * here that is structural rather than stated: this home may not import
- * `02_wires/mcp` at all — they are siblings, and the import audit refuses the
- * edge.
+ * LSP is an editor wire rather than MCP internals. This home may not import
+ * `02_wires/mcp`: the two are siblings and the import audit refuses the edge.
  *
  * Two facts have no owner upstream, and both are ways an editor protocol
  * quietly becomes a second LiteShip.
@@ -31,16 +27,13 @@
  * its overlay, and the overlay owns its session and base. A draft result may
  * never stand where a committed one is required.
  *
- * What this home does not own, because `00_core/17_editor` already does:
+ * This home does not own what `00_core/17_editor` already declares:
  * sessions, selections, working overlays, preview branches, history cursors,
- * edit proposals, and approval. A wire that redeclared any of them would be the
- * second editor state this repository has been deleting all week. Every
- * semantic type below is imported from its owner.
+ * edit proposals, and approval. Redeclaring them would create a second editor
+ * state. Every semantic type below is imported from its owner.
  *
  * It owns no language parser either. Turning document text into operations is
- * an injected capability, for the reason the predecessor got right: its server
- * took the evaluation engine as a parameter and declared no dependency on it,
- * which is why the boundary was real rather than promised.
+ * an injected capability, so protocol framing never becomes parsing authority.
  *
  * @module
  */
@@ -99,10 +92,12 @@ export type EditorRequestId<Name extends string = string> = Brand<
   'liteship.editor.request-id'
 >;
 
+/** Stable identity for one editor connection. */
 export type EditorConnectionId<Name extends string = string> = Brand<
   Name,
   'liteship.editor.connection-id'
 >;
+/** Typed reference to one editor connection. */
 export type EditorConnectionReference<
   Id extends EditorConnectionId = EditorConnectionId,
 > = Reference<'editor-connection', Id>;
@@ -120,18 +115,24 @@ export type EditorDocumentVersion<Value extends number = number> = Brand<
   'liteship.editor.document-version'
 >;
 
+/** Stable identity for one editor document. */
 export type EditorDocumentId<Name extends string = string> = Brand<
   Name,
   'liteship.editor.document-id'
 >;
+/** Typed reference to one editor document. */
 export type EditorDocumentReference<Id extends EditorDocumentId = EditorDocumentId> = Reference<
   'editor-document',
   Id
 >;
 
+/** Type-level representation of editor source language. */
 export type EditorSourceLanguage = 'astro' | 'typescript';
+/** Type-level representation of editor source text. */
 export type EditorSourceText = Brand<string, 'liteship.editor.source-text'>;
+/** Content address for one editor source. */
 export type EditorSourceAddress = ContentAddress<'text/plain'>;
+/** Type-level representation of editor text offset. */
 export type EditorTextOffset = Brand<number, 'liteship.editor.text-offset'>;
 
 /** Editor-neutral source range; LSP UTF-16 positions are a downstream projection. */
@@ -191,10 +192,9 @@ export type EditorDocumentChange<
 /**
  * Where one connection stands in the protocol's own lifecycle.
  *
- * Four phases, because the predecessor's property test fuzzed arbitrary
- * message sequences against exactly this machine and it is the part of that
- * server most worth keeping. A request before initialize and a request after
- * shutdown are both refusals, and they are different refusals.
+ * A request before initialize and a request after shutdown are both refusals,
+ * and they require different recovery. The closed phase machine makes both
+ * protocol boundaries explicit.
  */
 export type EditorProtocolPhase = Algebra<{
   initial: Record<never, never>;
@@ -282,6 +282,7 @@ export interface EditorLanguageCapability {
   readonly admit: EditorLanguageAdmission;
 }
 
+/** Capability requirement for editor language. */
 export type EditorLanguageRequirement = Hole<
   'liteship.editor.language',
   EditorLanguageCapability
@@ -357,11 +358,13 @@ export interface EditorMigrationAdmission {
   ): MaybePromise<Result<MigrationReport<Adapter, Request>, MigrationFailure>>;
 }
 
+/** Request for editor initialize. */
 export interface EditorInitializeRequest {
   readonly connection: EditorConnectionReference;
   readonly clientName?: string;
 }
 
+/** Result produced by editor initialize. */
 export interface EditorInitializeResult {
   readonly connection: EditorConnectionReference;
   readonly capabilities: EditorCapabilities;
@@ -371,7 +374,9 @@ export interface EditorInitializeResult {
 // Editor-neutral method authority
 // ---------------------------------------------------------------------------
 
+/** Type-level representation of editor method direction. */
 export type EditorMethodDirection = 'client-to-server' | 'server-to-client';
+/** Closed kind vocabulary for editor method. */
 export type EditorMethodKind = 'request' | 'notification';
 
 /** One semantic method and the exact relationship its handler must implement. */
@@ -505,7 +510,9 @@ export interface EditorProtocolDefinition<Catalog extends EditorMethodCatalog = 
 // Exact LSP 3.17 projection
 // ---------------------------------------------------------------------------
 
+/** LSP URI identifying one editor document. */
 export type LspDocumentUri = Brand<string, 'liteship.editor.lsp-document-uri'>;
+/** Stable identity for one LSP request. */
 export type LspRequestId = Brand<string | number, 'liteship.editor.lsp-request-id'>;
 
 /** LSP character positions are UTF-16 code-unit offsets. */
@@ -514,21 +521,25 @@ export interface LspPosition {
   readonly character: number;
 }
 
+/** UTF-16 source range projected through LSP. */
 export interface LspRange {
   readonly start: LspPosition;
   readonly end: LspPosition;
 }
 
+/** LSP replacement over one UTF-16 source range. */
 export interface LspTextEdit {
   readonly range: LspRange;
   readonly newText: string;
 }
 
+/** LSP document identity paired with its exact version. */
 export interface LspVersionedDocument {
   readonly uri: LspDocumentUri;
   readonly version: EditorDocumentVersion;
 }
 
+/** Versioned LSP edit population for one document. */
 export interface LspDocumentEdit {
   readonly document: LspVersionedDocument;
   readonly edits: NonEmptyTuple<LspTextEdit>;
@@ -570,6 +581,7 @@ type EditorMethodRow<Semantic extends EditorMethodCatalog[number]['id']> = Extra
   { readonly id: Semantic }
 >;
 
+/** Exact LSP spelling and direction for one semantic editor method. */
 export interface LspMethodProjection<
   Semantic extends EditorMethodCatalog[number]['id'],
 > {
@@ -606,11 +618,13 @@ export type LspMethodCatalog = [DuplicateProtocolMethods<DeclaredLspMethodCatalo
   ? DeclaredLspMethodCatalog
   : never;
 
+/** Type-level representation of editor server notification method. */
 export type EditorServerNotificationMethod = Extract<
   EditorMethodCatalog[number],
   { readonly direction: 'server-to-client'; readonly kind: 'notification' }
 >['id'];
 
+/** Type-level representation of editor server request method. */
 export type EditorServerRequestMethod = Extract<
   EditorMethodCatalog[number],
   { readonly direction: 'server-to-client'; readonly kind: 'request' }
@@ -645,10 +659,8 @@ export interface EditorRequestOutcome<
  *
  * Distinct from `WireRefusal`'s malformed and unrecognized arms, which are
  * about the message. This is about *when* the message arrived: before
- * initialize, or after shutdown. The predecessor answered both with one
- * invalid-request code and a hand-written sentence; separating them is what
- * lets a client tell "I started talking too early" from "I kept talking too
- * late".
+ * initialize, or after shutdown. Separating them lets a client tell "I started
+ * talking too early" from "I kept talking too late".
  */
 export type EditorLifecycleRefusal = Algebra<{
   beforeInitialize: { readonly attempted: string; readonly phase: CaseOf<EditorProtocolPhase, 'initial'> };
@@ -682,6 +694,7 @@ export interface EditorConnectionOrder<
   readonly sequence: StreamSequence;
 }
 
+/** Contract for editor notification. */
 export interface EditorNotification<
   Payload = unknown,
   Connection extends EditorConnectionId = EditorConnectionId,
@@ -709,8 +722,7 @@ export interface EditorOutboundRequest<
  * permissive. A document that was reported dirty and is now clean must receive
  * an explicit empty publish, or the editor keeps the stale squiggles forever —
  * clients drop diagnostics for a document only on an explicit publish for that
- * document. The predecessor learned this in review and the comment is still in
- * its source.
+ * document.
  */
 export interface EditorDiagnosticPush {
   readonly diagnostics: readonly Diagnostic[];
@@ -720,11 +732,9 @@ export interface EditorDiagnosticPush {
 /**
  * A failure that happened while handling a message that gets no response.
  *
- * A notification handler cannot answer, so a failure inside one has nowhere to
- * go and is silently dropped by default. The predecessor surfaced it as an
- * outbound log notification instead, which is the only channel available, and
- * that is the behaviour worth keeping: the failure stays visible without
- * inventing a response to a message that may not have one.
+ * A notification handler cannot answer, so a failure inside one otherwise has
+ * nowhere to go. An outbound log notification keeps the failure visible
+ * without inventing a response to a message that has none.
  */
 export interface EditorHandlerFailure {
   readonly attempted: string;
@@ -738,10 +748,9 @@ export interface EditorHandlerFailure {
 /**
  * How a client obtained diagnostics.
  *
- * Both arms carry `readonly Diagnostic[]` — core's, the same population an
- * assurance run or a CLI invocation reports. The predecessor supported both
- * paths and used one projection for both, and the alternative is two
- * diagnostic vocabularies that agree by coincidence.
+ * Both arms carry core's `readonly Diagnostic[]`, the same population an
+ * assurance run or CLI invocation reports. Separate push and pull diagnostic
+ * vocabularies would agree only by convention.
  */
 export type EditorDiagnosticDelivery = Algebra<{
   pushed: { readonly push: EditorDiagnosticPush };
@@ -767,6 +776,7 @@ export interface EditorDiagnosticExplanationReport {
   readonly explanation: Explanation;
 }
 
+/** Contract for editor diagnostic explanation projection. */
 export interface EditorDiagnosticExplanationProjection<
   Report extends EditorDiagnosticExplanationReport = EditorDiagnosticExplanationReport,
   Op extends OperationId = OperationId,
@@ -783,8 +793,7 @@ export interface EditorDiagnosticExplanationProjection<
  * One offered remediation, and the diagnostic it remediates.
  *
  * The back-link is required. A code action that floats free of its diagnostic
- * is an action a user cannot evaluate, and the predecessor carried the exact
- * diagnostic object it was offered against for precisely this reason.
+ * is an action a user cannot evaluate.
  *
  * The proposal and its approval are core's. This wire projects an *approved*
  * decision into the protocol and does not decide anything: `ApprovalDecision`
@@ -797,11 +806,13 @@ export interface EditorRemediationOffer {
   readonly selection?: SelectionSet;
 }
 
+/** Contract for editor document edit. */
 export interface EditorDocumentEdit {
   readonly document: EditorDocumentState;
   readonly edits: NonEmptyTuple<EditorTextEdit>;
 }
 
+/** Contract for editor workspace edit. */
 export interface EditorWorkspaceEdit {
   readonly documentChanges: NonEmptyTuple<EditorDocumentEdit>;
 }
@@ -810,9 +821,8 @@ export interface EditorWorkspaceEdit {
  * How an approved remediation reaches the client.
  *
  * Two arms because the honest answer depends on whether the semantic operation
- * maps faithfully back to source text. The predecessor projected every
- * remediation as a client command, and that was an implementation limit — it
- * had no document store — rather than a product ceiling.
+ * maps faithfully back to source text. A command-only projection would turn a
+ * missing text mapping into a product ceiling.
  *
  * `documentEdit` is the faithful case. `command` is the case where no faithful
  * text edit exists, and it is not a fallback for *not having implemented* the
@@ -831,6 +841,7 @@ export type EditorRemediationProjection = Algebra<{
   };
 }>;
 
+/** LSP command that invokes one approved semantic operation. */
 export interface LspCommand {
   readonly title: string;
   readonly command: string;

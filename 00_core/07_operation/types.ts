@@ -25,15 +25,25 @@ import type { TimeCoordinate } from '../04_time/types.js';
 import type { Deadline } from '../05_lifecycle/types.js';
 import type { EvidenceAuthority } from '../06_evidence/types.js';
 
+/** Stable identity for one operation. */
 export type OperationId<Name extends string = string> = Brand<Name, 'liteship.operation-id'>;
+/** Typed reference to one operation. */
 export type OperationReference<Id extends OperationId = OperationId> = Reference<'operation', Id>;
+/** Stable identity for one actor. */
 export type ActorId = Brand<string, 'liteship.actor-id'>;
+/** Stable identity for one workload. */
 export type WorkloadId = Brand<string, 'liteship.workload-id'>;
+/** Stable identity for one client. */
 export type ClientId = Brand<string, 'liteship.client-id'>;
+/** Stable identity for one delegate. */
 export type DelegateId = Brand<string, 'liteship.delegate-id'>;
+/** Type-level representation of business effect. */
 export type BusinessEffect = Brand<string, 'liteship.business-effect'>;
+/** Type-level representation of purpose code. */
 export type PurposeCode = Brand<string, 'liteship.purpose-code'>;
+/** Type-level representation of idempotency key. */
 export type IdempotencyKey = Brand<string, 'liteship.idempotency-key'>;
+/** Stable identity for one policy. */
 export type PolicyId = Brand<string, 'liteship.policy-id'>;
 
 /** Coarse effect class used for policy and explanation. */

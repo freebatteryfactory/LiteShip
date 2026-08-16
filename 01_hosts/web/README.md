@@ -1,7 +1,5 @@
 # Web: The Browser Host
 
-Status: specified; implementation absent
-
 Authority: This README for web-wide meaning and proof obligations; `types.ts` for the topology; each numbered home's `README.md` and `types.ts` for local authority
 
 Source home: `01_hosts/web/`
@@ -57,13 +55,13 @@ Thirteen numbered homes in dependency order, each one distinct physical authorit
 | `11_island` | Activation and graph-cut joining | specified |
 | `12_capture` | Committed browser-composite capture | specified |
 
-`11_island` is last because activation composes region, security, events, evidence, transport, optional persistence, media, graphics, and execution — and that composition is a type fact, not a sentence: `IslandActivationOffer` requires the region manager, the commit-application authority, and the execution host by exact requirement row. The topology in `types.ts` follows core's ordered pattern — named entries in an exact tuple with position-by-position laws — so order, membership, and surface association are all mutation-breakable facts, lawful because all thirteen directories physically exist.
+`11_island` is last because activation composes region, security, events, evidence, transport, optional persistence, media, graphics, and execution. `IslandActivationOffer` requires the region manager, commit-application authority, and execution host by exact requirement row. The topology uses named entries in an exact tuple with position-by-position laws, making order, membership, and surface association mutation-breakable facts.
 
 `12_capture` is after it for the same reason pointed the other way: it gathers physical outputs *after* they have been lawfully committed, composing the projection commit, the region boundary, and graphics resources without becoming the parent of any of them. It is the one home reaching a composition that spans DOM, canvas, and video at once, which is precisely why it may claim nothing about what that composition means.
 
 ## The capability composition
 
-Every home instantiates the closed host calculus rather than narrating it. Fifteen grounding slots enter the web boundary — discovery, application mount, invocation mount, sink policy, renderer catalog, event facility, probe facility, transport facility, database facility, audio facility, injected audio runtime, GPU access, scheduling — each pinned to its allowed origin and exact identity, twenty-eight pinned capability declarations in all. Thirteen offers construct everything else — region authority, event authority, commit application, transport authority, store, audio runtime, media authority, graphics authority, execution host, preparation, island activation — each a `WebRealizationOffer` with a pinned distinct identity, structurally unable to advertise a realm, a server or worker backend, platform-settled html-css, or a settlement location outside local, live, and remote.
+Every home instantiates the closed host calculus rather than narrating it. Grounding slots cover discovery, mounts, policy, renderer catalog, events, probes, transport, persistence, audio, injected audio runtime, GPU access, and scheduling, each pinned to its allowed origin and identity. Offers construct region, event, commit-application, transport, store, audio-runtime, media, graphics, execution, preparation, and island authorities, each structurally unable to advertise another realm, an unsupported backend, platform-settled HTML/CSS, or a settlement location outside local, live, and remote.
 
 Three altitudes stay distinct throughout, and multiplicity is honest: a requirement hole names a capability or provider authority, never a repeatable resource instance. Dynamic per-use resources — memberships, subscriptions, connections, watchers, media and graphics resources, islands — are created through typed operations on their providers with their own identity and lifecycle, so two islands or two regions are two values, not one deduplicated hole. Transaction-scoped leases are issued per commit by persistent membership, never frozen inside a provider. Offer inputs are classified — plan-bound configuration content-addressed by the selected step, invocation-bound input through an explicit slot, per-use input on the provider's operation — so no meaningful input vanishes between the plan and the physical act. `WebCapabilityTopology` composes the exact population into one inspectable surface with population laws on both sides, and the erased catalog of offer and grounding descriptors derives from it — a derivation whose faithfulness is a `system/01_assurance` obligation.
 
@@ -88,10 +86,10 @@ Retired old defects that do not return: generic browser engines living under a t
 - No ambient browser read exists outside the bootstrap.
 - Every promised evidence source has a producer, and no producer asserts an undeclared source.
 - Every physical write routes through sink policy and a region write authority.
-- The web capability population reconciles against the capability port ledger before implementation, and old source is read line by line before any port.
+- The web capability population is reconciled against concrete consumer and platform evidence before a realization is admitted.
 
 The first three are `system/01_assurance`; the last is the implementation-gate protocol.
 
 ## Implementation boundary
 
-Every implementation — DOM code, listeners, drivers, contexts, databases, workers, activation — is absent.
+Browser realizations must acquire each physical authority through its owning child contract and may not read ambient browser state outside bootstrap.

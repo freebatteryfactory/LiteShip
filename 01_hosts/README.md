@@ -1,7 +1,5 @@
 # Hosts: Physical Execution Environments
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/`
@@ -22,7 +20,7 @@ Own the shared contract by which a host makes unresolved physical behavior real:
 
 ## Does not own
 
-- Concrete browser, worker, edge, or server APIs. Physical authority belongs to the four child homes — `web/`, `worker/`, `edge/`, `server/` — whose architectures all exist and whose implementations do not.
+- Concrete browser, worker, edge, or server APIs. Physical authority belongs to the child homes `web/`, `worker/`, `edge/`, and `server/`.
 - Any second schema, operation, state, compiler, scene, or runtime meaning system.
 - Requirement identity, realization planning, or settlement. Those belong to core.
 - A hydration-tier table, in any spelling.
@@ -31,7 +29,7 @@ Own the shared contract by which a host makes unresolved physical behavior real:
 
 The host families are web, worker, edge, and server.
 
-For as long as only web physically existed, this umbrella deliberately declared no roster union: an inventory nothing can verify is the same defect as a law that cannot fail. All four child homes now physically exist with complete architectures, so the deferred population finalization has landed — `HostChildRoster` in `types.ts` names exactly web, worker, edge, and server in design order, and `TheChildRosterMatchesTheRealms` proves the roster and the host-realm union are one population: every realm has exactly one child, no child exists outside the union, and a fifth child is a new decision, never a silent edit.
+`HostChildRoster` names web, worker, edge, and server in design order, and `TheChildRosterMatchesTheRealms` proves the roster and host-realm union are one population. Every realm has one child, no child exists outside the union, and adding another realm requires editing the owner rather than dropping in an ungoverned directory.
 
 Sibling hosts never import one another: web, worker, edge, and server are four independent physical realms whose only shared vocabulary is this umbrella and everything upstream of it. Cross-realm products — a web-constructed worker, edge policy admitting shared memory, an operation with edge and server realizations — belong to downstream composition points that may lawfully see both sides. The direction gate holds this mechanically.
 
@@ -136,6 +134,6 @@ The obligations concerning provenance, origin genuineness, boundary population, 
 
 ## Implementation boundary
 
-Concrete environment APIs, physical capability implementations, and every runtime behavior are absent.
+Concrete environment APIs must enter only through the grounding, realization, custody, and lifecycle contracts declared here.
 
-The host layer is architecturally complete and no implementation exists or is authorized. The waterfall continues downstream — targets, wires, system, and root composition — architecture-only until the whole repository closes.
+Host realizations must preserve exact supplying shapes and custody while targets, wires, and system composition remain downstream consumers.

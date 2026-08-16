@@ -1,7 +1,5 @@
 # Web Regions and Write Authority
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/01_region/`
@@ -61,4 +59,4 @@ The first and third are assurance-with-fixtures territory; the second is behavio
 
 ## Implementation boundary
 
-Specified. No DOM observation, claiming, or mutation code exists or is authorized.
+A region realization must preserve mount identity, claim and transfer authority, revision awareness, observation, and owned disposal through DOM changes.

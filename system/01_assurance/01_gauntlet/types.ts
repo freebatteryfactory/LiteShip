@@ -10,12 +10,9 @@
  * passing result *is* the evidence, and an object standing beside it to say so
  * was a badge describing evidence.
  *
- * One idea from the deleted harness survives here, and only one. Five hundred
- * and seventy-one mutation scripts and a bespoke runner were an
- * implementation, and implementations are quarry. The durable relation they
- * were reaching for is that **a check is worth nothing until evidence shows it
- * detects the failure class it claims**, because this repository has repeatedly
- * written guards that pass with the guard removed. The umbrella owns the
+ * **A check is worth nothing until evidence shows it detects the failure class
+ * it claims.** A guard that still passes when its protected relationship is
+ * broken cannot qualify itself. The umbrella owns the
  * demonstration vocabulary; this home is where a claim, its proof, and its
  * evaluation become one population.
  *

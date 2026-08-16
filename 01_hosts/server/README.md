@@ -1,7 +1,5 @@
 # Server: The Trusted General-Purpose Host
 
-Status: specified; implementation absent
-
 Authority: This README for server-wide meaning and proof obligations; `types.ts` for the topology; each numbered home's `README.md` and `types.ts` for local authority
 
 Source home: `01_hosts/server/`
@@ -38,7 +36,7 @@ Eleven numbered homes in dependency order:
 
 ## The capability composition
 
-Eleven grounding slots — process entry, configuration, process facility, secret source, filesystem root, network facility, database endpoint, tool catalog, scheduling facility, operation catalog — and ten offers — child process, secret provider, filesystem provider, network authority, database provider, service authority, tool authority, execution host, operation handler, media authority. Twenty-one pinned capability declarations, each with exact identity, origin, custody, and placement: realm exactly `server`, locations `local | live`, backends `javascript | wasm | host-native`. Children, revealed secrets, handles, connections, leases, services, tool executions, sessions, handlers, and media jobs are per-use resources from their providers. `ServerCapabilityTopology` composes the exact population with population laws on both sides and carries its erased catalog.
+Grounding slots cover process entry, configuration, process, secret, filesystem, network, database, tool, scheduling, and operation facilities. Offers construct child-process, secret, filesystem, network, database, service, tool, execution, operation-handler, and media authorities. Every declaration pins identity, origin, custody, and placement to the server realm, local or live locations, and JavaScript, Wasm, or host-native backends. Per-use resources receive their own identities and lifecycles. `ServerCapabilityTopology` composes the exact population and its erased catalog.
 
 ## Does not own
 
@@ -67,4 +65,4 @@ All `system/01_assurance`. Pool sizes, timeouts, batching, backoff, concurrency,
 
 ## Implementation boundary
 
-Every implementation — process runner, database pool, filesystem driver, native tool, HTTP listener — is absent.
+Server realizations must acquire process, secret, filesystem, network, database, service, tool, operation, and media authorities through their exact provider contracts.

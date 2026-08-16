@@ -1,7 +1,5 @@
 # Media and Audio/Visual Time
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `12_media/`
@@ -91,6 +89,6 @@ Authoring constructor names are not architecture and are not listed. `render` is
 
 ## Implementation boundary
 
-The media semantics, codec requirements, frame envelopes, and export dispositions are specified. Physical codecs, analysis kernels, encoder paths, muxers, and device bindings are absent.
+Codecs, analysis kernels, encoders, muxers, and device bindings must preserve media coordinates, admitted profiles, frame and packet envelopes, custody, and export dispositions.
 
 Porting and completing old media behaviour, generalizing DSP kernels, and qualifying browser, worker, Wasm, native, and server paths are implementation obligations this architecture already authorizes.

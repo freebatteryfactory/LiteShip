@@ -1,7 +1,5 @@
 # Web Media
 
-Status: specified with physical profiles deferred; capture roster provisional; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/08_media/`
@@ -28,7 +26,7 @@ Own the physical browser audio and media resources: `AudioContext` and worklets,
 
 ## Grounding versus offer, in types
 
-Both custody stories are declared, not narrated. Only an injected clock-bearing audio runtime is a grounding: an already-created `AudioContext` genuinely carrying its clock enters through `InjectedAudioRuntimeGrounding` with retained custody. Generic injected media values — a `MediaStream`, a codec — enter through the media provider's `adopt` operation, never a global injected-resource hole. Constructed resources come through `AudioRuntimeOffer` (audio kinds, each arriving as a clock-bearing `AudioRuntimeInstance` whose clock is bound to that exact runtime) or `MediaAuthorityOffer` (everything else, clockless by design), each materializing an owned lifetime disposed exactly once. The capture source roster is deliberately reserved: the ledger preserves capture as a web capability without enumerating its old sources, so the concrete roster arrives with old-source mining, not architectural speculation.
+Both custody stories are declared, not narrated. Only an injected clock-bearing audio runtime is a grounding: an already-created `AudioContext` genuinely carrying its clock enters through `InjectedAudioRuntimeGrounding` with retained custody. Generic injected media values — a `MediaStream`, a codec — enter through the media provider's `adopt` operation, never a global injected-resource hole. Constructed resources come through `AudioRuntimeOffer` (audio kinds, each arriving as a clock-bearing `AudioRuntimeInstance` whose clock is bound to that exact runtime) or `MediaAuthorityOffer` (everything else, clockless by design), each materializing an owned lifetime disposed exactly once. The capture source roster remains reserved until concrete capture consumers and platform evidence establish its exact population.
 
 ## The sample clock
 
@@ -36,7 +34,7 @@ The clock speaks the core sample coordinate — `SampleIndex` at a `SampleRate` 
 
 ## Laws
 
-- This host *fills* core's decode, encode, and mux sockets rather than declaring neighbours of them. The predecessor state was three browser-local authorities shaped like core's and related to them only by comment, while the README claimed they had met. Identity, not similarity, is what makes that claim compile.
+- This host *fills* core's decode, encode, and mux sockets rather than declaring structurally similar browser-local neighbours. Identity, not similarity, makes the relationship compile.
 - Admission mints the `AdmittedProfile` core requires. Without it, admission would answer a question nobody downstream could act on and core's operations would have to reopen a compatibility arm they were designed to close.
 - Admission is an intrinsic browser fact and is grounded; the owned, hardware-sensitive codec provider is constructed by an offer requiring it.
 - Decode and encode are operations, not resource kinds. Holding a `codec` resource is acquisition; this home previously had no operation anywhere that could be asked to produce a frame or a packet.
@@ -51,10 +49,10 @@ The clock speaks the core sample coordinate — `SampleIndex` at a `SampleRate` 
 ## Proof obligations
 
 - Media availability and permission denial surface as evidence inside bound contracts, never as missing bindings.
-- The eventual capture roster is reconciled against old-source evidence before any capture implementation.
+- The eventual capture roster is reconciled against concrete capture consumers and platform evidence before admission.
 
 Both are assurance obligations at their respective phases.
 
 ## Implementation boundary
 
-Specified with physical profiles deferred: codec support, worklet scheduling, and capture availability are empirical. No AudioContext creation, device access, or codec code exists or is authorized.
+Codec support, worklet scheduling, and capture availability remain empirical; realizations must preserve admitted profiles, clock domains, custody, refusal, and packet/frame coordinates.

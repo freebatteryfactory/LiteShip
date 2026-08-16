@@ -38,22 +38,30 @@ import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../.
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 import type { SecretProviderRequirement } from '../02_secret/types.js';
 
+/** Stable identity for one database. */
 export type DatabaseId<Name extends string = string> = Brand<Name, 'liteship.server.database-id'>;
+/** Typed reference to one database. */
 export type DatabaseReference<Id extends DatabaseId = DatabaseId> = Reference<
   'server-database',
   Id
 >;
+/** Stable identity for one database connection. */
 export type DatabaseConnectionId<Name extends string = string> = Brand<
   Name,
   'liteship.server.database-connection-id'
 >;
+/** Typed reference to one database connection. */
 export type DatabaseConnectionReference<Id extends DatabaseConnectionId = DatabaseConnectionId> = Reference<
   'server-database-connection',
   Id
 >;
+/** Stable identity for one statement. */
 export type StatementId<Name extends string = string> = Brand<Name, 'liteship.server.statement-id'>;
+/** Typed reference to one statement. */
 export type StatementReference<Id extends StatementId = StatementId> = Reference<'server-statement', Id>;
+/** Stable identity for one transaction. */
 export type TransactionId<Name extends string = string> = Brand<Name, 'liteship.server.transaction-id'>;
+/** Typed reference to one transaction. */
 export type TransactionReference<Id extends TransactionId = TransactionId> = Reference<'server-transaction', Id>;
 
 /** The store ports a server database may realize — exactly the core four. */
@@ -196,10 +204,12 @@ export interface DatabaseEndpointBinding {
   readonly configuration: ContentAddress<'application/vnd.liteship.server-database-endpoint+cbor'>;
 }
 
+/** Capability requirement for database endpoint. */
 export type DatabaseEndpointRequirement = Hole<
   'liteship.server.database-endpoint',
   DatabaseEndpointBinding
 >;
+/** Capability requirement for database provider. */
 export type DatabaseProviderRequirement = Hole<'liteship.server.database', DatabaseProvider>;
 
 /** Deployment grounding: the database endpoint enters admitted. */

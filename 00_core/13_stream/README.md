@@ -1,7 +1,5 @@
 # Semantic Streams and Patch Families
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `13_stream/`
@@ -36,7 +34,7 @@ A trusted HTML or element fragment is a separately typed payload carrying a `Tru
 
 An untrusted generated structure is admitted through a closed host catalog and a bounded semantic structure grammar. Its `GeneratedStructureAdmission` is a different reference kind from a trusted-fragment attestation. It can update only legal components, fields, content, hierarchy, and operation bindings. It never enters the trusted-fragment path.
 
-A **catalog component** here — `CatalogComponentId`, `CatalogComponentDefinition` — is an admission entry with props, a child grammar, and allowed operations. It is not a **state component** (`00_core/08_state`), which is schema-backed world state with a storage profile. Both were once named `ComponentId` and, worse, shared the brand `liteship.component-id`, which made them one type to the compiler: a state component identity assigned to a catalog component slot with no error. The names and brands are now distinct, and nothing currently refuses a future tag shared across two homes — the gate that did lived in the deleted `verification/` tree.
+A **catalog component** here — `CatalogComponentId`, `CatalogComponentDefinition` — is an admission entry with props, a child grammar, and allowed operations. It is not a **state component** (`00_core/08_state`), which is schema-backed world state with a storage profile. Their names and brands are distinct so a state component identity cannot inhabit a catalog component slot. Repository assurance must also refuse reuse of either brand tag by another owner.
 
 The type surface pins the exact payload membership of both stream arms and proves that their payload unions have no assignable overlap. Runtime implementation must still authenticate the corresponding private minting and decoding paths. Static arm separation is not treated as a substitute for runtime provenance.
 
@@ -102,6 +100,6 @@ Frame classes mean:
 
 ## Implementation boundary
 
-The roster, trust boundary, shared envelope, generated-structure family, and control records are specified. Physical transports and domain patch implementations are absent.
+Stream transports and patch realizations must preserve stream identity, sequence, completeness, causality, trust, observation acknowledgements, checkpoints, and resumability.
 
 Finalizing the minimal generated-structure operation set through real UI fixtures, and porting the old bounded buffer, replay, and admission behaviour, are implementation obligations. The roster and the security boundary are settled here.

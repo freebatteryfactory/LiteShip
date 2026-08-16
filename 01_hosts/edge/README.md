@@ -1,7 +1,5 @@
 # Edge: The Request-Time Host
 
-Status: specified; implementation absent
-
 Authority: This README for edge-wide meaning and proof obligations; `types.ts` for the topology; each numbered home's `README.md` and `types.ts` for local authority
 
 Source home: `01_hosts/edge/`
@@ -38,7 +36,7 @@ Eleven numbered homes in dependency order:
 
 ## The capability composition
 
-Eleven grounding slots — invocation, deployment configuration, request, hint source, response policy, network facility, cache facility, deployment store, execution facility, response facility, deferred facility — each pinned to its allowed origin, custody, and exact identity. Eight offers — request evidence, request settlement, network authority, cache authority, store, execution host, response commit, deferred work — each an `EdgeRealizationOffer` structurally unable to advertise another realm, a backend beyond javascript and wasm, or any settlement location except `request`. Nineteen pinned capability declarations in all. Requests, connections, cache entries, handlers, and deferred tasks are per-use resources from their providers. `EdgeCapabilityTopology` composes the exact population with population laws on both sides and carries its erased catalog.
+Grounding slots cover invocation, deployment configuration, request, hints, response policy, network, cache, storage, execution, response, and deferred facilities, each pinned to its allowed origin, custody, and identity. Offers construct request-evidence, settlement, network, cache, store, execution, response-commit, and deferred-work authorities, each structurally unable to advertise another realm, a backend beyond JavaScript and Wasm, or a settlement location other than `request`. Requests, connections, cache entries, handlers, and deferred tasks are per-use resources. `EdgeCapabilityTopology` composes the exact population and its erased catalog.
 
 ## Does not own
 
@@ -67,4 +65,4 @@ All `system/01_assurance`. Body buffering, TTLs, stale windows, timeouts, retrie
 
 ## Implementation boundary
 
-Every implementation — request handler, cache driver, response pipeline, deferred runner — is absent.
+Edge realizations must preserve admitted request, policy, storage, response, and deferred-work coordinates without ambient environment reads.

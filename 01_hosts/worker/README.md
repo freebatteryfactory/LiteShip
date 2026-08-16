@@ -1,7 +1,5 @@
 # Worker: The Isolated-Execution Host
 
-Status: specified; implementation absent
-
 Authority: This README for worker-wide meaning and proof obligations; `types.ts` for the topology; each numbered home's `README.md` and `types.ts` for local authority
 
 Source home: `01_hosts/worker/`
@@ -18,7 +16,7 @@ Worker models a **single-bootstrap isolated execution session**: an explicit par
 
 ## Construction versus entry
 
-The parent realm (web today, server later) owns the physical construction facility, and the target owns the generated module or URL artifact. This realm owns everything after entry: raw isolated-realm globals stay beneath `00_bootstrap`, the bootstrap envelope is admitted rather than trusted, and every capability above the boundary is a narrow admitted authority. Parent-requested termination is a fact this realm observes; graceful close is the one exit it authors.
+The parent realm owns the physical construction facility, and the target owns the generated module or URL artifact. This realm owns everything after entry: raw isolated-realm globals stay beneath `00_bootstrap`, the bootstrap envelope is admitted rather than trusted, and every capability above the boundary is a narrow admitted authority. Parent-requested termination is a fact this realm observes; graceful close is the one exit it authors.
 
 ## Topology
 
@@ -34,11 +32,11 @@ Seven numbered homes in dependency order, each one distinct physical authority:
 | `05_queue` | SPSC bounded queues, batches, stale rejection | physical profiles deferred |
 | `06_execution` | Worker-local realization of the core executor | physical profiles deferred |
 
-Conditional graphics and media homes are deliberately absent: no worker-physical graphics or codec authority has yet proven a distinct need. If one does, it arrives as a new home with its own denominator — never as a silent extension of an existing one.
+Graphics and media remain upstream or parent-provided unless a consumer proves a distinct worker-owned authority. Such an authority requires its own home and contract rather than a silent extension of an existing child.
 
 ## The capability composition
 
-Six grounding slots enter the worker boundary — realm scope, bootstrap envelope, message facility, transfer facility, shared-memory facility, scheduling facility — each pinned to its allowed origin, exact custody, and exact identity. Five offers construct everything else — messaging authority, transfer authority, shared-memory authority, queue authority, execution host — each a `WorkerRealizationOffer` structurally unable to advertise another realm, a webgpu/server/host-native backend, or a settlement location outside local and live. Eleven pinned capability declarations in all. Channels, tickets, buffers, views, queues, and execution sessions are repeatable per-use resources from their providers with their own identity and lifecycle — never requirement holes. `WorkerCapabilityTopology` composes the exact population with population laws on both sides and carries its erased catalog, whose faithful derivation is a `system/01_assurance` obligation.
+Grounding slots cover realm scope, bootstrap envelope, messaging, transfer, shared memory, and scheduling, each pinned to its allowed origin, custody, and identity. Offers construct messaging, transfer, shared-memory, queue, and execution authorities, each structurally unable to advertise another realm, an unsupported backend, or a settlement location outside local and live. Channels, tickets, buffers, views, queues, and execution sessions are repeatable per-use resources with their own identity and lifecycle. `WorkerCapabilityTopology` composes the exact population and its erased catalog, whose faithful derivation is a `system/01_assurance` obligation.
 
 ## Does not own
 
@@ -66,4 +64,4 @@ The first four are `system/01_assurance`; the last is the implementation-gate pr
 
 ## Implementation boundary
 
-Every implementation — worker spawn, message loop, ring buffer, transfer, execution — is absent.
+Worker realizations must preserve the declared message, custody, queue, memory, execution, and lifecycle coordinates from bootstrap through disposal.

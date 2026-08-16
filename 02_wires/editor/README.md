@@ -1,7 +1,5 @@
 # Editor Wire
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_wires/editor/`
@@ -33,7 +31,7 @@ Source text is the first human surface. Addressed semantic objects remain the in
 - Astro or TypeScript parsing. `EditorLanguageRequirement` injects the language authority.
 - LSP mechanics as core meaning. URI spelling, UTF-16 positions, request framing, and LSP capability payloads stay in this wire.
 - MCP anything. Editor and MCP are siblings and the import audit refuses the edge.
-- Rename, references, formatting, semantic tokens, inlay hints, or code lens. Their exact product paths are not yet earned.
+- Rename, references, formatting, semantic tokens, inlay hints, or code lens. No exact product path for them is declared by this surface.
 
 ## One source-to-meaning path
 
@@ -112,11 +110,11 @@ Every offer names the exact diagnostic and core approval decision. The semantic 
 
 The LSP projection turns those into `WorkspaceEdit` or `Command`. A command is not a fallback for an edit nobody implemented.
 
-## What the predecessor contributed
+## Protocol decisions
 
-The predecessor established the independent lifecycle, request/notification discrimination, push and pull diagnostics, explicit empty diagnostic clearing, diagnostic-linked code actions, visible notification-handler failures, injected evaluation authority, and catalog-derived capabilities.
+The editor wire owns an independent lifecycle, request/notification discrimination, push and pull diagnostics, explicit empty diagnostic clearing, diagnostic-linked code actions, visible notification-handler failures, injected language authority, and catalog-derived capabilities.
 
-It had no document store, advertised `textDocumentSync: 0`, and projected unified diffs only as commands. It also claimed diagnostics were pushed on `initialized` while the handler did nothing. Those implementation limits and the false claim are not ported.
+Document synchronization is versioned and real workspace edits carry their edits. A command is lawful only where no faithful text mapping exists, and advertised behavior must derive from a handled semantic method rather than a prose claim.
 
 ## Laws
 

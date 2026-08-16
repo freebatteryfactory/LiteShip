@@ -30,10 +30,12 @@ import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../.
 import type { EdgeGroundingDefinition, EdgeRealizationOffer } from '../00_bootstrap/types.js';
 import type { EdgeInvocationContext } from '../00_bootstrap/types.js';
 
+/** Stable identity for one deferred task. */
 export type DeferredTaskId<Name extends string = string> = Brand<
   Name,
   'liteship.edge.deferred-task-id'
 >;
+/** Typed reference to one deferred task. */
 export type DeferredTaskReference<Id extends DeferredTaskId = DeferredTaskId> = Reference<
   'edge-deferred-task',
   Id
@@ -99,7 +101,9 @@ export interface DeferredFacility {
   >;
 }
 
+/** Capability requirement for deferred facility. */
 export type DeferredFacilityRequirement = Hole<'liteship.edge.deferred-facility', DeferredFacility>;
+/** Capability requirement for deferred work. */
 export type DeferredWorkRequirement = Hole<'liteship.edge.deferred-work', DeferredWorkAuthority>;
 
 /** Intrinsic grounding: the post-response scheduling machinery, admitted narrowly. */

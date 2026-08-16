@@ -1,18 +1,16 @@
 /**
  * Generated and virtual module relationships.
  *
- * The predecessor served seven virtual modules under fixed string identifiers.
- * Two different projects, with two different configurations, produced
- * byte-identical module ids — so a cache, a diff, or an ancestry question could
- * not tell them apart. The ecosystem does not help here: neither Vite nor
- * Rolldown documents any convention for parameterising a virtual id, and
- * neither detects a collision.
+ * Fixed virtual-module strings cannot distinguish projects or configurations,
+ * so caches, diffs, and ancestry questions would conflate byte-distinct
+ * modules. Neither Vite nor Rolldown defines configuration-qualified virtual
+ * identity or detects that collision.
  *
- * So this home separates two facts the predecessor fused. The **specifier** is
+ * This home separates two facts. The **specifier** is
  * the friendly, stable name an author imports. The **identity** is what the
  * module actually is, and it reads the configuration revision, the source
  * revision, and the environment. One specifier may resolve to many identities;
- * an identity that ignores its configuration is the original defect.
+ * an identity that ignores its configuration is incomplete.
  *
  * Unresolved data is refused, never emptied. `export const tokens = {}` for a
  * module whose data was missing is indistinguishable from a genuinely empty
@@ -44,8 +42,8 @@ export type ResolvedModuleLocation = Brand<string, 'liteship.target.vite.resolve
 /**
  * What a generated module actually is.
  *
- * Every axis that can change its bytes is read. Drop one and two different
- * modules become one identity, which is precisely the predecessor's bug.
+ * Every axis that can change its bytes is read. Drop one and two byte-distinct
+ * modules become one identity.
  */
 export interface GeneratedModuleIdentity<
   Config extends TargetConfigurationId = TargetConfigurationId,

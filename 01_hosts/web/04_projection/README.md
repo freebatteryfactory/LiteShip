@@ -1,7 +1,5 @@
 # Web Projection and Physical Application
 
-Status: specified; morph algorithm empirical; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/04_projection/`
@@ -25,7 +23,7 @@ Own the physical browser commit: applying admitted core outputs — write plans,
 - Region authority or preservation vocabulary — consumed from `01_region`.
 - Sink policy — consumed from `02_security` at every write.
 
-## Three families, three routes
+## Projection families
 
 Core write plans arrive inside their full `RuntimeCommit` — semantic commit, resulting revision, write plan, and trace together — never as a detached plan, because the physical browser must prove which committed cut it is applying. Trusted fragments arrive as attested, revision-pinned patches over semantic locations — never raw markup, never raw selectors — and remain subject to browser policy. Generated structures arrive as admitted content that already carries its admission; no sibling copy exists to disagree with it. Model output can never enter the trusted-fragment route, and opaque foreign output is not a write family at all.
 
@@ -50,8 +48,8 @@ The preserved hostile-input discipline for generated structures: iterative walki
 - A forged structural lookalike never reaches the renderer.
 - Faithful payload reachability: every admitted change reaches its physical target or the commit refuses.
 
-The forgery claim is `system/01_assurance`; the rest are implementation fixtures. The exact morph algorithm is old-source implementation evidence, mined at implementation time.
+The forgery claim belongs to `system/01_assurance`; the remaining claims require implementation fixtures. The exact morph algorithm remains an empirical realization choice constrained by those fixtures.
 
 ## Implementation boundary
 
-Specified with the morph algorithm explicitly empirical. No DOM construction, morphing, or rendering code exists or is authorized.
+DOM construction and morph strategy remain empirical; a realization must apply only committed, admitted, policy-checked write families and preserve their semantic coordinates.

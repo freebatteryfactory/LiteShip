@@ -95,13 +95,20 @@ export type Evidence<Value, Failure = readonly Diagnostic[]> = Algebra<{
   failed: { readonly error: Failure; readonly observedAt?: TimeCoordinate };
 }>;
 
+/** Stable identity for one evidence source. */
 export type EvidenceSourceId<Name extends string = string> = Brand<Name, 'liteship.evidence-source-id'>;
+/** Typed reference to one evidence source. */
 export type EvidenceReference<Id extends EvidenceSourceId = EvidenceSourceId> = Reference<'evidence-source', Id>;
 
+/** Type-level representation of evidence lifetime. */
 export type EvidenceLifetime = 'static' | 'request' | 'session' | 'connection' | 'transaction' | 'frame' | 'sample';
+/** Type-level representation of evidence evolution. */
 export type EvidenceEvolution = 'constant' | 'monotonic' | 'retractable' | 'continuous';
+/** Authority governing evidence. */
 export type EvidenceAuthority = 'advisory' | 'presentational' | 'authenticated' | 'authoritative';
+/** Type-level representation of evidence cadence. */
 export type EvidenceCadence = 'on-demand' | 'event' | 'frame' | 'sample' | 'poll';
+/** Closed realm vocabulary for evidence. */
 export type EvidenceRealm = 'build' | 'web' | 'worker' | 'edge' | 'server';
 
 /** Complete classification of one evidence source. */
@@ -200,10 +207,12 @@ export type EvidenceSourceRegistry = Hole<
 // Observations and cuts
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one evidence observation. */
 export type EvidenceObservationId<Name extends string = string> = Brand<
   Name,
   'liteship.evidence-observation-id'
 >;
+/** Typed reference to one evidence observation. */
 export type EvidenceObservationReference<Id extends EvidenceObservationId = EvidenceObservationId> =
   Reference<'evidence-observation', Id>;
 
@@ -231,7 +240,9 @@ export interface EvidenceObservation<
   readonly version?: ContentAddress;
 }
 
+/** Stable identity for one evidence cut. */
 export type EvidenceCutId<Name extends string = string> = Brand<Name, 'liteship.evidence-cut-id'>;
+/** Typed reference to one evidence cut. */
 export type EvidenceCutReference<Id extends EvidenceCutId = EvidenceCutId> = Reference<
   'evidence-cut',
   Id

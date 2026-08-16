@@ -1,7 +1,5 @@
 # Temporal Coordinates
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `04_time/`
@@ -67,6 +65,6 @@ A `TimeProjection` carries the complete source and target timebases, including f
 
 ## Implementation boundary
 
-The temporal algebra is specified. Host sources, serialization, clock implementations, and paved-road presets are absent.
+Clock sources, serialization, and presets must preserve clock identity, coordinate domains, ordering, and the distinction between semantic time and host observation.
 
 Qualifying canonical composite-time encoding, precision, overflow behaviour, and the default preset roster are implementation obligations. None of them reaches the distinct-coordinate law.

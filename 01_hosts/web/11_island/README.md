@@ -1,7 +1,5 @@
 # Web Islands
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/11_island/`
@@ -52,4 +50,4 @@ All three are assurance-and-implementation territory.
 
 ## Implementation boundary
 
-Specified. No activation code, no mount handling, no runtime joining exists or is authorized.
+An island realization must preserve exact artifact ancestry, region ownership, activation authority, retained updates, and diagnostic refusal.

@@ -31,19 +31,26 @@ import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bo
 import type { ChildProcessRequirement } from '../01_process/types.js';
 import type { FilesystemRootReference } from '../03_filesystem/types.js';
 
+/** Stable identity for one tool. */
 export type ToolId<Name extends string = string> = Brand<Name, 'liteship.server.tool-id'>;
+/** Typed reference to one tool. */
 export type ToolReference<Id extends ToolId = ToolId> = Reference<'server-tool', Id>;
+/** Type-level representation of tool version. */
 export type ToolVersion = Brand<string, 'liteship.server.tool-version'>;
+/** Stable identity for one tool execution. */
 export type ToolExecutionId<Name extends string = string> = Brand<
   Name,
   'liteship.server.tool-execution-id'
 >;
+/** Typed reference to one tool execution. */
 export type ToolExecutionReference<Id extends ToolExecutionId = ToolExecutionId> = Reference<
   'server-tool-execution',
   Id
 >;
 
+/** Stable identity for one tool profile. */
 export type ToolProfileId<Name extends string = string> = Brand<Name, 'liteship.server.tool-profile-id'>;
+/** Typed reference to one tool profile. */
 export type ToolProfileReference<Id extends ToolProfileId = ToolProfileId> = Reference<
   'server-tool-profile',
   Id
@@ -53,12 +60,10 @@ export type ToolProfileReference<Id extends ToolProfileId = ToolProfileId> = Ref
  * One admitted tool profile: exact identity, exact bytes, exact configuration,
  * and an evidence-backed reproducibility claim.
  *
- * The predecessor shape carried a name, a version string, and a two-arm
- * determinism algebra whose arms were both empty — a tool could assert
- * determinism while naming no binary, no options, and no witness. Nothing
- * downstream could tell a pinned static build from whatever happened to be on
- * the PATH, which is the entire content of a reproducibility claim about a
- * native encoder.
+ * A name and version string beside an empty determinism tag could assert
+ * determinism while naming no binary, options, or witness. Nothing downstream
+ * could distinguish a pinned static build from whatever happened to be on
+ * `PATH`.
  *
  * The claim is parameterized over this profile's *reference*, not over the
  * profile itself. A profile containing a claim parameterized by that same
@@ -143,7 +148,9 @@ export interface ToolCatalogBinding {
   readonly profiles: NonEmptyTuple<ToolProfile<ToolId>>;
 }
 
+/** Capability requirement for tool catalog. */
 export type ToolCatalogRequirement = Hole<'liteship.server.tool-catalog', ToolCatalogBinding>;
+/** Capability requirement for tool authority. */
 export type ToolAuthorityRequirement = Hole<'liteship.server.tools', ToolAuthority>;
 
 /** Deployment grounding: the tool roster enters admitted. */

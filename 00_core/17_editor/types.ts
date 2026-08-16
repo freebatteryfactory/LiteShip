@@ -39,8 +39,11 @@ import type {
 } from '../11_scene/types.js';
 import type { StructureNodeReference } from '../13_stream/types.js';
 
+/** Stable identity for one editor session. */
 export type EditorSessionId<Name extends string = string> = Brand<Name, 'liteship.editor-session-id'>;
+/** Stable identity for one selection. */
 export type SelectionId<Name extends string = string> = Brand<Name, 'liteship.selection-id'>;
+/** Typed reference to one editor session. */
 export type EditorSessionReference<Id extends EditorSessionId = EditorSessionId> = Reference<'editor-session', Id>;
 
 /** Semantic selection target, never a CSS selector as primary identity. */

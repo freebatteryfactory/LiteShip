@@ -9,10 +9,8 @@
  * would be structurally identical to the compiler and would drift the first
  * time web changed.
  *
- * The predecessor joined islands to a manifest by content address and, when the
- * manifest was stale, `find` returned undefined, every `??=` became a no-op,
- * and the island rendered with no diagnostic at all. Ancestry here is a member,
- * not a lookup.
+ * A stale manifest lookup must not fall through to a degraded render with no
+ * diagnostic. Ancestry here is a member, not a best-effort lookup.
  *
  * @module
  */
@@ -40,7 +38,7 @@ import type { AuthoredActivation } from '../02_authoring/types.js';
  * `join` is web's authority. `entry` is the umbrella's produced artifact, whose
  * `predecessors` carry the ancestry back to the residual program. The exact
  * configuration revision is carried because two configurations of one project
- * produce different entries, and the predecessor could not tell them apart.
+ * produce different entries and must not share identity.
  */
 export interface AstroIslandEntry<
   Config extends TargetConfigurationId = TargetConfigurationId,

@@ -1,7 +1,5 @@
 # Evidence, Truth, and Propositions
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `06_evidence/`
@@ -71,6 +69,6 @@ Collections reuse this proposition algebra rather than defining a second boolean
 
 ## Implementation boundary
 
-The proposition and source algebras are specified. Physical source producers, evaluation engine, and source-planning cost model are absent.
+Physical sources and proposition evaluators must preserve the declared evidence states, Strong Kleene tables, authority, retractability, and blocker/failure evidence.
 
 Determining subscription cancellation policy and measuring source cost are implementation obligations. Proposition semantics and reuse across collection predicates are settled here.

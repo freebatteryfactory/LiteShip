@@ -1,7 +1,5 @@
 # Edge Policy
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/edge/03_policy/`
@@ -37,4 +35,4 @@ Own edge-physical security and response policy: origin allowlist, credential and
 
 ## Implementation boundary
 
-Specified. No header emission or policy evaluation code exists or is authorized.
+An edge-policy realization must evaluate admitted policy and emit only the headers and authority granted by its exact decision.

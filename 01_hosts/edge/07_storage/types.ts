@@ -58,10 +58,12 @@ export interface DeploymentStoreBinding {
   readonly binding: ContentAddress<'application/vnd.liteship.edge-deployment-store+cbor'>;
 }
 
+/** Capability requirement for deployment store. */
 export type DeploymentStoreRequirement = Hole<
   'liteship.edge.deployment-store',
   DeploymentStoreBinding
 >;
+/** Capability requirement for edge store. */
 export type EdgeStoreRequirement = Hole<'liteship.edge.store', EdgeStore>;
 
 /** Deployment grounding: the storage binding enters admitted from deployment. */

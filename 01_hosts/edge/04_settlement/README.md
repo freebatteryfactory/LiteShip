@@ -1,7 +1,5 @@
 # Edge Request Settlement
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/edge/04_settlement/`
@@ -36,4 +34,4 @@ Both `system/01_assurance`.
 
 ## Implementation boundary
 
-Specified. No settlement evaluation code exists or is authorized.
+An edge-settlement realization must evaluate the exact residual demand and preserve refusal, selected placement, and diagnostics.

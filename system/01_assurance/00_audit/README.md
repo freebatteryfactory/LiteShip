@@ -1,7 +1,5 @@
 # Audit: Evidence Acquisition
 
-Status: architecture specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `system/01_assurance/00_audit/`
@@ -59,7 +57,7 @@ Both are gone. The one declaration of what a check reasons about is its proposit
 
 The root toolchain policy assigns roles, and `semantic-abi` and `analysis-api` may sit on a different lane than `primary-check` for as long as the native compiler exposes no *stable* programmatic API — 7.0.2 ships `typescript/unstable/*`, including a `Checker`, and unstable is the vendor's own word. That is a stated root policy with an explicit retirement trigger.
 
-What must not happen again is the previous response to that gap. Lacking the API, the deleted harness hand-rolled lexical scanners over comment-stripped source — a second parser with none of a parser's guarantees, checking claims about type identity by matching text. Requiring `TypeProgramInterpreter` as a hole means an implementation that wants to read source has to name the lane it read with, and the attestation it produces carries that lane's fingerprint.
+A hand-rolled source-text parser cannot establish type identity or module semantics. Requiring `TypeProgramInterpreter` as a hole means any implementation that reads source names the compiler lane it used, and the resulting attestation carries that lane's fingerprint.
 
 `ImportResolver` exists for the same reason at a smaller scale: what a specifier actually names is a resolution question, and text matching cannot answer it.
 
@@ -86,19 +84,17 @@ Runtime and repository claims a type cannot express:
 
 `import-boundary.ts` and `zero-runtime.ts` live here because acquiring repository facts is what this home is for.
 
-The compiler cannot decide this and no configuration makes it able to. Direction, peerage, sibling exclusion, and acyclicity are claims about *where* a declaration lives, not about what it means — and TypeScript resolved every specifier correctly, reported nothing, and carried a cycle in `02_wires/` for the entire life of that layer. One program, type-only imports, green build.
+The compiler cannot decide this and no configuration makes it able to. Direction, peerage, sibling exclusion, and acyclicity are claims about *where* a declaration lives, not about what it means. TypeScript may resolve every specifier while a forbidden architectural cycle remains.
 
-Project references would catch some of it, and the cost was measured rather than assumed. References enforce direction at *project* granularity, so a violation inside one project is invisible: catching `astro -> vite` needs astro and vite to be separate projects, and catching an umbrella/child cycle needs those separate too. Reaching what one script does would take roughly one tsconfig per home. Fourteen configurations before a measured need is the reflex that gave the predecessor twenty-three packages; sixty is not an improvement on it.
+Project references enforce direction at *project* granularity, so they cannot see a forbidden edge inside one project. Matching this audit with references would require splitting every independently governed home into its own compiler project, duplicating repository topology in compiler configuration.
 
 ### The bands are derived, never listed
 
 A top-level directory's ordinal prefix *is* its band. `02_targets` and `02_wires` are both band 2, therefore peers, and the root README says so in as many words.
 
-A scratchpad draft of this audit carried a hand-written rank table that gave them 3 and 4. It had invented an order the architecture denies, so `02_wires -> 02_targets` passed as a lawful downstream import — a second model of the repository living inside the tool whose job is noticing second models of the repository. Deriving the band did more than tidy it: with the two roots at different ranks, *peer* was not a relationship the audit could express at all.
+A hand-written rank table would create a second dependency graph and could invent an order the architecture denies. Deriving the band from the path makes peerage expressible and keeps the audit subordinate to the physical topology.
 
 ### Numbered children waterfall; unnumbered children are peers
-
-The first working draft reported a hundred and four violations, of which ninety-eight were `00_core/01_encoding -> 00_core/00_error` and its kin — the ordinary numbered waterfall, and the most common lawful edge in the repository.
 
 A layer's children come in two kinds and one rule cannot cover both. Numbered children (`00_error` through `18_inspection`, `00_workspace` through `02_release`) are a waterfall: higher may import lower, never the reverse. Unnumbered children (`astro`, `vite`, `cloudflare`; `web`, `worker`, `edge`, `server`) are peers with no order between them, so no import between them is lawful in either direction. Two numbered segments at the same band are peers too, which is what `02_targets` and `02_wires` are.
 
@@ -108,66 +104,35 @@ So the check walks both paths until they diverge and classifies at the first dif
 
 A shared-vocabulary umbrella importing a child it supplies is a cycle. A topology file importing children that never import it back is not. A compile-only fixture importing several children is not, because nothing imports the fixture.
 
-Three cases, one rule, no roles and no exception list — which matters, because an exception list is how the previous control plane justified itself. There are no waivers, no severities, and no baseline of known-acceptable findings. A violation is a violation and the exit code says so. If one is wrong, the rule is wrong and the rule gets fixed.
+Three cases use one rule with no roles or exception list. There are no waivers, severities, or baseline of accepted findings. If a reported edge is lawful, the classification rule is wrong and must be corrected.
 
-### It read imports with a regular expression, and that was a live defect
+### Import syntax comes from the compiler
 
-The specifier extraction matched `from '...'` against source text. So it saw single-quoted `from` clauses and nothing else. A side-effect `import './x.js'`, a dynamic `import("./x.js")`, a double-quoted specifier, and `import x = require('./x.js')` were all invisible to the check that exists to see them — and the side-effect import is the one that matters most, because it is precisely how one home reaches another for effect alone.
+A regular expression over `from '...'` would miss side-effect imports, dynamic imports, double-quoted specifiers, `import = require`, and other lawful module forms. It would also confuse source text with syntax.
 
-This was not hypothetical. Planting `import '../vite/types.js';` at the top of `02_targets/astro/types.ts` — a real sibling violation, the class this repository lost a Cloudflare package to — produced `0 violations` from the regex version and `SIBLING 02_targets/astro/types.ts -> 02_targets/vite/types.ts` from the replacement.
-
-It was also a regex parser over source text, which this repository forbids and which the previous control plane was deleted for. The rule was written down, and then broken by the tool enforcing the rules.
-
-It now uses the compiler's own lexer — `createScanner` from `typescript/unstable/ast`. A specifier is a string literal in module position: after `from`, directly after `import`, or as the first argument of `import(` or `require(`. Comments and template literals are tokens the scanner already classifies, so they cannot be mistaken for specifiers the way a text match mistook them.
-
-The retirement trigger stated elsewhere was stability, not existence, and it still is. This is `unstable` by the vendor's own word. What changed is that a lexer with the compiler's own token definitions is not in the same category as a pattern guessing at syntax, and the gap between them was one unclassified violation wide.
+The audit uses the compiler's lexer through `createScanner` from `typescript/unstable/ast`. A specifier is a string literal in module position: after `from`, directly after `import`, or as the first argument of `import(` or `require(`. Comments and template literals are tokens the scanner already classifies. The retirement trigger is a stable compiler API, not another parser.
 
 ### The graders are graded
 
-The relevant fact is whether a hand-written algorithm may decide that the repository passes without permanent evidence that it rejects the intended defect *and* accepts a lawful neighbour. Import classification has already shipped defects that turned a bad tree green.
+No hand-written repository algorithm may decide that the tree passes without permanent evidence that it rejects the intended defect *and* accepts a lawful neighbour.
 
 `audit.test.ts` holds that evidence. The algorithms are exported as pure functions with the commands as thin wrappers behind `import.meta.main`, so importing one does not emit a project or walk a filesystem. The end-to-end cases build a small tree in a temporary directory and run the real command against it, so the exit code is part of what is checked.
 
 No manifest, registry, mutation bank, score, or waiver table. The standard runner executes the lawful and refusing cases directly.
 
-It earned itself on its first run. `fs.require('./member-call.js')` was still being read as an import edge, because `require` scans as `RequireKeyword` rather than as an identifier — so the guard meant to exclude member calls sat on a branch that never ran, and the identifier branch beside it was pure false-positive surface. That branch is gone. Nothing but a lawful-neighbour test was going to find it, which is the whole argument for having one.
+The self-tests cover downstream, peer, sibling, cycle, and unresolved refusals; lawful waterfall, system-upstream, compile-only, and umbrella-child edges; and every admitted import form against comments, template literals, member calls, and bare strings.
 
-### Measured
+## Lint covers repository executables
 
-Every class refused: downstream, peer, sibling, cycle, unresolved. Every real edge in the tree admitted, including the six shapes most likely to be false positives — the numbered waterfall in core and in system, system reaching upstream into core, both compile-only files importing children, and an umbrella reaching into its own child.
-
-Every import form extracted and no false positives: type-only, side-effect, double-quoted, dynamic, re-export, star re-export, `import = require`, and plain `require`, against a commented-out import, a template literal, and a bare string that is not a specifier.
-
-## Lint covers the executables, and nothing else needs it
-
-`.oxlintrc.json` at the root is a linter configuration and never a formatter. A formatter that escapes slashes differently across Windows and macOS has already cost this project a codebase, and no script here carries `--fix`.
+`.oxlintrc.json` at the root is a linter configuration and never a formatter. No audit script carries `--fix`; repository checks report defects and do not rewrite their subject.
 
 The specification is declaration-only. The executable repository-control TypeScript in this home can carry the defects a linter exists for — unreachable code, loose equality, floating promises, shadowed bindings — and checks everything else, which is exactly why it is worth linting: a broken checker reports confidently and wrongly.
 
-Measured before enabling, against eight planted defects:
-
-- The default `correctness` set produces **zero** findings on this tree and catches three of eight.
-- Adding `suspicious` and `pedantic` catches all eight and produces **ninety-four** findings on code written deliberately — fifty-six of them `ban-types` firing on the `& {}` in root's `Simplify`, which is the standard idiom and load-bearing, and twenty-nine `max-lines`, which is a preference about file length rather than a defect.
-
-So: `correctness` in full, plus the seven specific rules that each found something real — `eqeqeq`, `no-self-compare`, `no-array-constructor`, `require-unicode-regexp`, `prefer-at`, `prefer-string-replace-all`, `prefer-import-meta-properties`. That configuration catches six of the eight planted defects with zero findings on the tree. The two it misses, an unreachable branch and an async callback passed to `forEach`, need rules that bring noise, and six with no false positives is worth more than eight with ninety-four.
-
-### The ninety-four were triaged badly the first time
-
-The first pass dismissed them from a summary of rule names, on the strength of one inspected instance: `ban-types` firing on the `& {}` in root's `Simplify`, which is the standard idiom and load-bearing. Fifty-six findings, one look, one conclusion.
-
-Reading all of them says something else. Exactly **one** was `Simplify`. **Forty-eight** were algebra arms written `none: {}`, `terminated: {}`, `withdrawn: {}` — against forty-three already written `Record<never, never>`. A near-even split between two spellings of one concept, drifting, in a repository whose whole thesis is that a fact has one owner and one spelling.
-
-The two are the same type: `Record<never, never>` *is* `{}` after instantiation, which is why every law kept passing through the conversion. So it was never a bug. It was the defect class this repository exists to remove, sitting in ninety-one places, invisible to the compiler because both spellings mean the same thing — and dismissed on inspection of one of them.
-
-All forty-eight normalized. Eight legitimate `{}` uses remain, and `ban-types` is therefore **not** enabled: `Simplify`'s intersection, the `{} extends Pick<Value, Key>` optionality idiom in three places, two empty type-parameter defaults, an accumulator seed, and one conditional tail. A rule that cannot run clean would need a waiver, and there is no waiver mechanism here and will not be one.
-
-Nothing prevents the drift recurring. That is stated rather than solved, because the alternatives are a regex over source text and an exception list, and this repository has already deleted one of each.
-
-Of the rest: twenty-nine `max-lines` are a three-hundred-line cap on declaration files carrying heavy documentation, which is a preference and not a defect. Two `no-useless-undefined` want an explicit `return undefined` removed from a function whose absence value is load-bearing, where explicit reads better. Four `require-unicode-regexp`, one `prefer-at`, one `prefer-string-replace-all`, and one `prefer-import-meta-properties` were real, all in this home's two executables, all fixed rather than waived.
+The configuration enables `correctness` plus individually qualified rules that detect repository defects without requiring waivers. Preference-only rules such as file-length limits remain disabled. `ban-types` remains disabled because the root calculus lawfully uses `{}` in conditional and normalization idioms; empty algebra arms use `Record<never, never>` by convention, not by a source-text checker.
 
 ## Implementation boundary
 
-No product runtime implementation exists here.
+Each audit executable must derive its answer from the repository bytes it observes and demonstrate both an admitted and a rejecting case.
 
 Repository-control implementations do: `zero-runtime.ts`, which emits the project and rejects any file that is not `export {};`; `import-boundary.ts`; and `declarations.ts`. They sit in a separate TypeScript compiler population from the specification they audit, and all run in the root `check`. Each answers a question the compiler provably cannot, and none issues authority or carries a waiver.
 

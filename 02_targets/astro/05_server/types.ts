@@ -4,16 +4,11 @@
  *
  * The application owns the route. This home owns the attachment — the act of
  * binding a location the application chose to one exact core operation, over an
- * admitted host request, with a correlated response-commit grant. `injectRoute`
- * stays at zero, which the predecessor already got right and stated in its own
- * architecture document.
- *
- * What the predecessor got wrong is everything underneath. Its unregistered
- * route factories owned HTTP themselves: 415, 400, 409, 422, 405, 413, 304,
- * weak ETags, and two independent hand-rolled JSON-RPC implementations that
- * shared nothing — while a transport-free operation vocabulary already existed
- * and was wired to the CLI and MCP but never to Astro. This home makes that
- * connection and owns none of the HTTP.
+ * admitted host request, with a correlated response-commit grant.
+ * `injectRoute` stays at zero because the application owns routes. Status
+ * policy, entity tags, negotiation, and protocol framing remain outside this
+ * attachment; this home connects transport-free operations and owns none of
+ * HTTP.
  *
  * Status policy, content negotiation, entity tags, request decoding, and
  * protocol framing belong to the host and, later, to `02_wires/`. The absence

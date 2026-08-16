@@ -40,7 +40,9 @@ import type { Result } from '../../../types.js';
 import type { WebGroundingDefinition, WebRealizationOffer } from '../00_bootstrap/types.js';
 import type { SinkPolicyRequirement } from '../02_security/types.js';
 
+/** Stable identity for one connection. */
 export type ConnectionId<Name extends string = string> = Brand<Name, 'liteship.web.connection-id'>;
+/** Typed reference to one connection. */
 export type ConnectionReference<Id extends ConnectionId = ConnectionId> = Reference<
   'web-connection',
   Id
@@ -176,7 +178,9 @@ export interface BrowserTransportFacility {
   ) => Result<CaseOf<WebConnection<Decoded>, Kind>, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for transport facility. */
 export type TransportFacilityRequirement = Hole<'liteship.web.transport-facility', BrowserTransportFacility>;
+/** Capability requirement for transport authority. */
 export type TransportAuthorityRequirement = Hole<'liteship.web.transport-authority', TransportAuthority>;
 
 /** Intrinsic grounding: the browser transport entrypoints, admitted narrowly. */

@@ -57,7 +57,9 @@ import type {
 // Packaging
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one package. */
 export type PackageId<Name extends string = string> = Brand<Name, 'liteship.package-id'>;
+/** Typed reference to one package. */
 export type PackageReference<Id extends PackageId = PackageId> = Reference<'package', Id>;
 
 /**
@@ -121,8 +123,8 @@ export interface ReleasePlan<Snapshot extends WorkspaceSnapshotId = WorkspaceSna
  * What packaging produced, and the plan it produced it from.
  *
  * The plan is carried rather than referenced because the snapshot coordinate
- * lives on it. A receipt holding a bare artifact population would be a product
- * with no ancestry, which is the shape a candidate used to hold.
+ * lives on it. A receipt holding only artifacts would be a product with no
+ * ancestry.
  */
 export type PackageReceipt<Snapshot extends WorkspaceSnapshotId = WorkspaceSnapshotId> = Envelope<
   'LiteShipPackageReceipt',
@@ -134,10 +136,12 @@ export type PackageReceipt<Snapshot extends WorkspaceSnapshotId = WorkspaceSnaps
   }
 >;
 
+/** Stable identity for one release candidate. */
 export type ReleaseCandidateId<Name extends string = string> = Brand<
   Name,
   'liteship.release-candidate-id'
 >;
+/** Typed reference to one release candidate. */
 export type ReleaseCandidateReference<Id extends ReleaseCandidateId = ReleaseCandidateId> =
   Reference<'release-candidate', Id>;
 
@@ -158,8 +162,8 @@ export type ReleaseCandidateReference<Id extends ReleaseCandidateId = ReleaseCan
  * satisfied outcome regardless of consequence, which is the release's question
  * rather than the run's.
  *
- * One member, not two. A qualification used to carry an authority and a receipt
- * side by side, and their agreement was prose.
+ * The qualification carries one release-grade result. A separate authority and
+ * receipt would repeat the same decision with only prose relating them.
  *
  * The specification is exact for the same reason the snapshot is. A passing
  * result says every check the run *required* was satisfied — so a run that

@@ -1,7 +1,5 @@
 # Worker Shared Memory
 
-Status: specified with physical profiles deferred; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/worker/04_memory/`
@@ -44,4 +42,4 @@ Both are `system/01_assurance`; capacity, padding, and wait policy are empirical
 
 ## Implementation boundary
 
-Specified with physical profiles deferred. No SharedArrayBuffer, view, or atomics code exists or is authorized.
+Shared-memory layouts, views, and atomic strategies remain empirical; a realization must preserve exact region, generation, custody, and capability coordinates.

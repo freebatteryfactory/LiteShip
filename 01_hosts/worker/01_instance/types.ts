@@ -26,10 +26,12 @@ import type { MonotonicNanoseconds } from '../../../00_core/04_time/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { WorkerBootstrapEnvelope } from '../00_bootstrap/types.js';
 
+/** Stable identity for one worker instance. */
 export type WorkerInstanceId<Name extends string = string> = Brand<
   Name,
   'liteship.worker.instance-id'
 >;
+/** Typed reference to one worker instance. */
 export type WorkerInstanceReference<Id extends WorkerInstanceId = WorkerInstanceId> = Reference<
   'worker-instance',
   Id

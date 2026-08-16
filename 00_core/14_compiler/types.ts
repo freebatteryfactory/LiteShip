@@ -46,10 +46,15 @@ import type {
 } from '../07_operation/types.js';
 import type { SceneToleranceProfileCoordinate } from '../11_scene/types.js';
 
+/** Stable identity for one compiler. */
 export type CompilerId<Name extends string = string> = Brand<Name, 'liteship.compiler-id'>;
+/** Stable identity for one migration adapter. */
 export type MigrationAdapterId<Name extends string = string> = Brand<Name, 'liteship.migration-adapter-id'>;
+/** Stable identity for one artifact. */
 export type ArtifactId<Name extends string = string> = Brand<Name, 'liteship.artifact-id'>;
+/** Stable identity for one projection target. */
 export type ProjectionTargetId<Name extends string = string> = Brand<Name, 'liteship.projection-target-id'>;
+/** Stable identity for one requirement. */
 export type RequirementId<Name extends string = string> = Brand<Name, 'liteship.requirement-id'>;
 /** Requirement identity derived from the exact root Hole name. */
 export type RequirementIdOf<Value extends AnyHole> = RequirementId<HoleKey<Value>>;
@@ -57,12 +62,19 @@ export type RequirementIdOf<Value extends AnyHole> = RequirementId<HoleKey<Value
 export type RequirementIds<Row extends RequirementRow> = {
   readonly [Index in keyof Row]: Row[Index] extends AnyHole ? RequirementIdOf<Row[Index]> : never;
 };
+/** Stable identity for one runtime feature. */
 export type RuntimeFeatureId<Name extends string = string> = Brand<Name, 'liteship.runtime-feature-id'>;
+/** Stable identity for one realization offer. */
 export type RealizationOfferId<Name extends string = string> = Brand<Name, 'liteship.realization-offer-id'>;
+/** Stable identity for one realization step. */
 export type RealizationStepId<Name extends string = string> = Brand<Name, 'liteship.realization-step-id'>;
+/** Stable identity for one realization instance. */
 export type RealizationInstanceId<Name extends string = string> = Brand<Name, 'liteship.realization-instance-id'>;
+/** Stable identity for one realization plan. */
 export type RealizationPlanId<Name extends string = string> = Brand<Name, 'liteship.realization-plan-id'>;
+/** Stable identity for one settlement candidate. */
 export type SettlementCandidateId<Name extends string = string> = Brand<Name, 'liteship.settlement-candidate-id'>;
+/** Stable identity for one realization candidate. */
 export type RealizationCandidateId<Name extends string = string> = Brand<Name, 'liteship.realization-candidate-id'>;
 /**
  * Identity of one declared grounding slot: an authority a host boundary can
@@ -76,6 +88,7 @@ export type RealizationCandidateId<Name extends string = string> = Brand<Name, '
  * machinery live in `01_hosts`.
  */
 export type GroundingId<Name extends string = string> = Brand<Name, 'liteship.grounding-id'>;
+/** Typed reference to one compiler. */
 export type CompilerReference<Id extends CompilerId = CompilerId> = Reference<'compiler', Id>;
 /**
  * Reference to one immutable compiler output.
@@ -86,8 +99,11 @@ export type CompilerReference<Id extends CompilerId = CompilerId> = Reference<'c
  * structurally identical cousins that no law can tell apart.
  */
 export type ArtifactReference<Id extends ArtifactId = ArtifactId> = Reference<'artifact', Id>;
+/** Typed reference to one projection target. */
 export type ProjectionTargetReference<Id extends ProjectionTargetId = ProjectionTargetId> = Reference<'projection-target', Id>;
+/** Typed reference to one runtime feature. */
 export type RuntimeFeatureReference<Id extends RuntimeFeatureId = RuntimeFeatureId> = Reference<'runtime-feature', Id>;
+/** Typed reference to one realization offer. */
 export type RealizationOfferReference<Id extends RealizationOfferId = RealizationOfferId> = Reference<
   'realization-offer',
   Id
@@ -104,6 +120,7 @@ export type RealizationInstanceReference<Id extends RealizationInstanceId = Real
 >;
 /** Reference to one declared grounding slot. */
 export type GroundingReference<Id extends GroundingId = GroundingId> = Reference<'grounding', Id>;
+/** Typed reference to one realization plan. */
 export type RealizationPlanReference<Id extends RealizationPlanId = RealizationPlanId> = Reference<
   'realization-plan',
   Id
@@ -118,7 +135,9 @@ export type RealizationCandidateReference<Id extends RealizationCandidateId = Re
   'realization-candidate',
   Id
 >;
+/** Content address for one backend profile. */
 export type BackendProfileAddress = ContentAddress<'application/vnd.liteship.backend-profile+cbor'>;
+/** Content address for one runtime feature set. */
 export type RuntimeFeatureSetAddress = ContentAddress<'application/vnd.liteship.runtime-feature-set+cbor'>;
 /**
  * Content address of the exact realization catalog — every offer and grounding
@@ -129,7 +148,9 @@ export type RuntimeFeatureSetAddress = ContentAddress<'application/vnd.liteship.
  */
 export type RealizationCatalogAddress = ContentAddress<'application/vnd.liteship.realization-catalog+cbor'>;
 
+/** Type-level representation of settlement location. */
 export type SettlementLocation = 'build' | 'platform' | 'request' | 'local' | 'live' | 'remote';
+/** Type-level representation of execution backend. */
 export type ExecutionBackend = 'html-css' | 'javascript' | 'wasm' | 'worker' | 'webgpu' | 'server' | 'host-native';
 
 /** The exact semantic domain whose addressed tolerance profile governs placement. */
@@ -178,6 +199,7 @@ export interface CostVector {
   readonly readbackBytes?: number;
 }
 
+/** Type-level representation of cost metric. */
 export type CostMetric = keyof CostVector;
 
 /** One hard budget applied before optimization. */
@@ -567,7 +589,9 @@ export interface SelectedGrounding {
 // Speculative preparation
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one speculative candidate. */
 export type SpeculativeCandidateId<Name extends string = string> = Brand<Name, 'liteship.speculative-candidate-id'>;
+/** Typed reference to one speculative candidate. */
 export type SpeculativeCandidateReference<Id extends SpeculativeCandidateId = SpeculativeCandidateId> = Reference<
   'speculative-candidate',
   Id
@@ -934,44 +958,56 @@ export type CompileResult<
 // Migration: the inward face of compiler authority
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one migration source format. */
 export type MigrationSourceFormatId<Name extends string = string> = Brand<
   Name,
   'liteship.migration-source-format-id'
 >;
+/** Stable identity for one migration source profile. */
 export type MigrationSourceProfileId<Name extends string = string> = Brand<
   Name,
   'liteship.migration-source-profile-id'
 >;
+/** Stable identity for one migration output profile. */
 export type MigrationOutputProfileId<Name extends string = string> = Brand<
   Name,
   'liteship.migration-output-profile-id'
 >;
+/** Type-level representation of migration media type. */
 export type MigrationMediaType<Name extends string = string> = Brand<
   Name,
   'liteship.migration-media-type'
 >;
+/** Typed reference to one migration source profile. */
 export type MigrationSourceProfileReference<
   Id extends MigrationSourceProfileId = MigrationSourceProfileId,
 > = Reference<'migration-source-profile', Id>;
+/** Typed reference to one migration output profile. */
 export type MigrationOutputProfileReference<
   Id extends MigrationOutputProfileId = MigrationOutputProfileId,
 > = Reference<'migration-output-profile', Id>;
+/** Content address for one migration adapter definition. */
 export type MigrationAdapterDefinitionAddress = ContentAddress<
   'application/vnd.liteship.migration-adapter-definition+cbor'
 >;
+/** Stable identity for one migration adapter definition. */
 export type MigrationAdapterDefinitionId<Name extends string = string> = Brand<
   Name,
   'liteship.migration-adapter-definition-id'
 >;
+/** Typed reference to one migration adapter definition. */
 export type MigrationAdapterDefinitionReference<
   Id extends MigrationAdapterDefinitionId = MigrationAdapterDefinitionId,
 > = Reference<'migration-adapter-definition', Id>;
+/** Content address for one migration catalog. */
 export type MigrationCatalogAddress = ContentAddress<
   'application/vnd.liteship.migration-catalog+cbor'
 >;
+/** Content address for one migration bundle. */
 export type MigrationBundleAddress = ContentAddress<
   'application/vnd.liteship.migration-meaning-bundle+cbor'
 >;
+/** Content address for one migration compatibility policy. */
 export type MigrationCompatibilityPolicyAddress = ContentAddress<
   'application/vnd.liteship.migration-compatibility-policy+cbor'
 >;
@@ -1083,6 +1119,7 @@ export type MigrationAdapterCandidate<Adapter extends MigrationAdapter = Migrati
       }>
     : never;
 
+/** Request for migration discovery. */
 export interface MigrationDiscoveryRequest<
   Profile extends MigrationSourceProfileReference = MigrationSourceProfileReference,
 > {
@@ -1130,13 +1167,16 @@ export interface MigrationDiscovery<Catalog extends MigrationAdapterCatalog> {
   ): Result<MigrationDiscoverySelection<Catalog, Profile>, MigrationFailure>;
 }
 
+/** Stable identity for one migration request. */
 export type MigrationRequestId<Name extends string = string> = Brand<
   Name,
   'liteship.migration-request-id'
 >;
+/** Typed reference to one migration request. */
 export type MigrationRequestReference<
   Id extends MigrationRequestId = MigrationRequestId,
 > = Reference<'migration-request', Id>;
+/** Typed reference to one migration admission. */
 export type MigrationAdmissionReference<
   Id extends MigrationRequestId = MigrationRequestId,
 > = Reference<'migration-admission', Id>;
@@ -1281,6 +1321,7 @@ export interface MigrationAuthority<
   ) => MaybePromise<Result<MigrationReport<Adapter, Request>, MigrationFailure>>;
 }
 
+/** Capability requirement for migration authority. */
 export type MigrationAuthorityRequirement = Hole<
   'liteship.compiler.migration-authority',
   MigrationAuthority

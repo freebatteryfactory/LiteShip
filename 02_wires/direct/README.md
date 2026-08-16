@@ -1,7 +1,5 @@
 # Direct Wire: In-Process Invocation
 
-Status: architecture specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_wires/direct/`
@@ -60,4 +58,4 @@ Runtime claims a type cannot express:
 
 ## Implementation boundary
 
-Architecture only. No implementation exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

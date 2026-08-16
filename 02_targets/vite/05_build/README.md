@@ -1,7 +1,5 @@
 # Vite Build Products
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/vite/05_build/`
@@ -24,15 +22,15 @@ Own the final build products — chunks, filled slots, assets, and source-map di
 - Artifact identity, address, or digest.
 - Deployment. That contract is deferred until a later child earns it.
 
-## Two emitters, no winner
+## One artifact emitter
 
-The predecessor wrote its boundary manifest twice, from two different derivations, in two different packages: once at bundle generation and once from a fresh rescan at the end of the framework build. Nothing recorded which one won.
+Two independently derived boundary manifests could disagree with no recorded winner. One produced artifact per slot and one producer per artifact make a second emitter unrepresentable.
 
 The ecosystem does not arbitrate this — both derivation surfaces exist and neither has a concept of a winner. The umbrella already made the answer unrepresentable: a produced artifact carries one producer and one slot. This home consumes that rather than inventing a second manifest vocabulary, so a second emitter has no shape to take.
 
-## Source maps, and a claim the predecessor made by accident
+## Source-map honesty
 
-Its CSS and HTML transforms returned a null map after moving code. Under the current bundler contract a null map is not "no source map" — it asserts that the transformation **preserved coordinates**, and the composer chains maps on that basis. The honest "no map here" return is an empty mapping object.
+After a transform moves code, a null map is not "no source map" — under the bundler contract it asserts that the transformation **preserved coordinates**, and the composer chains maps on that basis. The honest "no map here" return is an empty mapping object.
 
 So the defect was not an omission. It was a false identity-preserving source relation, which is exactly the disease core's source-relation algebra exists to eliminate — and why disposition here is stated rather than defaulted.
 
@@ -52,4 +50,4 @@ Assurance-and-implementation territory.
 
 ## Implementation boundary
 
-Specified. No code exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

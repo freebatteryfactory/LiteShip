@@ -1,7 +1,5 @@
 # Web Events and Listener Lifetime
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/03_event/`
@@ -49,4 +47,4 @@ Both are implementation-fixture obligations.
 
 ## Implementation boundary
 
-Specified. No addEventListener call, no dispatch code, no disposal machinery exists or is authorized.
+An event realization must preserve target, listener, dispatch, cancellation, and owned-disposal semantics across browser event APIs.

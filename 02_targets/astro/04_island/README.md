@@ -1,7 +1,5 @@
 # Astro Island Preparation
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/astro/04_island/`
@@ -25,7 +23,7 @@ Translate authored activation into the web host's existing island contract, and 
 
 ## The failure this home is shaped around
 
-The predecessor joined islands to a manifest by content address. When the manifest was stale, `find` returned undefined, every `??=` became a no-op, and the island rendered with no ARIA, no shaders, and **no diagnostic**. Nothing downstream could tell a degraded island from a correct one.
+A stale content-address lookup must not fall through to a degraded render with no diagnostic. Required ancestry makes that lookup failure a refusal rather than a quiet render.
 
 Ancestry here is a required member, and its absence is a refusal rather than a quiet render.
 
@@ -46,4 +44,4 @@ Assurance-and-implementation territory.
 
 ## Implementation boundary
 
-Specified. No code exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

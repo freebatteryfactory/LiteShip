@@ -30,22 +30,38 @@ import type {
   StateName,
 } from '../09_quantization/types.js';
 
+/** Stable identity for one scene. */
 export type SceneId<Name extends string = string> = Brand<Name, 'liteship.scene-id'>;
+/** Stable identity for one coordinate space. */
 export type CoordinateSpaceId<Name extends string = string> = Brand<Name, 'liteship.coordinate-space-id'>;
+/** Stable identity for one geometry. */
 export type GeometryId<Name extends string = string> = Brand<Name, 'liteship.geometry-id'>;
+/** Stable identity for one material. */
 export type MaterialId<Name extends string = string> = Brand<Name, 'liteship.material-id'>;
+/** Stable identity for one timeline. */
 export type TimelineId<Name extends string = string> = Brand<Name, 'liteship.timeline-id'>;
+/** Stable identity for one timeline key. */
 export type TimelineKeyId<Name extends string = string> = Brand<Name, 'liteship.timeline-key-id'>;
+/** Stable identity for one geometry point. */
 export type GeometryPointId<Name extends string = string> = Brand<Name, 'liteship.geometry-point-id'>;
+/** Typed reference to one scene. */
 export type SceneReference<Id extends SceneId = SceneId> = Reference<'scene', Id>;
+/** Typed reference to one geometry. */
 export type GeometryReference<Id extends GeometryId = GeometryId> = Reference<'geometry', Id>;
+/** Typed reference to one material. */
 export type MaterialReference<Id extends MaterialId = MaterialId> = Reference<'material', Id>;
+/** Typed reference to one timeline. */
 export type TimelineReference<Id extends TimelineId = TimelineId> = Reference<'timeline', Id>;
+/** Typed reference to one timeline key. */
 export type TimelineKeyReference<Id extends TimelineKeyId = TimelineKeyId> = Reference<'timeline-key', Id>;
 
+/** Type-level representation of spatial dimension. */
 export type SpatialDimension = 2 | 3;
+/** Type-level representation of spatial handedness. */
 export type SpatialHandedness = 'left-handed' | 'right-handed';
+/** Type-level representation of spatial axis direction. */
 export type SpatialAxisDirection = 'right' | 'left' | 'up' | 'down' | 'forward' | 'backward';
+/** Type-level representation of spatial unit. */
 export type SpatialUnit = 'unitless' | 'pixel' | 'point' | 'meter' | 'centimeter' | 'millimeter' | 'percent' | 'normalized';
 
 /** One named axis in a declared coordinate space. */
@@ -91,18 +107,22 @@ export type Point2<Space extends CoordinateSpaceId = CoordinateSpaceId> = Brand<
   readonly [x: number, y: number],
   readonly ['liteship.point2', Space]
 >;
+/** Two-dimensional vector in one coordinate space. */
 export type Vector2<Space extends CoordinateSpaceId = CoordinateSpaceId> = Brand<
   readonly [x: number, y: number],
   readonly ['liteship.vector2', Space]
 >;
+/** Three-dimensional point in one coordinate space. */
 export type Point3<Space extends CoordinateSpaceId = CoordinateSpaceId> = Brand<
   readonly [x: number, y: number, z: number],
   readonly ['liteship.point3', Space]
 >;
+/** Three-dimensional vector in one coordinate space. */
 export type Vector3<Space extends CoordinateSpaceId = CoordinateSpaceId> = Brand<
   readonly [x: number, y: number, z: number],
   readonly ['liteship.vector3', Space]
 >;
+/** Type-level representation of quaternion. */
 export type Quaternion<Space extends CoordinateSpaceId = CoordinateSpaceId> = Brand<
   readonly [x: number, y: number, z: number, w: number],
   readonly ['liteship.quaternion', Space]
@@ -114,6 +134,7 @@ export type Matrix3 = readonly [
   number, number, number,
   number, number, number,
 ];
+/** Four-by-four transform matrix between coordinate spaces. */
 export type Matrix4 = readonly [
   number, number, number, number,
   number, number, number, number,
@@ -166,6 +187,7 @@ export type SpatialTransformOperation = Algebra<{
 
 /** Domain-owned metric and unit identities for scene projection error. */
 export type SceneToleranceMetric = Brand<string, 'liteship.scene.tolerance-metric'>;
+/** Type-level representation of scene tolerance unit. */
 export type SceneToleranceUnit = Brand<string, 'liteship.scene.tolerance-unit'>;
 
 /** One addressed scene or spatial tolerance value under the shared identity. */
@@ -261,6 +283,7 @@ export type GeometryBounds<Space extends CoordinateSpaceId = CoordinateSpaceId> 
   bounds3: { readonly minimum: Point3<Space>; readonly maximum: Point3<Space> };
 }>;
 
+/** Type-level representation of scene egress. */
 export type SceneEgress = 'html-css' | 'dom' | 'svg' | 'canvas' | 'glsl' | 'wgsl' | 'video' | 'accessibility';
 
 /** Interpolation support is explicit rather than inferred from geometry name. */
@@ -279,8 +302,8 @@ export type GeometryTransformSupport = Algebra<{
 /**
  * How faithfully one subject reaches one egress.
  *
- * Four arms, because the predecessor shape — a boolean beside two optionals —
- * admitted eight combinations and at least two of them meant nothing: an exact
+ * Four arms, because a boolean beside two optionals would admit combinations
+ * with no meaning: an exact
  * projection carrying an error bound, and an inexact projection carrying
  * neither a bound nor an alternative. The second is indistinguishable from
  * nobody having thought about it, which is precisely the state a fidelity
@@ -341,6 +364,7 @@ export interface OpaqueGeometryDefinition<Space extends CoordinateSpaceId = Coor
   readonly address: ContentAddress<'application/vnd.liteship.geometry+cbor'>;
 }
 
+/** Definition of geometry. */
 export type GeometryDefinition<Space extends CoordinateSpaceId = CoordinateSpaceId> =
   | StandardGeometryDefinition<Space>
   | OpaqueGeometryDefinition<Space>;
@@ -431,7 +455,9 @@ export interface TimelineDefinition<Base extends Timebase = Timebase> {
   readonly address: ContentAddress<'application/vnd.liteship.timeline+cbor'>;
 }
 
+/** Stable identity for one scene marker. */
 export type SceneMarkerId<Name extends string = string> = Brand<Name, 'liteship.scene-marker-id'>;
+/** Typed reference to one scene marker. */
 export type SceneMarkerReference<Id extends SceneMarkerId = SceneMarkerId> = Reference<
   'scene-marker',
   Id
@@ -452,7 +478,9 @@ export interface SceneMarker<Base extends Timebase = Timebase> {
   readonly label?: string;
 }
 
+/** Stable identity for one scene envelope. */
 export type SceneEnvelopeId<Name extends string = string> = Brand<Name, 'liteship.scene-envelope-id'>;
+/** Typed reference to one scene envelope. */
 export type SceneEnvelopeReference<Id extends SceneEnvelopeId = SceneEnvelopeId> = Reference<
   'scene-envelope',
   Id

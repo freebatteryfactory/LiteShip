@@ -26,6 +26,7 @@ import type { OwnedResource } from '../../../00_core/05_lifecycle/types.js';
 import type { GroundingId, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 
+/** Stable identity for one secret. */
 export type SecretId<Name extends string = string> = Brand<Name, 'liteship.server.secret-id'>;
 /** Revealed material: branded, deliberately outside every canonical encoding path. */
 export type SecretMaterial = Brand<Uint8Array, 'liteship.server.secret-material'>;
@@ -45,6 +46,7 @@ export interface SecretUseReceipt<Id extends SecretId> {
   readonly reveals: SecretScopedReference<Id>;
   readonly address: ContentAddress<'application/vnd.liteship.server-secret-use+cbor'>;
 }
+/** Typed reference to one secret scoped. */
 export type SecretScopedReference<Id extends SecretId = SecretId> = Reference<'server-secret', Id>;
 
 /** Rotation and revocation evidence for one secret. */
@@ -86,7 +88,9 @@ export interface SecretSourceBinding {
   readonly address: ContentAddress<'application/vnd.liteship.server-secret-source+cbor'>;
 }
 
+/** Capability requirement for secret source. */
 export type SecretSourceRequirement = Hole<'liteship.server.secret-source', SecretSourceBinding>;
+/** Capability requirement for secret provider. */
 export type SecretProviderRequirement = Hole<'liteship.server.secrets', SecretProvider>;
 
 /** Deployment grounding: the secret source enters admitted. */

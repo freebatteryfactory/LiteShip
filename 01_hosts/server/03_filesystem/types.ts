@@ -33,15 +33,19 @@ import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 
+/** Stable identity for one filesystem root. */
 export type FilesystemRootId<Name extends string = string> = Brand<
   Name,
   'liteship.server.filesystem-root-id'
 >;
+/** Typed reference to one filesystem root. */
 export type FilesystemRootReference<Id extends FilesystemRootId = FilesystemRootId> = Reference<
   'server-filesystem-root',
   Id
 >;
+/** Stable identity for one file stream. */
 export type FileStreamId<Name extends string = string> = Brand<Name, 'liteship.server.file-stream-id'>;
+/** Typed reference to one file stream. */
 export type FileStreamReference<Id extends FileStreamId = FileStreamId> = Reference<
   'server-file-stream',
   Id
@@ -195,10 +199,12 @@ export interface FilesystemRootBinding {
   readonly configuration: ContentAddress<'application/vnd.liteship.server-filesystem-root+cbor'>;
 }
 
+/** Capability requirement for filesystem root. */
 export type FilesystemRootRequirement = Hole<
   'liteship.server.filesystem-root',
   FilesystemRootBinding
 >;
+/** Capability requirement for filesystem. */
 export type FilesystemRequirement = Hole<'liteship.server.filesystem', FilesystemProvider>;
 
 /** Deployment grounding: scoped roots enter admitted from deployment. */

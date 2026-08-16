@@ -1,14 +1,9 @@
 /**
  * Cloudflare target identity, registration, and compatibility evidence.
  *
- * The predecessor's Cloudflare package is the reason the sibling-exclusion rule
- * exists. It imported a framework sibling, and it lost its independent story
- * entirely: no direct worker entry anywhere, a README that required the
- * framework, a health probe literally labelled after the framework's output
- * mode, and one example. The two packages that imported no sibling both kept
- * first-class direct use.
- *
- * So this child names no framework, imports no sibling, and is registrable on
+ * A framework sibling import would make direct worker registration,
+ * compatibility, and deployment unrepresentable. This child therefore names no
+ * framework, imports no sibling, and is registrable on
  * its own. Whether a framework participated in producing what it deploys is a
  * question it has no member to ask.
  *
@@ -30,10 +25,12 @@ import type {
   TargetParticipation,
 } from '../../types.js';
 
+/** Stable identity for one cloudflare adapter. */
 export type CloudflareAdapterId<Name extends string = string> = Brand<
   Name,
   'liteship.target.cloudflare.adapter-id'
 >;
+/** Typed reference to one cloudflare adapter. */
 export type CloudflareAdapterReference<Id extends CloudflareAdapterId = CloudflareAdapterId> =
   Reference<'cloudflare-adapter', Id>;
 

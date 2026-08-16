@@ -34,10 +34,12 @@ import type { GroundingId, RealizationOfferId } from '../../../00_core/14_compil
 import type { WorkerGroundingDefinition, WorkerRealizationOffer } from '../00_bootstrap/types.js';
 import type { ChannelReference, EndpointRole, MessagingRequirement } from '../02_message/types.js';
 
+/** Stable identity for one transferable. */
 export type TransferableId<Name extends string = string> = Brand<
   Name,
   'liteship.worker.transferable-id'
 >;
+/** Typed reference to one transferable. */
 export type TransferableReference<Id extends TransferableId = TransferableId> = Reference<
   'worker-transferable',
   Id
@@ -106,7 +108,9 @@ export interface TransferAuthority {
   readonly detachment: Signature<TransferTicket<'moved'>, DetachmentEvidence, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for transfer facility. */
 export type TransferFacilityRequirement = Hole<'liteship.worker.transfer-facility', TransferFacility>;
+/** Capability requirement for transfer. */
 export type TransferRequirement = Hole<'liteship.worker.transfer', TransferAuthority>;
 
 /** Intrinsic grounding: the platform transfer machinery, admitted narrowly. */

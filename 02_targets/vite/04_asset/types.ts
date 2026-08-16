@@ -2,11 +2,9 @@
  * Worker, WebAssembly, and binary emission — inside the module graph, with
  * ancestry.
  *
- * The predecessor launched its compositor worker from a Blob URL assembled by
- * interpolating three source strings: no banner, no version, no digest, no
- * source-map link, and five independent startup strings with no canonical
- * bootstrap. Nothing about that worker was addressable, so nothing about it was
- * explicable.
+ * A worker assembled from source strings has no canonical module, digest,
+ * source-map relation, or producer identity, so it cannot be explained or
+ * reproduced.
  *
  * The ecosystem already solves this. Vite gives a bundler-owned worker entry —
  * a real module with a content-hashed filename, source maps, and its own

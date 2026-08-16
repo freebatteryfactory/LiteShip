@@ -25,7 +25,9 @@ import type { GroundingId } from '../../../00_core/14_compiler/types.js';
 
 import type { EdgeGroundingDefinition } from '../00_bootstrap/types.js';
 
+/** Closed origin vocabulary for allowed. */
 export type AllowedOrigin = Brand<string, 'liteship.edge.allowed-origin'>;
+/** Type-level representation of cache partition key. */
 export type CachePartitionKey = Brand<string, 'liteship.edge.cache-partition'>;
 
 /** Credential handling over the closed arms — never a free string. */
@@ -71,6 +73,7 @@ export type EdgePolicyRefusal = Algebra<{
   partition: { readonly partition: CachePartitionKey; readonly policy: EdgeResponsePolicy['address'] };
 }>;
 
+/** Capability requirement for edge policy. */
 export type EdgePolicyRequirement = Hole<'liteship.edge.response-policy', EdgeResponsePolicy>;
 
 /** Deployment grounding: the policy enters admitted, never assembled ad hoc. */

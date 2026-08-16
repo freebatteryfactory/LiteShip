@@ -35,14 +35,21 @@ import type {
 } from '../../../00_core/14_compiler/types.js';
 import type { WebGroundingDefinition, WebRealizationOffer } from '../00_bootstrap/types.js';
 
+/** Stable identity for one web document. */
 export type WebDocumentId<Name extends string = string> = Brand<Name, 'liteship.web.document-id'>;
+/** Typed reference to one web document. */
 export type WebDocumentReference<Id extends WebDocumentId = WebDocumentId> = Reference<'web-document', Id>;
 /** Opaque physical node handle. Never a raw DOM interface on the governed surface. */
 export type WebNodeId<Name extends string = string> = Brand<Name, 'liteship.web.node-id'>;
+/** Typed reference to one web node. */
 export type WebNodeReference<Id extends WebNodeId = WebNodeId> = Reference<'web-node', Id>;
+/** Stable identity for one region. */
 export type RegionId<Name extends string = string> = Brand<Name, 'liteship.web.region-id'>;
+/** Typed reference to one region. */
 export type RegionReference<Id extends RegionId = RegionId> = Reference<'web-region', Id>;
+/** Stable identity for one region writer. */
 export type RegionWriterId<Name extends string = string> = Brand<Name, 'liteship.web.region-writer-id'>;
+/** Typed reference to one region writer. */
 export type RegionWriterReference<Id extends RegionWriterId = RegionWriterId> = Reference<
   'web-region-writer',
   Id
@@ -117,6 +124,7 @@ export type PreservedAspect =
   | 'browser-managed'
   | 'foreign-boundary';
 
+/** Profile governing region preservation. */
 export type RegionPreservationProfile = readonly PreservedAspect[];
 
 /**
@@ -167,7 +175,9 @@ export interface MountRegion {
   readonly boundary: RegionBoundary;
 }
 
+/** Stable identity for one region membership. */
 export type RegionMembershipId<Name extends string = string> = Brand<Name, 'liteship.web.region-membership-id'>;
+/** Typed reference to one region membership. */
 export type RegionMembershipReference<Id extends RegionMembershipId = RegionMembershipId> = Reference<
   'web-region-membership',
   Id
@@ -227,8 +237,11 @@ export interface RegionAuthority {
   readonly issue: Signature<RegionLeaseRequest, RegionWriteAuthority, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for region discovery. */
 export type RegionDiscoveryRequirement = Hole<'liteship.web.region-discovery', RegionDiscovery>;
+/** Capability requirement for mount region. */
 export type MountRegionRequirement = Hole<'liteship.web.mount-region', MountRegion>;
+/** Capability requirement for region authority. */
 export type RegionAuthorityRequirement = Hole<'liteship.web.region-authority', RegionAuthority>;
 
 /** Intrinsic grounding: the discovery authority derived from the document. */

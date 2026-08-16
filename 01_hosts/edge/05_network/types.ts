@@ -27,18 +27,22 @@ import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { RequestMethod } from '../01_request/types.js';
 import type { AllowedOrigin, EdgePolicyRequirement } from '../03_policy/types.js';
 
+/** Stable identity for one outbound connection. */
 export type OutboundConnectionId<Name extends string = string> = Brand<
   Name,
   'liteship.edge.outbound-connection-id'
 >;
+/** Stable identity for one outbound request. */
 export type OutboundRequestId<Name extends string = string> = Brand<
   Name,
   'liteship.edge.outbound-request-id'
 >;
+/** Typed reference to one outbound request. */
 export type OutboundRequestReference<Id extends OutboundRequestId = OutboundRequestId> = Reference<
   'edge-outbound-request',
   Id
 >;
+/** Typed reference to one outbound connection. */
 export type OutboundConnectionReference<
   Id extends OutboundConnectionId = OutboundConnectionId,
 > = Reference<'edge-outbound-connection', Id>;
@@ -113,10 +117,12 @@ export interface EdgeNetworkAuthority {
   ) => Result<EdgeOutboundConnection<Decoded, Rid>, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for edge network facility. */
 export type EdgeNetworkFacilityRequirement = Hole<
   'liteship.edge.network-facility',
   EdgeNetworkFacility
 >;
+/** Capability requirement for edge network. */
 export type EdgeNetworkRequirement = Hole<'liteship.edge.network', EdgeNetworkAuthority>;
 
 /** Intrinsic grounding: the outbound fetch machinery, admitted narrowly. */

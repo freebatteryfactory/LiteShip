@@ -52,7 +52,9 @@ import type {
  */
 export type HostRealm = Exclude<EvidenceRealm, 'build'>;
 
+/** Stable identity for one host. */
 export type HostId<Name extends string = string> = Brand<Name, 'liteship.host-id'>;
+/** Typed reference to one host. */
 export type HostReference<Id extends HostId = HostId> = Reference<'host', Id>;
 
 /** Identity of one live admitted grounding: the provider that is disposed once. */
@@ -255,4 +257,3 @@ export type HostChildName = 'web' | 'worker' | 'edge' | 'server';
 
 /** The ordered child roster the physical tree carries. */
 export type HostChildRoster = readonly ['web', 'worker', 'edge', 'server'];
-

@@ -1,7 +1,5 @@
 # Gauntlet: Evidence Evaluation
 
-Status: architecture specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `system/01_assurance/01_gauntlet/`
@@ -43,9 +41,9 @@ The remaining declaration is the proposition, which already names the facts and 
 
 ## Consequence belongs to the invocation, not to the check
 
-A gate definition used to declare itself `blocking`, `warning`, or `advisory` for all time. That made a factual check permanently managerial, and it is wrong on its face: the same check is required by release, shown in an editor, informative in a diagnostic view, and possibly not run at all by a narrow local command. What a check *is* does not change. What an invocation *requires* does.
+A gate definition does not declare itself `blocking`, `warning`, or `advisory` for all time. That would make a factual check permanently managerial even though release, editor, diagnostic, and narrow local invocations require different consequences. What a check *is* does not change. What an invocation *requires* does.
 
-`AssuranceRunSpec` is that invocation's input — an exact identity, a non-empty check population, and `required | informational` per entry. Two arms, not three, and deliberately not the retired triple under new spelling. An invocation either needs an answer to proceed or wants to hear it. Severity of a finding stays on `Diagnostic`, where a vocabulary for it already exists.
+`AssuranceRunSpec` is that invocation's input — an exact identity, a non-empty check population, and `required | informational` per entry. An invocation either needs an answer to proceed or wants to hear it. Severity of a finding stays on `Diagnostic`, where a vocabulary for it already exists.
 
 `Finding` carries no disposition either. A finding reports what happened; how one caller treats it is a lookup into that caller's spec, and a copy here would let two runs of one check produce findings that disagree about their own consequence.
 
@@ -55,33 +53,31 @@ This is not a permission framework. It is a function argument. Publishing has st
 
 `AssuranceResult.evaluations` is one evaluation per planned check, positionally, each about that check's gate.
 
-The previous member was `readonly GateEvaluation[]`, which could be empty. That is the difference between *what was requested ran* and *something ran*, and the second reads downstream as a clean result — the specific habit that let a shadow control plane report on the subset it reached for its entire existence.
+A plain `readonly GateEvaluation[]` could be empty or contain the wrong gates. That is the difference between *what was requested ran* and *something ran*, and only the first can support a passing result.
 
 A homomorphic mapping over the spec's check tuple preserves arity, so a three-check spec admits exactly three evaluations; the per-position `infer` makes them the right three, so five evaluations of one gate cannot stand in for five checks. On the passing arm, every position whose consequence is the literal `required` narrows to an evaluation whose outcome is in the `satisfied` arm. That is what makes `passed` mean something rather than being a tag someone chose.
 
 Where the consequence is not a literal — the broad spec, where nobody has yet said what this run requires — no position is pinned. That is correct permissiveness, not a hole: a type should not invent an answer nobody has given.
 
-## The claim population reaches the result, which it did not before
+## The claim population reaches the result
 
 A planned check names three things now: the gate, the exact revision, and the claim population that revision declares.
 
-The third was missing, and its absence disconnected the entire demonstration apparatus from the only place it matters. `ClaimProofs` correlates a gate's declared claims with its proofs by position, and a law proves that mapping correct — at a hand-written fixture. Every carrier downstream instantiated `EvaluatedGate` with the claim population left at its broad default, so both the definition's `claims` and the proof tuple widened together. A gate declaring three failure classes while carrying a single proof for a fourth, unrelated one satisfied `DemonstratedGate`, occupied a required position in a `passed` result, and reached release.
-
-So the apparatus built to stop a check from certifying itself could be walked around by not naming a population — and nothing in six hundred laws said otherwise, because the one law on the subject read the operator rather than the carrier.
+If downstream carriers leave the claim population at its broad default, the definition's claims and proof tuple widen together. A gate could then declare one set of failure classes, carry proofs for another, and still reach a passing result.
 
 Nothing at the type level can compute a claim population from a `GateRevisionId`; there is no registry to look it up in. So the plan states what it requires the named revision to declare, and the evaluation has to satisfy the plan and the definition at once. That is not the claim population written twice — the definition owns it, this states an expectation, and the compiler reconciles them. A fact written twice and read from neither side is the thing this repository deletes; a stated expectation that must reconcile is the opposite.
 
 `TheExactClaimPopulationReachesThePassingResult` proves it, and refuses a foreign population of the same arity so the law distinguishes this population rather than observing that some population arrived.
 
-## The blocked arm has one population, not two
+## The blocked arm has one population
 
-A blocked result used to carry `evaluations`, derived positionally from the specification, *and* `unsatisfied`, a free non-empty tuple of unsatisfied evaluations, with nothing relating them.
+A blocked result with both positional `evaluations` and a free `unsatisfied` tuple would carry the same conclusion twice with nothing relating the populations.
 
-So the type could say: every required planned check was satisfied, one unplanned gate came out unsatisfied, result blocked. It could block on an informational check. It could block on the same foreign gate repeated. It could name a gate absent from the specification entirely. The exact positional population said what ran, and a curated roster beside it decided what that meant — which is the pattern the specification work existed to delete, surviving one member to the left of where it was deleted.
+That shape could block on an informational, repeated, foreign, or unplanned gate even when every required planned check was satisfied.
 
 The remedy is not a law relating the two populations. There is one population. `BlockedPlannedEvaluations` is a union over the positions a run is *allowed* to be blocked by: for each planned check whose consequence admits `required`, the tuple in which that position holds an unsatisfied evaluation and every other holds its ordinary planned one.
 
-Informational positions contribute `never` and drop out of the union. An exact specification with no required check therefore has an **uninhabitable** blocked arm — a diagnostic run cannot report itself blocked no matter what it observed. That could not be stated at all under the previous shape.
+Informational positions contribute `never` and drop out of the union. An exact specification with no required check therefore has an **uninhabitable** blocked arm.
 
 Reading `unsatisfied` off a result is still available and always was: it is the positions whose evaluations are in a non-satisfied arm. Deriving it when explaining a result is a projection. Authoring it beside the evaluations was a second roster.
 
@@ -89,9 +85,9 @@ Reading `unsatisfied` off a result is still available and always was: it is the 
 
 `AssuranceResult` is `passed | blocked`. There is deliberately no `passed-with-warnings`.
 
-The law that says so used to be about `GauntletVerdict`, a `passed | blocked` algebra carrying advisories and a blocking population — a strict subset of what the result already carried, produced by the same act, with nothing making the two agree. It had no consumer but its own law and the type surface: a conclusion declared twice, read once, composed by nothing. The type is gone and its negative moved to the result, which is worth more than it was.
+A separate `GauntletVerdict` would repeat a strict subset of `AssuranceResult` with nothing making the two agree. The result itself owns the conclusion.
 
-Two free populations went with it. `advisories: readonly Finding[]` on the passed arm could carry findings for gates the run never planned, and findings whose outcome disagreed with the evaluation population beside them. `AssuranceDegradation` carried a non-empty roster of gate references that could name anything at all — and it was a third statement of facts two types already own exactly: `GateOutcome.indeterminate` carries its blockers per gate, correlated with the evaluation that could not resolve, and audit's `ProbeCoverage.partial` carries the probes that could not run.
+Free `advisories` or degradation rosters could name unplanned gates or disagree with the evaluation population. `GateOutcome.indeterminate` already carries blockers per gate, and `ProbeCoverage.partial` carries probes that could not run.
 
 Findings now live on the evaluation that produced them, and a `Finding` carries no gate and no outcome, because those are the enclosing evaluation's. What a run could not establish is the positions whose outcome is indeterminate. Both are projections of one population.
 
@@ -103,11 +99,11 @@ That arm is how a blocking gate becomes a suggestion over time: the arm appears 
 
 A gate declares the profile it requires. Under a lean run, a gate needing rich evidence resolves to indeterminate — visible, and refused if the invocation required that check — instead of quietly not running. Quietly not running is how a checked repository becomes an unchecked one without anybody deciding to, and it is more or less what happened when the previous harness became slow enough that nobody ran the expensive banks.
 
-## The one idea that survived
+## Demonstrated discrimination
 
 A check is worth nothing until evidence shows it detects the failure class it claims.
 
-Everything else about the deleted mutation infrastructure was implementation: the runner, the fifteen banks, the five hundred and thirty-eight mutation entries, the temporary-directory staging, the generated tsconfig. Implementations are quarry. This relation is architecture, the assurance umbrella owns its vocabulary, and this home is where a claim, its proof, and its evaluation become one population — bound to the exact rule revision, so editing a check invalidates its old demonstration by construction rather than by anybody remembering to.
+This home binds each claim, proof, and evaluation to the exact rule revision. Editing a check therefore invalidates its demonstration by construction rather than by convention.
 
 ## Laws
 
@@ -142,4 +138,4 @@ Runtime and repository claims a type cannot express:
 
 ## Implementation boundary
 
-Architecture only. No implementation exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

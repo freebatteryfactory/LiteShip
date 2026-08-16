@@ -48,7 +48,9 @@ import type {
 /** The server realm, derived from the umbrella authority rather than restated. */
 export type ServerRealm = Extract<HostRealm, 'server'>;
 
+/** Stable identity for one server host. */
 export type ServerHostId = HostId<'liteship.host.server'>;
+/** Typed reference to one server host. */
 export type ServerHostReference = HostReference<ServerHostId>;
 
 /** The server host definition, mechanically tied to its catalog's identity and realm. */
@@ -121,7 +123,9 @@ export interface ServerConfiguration {
   readonly address: ContentAddress<'application/vnd.liteship.server-configuration+cbor'>;
 }
 
+/** Capability requirement for server entry. */
 export type ServerEntryRequirement = Hole<'liteship.server.process-entry', ServerProcessEntry>;
+/** Capability requirement for server configuration. */
 export type ServerConfigurationRequirement = Hole<
   'liteship.server.configuration',
   ServerConfiguration

@@ -1,7 +1,5 @@
 # Worker Transfer and Custody
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/worker/03_transfer/`
@@ -44,4 +42,4 @@ Both are `system/01_assurance` obligations.
 
 ## Implementation boundary
 
-Specified. No structured-clone or transfer-list code exists or is authorized.
+A transfer realization must enforce the declared copied, moved, and shared custody modes across structured clone and transfer lists.

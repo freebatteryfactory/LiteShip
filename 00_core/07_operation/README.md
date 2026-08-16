@@ -1,7 +1,5 @@
 # Operations and Delegated Authority
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `07_operation/`
@@ -77,6 +75,6 @@ Policy has three outcomes: allowed now, approval required, or denied. `allowed` 
 
 ## Implementation boundary
 
-The operation and delegated-authority contracts are specified. Handler composition, policy engines, wire projections, and host bindings are absent.
+Handlers, policy engines, wires, and host bindings must preserve exact invocation identity, requirements, authority disposition, outcome, diagnostics, and receipts.
 
 Qualifying policy integration, idempotency storage requirements, cancellation propagation, and protocol projections are implementation obligations this architecture already authorizes.

@@ -1,7 +1,5 @@
 # Vite Module Graph and Hot Updates
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/vite/03_graph/`
@@ -25,7 +23,7 @@ Own environment-scoped invalidation, hot-update ordering, and stale rejection â€
 
 ## Why the ecosystem timestamp is not promoted
 
-The predecessor's hot updates carried a content-address predecessor link but no monotonic generation, so two updates arriving out of order both applied and the final state was whichever landed last.
+A content-addressed causal link alone does not order concurrent hot updates. Without a monotonic generation, two out-of-order updates could both apply and leave arrival order as authority.
 
 The bundler's hot-update payload carries a timestamp, and it is tempting to reach for. But it is documented as cache-busting, not as an ordering guarantee â€” promoting it would adopt a promise the ecosystem never made. So it stays evidence, and ordering is carried by the coordinate that exists to be monotonic.
 
@@ -45,4 +43,4 @@ Assurance-and-implementation territory.
 
 ## Implementation boundary
 
-Specified. No code exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

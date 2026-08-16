@@ -37,18 +37,22 @@ import type {
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 
+/** Stable identity for one server handler. */
 export type ServerHandlerId<Name extends string = string> = Brand<
   Name,
   'liteship.server.handler-id'
 >;
+/** Typed reference to one server handler. */
 export type ServerHandlerReference<Id extends ServerHandlerId = ServerHandlerId> = Reference<
   'server-handler',
   Id
 >;
+/** Stable identity for one server operation execution. */
 export type ServerOperationExecutionId<Name extends string = string> = Brand<
   Name,
   'liteship.server.operation-execution-id'
 >;
+/** Typed reference to one server operation execution. */
 export type ServerOperationExecutionReference<
   Id extends ServerOperationExecutionId = ServerOperationExecutionId,
 > = Reference<'server-operation-execution', Id>;
@@ -153,10 +157,12 @@ export interface OperationCatalogBinding {
   readonly operations: NonEmptyTuple<OperationReference>;
 }
 
+/** Capability requirement for operation catalog. */
 export type OperationCatalogRequirement = Hole<
   'liteship.server.operation-catalog',
   OperationCatalogBinding
 >;
+/** Capability requirement for server operation. */
 export type ServerOperationRequirement = Hole<'liteship.server.operations', ServerOperationAuthority>;
 
 /** Deployment grounding: the handler catalog enters admitted. */

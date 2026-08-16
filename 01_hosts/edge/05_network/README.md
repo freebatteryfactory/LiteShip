@@ -1,7 +1,5 @@
 # Edge Network
 
-Status: specified with physical profiles deferred; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/edge/05_network/`
@@ -38,4 +36,4 @@ Own physical outbound network resources: decoder-correlated connection opening, 
 
 ## Implementation boundary
 
-Specified with physical profiles deferred. No fetch or socket code exists or is authorized.
+Network timeouts, pooling, and transport profiles remain empirical; a realization must preserve request identity, policy, evidence, custody, and cancellation.

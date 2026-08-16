@@ -65,9 +65,8 @@ export interface GeneratedDeclaration<
 /**
  * Development evidence, or an explicit refusal.
  *
- * `stale` is its own arm. The predecessor's failure mode was serving evidence
- * derived from sources that had already moved; a stale result that presented as
- * fresh is worse than no result, because nothing downstream can tell.
+ * `stale` is its own arm. Evidence derived from sources that have moved must
+ * not present as fresh, because nothing downstream could detect the mismatch.
  */
 export type DevelopmentEvidence<
   Config extends TargetConfigurationId = TargetConfigurationId,

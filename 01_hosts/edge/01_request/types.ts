@@ -25,7 +25,9 @@ import type { CancellationState } from '../../../00_core/05_lifecycle/types.js';
 import type { GroundingId, RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { EdgeGroundingDefinition } from '../00_bootstrap/types.js';
 
+/** Stable identity for one edge request. */
 export type EdgeRequestId<Name extends string = string> = Brand<Name, 'liteship.edge.request-id'>;
+/** Typed reference to one edge request. */
 export type EdgeRequestReference<Id extends EdgeRequestId = EdgeRequestId> = Reference<
   'edge-request',
   Id
@@ -38,8 +40,11 @@ export type RequestMethod = 'get' | 'head' | 'post' | 'put' | 'patch' | 'delete'
 export type AdmittedUrl = Brand<string, 'liteship.edge.admitted-url'>;
 /** An admitted header name/value pair, decoded, never raw wire bytes. */
 export type AdmittedHeaderName = Brand<string, 'liteship.edge.header-name'>;
+/** Type-level representation of admitted header value. */
 export type AdmittedHeaderValue = Brand<string, 'liteship.edge.header-value'>;
+/** Type-level representation of admitted cookie name. */
 export type AdmittedCookieName = Brand<string, 'liteship.edge.cookie-name'>;
+/** Type-level representation of admitted cookie value. */
 export type AdmittedCookieValue = Brand<string, 'liteship.edge.cookie-value'>;
 
 /** One admitted header entry. The map is a readonly row, not a mutable bag. */
@@ -84,6 +89,7 @@ export interface RequestClone<Id extends EdgeRequestId> {
   readonly lifecycle: CaseOf<RealizationLifecycle, 'owned'>;
 }
 
+/** Request for admitted. */
 export interface AdmittedRequest<Id extends EdgeRequestId> {
   readonly id: EdgeRequestReference<Id>;
   readonly invocation: ContentAddress<'application/vnd.liteship.edge-invocation+cbor'>;
@@ -103,6 +109,7 @@ export interface AdmittedRequest<Id extends EdgeRequestId> {
   readonly lifecycle: CaseOf<RealizationLifecycle, 'unowned'>;
 }
 
+/** Capability requirement for admitted request. */
 export type AdmittedRequestRequirement = Hole<'liteship.edge.request', AdmittedRequest<EdgeRequestId>>;
 
 /** Invocation grounding: the incoming request carried by the entry itself. */

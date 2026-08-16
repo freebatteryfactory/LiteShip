@@ -43,7 +43,9 @@ import type { EdgePolicyRequirement } from '../03_policy/types.js';
 /** Backends this home locally owns, derived from the bootstrap's placement authority. */
 export type EdgeExecutionBackend = EdgePlacedBackend;
 
+/** Stable identity for one edge handler. */
 export type EdgeHandlerId<Name extends string = string> = Brand<Name, 'liteship.edge.handler-id'>;
+/** Typed reference to one edge handler. */
 export type EdgeHandlerReference<Id extends EdgeHandlerId = EdgeHandlerId> = Reference<
   'edge-handler',
   Id
@@ -53,6 +55,7 @@ export type EdgeHandlerReference<Id extends EdgeHandlerId = EdgeHandlerId> = Ref
 type EdgeDriverBinding<Backend> = Backend extends EdgeExecutionBackend
   ? { readonly backend: Backend; readonly driver: ExecutionBackendDriver & { readonly kind: Backend } }
   : never;
+/** Physical driver contract for bound edge. */
 export type BoundEdgeDriver = EdgeDriverBinding<EdgeExecutionBackend>;
 
 /** The edge execution host: matching drivers and core's exact executor. */
@@ -116,11 +119,14 @@ export interface EdgeExecutionFacility {
   readonly drivers: NonEmptyTuple<BoundEdgeDriver>;
 }
 
+/** Capability requirement for edge execution facility. */
 export type EdgeExecutionFacilityRequirement = Hole<
   'liteship.edge.execution-facility',
   EdgeExecutionFacility
 >;
+/** Capability requirement for edge execution. */
 export type EdgeExecutionRequirement = Hole<'liteship.edge.execution', EdgeExecutionHost>;
+/** Capability requirement for edge operation. */
 export type EdgeOperationRequirement = Hole<'liteship.edge.operation', EdgeOperationAuthority>;
 
 /** Intrinsic grounding: the platform execution machinery, admitted narrowly. */

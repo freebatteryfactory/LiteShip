@@ -28,11 +28,11 @@ Core answers what a program means. Hosts answer how unresolved physical behaviou
 
 Every fact has exactly one owner. Participation owns target and configuration revision; the producer owns participation; production owns the artifact and the slot; **the outcome alone owns composition identity**. Nothing is carried twice, so there is no parity law anywhere in this home and nothing that can drift.
 
-Composition ownership is worth stating plainly, because the alternative was tried and rejected. Participation and the producer used to carry a composition of their own, which meant an outcome for composition A could hold participants stamped with composition B — exact local generics beside a broad public carrier, the same failure the host layer paid four folds to close. Threading the composition generic through both populations would have made the mismatch illegal. Removing the copy makes it **unrepresentable**, which is the stronger of the two and the smaller change.
+Composition ownership is worth stating plainly. If participation and producers each carried a composition, an outcome for composition A could hold participants stamped with composition B. Threading the composition through every copy would only relate duplicated facts; removing the copies makes mismatch **unrepresentable**.
 
 Selection is an altitude, not a flag. `TargetCompositionId` identifies a *selected* composition, so nothing that never reached selection may carry one: a refusal is identified by a `TargetAttemptId`, and slot claimants are `SlotClaim` values rather than `ArtifactProducer` values. A claim says what offered; a producer says what produced. Their payloads are identical, so only their tags keep them apart — and a law compares them structurally, because comments do not constrain the compiler.
 
-The composition outcome is what projects into core's existing `Explanation`. There is no separate facts product — an earlier draft had one, and it let a refused outcome sit beside a non-empty production array, which defeated the law forbidding exactly that. A wrapper that restates what it wraps is not an abstraction.
+The composition outcome is what projects into core's existing `Explanation`. There is no separate facts product because it could place a refused outcome beside a non-empty production array. A wrapper that restates what it wraps is not an abstraction.
 
 ## Does not own
 
@@ -49,7 +49,7 @@ The composition outcome is what projects into core's existing `Explanation`. The
 
 Not the host argument. Host children are disjoint — no physical execution is simultaneously web and server — and that reasoning does not transfer. Astro genuinely uses Vite and genuinely deploys through Cloudflare; all three may be live in one build, and that is supported.
 
-The reason is that ecosystem usage and distribution dependency are not semantic authority. "Astro uses Vite" does not put Vite above Astro. The predecessor repository fused those three claims into single package edges and paid for it precisely: the one target that imported a sibling lost its independent story entirely, while the two that imported none kept theirs.
+The reason is that ecosystem usage and distribution dependency are not semantic authority. "Astro uses Vite" does not put Vite above Astro. A sibling import would shape one target around another and erase its independent direct path.
 
 The exclusion does not physically prevent anyone from later writing a producer-neutral path by hand. It prevents something subtler — once one target imports another, that shape becomes structurally normal, the producer-neutral seam is never named, and the alternative stops being visible to the architecture rather than stopping being possible.
 
@@ -81,27 +81,25 @@ That test was run. `02_targets/cloudflare/03_deployment` is the first consumer t
 
 ## Where the children meet
 
-Astro genuinely uses Vite. Neither may import the other, because ecosystem usage and distribution dependency are not semantic authority — the rule that saved this umbrella from the predecessor's Cloudflare package, which imported a framework sibling and lost its independent story entirely.
+Astro genuinely uses Vite. Neither may import the other, because ecosystem usage and distribution dependency are not semantic authority; their relationship is proved at a downstream composition point.
 
-The consequence is that the seam between them is a set of choices made twice. Astro declares a socket without naming who fills it; Vite declares a facility "taken without reference to any requester"; and until now nothing imported both, so whether the supplier actually fit the socket was an untested belief held by two files that had never met.
+The consequence is that Astro declares a socket without naming who fills it and Vite declares a facility without reference to a requester. A downstream composition must import both real surfaces and prove that the supplier fits the socket.
 
-`types.laws.ts` is that test, and it is a separate file for a reason that was learned the hard way. The composition first landed inside `types.ts`, on the reasoning that the parent is the one place that may see both children. That reasoning was half right and the half that was wrong closed a cycle: the children import this umbrella for participation, producer, and slot vocabulary, so an umbrella importing them back to check their composition makes `02_targets/types.ts -> astro/03_build/types.ts -> 02_targets/types.ts`. TypeScript accepts it — type-only imports, one program — which is why it had to be caught by reading.
+`types.laws.ts` owns that compile-use composition. It cannot live in `types.ts` because the children import umbrella vocabulary; importing children back from the umbrella would close a cycle that TypeScript permits for type-only edges.
 
-`system/types.ts` does import its children and is not the same case, though it was cited as the precedent. That file owns topology and nothing else, and no system child imports it, so nothing flows back. The distinguishing property is not *parent* but *owns vocabulary the children consume*.
+`system/types.ts` may import its children because no system child imports it. The distinguishing property is not *parent* but *owns vocabulary the children consume*.
 
 So the umbrella imports no child, and the fixture is compile-only: it owns no target semantics, declares no facility, request, or disposition of its own, emits nothing, and is imported by nobody. A local replica would prove that a copy fits a socket, which is the defect `system/01_assurance/00_audit` exists to detect, committed by the proof. Every type in it is the real one.
 
 The positive case needs no assertion. `AstroBuildFacilityRequirement` constrains its fourth parameter to Astro's facility at exact axes, so naming Vite's facility as the filler either compiles or does not. It compiles.
 
-### Independent conformance, not coincidence
+### Independent conformance
 
-Astro declares a requirement. Vite independently exposes a facility. At this exact composition, Vite conforms. There is no shared upstream contract making that true, which is precisely why the fixture has to exist — but "conformance without a shared contract" is an ordinary architectural fact, not cosmic roulette, and calling it coincidence belongs to the investigation history rather than to the architecture.
+Astro declares a requirement. Vite independently exposes a facility. There is no shared upstream contract making conformance automatic, so the fixture must prove the exact relationship.
 
-An earlier draft carried a second law asserting the two request types, the two disposition algebras, and the two slot aliases were pairwise equal. Measuring retired it on both counts.
+No parity law compares request types, disposition algebras, or slot aliases. Each derives from its owner, so equality would test a derivation against itself or preserve a duplicated fact.
 
-It was redundant: the facility constraint alone goes red when Vite widens its slot demands, gains a disposition arm, renames a disposition arm, or when Astro renames a request member. Four mutations, four failures, no equality law involved.
-
-And it was wrong. `project` is a `Signature`, whose input slot is a parameter position and therefore contravariant, so a supplier whose request needs *fewer* members than the socket offers stays assignable — correctly. Dropping a member from Vite's request leaves the composition compiling, exactly as it should. The equality law would have called that a divergence and turned red on a legal change.
+`project` is a `Signature`, whose input slot is contravariant, so a supplier whose request needs fewer members than the socket offers remains assignable. A pairwise equality law would reject that lawful conformance and duplicate checks already carried by the facility constraint.
 
 A law that freezes two spellings into agreement is not checking a relationship. It is asserting that nobody will ever legally differ.
 
@@ -127,7 +125,7 @@ A law that freezes two spellings into agreement is not checking a relationship. 
 - The umbrella carries no per-target member and no lifecycle phase. `payload`, `context`, and `hooks` are checked by name, because a junk drawer does not become constitutional by removing Astro from its label.
 - Rejection and failure stay distinct, and neither carries production.
 - A composed outcome has at least one participant.
-- The outcome projects into core's one `Explanation` and declares no explanation vocabulary of its own. `explanation`, `facts`, `report`, and `rendered` are checked by name, because a wrapper is one member away at all times — and an earlier draft's facts product let a refused outcome sit beside a non-empty production array while the law forbidding that held one object inward.
+- The outcome projects into core's one `Explanation` and declares no explanation vocabulary of its own. `explanation`, `facts`, `report`, and `rendered` are checked by name because any wrapper could let a refused outcome sit beside a non-empty production array while the inner law still held.
 - Every product carries the identity of the phase it belongs to. A refusal holds an attempt and no composition; a failure holds the selected composition and the participation that failed, and never falls back to an attempt. The two reference kinds stay distinct populations, so nothing changes phase by swapping which one it holds.
 
 ## Proof obligations

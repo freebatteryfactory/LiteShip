@@ -1,7 +1,5 @@
 # Astro Build Facility Requirement
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/astro/03_build/`
@@ -23,7 +21,7 @@ State the one build facility this child needs, in already-closed upstream vocabu
 
 - Any supplier. This home names no ecosystem, no plugin, and no bundler.
 - Compiler algorithms, a compiler-arm roster, source maps, artifact identity, or output bytes.
-- Whether a given supplier converges. That is a question for a composition point importing both, and it is assurance rather than architecture — its home is `system/`, which is not yet authored.
+- Whether a given supplier converges. A composition point under `system/` imports both and answers that assurance question.
 
 ## Why the parameter is constrained, and by what
 
@@ -68,4 +66,4 @@ Assurance-and-implementation territory.
 
 ## Implementation boundary
 
-Specified. No code exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

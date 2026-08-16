@@ -1,7 +1,5 @@
 # Edge Request Evidence
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/edge/02_evidence/`
@@ -38,4 +36,4 @@ All `system/01_assurance`.
 
 ## Implementation boundary
 
-Specified. No header-parsing or hint-decoding code exists or is authorized.
+An edge-evidence realization must decode hints into the declared evidence states without treating absence, failure, or pending truth as support.

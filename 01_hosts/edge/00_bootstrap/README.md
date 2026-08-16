@@ -1,7 +1,5 @@
 # Edge Bootstrap
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/edge/00_bootstrap/`
@@ -38,4 +36,4 @@ Own the only place raw edge globals and environment bindings exist: realm identi
 
 ## Implementation boundary
 
-Specified. No platform-context capture or binding-decoding code exists or is authorized.
+An edge bootstrap realization must capture platform context once, decode admitted bindings, and permit no ambient environment reads elsewhere.

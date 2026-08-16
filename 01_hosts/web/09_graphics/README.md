@@ -1,7 +1,5 @@
 # Web Graphics
 
-Status: specified with physical profiles deferred; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/09_graphics/`
@@ -53,4 +51,4 @@ The first is assurance; the second is an implementation fixture.
 
 ## Implementation boundary
 
-Specified with physical profiles deferred: WebGPU thresholds and backend crossover points are empirical and measured. No context acquisition or rendering code exists or is authorized.
+Graphics thresholds and backend crossover profiles remain empirical; a realization must preserve device, surface, resource, frame, tolerance, and custody coordinates.

@@ -31,11 +31,16 @@ import type { EvidenceCutId, ReproducibilityClaim } from '../06_evidence/types.j
 import type { AnySemanticCut } from '../08_state/types.js';
 import type { ProjectionFidelity, SceneEgress, SceneReference } from '../11_scene/types.js';
 
+/** Stable identity for one media asset. */
 export type MediaAssetId<Name extends string = string> = Brand<Name, 'liteship.media-asset-id'>;
+/** Typed reference to one media asset. */
 export type MediaAssetReference<Id extends MediaAssetId = MediaAssetId> = Reference<'media-asset', Id>;
+/** Type-level representation of sample rate. */
 export type SampleRate = Brand<number, 'liteship.sample-rate'>;
+/** Type-level representation of frame rate. */
 export type FrameRate = Brand<number, 'liteship.frame-rate'>;
 
+/** Closed kind vocabulary for media. */
 export type MediaKind = 'audio' | 'video' | 'image' | 'font' | 'binary';
 
 /** Addressed media source descriptor. */
@@ -48,12 +53,14 @@ export interface MediaAsset {
   readonly metadata?: CanonicalValue;
 }
 
+/** Contract for sample range. */
 export interface SampleRange {
   readonly start: SampleIndex;
   readonly end: SampleIndex;
   readonly rate: SampleRate;
 }
 
+/** Contract for frame range. */
 export interface FrameRange {
   readonly start: FrameIndex;
   readonly end: FrameIndex;
@@ -132,10 +139,12 @@ export interface MediaFrame<
 // Physical payload: representation, not realm
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one media representation. */
 export type MediaRepresentationId<Name extends string = string> = Brand<
   Name,
   'liteship.media-representation-id'
 >;
+/** Typed reference to one media representation. */
 export type MediaRepresentationReference<
   Id extends MediaRepresentationId = MediaRepresentationId,
 > = Reference<'media-representation', Id>;
@@ -155,13 +164,9 @@ export type PayloadLocation = Algebra<{
 /**
  * One physical payload, exact over what its bytes *are*.
  *
- * Identity follows representation, not origin. An earlier draft gave each realm
- * its own payload type — browser bytes, capture bytes, server bytes — and all
- * of them reduced to the same structure, so TypeScript treated four
- * nominal-sounding names as one anonymous paper bag. Worse, had they been
- * branded by realm, two hosts producing identical RGBA8 would have needed a
- * conversion bridge between identical bytes because one was born near a
- * browser.
+ * Identity follows representation, not origin. Realm-specific payload aliases
+ * would either collapse structurally or force conversion between identical
+ * bytes solely because different hosts produced them.
  *
  * Origin lives in provenance, where it belongs.
  */
@@ -174,7 +179,9 @@ export interface PhysicalPayload<Representation extends MediaRepresentationId = 
 // Bounded media sources
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one media source. */
 export type MediaSourceId<Name extends string = string> = Brand<Name, 'liteship.media-source-id'>;
+/** Typed reference to one media source. */
 export type MediaSourceReference<Id extends MediaSourceId = MediaSourceId> = Reference<
   'media-source',
   Id
@@ -213,10 +220,8 @@ export type MediaBatch<Unit> = Algebra<{
 /**
  * One bounded, ordered, lossless media source.
  *
- * This is what makes long-form work possible. The predecessor shape required a
- * non-empty tuple of every frame, which meant a five-minute render had to exist
- * in memory before encoding could start — fine for a ten-second demo and a wall
- * for anything the product actually exists to make.
+ * This is what makes long-form work possible. A non-empty tuple of every frame
+ * would require a whole render to exist in memory before encoding could start.
  *
  * The unit is exact on the pull's *output*, which is covariant. An exact unit
  * carried only in an input position would be contravariant and prove nothing.
@@ -231,8 +236,8 @@ export interface MediaSource<Unit, Id extends MediaSourceId = MediaSourceId> {
   // exact source unassignable to a broad one and quietly block every downstream
   // composition this model exists to allow.
   //
-  // Its output used to be the source's own reference, which kept `Id` covariant
-  // and said nothing. `CancellationReceipt` keeps the covariance and spends it
+  // Returning only the source's own reference would keep `Id` covariant but
+  // say nothing. `CancellationReceipt` keeps the covariance and spends it
   // on the distinction `MediaBatch` already makes four lines up: a cancel that
   // stopped a live source, a cancel that repeated one already in effect, and a
   // cancel that arrived after `completed` or `failed`. The third is the
@@ -305,9 +310,7 @@ export type CapturedProvenance<Composition, Profile> = Algebra<{
  * One physical frame: bytes and where they came from.
  *
  * The provenance parameter is specialized per frame kind rather than left as
- * one union with arms a given frame can never inhabit. An earlier draft used
- * `never` for a capture's semantic-frame parameter, which locked the trapdoor
- * correctly but left consumers staring at branches that could not exist.
+ * one union with arms a given frame can never inhabit.
  */
 export interface PhysicalFrame<
   Representation extends MediaRepresentationId = MediaRepresentationId,
@@ -318,24 +321,28 @@ export interface PhysicalFrame<
   readonly address: ContentAddress<'application/vnd.liteship.physical-frame+cbor'>;
 }
 
+/** Type-level representation of rasterized frame. */
 export type RasterizedFrame<
   Representation extends MediaRepresentationId,
   Frame extends MediaFrame,
   Profile,
 > = PhysicalFrame<Representation, RasterizedProvenance<Frame, Profile>>;
 
+/** Type-level representation of decoded frame. */
 export type DecodedFrame<
   Representation extends MediaRepresentationId,
   Asset extends MediaAssetId,
   Profile extends DecodeProfileId,
 > = PhysicalFrame<Representation, DecodedProvenance<Asset, Profile>>;
 
+/** Type-level representation of captured frame. */
 export type CapturedFrame<
   Representation extends MediaRepresentationId,
   Composition,
   Profile,
 > = PhysicalFrame<Representation, CapturedProvenance<Composition, Profile>>;
 
+/** Type-level representation of decoded sample block. */
 export type DecodedSampleBlock<
   Representation extends MediaRepresentationId,
   Asset extends MediaAssetId,
@@ -362,10 +369,9 @@ export type SampleProvenance<
 /**
  * One physical block of audio samples.
  *
- * Audio is a first-class input, not a track that video happens to carry. The
- * predecessor encode path required video frames even for an audio-only output,
- * which meant the track algebra could describe a product the operation surface
- * had no legal way to produce.
+ * Audio is a first-class input, not a track that video happens to carry. An
+ * encode path requiring video frames for audio-only output would leave lawful
+ * track products unreachable from the operation surface.
  */
 export interface PhysicalSampleBlock<
   Representation extends MediaRepresentationId = MediaRepresentationId,
@@ -380,28 +386,38 @@ export interface PhysicalSampleBlock<
 // Codecs, tracks, packets, containers
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one media codec. */
 export type MediaCodecId<Name extends string = string> = Brand<Name, 'liteship.media-codec-id'>;
+/** Typed reference to one media codec. */
 export type MediaCodecReference<Id extends MediaCodecId = MediaCodecId> = Reference<'media-codec', Id>;
 
+/** Stable identity for one media track. */
 export type MediaTrackId<Name extends string = string> = Brand<Name, 'liteship.media-track-id'>;
+/** Typed reference to one media track. */
 export type MediaTrackReference<Id extends MediaTrackId = MediaTrackId> = Reference<'media-track', Id>;
 
+/** Stable identity for one decode profile. */
 export type DecodeProfileId<Name extends string = string> = Brand<Name, 'liteship.media-decode-profile-id'>;
+/** Typed reference to one decode profile. */
 export type DecodeProfileReference<Id extends DecodeProfileId = DecodeProfileId> = Reference<
   'media-decode-profile',
   Id
 >;
 
+/** Stable identity for one encode profile. */
 export type EncodeProfileId<Name extends string = string> = Brand<Name, 'liteship.media-encode-profile-id'>;
+/** Typed reference to one encode profile. */
 export type EncodeProfileReference<Id extends EncodeProfileId = EncodeProfileId> = Reference<
   'media-encode-profile',
   Id
 >;
 
+/** Stable identity for one container profile. */
 export type ContainerProfileId<Name extends string = string> = Brand<
   Name,
   'liteship.media-container-profile-id'
 >;
+/** Typed reference to one container profile. */
 export type ContainerProfileReference<Id extends ContainerProfileId = ContainerProfileId> = Reference<
   'media-container-profile',
   Id
@@ -601,6 +617,7 @@ export interface MediaDecodeProduct<
   readonly reproducibility: ReproducibilityClaim<DecodeProfileReference<Profile>>;
 }
 
+/** Authority governing media decoder. */
 export interface MediaDecoderAuthority {
   readonly decode: <
     Tag extends MediaTrackTag,
@@ -638,6 +655,7 @@ export interface MediaEncodeRequest<
   readonly input: CaseOf<MediaTrackSources<VideoUnit, AudioUnit>, Tag>;
 }
 
+/** Contract for media encode product. */
 export interface MediaEncodeProduct<
   Tag extends MediaTrackTag = MediaTrackTag,
   Profile extends EncodeProfileId = EncodeProfileId,
@@ -651,6 +669,7 @@ export interface MediaEncodeProduct<
   readonly reproducibility: ReproducibilityClaim<EncodeProfileReference<Profile>>;
 }
 
+/** Authority governing media encoder. */
 export interface MediaEncoderAuthority {
   readonly encode: <
     Tag extends MediaTrackTag,
@@ -691,6 +710,7 @@ export interface MediaMuxRequest<
   readonly packets: MediaSource<MediaPacket<Profile, Packets>, Packets>;
 }
 
+/** Contract for media mux product. */
 export interface MediaMuxProduct<
   Tag extends MediaTrackTag = MediaTrackTag,
   Asset extends MediaAssetId = MediaAssetId,
@@ -702,6 +722,7 @@ export interface MediaMuxProduct<
   readonly reproducibility: ReproducibilityClaim<ContainerProfileReference<Container>>;
 }
 
+/** Authority governing media mux. */
 export interface MediaMuxAuthority {
   readonly finalize: <
     Tag extends MediaTrackTag,
@@ -716,18 +737,23 @@ export interface MediaMuxAuthority {
   ) => Result<MediaMuxProduct<Tag, Asset, Container, Video, Audio>, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for media decoder. */
 export type MediaDecoderRequirement = Hole<'liteship.media.decoder', MediaDecoderAuthority>;
+/** Capability requirement for media encoder. */
 export type MediaEncoderRequirement = Hole<'liteship.media.encoder', MediaEncoderAuthority>;
+/** Capability requirement for media mux. */
 export type MediaMuxRequirement = Hole<'liteship.media.mux', MediaMuxAuthority>;
 
 // ---------------------------------------------------------------------------
 // Analysis identity
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one analysis algorithm. */
 export type AnalysisAlgorithmId<Name extends string = string> = Brand<
   Name,
   'liteship.media-analysis-algorithm-id'
 >;
+/** Typed reference to one analysis algorithm. */
 export type AnalysisAlgorithmReference<Id extends AnalysisAlgorithmId = AnalysisAlgorithmId> = Reference<
   'media-analysis-algorithm',
   Id

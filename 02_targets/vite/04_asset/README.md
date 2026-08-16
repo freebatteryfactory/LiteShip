@@ -1,7 +1,5 @@
 # Vite Asset Emission
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/vite/04_asset/`
@@ -24,11 +22,11 @@ Emit worker, WebAssembly, and binary assets inside the module graph, with ancest
 - The bundler emission mechanism.
 - Worker runtime semantics. The web and worker hosts own those.
 
-## The worker the predecessor could not explain
+## Generated workers stay in the graph
 
-Its compositor worker was launched from a Blob URL assembled by interpolating three source strings: no banner, no version, no digest, no source-map link, and five independent startup strings with no canonical bootstrap. Nothing about that worker was addressable, so nothing about it was explicable.
+A worker body assembled from source strings has no canonical module, digest, source-map relation, or producer identity, so it cannot be explained or reproduced.
 
-The ecosystem already solves this. The bundler provides a canonical worker entry — a real module with a content-hashed filename, source maps, and its own configuration — so a synthesized worker body belongs in the graph as a generated module consumed through that entry, not in a string.
+The bundler provides a canonical worker entry — a real module with a content-hashed filename, source maps, and its own configuration — so a synthesized worker body belongs in the graph as a generated module consumed through that entry, not in a string.
 
 What the ecosystem does **not** provide is identity: an emit returns a reference id and a filename, and neither is a content address nor a record of who produced what. That distinction is this home's, and the laws hold it.
 
@@ -50,4 +48,4 @@ Assurance-and-implementation territory.
 
 ## Implementation boundary
 
-Specified. No code exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

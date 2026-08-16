@@ -1,7 +1,5 @@
 # Programs: The Operations Whose Subject Is This Repository
 
-Status: architecture specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `system/03_programs/`
@@ -40,7 +38,7 @@ Everything else comes from `OperationDefinition`. A program that lies about its 
 
 `ObservesOnly` projects through `definition.effects` rather than adding a `readOnly` member. A second summary of the effects would be one more fact that can drift from what it summarizes.
 
-## Nine programs, because nine contracts are earned
+## Program definitions
 
 The population was eleven names — `doctor`, `verify`, `audit`, `gauntlet`, `build`, `benchmark`, `docs`, `migrate`, `package`, `release`, `ship` — in a tuple of strings, with every registry entry resolving to `SystemProgram<Name, unknown, unknown, RequirementRow>`.
 
@@ -48,7 +46,7 @@ Eleven names and eleven broad placeholders. The three exact release signatures w
 
 `SystemProgramDefinitions` pairs each name with its contract, and the roster, the name union, the identities, the references, the registry, and the wire exposure all derive from it. There is one place a program is introduced.
 
-Nine are here because nine have exact inputs, outputs, failures, prerequisites, and consumers presently readable off types that exist: `AuditProduct`, `AssuranceResult`, the compiler-owned migration authority, the consumer-build adapters, the doctor provider authority, and the package, release, and publication chain. `benchmark` and `docs` remain intended capabilities whose outputs have not yet been quarried. Naming them would restore exactly the placeholder the map exists to remove — a roster is a promise the compiler checks, and a promise about a contract nobody has written is not one it can keep.
+Every rostered program has exact inputs, outputs, failures, prerequisites, and consumers grounded in existing authorities: `AuditProduct`, `AssuranceResult`, the compiler-owned migration authority, consumer-build adapters, doctor providers, and the package, release, and publication chain. Benchmark and docs generation are absent because those exact contracts and consumers do not exist. Naming them would restore the placeholder the map exists to remove.
 
 Each returns when its complete operation definition is reasoned and consumed. That is one edit to one tuple.
 
@@ -56,7 +54,7 @@ Each returns when its complete operation definition is reasoned and consumed. Th
 
 ### Where the request shapes live, and why they must live here
 
-`gauntlet` evaluates an audit product, and `01_gauntlet` may not import `00_audit` — they are siblings, and sibling exclusion is the rule that kept the predecessor's Cloudflare package from losing its independent story.
+`gauntlet` evaluates an audit product, and `01_gauntlet` may not import `00_audit` because they are sibling authorities. Their relationship belongs here, at the first downstream home allowed to name both.
 
 So `GauntletRequest` and `VerifyRequest` are declared here. This home is downstream of both children and is the first place allowed to name them together, which is precisely its job: it says which program consumes and produces which, and declares none of the products itself.
 
@@ -96,7 +94,7 @@ What it is not: a run. These are contracts, and a composition of contracts prove
 
 `MigrateProgram` consumes core's exact selected-row `MigrationRequest`, produces the report parameterized by that same adapter and request identity, fails with `MigrationFailure`, and requires the compiler-owned `MigrationAuthorityRequirement`. Its failure type is not the default diagnostic array: `SystemProgram` permits an exact failure carrier after the requirement row, so the rostered entry is the contract wires actually project.
 
-`MigrateProgramProjection` binds that one computed program identity through direct, CLI, HTTP, and MCP carriers and consumes the editor's generic semantic migration method. The concrete editor catalog itself retains the adapter/request relationship: each call returns `MigrationReport<ThatAdapter, ThatRequest>`, while its outer request carrier adds correlation and crossing once. This composition lives here because wires cannot import system back. No browser projection exists, and none is implied. The composition is compile-use evidence only; no handler body exists.
+`MigrateProgramProjection` binds that one computed program identity through direct, CLI, HTTP, and MCP carriers and consumes the editor's generic semantic migration method. The concrete editor catalog itself retains the adapter/request relationship: each call returns `MigrationReport<ThatAdapter, ThatRequest>`, while its outer request carrier adds correlation and crossing once. This composition lives here because wires cannot import system back. No browser projection exists or is implied. A realization must preserve the exact adapter, request, report, and outer crossing carried by this compile-use composition.
 
 Its effect population is exactly `create`. Migration creates an addressed admitted-meaning bundle and proposes a later application operation; it has no `modify` effect and no workspace-mutation arm.
 
@@ -130,11 +128,9 @@ Strict CLI mode exposed one missing wire state. A caution report remains a succe
 
 Initial doctor exposure is direct, CLI, MCP, and the editor's diagnostics/explanation surface. HTTP is absent.
 
-## Why this home waited
+## Dependency on wires
 
-A program projects through a wire. Its contract could not be written honestly before the wire contract existed, and `02_wires/cli` landed first for that reason.
-
-That was a dependency, not a schedule. The distinction matters because the previous arrangement's equivalent of this home was built anyway, under a `verification/` directory, before anything it needed existed.
+A program projects through a wire, so its complete public contract depends on the exact wire carriers it exposes. This home owns those compositions after the wire layer and cannot be replaced by a private command engine.
 
 ## Laws
 

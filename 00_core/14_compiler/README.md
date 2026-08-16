@@ -1,7 +1,5 @@
 # Compiler, Settlement, and Realization Planning
 
-Status: specified with empirical cost profiles; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `14_compiler/`

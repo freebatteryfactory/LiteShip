@@ -9,10 +9,9 @@
  * own it without choosing between ffmpeg, a rasterizer, and a headless browser.
  *
  * The second is the codec side, which this host does not redeclare: decode,
- * encode, and mux are core's sockets, and the offer below provides them.
- * `render` used to span all four, accepting a schema *describing* a frame and
- * emitting bytes framed as network chunks — a job satisfiable without a frame
- * ever existing, whose output could not be told from traffic.
+ * encode, and mux are core's sockets, and the offer below provides them. A
+ * single render/decode/encode/mux operation could accept only a schema
+ * describing a frame and emit traffic-shaped bytes without any frame existing.
  *
  * Sources are bounded and lossless. A five-minute render cannot exist in memory
  * before encoding starts, and an operation returning every frame at once makes
@@ -62,7 +61,9 @@ import type { FilesystemRequirement } from '../03_filesystem/types.js';
 import type { AdmittedPath, FilesystemRootId } from '../03_filesystem/types.js';
 import type { ToolAuthorityRequirement, ToolId, ToolProfile, ToolProfileId } from '../07_tool/types.js';
 
+/** Stable identity for one media job. */
 export type MediaJobId<Name extends string = string> = Brand<Name, 'liteship.server.media-job-id'>;
+/** Typed reference to one media job. */
 export type MediaJobReference<Id extends MediaJobId = MediaJobId> = Reference<
   'server-media-job',
   Id
@@ -74,10 +75,12 @@ export interface ServerSamplePosition {
   readonly rate: SampleRate;
 }
 
+/** Stable identity for one render profile. */
 export type RenderProfileId<Name extends string = string> = Brand<
   Name,
   'liteship.server.render-profile-id'
 >;
+/** Typed reference to one render profile. */
 export type RenderProfileReference<Id extends RenderProfileId = RenderProfileId> = Reference<
   'server-render-profile',
   Id
@@ -195,6 +198,7 @@ export interface ServerMediaAuthority {
   >;
 }
 
+/** Capability requirement for server media. */
 export type ServerMediaRequirement = Hole<'liteship.server.media', ServerMediaAuthority>;
 
 /** Native codec admission: whether this machine's tools accept one profile. */
@@ -216,6 +220,7 @@ export interface ServerCodecAdmission {
   >;
 }
 
+/** Capability requirement for server codec admission. */
 export type ServerCodecAdmissionRequirement = Hole<
   'liteship.server.codec-admission',
   ServerCodecAdmission

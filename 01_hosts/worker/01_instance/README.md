@@ -1,7 +1,5 @@
 # Worker Instance
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/worker/01_instance/`
@@ -42,4 +40,4 @@ Both are `system/01_assurance` obligations.
 
 ## Implementation boundary
 
-Specified. No lifecycle, signal, or close code exists or is authorized.
+A worker-instance realization must preserve readiness, crash, termination, finalization, and owned-resource semantics as distinct outcomes.

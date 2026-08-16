@@ -56,7 +56,9 @@ export interface HintSourceFacility {
   readonly headers: readonly AdmittedHeader[];
 }
 
+/** Capability requirement for hint source. */
 export type HintSourceRequirement = Hole<'liteship.edge.hint-source', HintSourceFacility>;
+/** Capability requirement for request evidence. */
 export type RequestEvidenceRequirement = Hole<
   'liteship.edge.request-evidence',
   RequestEvidenceAuthority

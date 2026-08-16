@@ -1,7 +1,5 @@
 # Astro Integration Identity
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/astro/00_integration/`
@@ -27,7 +25,7 @@ Answer who this child is and what it may honestly claim about the ecosystem it a
 
 ## Why absence is an altitude of its own
 
-`refused` knows the range and says no. `unavailable` could not determine the range at all. Collapsing them turns "we did not look" into "we checked and it is fine" — which is what a silent degradation looks like once it is written down. The predecessor shipped a doctor probe that reported a target healthy because nothing had contradicted it yet.
+`refused` knows the range and says no. `unavailable` could not determine the range at all. Collapsing them turns "we did not look" into "we checked and it is fine", allowing absence of evidence to masquerade as support.
 
 ## Laws
 
@@ -46,4 +44,4 @@ Assurance-and-implementation territory.
 
 ## Implementation boundary
 
-Specified. No code exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

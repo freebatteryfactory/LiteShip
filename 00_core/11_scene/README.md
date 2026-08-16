@@ -1,7 +1,5 @@
 # Scenes, Spatial Coordinates, and Timelines
 
-Status: specified hypothesis; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `11_scene/`
@@ -99,7 +97,7 @@ A subscene is an addressed semantic world instance with local coordinates, local
 
 ## Laws
 
-- Fidelity is a four-arm algebra. The predecessor shape — a boolean beside two optionals — admitted eight combinations, two of them meaningless: an exact projection carrying an error bound, and an inexact one carrying neither a bound nor an alternative.
+- Fidelity is a four-arm algebra. A boolean beside two optionals would admit meaningless combinations: an exact projection carrying an error bound, and an inexact one carrying neither a bound nor an alternative.
 - An approximate projection names an addressed scene-owned tolerance profile stating domain, metric, unit, bound, and address, never a bare number. `0.01` cannot say whether it means pixels, normalized distance, channel error, or timing drift.
 - Spatial fidelity and invertibility are orthogonal. Exact projection does not silently promise a reversible transform.
 - An unsupported projection carries a non-empty diagnostic population and a remediation. Silence is the failure mode this declaration exists to rule out.
@@ -145,6 +143,6 @@ A subscene is an addressed semantic world instance with local coordinates, local
 
 ## Implementation boundary
 
-The scene roster, coordinate and transform contracts, geometry-support predicate, timeline families, shared interpolation ownership, subscene model, and patch family are specified. This is the only major core area with no mature old spatial algebra to port.
+Scene realizations must preserve coordinate spaces, ordered transforms, addressed tolerances, geometry support, timelines, subscenes, and patch semantics across every egress.
 
 The spatial contract is a clean-room hypothesis and carries no production authority until it has been pressure-tested with SVG, CSS, Canvas, WebGPU, video, editor, and accessibility fixtures. Exact standard geometry and material constructor spelling may refine under those proofs; the laws above do not.

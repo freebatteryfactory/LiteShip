@@ -270,6 +270,7 @@ export type SlotClaim<
   'direct-composition-claim': Record<never, never>;
 }>;
 
+/** Type-level representation of target rejection. */
 export type TargetRejection = Algebra<{
   /** The configuration never decoded into something admissible. */
   'malformed-configuration': { readonly diagnostics: NonEmptyTuple<Diagnostic> };
@@ -374,4 +375,3 @@ export interface DeployableApplication {
   readonly entry: ProducedArtifact;
   readonly assets: readonly ProducedArtifact[];
 }
-

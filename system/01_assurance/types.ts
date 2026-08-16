@@ -142,7 +142,9 @@ export type AssuranceDecision = Decision<AssuranceSubject, readonly Diagnostic[]
 // Gates and the authority they must earn
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one gate. */
 export type GateId<Name extends string = string> = Brand<Name, 'liteship.assurance-gate-id'>;
+/** Typed reference to one gate. */
 export type GateReference<Id extends GateId = GateId> = Reference<'assurance-gate', Id>;
 
 /**
@@ -156,6 +158,7 @@ export type FailureClassId<Name extends string = string> = Brand<
   Name,
   'liteship.assurance-failure-class-id'
 >;
+/** Typed reference to one failure class. */
 export type FailureClassReference<Id extends FailureClassId = FailureClassId> = Reference<
   'assurance-failure-class',
   Id
@@ -193,12 +196,9 @@ export interface GateScope {
  * > this proof, this run specification, and this evaluation concern the same
  * > exact definition observation.
  *
- * It does not prove that the token changes when the rule's bytes change. Nothing
- * in a type system mints a token, so "editing the rule invalidates its old
- * proof" is a property of whatever mints them — and an earlier draft of this
- * comment asserted it as a property of the declaration, which is the same
- * overclaim the snapshot token was carefully written to avoid, made one file
- * over and four days later.
+ * It does not prove that the token changes when the rule's bytes change.
+ * Nothing in a type system mints a token, so invalidating proofs after an edit
+ * is an obligation of the authority that mints revisions.
  *
  * The definition carries a `ContentAddress` of the rule text as a runtime
  * observation. That address cannot carry the exactness either:
@@ -211,6 +211,7 @@ export type GateRevisionId<Name extends string = string> = Brand<
   Name,
   'liteship.assurance-gate-revision-id'
 >;
+/** Typed reference to one gate revision. */
 export type GateRevisionReference<Id extends GateRevisionId = GateRevisionId> = Reference<
   'assurance-gate-revision',
   Id
@@ -230,6 +231,7 @@ export type SpecimenId<Name extends string = string> = Brand<
   Name,
   'liteship.assurance-specimen-id'
 >;
+/** Typed reference to one specimen. */
 export type SpecimenReference<Id extends SpecimenId = SpecimenId> = Reference<
   'assurance-specimen',
   Id
@@ -309,12 +311,10 @@ export interface DemonstrationWitness<
 /**
  * One demonstration that one check detects one failure class.
  *
- * Four named slots, each pinned to its own role literal, so the product cannot
- * hold four baselines. This is what replaces the previous arrangement, in which
- * `detects: NonEmptyTuple<FailureClassReference>` and
- * `witnesses: NonEmptyTuple<DetectionWitness>` were two independent populations
- * — probe-confirmed that a gate declaring it detects X while carrying a witness
- * for Y was assignable. The claim and its evidence are now the same object.
+ * Named slots are pinned to their role literals, so the product cannot contain
+ * only baselines. Independent `detects` and `witnesses` populations would
+ * allow a gate to claim X while carrying evidence for Y; here the claim and
+ * evidence are one object.
  */
 export interface ClaimDemonstration<
   Class extends FailureClassId = FailureClassId,
@@ -440,13 +440,11 @@ export type GateOrigin = 'repository' | 'consumer';
  * A check that claims nothing can never be disproven, which makes it
  * permanently undemonstrable rather than trivially trustworthy.
  *
- * There is no `disposition` member. A definition used to declare itself
- * `blocking`, `warning`, or `advisory` for all time, which made a factual check
- * permanently managerial — and it is wrong on its face, because the same check
- * is required by release, shown in an editor, and merely informative in a
- * diagnostic view. What a check *is* does not change; what an invocation
- * *requires* does. Consequence therefore lives on {@link AssuranceRunSpec}, as
- * ordinary operation input.
+ * There is no `disposition` member. A permanent `blocking`, `warning`, or
+ * `advisory` tag would make a factual check managerial even though release,
+ * editor, and diagnostic invocations require different consequences. What a
+ * check *is* does not change; what an invocation *requires* does. Consequence
+ * therefore lives on {@link AssuranceRunSpec}, as ordinary operation input.
  *
  * `requires` stays, and is not the same kind of thing. An evidence profile is a
  * factual prerequisite of the check — it says what the check needs in order to
@@ -584,10 +582,12 @@ export interface PlannedCheck<
   readonly consequence: CheckConsequence;
 }
 
+/** Stable identity for one assurance run spec. */
 export type AssuranceRunSpecId<Name extends string = string> = Brand<
   Name,
   'liteship.assurance-run-spec-id'
 >;
+/** Typed reference to one assurance run spec. */
 export type AssuranceRunSpecReference<Id extends AssuranceRunSpecId = AssuranceRunSpecId> =
   Reference<'assurance-run-spec', Id>;
 

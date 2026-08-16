@@ -1,7 +1,5 @@
 # Edge Storage
 
-Status: provisional; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/edge/07_storage/`
@@ -36,4 +34,4 @@ Own optional edge-physical providers realizing lawful subsets of core's revision
 
 ## Implementation boundary
 
-Provisional and specified. No KV, R2-like, or storage driver code exists or is authorized.
+Storage durability, consistency, and capacity profiles remain empirical; a realization must preserve admitted binding, key, value, custody, and failure semantics.

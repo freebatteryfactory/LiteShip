@@ -7,16 +7,14 @@
  * local condition algebra — a target that authors its own proposition grammar
  * has stopped translating and started competing.
  *
- * The predecessor registered nine client directives that mixed several
- * unrelated categories: adaptivity, graph-cut joining, remote evidence sources,
- * and backend selection. Three of those nine (`worker`, `gpu`, `wasm`) let an
- * author pick an execution backend through a hydration spelling. The compiler
- * and the backend planner choose backends from requirements and evidence. An
- * author directive is not a backend dropdown wearing HTML.
+ * One directive must not mix adaptivity, graph-cut joining, remote evidence,
+ * and backend selection. The compiler and backend planner choose execution from
+ * requirements and evidence; an author directive is not a backend dropdown
+ * wearing HTML.
  *
- * Collapsing nine spellings into one must not produce one drawer holding all
- * nine meanings. The absence laws below are what keep this from becoming a
- * payload bag with a nicer name.
+ * A shared authoring projection must not become one drawer holding unrelated
+ * meanings. The absence laws keep this from becoming a payload bag with a
+ * nicer name.
  *
  * @module
  */
@@ -50,7 +48,7 @@ export interface AuthoredActivation {
  *
  * Refusal is explicit. An unrecognised directive that quietly produced an
  * always-true activation would ship browser behaviour the author never asked
- * for, which is how the predecessor's silent degradation reached production.
+ * for.
  */
 export type AuthoringRefusal = Algebra<{
   'unknown-directive': { readonly directive: AstroDirectiveName; readonly diagnostics: NonEmptyTuple<Diagnostic> };

@@ -1,7 +1,5 @@
 # Vite Fleet Projection
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/vite/01_projection/`
@@ -23,11 +21,11 @@ Project the complete core compiler fleet into the build lifecycle, and expose th
 
 - Any requester. Nothing here imports, names, or is shaped around a framework.
 - Compiler algorithms or arm semantics. Core owns those.
-- Whether the facility converges with anyone. A composition point answers that, and it is assurance rather than architecture — its home is `system/`, which is not yet authored.
+- Whether the facility converges with a requester. A composition point under `system/` answers that assurance question.
 
 ## Derived, because a hand-maintained list goes quiet
 
-The predecessor kept a fixed set of transforms. Adding a compiler capability produced no error and no diagnostic — the new arm simply had no projection, and nothing said so.
+A fixed transform list can silently omit a new compiler capability. The projection is therefore derived from the compiler roster, making every added arm demand an explicit supported or unsupported decision.
 
 Here the projection is a mapped type over the roster. Adding an arm adds a key, and a projection that has not decided about it does not type-check. The decision may be "unsupported", but it must be made and it must carry evidence.
 
@@ -49,4 +47,4 @@ Assurance-and-implementation territory.
 
 ## Implementation boundary
 
-Specified. No code exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

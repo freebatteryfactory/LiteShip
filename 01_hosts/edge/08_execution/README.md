@@ -1,7 +1,5 @@
 # Edge Execution
 
-Status: specified with physical profiles deferred; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/edge/08_execution/`

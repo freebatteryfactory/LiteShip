@@ -1,7 +1,5 @@
 # Runtime and General Compute Kernels
 
-Status: specified with empirical backend crossover; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `16_runtime/`
@@ -104,6 +102,6 @@ Fallback behavior is explicit and preserves the reference semantics or returns a
 
 ## Implementation boundary
 
-The execution model and generalized kernel ABI are specified. Rust crate organization, command encoding, shared-memory strategy, backend implementations, and crossover thresholds are absent and empirical.
+Runtime realizations must preserve kernel ABI, backend qualification, command and memory-plan semantics, committed-cut identity, and failure behavior; physical encodings and crossover thresholds remain empirical.
 
 Recruiting and generalizing the existing compute crate, removing inappropriate fixed-buffer assumptions, building caller-owned batching, and establishing representative backend profiles are implementation obligations. GPU reconciliation is research rather than architecture, and it is not the default execution model; making it one would be an explicit reopening.

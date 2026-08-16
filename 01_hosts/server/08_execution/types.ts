@@ -38,7 +38,9 @@ import type {
 /** Backends this home locally owns, derived from the bootstrap's placement authority. */
 export type ServerExecutionBackend = ServerPlacedBackend;
 
+/** Stable identity for one server task. */
 export type ServerTaskId<Name extends string = string> = Brand<Name, 'liteship.server.task-id'>;
+/** Typed reference to one server task. */
 export type ServerTaskReference<Id extends ServerTaskId = ServerTaskId> = Reference<
   'server-task',
   Id
@@ -48,6 +50,7 @@ export type ServerTaskReference<Id extends ServerTaskId = ServerTaskId> = Refere
 type ServerDriverBinding<Backend> = Backend extends ServerExecutionBackend
   ? { readonly backend: Backend; readonly driver: ExecutionBackendDriver & { readonly kind: Backend } }
   : never;
+/** Physical driver contract for bound server. */
 export type BoundServerDriver = ServerDriverBinding<ServerExecutionBackend>;
 
 /** The complete execution request carries the fresh per-use task identity. */
@@ -88,10 +91,12 @@ export interface ServerSchedulingFacility {
   readonly schedule: Signature<ExecutionRequest, ExecutionRequest, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for server scheduling. */
 export type ServerSchedulingRequirement = Hole<
   'liteship.server.scheduling-facility',
   ServerSchedulingFacility
 >;
+/** Capability requirement for server execution. */
 export type ServerExecutionRequirement = Hole<'liteship.server.execution', ServerExecutionHost>;
 
 /** Intrinsic grounding: the scheduling facility, admitted narrowly. */

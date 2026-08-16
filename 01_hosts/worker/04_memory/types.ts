@@ -40,10 +40,12 @@ import type { TransactionGeneration } from '../../../00_core/04_time/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { WorkerGroundingDefinition, WorkerRealizationOffer } from '../00_bootstrap/types.js';
 
+/** Stable identity for one shared buffer. */
 export type SharedBufferId<Name extends string = string> = Brand<
   Name,
   'liteship.worker.shared-buffer-id'
 >;
+/** Typed reference to one shared buffer. */
 export type SharedBufferReference<Id extends SharedBufferId = SharedBufferId> = Reference<
   'worker-shared-buffer',
   Id
@@ -52,6 +54,7 @@ export type SharedBufferReference<Id extends SharedBufferId = SharedBufferId> = 
 /** The addressed layout contract: sizes, planes, and offsets live behind this address. */
 export type SharedMemoryLayoutAddress = ContentAddress<'application/vnd.liteship.worker-memory-layout+cbor'>;
 
+/** Stable identity for one memory layout. */
 export type MemoryLayoutId<Name extends string = string> = Brand<
   Name,
   'liteship.worker.memory-layout-id'
@@ -149,10 +152,12 @@ export interface SharedMemoryAuthority {
   ) => Result<SharedMemoryView<Role, Id>, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for shared memory facility. */
 export type SharedMemoryFacilityRequirement = Hole<
   'liteship.worker.shared-memory-facility',
   SharedMemoryFacility
 >;
+/** Capability requirement for shared memory. */
 export type SharedMemoryRequirement = Hole<'liteship.worker.shared-memory', SharedMemoryAuthority>;
 
 /** Intrinsic grounding: the shared-memory constructor facility, admitted narrowly. */

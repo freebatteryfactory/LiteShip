@@ -1,7 +1,5 @@
 # Web Composite Capture
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/12_capture/`
@@ -70,4 +68,4 @@ These are runtime claims, not unfinished work. A type cannot express any of them
 
 ## Implementation boundary
 
-Specified. No capture code, no permission flow, and no runtime exists or is authorized.
+A capture realization must preserve source identity, permission evidence, admitted media profiles, custody, cancellation, and device failure.

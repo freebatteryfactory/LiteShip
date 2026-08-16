@@ -2,11 +2,10 @@
  * Environment-scoped module-graph relationships: invalidation, hot-update
  * ordering, and stale rejection.
  *
- * The predecessor's hot updates carried a content-address predecessor link but
- * no monotonic generation, so two updates arriving out of order both applied
- * and the later state was whichever landed last. The ecosystem does not fix
- * this: Vite's hot-update payload carries a timestamp for cache-busting, and
- * neither the HMR guide nor the hook documentation promises ordering.
+ * A content-addressed predecessor link without a monotonic generation allows
+ * out-of-order updates to apply under arrival order. Vite's hot-update
+ * timestamp is cache-busting evidence; neither the HMR guide nor hook contract
+ * promises ordering.
  *
  * So the ecosystem timestamp stays what it is — evidence — and ordering is
  * carried by core's `StreamSequence`, which exists precisely to be monotonic.

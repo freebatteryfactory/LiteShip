@@ -1,7 +1,5 @@
 # Collections and Relational Expressions
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `10_collection/`
@@ -93,6 +91,6 @@ Join cardinality is explicit so output schema and optionality remain derivable.
 
 ## Implementation boundary
 
-The relational algebra, truth semantics, revision relationship, patch family, and deterministic ordering rules are specified. Authoring helper spelling, execution engines, and index realization are absent.
+Collection realizations must preserve relational truth, revision relationships, patch legality, deterministic ordering, and scan/index equivalence.
 
 Testing the authoring helpers against real TypeScript ergonomics, including direct field navigation and any optional symbolic callback form, and selecting physical index and backend realizations, are implementation and empirical obligations.

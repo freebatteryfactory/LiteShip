@@ -1,7 +1,5 @@
 # Edge Cache
 
-Status: specified with physical profiles deferred; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/edge/06_cache/`
@@ -39,4 +37,4 @@ Own edge cache provider authority: canonical keys, declared variation, private p
 
 ## Implementation boundary
 
-Specified with physical profiles deferred. No cache driver code exists or is authorized.
+Cache TTL, staleness, partition, and cardinality profiles remain empirical; a realization must preserve key variation, partition isolation, evidence, and custody.

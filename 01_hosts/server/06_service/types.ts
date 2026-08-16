@@ -28,7 +28,9 @@ import type { RealizationLifecycle, RealizationOfferId } from '../../../00_core/
 import type { ServerRealizationOffer } from '../00_bootstrap/types.js';
 import type { ProcessAuthorityRequirement } from '../01_process/types.js';
 
+/** Stable identity for one service. */
 export type ServiceId<Name extends string = string> = Brand<Name, 'liteship.server.service-id'>;
+/** Typed reference to one service. */
 export type ServiceReference<Id extends ServiceId = ServiceId> = Reference<'server-service', Id>;
 
 /** Readiness and health, phase-correct: starting is not ready; unhealthy is not gone. */
@@ -87,6 +89,7 @@ export interface ServiceAuthority {
   readonly construct: Signature<ServiceRequest, ServiceInstance, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for service. */
 export type ServiceRequirement = Hole<'liteship.server.service', ServiceAuthority>;
 
 /** Constructing the service provider over the admitted host process. */

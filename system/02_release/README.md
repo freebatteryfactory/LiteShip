@@ -1,7 +1,5 @@
 # Release: Distributable Meaning and Earned Qualification
 
-Status: architecture specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `system/02_release/`
@@ -42,7 +40,7 @@ A candidate must still be able to be unqualified: it is packed before it is judg
 
 The alternative is the ordinary industry arrangement, in which the same program produces a tarball and declares it fit. That arrangement has nowhere to record *why* it is fit, which means it has nothing to be wrong about.
 
-## Two axes, not one
+## Compatibility and assurance are independent
 
 A result is exact over its snapshot and over its specification. The snapshot axis answers *was this evidence about the right revision*. The specification axis answers *was it about the right question*.
 
@@ -76,7 +74,7 @@ A semantic version is an assertion a human typed. An ABI address is a fact about
 
 The `no-predecessor` arm is a real conclusion, not an unfinished assessment: it carries the current ABI address and states that no previous surface exists. A grammar that forces the first release to say `compatible` teaches the apparatus to invent a comparison. A law pins the complete roster, the current address, the absent predecessor, and the absence of a free-text reason.
 
-## Three receipts, because three things can fail separately
+## Distinct release receipts
 
 Packaging, releasing, and publishing are three operations over one authority, and each can succeed while the next does not.
 
@@ -111,4 +109,4 @@ Runtime and repository claims a type cannot express:
 
 ## Implementation boundary
 
-Architecture only. No implementation exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

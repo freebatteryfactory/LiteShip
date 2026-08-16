@@ -5,8 +5,6 @@
  * `DeployableApplication` binds produced artifacts whose producers may be an
  * ecosystem target or a host-only composition, and this home consumes that type
  * — the *only* type — so there is nowhere for a framework branch to attach.
- * The predecessor could not do this: its Cloudflare package required a
- * framework sibling and had no direct entry at all.
  *
  * A deployment therefore has no member naming a framework, no arm for
  * "framework-produced", and no way to ask. If a consumer ever needs to know

@@ -578,7 +578,7 @@ It composes the root shape calculus into actual product semantics:
 - agent/editor/accessibility/shader/media projections;
 - explanation and authority discovery.
 
-The attached `00_core/README.md`, `00_core/types.ts`, and numbered core homes record the confirmed internal authority structure, type waterfall, runtime doctrine, proof obligations, and visible open seams. They are downstream of this root foundation and exist as architecture; implementation is intentionally absent. Nothing there is protected from correction — see §17.
+The attached `00_core/README.md`, `00_core/types.ts`, and numbered core homes record the internal authority structure, type waterfall, runtime doctrine, and proof obligations. They are downstream of this root foundation, and nothing there is protected from correction — see §17.
 
 ### 8.1 Complete meaning, selective realization
 
@@ -626,7 +626,7 @@ Targets attach upstream LiteShip capabilities to ecosystem lifecycles.
 
 The target children are Astro, Vite, and Cloudflare. `TargetChildRoster` in `02_targets/types.ts` names exactly those three, so a fourth is an edit somebody makes on purpose rather than a folder that appears because a dependency did.
 
-An earlier draft of this section also named Remotion. No such target exists and none is planned for this phase: media rendering is core and host capability — `00_core/12_media` and `01_hosts/server/10_media` — and routing it through an ecosystem target would have made a capability the repository owns look like one it borrows.
+Media rendering is a core and host capability — `00_core/12_media` and `01_hosts/server/10_media` — rather than an ecosystem target. Treating it as a target would make a capability LiteShip owns look like one it borrows.
 
 A target may own registration, build hooks, lifecycle translation, host configuration, generated artifacts, middleware attachment, directive registration, and ecosystem compatibility.
 
@@ -668,7 +668,7 @@ LiteShip's own system programs use this same wire. User applications can project
 
 Its responsibilities are workspace, assurance, release, repository programs, and bootstrap.
 
-Its earned definition map currently owns typed programs for:
+Its definition map owns typed programs for:
 
 - doctor;
 - audit;
@@ -680,9 +680,9 @@ Its earned definition map currently owns typed programs for:
 - release;
 - shipping.
 
-Nine are rostered. Benchmark and docs generation remain intended capabilities whose output contracts have not yet been quarried; they are not `unknown -> unknown` placeholders. This list previously opened with *workspace discovery*, and that entry has moved rather than vanished: `system/00_workspace` owns workspace identity, snapshots, root and source-home observation, revision and working-tree state, and toolchain references, and the programs above consume that authority. Discovery is a thing programs need, not a thing programs orchestrate. Exposing it later through `doctor`, an editor wire, or MCP is ordinary; making it another orchestration engine would have meant two places that answer "what repository is this", which is the defect the layer exists to prevent.
+Benchmark and docs generation are absent because no exact output contracts and immediate consumers are declared; they are not `unknown -> unknown` placeholders. Workspace discovery is an authority rather than a program: `system/00_workspace` owns workspace identity, snapshots, root and source-home observation, revision and working-tree state, and toolchain references. Programs consume that authority instead of creating another engine that answers "what repository is this".
 
-Packaging likewise did not disappear from the responsibility list — it was absorbed. `system/02_release` owns distributable artifact identity, package manifests, candidates, qualification, attestations, publication plans, and receipts; `package`, `release`, and `ship` remain three distinct programs over that one authority. There is no separate packaging home waiting to hatch.
+`system/02_release` owns distributable artifact identity, package manifests, candidates, qualification, attestations, publication plans, and receipts; `package`, `release`, and `ship` are distinct programs over that one authority. There is no separate packaging home.
 
 It also owns assurance acquisition/evaluation composition, type ABI canonicalization, release attestations, and workspace governance.
 
@@ -809,25 +809,10 @@ This foundation and the attached `00_core/` architecture candidate intentionally
 
 **Nothing above is protected from correction.** A commit records bytes; a tag is a bookmark; "type-checks" means TypeScript accepted this tree under one named configuration. No layer name, prior ruling, or tag creates a permission barrier. When evidence shows an authority is wrong or incomplete, correct that authority directly rather than working around it downstream.
 
-Evidence that warrants correcting core, or anything else: a downstream contract that cannot be expressed faithfully over it; compiler behaviour contradicting a written claim; an implementation showing a declared contract is unrealizable; an old-source oracle revealing an omitted capability; an empirical result invalidating a physical assumption; or a change in product intent.
+Evidence that warrants correcting core, or anything else: a downstream contract that cannot be expressed faithfully over it; compiler behaviour contradicting a written claim; an implementation showing a declared contract is unrealizable; implementation evidence revealing an omitted capability; an empirical result invalidating a physical assumption; or a change in product intent.
 
 Dependency direction is the one rule that does not bend — it is what makes this a waterfall rather than a graph.
 
 The physical tree is the population. A home exists when its directory does; this document does not carry a second census of what is written, because a hand-maintained one drifts from the tree within hours and then misleads every reader who trusts the root first.
 
-No runtime implementation exists anywhere. Every home receives its architecture before any executable product code, so the shape settles while it is still cheap to change.
-
-## 18. Source basis
-
-This clean-room design was built from:
-
-- the post-fiasco North Star;
-- the reset postmortem;
-- the capability port ledger;
-- the human-in-the-loop method;
-- the layout seed and global-layout artifact;
-- the full-send ideation atlas;
-- line-by-line source-quarry evidence for the schema port, schema AST/inference, tagged error algebra, result carrier, content addressing, typed requirement tuples, capsule contracts, ECS authority tuples, receipt envelopes, and type-surface enumeration;
-- current official TypeScript transition guidance establishing the native TypeScript 7 primary lane and the temporary TypeScript 6 compatibility/API lane required by Astro-class embedded-language tooling.
-
-The source quarry supplied mechanisms and failure evidence. The architecture in this document is clean-room successor design.
+Realizations enter in dependency order and must satisfy each owner's stated laws and proof obligations without introducing a second semantic path.

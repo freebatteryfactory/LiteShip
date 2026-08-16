@@ -1,7 +1,5 @@
 # Errors and Diagnostics
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `00_error/`
@@ -63,6 +61,6 @@ A diagnostic carries the complete machine object. Default human rendering answer
 
 ## Implementation boundary
 
-The semantic contract is specified. Runtime implementation, exported constructors, catalog storage, and renderers are absent. Production authority is not earned until the security and cross-projection proofs exist.
+Constructors, catalogs, and renderers must preserve the same diagnostic identity, structured remediation, and human/machine projections; security and cross-projection behavior remain empirical proof obligations.
 
 Porting the old secure composer and result behaviour, defining the diagnostic-family extension mechanism, and measuring loading and rendering cost are implementation obligations this architecture already authorizes.

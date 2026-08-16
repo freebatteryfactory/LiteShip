@@ -1,7 +1,5 @@
 # Workspace: Repository and Project Context
 
-Status: architecture specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `system/00_workspace/`
@@ -36,25 +34,25 @@ Answer, for every other system home, what repository this is: which revision, wh
 
 The governing word in this home is *observes*.
 
-A snapshot points at the root manifest, the toolchain matrix, the physical directories, and the Git revision. It never restates their contents. The alternative was tried at scale and failed exactly the way this design predicts: a control plane grew its own picture of what the repository contained, nobody compared the two, and they disagreed for as long as it existed.
+A snapshot points at the root manifest, the toolchain matrix, the physical directories, and the Git revision. It never restates their contents. A control plane that stores a second picture of the repository can diverge without either side becoming ill-typed.
 
 Concretely, that is why `RootMetadataObservation` holds an `Evidence<TypeScriptToolchainMatrix>` and a `compilerConfiguration` digest rather than a compiler version field. Two places that may state a version are the same defect as one place that lies.
 
-## The root census is this session's lesson as a type
+## Root census
 
 `RootCensusEntry` has three arms and one deliberate absence.
 
-`governed` is declared and present. `reserved` is declared and not yet present — lawful, and the state `system/03_programs/` is in today; naming a home before authoring it is how the waterfall stays legible. `ungoverned` is present and declared nowhere, which is the state `verification/` and `scripts/` were in for their entire existence.
+`governed` is declared and present. `reserved` is declared but not present, which keeps an intended location visible without claiming it exists. `ungoverned` is present and declared nowhere.
 
-The failure that produced them was not a missing rule. `AGENTS.md` already forbade a `scripts/` directory, in prose, before either existed. The failure was that *undeclared* had no representation anywhere in the system, so the observation had nowhere to land and therefore landed nowhere. No report was ever wrong, because no report ever mentioned them.
+An observation without an `ungoverned` arm can omit undeclared roots and still report success. The explicit arm makes every observed root land in the census.
 
-There is no arm meaning **known and ignored**. An exemption would reintroduce precisely the state this algebra exists to expose, and an exemption list is how the previous arrangement justified itself. A law pins the arm count, so adding one is a compile error rather than a quiet widening.
+There is no arm meaning **known and ignored**. An exemption would reintroduce precisely the state this algebra exists to expose. A law pins the complete arm population, so adding one is a compile error rather than a quiet widening.
 
 ## Coverage is not optional
 
 `HomeCensusCoverage` and the `Evidence` wrapper on each observed file exist for one reason: a census that silently drops what it could not read reports a smaller repository than exists.
 
-That is not a hypothetical. Reporting on the subset it managed to reach, and reading clean downstream, is the specific habit that let a shadow control plane sit at the root of a repository whose entire thesis is that it describes itself.
+Reporting only the subset a census managed to read produces a smaller, falsely clean repository.
 
 An unreadable file is `unavailable` inside its own `Evidence`. An unenumerable directory is `partial` at the run level. Neither is ever an omission.
 
@@ -109,4 +107,4 @@ Runtime and repository claims a type cannot express:
 
 ## Implementation boundary
 
-Architecture only. No implementation exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

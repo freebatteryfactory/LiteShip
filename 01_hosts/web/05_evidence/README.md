@@ -1,7 +1,5 @@
 # Web Evidence Producers
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/05_evidence/`
@@ -43,4 +41,4 @@ Both are `system/01_assurance` obligations.
 
 ## Implementation boundary
 
-Specified. No matchMedia call, probe, or watcher code exists or is authorized.
+A browser-evidence realization must preserve source identity, acquisition state, observation time, retractability, and disposal across probes and watchers.

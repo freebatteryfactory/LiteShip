@@ -2,11 +2,9 @@
  * Final build products: chunks, emitted rosters, and the manifest — with one
  * producer per slot.
  *
- * The predecessor wrote its boundary manifest twice, from two different
- * derivations, in two different packages: once at bundle generation and once
- * from a fresh rescan at the end of the framework build. Nothing recorded which
- * one won. The ecosystem does not arbitrate this — both derivation surfaces
- * exist and neither has a concept of a winner.
+ * Two independently derived boundary manifests could disagree with no recorded
+ * winner. The ecosystem exposes both derivation surfaces and does not arbitrate
+ * between them.
  *
  * The umbrella already made the answer unrepresentable: a `ProducedArtifact`
  * carries one producer and one slot. This home consumes that rather than

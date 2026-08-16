@@ -1,7 +1,5 @@
 # Edge Request
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/edge/01_request/`
@@ -37,4 +35,4 @@ Own the exact physical incoming request: identity, closed method vocabulary, adm
 
 ## Implementation boundary
 
-Specified. No request parsing or body streaming code exists or is authorized.
+An edge-request realization must preserve admitted request identity, body custody, decoding failures, and cancellation through the physical request stream.

@@ -40,7 +40,9 @@ export type AdmittedStatus = Brand<number, 'liteship.edge.admitted-status'>;
 
 /** The physical receipt address only commitment mints. */
 export type ResponseCommitAddress = ContentAddress<'application/vnd.liteship.edge-response-commit+cbor'>;
+/** Stable identity for one response stream. */
 export type ResponseStreamId<Name extends string = string> = Brand<Name, 'liteship.edge.response-stream-id'>;
+/** Typed reference to one response stream. */
 export type ResponseStreamReference<Id extends ResponseStreamId = ResponseStreamId> = Reference<
   'edge-response-stream',
   Id
@@ -159,10 +161,12 @@ export interface ResponseCommitGrant {
   ) => Result<ResponseCommitAuthority<Id>, ResponseFailure>;
 }
 
+/** Capability requirement for response facility. */
 export type ResponseFacilityRequirement = Hole<
   'liteship.edge.response-facility',
   ResponseFacility<EdgeRequestId>
 >;
+/** Capability requirement for response commit. */
 export type ResponseCommitRequirement = Hole<'liteship.edge.response-commit', ResponseCommitGrant>;
 
 /** Invocation grounding: the response writer belongs to the invocation. */

@@ -25,7 +25,9 @@ import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../.
 import type { EdgeGroundingDefinition, EdgeRealizationOffer } from '../00_bootstrap/types.js';
 import type { CachePartitionKey, EdgePolicyRequirement } from '../03_policy/types.js';
 
+/** Stable identity for one cache entry. */
 export type CacheEntryId<Name extends string = string> = Brand<Name, 'liteship.edge.cache-entry-id'>;
+/** Typed reference to one cache entry. */
 export type CacheEntryReference<Id extends CacheEntryId = CacheEntryId> = Reference<
   'edge-cache-entry',
   Id
@@ -82,7 +84,9 @@ export interface CacheFacility {
   readonly fill: EdgeCacheAuthority['fill'];
 }
 
+/** Capability requirement for cache facility. */
 export type CacheFacilityRequirement = Hole<'liteship.edge.cache-facility', CacheFacility>;
+/** Capability requirement for edge cache. */
 export type EdgeCacheRequirement = Hole<'liteship.edge.cache', EdgeCacheAuthority>;
 
 /** Intrinsic grounding: the platform cache, admitted narrowly. */

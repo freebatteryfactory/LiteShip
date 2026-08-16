@@ -123,7 +123,9 @@ export interface CommitApplication {
   readonly apply: Signature<ProjectionCommit, WebCommitAddress, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for commit application. */
 export type CommitApplicationRequirement = Hole<'liteship.web.commit-application', CommitApplication>;
+/** Capability requirement for renderer catalog. */
 export type RendererCatalogRequirement = Hole<'liteship.web.renderer-catalog', ComponentRendererCatalog>;
 
 /** Deployment grounding: the renderer roster arrives as an addressed artifact. */

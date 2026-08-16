@@ -28,26 +28,44 @@ import type {
   SourceRelation,
 } from '../14_compiler/types.js';
 
+/** Stable identity for one program. */
 export type ProgramId<Name extends string = string> = Brand<Name, 'liteship.program-id'>;
+/** Stable identity for one program source. */
 export type ProgramSourceId<Name extends string = string> = Brand<Name, 'liteship.program-source-id'>;
+/** Stable identity for one program node. */
 export type ProgramNodeId<Name extends string = string> = Brand<Name, 'liteship.program-node-id'>;
+/** Stable identity for one program output. */
 export type ProgramOutputId<Name extends string = string> = Brand<Name, 'liteship.program-output-id'>;
+/** Stable identity for one program operation. */
 export type ProgramOperationId<Name extends string = string> = Brand<Name, 'liteship.program-operation-id'>;
+/** Stable identity for one memory plane. */
 export type MemoryPlaneId<Name extends string = string> = Brand<Name, 'liteship.memory-plane-id'>;
+/** Stable identity for one kernel. */
 export type KernelId<Name extends string = string> = Brand<Name, 'liteship.kernel-id'>;
+/** Typed reference to one program source. */
 export type ProgramSourceReference<Id extends ProgramSourceId = ProgramSourceId> = Reference<'program-source', Id>;
+/** Typed reference to one program node. */
 export type ProgramNodeReference<Id extends ProgramNodeId = ProgramNodeId> = Reference<'program-node', Id>;
+/** Typed reference to one program output. */
 export type ProgramOutputReference<Id extends ProgramOutputId = ProgramOutputId> = Reference<'program-output', Id>;
+/** Typed reference to one program operation. */
 export type ProgramOperationReference<Id extends ProgramOperationId = ProgramOperationId> = Reference<
   'program-operation',
   Id
 >;
+/** Typed reference to one memory plane. */
 export type MemoryPlaneReference<Id extends MemoryPlaneId = MemoryPlaneId> = Reference<'memory-plane', Id>;
+/** Type-level representation of program format version. */
 export type ProgramFormatVersion = 1;
+/** Type-level representation of memory layout format version. */
 export type MemoryLayoutFormatVersion = 1;
+/** Type-level representation of execution image format version. */
 export type ExecutionImageFormatVersion = 1;
+/** Type-level representation of source slot. */
 export type SourceSlot = Brand<number, 'liteship.program.source-slot'>;
+/** Type-level representation of node slot. */
 export type NodeSlot = Brand<number, 'liteship.program.node-slot'>;
+/** Type-level representation of output slot. */
 export type OutputSlot = Brand<number, 'liteship.program.output-slot'>;
 
 /** Readable source entry. */
@@ -106,9 +124,13 @@ export type ResidualProgram = Envelope<
   }
 >;
 
+/** Type-level representation of index width. */
 export type IndexWidth = 'u16' | 'u32';
+/** Type-level representation of generation width. */
 export type GenerationWidth = 'u32' | 'u64';
+/** Type-level representation of numeric width. */
 export type NumericWidth = 'i8' | 'u8' | 'i16' | 'u16' | 'i32' | 'u32' | 'i64' | 'u64' | 'f32' | 'f64';
+/** Type-level representation of plane encoding. */
 export type PlaneEncoding = 'numeric' | 'bitset' | 'two-bit' | 'offsets' | 'references' | 'bytes';
 
 /** Numeric semantics are declared per plane or kernel, not by one global float doctrine. */

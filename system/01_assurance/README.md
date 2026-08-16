@@ -1,7 +1,5 @@
 # Assurance: Claims About the Repository Itself
 
-Status: umbrella and both children architecture specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `system/01_assurance/`
@@ -23,7 +21,7 @@ Own the shared vocabulary for the facts TypeScript's assignability cannot decide
 - The gate outcome algebra, in which pending cannot pass.
 - The self-demonstration vocabulary: gate revision identity, specimen identity, witness roles, the four-role demonstration, and its outcome.
 - Findings, which live inside the evaluation that produced them.
-- Exactly two children: `00_audit` acquires, `01_gauntlet` evaluates.
+- The children are `00_audit`, which acquires evidence, and `01_gauntlet`, which evaluates it.
 
 ## Does not own
 
@@ -59,34 +57,32 @@ What is genuinely new is the idea of a check that must demonstrate it can discri
 
 ## A check must demonstrate that it discriminates
 
-Five hundred and thirty-eight mutation entries and a bespoke runner were an implementation, and implementations are quarry. The relation they were reaching for is this:
-
 > A guard that has never been observed failing is indistinguishable from a guard that cannot fail.
 
-This repository has written laws in both categories, repeatedly, minutes apart from each other — a `keyof` blind to an empty population, a union tested against one arm's shape, an exactness assertion read off an alias that survived the carrier dropping its parameter. Every one of them passed. Every one of them proved nothing.
+A `keyof` blind to an empty population, a union tested against one arm's shape, or an exactness assertion read from an alias after the carrier drops its parameter can all compile while proving nothing.
 
-The first attempt at carrying that relation did not carry it. `QualifiedGate` had a non-empty `detects` and a non-empty `witnesses`, which looks like a claim bound to its evidence and is two independent tuples: a gate declaring it detects X while carrying a witness for Y was assignable, probe-confirmed. Nothing related a position in one to a position in the other, so the qualification was decorative — the same defect it existed to catch, committed by the catcher.
+Independent `detects` and `witnesses` tuples would let a gate claim X while carrying a witness for Y. Nothing positional would connect the two, so the qualification would be decorative.
 
 `ClaimDemonstration` binds them. One proof entry per declared claim, positionally, with the claim population as a type parameter so the correspondence is construction rather than convention.
 
-## Four roles, in named slots
+## Named demonstration roles
 
 A demonstration requires `baseline`, `lawful`, `detection`, and `attribution`, each pinned to its own role literal.
 
-Four different ways a self-test can be worthless:
+A self-test can be worthless in distinct ways:
 
 - The check was already red for unrelated reasons — answered by `baseline`, an unmodified control that came out green.
 - The check refuses everything in the neighbourhood — answered by `lawful`, a legal specimen close to the defect that was accepted.
 - The check never noticed the defect — answered by `detection`, the injected failure class refused.
 - The check went red for the wrong reason — answered by `attribution`, which names the semantic relationship the refusal is attributed to.
 
-An array of four witness values can hold four baselines and congratulate itself. Named slots pinned to role literals cannot.
+An array of witness values can hold only baselines and still look complete. Named slots pinned to role literals cannot.
 
 `attribution` is the one that resists being faked. A nonzero exit code, a syntax error, an unresolved import, and an unrelated rule firing all produce a red check; none of them can produce an `AssurancePredicate` naming the relationship the check polices. That is a type-level bar, not a full one — proof obligations below carry what remains.
 
 ## One gate identity, with origin as a member
 
-`ConsumerGateId` was a second brand over the same carrier, so `GateDefinition<Id extends GateId>` could not be instantiated with one. The promise that consumer gates travel the same path as repository gates was not weakly enforced — it was impossible, and the type that existed to make extension first-class was the thing preventing it.
+`origin: repository | consumer` belongs on one gate definition. A second identity brand would make consumer gates unable to travel the same path as repository gates.
 
 It is now `origin: repository | consumer` on the one definition. Origin is a member and not a type parameter on purpose: two definitions from different origins are the same type travelling the same path, which is the entire point. As a parameter it would be two paths again with better manners.
 
@@ -106,9 +102,9 @@ A specimen is a fabricated world built to test whether the instrument discrimina
 
 ## Untested is an absence, not an arm
 
-`GateQualification` was `untested | qualified | refuted` — one algebra mixing *has anybody looked* with *what did they find*, which is a maturity badge riding on every evaluation.
+An `untested | qualified | refuted` algebra would mix *has anybody looked* with *what did they find*, turning acquisition state into a maturity badge on every evaluation.
 
-Core's `Evidence` already separates those, and had for as long as this home has existed: `unavailable` when nobody produced a demonstration, `outstanding` while one runs, `ready` when it came out either way, `failed` when the demonstration machinery itself broke. Reuse the absence language that exists; do not invent a second one.
+Core's `Evidence` separates those: `unavailable` when nobody produced a demonstration, `outstanding` while one runs, `ready` when it came out either way, and `failed` when the demonstration machinery itself broke.
 
 Deleting the qualification algebra outright would have lost something real, though. *Nobody tested this* and *this was tested and did not notice* are different worlds, and the second is more dangerous because it looks most like safety. It survives as `disproven`, inside the outcome, where it is evidence rather than status.
 
@@ -118,7 +114,7 @@ Deleting the qualification algebra outright would have lost something real, thou
 
 `GateOutcome`'s `satisfied` arm intersects its decision with `{ truth: 'true' }`. A gate whose evidence was unavailable resolves to `pending` under Strong Kleene, and that shape cannot be constructed in the pass arm.
 
-Fail-closed is therefore a type here, not a promise in a comment. The distinction matters because the previous arrangement's fail-closed behaviour lived in a runner, and a runner is one refactor away from failing open at three in the morning.
+Fail-closed is therefore a carrier property rather than a runner convention.
 
 ## A gate states what it does not cover
 
@@ -161,4 +157,4 @@ Runtime and repository claims a type cannot express:
 
 ## Implementation boundary
 
-Architecture only. No implementation exists or is authorized. The deleted harness is quarry in Git history, not a port target: relocating it here would move the corpse and call it architecture.
+A realization must preserve one addressed claim-proof-evaluation relation rather than introducing a second mutation vocabulary or runner-owned truth.

@@ -1,7 +1,5 @@
 # Web Transport
 
-Status: specified with physical profiles deferred; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/06_transport/`
@@ -49,4 +47,4 @@ The first is `system/01_assurance` over the transport population; the second is 
 
 ## Implementation boundary
 
-Specified with physical profiles deferred: reconnection constants, buffer sizes, and heartbeat intervals are empirical. No fetch, EventSource, or stream code exists or is authorized.
+Reconnection, buffering, and heartbeat profiles remain empirical; one transport realization must preserve carrier identity, ordering, custody, evidence, and failure across browser APIs.

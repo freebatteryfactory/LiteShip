@@ -14,15 +14,25 @@ import type { Diagnostic } from '../00_error/types.js';
 import type { ContentAddress } from '../01_encoding/types.js';
 import type { ToleranceProfileReference } from '../02_identity/types.js';
 
+/** Type-level representation of unix time milliseconds. */
 export type UnixTimeMilliseconds = Brand<number, 'liteship.time.unix-ms'>;
+/** Type-level representation of monotonic nanoseconds. */
 export type MonotonicNanoseconds = Brand<bigint, 'liteship.time.monotonic-ns'>;
+/** Type-level representation of logical counter. */
 export type LogicalCounter = Brand<bigint, 'liteship.time.logical-counter'>;
+/** Type-level representation of transaction generation. */
 export type TransactionGeneration = Brand<bigint, 'liteship.time.transaction-generation'>;
+/** Type-level representation of frame index. */
 export type FrameIndex = Brand<bigint, 'liteship.time.frame-index'>;
+/** Type-level representation of sample index. */
 export type SampleIndex = Brand<bigint, 'liteship.time.sample-index'>;
+/** Type-level representation of simulation step. */
 export type SimulationStep = Brand<bigint, 'liteship.time.simulation-step'>;
+/** Type-level representation of stream sequence. */
 export type StreamSequence = Brand<bigint, 'liteship.time.stream-sequence'>;
+/** Type-level representation of editor position. */
 export type EditorPosition = Brand<bigint, 'liteship.time.editor-position'>;
+/** Type-level representation of beat position. */
 export type BeatPosition = Brand<number, 'liteship.time.beat-position'>;
 
 /** Standard hybrid logical clock: wall time plus a logical counter and node. */
@@ -83,6 +93,7 @@ export interface TimeCut<Axes extends readonly TimeCoordinate[] = readonly TimeC
 
 /** Domain-owned metric identity for temporal approximation. */
 export type TemporalToleranceMetric = Brand<string, 'liteship.time.tolerance-metric'>;
+/** Type-level representation of temporal tolerance unit. */
 export type TemporalToleranceUnit =
   | 'second'
   | 'nanosecond'

@@ -47,7 +47,9 @@ import type { AssuranceFactName, AssuranceSubject } from '../types.js';
 // Probes
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one audit probe. */
 export type AuditProbeId<Name extends string = string> = Brand<Name, 'liteship.audit-probe-id'>;
+/** Typed reference to one audit probe. */
 export type AuditProbeReference<Id extends AuditProbeId = AuditProbeId> = Reference<
   'audit-probe',
   Id

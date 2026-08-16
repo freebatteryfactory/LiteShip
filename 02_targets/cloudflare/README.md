@@ -1,7 +1,5 @@
 # Cloudflare Target
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/cloudflare/`
@@ -12,7 +10,7 @@ Dependency authority: Actual source imports, constrained by the numbered path or
 
 Attach already-defined LiteShip meaning to a platform's registration, configuration, resource-binding, and deployment surfaces — and consume a deployable application without asking who produced it.
 
-This child does less than its siblings. It does not author, does not compile, and does not emit. Four homes is what that honestly requires.
+This child does less than its siblings. It does not author, compile, or emit; it owns integration, configuration, binding, and deployment.
 
 ## Homes
 
@@ -34,13 +32,13 @@ This child does less than its siblings. It does not author, does not compile, an
 
 ## This child is a correction, not an addition
 
-The predecessor's Cloudflare package is why the sibling-exclusion rule exists. It imported a framework sibling and lost its independent story entirely: no direct worker entry anywhere in the repository, a README that required the framework, a health probe labelled after the framework's output mode, and one example — the framework one. The two target packages that imported no sibling both kept first-class direct use.
+A Cloudflare target must retain first-class direct worker use. Importing a framework sibling would make registration, health, examples, and deployment depend on that framework and erase the independent platform path.
 
 That is a natural experiment with a clean result, and it is the whole argument for **coexistence does not create ownership**. A framework may genuinely deploy through this platform. That does not put the platform above the framework, or the framework above the platform, and the moment one imports the other the producer-neutral seam stops being visible to the architecture.
 
 ## Where direct mode stops being a promise
 
-The umbrella has carried an empty `direct-composition` arm since it was sealed, on the claim that a composition of hosts alone can produce what a framework-produced artifact would and that the consuming path does not branch. Nothing had ever tested it — the arm was compiled in, but no consumer existed that took both.
+The `direct-composition` arm means a host-only composition can produce the same admitted application shape as a framework-produced artifact without changing the consuming path. This child is its concrete consumer and proof.
 
 `03_deployment` is that consumer, and a composition point importing both producers is the test. It builds one application from framework-produced artifacts and another from host-only-produced artifacts, then passes both through **one function** into the same request type. There is no member that function could read to decide, which is what the claim actually meant.
 
@@ -57,7 +55,7 @@ The umbrella deliberately deferred the deployable-application shape until a deno
 
 ## Laws
 
-- The roster is exactly four homes.
+- The roster contains integration, configuration, binding, and deployment, with no unowned child.
 - Load-bearing surface members keep their declared types, named one by one.
 - This child declares no second ecosystem-target identity.
 
@@ -70,4 +68,4 @@ The umbrella deliberately deferred the deployable-application shape until a deno
 
 ## Implementation boundary
 
-Specified. No adapter code, no deployment client, no runtime exists or is authorized.
+A Cloudflare realization must preserve direct worker composition and admit configuration, bindings, and deployment evidence without importing a sibling target.

@@ -1,7 +1,5 @@
 # Web Execution Host
 
-Status: specified with physical profiles deferred; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/10_execution/`
@@ -50,4 +48,4 @@ The first is assurance; the second is an implementation fixture.
 
 ## Implementation boundary
 
-Specified with physical profiles deferred: backend crossover profiles are empirical. No scheduler, driver, or execution code exists or is authorized.
+Scheduler and backend crossover profiles remain empirical; a realization must preserve program, backend, evidence, cancellation, result, and custody coordinates.

@@ -1,7 +1,5 @@
 # LiteShip Core Architecture
 
-Status: specified; implementation absent
-
 Authority: This README for core ownership, dependency direction, semantic relationships, implementation boundaries, and proof obligations; `types.ts` for the complete core type topology; each numbered home's `README.md` and `types.ts` for local authority
 
 Scope: The complete realm-neutral semantic body of LiteShip
@@ -482,7 +480,7 @@ The temporal algebra is not literally reused because space adds different laws:
 
 A `SpatialTransform<From, To>` makes parent/child and egress-space conversion explicit and type-checkable. Inexact conversion names an addressed scene-owned tolerance profile and may be refused by target or policy; invertibility remains a separate capability. Coordinate-bearing geometry values and bounds preserve the same space parameter, so a screen-space point cannot silently enter world-space geometry.
 
-This spatial contract is the one major clean-room semantic hypothesis in core. The project packet requires hierarchy, geometry, transform composition, z-order, blend semantics, and faithful output, but does not supply a mature old spatial algebra. Production authority therefore depends on strong multi-egress proofs.
+The spatial contract must preserve hierarchy, geometry, transform composition, z-order, blend semantics, and faithful output. Its production authority depends on strong multi-egress proofs rather than one preferred renderer.
 
 ## 10. Lifecycle
 
@@ -1249,13 +1247,11 @@ Empirical contracts can begin in parallel once their semantic workload shape exi
 
 Measurements wait for workloads. Contract design does not.
 
-## 24. Remaining signals
+## 24. Proof pressure
 
-No unresolved core product-language decision is hidden in this artifact.
+### Spatial semantics
 
-### Highest-risk semantic proof
-
-The dedicated spatial-coordinate and transform algebra is a clean-room specified hypothesis. It has no mature old implementation to certify. Multi-egress fixtures may refine exact constructors and standard presets, but explicit typed projection, ordered transforms, and loss visibility are held.
+The spatial-coordinate and transform algebra requires multi-egress fixtures across SVG, CSS, Canvas, WebGPU, video, editor, and accessibility projections. Those proofs may refine exact constructors and standard presets; explicit typed projection, ordered transforms, and visible loss remain invariant.
 
 ### Empirical selections
 
@@ -1281,9 +1277,9 @@ with its own denominator — not an obligation waiting quietly in a list:
 - replication and CRDT algorithms;
 - a dedicated LiteShip file format.
 
-### Downstream design
+### Downstream ownership
 
-Later phases still own:
+Downstream layers own:
 
 - concrete host adapters;
 - browser, worker, edge, and server implementation;
@@ -1293,4 +1289,4 @@ Later phases still own:
 - final package distribution;
 - final bare-root export roster.
 
-Absence remains signal. It is not covered with optimistic counts or invented implementation detail.
+An absent capability remains absent until its owning layer declares a contract and a consumer proves the need.

@@ -40,7 +40,9 @@ import type {
   SourceSlot,
 } from '../15_program/types.js';
 
+/** Stable identity for one backend. */
 export type BackendId<Name extends string = string> = Brand<Name, 'liteship.backend-id'>;
+/** Version of the ABI exposed by one runtime kernel. */
 export type KernelAbiVersion = 1;
 
 /** General compute primitive families. Domain semantics remain with their owners. */
@@ -109,6 +111,7 @@ export interface ExecutionBackendDriver extends OwnedResource {
   ) => MaybePromise<Result<KernelStatus, readonly Diagnostic[]>>;
 }
 
+/** Capability requirement for backend registry. */
 export type BackendRegistryRequirement = Hole<
   'liteship.runtime.backends',
   ReadonlyMap<BackendId, ExecutionBackendDriver>

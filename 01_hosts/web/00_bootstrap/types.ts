@@ -42,7 +42,9 @@ import type { Signature } from '../../../types.js';
  */
 export type WebRealm = Extract<HostRealm, 'web'>;
 
+/** Stable identity for one web host. */
 export type WebHostId = HostId<'liteship.host.web'>;
+/** Typed reference to one web host. */
 export type WebHostReference = HostReference<WebHostId>;
 
 /** The web host definition, mechanically tied to its catalog's identity and realm. */

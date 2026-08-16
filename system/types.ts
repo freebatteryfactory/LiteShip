@@ -64,10 +64,9 @@ export type SystemTypeTopology = Tuple<
 /**
  * The system homes that physically exist, in dependency order.
  *
- * Derived from the topology. It used to be a hand-written union beside the
- * tuple, guarded by a parity law — a confession that the population was written
- * twice, in a file authored the same day the repository deleted a folder for
- * exactly that habit.
+ * Derived from the topology so the name population is written once. A
+ * hand-written union beside the tuple would require a parity law and could
+ * drift independently.
  */
 export type SystemHomeName = SystemTypeTopology[number]['name'];
 

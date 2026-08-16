@@ -1,7 +1,5 @@
 # Lifecycle and Cancellation
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `05_lifecycle/`
@@ -76,6 +74,6 @@ disposal.
 
 ## Implementation boundary
 
-The lifecycle contract is specified. Runtime implementation is absent. The mature old `Lifetime` behavior is a direct behavior-port candidate, subject to source and test rereading during implementation.
+Lifecycle realizations must enforce declared ownership, idempotent release where promised, LIFO finalization, reentrant safety, aggregate failure, and parent-child reachability while keeping cancellation, disposal, and finalization distinct.
 
 Porting and qualifying the old behaviour, then projecting it into each physical host resource, are implementation obligations this architecture already authorizes.

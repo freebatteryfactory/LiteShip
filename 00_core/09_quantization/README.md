@@ -1,7 +1,5 @@
 # Quantization and Reconstruction
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `09_quantization/`
@@ -66,6 +64,6 @@ A scene may define where and when values change. It does not redefine how a name
 
 ## Implementation boundary
 
-The quantization and interpolation semantics are specified. Runtime, compiler projections, numeric kernels, and authoring values are absent.
+Quantizer realizations, compiler projections, and kernels must preserve ordered thresholds, interpolation semantics, state continuity, and declared tolerance relationships.
 
 Porting the mature boundary behaviour, defining the standard interpolator catalogue, and qualifying numerical parity across TypeScript, Rust, Wasm, and GPU projections are implementation obligations this architecture already authorizes.

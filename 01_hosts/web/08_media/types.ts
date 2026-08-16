@@ -52,7 +52,9 @@ import type {
 } from '../../../00_core/14_compiler/types.js';
 import type { WebGroundingDefinition, WebRealizationOffer } from '../00_bootstrap/types.js';
 
+/** Stable identity for one media resource. */
 export type MediaResourceId<Name extends string = string> = Brand<Name, 'liteship.web.media-resource-id'>;
+/** Typed reference to one media resource. */
 export type MediaResourceReference<Id extends MediaResourceId = MediaResourceId> = Reference<
   'web-media-resource',
   Id
@@ -213,6 +215,7 @@ export interface WebCodecAdmission {
   >;
 }
 
+/** Capability requirement for web codec admission. */
 export type WebCodecAdmissionRequirement = Hole<'liteship.web.codec-admission', WebCodecAdmission>;
 
 /**
@@ -225,7 +228,9 @@ export type WebCodecAdmissionRequirement = Hole<'liteship.web.codec-admission', 
  * true, and naming the core type is what makes the compiler agree.
  */
 export type WebDecoderAuthority = MediaDecoderAuthority;
+/** Authority governing web encoder. */
 export type WebEncoderAuthority = MediaEncoderAuthority;
+/** Authority governing web mux. */
 export type WebMuxAuthority = MediaMuxAuthority;
 
 /**
@@ -271,8 +276,11 @@ export interface WebCodecOffer
   readonly id: RealizationOfferId<'liteship.web.offer.codec-facility'>;
 }
 
+/** Capability requirement for audio facility. */
 export type AudioFacilityRequirement = Hole<'liteship.web.audio-facility', AudioFacility>;
+/** Capability requirement for audio runtime. */
 export type AudioRuntimeRequirement = Hole<'liteship.web.audio-runtime', AudioRuntimeAuthority>;
+/** Capability requirement for media authority. */
 export type MediaAuthorityRequirement = Hole<'liteship.web.media-authority', MediaConstructionAuthority>;
 
 /** Intrinsic grounding: the constructor facility itself, not any constructed resource. */
@@ -326,6 +334,7 @@ export interface MediaAuthorityOffer
   readonly backends: NonEmptyTuple<'javascript'>;
 }
 
+/** Public declaration surface owned by web media. */
 export interface WebMediaTypeSurface {
   readonly resource: WebMediaResource;
   readonly admission: WebCodecAdmission;

@@ -47,7 +47,9 @@ import type { RuntimeCommit } from '../../../00_core/16_runtime/types.js';
 import type { WebGroundingDefinition, WebRealizationOffer } from '../00_bootstrap/types.js';
 import type { WebNodeReference } from '../01_region/types.js';
 
+/** Stable identity for one graphics resource. */
 export type GraphicsResourceId<Name extends string = string> = Brand<Name, 'liteship.web.graphics-resource-id'>;
+/** Typed reference to one graphics resource. */
 export type GraphicsResourceReference<Id extends GraphicsResourceId = GraphicsResourceId> = Reference<
   'web-graphics-resource',
   Id
@@ -109,6 +111,7 @@ export interface GraphicsApplication {
   readonly resource: GraphicsResourceReference;
 }
 
+/** Contract for graphics egress. */
 export interface GraphicsEgress {
   readonly apply: Signature<
     GraphicsApplication,
@@ -121,7 +124,9 @@ export interface GraphicsEgress {
 // Rasterization and readback
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one raster profile. */
 export type RasterProfileId<Name extends string = string> = Brand<Name, 'liteship.web.raster-profile-id'>;
+/** Typed reference to one raster profile. */
 export type RasterProfileReference<Id extends RasterProfileId = RasterProfileId> = Reference<
   'web-raster-profile',
   Id
@@ -244,7 +249,9 @@ export interface GraphicsAuthority {
   readonly readback: GraphicsReadback;
 }
 
+/** Capability requirement for gpu access. */
 export type GpuAccessRequirement = Hole<'liteship.web.gpu-access', GpuAccess>;
+/** Capability requirement for graphics authority. */
 export type GraphicsAuthorityRequirement = Hole<'liteship.web.graphics-authority', GraphicsAuthority>;
 
 /** Intrinsic grounding: the access facility, not any acquired device. */

@@ -1,7 +1,5 @@
 # Astro Authoring Translation
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/astro/02_authoring/`
@@ -26,7 +24,7 @@ Translate what an author writes into meaning that already exists upstream. One r
 
 ## Collapsing nine directives without building a kingdom
 
-The predecessor registered nine client directives that mixed several unrelated categories. `adaptive` was settlement; `stream` and `llm` were remote evidence sources; `worker`, `gpu`, and `wasm` were backend selection wearing hydration syntax; `motion` and `svg` were effect meaning. Preserving those behaviours does not require preserving those spellings.
+One authoring directive must not absorb settlement, remote evidence, backend selection, and effect meaning. Those relationships may share a pleasant authoring projection while remaining separate contracts underneath.
 
 The risk in collapsing them is obvious: one central directive becomes one drawer holding all nine meanings. That is what the absence laws are for. The relationships can share one pleasant authoring experience while remaining separate contracts underneath — an author directive is not a backend dropdown wearing HTML.
 
@@ -47,4 +45,4 @@ Assurance-and-implementation territory.
 
 ## Implementation boundary
 
-Specified. No code exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

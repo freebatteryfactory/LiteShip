@@ -1,7 +1,5 @@
 # Worker Bounded Queues
 
-Status: specified with physical profiles deferred; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/worker/05_queue/`
@@ -42,4 +40,4 @@ One queue has exactly one producer endpoint and one consumer endpoint, each pinn
 
 ## Implementation boundary
 
-Specified with physical profiles deferred. No ring-buffer or atomics code exists or is authorized.
+Queue capacities, ring layouts, and atomic strategies remain empirical; a realization must preserve exact queue identity, endpoint roles, ordering, and overflow behavior.

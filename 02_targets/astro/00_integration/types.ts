@@ -8,8 +8,7 @@
  * restated without amending the architecture.
  *
  * Support is a claim that must be paid for. Absent evidence is `unavailable`,
- * not support — the predecessor shipped a doctor probe that reported a target
- * healthy because nothing had contradicted it yet.
+ * not support; absence of contradiction cannot establish compatibility.
  *
  * @module
  */
@@ -29,10 +28,12 @@ import type {
   TargetParticipation,
 } from '../../types.js';
 
+/** Stable identity for one astro integration. */
 export type AstroIntegrationId<Name extends string = string> = Brand<
   Name,
   'liteship.target.astro.integration-id'
 >;
+/** Typed reference to one astro integration. */
 export type AstroIntegrationReference<Id extends AstroIntegrationId = AstroIntegrationId> = Reference<
   'astro-integration',
   Id

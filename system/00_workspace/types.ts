@@ -33,7 +33,9 @@ import type { Evidence } from '../../00_core/06_evidence/types.js';
 // Identity
 // ---------------------------------------------------------------------------
 
+/** Stable identity for one workspace. */
 export type WorkspaceId<Name extends string = string> = Brand<Name, 'liteship.workspace-id'>;
+/** Typed reference to one workspace. */
 export type WorkspaceReference<Id extends WorkspaceId = WorkspaceId> = Reference<'workspace', Id>;
 
 /**
@@ -60,6 +62,7 @@ export type RootName = Brand<string, 'liteship.repository-root-name'>;
 
 /** The name of one numbered source home, such as `00_core/12_media`. */
 export type SourceHomeName = Brand<string, 'liteship.source-home-name'>;
+/** Typed reference to one source home. */
 export type SourceHomeReference<Name extends SourceHomeName = SourceHomeName> = Reference<
   'source-home',
   Name
@@ -158,6 +161,7 @@ export type HomeCensusCoverage = Algebra<{
 
 /** Identity of one source-control revision of the workspace. */
 export type SourceRevisionId = Brand<string, 'liteship.source-revision-id'>;
+/** Typed reference to one source revision. */
 export type SourceRevisionReference<Id extends SourceRevisionId = SourceRevisionId> = Reference<
   'source-revision',
   Id
@@ -279,6 +283,7 @@ export type WorkspaceFileSystem = Hole<
   }
 >;
 
+/** Type-level representation of workspace source control. */
 export type WorkspaceSourceControl = Hole<
   'liteship.system.workspace.source-control',
   {

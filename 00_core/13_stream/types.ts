@@ -31,21 +31,33 @@ import type { CollectionPatch, CollectionView } from '../10_collection/types.js'
 import type { SceneDefinition, ScenePatch } from '../11_scene/types.js';
 import type { MediaEvent } from '../12_media/types.js';
 
+/** Stable identity for one stream. */
 export type StreamId<Name extends string = string> = Brand<Name, 'liteship.stream-id'>;
+/** Stable identity for one generated structure. */
 export type GeneratedStructureId<Name extends string = string> = Brand<Name, 'liteship.generated-structure-id'>;
+/** Stable identity for one structure node. */
 export type StructureNodeId<Name extends string = string> = Brand<Name, 'liteship.structure-node-id'>;
+/** Stable identity for one coalescing key. */
 export type CoalescingKeyId<Name extends string = string> = Brand<Name, 'liteship.coalescing-key-id'>;
+/** Stable identity for one stream event. */
 export type StreamEventId = ContentAddress<'application/vnd.liteship.stream-event+cbor'>;
+/** Typed reference to one stream. */
 export type StreamReference<Id extends StreamId = StreamId> = Reference<'stream', Id>;
+/** Typed reference to one generated structure. */
 export type GeneratedStructureReference<Id extends GeneratedStructureId = GeneratedStructureId> = Reference<
   'generated-structure',
   Id
 >;
+/** Typed reference to one structure node. */
 export type StructureNodeReference<Id extends StructureNodeId = StructureNodeId> = Reference<'structure-node', Id>;
+/** Type-level representation of trusted fragment attestation. */
 export type TrustedFragmentAttestation = Reference<'trusted-fragment-attestation', AttestationId>;
+/** Type-level representation of generated structure admission. */
 export type GeneratedStructureAdmission = Reference<'generated-structure-admission', AttestationId>;
 
+/** Closed kind vocabulary for stream frame. */
 export type StreamFrameKind = 'snapshot' | 'patch' | 'hold' | 'prediction';
+/** Type-level representation of stream completeness. */
 export type StreamCompleteness = 'partial' | 'complete';
 
 /** Common semantic stream envelope, exact over the stream that owns it. */
@@ -105,6 +117,7 @@ export type TrustedFragmentPatch = RevisionPatch<'trusted-fragment', TrustedFrag
  */
 export type ComponentCatalogAddress = ContentAddress<'application/vnd.liteship.component-catalog+cbor'>;
 
+/** Stable identity for one catalog component. */
 export type CatalogComponentId<Name extends string = string> = Brand<
   Name,
   'liteship.catalog-component-id'

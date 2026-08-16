@@ -1,7 +1,5 @@
 # Vite Target
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/vite/`
@@ -37,7 +35,7 @@ Six.
 
 ## What the ecosystem does not give us
 
-Four of the predecessor's defects are **not** solved by the bundler, and are therefore genuinely this layer's to own. Each lands on a member the umbrella already provides:
+The bundler does not solve four relationships this layer must own. Each lands on a member the umbrella already provides:
 
 | Defect | Owner here |
 |---|---|
@@ -46,7 +44,7 @@ Four of the predecessor's defects are **not** solved by the bundler, and are the
 | Hot updates with no monotonic generation | core's stream sequence |
 | Data missing answered with an empty module | `unresolved` as its own arm, carrying diagnostics |
 
-Two others **are** solved natively and are therefore deleted rather than reimplemented: the canonical worker entry replaces Blob-URL assembly, and map chaining across transforms is the bundler's own.
+Two adjacent responsibilities **are** solved natively and are not reimplemented: canonical worker entries keep workers in the module graph, and the bundler owns source-map chaining across transforms.
 
 A third thing the ecosystem gives is bookkeeping that must not be mistaken for identity. An emit returns a reference id and resolves to a hashed filename; both are location handles. Neither is a content address, and neither records which plugin produced what.
 
@@ -54,11 +52,11 @@ A third thing the ecosystem gives is bookkeeping that must not be mistaken for i
 
 This child exposes a facility in upstream vocabulary and stops. It does not import a requester's hole to claim conformance, and it declares no member shaped around one — a `framework`, `astro`, or `hooks` member would make the facility fillable only by the requester it was shaped around, which is a sibling import re-entering through the type system.
 
-Whether the facility converges with anyone's requirement is proved by a composition point importing both public surfaces, which acquires no semantic ownership by doing so. That is assurance; its home is `system/`, which is not yet authored.
+Whether the facility converges with a requester's requirement is proved by a composition point importing both public surfaces, which acquires no semantic ownership by doing so. That is assurance and belongs under `system/`.
 
 ## Laws
 
-- The roster is exactly six homes.
+- The roster contains integration, projection, module, graph, asset, and build, with no unowned child.
 - Load-bearing surface members keep their declared types, named one by one.
 - This child declares no second ecosystem-target identity.
 
@@ -71,4 +69,4 @@ Whether the facility converges with anyone's requirement is proved by a composit
 
 ## Implementation boundary
 
-Specified. No plugin code, no hook handlers, no runtime exists or is authorized.
+A Vite realization must project the exact compiler catalog, preserve module and graph identity, and admit produced assets and build evidence through the declared target contracts.

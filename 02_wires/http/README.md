@@ -1,7 +1,5 @@
 # HTTP Wire: Request and Response Across Address Spaces
 
-Status: architecture specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_wires/http/`

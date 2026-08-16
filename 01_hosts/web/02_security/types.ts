@@ -25,9 +25,13 @@ import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { GroundingId } from '../../../00_core/14_compiler/types.js';
 import type { WebGroundingDefinition } from '../00_bootstrap/types.js';
 
+/** URL scheme admitted by the web security policy. */
 export type AllowedUrlScheme = Brand<string, 'liteship.web.allowed-url-scheme'>;
+/** Type-level representation of allowed attribute name. */
 export type AllowedAttributeName = Brand<string, 'liteship.web.allowed-attribute'>;
+/** Type-level representation of allowed element name. */
 export type AllowedElementName = Brand<string, 'liteship.web.allowed-element'>;
+/** Closed origin vocabulary for allowed endpoint. */
 export type AllowedEndpointOrigin = Brand<string, 'liteship.web.allowed-origin'>;
 /** Deployment-grounded Trusted Types policy identity. */
 export type TrustedTypesPolicyName = Brand<string, 'liteship.web.trusted-types-policy'>;

@@ -1,7 +1,5 @@
 # Worker Bootstrap
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/worker/00_bootstrap/`
@@ -45,4 +43,4 @@ Both are `system/01_assurance` obligations.
 
 ## Implementation boundary
 
-Specified. No worker global capture or entry-decoding code exists or is authorized.
+A worker bootstrap realization must capture the realm once, decode admitted entry input, and permit no ambient realm reads elsewhere.

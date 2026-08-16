@@ -1,7 +1,5 @@
 # Web Bootstrap and Grounding
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/web/00_bootstrap/`
@@ -50,4 +48,4 @@ All four are `system/01_assurance` obligations; TypeScript cannot see an ambient
 
 ## Implementation boundary
 
-Specified. No capture code, no admission implementation, no browser API calls exist or are authorized.
+A web bootstrap realization must capture browser globals once, admit exact inputs, and permit no ambient browser reads elsewhere.

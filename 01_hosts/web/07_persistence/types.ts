@@ -34,6 +34,7 @@ import type {
 import type { OwnedResource } from '../../../00_core/05_lifecycle/types.js';
 import type { WebGroundingDefinition, WebRealizationOffer } from '../00_bootstrap/types.js';
 
+/** Type-level representation of browser database name. */
 export type BrowserDatabaseName = Brand<string, 'liteship.web.database-name'>;
 
 /**
@@ -56,6 +57,7 @@ export interface DatabaseFacility {
   readonly open: Signature<BrowserDatabaseName, BrowserDatabase, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for database facility. */
 export type DatabaseFacilityRequirement = Hole<'liteship.web.database-facility', DatabaseFacility>;
 
 /** Intrinsic grounding: the database factory facility. */

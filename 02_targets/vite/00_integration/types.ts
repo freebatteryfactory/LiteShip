@@ -33,7 +33,9 @@ import type {
   TargetParticipation,
 } from '../../types.js';
 
+/** Stable identity for one vite plugin. */
 export type VitePluginId<Name extends string = string> = Brand<Name, 'liteship.target.vite.plugin-id'>;
+/** Typed reference to one vite plugin. */
 export type VitePluginReference<Id extends VitePluginId = VitePluginId> = Reference<'vite-plugin', Id>;
 
 /** The one ecosystem target this child is. */

@@ -44,7 +44,9 @@ import type { ChannelReference } from '../02_message/types.js';
 /** Backends this home locally owns, derived from the bootstrap's placement authority. */
 export type WorkerExecutionBackend = WorkerPlacedBackend;
 
+/** Stable identity for one worker task. */
 export type WorkerTaskId<Name extends string = string> = Brand<Name, 'liteship.worker.task-id'>;
+/** Typed reference to one worker task. */
 export type WorkerTaskReference<Id extends WorkerTaskId = WorkerTaskId> = Reference<
   'worker-task',
   Id
@@ -58,6 +60,7 @@ export type WorkerTaskReference<Id extends WorkerTaskId = WorkerTaskId> = Refere
 type WorkerDriverBinding<Backend> = Backend extends WorkerExecutionBackend
   ? { readonly backend: Backend; readonly driver: ExecutionBackendDriver & { readonly kind: Backend } }
   : never;
+/** Physical driver contract for bound worker. */
 export type BoundWorkerDriver = WorkerDriverBinding<WorkerExecutionBackend>;
 
 /**
@@ -136,10 +139,12 @@ export interface WorkerSchedulingFacility {
   readonly schedule: Signature<ExecutionRequest, ExecutionRequest, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for worker scheduling. */
 export type WorkerSchedulingRequirement = Hole<
   'liteship.worker.scheduling-facility',
   WorkerSchedulingFacility
 >;
+/** Capability requirement for worker execution. */
 export type WorkerExecutionRequirement = Hole<'liteship.worker.execution', WorkerExecutionHost>;
 
 /** Intrinsic grounding: the realm's scheduling facility, admitted narrowly. */

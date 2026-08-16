@@ -1,7 +1,5 @@
 # Cloudflare Adapter Identity
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `02_targets/cloudflare/00_integration/`
@@ -25,13 +23,9 @@ Answer who this child is and what it may claim about the platform generation it 
 - Any framework. This child imports no sibling and names none.
 - Platform credentials or accounts.
 
-## The package this child exists to replace
+## Direct platform use
 
-The predecessor's Cloudflare package is the reason the sibling-exclusion rule exists at all. It imported a framework sibling, and it lost its independent story completely: no direct worker entry anywhere in the repository, a README that required the framework, a health probe literally labelled after the framework's output mode, and exactly one example — the framework one.
-
-The two target packages that imported no sibling both kept first-class direct use. That is not a coincidence anyone needs to argue about; it is a natural experiment with a clean result.
-
-So "direct platform use without a framework" is not a hypothetical requirement here. It is a correction of a specific historical failure, and `RegistrationNamesNoFramework` is where it is enforced.
+Registration imports no framework sibling and names no framework-specific mode. Otherwise direct worker use would become unrepresentable and every consumer would inherit a framework dependency it did not choose. `RegistrationNamesNoFramework` enforces the direct path.
 
 ## Laws
 
@@ -49,4 +43,4 @@ Assurance-and-implementation territory.
 
 ## Implementation boundary
 
-Specified. No code exists or is authorized.
+A realization must satisfy the laws and proof obligations above through this home's declared authorities.

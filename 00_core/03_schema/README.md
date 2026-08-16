@@ -1,7 +1,5 @@
 # Schema and Typed Field References
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `03_schema/`
@@ -93,6 +91,6 @@ An unrelated schema field cannot satisfy the hop, and recursion never depends on
 
 ## Implementation boundary
 
-The schema algebra, typed reference model, explicit recursive-hop contract, and projection obligations are specified. Runtime constructors, eager field-object materialization, field-reference composition, decoder, encoder, and projectors are absent.
+Schema constructors, decoders, encoders, and projectors must preserve typed references, explicit recursive hops, canonical field order, and the declared projection obligations.
 
 Qualifying field-object allocation cost, named-reference resolution and composition, the certified opaque-adapter process, and the exact metadata each projection consumes are implementation obligations this architecture already authorizes.

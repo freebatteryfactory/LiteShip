@@ -8,11 +8,9 @@
  * Whether it converges with any requester is a question verification asks; it
  * is not a question this file may answer about itself.
  *
- * The fleet projection is derived, never listed. The predecessor kept a
- * hand-maintained set of transforms, so adding a compiler capability produced
- * silence rather than a build error. Here the projection is a mapped type over
- * the fleet: a new arm creates an obligation to project it or to refuse it with
- * evidence, and there is no third option.
+ * The fleet projection is derived, never listed. A hand-maintained transform
+ * set could silently omit a new compiler capability. The mapped fleet makes a
+ * new arm require either a projection or an evidenced refusal.
  *
  * @module
  */

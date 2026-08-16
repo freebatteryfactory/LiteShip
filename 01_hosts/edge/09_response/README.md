@@ -1,7 +1,5 @@
 # Edge Response
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `01_hosts/edge/09_response/`
@@ -40,4 +38,4 @@ Both `system/01_assurance`; buffering-versus-streaming crossover is empirical.
 
 ## Implementation boundary
 
-Specified. No response writer or streaming code exists or is authorized.
+A response realization must preserve request-correlated commit authority, streaming custody, completion, and failure without inventing operation semantics.

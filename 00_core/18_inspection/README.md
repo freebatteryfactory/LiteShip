@@ -1,7 +1,5 @@
 # Inspection, Explanation, and Authority Discovery
 
-Status: specified; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `18_inspection/`
@@ -69,6 +67,6 @@ Type ABI evidence is a `TypeAbiAttestation`, not a receipt. It asserts that an i
 
 ## Implementation boundary
 
-The query, explanation, authority, and impact contracts are specified. The system compiler analysis, catalog builders, graph container, and wire renderers are absent.
+Inspection realizations must preserve exact queries, authority, explanations, impact coordinates, and refusal semantics across compiler analysis, catalogs, graph storage, and wire renderers.
 
 Building the compiler-derived Type ABI pipeline and runtime catalogue joins are implementation obligations. Explanation verbosity is a projection choice and does not alter the underlying structured object.

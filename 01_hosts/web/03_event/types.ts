@@ -46,7 +46,9 @@ import type {
   WebNodeReference,
 } from '../01_region/types.js';
 
+/** Stable identity for one listener. */
 export type ListenerId<Name extends string = string> = Brand<Name, 'liteship.web.listener-id'>;
+/** Typed reference to one listener. */
 export type ListenerReference<Id extends ListenerId = ListenerId> = Reference<'web-listener', Id>;
 /** Physical browser event kind identity. The roster is implementation evidence. */
 export type WebEventKind = Brand<string, 'liteship.web.event-kind'>;
@@ -64,7 +66,9 @@ export interface WebEventDescriptor {
   readonly options: EventSubscriptionOptions;
 }
 
+/** Stable identity for one web observation. */
 export type WebObservationId<Name extends string = string> = Brand<Name, 'liteship.web.observation-id'>;
+/** Typed reference to one web observation. */
 export type WebObservationReference<Id extends WebObservationId = WebObservationId> = Reference<
   'web-observation',
   Id
@@ -148,7 +152,9 @@ export interface EventSubscriptionAuthority {
   readonly subscribe: Signature<EventSubscriptionRequest, EventSubscription, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for event facility. */
 export type EventFacilityRequirement = Hole<'liteship.web.event-facility', EventFacility>;
+/** Capability requirement for event authority. */
 export type EventAuthorityRequirement = Hole<'liteship.web.event-authority', EventSubscriptionAuthority>;
 
 /** Intrinsic grounding: the observation facility derived from event targets. */

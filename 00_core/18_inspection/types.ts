@@ -29,8 +29,11 @@ import type {
 } from '../14_compiler/types.js';
 import type { ExecutionImage, ResidualProgram } from '../15_program/types.js';
 
+/** Stable identity for one authority. */
 export type AuthorityId<Name extends string = string> = Brand<Name, 'liteship.authority-id'>;
+/** Stable identity for one proof. */
 export type ProofId = ContentAddress<'application/vnd.liteship.proof+cbor'>;
+/** Typed reference to one authority. */
 export type AuthorityReference<Id extends AuthorityId = AuthorityId> = Reference<'authority', Id>;
 
 /** Canonical import address of one public declaration. */

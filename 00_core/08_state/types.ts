@@ -43,17 +43,25 @@ import type { TimeCut } from '../04_time/types.js';
 import type { EvidenceCutId, EvidenceCutReference } from '../06_evidence/types.js';
 import type { OperationReference } from '../07_operation/types.js';
 
+/** Stable identity for one component. */
 export type ComponentId<Name extends string = string> = Brand<Name, 'liteship.component-id'>;
+/** Stable identity for one relation. */
 export type RelationId<Name extends string = string> = Brand<Name, 'liteship.relation-id'>;
+/** Stable identity for one system. */
 export type SystemId<Name extends string = string> = Brand<Name, 'liteship.system-id'>;
+/** Stable identity for one index. */
 export type IndexId<Name extends string = string> = Brand<Name, 'liteship.index-id'>;
+/** Stable identity for one subworld port. */
 export type SubworldPortId<Name extends string = string> = Brand<Name, 'liteship.subworld-port-id'>;
+/** Typed reference to one component. */
 export type ComponentReference<
   Id extends ComponentId = ComponentId,
   Value extends CanonicalValue = CanonicalValue,
   Encoded extends CanonicalValue = Value,
 > = Reference<'component', Id> & Port<Value, Encoded>;
+/** Typed reference to one relation. */
 export type RelationReference<Id extends RelationId = RelationId> = Reference<'relation', Id>;
+/** Typed reference to one index. */
 export type IndexReference<Id extends IndexId = IndexId> = Reference<'index', Id>;
 
 /** Requested physical storage realization for one component family. */
@@ -364,9 +372,13 @@ export interface BlobStore {
   readonly get: (address: ContentAddress) => MaybePromise<Result<Uint8Array | null, readonly Diagnostic[]>>;
 }
 
+/** Capability requirement for revision store. */
 export type RevisionStoreRequirement = Hole<'liteship.state.revision-store', RevisionStore>;
+/** Capability requirement for snapshot store. */
 export type SnapshotStoreRequirement = Hole<'liteship.state.snapshot-store', SnapshotStore>;
+/** Capability requirement for change log. */
 export type ChangeLogRequirement = Hole<'liteship.state.change-log', ChangeLog>;
+/** Capability requirement for blob store. */
 export type BlobStoreRequirement = Hole<'liteship.state.blob-store', BlobStore>;
 
 /** Type summary consumed by the root core topology. */

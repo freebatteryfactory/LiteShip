@@ -26,7 +26,9 @@ import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { ServerGroundingDefinition, ServerRealizationOffer } from '../00_bootstrap/types.js';
 
+/** Stable identity for one process. */
 export type ProcessId<Name extends string = string> = Brand<Name, 'liteship.server.process-id'>;
+/** Typed reference to one process. */
 export type ProcessReference<Id extends ProcessId = ProcessId> = Reference<'server-process', Id>;
 
 /** The closed signal vocabulary this realm speaks. */
@@ -86,7 +88,9 @@ export interface ChildProcessAuthority {
   readonly spawn: Signature<ChildProcessRequest, ChildProcess, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for process authority. */
 export type ProcessAuthorityRequirement = Hole<'liteship.server.process', HostProcessAuthority>;
+/** Capability requirement for child process. */
 export type ChildProcessRequirement = Hole<'liteship.server.child-process', ChildProcessAuthority>;
 
 /** Intrinsic grounding: the host process, admitted narrowly. */

@@ -1,7 +1,5 @@
 # Residual Programs, Memory Plans, and Execution Images
 
-Status: specified with empirical physical layouts; implementation absent
-
 Authority: This README for local meaning and proof obligations; `types.ts` for the local semantic declaration surface
 
 Source home: `15_program/`
@@ -99,6 +97,6 @@ A likely useful form is a mixed image: dataflow tables plus kernel commands plus
 
 ## Implementation boundary
 
-The semantic program, logical memory plan, physical layout distinction, image contract, numeric contracts, and bytecode policy are specified. Table encodings, widths, page sizes, reserves, and bytecode inclusion are empirical.
+Program realizations must preserve semantic instructions, logical memory, image identity, numeric contracts, and bytecode policy while physical encodings and capacities remain evidence-selected.
 
 Selecting physical layouts and capacity parameters for actual workload classes is empirical benchmarking work. This home owns no bytecode: introducing one would be an explicit architecture reopening justified by measured need against the readable interpreter and packed image, not an unstated obligation.

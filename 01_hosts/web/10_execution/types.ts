@@ -59,6 +59,7 @@ export type BrowserExecutionBackend = WebPlacedBackend;
 type DriverBinding<Backend> = Backend extends BrowserExecutionBackend
   ? { readonly backend: Backend; readonly driver: ExecutionBackendDriver & { readonly kind: Backend } }
   : never;
+/** Physical driver contract for bound. */
 export type BoundDriver = DriverBinding<BrowserExecutionBackend>;
 
 /**
@@ -96,7 +97,9 @@ export interface SchedulingFacility {
   readonly schedule: Signature<ExecutionRequest, ExecutionRequest, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for scheduling facility. */
 export type SchedulingFacilityRequirement = Hole<'liteship.web.scheduling-facility', SchedulingFacility>;
+/** Capability requirement for web execution. */
 export type WebExecutionRequirement = Hole<'liteship.web.execution', WebExecutionHost>;
 
 /** Intrinsic grounding: the scheduling facility derived from the platform. */
@@ -141,6 +144,7 @@ export interface PreparationConsumption {
   readonly commit: RuntimeCommit;
 }
 
+/** Authority governing web preparation. */
 export interface WebPreparationAuthority {
   readonly prepare: Signature<SpeculativeCandidate, PreparedWork, NonEmptyTuple<Diagnostic>>;
   readonly consume: Signature<PreparationConsumption, PreparationDisposition, NonEmptyTuple<Diagnostic>>;
@@ -151,6 +155,7 @@ export interface WebPreparationAuthority {
   >;
 }
 
+/** Capability requirement for preparation. */
 export type PreparationRequirement = Hole<'liteship.web.preparation', WebPreparationAuthority>;
 
 /** Standing up the preparation provider is an offer requiring scheduling. */

@@ -31,8 +31,11 @@ import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { WorkerGroundingDefinition, WorkerRealizationOffer } from '../00_bootstrap/types.js';
 
+/** Stable identity for one channel. */
 export type ChannelId<Name extends string = string> = Brand<Name, 'liteship.worker.channel-id'>;
+/** Typed reference to one channel. */
 export type ChannelReference<Id extends ChannelId = ChannelId> = Reference<'worker-channel', Id>;
+/** Stable identity for one correlation. */
 export type CorrelationId<Name extends string = string> = Brand<
   Name,
   'liteship.worker.correlation-id'
@@ -130,7 +133,9 @@ export interface MessagingAuthority {
   ) => Result<WorkerChannel<Decoded, Id>, NonEmptyTuple<Diagnostic>>;
 }
 
+/** Capability requirement for message facility. */
 export type MessageFacilityRequirement = Hole<'liteship.worker.message-facility', MessageFacility>;
+/** Capability requirement for messaging. */
 export type MessagingRequirement = Hole<'liteship.worker.messaging', MessagingAuthority>;
 
 /** Intrinsic grounding: the postMessage-family machinery, admitted narrowly. */

@@ -76,6 +76,7 @@ export interface CliDiagnosticStream {
   readonly entries: readonly Diagnostic[];
 }
 
+/** Output produced by cli. */
 export interface CliOutput<Output = unknown> {
   readonly answer: { readonly stream: 'answer'; readonly value: Output };
   readonly diagnostics: CliDiagnosticStream;
@@ -152,14 +153,9 @@ type CompletedWith<
 /**
  * One crossing as a command invocation.
  *
- * The exit is a function of the operation's outcome, and this is the shape that
- * makes that sentence true rather than aspirational. There used to be one
- * `answered` arm carrying any completed crossing beside an independently
- * chosen exit, and the module comment above it claimed the exit derived from
- * the outcome. Nothing derived it. A receipt saying `failed` sat happily beside
- * `exit: success`, and the law on the subject only checked that the *other two*
- * crossing arms could not reach success — cross-arm exclusion, while the arm
- * where the real work happens went unrelated.
+ * The exit is a function of the operation's outcome, and this shape makes that
+ * relationship structural. One generic `answered` arm beside an independently
+ * chosen exit would allow a failed receipt to sit beside `exit: success`.
  *
  * That is the defect this file opens by naming: one integer asked to carry two
  * questions. The transport question was answered and the operation question was

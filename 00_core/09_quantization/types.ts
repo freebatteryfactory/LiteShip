@@ -14,15 +14,25 @@ import type { ContentAddress } from '../01_encoding/types.js';
 import type { SchemaId, SchemaReference } from '../03_schema/types.js';
 import type { EvidenceReference } from '../06_evidence/types.js';
 
+/** Stable identity for one signal. */
 export type SignalId<Name extends string = string> = Brand<Name, 'liteship.signal-id'>;
+/** Stable identity for one boundary. */
 export type BoundaryId<Name extends string = string> = Brand<Name, 'liteship.boundary-id'>;
+/** Stable identity for one quantizer. */
 export type QuantizerId<Name extends string = string> = Brand<Name, 'liteship.quantizer-id'>;
+/** Stable identity for one interpolator. */
 export type InterpolatorId<Name extends string = string> = Brand<Name, 'liteship.interpolator-id'>;
+/** Stable identity for one quantizer output. */
 export type QuantizerOutputId<Name extends string = string> = Brand<Name, 'liteship.quantizer-output-id'>;
+/** Type-level representation of state name. */
 export type StateName<Name extends string = string> = Brand<Name, 'liteship.state-name'>;
+/** Typed reference to one boundary. */
 export type BoundaryReference<Id extends BoundaryId = BoundaryId> = Reference<'boundary', Id>;
+/** Typed reference to one quantizer. */
 export type QuantizerReference<Id extends QuantizerId = QuantizerId> = Reference<'quantizer', Id>;
+/** Typed reference to one interpolator. */
 export type InterpolatorReference<Id extends InterpolatorId = InterpolatorId> = Reference<'interpolator', Id>;
+/** Typed reference to one quantizer output. */
 export type QuantizerOutputReference<Id extends QuantizerOutputId = QuantizerOutputId> = Reference<'quantizer-output', Id>;
 
 /** One ordered threshold and its resulting named state. */
