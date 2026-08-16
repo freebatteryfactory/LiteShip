@@ -828,7 +828,7 @@ Every compiler arm declares:
 - requirements;
 - supported settlement locations;
 - supported egresses;
-- determinism and cache identity;
+- cache identity;
 - diagnostics;
 - explanation;
 - source-map behavior;
@@ -1050,7 +1050,7 @@ The Rust/Wasm compute work is generalized into reusable kernel families:
 - DSP;
 - geometry.
 
-Every kernel declares schemas, purity, determinism, requirements, buffer regions, backends, numeric contract, TypeScript reference, and parity fixture.
+Canonical kernels are semantically pure and deterministic by definition. Every kernel declares schemas, requirements, buffer regions, backends, any applicable numeric contract, TypeScript reference, and a parity fixture. Physical reproducibility is qualified later against an exact backend execution profile rather than asserted by the semantic definition.
 
 Domain APIs lower into kernels. Rust never becomes a second semantic implementation.
 

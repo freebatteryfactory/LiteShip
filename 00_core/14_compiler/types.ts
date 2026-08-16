@@ -775,7 +775,6 @@ export interface CompilerArm<
   readonly inputSchema: SchemaReference<SchemaId, Input>;
   readonly outputSchema: SchemaReference<SchemaId, Output>;
   readonly requirements: Requirements;
-  readonly deterministic: boolean;
   readonly supportedLocations: readonly SettlementLocation[];
   readonly supportedBackends: readonly ExecutionBackend[];
   readonly proof: ContentAddress<'application/vnd.liteship.proof+cbor'>;

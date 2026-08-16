@@ -50,7 +50,7 @@ The existing Rust compute crate is a seed, not a sacred API. Domain operations l
 - DSP;
 - geometry.
 
-Every kernel declares identity, ABI version, typed input and output schemas, purity, determinism, requirements, buffer regions, supported backends, numeric contract, reference behavior, and parity fixture. Buffered runtime outputs preserve their schema value type through the commit barrier rather than pairing an arbitrary value with an unrelated schema reference.
+Canonical kernels are pure and deterministic by definition over their admitted inputs and explicit requirements. A computation that reads hidden state, time, entropy, or effects is a different authority and names those inputs instead of advertising a false alternate kernel mode. Every kernel declares identity, ABI version, typed input and output schemas, requirements, buffer regions, supported backends, any applicable numeric contract, reference behavior, and a parity fixture. Buffered runtime outputs preserve their schema value type through the commit barrier rather than pairing an arbitrary value with an unrelated schema reference.
 
 Rust and Wasm execute lawful kernels. They do not become a second scene, state, collection, settlement, or operation authority.
 
@@ -76,6 +76,7 @@ Fallback behavior is explicit and preserves the reference semantics or returns a
 - One transaction publishes one coherent cut.
 - TypeScript is the semantic reference.
 - Every optimized backend passes differential parity under its declared numeric contract.
+- Physical reproducibility is qualified separately for an exact backend execution profile; semantic purity and determinism do not claim repeated byte-identical physical execution.
 - Kernel primitives are reusable beyond one old call site.
 - Bridge crossings are measured and batched.
 - Buffers and growth are bounded by the memory plan.

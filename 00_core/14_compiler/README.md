@@ -49,6 +49,8 @@ The operation-level `MigrationReport` distinguishes admitted and rejected source
 
 Migration never applies the produced meaning. `MigrationApplicationProposal` is consumed by a separate approved operation and carries a core diagnostic explaining that proposed action instead of an unstructured explanation string.
 
+Compiler arms are semantically deterministic by definition over admitted input and explicit requirements. An arm that reads hidden time, entropy, evidence, or effects is not another compiler mode; those inputs must enter through named authority. Repeated physical emission is a separate claim made later against an exact compiler implementation profile, using the stage-specific reproducibility grammar rather than a boolean on the semantic arm.
+
 ## Requirement closure is the bundle law
 
 The root typed-hole and exact requirement-row machinery determines what unresolved runtime authority remains after compilation.
@@ -200,6 +202,7 @@ Several authorities backed by one physical provider share one instance and one l
 - Runtime features derive from exact residual requirements.
 - Cost vectors remain multidimensional until an explicit objective selects among lawful candidates.
 - Profile identity includes toolchain, backend, workload family, residency, and measured body.
+- Physical reproducibility is qualified against an exact implementation profile and never inferred from semantic compiler identity alone.
 - No planner silently weakens semantic or security invariants.
 - Unsupported projection refuses.
 - An offer provides imported owner authorities; it never authors a replacement.

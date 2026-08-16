@@ -68,7 +68,6 @@ export interface InterpolatorDefinition<
     Requirements
   >;
   readonly requirements: Requirements;
-  readonly deterministic: boolean;
   readonly address: ContentAddress<'application/vnd.liteship.interpolator+cbor'>;
 }
 

@@ -84,8 +84,6 @@ export interface KernelDefinition<
   readonly inputSchema: SchemaReference<SchemaId, Input>;
   readonly outputSchema: SchemaReference<SchemaId, Output>;
   readonly requirements: Requirements;
-  readonly deterministic: boolean;
-  readonly pure: boolean;
   readonly supportedBackends: readonly ExecutionBackend[];
   readonly numerics?: NumericContract;
   readonly parityFixture: ContentAddress;

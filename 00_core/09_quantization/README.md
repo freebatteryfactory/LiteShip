@@ -40,7 +40,7 @@ A scene may define where and when values change. It does not redefine how a name
 
 - Boundaries have nonempty ordered states and strictly ordered thresholds.
 - Hysteresis prevents flapping without inventing state.
-- One input and prior state produce one deterministic result under the declared numeric contract.
+- An interpolator is deterministic by definition over its admitted inputs and explicit requirements. Work that also depends on time, randomness, or late evidence is a different operation and names that authority rather than hiding it behind an alternate interpolator mode.
 - Reconstruction is explicit: endpoints plus progress produce a value.
 - Interpolator identity is typed and content-addressable; raw strings do not satisfy it.
 - Quality may remove optional richness but never truth, security, authority, accessibility, or required interaction.
