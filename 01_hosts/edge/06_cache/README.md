@@ -17,6 +17,7 @@ Own edge cache provider authority: canonical keys, declared variation, private p
 - The key contract: canonical input address plus explicit variation row plus privacy partition — never a hand-built string.
 - The closed variation vocabulary: tenant, authorization, locale, capability, content.
 - The phase-correct disposition algebra: hit, miss, stale, bypass.
+- The intrinsic cache facility carries physical lookup and fill contracts, not an interchangeable availability marker.
 
 ## Does not own
 

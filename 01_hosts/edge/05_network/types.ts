@@ -99,7 +99,7 @@ export interface EdgeOutboundConnection<Decoded, Rid extends OutboundRequestId> 
 
 /** Narrow intrinsic authority over the platform's outbound fetch machinery. */
 export interface EdgeNetworkFacility {
-  readonly admitted: true;
+  readonly open: EdgeNetworkAuthority['open'];
 }
 
 /**

@@ -17,6 +17,7 @@ Own explicitly bounded post-response work: task identity, request ancestry, reta
 - The deferred task: descended from its exact invocation, carrying actual work (an operation invocation) under an actual bound (flush-tied or deadline-carrying), holding an exact declared capability scope — never the whole realm — and owned.
 - The phase-correct outcome algebra: pending, completed-with-receipt, failed, cancelled.
 - The enqueue contract: ancestry, work, scope, and bound together — no naked deferral.
+- The intrinsic platform facility carries the bounded defer operation itself; it is distinct from cache, network, and execution facilities by usable shape.
 
 ## Does not own
 

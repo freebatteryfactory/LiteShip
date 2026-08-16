@@ -17,6 +17,7 @@ Own the physical request-time evidence producers — Client Hints and other admi
 - `EdgeSourcedEvidenceUpdate<Source>`: an update naming its exact core source, with no identity-erasing default.
 - The source-correlated `read` contract: asking for source A yields an update of A, provably not B.
 - The hint-source grounding (invocation origin) and the request-evidence offer.
+- The hint-source input is the admitted request-header row the invocation actually supplies, not a contentless marker.
 
 ## Does not own
 

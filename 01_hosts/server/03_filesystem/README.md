@@ -15,6 +15,7 @@ Own scoped filesystem-provider authority: deployment-admitted roots, root-correl
 ## Owns
 
 - `AdmittedPath<Root>`: a path is admitted against the exact root it belongs to — a raw string is never authority, and a path under root A structurally cannot open under root B.
+- The deployment root binding: the exact root reference and its addressed configuration together, never a generic admitted flag.
 - Root-correlated admission and opening on the provider.
 - Owned file handles with atomic-write-and-replace semantics, plus the full resource families: directories, watches, locks, and bounded chunk streams — all root-correlated — and exact realization of the four core store ports.
 

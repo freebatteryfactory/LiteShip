@@ -139,7 +139,8 @@ export interface ToolAuthority {
 
 /** The admitted tool roster beneath the provider. */
 export interface ToolCatalogBinding {
-  readonly admitted: true;
+  readonly address: ContentAddress<'application/vnd.liteship.server-tool-catalog+cbor'>;
+  readonly profiles: NonEmptyTuple<ToolProfile<ToolId>>;
 }
 
 export type ToolCatalogRequirement = Hole<'liteship.server.tool-catalog', ToolCatalogBinding>;

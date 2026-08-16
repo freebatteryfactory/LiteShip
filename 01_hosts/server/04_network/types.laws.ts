@@ -14,7 +14,7 @@
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { Assert, CaseOf, Equal, NonEmptyTuple, OutputOf, Result, Signature } from '../../../types.js';
-import type { AllowedEndpoint, ListenerResource, ServerConnectRequest, ServerConnection, ServerConnectionReference, ServerEncodedChunk, ServerNetworkAuthority } from './types.js';
+import type { AllowedEndpoint, ListenerResource, ServerConnectRequest, ServerConnection, ServerConnectionReference, ServerEncodedChunk, ServerNetworkAuthority, ServerNetworkFacility } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -36,6 +36,14 @@ export type ConnectingIsDecoderCorrelated = Assert<
       ServerConnection<string> extends ServerConnection<Uint8Array> ? true : false,
     ],
     [true, false]
+  >
+>;
+
+/** Compile-time law: the intrinsic grounding carries the physical network operations. */
+export type TheNetworkFacilityIsAnAuthorityNotAMarker = Assert<
+  Equal<
+    [ServerNetworkFacility['connect'], ServerNetworkFacility['listen']],
+    [ServerNetworkAuthority['connect'], ServerNetworkAuthority['listen']]
   >
 >;
 

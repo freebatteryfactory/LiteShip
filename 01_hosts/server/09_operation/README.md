@@ -18,6 +18,7 @@ Own trusted server-physical operation-handler realization: exact bindings to cor
 - The execution: one exact invocation, result, cancellation receipt, and owned lifecycle. Cancellation targets this per-use execution, never the handler serving its siblings.
 - Operation-correlated binding on the provider.
 - The deployment-admitted handler catalog grounding.
+- That grounding carries one addressed, non-empty operation-reference population; exact definitions remain core-owned and enter the correlated binding request. A catalog binding is usable input, not an admitted boolean.
 
 ## Does not own
 

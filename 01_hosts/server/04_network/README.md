@@ -17,6 +17,7 @@ Own physical network providers: decoder-correlated outbound connections, listene
 - Outbound connections that send and receive, whose decoder and received values share one decoded type.
 - Listeners as owned resources accepting usable per-use connections — never bare references — at admitted endpoints.
 - The endpoint allowlist carrier — admitted, never a raw string.
+- The intrinsic network facility carries the actual decoder-correlated connect and endpoint-admitted listen operations; it is not a contentless availability marker.
 
 ## Does not own
 

@@ -191,7 +191,8 @@ export interface FilesystemProvider {
 
 /** The admitted scoped root beneath the provider. */
 export interface FilesystemRootBinding {
-  readonly admitted: true;
+  readonly root: FilesystemRootReference;
+  readonly configuration: ContentAddress<'application/vnd.liteship.server-filesystem-root+cbor'>;
 }
 
 export type FilesystemRootRequirement = Hole<

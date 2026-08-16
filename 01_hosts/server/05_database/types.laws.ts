@@ -12,12 +12,13 @@
  */
 
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { TransactionGeneration } from '../../../00_core/04_time/types.js';
 import type { CancellationReceipt, Deadline } from '../../../00_core/05_lifecycle/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { Assert, BindingsFor, CaseOf, Equal, InputOf, NonEmptyTuple, Result, Signature, UniqueRequirements } from '../../../types.js';
 import type { SecretProviderRequirement } from '../02_secret/types.js';
-import type { DatabaseConnection, DatabaseEndpointRequirement, DatabasePool, DatabaseProvider, DatabaseProviderOffer, DatabaseReference, MigrationAddress, ServerStoreRow, StatementId, StatementReference, StatementRequest, StatementResource, TransactionFinalizationReceipt, TransactionId, TransactionLease, TransactionLeaseRequest, TransactionReference } from './types.js';
+import type { DatabaseConnection, DatabaseEndpointBinding, DatabaseEndpointRequirement, DatabasePool, DatabaseProvider, DatabaseProviderOffer, DatabaseReference, MigrationAddress, ServerStoreRow, StatementId, StatementReference, StatementRequest, StatementResource, TransactionFinalizationReceipt, TransactionId, TransactionLease, TransactionLeaseRequest, TransactionReference } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -51,6 +52,17 @@ export type ALeaseIsIssuedPerGeneration = Assert<
       true,
       TransactionReference<TransactionId<'liteship.server.db.law.tx-a'>>,
       TransactionReference<TransactionId<'liteship.server.db.law.tx-a'>>,
+    ]
+  >
+>;
+
+/** Compile-time law: deployment supplies the exact database and addressed endpoint profile. */
+export type AnEndpointBindingNamesItsDatabase = Assert<
+  Equal<
+    [DatabaseEndpointBinding['database'], DatabaseEndpointBinding['configuration']],
+    [
+      DatabaseReference,
+      ContentAddress<'application/vnd.liteship.server-database-endpoint+cbor'>,
     ]
   >
 >;

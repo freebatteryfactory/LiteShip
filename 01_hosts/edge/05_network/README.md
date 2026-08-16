@@ -16,6 +16,7 @@ Own physical outbound network resources: decoder-correlated connection opening, 
 
 - The outbound connection: per-use owned resource whose decoder and received values share one decoded type, correlated to the exact outbound request that opened it — which carries its own physical request identity, method, and addressed body, not merely an origin.
 - The decoder-correlated `open` on the network provider.
+- The intrinsic fetch facility carries that physical `open` contract into admission; it cannot be confused with cache, execution, or deferred-work machinery.
 - The offer's policy requirement: no connection opens outside the allowlists.
 
 ## Does not own

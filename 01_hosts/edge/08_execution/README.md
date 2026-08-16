@@ -15,6 +15,7 @@ Own request-scoped edge execution: lawful backends bound to matching drivers, co
 ## Owns
 
 - The execution host: `BoundEdgeDriver` roster and core's `RuntimeExecutor`, exactly.
+- The intrinsic execution grounding supplies a non-empty population of already kind-correlated drivers, rather than an availability marker.
 - Operation- and requirements-correlated handler binding: a handler for operation A with requirement row R is provably not a handler for B or for another row, its definition carries the exact row, and its capabilities are exactly the bindings for that row — never a free requirement list.
 - The offer's invocation and policy requirements — execution is request-scoped and policy-bound.
 

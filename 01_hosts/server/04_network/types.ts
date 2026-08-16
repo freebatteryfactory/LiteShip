@@ -103,7 +103,8 @@ export interface ServerNetworkAuthority {
 
 /** Narrow intrinsic authority over the host network machinery. */
 export interface ServerNetworkFacility {
-  readonly admitted: true;
+  readonly connect: ServerNetworkAuthority['connect'];
+  readonly listen: ServerNetworkAuthority['listen'];
 }
 
 export type ServerNetworkFacilityRequirement = Hole<

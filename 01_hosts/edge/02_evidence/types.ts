@@ -28,7 +28,7 @@ import type {
 } from '../../../00_core/06_evidence/types.js';
 import type { GroundingId, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
 import type { EdgeGroundingDefinition, EdgeRealizationOffer } from '../00_bootstrap/types.js';
-import type { AdmittedRequestRequirement } from '../01_request/types.js';
+import type { AdmittedHeader, AdmittedRequestRequirement } from '../01_request/types.js';
 
 /**
  * One evidence update whose source is the exact core source identity it was
@@ -53,7 +53,7 @@ export interface RequestEvidenceAuthority {
 
 /** Narrow intrinsic authority over the physical hint fields of the invocation. */
 export interface HintSourceFacility {
-  readonly admitted: true;
+  readonly headers: readonly AdmittedHeader[];
 }
 
 export type HintSourceRequirement = Hole<'liteship.edge.hint-source', HintSourceFacility>;

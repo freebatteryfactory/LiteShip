@@ -14,7 +14,7 @@
 import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Assert, CaseOf, Equal, NonEmptyTuple, TagOf } from '../../../types.js';
 import type { CachePartitionKey, EdgePolicyRequirement } from '../03_policy/types.js';
-import type { CacheDisposition, CacheEntry, CacheFacilityRequirement, CacheKey, CacheVariation, EdgeCacheOffer } from './types.js';
+import type { CacheDisposition, CacheEntry, CacheFacility, CacheFacilityRequirement, CacheKey, CacheVariation, EdgeCacheAuthority, EdgeCacheOffer } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -47,6 +47,14 @@ export type DispositionsArePhaseCorrect = Assert<
   Equal<
     [TagOf<CacheDisposition>, CaseOf<CacheDisposition, 'hit'>['entry'], CaseOf<CacheDisposition, 'stale'>['entry']],
     ['hit' | 'miss' | 'stale' | 'bypass', CacheEntry, CacheEntry]
+  >
+>;
+
+/** Compile-time law: the intrinsic cache grounding carries physical cache operations. */
+export type TheCacheFacilityIsNotAMarker = Assert<
+  Equal<
+    [CacheFacility['lookup'], CacheFacility['fill']],
+    [EdgeCacheAuthority['lookup'], EdgeCacheAuthority['fill']]
   >
 >;
 

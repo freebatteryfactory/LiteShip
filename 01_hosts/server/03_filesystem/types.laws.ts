@@ -12,9 +12,10 @@
  */
 
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { Assert, BindingsFor, CaseOf, Equal, NonEmptyTuple, OutputOf, Result, UniqueRequirements } from '../../../types.js';
-import type { AdmittedPath, FileBufferBound, FileHandle, FileOpenRequest, FileStream, FileStreamFinalizationReceipt, FileStreamId, FileStreamOpenRequest, FilesystemProvider, FilesystemRootId, FilesystemRootReference, FilesystemStoreRow, LockResource, WatchResource } from './types.js';
+import type { AdmittedPath, FileBufferBound, FileHandle, FileOpenRequest, FileStream, FileStreamFinalizationReceipt, FileStreamId, FileStreamOpenRequest, FilesystemProvider, FilesystemRootBinding, FilesystemRootId, FilesystemRootReference, FilesystemStoreRow, LockResource, WatchResource } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -35,6 +36,17 @@ export type APathCannotClaimAnotherRoot = Assert<
         : false,
     ],
     [FilesystemRootReference<FilesystemRootId<'liteship.server.fs.law.root-a'>>, false]
+  >
+>;
+
+/** Compile-time law: deployment supplies the exact root and its addressed configuration. */
+export type ARootBindingNamesThePhysicalRoot = Assert<
+  Equal<
+    [FilesystemRootBinding['root'], FilesystemRootBinding['configuration']],
+    [
+      FilesystemRootReference,
+      ContentAddress<'application/vnd.liteship.server-filesystem-root+cbor'>,
+    ]
   >
 >;
 

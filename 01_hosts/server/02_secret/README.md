@@ -15,6 +15,7 @@ Own secret-provider authority: opaque references that never carry material, iden
 ## Owns
 
 - Opaque `SecretScopedReference` values — the only secret-shaped thing broad contexts ever hold.
+- The deployment secret-source binding as one exact content address, never a universal admitted marker or a raw environment map.
 - `RevealedSecret<Id>`: identity-correlated (revealing A provably yields A's revelation), with the identity and scoped `use` operation beside core's directly exposed owned lifecycle. Disposal takes no secret reference and returns no identity echo. Material never appears as a field: it exists only as the input of a `SecretConsumer<Id>` admitted for exactly this secret, so broad contexts, receipts, logs, and object traversal have nothing to reach. That code explicitly admitted into the consumer boundary can still leak what it is given remains the standing assurance obligation.
 - Disposition observation without revelation: current, rotated, revoked.
 

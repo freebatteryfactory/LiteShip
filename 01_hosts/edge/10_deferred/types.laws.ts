@@ -18,7 +18,7 @@ import type { OperationInvocation } from '../../../00_core/07_operation/types.js
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { Assert, CaseOf, Equal, NonEmptyTuple, Signature, TagOf } from '../../../types.js';
 import type { EdgeInvocationContext } from '../00_bootstrap/types.js';
-import type { DeferredBound, DeferredOutcome, DeferredTask, DeferredTaskRequest, DeferredWorkAuthority } from './types.js';
+import type { DeferredBound, DeferredFacility, DeferredOutcome, DeferredTask, DeferredTaskReference, DeferredTaskRequest, DeferredWorkAuthority } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -79,5 +79,13 @@ export type EnqueueingRequiresAncestryAndScope = Assert<
       OperationInvocation,
       DeferredBound,
     ]
+  >
+>;
+
+/** Compile-time law: the intrinsic grounding carries the platform defer operation. */
+export type TheDeferredFacilityCanScheduleNotMerelyMark = Assert<
+  Equal<
+    DeferredFacility['defer'],
+    Signature<DeferredTaskRequest, DeferredTaskReference, NonEmptyTuple<Diagnostic>>
   >
 >;

@@ -12,9 +12,10 @@
  */
 
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { OwnedResource } from '../../../00_core/05_lifecycle/types.js';
 import type { Assert, Equal, InputOf, NonEmptyTuple, Result, Signature, TagOf } from '../../../types.js';
-import type { RevealedSecret, SecretConsumer, SecretDisposition, SecretId, SecretMaterial, SecretProvider, SecretScopedReference, SecretUseReceipt } from './types.js';
+import type { RevealedSecret, SecretConsumer, SecretDisposition, SecretId, SecretMaterial, SecretProvider, SecretScopedReference, SecretSourceBinding, SecretUseReceipt } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -68,6 +69,14 @@ export type ARevealedSecretHasNoSerializationSurface = Assert<
         : false,
     ],
     [true, true, false, 'reveals' | 'address', SecretMaterial, false]
+  >
+>;
+
+/** Compile-time law: deployment supplies one addressed secret-source fact. */
+export type ASecretSourceIsAddressedNotAMarker = Assert<
+  Equal<
+    SecretSourceBinding['address'],
+    ContentAddress<'application/vnd.liteship.server-secret-source+cbor'>
   >
 >;
 

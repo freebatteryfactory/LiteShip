@@ -17,7 +17,7 @@ import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js
 import type { Assert, CaseOf, Equal, NonEmptyTuple, Result, Signature } from '../../../types.js';
 import type { RequestMethod } from '../01_request/types.js';
 import type { AllowedOrigin, EdgePolicyRequirement } from '../03_policy/types.js';
-import type { EdgeBufferBound, EdgeEncodedChunk, EdgeNetworkAuthority, EdgeNetworkFacilityRequirement, EdgeNetworkOffer, EdgeOutboundConnection, OutboundConnectionReference, OutboundOpenRequest, OutboundRequestId, OutboundRequestReference } from './types.js';
+import type { EdgeBufferBound, EdgeEncodedChunk, EdgeNetworkAuthority, EdgeNetworkFacility, EdgeNetworkFacilityRequirement, EdgeNetworkOffer, EdgeOutboundConnection, OutboundConnectionReference, OutboundOpenRequest, OutboundRequestId, OutboundRequestReference } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -61,6 +61,11 @@ export type OutboundOpeningIsDecoderCorrelated = Assert<
       ContentAddress<'application/vnd.liteship.edge-outbound-body+cbor'>,
     ]
   >
+>;
+
+/** Compile-time law: the intrinsic grounding carries the physical open operation. */
+export type TheNetworkFacilityCanOpenNotMerelyMark = Assert<
+  Equal<EdgeNetworkFacility['open'], EdgeNetworkAuthority['open']>
 >;
 
 

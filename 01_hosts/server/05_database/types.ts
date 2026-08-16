@@ -192,7 +192,8 @@ export interface DatabaseProvider {
 
 /** The admitted deployment endpoint beneath the provider. */
 export interface DatabaseEndpointBinding {
-  readonly admitted: true;
+  readonly database: DatabaseReference;
+  readonly configuration: ContentAddress<'application/vnd.liteship.server-database-endpoint+cbor'>;
 }
 
 export type DatabaseEndpointRequirement = Hole<

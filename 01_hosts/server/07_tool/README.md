@@ -18,6 +18,7 @@ Own native-tool provider authority: exact tool profiles with versions and determ
 - The tool profile: exact identity, version, determinism arm.
 - Tool-correlated invocation: invoking tool A provably yields an execution of A, carrying the actual input value beside its typed contracts and a declared sandbox — never ambient scope — and yielding an actual result: a produced value with its receipt, or a failure.
 - The deployment-admitted tool roster grounding.
+- That grounding carries one addressed, non-empty population of exact tool profiles; it is not an interchangeable admitted marker.
 
 ## Does not own
 

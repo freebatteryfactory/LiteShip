@@ -113,7 +113,7 @@ export interface EdgeOperationAuthority {
 
 /** Narrow intrinsic authority over the platform's execution machinery. */
 export interface EdgeExecutionFacility {
-  readonly admitted: true;
+  readonly drivers: NonEmptyTuple<BoundEdgeDriver>;
 }
 
 export type EdgeExecutionFacilityRequirement = Hole<

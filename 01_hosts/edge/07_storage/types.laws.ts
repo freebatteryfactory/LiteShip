@@ -12,8 +12,9 @@
  */
 
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { Assert, BindingsFor, Equal, NonEmptyTuple, Result, UniqueRequirements } from '../../../types.js';
-import type { DeploymentStoreRequirement, EdgeStore, EdgeStoreRow } from './types.js';
+import type { DeploymentStoreBinding, DeploymentStoreRequirement, EdgeStore, EdgeStoreRow } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -29,6 +30,14 @@ export type EdgeConstructionReturnsExactBindings = Assert<
     <Row extends EdgeStoreRow>(
       row: UniqueRequirements<Row>,
     ) => Result<BindingsFor<Row>, NonEmptyTuple<Diagnostic>>
+  >
+>;
+
+/** Compile-time law: deployment supplies one exact addressed storage binding. */
+export type TheStoreBindingIsAddressedNotAMarker = Assert<
+  Equal<
+    DeploymentStoreBinding['binding'],
+    ContentAddress<'application/vnd.liteship.edge-deployment-store+cbor'>
   >
 >;
 

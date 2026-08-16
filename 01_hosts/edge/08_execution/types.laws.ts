@@ -15,7 +15,7 @@ import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { OperationId, OperationInvocation, OperationReference } from '../../../00_core/07_operation/types.js';
 import type { ExecutionRequest, RuntimeCommit, RuntimeExecutor } from '../../../00_core/16_runtime/types.js';
 import type { Assert, BindingsFor, Equal, Hole, InputOf, NonEmptyTuple, OutputOf, Result } from '../../../types.js';
-import type { BoundEdgeDriver, EdgeExecutionHost, EdgeHandlerBindingRequest, EdgeOperationAuthority, EdgeOperationHandler } from './types.js';
+import type { BoundEdgeDriver, EdgeExecutionFacility, EdgeExecutionHost, EdgeHandlerBindingRequest, EdgeOperationAuthority, EdgeOperationHandler } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -36,6 +36,11 @@ export type TheEdgeHostActuallyExecutes = Assert<
     [EdgeExecutionHost['executor'], OutputOf<RuntimeExecutor['execute']>, InputOf<RuntimeExecutor['execute']>],
     [RuntimeExecutor, RuntimeCommit, ExecutionRequest]
   >
+>;
+
+/** Compile-time law: the intrinsic execution grounding supplies actual matched drivers. */
+export type TheExecutionFacilityCarriesDriversNotAMarker = Assert<
+  Equal<EdgeExecutionFacility['drivers'], NonEmptyTuple<BoundEdgeDriver>>
 >;
 
 

@@ -92,7 +92,11 @@ export interface DeferredWorkAuthority {
 
 /** Narrow intrinsic authority over the platform's post-response scheduling. */
 export interface DeferredFacility {
-  readonly admitted: true;
+  readonly defer: Signature<
+    DeferredTaskRequest,
+    DeferredTaskReference,
+    NonEmptyTuple<Diagnostic>
+  >;
 }
 
 export type DeferredFacilityRequirement = Hole<'liteship.edge.deferred-facility', DeferredFacility>;

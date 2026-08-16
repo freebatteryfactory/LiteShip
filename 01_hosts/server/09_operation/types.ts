@@ -24,12 +24,14 @@ import type {
   Signature,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type {
   IdempotencyKey,
   OperationDefinition,
   OperationId,
   OperationInvocation,
+  OperationReference,
   OperationReceipt,
 } from '../../../00_core/07_operation/types.js';
 import type { GroundingId, RealizationLifecycle, RealizationOfferId } from '../../../00_core/14_compiler/types.js';
@@ -147,7 +149,8 @@ export interface ServerOperationAuthority {
 
 /** The admitted handler catalog beneath the provider. */
 export interface OperationCatalogBinding {
-  readonly admitted: true;
+  readonly address: ContentAddress<'application/vnd.liteship.server-operation-catalog+cbor'>;
+  readonly operations: NonEmptyTuple<OperationReference>;
 }
 
 export type OperationCatalogRequirement = Hole<

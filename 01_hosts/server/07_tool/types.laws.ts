@@ -17,7 +17,7 @@ import type { ReproducibilityClaim } from '../../../00_core/06_evidence/types.js
 import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { Assert, CaseOf, Equal, NonEmptyTuple, Result, Signature, TagOf } from '../../../types.js';
-import type { ToolAuthority, ToolExecution, ToolExecutionId, ToolExecutionReference, ToolId, ToolInvocationRequest, ToolOutcome, ToolProfile, ToolProfileId, ToolProfileReference, ToolReference, ToolSandbox } from './types.js';
+import type { ToolAuthority, ToolCatalogBinding, ToolExecution, ToolExecutionId, ToolExecutionReference, ToolId, ToolInvocationRequest, ToolOutcome, ToolProfile, ToolProfileId, ToolProfileReference, ToolReference, ToolSandbox } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -162,6 +162,17 @@ export type AToolProfileIsExactAboutWhatItRan = Assert<
         : false,
     ],
     [true, true, true, true]
+  >
+>;
+
+/** Compile-time law: the deployment grounding carries an addressed non-empty profile catalog. */
+export type TheToolCatalogCarriesProfilesNotAMarker = Assert<
+  Equal<
+    [ToolCatalogBinding['address'], ToolCatalogBinding['profiles']],
+    [
+      ContentAddress<'application/vnd.liteship.server-tool-catalog+cbor'>,
+      NonEmptyTuple<ToolProfile<ToolId>>,
+    ]
   >
 >;
 

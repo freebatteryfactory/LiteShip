@@ -12,11 +12,12 @@
  */
 
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
-import type { IdempotencyKey, OperationId } from '../../../00_core/07_operation/types.js';
+import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
+import type { IdempotencyKey, OperationId, OperationReference } from '../../../00_core/07_operation/types.js';
 import type { CancellationReceipt } from '../../../00_core/05_lifecycle/types.js';
 import type { RealizationLifecycle } from '../../../00_core/14_compiler/types.js';
 import type { Assert, BindingsFor, CaseOf, Equal, Hole, NonEmptyTuple, Result, Signature } from '../../../types.js';
-import type { ServerHandlerBindingRequest, ServerOperationAuthority, ServerOperationExecution, ServerOperationExecutionId, ServerOperationExecutionReference, ServerOperationExecutionRequest, ServerOperationHandler } from './types.js';
+import type { OperationCatalogBinding, ServerHandlerBindingRequest, ServerOperationAuthority, ServerOperationExecution, ServerOperationExecutionId, ServerOperationExecutionReference, ServerOperationExecutionRequest, ServerOperationHandler } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -193,5 +194,16 @@ export type AHandlerCarriesItsObligations = Assert<
       ServerOperationHandler<OperationId, string, string, string, readonly []>['lifecycle'],
     ],
     [IdempotencyKey, CaseOf<RealizationLifecycle, 'owned'>]
+  >
+>;
+
+/** Compile-time law: the deployment grounding carries the addressed operation definitions. */
+export type TheOperationCatalogCarriesReferencesNotAMarker = Assert<
+  Equal<
+    [OperationCatalogBinding['address'], OperationCatalogBinding['operations']],
+    [
+      ContentAddress<'application/vnd.liteship.server-operation-catalog+cbor'>,
+      NonEmptyTuple<OperationReference>,
+    ]
   >
 >;

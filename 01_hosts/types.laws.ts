@@ -13,7 +13,9 @@
 
 import type { SchemaReference } from '../00_core/03_schema/types.js';
 import type { RealizationCatalogAddress, RealizationLifecycle, RealizationOfferDescriptor, RequirementId, StepInputBinding } from '../00_core/14_compiler/types.js';
-import type { Assert, Binding, BindingRow, Equal, FailureOf, Hole, IsNever, NonEmptyTuple, OutputOf, RequirementsOf, TagOf } from '../types.js';
+import type { Assert, Binding, BindingRow, Equal, FailureOf, Hole, InputOf, IsNever, NonEmptyTuple, OutputOf, RequirementsOf, TagOf } from '../types.js';
+import type { EdgeCapabilityTopology } from './edge/types.js';
+import type { ServerCapabilityTopology } from './server/types.js';
 import type { HostAdmissionFailure, HostAuthorityBoundary, HostCapabilityCatalog, HostChildName, HostChildRoster, HostDefinition, HostGroundingDefinition, HostGroundingDescriptor, HostId, HostRealm, HostReference, RealizationCatalog } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -166,5 +168,52 @@ export type TheChildRosterMatchesTheRealms = Assert<
   Equal<
     [HostChildRoster[number], HostChildName, HostChildRoster[0], HostChildRoster[3]],
     [HostRealm, HostRealm, 'web', 'server']
+  >
+>;
+
+type PhysicalGroundingInputs = readonly [
+  InputOf<ServerCapabilityTopology['groundings']['secretSource']['admit']>,
+  InputOf<ServerCapabilityTopology['groundings']['filesystemRoot']['admit']>,
+  InputOf<ServerCapabilityTopology['groundings']['networkFacility']['admit']>,
+  InputOf<ServerCapabilityTopology['groundings']['databaseEndpoint']['admit']>,
+  InputOf<ServerCapabilityTopology['groundings']['toolCatalog']['admit']>,
+  InputOf<ServerCapabilityTopology['groundings']['operationCatalog']['admit']>,
+  InputOf<EdgeCapabilityTopology['groundings']['hintSource']['admit']>,
+  InputOf<EdgeCapabilityTopology['groundings']['networkFacility']['admit']>,
+  InputOf<EdgeCapabilityTopology['groundings']['cacheFacility']['admit']>,
+  InputOf<EdgeCapabilityTopology['groundings']['deploymentStore']['admit']>,
+  InputOf<EdgeCapabilityTopology['groundings']['executionFacility']['admit']>,
+  InputOf<EdgeCapabilityTopology['groundings']['deferredFacility']['admit']>,
+];
+
+type MutuallyUnassignable<Left, Right> = [Left] extends [Right]
+  ? false
+  : [Right] extends [Left]
+    ? false
+    : true;
+
+type IncomparableWithAll<Head, Tail extends readonly unknown[]> =
+  Tail extends readonly [infer Next, ...infer Rest]
+    ? MutuallyUnassignable<Head, Next> extends true
+      ? IncomparableWithAll<Head, Rest>
+      : false
+    : true;
+
+type PairwiseIncomparable<Row extends readonly unknown[]> =
+  Row extends readonly [infer Head, ...infer Tail]
+    ? IncomparableWithAll<Head, Tail> extends true
+      ? PairwiseIncomparable<Tail>
+      : false
+    : true;
+
+/** Compile-time law: twelve physical facts cannot collapse to one admitted marker. */
+export type PhysicalGroundingInputsArePairwiseDistinct = Assert<
+  Equal<
+    [
+      PairwiseIncomparable<PhysicalGroundingInputs>,
+      { readonly admitted: true } extends PhysicalGroundingInputs[number] ? true : false,
+      PhysicalGroundingInputs['length'],
+    ],
+    [true, false, 12]
   >
 >;

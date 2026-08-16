@@ -18,6 +18,7 @@ import type {
   UniqueRequirements,
 } from '../../../types.js';
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
+import type { ContentAddress } from '../../../00_core/01_encoding/types.js';
 import type {
   BlobStoreRequirement,
   ChangeLogRequirement,
@@ -54,7 +55,7 @@ export interface EdgeStore {
 
 /** The admitted deployment binding beneath the store. */
 export interface DeploymentStoreBinding {
-  readonly admitted: true;
+  readonly binding: ContentAddress<'application/vnd.liteship.edge-deployment-store+cbor'>;
 }
 
 export type DeploymentStoreRequirement = Hole<

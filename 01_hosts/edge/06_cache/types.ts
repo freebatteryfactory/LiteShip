@@ -78,7 +78,8 @@ export interface EdgeCacheAuthority {
 
 /** Narrow intrinsic authority over the platform cache machinery. */
 export interface CacheFacility {
-  readonly admitted: true;
+  readonly lookup: EdgeCacheAuthority['lookup'];
+  readonly fill: EdgeCacheAuthority['fill'];
 }
 
 export type CacheFacilityRequirement = Hole<'liteship.edge.cache-facility', CacheFacility>;

@@ -14,7 +14,8 @@
 import type { Diagnostic } from '../../../00_core/00_error/types.js';
 import type { EvidenceReference, EvidenceSourceId } from '../../../00_core/06_evidence/types.js';
 import type { Assert, Equal, NonEmptyTuple, Result } from '../../../types.js';
-import type { EdgeSourcedEvidenceUpdate, RequestEvidenceAuthority } from './types.js';
+import type { AdmittedHeader } from '../01_request/types.js';
+import type { EdgeSourcedEvidenceUpdate, HintSourceFacility, RequestEvidenceAuthority } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Laws
@@ -53,4 +54,9 @@ export type AnEdgeUpdateNamesItsExactSource = Assert<
     EdgeSourcedEvidenceUpdate<EvidenceSourceId<'liteship.evidence.law.source-a'>>['source'],
     EvidenceReference<EvidenceSourceId<'liteship.evidence.law.source-a'>>
   >
+>;
+
+/** Compile-time law: request hint admission carries the actual admitted header row. */
+export type TheHintSourceCarriesHeadersNotAMarker = Assert<
+  Equal<HintSourceFacility['headers'], readonly AdmittedHeader[]>
 >;

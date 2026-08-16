@@ -83,7 +83,7 @@ export interface SecretProvider {
 
 /** The admitted deployment source beneath the provider. */
 export interface SecretSourceBinding {
-  readonly admitted: true;
+  readonly address: ContentAddress<'application/vnd.liteship.server-secret-source+cbor'>;
 }
 
 export type SecretSourceRequirement = Hole<'liteship.server.secret-source', SecretSourceBinding>;

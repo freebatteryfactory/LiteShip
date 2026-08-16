@@ -17,6 +17,7 @@ Own optional edge-physical providers realizing lawful subsets of core's revision
 - The closed store-port union — exactly the four core ports, no locally authored twins.
 - Exact construction: a unique row in, `BindingsFor` that row out; duplicates uncallable.
 - The deployment-store grounding and the store offer.
+- The deployment grounding carries the exact addressed storage binding; no raw environment map or generic admitted flag reaches the store offer.
 
 ## Does not own
 

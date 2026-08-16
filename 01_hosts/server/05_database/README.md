@@ -16,6 +16,7 @@ Own database-provider authority: exact database identity, per-use connections, p
 
 - Three distinct altitudes, provably so: the provider (durable), connections (per-use owned resources), and exact transaction leases (per-generation, finalized by commit or rollback into a terminal receipt that returns connection custody, never a long-lived binding).
 - Exact port realization: a unique row of the four core store ports in, `BindingsFor` that row out.
+- The deployment endpoint binding names the exact database and its addressed endpoint configuration; it cannot substitute for another deployment resource.
 - Pools as the durable acquisition points, contract-bound deadline-governed cancellable statement resources — the deadline relationship is architectural; its numeric value stays empirical — the migration execution facility applying addressed artifacts at a generation, change feeds as owned resources, and credentials by requirement row from the secret provider.
 
 ## Does not own
