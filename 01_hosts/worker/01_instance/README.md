@@ -16,7 +16,7 @@ Own the live worker realm after bootstrap: instance identity, lifecycle state, r
 
 - The instance resource: identity, the exact entry envelope it was admitted with, its lifecycle state, and its owned disposal.
 - The phase-correct lifecycle algebra: admitted, ready, closing, closed, terminated, crashed, withdrawn.
-- The one worker-authored finalization: graceful close, which mints the terminal close receipt the closed arm records. It is not disposal; the instance's owned lifecycle remains the ownership path.
+- The one worker-authored finalization: graceful close, which mints the terminal receipt its lifecycle records. It is not disposal; the instance's owned lifecycle remains the ownership path.
 
 ## Does not own
 

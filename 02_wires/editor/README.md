@@ -43,7 +43,7 @@ The language capability performs the only admitted translation:
 
 An incremental change names its previous and next document states and carries a non-empty edit population. Full replacement is the explicit recovery and resynchronization arm; it names the prior state and semantic ancestry, so replacing the text cannot silently reset the document's relationship to the semantic program.
 
-`unknown` text does not enter core. The injected language authority is generic over the exact `EditorDocumentChange` it receives and either produces `EditorLanguageProduct<ThatChange>` or a non-empty diagnostic failure. The product carries that change once; its resulting document state is derived from the opened/changed/replaced/closed arm, so document A cannot yield a product for document B and no duplicate document coordinate can drift from the input. The laws also compare the generic call signature against the formerly tempting broad function: a broad-change-to-broad-product handler cannot satisfy the language authority.
+`unknown` text does not enter core. The injected language authority is generic over the exact `EditorDocumentChange` it receives and either produces `EditorLanguageProduct<ThatChange>` or a non-empty diagnostic failure. The product carries that change once; its resulting document state is derived from the exact change arm, so document A cannot yield a product for document B and no duplicate document coordinate can drift from the input. The laws also compare the generic call signature against the formerly tempting broad function: a broad-change-to-broad-product handler cannot satisfy the language authority.
 
 ## One owner for a draft coordinate
 
