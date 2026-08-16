@@ -67,6 +67,7 @@ import type {
   SignaturesConnect,
   Tagged,
   UniqueRequirements,
+  WithoutOrdinalPrefix,
 } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -451,6 +452,23 @@ export type ExecutingASignatureConsumesItsInputAndYieldsItsResult = Assert<
 
 export type ComposingADisconnectedPipelineIsRejected = Assert<
   IsNever<ComposeSignatures<Produce, Disconnected>>
+>;
+
+// ---------------------------------------------------------------------------
+// Ordinal-prefix parsing preserves complete Unicode code points and passes
+// unnumbered names through unchanged
+// ---------------------------------------------------------------------------
+
+export type AnAstralCharacterSurvivesOrdinalPrefixRemoval = Assert<
+  Equal<WithoutOrdinalPrefix<'07_🛸scene'>, '🛸scene'>
+>;
+
+export type AnAsciiOrdinalPrefixIsRemoved = Assert<
+  Equal<WithoutOrdinalPrefix<'09_quantization'>, 'quantization'>
+>;
+
+export type AnUnnumberedNamePassesThrough = Assert<
+  Equal<WithoutOrdinalPrefix<'editor'>, 'editor'>
 >;
 
 // ---------------------------------------------------------------------------
