@@ -5,17 +5,17 @@
   "type": "module",
   "description": "LiteShip: a compiler-checked specification. The specification population emits no executable product code; the only executable bytes are the repository-control audits under system/01_assurance/00_audit/.",
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=24.12.0"
   },
   "scripts": {
     "check:types": "tsc -p tsconfig.json",
     "check:system": "tsc -p tsconfig.system.json",
-    "check:zero-runtime": "node system/01_assurance/00_audit/zero-runtime.mjs",
-    "check:declarations": "node system/01_assurance/00_audit/declarations.mjs",
-    "check:audits": "node --test system/01_assurance/00_audit/audit.test.mjs",
+    "check:zero-runtime": "node system/01_assurance/00_audit/zero-runtime.ts",
+    "check:declarations": "node system/01_assurance/00_audit/declarations.ts",
+    "check:audits": "node --test system/01_assurance/00_audit/audit.test.ts",
     "typecheck": "npm run check:types",
     "check": "npm run check:types && npm run check:system && npm run check:lint && npm run check:zero-runtime && npm run check:imports && npm run check:declarations && npm run check:audits",
-    "check:imports": "node system/01_assurance/00_audit/import-boundary.mjs .",
+    "check:imports": "node system/01_assurance/00_audit/import-boundary.ts .",
     "check:lint": "oxlint --deny-warnings ."
   },
   "devDependencies": {

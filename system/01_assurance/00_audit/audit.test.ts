@@ -1,11 +1,11 @@
 /**
- * Self-tests for the two repository-control algorithms.
+ * Self-tests for the repository-control algorithms.
  *
  * The relevant count is not how many executable files exist. It is how many
  * hand-written algorithms are allowed to decide whether the repository passes
  * without permanent evidence that they reject the intended defect and accept a
- * lawful neighbour. There are two, both in the root `check`, and both have
- * already shipped a defect that turned a bad tree green:
+ * lawful neighbour. Import classification has already shipped defects that
+ * turned a bad tree green:
  *
  * - the import audit read specifiers with a regular expression and could not
  *   see a side-effect import, so a planted sibling violation reported clean;
@@ -18,8 +18,8 @@
  * Every test below therefore carries both directions: the defect it must reject
  * and the lawful neighbour it must admit.
  *
- * No manifest, registry, mutation bank, score, or waiver table. Two functions
- * and an end-to-end run, in one file, on the standard runner.
+ * No manifest, registry, mutation bank, score, or waiver table. Pure functions
+ * and end-to-end runs, in one file, on the standard runner.
  */
 
 import { strict as assert } from 'node:assert';
@@ -29,10 +29,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-import { classify, moduleSpecifiers } from './import-boundary.mjs';
-import { carriesExecutableContent } from './zero-runtime.mjs';
+import { inspectDeclarationPopulation } from './declarations.ts';
+import { classify, moduleSpecifiers } from './import-boundary.ts';
+import { carriesExecutableContent, inspectEmittedJavaScript } from './zero-runtime.ts';
 
-const AUDIT = join(import.meta.dirname, 'import-boundary.mjs');
+const AUDIT = join(import.meta.dirname, 'import-boundary.ts');
 
 // --- specifier extraction --------------------------------------------------
 
@@ -103,7 +104,15 @@ test('an empty module is not executable content, and anything else is', () => {
 
 // --- end to end ------------------------------------------------------------
 
-const withTree = (/** @type {Record<string, string>} */ files, /** @type {(root: string) => {code: number, out: string}} */ run) => {
+interface AuditRun {
+  readonly code: number;
+  readonly out: string;
+}
+
+const withTree = (
+  files: Readonly<Record<string, string>>,
+  run: (root: string) => AuditRun,
+): AuditRun => {
   const root = mkdtempSync(join(tmpdir(), 'liteship-audit-test-'));
   try {
     for (const [path, text] of Object.entries(files)) {
@@ -117,14 +126,14 @@ const withTree = (/** @type {Record<string, string>} */ files, /** @type {(root:
   }
 };
 
-const audit = (/** @type {string} */ root) => {
+const audit = (root: string): AuditRun => {
   try {
     return { code: 0, out: execFileSync(process.execPath, [AUDIT, root], { encoding: 'utf8' }) };
   } catch (error) {
     // `execFileSync` throws an Error carrying the child's status and streams.
     // The audit's exit code is part of what these tests check, so the failure
     // path is the interesting one and is read rather than rethrown.
-    const failure = /** @type {{ status?: number, stdout?: string, stderr?: string }} */ (error);
+    const failure = error as { status?: number; stdout?: string; stderr?: string };
     return {
       code: failure.status ?? 1,
       out: `${failure.stdout ?? ''}${failure.stderr ?? ''}`,
@@ -212,4 +221,20 @@ test('the audit refuses an empty population rather than reporting it clean', () 
 
   assert.equal(result.code, 1);
   assert.match(result.out, /nothing was inspected/u);
+});
+
+test('zero-runtime refuses no emitted files and admits a lawful emitted neighbour', () => {
+  assert.deepEqual(inspectEmittedJavaScript([]), { kind: 'empty' });
+  assert.deepEqual(
+    inspectEmittedJavaScript([{ path: 'lawful.js', text: 'export {};\n' }]),
+    { kind: 'inspected', executable: [] },
+  );
+});
+
+test('declarations refuses no emitted declarations and admits a lawful neighbour', () => {
+  assert.deepEqual(inspectDeclarationPopulation([]), { kind: 'empty' });
+  assert.deepEqual(
+    inspectDeclarationPopulation([{ name: 'lawful.d.ts', text: 'export interface Lawful {}\n' }]),
+    { kind: 'inspected', findings: [] },
+  );
 });

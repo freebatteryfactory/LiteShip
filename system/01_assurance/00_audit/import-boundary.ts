@@ -93,16 +93,16 @@ import { LanguageVariant, SyntaxKind, createScanner } from 'typescript/unstable/
  * the parse API in `typescript/unstable/sync` needs a `Program` this audit does
  * not yet build.
  */
-export const moduleSpecifiers = (/** @type {string} */ text) => {
+export const moduleSpecifiers = (text: string): string[] => {
   const scanner = createScanner(true, LanguageVariant.Standard, text);
-  const found = [];
+  const found: string[] = [];
 
   // The three most recent tokens, each as { kind, text }. Three, because
   // deciding `require(` needs the token before `require` to rule out a member
   // call: `fs.require('./x')` is not Node's require and must not become an edge.
-  let one;
-  let two;
-  let three;
+  let one: { readonly kind: SyntaxKind } | undefined;
+  let two: { readonly kind: SyntaxKind } | undefined;
+  let three: { readonly kind: SyntaxKind } | undefined;
 
   for (;;) {
     const kind = scanner.scan();
@@ -131,10 +131,9 @@ export const moduleSpecifiers = (/** @type {string} */ text) => {
   return found;
 };
 
-const posix = (/** @type {string} */ p) => p.split(sep).join('/');
+const posix = (path: string): string => path.split(sep).join('/');
 
-/** @returns {string[]} */
-const walk = (/** @type {string} */ dir) =>
+const walk = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
     entry.name === 'node_modules' || entry.name === '.git'
       ? []
@@ -143,16 +142,15 @@ const walk = (/** @type {string} */ dir) =>
         : join(dir, entry.name),
   );
 
-// `.mjs` as well as `.ts`. The two executable audits are `.mjs`, so a
-// population of `.ts` alone left the code that enforces dependency direction
-// outside the graph whose dependency direction is inspected.
-const inventory = (/** @type {string} */ root) =>
+// The separately checked repository-control implementations are TypeScript too,
+// so one `.ts` population includes both specification and control algorithms.
+const inventory = (root: string): string[] =>
   walk(root)
-    .filter((f) => f.endsWith('.ts') || f.endsWith('.mjs'))
-    .map((f) => posix(f.slice(root.length + 1)));
+    .filter((file) => file.endsWith('.ts'))
+    .map((file) => posix(file.slice(root.length + 1)));
 
 /** The directory segments a file lives under. A root-level file has none. */
-const dirsOf = (/** @type {string} */ file) => file.split('/').slice(0, -1);
+const dirsOf = (file: string): string[] => file.split('/').slice(0, -1);
 
 /**
  * The band of one path segment, or `undefined` when the segment is unnumbered.
@@ -161,7 +159,7 @@ const dirsOf = (/** @type {string} */ file) => file.split('/').slice(0, -1);
  * product home may import it, so it sits downstream of every numbered layer.
  * Everything else numbered carries its band in its name.
  */
-const bandOf = (/** @type {string} */ segment, /** @type {number} */ depth) => {
+const bandOf = (segment: string, depth: number): number | undefined => {
   if (depth === 0 && segment === 'system') return Number.MAX_SAFE_INTEGER;
   const match = /^(\d+)_/u.exec(segment);
   return match ? Number(match[1]) : undefined;
@@ -194,7 +192,9 @@ const bandOf = (/** @type {string} */ segment, /** @type {number} */ depth) => {
  * own child -- this rule says nothing. Direction is not the question there;
  * whether anything comes back is, and `CYCLE` answers it.
  */
-export const classify = (/** @type {string} */ from, /** @type {string} */ to) => {
+export type ImportBoundaryViolation = 'DOWNSTREAM' | 'PEER' | 'SIBLING';
+
+export const classify = (from: string, to: string): ImportBoundaryViolation | undefined => {
   const fromDirs = dirsOf(from);
   const toDirs = dirsOf(to);
 
@@ -227,12 +227,12 @@ const ROOT = resolve(process.argv[2] ?? '.');
 const files = inventory(ROOT);
 const known = new Set(files);
 
-const edges = new Map();
-const violations = [];
+const edges = new Map<string, string[]>();
+const violations: string[] = [];
 
 for (const file of files) {
   const source = readFileSync(join(ROOT, file), 'utf8');
-  const resolved = [];
+  const resolved: string[] = [];
 
   for (const specifier of moduleSpecifiers(source)) {
     if (!specifier.startsWith('.')) continue;
@@ -259,12 +259,12 @@ for (const file of files) {
 const WHITE = 0;
 const GREY = 1;
 const BLACK = 2;
-const colour = new Map(files.map((f) => [f, WHITE]));
-const seenCycle = new Set();
+const colour = new Map<string, number>(files.map((file) => [file, WHITE]));
+const seenCycle = new Set<string>();
 
 for (const start of files) {
   if (colour.get(start) !== WHITE) continue;
-  const stack = [{ node: start, next: 0 }];
+  const stack: { node: string; next: number }[] = [{ node: start, next: 0 }];
   colour.set(start, GREY);
 
   while (stack.length > 0) {

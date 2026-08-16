@@ -16,8 +16,15 @@
   "compilerOptions": {
     "noEmit": true
   },
-  // Everything. Not a governed-root list — a directory the census forgets is
-  // exactly how `verification/` escaped for its entire existence.
+  // Every realm-neutral specification and law. The four Node implementations
+  // are excluded here because `tsconfig.system.json` is their checking
+  // population; no directory or semantic home is omitted from this census.
   "include": ["**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "system/01_assurance/00_audit/audit.test.ts",
+    "system/01_assurance/00_audit/declarations.ts",
+    "system/01_assurance/00_audit/import-boundary.ts",
+    "system/01_assurance/00_audit/zero-runtime.ts"
+  ]
 }

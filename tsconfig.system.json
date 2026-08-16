@@ -1,28 +1,25 @@
 {
   // The repository-control implementations: the only executable bytes here.
   //
-  // These are the two audits in the root `check` and their self-test. They
-  // decide whether the repository passes, and until now nothing typechecked
-  // them — the code enforcing dependency direction sat outside every checking
-  // population, which is the same shape as a control plane outside every
-  // census.
+  // These audits and their self-test decide whether the repository passes.
+  // Their implementation population is checked here rather than relying on
+  // Node's type stripping, which deliberately does not typecheck source.
   //
   // Separate from the specification for reasons that are facts rather than
   // taste. This population runs on Node and needs its types; the specification
-  // is realm-neutral and must never see them. This population is JavaScript;
-  // the specification is declarations. `erasableSyntaxOnly` is meaningless for
-  // a file that is already JavaScript.
+  // is realm-neutral and must never see them. This population is executable
+  // TypeScript restricted to syntax Node can erase directly.
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "types": ["node"],
-    "allowJs": true,
-    "checkJs": true,
     "noEmit": true,
-    // A `.mjs` file is JavaScript. The specification's syntax restriction has
-    // no subject here, and leaving it on would assert something about a
-    // population it was never about.
-    "erasableSyntaxOnly": false
+    "allowImportingTsExtensions": true
   },
-  "include": ["system/**/*.mjs"],
+  "include": [
+    "system/01_assurance/00_audit/audit.test.ts",
+    "system/01_assurance/00_audit/declarations.ts",
+    "system/01_assurance/00_audit/import-boundary.ts",
+    "system/01_assurance/00_audit/zero-runtime.ts"
+  ],
   "exclude": ["node_modules"]
 }

@@ -68,7 +68,7 @@ What must not happen again is the previous response to that gap. Lacking the API
 - An acquired fact names at least one consumer, as a non-empty population that cannot become a plain array.
 - The audit product's surfaces, attestations, and graph are structurally the upstream owners' types.
 - The audit product carries no verdict, findings, authority, outcome, or pass flag.
-- Every relative import edge resolves, and none crosses a band downstream, a peer boundary, a sibling boundary, or closes a cycle. Enforced by `import-boundary.mjs` in the root `check`, not by a type.
+- Every relative import edge resolves, and none crosses a band downstream, a peer boundary, a sibling boundary, or closes a cycle. Enforced by `import-boundary.ts` in the root `check`, not by a type.
 - An acquired fact carries no roster of the checks that will read it, under that name or an obvious substitute.
 - Probe coverage distinguishes complete from partial, has no skipped arm, and fact values remain `Evidence`.
 
@@ -84,7 +84,7 @@ Runtime and repository claims a type cannot express:
 
 ## The import boundary is implemented, and here is why it is a script
 
-`import-boundary.mjs` is the second executable byte in this repository, beside `zero-runtime.mjs`, and both live here because acquiring repository facts is what this home is for.
+`import-boundary.ts` and `zero-runtime.ts` live here because acquiring repository facts is what this home is for.
 
 The compiler cannot decide this and no configuration makes it able to. Direction, peerage, sibling exclusion, and acyclicity are claims about *where* a declaration lives, not about what it means — and TypeScript resolved every specifier correctly, reported nothing, and carried a cycle in `02_wires/` for the entire life of that layer. One program, type-only imports, green build.
 
@@ -124,11 +124,11 @@ The retirement trigger stated elsewhere was stability, not existence, and it sti
 
 ### The graders are graded
 
-The relevant count was never how many executable files exist. It is how many hand-written algorithms may decide whether the repository passes without permanent evidence that they reject the intended defect *and* accept a lawful neighbour. There are two, both in the root `check`, and both have already shipped a defect that turned a bad tree green.
+The relevant fact is whether a hand-written algorithm may decide that the repository passes without permanent evidence that it rejects the intended defect *and* accepts a lawful neighbour. Import classification has already shipped defects that turned a bad tree green.
 
-`audit.test.mjs` holds that evidence. Both algorithms are exported as pure functions with the commands as thin wrappers behind `import.meta.main`, so importing one does not emit a project or walk a filesystem. The end-to-end cases build a small tree in a temporary directory and run the real command against it, so the exit code is part of what is checked.
+`audit.test.ts` holds that evidence. The algorithms are exported as pure functions with the commands as thin wrappers behind `import.meta.main`, so importing one does not emit a project or walk a filesystem. The end-to-end cases build a small tree in a temporary directory and run the real command against it, so the exit code is part of what is checked.
 
-No manifest, registry, mutation bank, score, or waiver table. Two functions and one file on the standard runner.
+No manifest, registry, mutation bank, score, or waiver table. The standard runner executes the lawful and refusing cases directly.
 
 It earned itself on its first run. `fs.require('./member-call.js')` was still being read as an import edge, because `require` scans as `RequireKeyword` rather than as an identifier — so the guard meant to exclude member calls sat on a branch that never ran, and the identifier branch beside it was pure false-positive surface. That branch is gone. Nothing but a lawful-neighbour test was going to find it, which is the whole argument for having one.
 
@@ -142,7 +142,7 @@ Every import form extracted and no false positives: type-only, side-effect, doub
 
 `.oxlintrc.json` at the root is a linter configuration and never a formatter. A formatter that escapes slashes differently across Windows and macOS has already cost this project a codebase, and no script here carries `--fix`.
 
-The repository is declaration-only except for the two `.mjs` files in this home, so the entire class of defect a linter exists for — unreachable code, loose equality, floating promises, shadowed bindings — can only occur in them. They are the files that check everything else, which is exactly why they are worth linting: a broken checker reports confidently and wrongly.
+The specification is declaration-only. The executable repository-control TypeScript in this home can carry the defects a linter exists for — unreachable code, loose equality, floating promises, shadowed bindings — and checks everything else, which is exactly why it is worth linting: a broken checker reports confidently and wrongly.
 
 Measured before enabling, against eight planted defects:
 
@@ -169,15 +169,15 @@ Of the rest: twenty-nine `max-lines` are a three-hundred-line cap on declaration
 
 No product runtime implementation exists here.
 
-Three repository-control implementations do: `zero-runtime.mjs`, which emits the project and rejects any file that is not `export {};`; `import-boundary.mjs`; and `declarations.mjs`. All are `.mjs` so they sit outside the specification population they audit, and all run in the root `check`. That the number keeps rising is worth watching — the previous arrangement grew one reasonable file at a time — but each answers a question the compiler provably cannot, and none issues authority or carries a waiver.
+Repository-control implementations do: `zero-runtime.ts`, which emits the project and rejects any file that is not `export {};`; `import-boundary.ts`; and `declarations.ts`. They sit in a separate TypeScript compiler population from the specification they audit, and all run in the root `check`. Each answers a question the compiler provably cannot, and none issues authority or carries a waiver.
 
-They are no longer unchecked themselves. `tsconfig.system.json` typechecks them under the same strict posture the specification uses, which is how the graders stopped being the one population outside every checking population. Typing them for the first time turned up two real unchecked-index sites in the cycle walker and the band comparison, both now guarded rather than asserted away.
+They are typechecked by `tsconfig.system.json` under the same strict posture the specification uses. Node 24.12 or newer erases the TypeScript syntax when executing them, while `tsc` remains the authority that checks it. Typing them for the first time turned up two real unchecked-index sites in the cycle walker and the band comparison, both now guarded rather than asserted away.
 
 ## The declaration lane
 
-`declarations.mjs` emits from `tsconfig.spec.json` — the specification alone, laws excluded by population — and inspects the result. Non-empty output, no compile-only module in the surface, no exported `Assert` alias whatever file it came from, no declaration importing a `.laws.js` or `.type-test.js` module, two independent emits byte-identical, and the emitted tree typechecking on its own as a consumer receives it.
+`declarations.ts` emits from `tsconfig.spec.json` — the specification alone, laws excluded by population — and inspects the result. Non-empty output, no compile-only module in the surface, no exported `Assert` alias whatever file it came from, no declaration importing a `.laws.js` or `.type-test.js` module, two independent emits byte-identical, and the emitted tree typechecking on its own as a consumer receives it.
 
-It does not trust the file naming, for the same reason `zero-runtime.mjs` does not trust `erasableSyntaxOnly`: a convention and a flag are both claims, and a claim is not evidence.
+It does not trust the file naming, for the same reason `zero-runtime.ts` does not trust `erasableSyntaxOnly`: a convention and a flag are both claims, and a claim is not evidence.
 
 It found a real defect on its first run. The root calculus is authored as `types.d.ts`, so it is an *input* declaration and the compiler never re-emits it — every emitted file imported from a `../types.js` that was not in the output, and the surface a consumer would have received resolved nothing. The lane now copies it in, which is what packaging does, and the consumer check reads the whole surface rather than a subset of it.
 

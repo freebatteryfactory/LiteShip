@@ -20,8 +20,16 @@
     "emitDeclarationOnly": true,
     "noEmit": false
   },
-  // Everything except the laws. Not a hand-listed roster of semantic files: a
-  // directory the census forgets is exactly how `verification/` escaped.
+  // Every semantic declaration, excluding laws, type tests, and the exact Node
+  // implementation population checked by `tsconfig.system.json`.
   "include": ["**/*.ts"],
-  "exclude": ["node_modules", "**/*.laws.ts", "**/*.type-test.ts"]
+  "exclude": [
+    "node_modules",
+    "**/*.laws.ts",
+    "**/*.type-test.ts",
+    "system/01_assurance/00_audit/audit.test.ts",
+    "system/01_assurance/00_audit/declarations.ts",
+    "system/01_assurance/00_audit/import-boundary.ts",
+    "system/01_assurance/00_audit/zero-runtime.ts"
+  ]
 }

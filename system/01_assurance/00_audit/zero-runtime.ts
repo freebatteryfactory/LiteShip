@@ -19,10 +19,8 @@
  * `system/`, and assurance acquisition lives in `00_audit`. If a second audit
  * appears, it belongs beside this one — not in a new top-level folder.
  *
- * It is `.mjs` rather than `.ts` for a reason worth keeping: the audited
- * population is the TypeScript project, and this file is not in it. An auditor
- * inside its own subject would have to exempt itself, and an exemption is the
- * thing this repository refuses to grow.
+ * It belongs to the separately checked system implementation population, not
+ * the declaration-only specification population it audits.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -44,10 +42,31 @@ export const EMITTED_EXTENSION = '.js';
  * comparison because emit formatting is not the subject; `export {};` and
  * `export{};` are the same absence of behaviour.
  */
-export const carriesExecutableContent = (/** @type {string} */ text) => text.replaceAll(/\s/gu, '') !== 'export{};';
+export const carriesExecutableContent = (text: string): boolean => text.replaceAll(/\s/gu, '') !== 'export{};';
 
-/** @returns {string[]} */
-const walk = (/** @type {string} */ dir) =>
+export interface EmittedJavaScript {
+  readonly path: string;
+  readonly text: string;
+}
+
+export type ZeroRuntimeInspection =
+  | { readonly kind: 'empty' }
+  | { readonly kind: 'inspected'; readonly executable: readonly string[] };
+
+/** Inspect one complete emitted population; zero subjects are never a clean result. */
+export const inspectEmittedJavaScript = (
+  emitted: readonly EmittedJavaScript[],
+): ZeroRuntimeInspection =>
+  emitted.length === 0
+    ? { kind: 'empty' }
+    : {
+        kind: 'inspected',
+        executable: emitted
+          .filter((file) => carriesExecutableContent(file.text))
+          .map((file) => file.path),
+      };
+
+const walk = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
     entry.isDirectory() ? walk(join(dir, entry.name)) : join(dir, entry.name),
   );
@@ -55,30 +74,32 @@ const walk = (/** @type {string} */ dir) =>
 // Only when run as a command. The predicate above is imported by the audit
 // self-test, and importing a module must not emit a project as a side effect.
 if (import.meta.main) {
-const out = mkdtempSync(join(tmpdir(), 'liteship-emit-'));
-try {
-  execFileSync(
-    process.execPath,
-    [TSC, '-p', join(REPO, 'tsconfig.json'), '--noEmit', 'false', '--declaration', 'false', '--removeComments', '--outDir', out],
-    { stdio: 'inherit', cwd: REPO },
-  );
+  const out = mkdtempSync(join(tmpdir(), 'liteship-emit-'));
+  try {
+    execFileSync(
+      process.execPath,
+      [TSC, '-p', join(REPO, 'tsconfig.json'), '--noEmit', 'false', '--declaration', 'false', '--removeComments', '--outDir', out],
+      { stdio: 'inherit', cwd: REPO },
+    );
 
-  const emitted = walk(out).filter((file) => file.endsWith(EMITTED_EXTENSION));
-  const executable = emitted.filter((file) =>
-    carriesExecutableContent(readFileSync(file, 'utf8')),
-  );
+    const emitted = walk(out)
+      .filter((file) => file.endsWith(EMITTED_EXTENSION))
+      .map((path) => ({ path, text: readFileSync(path, 'utf8') }));
+    const inspection = inspectEmittedJavaScript(emitted);
 
-  // An empty population would pass every check below, so say the number out
-  // loud. Zero emitted files means the project resolved nothing, not that the
-  // repository is clean.
-  console.log(`zero-runtime: ${emitted.length} emitted, ${executable.length} carrying executable content`);
-  if (emitted.length === 0) {
-    console.error('zero-runtime: FAILED — nothing was emitted, so nothing was audited');
-    process.exit(1);
+    if (inspection.kind === 'empty') {
+      console.error('zero-runtime: FAILED — nothing was emitted, so nothing was audited');
+      process.exit(1);
+    }
+
+    console.log(
+      `zero-runtime: ${emitted.length} emitted, ${inspection.executable.length} carrying executable content`,
+    );
+    for (const file of inspection.executable) {
+      console.error(`  executable content: ${relative(out, file)}`);
+    }
+    process.exit(inspection.executable.length === 0 ? 0 : 1);
+  } finally {
+    rmSync(out, { recursive: true, force: true });
   }
-  for (const file of executable) console.error(`  executable content: ${relative(out, file)}`);
-  process.exit(executable.length === 0 ? 0 : 1);
-} finally {
-  rmSync(out, { recursive: true, force: true });
-}
 }
