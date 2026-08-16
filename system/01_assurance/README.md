@@ -20,7 +20,7 @@ Own the shared vocabulary for the facts TypeScript's assignability cannot decide
 - The gate definition itself, at an exact revision, and the evidence profile it requires.
 - The planned check and the run specification: which exact checks an invocation asked for, and which of them it requires.
 - The evaluated gate and the demonstrated gate: a definition paired with where each of its claims' demonstrations stand.
-- The gate outcome algebra, in which unknown cannot pass.
+- The gate outcome algebra, in which pending cannot pass.
 - The self-demonstration vocabulary: gate revision identity, specimen identity, witness roles, the four-role demonstration, and its outcome.
 - Findings, which live inside the evaluation that produced them.
 - Exactly two children: `00_audit` acquires, `01_gauntlet` evaluates.
@@ -53,7 +53,7 @@ The obvious version of an assurance layer declares an evidence type, a propositi
 
 - `Proposition<Atom>` takes the atom. Assurance contributes `AssurancePredicate` and gets Strong Kleene semantics identical to the ones the application language uses. A law pins the identity, so a future edit that starts writing a private `and`/`or`/`not` here fails to compile rather than forking the repository's logic in two.
 - `Decision<Subject, Failure>` takes the subject. Assurance supplies one.
-- `Evidence<Value>` already separates unavailable, pending, ready, and failed — which is precisely what "missing evidence stays visible" requires, written years before anyone needed it here.
+- `Evidence<Value>` already separates unavailable, outstanding, ready, and failed — which is precisely what "missing evidence stays visible" requires, written years before anyone needed it here.
 
 What is genuinely new is the idea of a check that must demonstrate it can discriminate. That is what this file declares, and almost nothing else.
 
@@ -108,15 +108,15 @@ A specimen is a fabricated world built to test whether the instrument discrimina
 
 `GateQualification` was `untested | qualified | refuted` — one algebra mixing *has anybody looked* with *what did they find*, which is a maturity badge riding on every evaluation.
 
-Core's `Evidence` already separates those, and had for as long as this home has existed: `unavailable` when nobody produced a demonstration, `pending` while one runs, `ready` when it came out either way, `failed` when the demonstration machinery itself broke. Reuse the absence language that exists; do not invent a second one.
+Core's `Evidence` already separates those, and had for as long as this home has existed: `unavailable` when nobody produced a demonstration, `outstanding` while one runs, `ready` when it came out either way, `failed` when the demonstration machinery itself broke. Reuse the absence language that exists; do not invent a second one.
 
 Deleting the qualification algebra outright would have lost something real, though. *Nobody tested this* and *this was tested and did not notice* are different worlds, and the second is more dangerous because it looks most like safety. It survives as `disproven`, inside the outcome, where it is evidence rather than status.
 
 `disproven`, not `refuted`. `GateOutcome.refuted` already means the check found the repository wanting; this means the check was found wanting. One word for both would be the vocabulary collapsing at exactly the point it matters.
 
-## Unknown does not pass
+## Pending does not pass
 
-`GateOutcome`'s `satisfied` arm intersects its decision with `{ truth: 'true' }`. A gate whose evidence was unavailable resolves to `unknown` under Strong Kleene, and that shape cannot be constructed in the pass arm.
+`GateOutcome`'s `satisfied` arm intersects its decision with `{ truth: 'true' }`. A gate whose evidence was unavailable resolves to `pending` under Strong Kleene, and that shape cannot be constructed in the pass arm.
 
 Fail-closed is therefore a type here, not a promise in a comment. The distinction matters because the previous arrangement's fail-closed behaviour lived in a runner, and a runner is one refactor away from failing open at three in the morning.
 
@@ -137,7 +137,7 @@ The split also makes the lean/rich distinction expressible: `01_gauntlet` declar
 ## Laws
 
 - The assurance proposition is core's `Proposition` at the assurance atom, and the assurance decision is core's `Decision` at the assurance subject.
-- A satisfied gate carries a resolved decision; unknown is not assignable into the pass arm, and the pass arm is not the full `Truth` union.
+- A satisfied gate carries a resolved decision; pending is not assignable into the pass arm, and the pass arm is not the full `Truth` union.
 - A demonstration requires all four roles in named slots; a baseline witness cannot occupy the detection slot, and each role is pinned to the outcome it is allowed to have observed.
 - Attribution names the semantic relationship it attributes a refusal to, and the other three roles carry no attribution payload.
 - The demonstration outcome is demonstrated or disproven, with no untested arm; absence lives in core's `Evidence` instead.

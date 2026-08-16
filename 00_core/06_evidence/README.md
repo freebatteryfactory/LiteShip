@@ -16,8 +16,8 @@ Model operational evidence state, three-valued truth, source authority, lifetime
 
 - Evidence observation identity, and the immutable addressed evidence cut one evaluation saw.
 - The reproducibility claim grammar, instantiated per physical stage over that stage's profile reference.
-- `Truth = true | false | unknown`.
-- `Evidence = unavailable | pending | ready | failed`.
+- `Truth = true | false | pending`.
+- `Evidence = unavailable | outstanding | ready | failed`.
 - Evidence source definitions and references.
 - Source authority, lifetime, evolution, cadence, and realm axes.
 - Generic `Proposition<Atom>` using strong Kleene logic.
@@ -33,19 +33,19 @@ Model operational evidence state, three-valued truth, source authority, lifetime
 
 ## Semantic contracts
 
-`Pending` is operational. `Unknown` is epistemic. Failure remains failure even when the visible truth result is already determined by another operand.
+`pending` is epistemic: the truth is not yet determined. `outstanding` is operational: an evidence acquisition is owed or in flight. Failure remains failure even when the visible truth result is already determined by another operand.
 
-Collections reuse this proposition algebra rather than defining a second boolean predicate language. A field may be unknown because of null, missing data, or pending evidence, while blockers and failures still explain which case occurred.
+Collections reuse this proposition algebra rather than defining a second boolean predicate language. A field may be pending because of null, missing data, or outstanding evidence, while blockers and failures still explain which case occurred.
 
 ## Laws
 
-- An observation retains the whole operational state algebra: unavailable, pending, and failed sources genuinely participated in an evaluated world.
+- An observation retains the whole operational state algebra: unavailable, outstanding, and failed sources genuinely participated in an evaluated world.
 - An evidence cut is exact over its identity and addressed. Its observation population may be empty but never absent — "consulted nothing" and "nobody recorded what was consulted" are different claims.
 - A reproducibility claim names a profile *reference*, never a profile product. A profile containing a claim parameterized by that profile is a type containing itself.
 - `unclaimed` carries limitations and cannot carry a witness. Absent evidence is not a negative finding, and calling unmeasured output non-reproducible is the same error as calling an unmapped artifact unmappable.
 - `reproducible-under-profile` requires both an exact profile and a witness; `observed-variable` requires repeated-run evidence.
 - Strong Kleene truth tables apply.
-- `false AND unknown = false` and `true OR unknown = true` without erasing blockers or failures.
+- `false AND pending = false` and `true OR pending = true` without erasing blockers or failures.
 - Advisory or presentational evidence cannot satisfy authoritative requirements.
 - Source lifetime and evolution determine whether a subscription must remain live.
 - A retractable source may reverse a prior result.

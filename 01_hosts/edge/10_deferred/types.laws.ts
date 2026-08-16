@@ -59,7 +59,7 @@ export type DeferredOutcomesArePhaseCorrect = Assert<
   Equal<
     [TagOf<DeferredOutcome>, CaseOf<DeferredOutcome, 'completed'>['receipt']],
     [
-      'pending' | 'completed' | 'failed' | 'cancelled',
+      'outstanding' | 'completed' | 'failed' | 'cancelled',
       ContentAddress<'application/vnd.liteship.edge-deferred+cbor'>,
     ]
   >

@@ -106,7 +106,7 @@ export type AnObservationRetainsUnavailableAndFailedStates = Assert<
       TagOf<EvidenceObservation['state']>,
       EvidenceObservation['observedAt'] extends TimeCoordinate ? true : false,
     ],
-    ['unavailable' | 'pending' | 'ready' | 'failed', true]
+    ['unavailable' | 'outstanding' | 'ready' | 'failed', true]
   >
 >;
 

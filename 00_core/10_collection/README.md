@@ -51,8 +51,8 @@ Collection predicates extend the generic strong Kleene `Proposition` algebra wit
 
 - `null` is a schema value.
 - A missing optional field remains distinct from `null`.
-- Pending evidence remains operationally pending.
-- All may yield `unknown` truth while blockers and failures preserve the reason.
+- Outstanding evidence remains operationally outstanding.
+- All may yield `pending` truth while blockers and failures preserve the reason.
 - `isNull`, `isMissing`, and `coalesce` remain explicit in the typed value/predicate algebra.
 
 ## Deterministic ordering

@@ -51,7 +51,7 @@ export type DeferredBound = Algebra<{
 
 /** The task outcome, phase-correct: completed with a receipt, failed, or cancelled. */
 export type DeferredOutcome = Algebra<{
-  pending: Record<never, never>;
+  outstanding: Record<never, never>;
   completed: { readonly receipt: ContentAddress<'application/vnd.liteship.edge-deferred+cbor'> };
   failed: { readonly diagnostics: NonEmptyTuple<Diagnostic> };
   cancelled: Record<never, never>;

@@ -2,9 +2,9 @@
  * Evidence state, three-valued truth, authority, and inspectable propositions.
  *
  * Operational state and epistemic uncertainty are separate. Failure never
- * silently becomes unknown, false, or pending. The logical proposition algebra
- * is generic so collections, policies, and other domains reuse one Strong
- * Kleene implementation rather than inventing parallel boolean systems.
+ * silently becomes pending, false, or outstanding. The logical proposition
+ * algebra is generic so collections, policies, and other domains reuse one
+ * Strong Kleene implementation rather than inventing parallel boolean systems.
  *
  * @module
  */
@@ -22,13 +22,19 @@ import type { CanonicalValue, ContentAddress } from '../01_encoding/types.js';
 import type { SchemaId, SchemaReference } from '../03_schema/types.js';
 import type { TimeCoordinate } from '../04_time/types.js';
 
-/** Kleene three-valued truth. */
-export type Truth = 'true' | 'false' | 'unknown';
+/**
+ * Kleene three-valued truth.
+ *
+ * `pending` is epistemic: admitted evidence has not determined the proposition's
+ * truth. Operational work that is owed or in flight is `Evidence.outstanding`;
+ * the two words never substitute for one another.
+ */
+export type Truth = 'true' | 'false' | 'pending';
 
 /** Operational state of an evidence source. */
 export type Evidence<Value, Failure = readonly Diagnostic[]> = Algebra<{
   unavailable: { readonly reason?: string };
-  pending: { readonly since?: TimeCoordinate };
+  outstanding: { readonly since?: TimeCoordinate };
   ready: { readonly value: Value; readonly observedAt?: TimeCoordinate };
   failed: { readonly error: Failure; readonly observedAt?: TimeCoordinate };
 }>;
@@ -88,8 +94,8 @@ export type EvidenceProposition = Proposition<EvidencePredicate>;
 /** One reason a decision remains unresolved. */
 export type DecisionBlocker<Subject = EvidenceReference> = Algebra<{
   unavailable: { readonly subject: Subject; readonly reason?: string };
-  pending: { readonly subject: Subject; readonly since?: TimeCoordinate };
-  unknown: { readonly subject?: Subject; readonly reason?: string };
+  outstanding: { readonly subject: Subject; readonly since?: TimeCoordinate };
+  pending: { readonly subject?: Subject; readonly reason?: string };
 }>;
 
 /** Decision retains truth, blockers, failures, and supporting subjects. */
@@ -149,8 +155,8 @@ export type EvidenceObservationReference<Id extends EvidenceObservationId = Evid
  * One exact observation contributed to a cut.
  *
  * The contributed state is the full `Evidence` algebra rather than a value,
- * because unavailable, pending, and failed sources genuinely participate in an
- * evaluated world. A cut that recorded only the sources that answered would
+ * because unavailable, outstanding, and failed sources genuinely participate
+ * in an evaluated world. A cut that recorded only the sources that answered would
  * describe a world nobody evaluated, and would silently become reproducible by
  * forgetting what went wrong.
  *

@@ -17,7 +17,7 @@
  *   second logic.
  * - `Decision<Subject, Failure>` is already generic there too, so assurance
  *   supplies a subject and reuses the resolution shape.
- * - `Evidence<Value>` already distinguishes unavailable, pending, ready, and
+ * - `Evidence<Value>` already distinguishes unavailable, outstanding, ready, and
  *   failed, which is exactly what "missing evidence stays visible" requires.
  * - `AuthorityRecord`, `AuthorityGraph`, and `CanonicalImport` are already
  *   owned by `00_core/18_inspection`, whose own module comment says system
@@ -340,8 +340,8 @@ export interface ClaimDemonstration<
  * There is no `untested` arm, and its absence is the point. Whether anyone has
  * tried is not a property of the outcome — it is the difference between having
  * this value and not having it, which is exactly what core's `Evidence` already
- * expresses: `unavailable` when nobody produced a demonstration, `pending` while
- * one runs, `ready` when it came out either way, `failed` when the demonstration
+ * expresses: `unavailable` when nobody produced a demonstration, `outstanding`
+ * while one runs, `ready` when it came out either way, `failed` when the demonstration
  * machinery itself broke. The retired `GateQualification` had `untested` as an
  * arm of the same algebra as `qualified`, which is a status badge riding on
  * every evaluation. Reuse the absence language that exists; do not invent a
@@ -370,10 +370,10 @@ export type DemonstratedProof<
 >;
 
 /**
- * The result of evaluating one gate, with unknown kept out of the pass arm.
+ * The result of evaluating one gate, with pending kept out of the pass arm.
  *
  * Each arm pins the decision truth it is allowed to carry. A gate whose
- * evidence was unavailable resolves to `unknown` under Strong Kleene, and that
+ * evidence was unavailable resolves to `pending` under Strong Kleene, and that
  * cannot be reported as `satisfied` because the intersection makes the shape
  * impossible. Fail-closed is a type here, not a promise in a comment.
  */
@@ -381,7 +381,7 @@ export type GateOutcome = Algebra<{
   satisfied: { readonly decision: AssuranceDecision & { readonly truth: 'true' } };
   refuted: { readonly decision: AssuranceDecision & { readonly truth: 'false' } };
   indeterminate: {
-    readonly decision: AssuranceDecision & { readonly truth: 'unknown' };
+    readonly decision: AssuranceDecision & { readonly truth: 'pending' };
     readonly blockers: NonEmptyTuple<DecisionBlocker<AssuranceSubject>>;
   };
 }>;

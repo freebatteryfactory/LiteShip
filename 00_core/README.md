@@ -264,7 +264,7 @@ Development may temporarily contain:
 - explicit recursive references;
 - hot-reload placeholders;
 - incomplete projections;
-- suspended or pending operational work.
+- suspended or outstanding operational work.
 
 Every incomplete value must be enumerable, diagnosable, non-authoritative, and blocked from canonical production emission.
 
@@ -274,7 +274,7 @@ Registration is never a side effect of loading. A module that registers a compon
 
 Operational deferral remains legal when it is represented by its real state:
 
-- pending;
+- outstanding;
 - unavailable;
 - stream;
 - checkpoint;
@@ -507,8 +507,8 @@ Hosts bind physical resources into this contract. Core does not pretend the envi
 `06_evidence/` keeps operational state and epistemic truth separate:
 
 ```text
-Evidence = unavailable | pending | ready | failed
-Truth = true | false | unknown
+Evidence = unavailable | outstanding | ready | failed
+Truth = true | false | pending
 ```
 
 Strong Kleene logic governs propositions. A visible annihilator may settle truth while blockers and failures remain inspectable.
@@ -527,7 +527,7 @@ Advisory or presentational evidence cannot satisfy authoritative requirements.
 
 `10_collection/` does not invent another boolean expression language.
 
-Collection field comparisons extend generic `Proposition<Atom>` with typed collection atoms rooted in the query's declared row schemas. A row predicate may be unknown because a field is null, absent, or evidence is pending, while blockers and failures preserve the difference.
+Collection field comparisons extend generic `Proposition<Atom>` with typed collection atoms rooted in the query's declared row schemas. A row predicate may be pending because a field is null, absent, or evidence is outstanding, while blockers and failures preserve the difference.
 
 Filters retain only `true`. `isNull`, `isMissing`, and `coalesce` remain explicit.
 

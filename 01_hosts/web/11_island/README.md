@@ -28,7 +28,7 @@ The plan selects a repeatable activation provider through `IslandActivationOffer
 
 A live island holds the owner `RegionMembership` type inside its join; the transaction-scoped write authority is acquired from that membership for each commit, never frozen inside the long-lived instance.
 
-A `client:when` condition that is unknown or false leaves the island inactive with its retained updates available. No failure is fabricated. Failure stays phase-correct: no lawful provider is planning refusal; a malformed mount or serialized bootstrap value is admission failure; a selected activation that does not survive construction is realization failure; a provider that later disappears is withdrawal or typed evidence, per the contract.
+A `client:when` condition that is pending or false leaves the island inactive with its retained updates available. No failure is fabricated. Failure stays phase-correct: no lawful provider is planning refusal; a malformed mount or serialized bootstrap value is admission failure; a selected activation that does not survive construction is realization failure; a provider that later disappears is withdrawal or typed evidence, per the contract.
 
 Activation preserves exact graph and revision identity, preboot updates, one committed generation across sibling islands, region physical state, foreign boundaries, and the replay position. An island never reconstructs a competing local world.
 

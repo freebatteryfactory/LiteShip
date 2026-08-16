@@ -360,17 +360,17 @@ export type AssuranceReusesTheCoreProposition = Assert<
  * A satisfied gate cannot be carrying an unresolved decision.
  *
  * Lines one and two pin that the pass arm admits only `'true'` and that
- * `'unknown'` is not assignable into it. Line three is the anti-vacuity
+ * `'pending'` is not assignable into it. Line three is the anti-vacuity
  * partner: without it, the law would still pass if `satisfied` were widened to
  * the full `Truth` union, because `'true'` remains assignable to `Truth`.
  */
-export type UnknownNeverPassesAGate = Assert<
+export type PendingNeverPassesAGate = Assert<
   Equal<
     [
       Equal<CaseOf<GateOutcome, 'satisfied'>['decision']['truth'], 'true'>,
-      'unknown' extends CaseOf<GateOutcome, 'satisfied'>['decision']['truth'] ? true : false,
+      'pending' extends CaseOf<GateOutcome, 'satisfied'>['decision']['truth'] ? true : false,
       Truth extends CaseOf<GateOutcome, 'satisfied'>['decision']['truth'] ? true : false,
-      Equal<CaseOf<GateOutcome, 'indeterminate'>['decision']['truth'], 'unknown'>,
+      Equal<CaseOf<GateOutcome, 'indeterminate'>['decision']['truth'], 'pending'>,
       Equal<TagOf<GateOutcome>, 'satisfied' | 'refuted' | 'indeterminate'>,
     ],
     [true, false, false, true, true]
@@ -534,7 +534,7 @@ export type UntestedIsAnAbsenceRatherThanAnArm = Assert<
         Equal<TagOf<DemonstrationOutcome>, 'demonstrated' | 'disproven'>,
         'untested' extends TagOf<DemonstrationOutcome> ? true : false,
         'disproven' extends TagOf<DemonstrationOutcome> ? true : false,
-        Equal<TagOf<Evidence<DemonstrationOutcome>>, 'unavailable' | 'pending' | 'ready' | 'failed'>,
+        Equal<TagOf<Evidence<DemonstrationOutcome>>, 'unavailable' | 'outstanding' | 'ready' | 'failed'>,
         'refuted' extends TagOf<DemonstrationOutcome> ? true : false,
         [DemonstratedProof] extends [never] ? true : false,
         Equal<DemonstratedProof['value'], CaseOf<DemonstrationOutcome, 'demonstrated'>>,
