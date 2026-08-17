@@ -8,15 +8,15 @@ Dependency authority: Actual source imports, constrained by the numbered path or
 
 ## Purpose
 
-Operate on the repository and the product architecture without becoming part of application runtime composition.
+Compose the repository-facing control plane without becoming part of application runtime composition.
 
-Core answers what a program means. Hosts answer how unresolved physical behaviour exists. Targets attach that to an ecosystem. System answers a different kind of question entirely: what is this repository, is it what it claims to be, and is this build fit to ship.
+Core answers what a program means. Hosts answer how unresolved physical behaviour exists. Targets attach that to an ecosystem. System composes those authorities into repository-facing operations: observe the workspace, evaluate assurance, build or migrate a product, and package, release, or ship an admitted result.
 
 ## Why this home is unnumbered
 
-The numbers express a dependency band in the product waterfall. System is not a band — it is orthogonal to all of them. It may consume root, core, hosts, targets, and wires because it is downstream and observational. No product home may depend on it, in any direction, ever.
+The numbers express a dependency band in the product waterfall. System is not a band — it is the downstream control plane over that waterfall. It may consume root, core, hosts, targets, and wires because it composes authorities those homes already own. No product home may depend on it, in any direction, ever.
 
-That rule is the whole reason the layer exists as a layer rather than as tooling. Tooling that inspects a repository tends to grow its own model of that repository, and a model nobody compares to the original diverges silently. Everything here observes something that already has an owner.
+That rule is the whole reason the layer exists as a layer rather than as loose tooling. Assurance observes facts owned upstream; effectful programs invoke upstream operations and capabilities. Neither may grow a second model of the product or move product meaning into the control plane.
 
 ## Why repository observation stays downstream
 
@@ -85,8 +85,8 @@ The obligations are `system/01_assurance` claims about the repository, which mea
 
 ## Implementation
 
-Repository programs compose the declared authorities; they do not create a second product model.
+Repository programs compose the declared authorities; they do not create a second product model. Observation-only programs and effectful programs remain distinct through their core operation definitions rather than through a folder-wide claim.
 
 Repository-control executables live in `01_assurance/00_audit/`. Each must own a repository fact that TypeScript cannot express, remain typechecked, and prove both lawful and rejecting cases.
 
-Program and bootstrap realizations must consume the declared wire and operation contracts rather than restating them.
+Program realizations must consume the exact upstream authorities, target definitions, and wire contracts their declarations name. Physical drivers enter through declared capability holes; the bootstrap composition binds those realizations to the root executable. A program body that redefines an upstream product or silently acquires an undeclared capability violates this layer even if it produces the expected output.

@@ -686,7 +686,7 @@ Benchmark and docs generation are absent because no exact output contracts and i
 
 It also owns assurance acquisition/evaluation composition, type ABI canonicalization, release attestations, and workspace governance.
 
-System may import the root type ABI directly. It may consume core, hosts, targets, and wires because it is downstream and observational. Product homes never depend on system.
+System may import the root type ABI directly. It may consume core, hosts, targets, and wires because it is the downstream control plane that composes their authorities. Assurance and doctor observe; build, migrate, package, release, and ship carry the effects declared by their core operation definitions. Product homes never depend on system.
 
 Meaningful repository workflows become programs, not loose scripts.
 
