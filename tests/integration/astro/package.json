@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "astro": "^7.1.0",
+    "astro": "^7.2.8",
     "@liteship/astro": "workspace:*",
     "liteship": "workspace:*"
   }
